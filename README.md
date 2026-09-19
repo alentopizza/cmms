@@ -1,4 +1,4 @@
-# Deswel CMMS
+# Desweb CMMS
 
 Sistema multiempresa de gestión de mantenimiento para activos, sedes y equipos.
 
@@ -24,9 +24,10 @@ Incluye:
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+APP_ADMIN_EMAIL=admin@desweb.cloud
 APP_ADMIN_PASSWORD=una-contrasena-segura
 AUTH_SECRET=una-cadena-aleatoria-larga
-NEXT_PUBLIC_APP_NAME=Deswel CMMS
+NEXT_PUBLIC_APP_NAME=Desweb CMMS
 NEXT_PUBLIC_APP_URL=https://cmms.desweb.cloud
 ```
 
@@ -57,4 +58,4 @@ npm run migrate
 
 ## Seguridad inicial
 
-La primera versión usa una contraseña administrativa definida en `APP_ADMIN_PASSWORD`. El modelo de datos ya contempla usuarios y roles; la autenticación individual por usuario será una de las siguientes iteraciones.
+La primera versión usa correo y contraseña administrativos definidos en `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. El modelo de datos ya contempla usuarios y roles; la autenticación individual por usuario será una de las siguientes iteraciones.

@@ -1,6 +1,20 @@
 # Changelog
 
 
+## 2026-09-19 — Company and site management
+
+### Added
+
+- Added a dedicated detail page for every company.
+- Added company editing for commercial name, legal name, tax ID, identifier and timezone.
+- Added activation and deactivation controls for companies.
+- Added creation and management of multiple sites per company.
+- Added site editing for name, code, address, city and country.
+- Added activation and deactivation controls for sites.
+- Added company and site operational summaries for assets and work orders.
+- Updated the company directory with status, site counts and detail navigation.
+
+
 ## 2026-09-19 — Login branding alignment
 
 ### Changed

@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 2026-09-19 — Login branding alignment
+
+### Changed
+
+- Centered the login logo within the left column.
+- Moved the `CMMS` product label below the logo to prevent horizontal visual displacement.
+- Preserved configurable light/dark logo behavior and responsive layout.
+
 This file records meaningful product and engineering changes so future developers and AI agents can reconstruct the project history.
 
 ## 2026-09-18 / 2026-09-19 — Initial CMMS foundation

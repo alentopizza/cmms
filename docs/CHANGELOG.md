@@ -82,3 +82,12 @@ This file records meaningful product and engineering changes so future developer
 - Added project context, architecture, decisions, roadmap and changelog under `docs/`.
 - Established a rule that meaningful changes must update the changelog and relevant technical documentation.
 - Added branding and design-system documents to the mandatory AI/contributor reading list.
+
+
+### Logo asset correction
+
+- Rebuilt the Desweb logo asset from the supplied source artwork.
+- Cropped excess canvas space so the wordmark occupies the expected visual area.
+- Converted the logo to a transparent, lossless WebP optimized for the application.
+- Updated login sizing and sidebar treatment to guarantee readable contrast.
+- Sidebar now places the dark wordmark on a light brand surface while preserving the institutional dark navigation background.

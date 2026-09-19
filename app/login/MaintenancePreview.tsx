@@ -11,9 +11,7 @@ export default function MaintenancePreview() {
         <span className="preview-badge positive">+2.4%</span>
       </div>
       <div className="availability-row">
-        <div className="availability-ring" aria-hidden="true">
-          <span>97%</span>
-        </div>
+        <div className="availability-ring" aria-hidden="true"><span>97%</span></div>
         <div className="availability-legend">
           <div><span className="dot dot-ok" /> Operativos <strong>142</strong></div>
           <div><span className="dot dot-maint" /> En mantenimiento <strong>4</strong></div>
@@ -77,9 +75,9 @@ export default function MaintenancePreview() {
     </div>
 
     <div className="preview-brand-block">
-      <div className="preview-brand-icon">D</div>
+      <div className="preview-brand-mark">DW</div>
       <div>
-        <strong>Control de mantenimiento en un solo lugar</strong>
+        <strong>Un centro de control para mantenimiento</strong>
         <p>Activos, órdenes de trabajo, preventivos, repuestos y trazabilidad para cada empresa y sede.</p>
       </div>
     </div>

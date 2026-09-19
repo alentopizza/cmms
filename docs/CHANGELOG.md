@@ -91,3 +91,11 @@ This file records meaningful product and engineering changes so future developer
 - Converted the logo to a transparent, lossless WebP optimized for the application.
 - Updated login sizing and sidebar treatment to guarantee readable contrast.
 - Sidebar now places the dark wordmark on a light brand surface while preserving the institutional dark navigation background.
+
+
+### Runtime startup hardening
+
+- Fixed a deployment condition where Easypanel could report `Service is not reachable` after a redeploy even though the build succeeded.
+- Added PostgreSQL startup retry logic to `scripts/migrate.mjs` so the container waits for the database instead of exiting on the first transient connection failure.
+- Explicitly set `HOSTNAME=0.0.0.0` in the production container so Next.js always listens on all container interfaces at port `3000`.
+- Deployment rule: do not replace these safeguards with a one-shot database connection or hostname-specific server binding.

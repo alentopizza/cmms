@@ -1,6 +1,21 @@
 # Changelog
 
 
+## 2026-09-19 — Visual company directory
+
+### Added
+
+- Replaced the company list with responsive visual cards.
+- Added point-of-reference cover images and centered company logos.
+- Added location, active-site and asset summaries to each card.
+- Replaced the inline creation form with an accessible popup.
+- Added logo and cover uploads to company creation.
+- Added logo and cover replacement from the company detail page.
+- Added migration `003_organization_visual_assets.sql`.
+- Added authenticated routes for company visual assets.
+- Added image type and size validation with durable PostgreSQL storage.
+
+
 ## 2026-09-19 — Company and site management
 
 ### Added

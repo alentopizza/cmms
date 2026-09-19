@@ -49,6 +49,8 @@ The first production-capable foundation exists and includes:
 - initial admin login;
 - multi-company and multi-site database model;
 - company detail, editing and activation state;
+- visual company cards with persistent logo and point-of-reference cover image;
+- popup-based company creation with image uploads;
 - multiple site creation, editing and activation state;
 - asset creation/listing;
 - work-order creation/listing;

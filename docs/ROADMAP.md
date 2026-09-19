@@ -22,6 +22,8 @@ This roadmap is directional and should be updated as priorities change.
 - company detail and editing
 - multiple site creation and editing
 - company and site activation states
+- visual company directory with logo and cover images
+- popup-based company creation
 
 ## Next functional priorities
 

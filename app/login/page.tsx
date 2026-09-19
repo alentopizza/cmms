@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <section className="login-shell">
       <div className="login-panel">
         <div className="login-panel-inner">
-          <div className="login-brand">
+          <div className={`login-brand ${customization.hasLogoOnDark ? "has-dark-logo" : "uses-fallback-logo"}`}>
             <img className="theme-logo theme-logo-light" src={logoOnLightSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
             <img className="theme-logo theme-logo-dark" src={logoOnDarkSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
             <span>CMMS</span>

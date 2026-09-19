@@ -63,7 +63,7 @@ export default function NewCompanyModal({ error }: { error?: string }) {
                   {logoPreview ? <img src={logoPreview} alt="Vista previa del logo" /> : <span aria-hidden="true">LOGO</span>}
                 </span>
                 <strong>Cargar logo</strong>
-                <small>Imagen cuadrada · máximo 2 MB</small>
+                <small>PNG, JPG o WebP · cuadrada · 800 × 800 px recomendado · máximo 2 MB</small>
                 <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" required onChange={event => previewFile(event.target.files?.[0], setLogoPreview)} />
               </label>
 
@@ -72,7 +72,7 @@ export default function NewCompanyModal({ error }: { error?: string }) {
                   {coverPreview ? <img src={coverPreview} alt="Vista previa de la portada" /> : <span aria-hidden="true">FOTO DE PORTADA</span>}
                 </span>
                 <strong>Cargar foto del punto de referencia</strong>
-                <small>Imagen horizontal · máximo 5 MB</small>
+                <small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB</small>
                 <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" required onChange={event => previewFile(event.target.files?.[0], setCoverPreview)} />
               </label>
             </div>

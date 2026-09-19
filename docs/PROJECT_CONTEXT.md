@@ -48,6 +48,8 @@ The first production-capable foundation exists and includes:
 - Easypanel deployment configuration documented in the repository;
 - initial admin login;
 - multi-company and multi-site database model;
+- company detail, editing and activation state;
+- multiple site creation, editing and activation state;
 - asset creation/listing;
 - work-order creation/listing;
 - preventive and inventory base screens;

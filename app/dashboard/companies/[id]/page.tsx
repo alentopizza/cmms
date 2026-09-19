@@ -33,6 +33,7 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (error === "slug") return <div className="notice error">El identificador ya está siendo usado por otra empresa.</div>;
   if (error === "site-code") return <div className="notice error">Ese código de sede ya existe dentro de esta empresa.</div>;
   if (error) return <div className="notice error">Revisa los campos obligatorios e inténtalo nuevamente.</div>;
+  if (created === "company") return <div className="notice success">La empresa y su sede principal fueron creadas correctamente.</div>;
   if (created === "site") return <div className="notice success">La nueva sede fue creada correctamente.</div>;
   if (saved === "company") return <div className="notice success">La información de la empresa fue actualizada.</div>;
   if (saved === "status") return <div className="notice success">El estado de la empresa fue actualizado.</div>;

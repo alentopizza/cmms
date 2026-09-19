@@ -71,6 +71,8 @@ The module is designed to expand later with color, typography and other visual s
 
 Company directory cards use a horizontal point-of-reference cover, a centered circular logo, location metadata and compact operational metrics. Missing legacy images use branded fallbacks.
 
+Card details open in a modal with read-only fields by default. Editing must be explicitly enabled, saving requires confirmation, and destructive deletion requires a separate irreversible-action confirmation.
+
 ### Buttons
 Primary: Desweb teal with white label.  
 Secondary: neutral surface with theme-aware text.

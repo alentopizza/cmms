@@ -1,6 +1,6 @@
 # Desweb CMMS — AI / contributor context
 
-This repository is the source of truth for **Desweb CMMS**, a multi-company maintenance management system deployed with Easypanel at `https://cmms.desweb.cloud`.
+This repository is the source of truth for **Desweb CMMS**, deployed at `https://cmms.desweb.cloud`.
 
 Before making changes, read:
 
@@ -14,41 +14,30 @@ Before making changes, read:
 
 ## Working rules
 
-- Preserve multi-company data isolation: every operational record belongs to an `organization_id`.
-- A company may have multiple sites. Assets, work orders, preventive plans and inventory must remain company/site aware.
+- Preserve multi-company data isolation.
 - PostgreSQL is the system of record.
-- Database changes must be added as new files under `db/migrations/`. Never edit an already-applied migration for production behavior.
-- The application deploys from branch `main` through the repository `Dockerfile`.
-- Production runs behind Easypanel reverse proxy on internal port `3000`.
-- Public URL is `https://cmms.desweb.cloud`.
+- Database changes require new immutable migrations under `db/migrations/`.
+- Production deploys from `main` using the repository Dockerfile.
 - Keep `/api/health` functional.
+- Preserve PostgreSQL startup retries and `0.0.0.0:3000` binding safeguards.
 - Do not commit production secrets.
-- Current bootstrap authentication uses `APP_ADMIN_EMAIL` + `APP_ADMIN_PASSWORD`; the data model already supports future per-user authentication.
-- User-facing brand spelling is **Desweb**, never Deswel.
-- New UI must follow `docs/BRANDING.md` and `docs/DESIGN_SYSTEM.md`.
-- Prefer the official brand tokens already defined in `app/globals.css`; do not invent unrelated color palettes per screen.
+- Brand spelling is **Desweb**.
+- New UI must follow branding/design-system documentation.
+- Global visual branding must flow through the **Personalización** module where supported.
+- Do not hardcode replacement logos or favicons in individual screens.
+- Light/dark theme behavior must remain functional after UI changes.
+
+## Customization architecture
+
+Global branding assets are stored in PostgreSQL table `app_customization`.
+
+Current customizable assets:
+- logo on light backgrounds;
+- logo on dark backgrounds;
+- favicon.
+
+Future visual settings should extend this architecture.
 
 ## Documentation requirement
 
-Any meaningful implementation change must also update `docs/CHANGELOG.md`. If the change affects architecture, deployment, data model, conventions, branding, design system or product scope, update the appropriate document in `docs/` as part of the same work.
-
-## Current design direction
-
-The product is anchored to the official Desweb palette:
-- `#293644`
-- `#FCFCFC`
-- `#BAE3E0`
-- `#79CAC4`
-- `#38B2A9`
-
-The login is intentionally a two-panel enterprise layout:
-- left: official Desweb branding + authentication;
-- right: illustrative CMMS cards representing asset availability, work orders, preventive compliance and asset criticality.
-
-The preview data on the login is explicitly illustrative and must not be presented as live customer data.
-
-The authenticated shell uses:
-- official Desweb logo;
-- institutional dark sidebar;
-- light workspace;
-- teal primary actions and KPI accents.
+Meaningful implementation changes must update `docs/CHANGELOG.md` and any relevant architecture, branding or design-system documents.

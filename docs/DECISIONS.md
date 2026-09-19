@@ -51,3 +51,12 @@ The preview focuses on:
 - open work orders;
 - preventive maintenance compliance;
 - asset criticality.
+
+
+## ADR-008 — Company visual assets in PostgreSQL
+
+Status: accepted.
+
+Each company can store a logo and a point-of-reference cover image. The binary files and their MIME metadata live on the `organizations` record and are delivered through authenticated asset routes.
+
+This follows the existing durable PostgreSQL asset strategy and avoids relying on the ephemeral application filesystem during Easypanel redeploys. Uploads are limited to PNG, JPEG or WebP, with separate size limits for logos and covers.

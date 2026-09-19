@@ -131,3 +131,20 @@ The dashboard uses:
 - clear status hierarchy.
 
 Future screens should follow the same tokens rather than inventing independent color schemes.
+
+
+## Web asset implementation note
+
+The production logo asset was rebuilt after the first conversion proved unsuitable for web UI because the useful logo artwork occupied too little of the source canvas.
+
+Current canonical asset:
+
+`public/brand/desweb-logo-dark.webp`
+
+Properties:
+- tightly cropped around the official wordmark and tagline;
+- transparent background;
+- optimized lossless WebP;
+- intended for light surfaces.
+
+On the dark sidebar, this dark wordmark is intentionally placed on a small light brand surface to maintain contrast without recoloring the supplied logo.

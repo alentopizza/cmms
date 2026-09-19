@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { publicUrl } from "@/lib/urls";
 
 export async function POST(request: Request) {
   if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
@@ -20,5 +21,5 @@ export async function POST(request: Request) {
      VALUES($1,$2,$3,$4,$5,$6,$7)`,
     [site.rows[0].organization_id,siteId,code,name,criticality,manufacturer||null,model||null]
   );
-  return NextResponse.redirect(new URL("/dashboard/assets", request.url), 303);
+  return NextResponse.redirect(publicUrl("/dashboard/assets", request.url), 303);
 }

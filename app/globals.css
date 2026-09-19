@@ -128,3 +128,5 @@ button,input,select,textarea{font:inherit}
 @media(max-width:1080px){.login-shell{grid-template-columns:1fr}.login-preview{display:none}.login-panel{padding:46px 32px}.login-brand{margin-bottom:42px}.shell{grid-template-columns:220px 1fr}}
 @media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{display:none}.grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.main{padding:20px}.dashboard-two-column{grid-template-columns:1fr}.topbar-domain{display:none}}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.login-page{padding:0;background:#fff}.login-shell{border-radius:0;box-shadow:none;min-height:100vh}.login-panel{padding:28px 22px}.login-panel-inner{width:100%}.login-heading h1{font-size:30px}.page-header{display:block}.brand-pill{margin-top:14px;width:max-content}}
+
+.preventive-count span{position:relative;z-index:2}

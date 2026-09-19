@@ -237,3 +237,6 @@ html[data-theme="dark"] .sidebar-brand.uses-fallback-logo{background:#fcfcfc}
   .customization-intro,.customization-savebar{align-items:flex-start;flex-direction:column}
   .customization-savebar{bottom:8px}
 }
+
+html[data-theme="dark"] .login-brand.uses-fallback-logo{background:#fcfcfc;border-radius:12px;padding:10px 12px}
+html[data-theme="dark"] .login-brand.has-dark-logo{background:transparent;padding:0}

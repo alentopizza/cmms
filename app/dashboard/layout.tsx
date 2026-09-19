@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </nav>
     </aside>
     <main className="main">
-      <div className="topbar"><div><strong>CMMS</strong><div className="muted">cmms.deswel.cloud</div></div>
+      <div className="topbar"><div><strong>CMMS</strong><div className="muted">cmms.desweb.cloud</div></div>
       <form method="post" action="/api/auth/logout"><button className="button secondary">Salir</button></form></div>
       {children}
     </main>

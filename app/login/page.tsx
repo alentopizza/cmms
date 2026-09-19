@@ -1,18 +1,20 @@
 import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
+import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 import LoginForm from "./LoginForm";
 import MaintenancePreview from "./MaintenancePreview";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await isAuthenticated()) redirect("/dashboard");
-  const params = await searchParams;
+  const [params, customization] = await Promise.all([searchParams, getCustomizationSummary()]);
 
   return <main className="login-page">
     <section className="login-shell">
       <div className="login-panel">
         <div className="login-panel-inner">
           <div className="login-brand">
-            <img src="/brand/desweb-logo-dark.webp" alt="Desweb - Desarrollo de Soluciones" />
+            <img className="theme-logo theme-logo-light" src={logoOnLightSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
+            <img className="theme-logo theme-logo-dark" src={logoOnDarkSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
             <span>CMMS</span>
           </div>
 

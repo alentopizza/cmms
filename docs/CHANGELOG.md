@@ -34,68 +34,42 @@ This file records meaningful product and engineering changes so future developer
 - Configured deployment for Easypanel internal port `3000`.
 - Corrected production domain from an early typo to `cmms.desweb.cloud`.
 - Fixed redirects that previously exposed the internal Docker hostname after login by introducing `lib/urls.ts`.
+- Added PostgreSQL startup retry logic so transient database readiness does not crash the container during redeploy.
+- Explicitly bind Next.js to `0.0.0.0:3000`.
 
 ### Authentication
 
 - Started with password-only bootstrap authentication.
 - Upgraded bootstrap login to require both `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD`.
 
-### Branding
+### Branding and UI
 
-- Corrected product naming from the early misspelling “Deswel” to **Desweb** throughout user-facing and documentation content.
-- Adopted the official Desweb palette supplied by the project owner:
-  - `#293644`
-  - `#FCFCFC`
-  - `#BAE3E0`
-  - `#79CAC4`
-  - `#38B2A9`
-- Added optimized official logo asset at `public/brand/desweb-logo-dark.webp`.
-- Added `docs/BRANDING.md`.
-- Added `docs/DESIGN_SYSTEM.md`.
-- Converted global styling to reusable brand tokens.
-- Applied the official identity to login, sidebar, buttons, cards, tables and dashboard surfaces.
+- Corrected product naming from “Deswel” to **Desweb**.
+- Adopted official Desweb palette: `#293644`, `#FCFCFC`, `#BAE3E0`, `#79CAC4`, `#38B2A9`.
+- Added official branding documentation and design-system guidance.
+- Added enterprise two-panel login with illustrative CMMS metrics.
+- Redesigned authenticated shell, sidebar and dashboard around Desweb branding.
+- Corrected logo asset rendering and contrast behavior.
 
-### Login design iterations
+### Personalization module
 
-- Replaced the original minimal login with a modern branded layout.
-- Explored an illustrative visual direction.
-- Changed direction to an enterprise two-panel layout inspired by dashboard-oriented SaaS login experiences.
-- Added `MaintenancePreview.tsx`, which shows illustrative maintenance metrics:
-  - asset availability;
-  - open work orders;
-  - preventive compliance;
-  - asset criticality.
-- Explicitly labeled these login metrics as illustrative rather than live data.
-- Updated the login to use the official Desweb logo and official brand colors.
-
-### Dashboard visual system
-
-- Redesigned the authenticated application shell with a Desweb dark sidebar.
-- Added official logo branding to the sidebar.
-- Restyled primary actions using Desweb teal.
-- Added branded KPI cards and a clearer operational dashboard hierarchy.
-- Added a branded informational panel for future maintenance KPIs.
+- Added migration `002_app_customization.sql`.
+- Added global `app_customization` settings row in PostgreSQL.
+- Added **Personalización** module to the dashboard navigation.
+- Added upload/replacement for:
+  - logo for light backgrounds;
+  - logo for dark backgrounds;
+  - favicon.
+- Custom branding files are stored in PostgreSQL so they survive application redeploys.
+- Added dynamic asset endpoints for logos and favicon.
+- Added dynamic favicon integration in the root layout.
+- Added light/dark theme switcher.
+- Theme preference is stored in browser local storage and initially honors the operating-system color scheme.
+- Login and application shell choose the appropriate configured logo for their background/theme.
+- Added contrast fallback behavior when a dark-background logo has not yet been configured.
 
 ### Documentation continuity
 
 - Added `AGENTS.md` as the entry point for future AI agents and contributors.
-- Added project context, architecture, decisions, roadmap and changelog under `docs/`.
-- Established a rule that meaningful changes must update the changelog and relevant technical documentation.
-- Added branding and design-system documents to the mandatory AI/contributor reading list.
-
-
-### Logo asset correction
-
-- Rebuilt the Desweb logo asset from the supplied source artwork.
-- Cropped excess canvas space so the wordmark occupies the expected visual area.
-- Converted the logo to a transparent, lossless WebP optimized for the application.
-- Updated login sizing and sidebar treatment to guarantee readable contrast.
-- Sidebar now places the dark wordmark on a light brand surface while preserving the institutional dark navigation background.
-
-
-### Runtime startup hardening
-
-- Fixed a deployment condition where Easypanel could report `Service is not reachable` after a redeploy even though the build succeeded.
-- Added PostgreSQL startup retry logic to `scripts/migrate.mjs` so the container waits for the database instead of exiting on the first transient connection failure.
-- Explicitly set `HOSTNAME=0.0.0.0` in the production container so Next.js always listens on all container interfaces at port `3000`.
-- Deployment rule: do not replace these safeguards with a one-shot database connection or hostname-specific server binding.
+- Added project context, architecture, decisions, branding, design system, roadmap and changelog under `docs/`.
+- Meaningful implementation changes must update the changelog and relevant technical documentation.

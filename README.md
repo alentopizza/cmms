@@ -27,7 +27,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
 APP_ADMIN_PASSWORD=una-contrasena-segura
 AUTH_SECRET=una-cadena-aleatoria-larga
 NEXT_PUBLIC_APP_NAME=Deswel CMMS
-NEXT_PUBLIC_APP_URL=https://cmms.deswel.cloud
+NEXT_PUBLIC_APP_URL=https://cmms.desweb.cloud
 ```
 
 ## Easypanel
@@ -37,7 +37,7 @@ NEXT_PUBLIC_APP_URL=https://cmms.deswel.cloud
 3. Usar el Dockerfile del repositorio.
 4. Configurar las variables de entorno indicadas arriba.
 5. Exponer el puerto interno `3000`.
-6. Asignar el dominio `cmms.deswel.cloud`.
+6. Asignar el dominio `cmms.desweb.cloud`.
 7. Configurar el health check con `/api/health`.
 
 Al iniciar el contenedor se ejecutan automáticamente las migraciones pendientes y luego se inicia la aplicación.

@@ -33,7 +33,7 @@ export default async function Dashboard() {
           <h2>Próximos preventivos</h2>
           <p className="muted">Planes vencidos o programados para los próximos 7 días.</p>
         </div>
-        <div className="preventive-count">{due.rows[0].count}</div>
+        <div className="preventive-count"><span>{due.rows[0].count}</span></div>
       </div>
 
       <div className="card dashboard-brand-card">

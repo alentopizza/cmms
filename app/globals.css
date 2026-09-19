@@ -91,7 +91,7 @@ button,input,select,textarea{font:inherit}
 .login-shell{width:min(1240px,100%);min-height:720px;background:#fff;border-radius:24px;box-shadow:0 28px 70px rgba(41,54,68,.18);display:grid;grid-template-columns:.9fr 1.1fr;overflow:hidden;border:1px solid rgba(41,54,68,.08)}
 .login-panel{display:grid;place-items:center;padding:52px 48px;background:#fff}
 .login-panel-inner{width:min(420px,100%)}
-.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:52px}
+.login-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:max-content;max-width:100%;margin:0 auto 52px;text-align:center}
 .login-brand img{width:210px;height:auto;display:block}
 .login-brand>span{font-size:10px;font-weight:900;letter-spacing:.16em;color:var(--brand-teal)}
 .login-heading{margin-bottom:30px;text-align:center}

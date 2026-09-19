@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cmms
+      POSTGRES_USER: cmms
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - cmms_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cmms -d cmms"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://cmms:${POSTGRES_PASSWORD:-change-me}@postgres:5432/cmms
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-change-this-before-deploy}
+      AUTH_SECRET: ${AUTH_SECRET:-replace-this-secret}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Deswel CMMS}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cmms.deswel.cloud}
+    ports:
+      - "3000:3000"
+
+volumes:
+  cmms_postgres:

@@ -69,6 +69,8 @@ The module is designed to expand later with color, typography and other visual s
 - restrained shadow;
 - 14px radius.
 
+Company directory cards use a horizontal point-of-reference cover, a centered circular logo, location metadata and compact operational metrics. Missing legacy images use branded fallbacks.
+
 ### Buttons
 Primary: Desweb teal with white label.  
 Secondary: neutral surface with theme-aware text.

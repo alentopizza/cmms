@@ -1,6 +1,19 @@
 # Changelog
 
 
+## 2026-09-19 — Protected company detail popup
+
+### Added
+
+- Changed “Ver detalle” to open a modal without leaving the company directory.
+- Added read-only company and primary-site information by default.
+- Added an explicit edit mode that unlocks company, primary-site and optional image fields.
+- Added a save confirmation before any modal edit is submitted.
+- Added permanent company deletion with an irreversible-action confirmation.
+- Added image guidance for accepted formats, recommended pixel dimensions and file-size limits.
+- Kept the full company page available for multi-site administration.
+
+
 ## 2026-09-19 — Visual company directory
 
 ### Added

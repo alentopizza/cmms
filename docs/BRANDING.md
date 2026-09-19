@@ -1,150 +1,63 @@
 # Desweb branding
 
-This document defines the official visual identity for Desweb CMMS.
-
 ## Brand name
 
-Primary brand: **DESWEB**
+Primary brand: **DESWEB**  
+Product: **Desweb CMMS**  
+Tagline: **Desarrollo de Soluciones**
 
-Product name: **Desweb CMMS**
-
-Tagline used in source artwork: **Desarrollo de Soluciones**
-
-Do not use the misspelling "Deswel".
+Never use the misspelling “Deswel”.
 
 ## Official palette
 
-The approved brand palette supplied by the project owner is:
-
 | Role | Hex |
 |---|---|
-| Dark / institutional background | `#293644` |
+| Institutional dark | `#293644` |
 | White | `#FCFCFC` |
 | Mint light | `#BAE3E0` |
 | Mint medium | `#79CAC4` |
 | Primary teal | `#38B2A9` |
 
-These five colors are the source palette. Derived UI colors may be used for hover, borders, shadows and semantic states, but the product should visually remain anchored to these values.
+## Logo variants
 
-## Logo assets
+Desweb CMMS distinguishes two logo roles:
 
-Current repository asset:
+- **Logo on light:** dark-wordmark variant for white/light backgrounds.
+- **Logo on dark:** white/light-wordmark variant for dark backgrounds and dark theme.
 
-`public/brand/desweb-logo-dark.webp`
+The application includes a fallback repository asset, but production branding should be managed from **Personalización**.
 
-This asset was prepared from the official logo supplied by the project owner and is intended primarily for use on `#293644` or visually compatible dark backgrounds.
+Configured logo files are stored in PostgreSQL and delivered through application asset routes.
 
-Current uses:
-- login branding;
-- application sidebar.
+## Favicon
 
-If additional official logo variants are supplied later, preserve the original files and add explicit light/dark/icon variants rather than overwriting this asset.
+The favicon is also managed from **Personalización**.
+
+If no custom favicon exists, the application serves a generated Desweb fallback icon.
 
 ## Logo rules
 
-- Preserve aspect ratio.
-- Do not stretch or skew.
-- Keep comfortable whitespace around the wordmark.
-- Prefer the official logo over reconstructed text whenever there is sufficient horizontal space.
-- For compact UI where the full wordmark does not fit, a documented icon/monogram variant may be used.
-- Avoid decorative shadows or effects directly on the wordmark.
-- Do not recolor the supplied logo arbitrarily.
+- preserve aspect ratio;
+- prefer transparent files;
+- do not stretch;
+- do not add decorative shadows directly to the wordmark;
+- use the correct light/dark variant for contrast;
+- retain comfortable clear space.
 
-## Product visual direction
+## Personalization direction
 
-Desweb CMMS should look:
-- professional;
-- technical;
-- clean;
-- modern;
-- calm rather than flashy;
-- suitable for industrial/operational software.
+The personalization module is the canonical future home for visual brand settings.
 
-The dark institutional color is appropriate for:
-- sidebar/navigation;
-- login visualization panel;
-- high-emphasis branded panels.
+Current scope:
+- light-background logo;
+- dark-background logo;
+- favicon.
 
-The teal is appropriate for:
-- primary buttons;
-- active navigation;
-- KPI accents;
-- chart series;
-- focus states;
-- progress indicators.
+Future scope may include:
+- brand colors;
+- product name;
+- login background;
+- typography;
+- email/report branding.
 
-Mint tones are appropriate for:
-- soft backgrounds;
-- secondary charts;
-- badges;
-- visual hierarchy;
-- hover surfaces.
-
-## Typography
-
-Current application stack:
-
-`Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
-
-Do not add a remote font dependency unless there is a clear product reason. The UI should remain fast and predictable in production.
-
-## Semantic colors
-
-Operational status colors may extend beyond the brand palette where meaning requires it:
-
-- success / operational: green;
-- warning / attention: amber;
-- danger / stopped / urgent: red;
-- informational / primary: Desweb teal.
-
-Brand teal should not replace danger or warning semantics when that would reduce clarity.
-
-## Login
-
-The approved direction is a two-panel enterprise login:
-
-Left:
-- Desweb logo;
-- login heading;
-- email;
-- password;
-- primary teal submit action.
-
-Right:
-- dark Desweb background;
-- representative CMMS metrics;
-- asset availability;
-- work-order backlog;
-- preventive compliance;
-- asset criticality.
-
-The values in this login preview are illustrative, not customer data.
-
-## Dashboard
-
-The dashboard uses:
-- institutional dark sidebar;
-- white/light surfaces;
-- teal action and KPI accents;
-- restrained shadows;
-- rounded cards;
-- clear status hierarchy.
-
-Future screens should follow the same tokens rather than inventing independent color schemes.
-
-
-## Web asset implementation note
-
-The production logo asset was rebuilt after the first conversion proved unsuitable for web UI because the useful logo artwork occupied too little of the source canvas.
-
-Current canonical asset:
-
-`public/brand/desweb-logo-dark.webp`
-
-Properties:
-- tightly cropped around the official wordmark and tagline;
-- transparent background;
-- optimized lossless WebP;
-- intended for light surfaces.
-
-On the dark sidebar, this dark wordmark is intentionally placed on a small light brand surface to maintain contrast without recoloring the supplied logo.
+Future work should extend the existing module and storage model rather than hardcoding per-screen branding.

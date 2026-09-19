@@ -7,8 +7,10 @@ Before making changes, read:
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/ARCHITECTURE.md`
 3. `docs/DECISIONS.md`
-4. `docs/CHANGELOG.md`
-5. `docs/ROADMAP.md`
+4. `docs/BRANDING.md`
+5. `docs/DESIGN_SYSTEM.md`
+6. `docs/CHANGELOG.md`
+7. `docs/ROADMAP.md`
 
 ## Working rules
 
@@ -23,15 +25,30 @@ Before making changes, read:
 - Do not commit production secrets.
 - Current bootstrap authentication uses `APP_ADMIN_EMAIL` + `APP_ADMIN_PASSWORD`; the data model already supports future per-user authentication.
 - User-facing brand spelling is **Desweb**, never Deswel.
+- New UI must follow `docs/BRANDING.md` and `docs/DESIGN_SYSTEM.md`.
+- Prefer the official brand tokens already defined in `app/globals.css`; do not invent unrelated color palettes per screen.
 
 ## Documentation requirement
 
-Any meaningful implementation change must also update `docs/CHANGELOG.md`. If the change affects architecture, deployment, data model, conventions or product scope, update the appropriate document in `docs/` as part of the same work.
+Any meaningful implementation change must also update `docs/CHANGELOG.md`. If the change affects architecture, deployment, data model, conventions, branding, design system or product scope, update the appropriate document in `docs/` as part of the same work.
 
 ## Current design direction
 
+The product is anchored to the official Desweb palette:
+- `#293644`
+- `#FCFCFC`
+- `#BAE3E0`
+- `#79CAC4`
+- `#38B2A9`
+
 The login is intentionally a two-panel enterprise layout:
-- left: Desweb CMMS authentication;
+- left: official Desweb branding + authentication;
 - right: illustrative CMMS cards representing asset availability, work orders, preventive compliance and asset criticality.
 
 The preview data on the login is explicitly illustrative and must not be presented as live customer data.
+
+The authenticated shell uses:
+- official Desweb logo;
+- institutional dark sidebar;
+- light workspace;
+- teal primary actions and KPI accents.

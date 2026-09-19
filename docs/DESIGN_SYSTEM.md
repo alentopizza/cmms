@@ -1,10 +1,6 @@
 # Desweb CMMS design system
 
-## CSS tokens
-
-The canonical implementation is in `app/globals.css`.
-
-Core tokens:
+## Core brand tokens
 
 ```css
 :root {
@@ -14,152 +10,87 @@ Core tokens:
   --brand-mint: #79CAC4;
   --brand-teal: #38B2A9;
   --brand-teal-hover: #2F9D95;
-
-  --bg: #F4F7F8;
-  --surface: #FCFCFC;
-  --text: #1F2937;
-  --text-soft: #66727E;
-  --border: #D9E2E7;
 }
 ```
 
-When adding new components, use these tokens instead of hardcoding unrelated colors.
+## Theme implementation
 
-## Layout
+Two themes are implemented.
 
-### Application shell
+### Light
 
-Desktop:
-- dark sidebar;
-- light main workspace;
-- top bar inside workspace.
+- light workspace;
+- white/light surfaces;
+- institutional dark text;
+- Desweb teal primary actions;
+- dark logo variant.
 
-Mobile:
-- current sidebar is hidden below the responsive breakpoint;
-- future work should introduce a dedicated mobile navigation rather than forcing desktop navigation onto small screens.
+### Dark
 
-### Content width
+- dark workspace;
+- darker elevated surfaces;
+- light text;
+- teal and mint accents;
+- light/white logo variant.
 
-The main workspace is constrained to a readable maximum width while remaining fluid.
+Mechanism:
+
+- `data-theme="light"` or `data-theme="dark"` on `<html>`;
+- persisted in `localStorage` under `desweb-theme`;
+- first visit honors `prefers-color-scheme`;
+- theme toggle in authenticated top bar.
+
+Do not duplicate complete component styles per theme. Prefer semantic CSS variables and targeted overrides.
+
+## Personalization module
+
+Visual branding is controlled through **Dashboard → Personalización**.
+
+Current editable assets:
+
+- logo for light backgrounds;
+- logo for dark backgrounds;
+- favicon.
+
+Guidelines:
+
+- transparent PNG, WebP or SVG for logos;
+- SVG or square PNG preferred for favicon;
+- maximum upload size: 2 MB per asset;
+- preserve original logo aspect ratio;
+- do not apply arbitrary recoloring to uploaded logos.
+
+The module is designed to expand later with color, typography and other visual settings.
 
 ## Components
 
 ### Cards
-
-Default cards:
-- white surface;
-- subtle gray border;
-- 14px radius;
-- very light shadow.
-
-Cards should not use heavy shadows.
+- subtle border;
+- restrained shadow;
+- 14px radius.
 
 ### Buttons
-
-Primary:
-- Desweb teal;
-- white label;
-- teal hover state.
-
-Secondary:
-- light neutral background;
-- institutional dark text.
-
-Danger actions should use semantic red rather than teal.
+Primary: Desweb teal with white label.  
+Secondary: neutral surface with theme-aware text.
 
 ### Inputs
-
-- white surface;
-- soft gray border;
-- teal focus border;
-- subtle teal focus ring;
-- consistent 9px radius.
+- visible labels;
+- semantic surface/background;
+- teal focus state;
+- 9px radius.
 
 ### Tables
+- semantic surface;
+- soft row borders;
+- theme-aware header background.
 
-- white surface;
-- soft borders;
-- light header background;
-- compact uppercase header labels.
-
-### Status badges
-
-Status badges should use soft tinted backgrounds and clearly legible text.
-
-## Dashboard KPIs
-
-KPI cards use:
-- small semantic/brand icon block;
-- descriptive label;
-- large dark metric.
-
-Operational exceptions may use warning/danger treatments.
-
-## Charts
-
-Preferred chart color order for neutral CMMS reporting:
-
-1. `#38B2A9`
-2. `#79CAC4`
-3. `#BAE3E0`
-4. `#293644`
-
-Use red/amber/green only when the data has corresponding semantic meaning.
-
-Do not use rainbow palettes for routine operational charts.
-
-## Spacing and radius
-
-General conventions:
-- small gaps: 6–8px;
-- form/component gaps: 12–18px;
-- section spacing: ~24px;
-- card radius: 14px;
-- input/button radius: 9px.
-
-Consistency is more important than introducing many size variants.
+### Status
+Semantic red/amber/green remain available where operational meaning requires them.
 
 ## Accessibility
 
-- Preserve sufficient contrast.
-- Do not communicate status through color alone.
-- Inputs require visible labels.
-- Focus state must remain visible.
-- Avoid tiny text for essential information.
-- Responsive views must remain usable without horizontal scrolling.
-
-## Illustration and decorative content
-
-The login CMMS preview is decorative/product-communicative and must remain explicitly labeled as illustrative.
-
-Do not fabricate real operational data in authenticated dashboards. Authenticated dashboard values must originate from the database.
-
-
-## Theme architecture direction
-
-Desweb CMMS will support two visual themes:
-
-### Light
-- light workspace;
-- white/light surfaces;
-- institutional dark text;
-- Desweb teal as primary action color;
-- dark logo variant.
-
-### Dark
-- institutional/dark workspace;
-- darker elevated surfaces;
-- light text;
-- Desweb teal and mint accents;
-- light/white logo variant.
-
-Implementation should use semantic CSS variables rather than duplicating full component styles.
-
-Recommended mechanism:
-- `data-theme="light"` / `data-theme="dark"` on the document root;
-- persisted user choice in browser storage;
-- first visit may honor `prefers-color-scheme`;
-- theme toggle available in the authenticated shell;
-- logo asset chosen according to theme.
-
-Do not hardcode theme-specific colors directly inside individual components when an existing semantic token can be used.
+- sufficient contrast in both themes;
+- visible focus state;
+- no status conveyed through color only;
+- avoid tiny essential text;
+- uploaded branding must not compromise readability.

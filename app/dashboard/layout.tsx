@@ -8,7 +8,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!(await isAuthenticated())) redirect("/login");
   return <div className="shell">
     <aside className="sidebar">
-      <div className="brand">Deswel CMMS</div>
+      <div className="brand">Desweb CMMS</div>
       <nav className="nav">
         <Link href="/dashboard">Resumen</Link>
         <Link href="/dashboard/companies">Empresas y sedes</Link>

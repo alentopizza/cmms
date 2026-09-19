@@ -43,6 +43,17 @@ This file records meaningful product and engineering changes so future developer
 ### Branding
 
 - Corrected product naming from the early misspelling “Deswel” to **Desweb** throughout user-facing and documentation content.
+- Adopted the official Desweb palette supplied by the project owner:
+  - `#293644`
+  - `#FCFCFC`
+  - `#BAE3E0`
+  - `#79CAC4`
+  - `#38B2A9`
+- Added optimized official logo asset at `public/brand/desweb-logo-dark.webp`.
+- Added `docs/BRANDING.md`.
+- Added `docs/DESIGN_SYSTEM.md`.
+- Converted global styling to reusable brand tokens.
+- Applied the official identity to login, sidebar, buttons, cards, tables and dashboard surfaces.
 
 ### Login design iterations
 
@@ -55,9 +66,19 @@ This file records meaningful product and engineering changes so future developer
   - preventive compliance;
   - asset criticality.
 - Explicitly labeled these login metrics as illustrative rather than live data.
+- Updated the login to use the official Desweb logo and official brand colors.
+
+### Dashboard visual system
+
+- Redesigned the authenticated application shell with a Desweb dark sidebar.
+- Added official logo branding to the sidebar.
+- Restyled primary actions using Desweb teal.
+- Added branded KPI cards and a clearer operational dashboard hierarchy.
+- Added a branded informational panel for future maintenance KPIs.
 
 ### Documentation continuity
 
 - Added `AGENTS.md` as the entry point for future AI agents and contributors.
 - Added project context, architecture, decisions, roadmap and changelog under `docs/`.
 - Established a rule that meaningful changes must update the changelog and relevant technical documentation.
+- Added branding and design-system documents to the mandatory AI/contributor reading list.

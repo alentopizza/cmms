@@ -2,6 +2,17 @@
 
 Sistema multiempresa de gestión de mantenimiento para activos, sedes y equipos.
 
+## Documentación del proyecto
+
+Para entender el estado actual y continuar el desarrollo sin empezar de cero:
+
+- `AGENTS.md` — instrucciones y contexto para IAs y colaboradores.
+- `docs/PROJECT_CONTEXT.md` — visión del producto y estado actual.
+- `docs/ARCHITECTURE.md` — arquitectura, estructura y modelo de datos.
+- `docs/DECISIONS.md` — decisiones técnicas y de producto.
+- `docs/ROADMAP.md` — prioridades de desarrollo.
+- `docs/CHANGELOG.md` — historial de cambios relevantes.
+
 ## Primera versión
 
 Incluye:

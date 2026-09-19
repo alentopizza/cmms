@@ -133,3 +133,33 @@ Consistency is more important than introducing many size variants.
 The login CMMS preview is decorative/product-communicative and must remain explicitly labeled as illustrative.
 
 Do not fabricate real operational data in authenticated dashboards. Authenticated dashboard values must originate from the database.
+
+
+## Theme architecture direction
+
+Desweb CMMS will support two visual themes:
+
+### Light
+- light workspace;
+- white/light surfaces;
+- institutional dark text;
+- Desweb teal as primary action color;
+- dark logo variant.
+
+### Dark
+- institutional/dark workspace;
+- darker elevated surfaces;
+- light text;
+- Desweb teal and mint accents;
+- light/white logo variant.
+
+Implementation should use semantic CSS variables rather than duplicating full component styles.
+
+Recommended mechanism:
+- `data-theme="light"` / `data-theme="dark"` on the document root;
+- persisted user choice in browser storage;
+- first visit may honor `prefers-color-scheme`;
+- theme toggle available in the authenticated shell;
+- logo asset chosen according to theme.
+
+Do not hardcode theme-specific colors directly inside individual components when an existing semantic token can be used.

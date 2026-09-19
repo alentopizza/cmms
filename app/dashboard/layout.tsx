@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
+import { getCustomizationSummary, logoOnDarkSrc } from "@/lib/customization";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +13,17 @@ const navItems = [
   ["✓", "Órdenes de trabajo", "/dashboard/work-orders"],
   ["↻", "Preventivos", "/dashboard/maintenance"],
   ["▤", "Inventario", "/dashboard/inventory"],
+  ["✦", "Personalización", "/dashboard/personalization"],
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (!(await isAuthenticated())) redirect("/login");
+  const customization = await getCustomizationSummary();
+
   return <div className="shell">
     <aside className="sidebar">
-      <div className="sidebar-brand">
-        <img src="/brand/desweb-logo-dark.webp" alt="Desweb" />
+      <div className={`sidebar-brand ${customization.hasLogoOnDark ? "has-dark-logo" : "uses-fallback-logo"}`}>
+        <img src={logoOnDarkSrc(customization)} alt="Desweb" />
         <span>CMMS</span>
       </div>
       <div className="sidebar-caption">Mantenimiento inteligente</div>
@@ -42,6 +47,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <strong>Centro de mantenimiento</strong>
         </div>
         <div className="topbar-actions">
+          <ThemeToggle />
           <span className="topbar-domain">cmms.desweb.cloud</span>
           <form method="post" action="/api/auth/logout"><button className="button secondary">Salir</button></form>
         </div>

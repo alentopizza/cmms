@@ -15,7 +15,7 @@ function slugify(value: string) {
 
 function creationError(requestUrl: string, code: string) {
   const url = publicUrl("/dashboard/companies", requestUrl);
-  url.searchParams.set("error", code);
+  url.searchParams.set("create_error", code);
   return NextResponse.redirect(url, 303);
 }
 

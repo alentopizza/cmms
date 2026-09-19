@@ -39,6 +39,7 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/dashboard/` — authenticated operational UI.
 - `app/dashboard/companies/CompanyDirectory.tsx` — protected directory detail popup, edit mode and destructive-action confirmation.
 - `app/dashboard/companies/[id]/` — full company and site administration.
+- `app/dashboard/locations/[id]/` — recursive physical hierarchy below a principal site.
 - `app/api/organizations/[id]/` — company updates, status changes, visual assets and site creation.
 - `app/api/organizations/[id]/assets/[asset]/` — authenticated company logo and cover delivery.
 - `lib/organization-assets.ts` — company image validation and conversion.
@@ -53,6 +54,16 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `db/migrations/` — ordered SQL migrations.
 - `scripts/migrate.mjs` — migration runner.
 - `Dockerfile` — production container build.
+
+## Tenant and physical-location model
+
+- `organizations` is the tenant boundary.
+- `organization_limits` stores the resource entitlement assigned by the super administrator.
+- `sites` represents principal locations such as a hospital, clinic, warehouse or office.
+- `locations` represents every subordinate physical space and is recursive through `parent_id`.
+- assets, work orders and inventory items may point to a precise `location_id` while retaining their principal `site_id`.
+
+Every operational query and mutation must validate `organization_id`; an identifier supplied by the browser is never sufficient tenant authorization by itself.
 
 ## Global customization
 

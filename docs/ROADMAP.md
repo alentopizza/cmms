@@ -27,7 +27,14 @@ This roadmap is directional and should be updated as priorities change.
 
 ## Next functional priorities
 
-1. Asset management
+### Current foundation slice
+
+- organization resource limits;
+- principal-location quota enforcement;
+- recursive sublocation hierarchy;
+- precise location references prepared for assets, work orders and inventory.
+
+1. Suppliers and asset management
    - full asset detail;
    - category management;
    - asset hierarchy;

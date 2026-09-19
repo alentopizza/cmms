@@ -97,6 +97,18 @@ export default function NewCompanyModal({ error }: { error?: string }) {
           </div>
 
           <div className="modal-section">
+            <div className="modal-section-title"><strong>Recursos asignados</strong><span>Límites del plan</span></div>
+            <p className="muted resource-help">Estos cupos controlan lo que la empresa podrá crear. Se pueden ampliar posteriormente.</p>
+            <div className="resource-limit-grid">
+              <div className="field"><label htmlFor="max-sites">Ubicaciones principales</label><input id="max-sites" name="max_sites" type="number" min="1" defaultValue="5" required /></div>
+              <div className="field"><label htmlFor="max-sublocations">Sububicaciones</label><input id="max-sublocations" name="max_sublocations" type="number" min="0" defaultValue="100" required /></div>
+              <div className="field"><label htmlFor="max-assets">Activos</label><input id="max-assets" name="max_assets" type="number" min="0" defaultValue="500" required /></div>
+              <div className="field"><label htmlFor="max-inventory">Artículos de inventario</label><input id="max-inventory" name="max_inventory_items" type="number" min="0" defaultValue="1000" required /></div>
+              <div className="field"><label htmlFor="max-technicians">Técnicos</label><input id="max-technicians" name="max_technicians" type="number" min="0" defaultValue="50" required /></div>
+            </div>
+          </div>
+
+          <div className="modal-section">
             <div className="modal-section-title"><strong>Sede principal</strong><span>Primer punto de operación</span></div>
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Sede principal" /></div>

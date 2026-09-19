@@ -52,6 +52,8 @@ The first production-capable foundation exists and includes:
 - visual company cards with persistent logo and point-of-reference cover image;
 - popup-based company creation with image uploads;
 - multiple site creation, editing and activation state;
+- super-administrator resource entitlements;
+- recursive sublocations below each principal location;
 - asset creation/listing;
 - work-order creation/listing;
 - preventive and inventory base screens;
@@ -102,6 +104,10 @@ Terminology used in UI:
 - Inventario / Repuestos
 - Proveedor
 - Técnico
+
+## Agreed operating model
+
+The super administrator creates tenants and assigns their resource limits. Company administrators then build their own isolated operational structure in this order: principal locations, nested sublocations, suppliers, assets/inventory, technicians, crews, routines, work orders and preventive maintenance. `docs/FUNCTIONAL_MODEL.md` is the detailed source of truth for this flow.
 
 ## Collaboration model
 

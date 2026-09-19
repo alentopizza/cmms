@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-export default function NewCompanyModal() {
-  const [open, setOpen] = useState(false);
+export default function NewCompanyModal({ error }: { error?: string }) {
+  const [open, setOpen] = useState(Boolean(error));
   const [logoPreview, setLogoPreview] = useState("");
   const [coverPreview, setCoverPreview] = useState("");
 
@@ -25,6 +25,14 @@ export default function NewCompanyModal() {
     setter(URL.createObjectURL(file));
   }
 
+  const errorMessages: Record<string, string> = {
+    required: "Completa los campos obligatorios.",
+    "image-required": "Debes cargar el logo y la foto de portada.",
+    "image-type": "Las imágenes deben ser PNG, JPG o WebP.",
+    "image-size": "Una de las imágenes supera el tamaño permitido.",
+  };
+  const errorMessage = error ? errorMessages[error] || "No se pudo crear la empresa." : "";
+
   return <>
     <button className="button company-new-button" type="button" onClick={() => setOpen(true)}>
       <span aria-hidden="true">＋</span>
@@ -43,6 +51,8 @@ export default function NewCompanyModal() {
           </div>
           <button className="modal-close" type="button" aria-label="Cerrar" onClick={() => setOpen(false)}>×</button>
         </header>
+
+        {errorMessage && <div className="notice error modal-error">{errorMessage}</div>}
 
         <form className="company-modal-form" method="post" action="/api/organizations" encType="multipart/form-data">
           <div className="modal-section">

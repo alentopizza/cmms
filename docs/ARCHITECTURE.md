@@ -18,7 +18,7 @@ Desweb CMMS / Next.js
 PostgreSQL
 ```
 
-The application container starts by applying pending SQL migrations and then launches the Next.js standalone server.
+The application container applies pending SQL migrations and then launches the Next.js standalone server.
 
 ## Technology stack
 
@@ -37,104 +37,48 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/` — Next.js routes, pages and API handlers.
 - `app/login/` — login UI and illustrative CMMS preview.
 - `app/dashboard/` — authenticated operational UI.
-- `app/api/` — authentication, health and write endpoints.
+- `app/dashboard/personalization/` — global visual personalization UI.
+- `app/api/customization/` — branding upload and asset delivery routes.
+- `components/ThemeToggle.tsx` — persisted light/dark appearance switch.
+- `lib/customization.ts` — customization lookup and logo selection helpers.
 - `lib/db.ts` — shared PostgreSQL pool/query helper.
 - `lib/auth.ts` — bootstrap session logic.
 - `lib/urls.ts` — public URL helper for proxy-safe redirects.
 - `db/migrations/` — ordered SQL migrations.
 - `scripts/migrate.mjs` — migration runner.
 - `Dockerfile` — production container build.
-- `.github/workflows/ci.yml` — build validation.
 
-## Domain model
+## Global customization
 
-### organizations
+Migration `002_app_customization.sql` creates a singleton `app_customization` row.
 
-Represents a tenant/company.
+It currently stores:
 
-### sites
+- logo for light backgrounds;
+- MIME type and original filename;
+- logo for dark backgrounds;
+- MIME type and original filename;
+- favicon;
+- MIME type and original filename;
+- last update timestamp.
 
-Physical or logical locations belonging to an organization.
+Binary branding assets are stored as PostgreSQL `bytea`. This is intentional for the current phase because it keeps configuration durable across Easypanel redeploys without requiring a persistent application filesystem.
 
-### users / organization_members
+The customization is installation-wide, not organization-specific.
 
-Users are global identities. Membership associates a user with an organization and role.
+Future personalization settings such as colors, application title or login background should extend this same module rather than creating unrelated configuration stores.
 
-Defined roles:
+## Theme behavior
 
-- owner
-- admin
-- manager
-- technician
-- requester
-- viewer
+The root HTML element receives `data-theme="light"` or `data-theme="dark"`.
 
-### assets / asset_categories
+Theme selection priority:
 
-Maintainable equipment. Assets belong to an organization and site. Assets can optionally have categories and parent assets.
+1. explicit user choice in `localStorage`;
+2. operating-system `prefers-color-scheme`;
+3. light fallback.
 
-Asset status:
-
-- operational
-- maintenance
-- down
-- retired
-
-Criticality:
-
-- low
-- medium
-- high
-- critical
-
-### meters / meter_readings
-
-Usage or operational counters associated with an asset, supporting meter-driven maintenance.
-
-### maintenance_plans
-
-Preventive plans triggered by calendar or meter thresholds.
-
-### work_orders
-
-Core maintenance execution record.
-
-Types:
-
-- corrective
-- preventive
-- inspection
-- emergency
-- improvement
-
-Status:
-
-- open
-- assigned
-- in_progress
-- paused
-- completed
-- cancelled
-
-Work orders can track downtime and cost components.
-
-### inventory
-
-`inventory_items` stores parts and supplies. `inventory_transactions` records receipts, issues, adjustments and returns.
-
-### suppliers
-
-Vendor registry per organization.
-
-### audit_log
-
-General-purpose audit history for future traceability.
-
-## Multi-tenancy rule
-
-Operational tables include `organization_id`. New queries and new features must preserve tenant isolation. Never infer tenancy only from a client-provided field when it can be derived from a trusted related record.
-
-Example: asset creation receives a site ID; the server resolves the organization's ID from that site before inserting the asset.
+Theme-specific styling must use semantic CSS variables and documented overrides.
 
 ## Deployment behavior
 
@@ -153,23 +97,20 @@ Internal application port: `3000`
 
 Health check: `/api/health`
 
-## Proxy redirects
-
-Never construct browser redirects solely from `request.url` behind Easypanel, because it may expose the internal container host. Use `publicUrl()` from `lib/urls.ts`.
-
-
 ## Startup resilience
 
-Easypanel redeploys can create a short window where the application container starts before PostgreSQL is immediately reachable on the internal network.
+Easypanel redeploys can create a short window where PostgreSQL is not immediately reachable.
 
 To avoid a crash-loop:
 
-- `scripts/migrate.mjs` retries PostgreSQL connectivity before applying migrations.
-- The default retry policy is 30 attempts with a 2-second delay.
-- Optional tuning:
-  - `DB_CONNECT_RETRIES`
-  - `DB_CONNECT_RETRY_MS`
-- The production container sets `HOSTNAME=0.0.0.0`.
-- Next.js must remain reachable on internal port `3000`.
+- `scripts/migrate.mjs` retries PostgreSQL connectivity.
+- default: 30 attempts, 2 seconds apart;
+- optional: `DB_CONNECT_RETRIES`, `DB_CONNECT_RETRY_MS`;
+- production sets `HOSTNAME=0.0.0.0`;
+- Next.js remains reachable on port `3000`.
 
-These behaviors are deployment safeguards and should be preserved in future refactors.
+These safeguards must be preserved.
+
+## Proxy redirects
+
+Never construct browser redirects solely from `request.url` behind Easypanel. Use `publicUrl()` from `lib/urls.ts`.

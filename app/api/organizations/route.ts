@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { publicUrl } from "@/lib/urls";
 
 function slugify(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -29,5 +30,5 @@ export async function POST(request: Request) {
   } finally {
     client.release();
   }
-  return NextResponse.redirect(new URL("/dashboard/companies", request.url), 303);
+  return NextResponse.redirect(publicUrl("/dashboard/companies", request.url), 303);
 }

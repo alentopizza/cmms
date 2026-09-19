@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-19 — Tenant limits and location hierarchy
+
+### Added
+
+- Added migration `004_tenant_limits_and_location_hierarchy.sql`.
+- Added super-administrator resource assignments for locations, sublocations, assets, inventory and technicians.
+- Added server-side enforcement for principal-location and sublocation creation.
+- Added recursive sublocations with arbitrary practical depth.
+- Added a dedicated location workspace with parent selection, hierarchy view, editing and activation state.
+- Prepared assets, work orders and inventory articles for precise sublocation assignment.
+- Added `docs/FUNCTIONAL_MODEL.md` with roles, entity definitions, workflow and implementation order.
+
 
 ## 2026-09-19 — Protected company detail popup
 

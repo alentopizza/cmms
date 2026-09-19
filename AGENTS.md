@@ -11,6 +11,7 @@ Before making changes, read:
 5. `docs/DESIGN_SYSTEM.md`
 6. `docs/CHANGELOG.md`
 7. `docs/ROADMAP.md`
+8. `docs/FUNCTIONAL_MODEL.md`
 
 ## Working rules
 

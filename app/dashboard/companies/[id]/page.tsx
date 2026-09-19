@@ -17,6 +17,11 @@ type Organization = {
   work_order_count: string;
   has_logo: boolean;
   has_cover: boolean;
+  max_sites: number;
+  max_sublocations: number;
+  max_assets: number;
+  max_inventory_items: number;
+  max_technicians: number;
 };
 
 type Site = {
@@ -34,6 +39,7 @@ type Site = {
 function Feedback({ saved, created, error }: { saved?: string; created?: string; error?: string }) {
   if (error === "slug") return <div className="notice error">El identificador ya está siendo usado por otra empresa.</div>;
   if (error === "site-code") return <div className="notice error">Ese código de sede ya existe dentro de esta empresa.</div>;
+  if (error === "site-limit") return <div className="notice error">La empresa alcanzó el límite de ubicaciones asignado.</div>;
   if (error === "image-type") return <div className="notice error">Las imágenes deben ser PNG, JPG o WebP.</div>;
   if (error === "image-size") return <div className="notice error">Una de las imágenes supera el tamaño permitido.</div>;
   if (error === "image-required") return <div className="notice error">Selecciona al menos una imagen para actualizar.</div>;
@@ -45,6 +51,7 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (saved === "status") return <div className="notice success">El estado de la empresa fue actualizado.</div>;
   if (saved === "site-status") return <div className="notice success">El estado de la sede fue actualizado.</div>;
   if (saved === "site") return <div className="notice success">La información de la sede fue actualizada.</div>;
+  if (saved === "limits") return <div className="notice success">Los límites de recursos fueron actualizados.</div>;
   return null;
 }
 
@@ -64,8 +71,13 @@ export default async function CompanyDetailPage({
         (o.logo_data IS NOT NULL) has_logo,
         (o.cover_data IS NOT NULL) has_cover,
         (SELECT count(*)::text FROM assets a WHERE a.organization_id=o.id) asset_count,
-        (SELECT count(*)::text FROM work_orders w WHERE w.organization_id=o.id) work_order_count
-       FROM organizations o WHERE o.id=$1`,
+        (SELECT count(*)::text FROM work_orders w WHERE w.organization_id=o.id) work_order_count,
+        COALESCE(ol.max_sites,5)::int max_sites,
+        COALESCE(ol.max_sublocations,100)::int max_sublocations,
+        COALESCE(ol.max_assets,500)::int max_assets,
+        COALESCE(ol.max_inventory_items,1000)::int max_inventory_items,
+        COALESCE(ol.max_technicians,50)::int max_technicians
+       FROM organizations o LEFT JOIN organization_limits ol ON ol.organization_id=o.id WHERE o.id=$1`,
       [id],
     ),
     query<Site>(
@@ -179,6 +191,19 @@ export default async function CompanyDetailPage({
     </section>
 
     <section className="card section">
+      <div className="section-heading"><div><span className="eyebrow">Control del plan</span><h2>Recursos asignados</h2></div><small>Solo el superadministrador debe modificar estos cupos.</small></div>
+      <form className="resource-limit-grid" method="post" action={`/api/organizations/${organization.id}`}>
+        <input type="hidden" name="intent" value="limits" />
+        <div className="field"><label>Ubicaciones principales</label><input name="max_sites" type="number" min="1" defaultValue={organization.max_sites} /></div>
+        <div className="field"><label>Sububicaciones</label><input name="max_sublocations" type="number" min="0" defaultValue={organization.max_sublocations} /></div>
+        <div className="field"><label>Activos</label><input name="max_assets" type="number" min="0" defaultValue={organization.max_assets} /></div>
+        <div className="field"><label>Inventario</label><input name="max_inventory_items" type="number" min="0" defaultValue={organization.max_inventory_items} /></div>
+        <div className="field"><label>Técnicos</label><input name="max_technicians" type="number" min="0" defaultValue={organization.max_technicians} /></div>
+        <div className="field resource-save"><label>&nbsp;</label><button className="button" type="submit">Actualizar cupos</button></div>
+      </form>
+    </section>
+
+    <section className="card section">
       <div className="section-heading">
         <div><span className="eyebrow">Nueva ubicación</span><h2>Crear sede</h2></div>
         <small>Puedes registrar todas las sedes necesarias.</small>
@@ -209,6 +234,8 @@ export default async function CompanyDetailPage({
             </div>
             <div className="site-stats"><strong>{site.asset_count}</strong><span>activos</span><strong>{site.work_order_count}</strong><span>OT</span></div>
           </div>
+
+          <Link className="button secondary site-location-link" href={`/dashboard/locations/${site.id}`}>Ver sububicaciones</Link>
 
           <form className="form-grid site-edit-form" method="post" action={`/api/sites/${site.id}`}>
             <input type="hidden" name="organization_id" value={organization.id} />

@@ -3,6 +3,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
+import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -86,6 +87,23 @@ export async function POST(
       }
       throw error;
     }
+  }
+
+  if (intent === "limits") {
+    const limits = [
+      positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
+      positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
+      positiveLimit(form.get("max_assets"), DEFAULT_LIMITS.max_assets),
+      positiveLimit(form.get("max_inventory_items"), DEFAULT_LIMITS.max_inventory_items),
+      positiveLimit(form.get("max_technicians"), DEFAULT_LIMITS.max_technicians),
+    ];
+    await query(
+      `INSERT INTO organization_limits(organization_id,max_sites,max_sublocations,max_assets,max_inventory_items,max_technicians,updated_at)
+       VALUES($1,$2,$3,$4,$5,$6,now())
+       ON CONFLICT(organization_id) DO UPDATE SET max_sites=$2,max_sublocations=$3,max_assets=$4,max_inventory_items=$5,max_technicians=$6,updated_at=now()`,
+      [id, ...limits],
+    );
+    return NextResponse.redirect(companyUrl(id, request.url, "?saved=limits"), 303);
   }
 
   const returnToDirectory = String(form.get("return_to") || "") === "directory";

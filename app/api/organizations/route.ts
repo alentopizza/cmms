@@ -3,6 +3,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
+import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
 
 function slugify(value: string) {
   return value
@@ -33,6 +34,13 @@ export async function POST(request: Request) {
     const address = String(form.get("address") || "").trim();
     const city = String(form.get("city") || "").trim();
     const country = String(form.get("country") || "CO").trim().toUpperCase();
+    const limits = {
+      max_sites: positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
+      max_sublocations: positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
+      max_assets: positiveLimit(form.get("max_assets"), DEFAULT_LIMITS.max_assets),
+      max_inventory_items: positiveLimit(form.get("max_inventory_items"), DEFAULT_LIMITS.max_inventory_items),
+      max_technicians: positiveLimit(form.get("max_technicians"), DEFAULT_LIMITS.max_technicians),
+    };
 
     if (!name || !siteName || !city || !country) {
       return creationError(request.url, "required");
@@ -68,6 +76,12 @@ export async function POST(request: Request) {
         ],
       );
       organizationId = organization.rows[0].id;
+
+      await client.query(
+        `INSERT INTO organization_limits(organization_id,max_sites,max_sublocations,max_assets,max_inventory_items,max_technicians)
+         VALUES($1,$2,$3,$4,$5,$6)`,
+        [organizationId, limits.max_sites, limits.max_sublocations, limits.max_assets, limits.max_inventory_items, limits.max_technicians],
+      );
 
       await client.query(
         `INSERT INTO sites(organization_id,name,code,address,city,country)

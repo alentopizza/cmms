@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { canCreateSite } from "@/lib/resource-limits";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -31,6 +32,9 @@ export async function POST(
 
   const organization = await query("SELECT 1 FROM organizations WHERE id=$1", [id]);
   if (!organization.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
+  if (!(await canCreateSite(id))) {
+    return NextResponse.redirect(companyUrl(id, request.url, "?error=site-limit"), 303);
+  }
 
   try {
     await query(

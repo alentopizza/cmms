@@ -60,3 +60,15 @@ Status: accepted.
 Each company can store a logo and a point-of-reference cover image. The binary files and their MIME metadata live on the `organizations` record and are delivered through authenticated asset routes.
 
 This follows the existing durable PostgreSQL asset strategy and avoids relying on the ephemeral application filesystem during Easypanel redeploys. Uploads are limited to PNG, JPEG or WebP, with separate size limits for logos and covers.
+
+## ADR-009 — Sites as principal locations and recursive sublocations
+
+Status: accepted.
+
+The existing `sites` table represents the top-level operational location (for example a hospital). Subordinate spaces use one recursive `locations` table instead of separate tables for floors, rooms and areas. This supports unlimited practical depth and preserves one consistent relation for assets, inventory and maintenance activity.
+
+## ADR-010 — Server-enforced tenant resource entitlements
+
+Status: accepted.
+
+The super administrator assigns creation limits in `organization_limits`. Limits must be checked by server-side mutations and never only by disabled UI controls. Current entitlements cover principal locations, sublocations, assets, inventory items and technicians; more resources can be added without changing the tenant model.

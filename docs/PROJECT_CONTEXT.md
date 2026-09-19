@@ -53,7 +53,25 @@ The first production-capable foundation exists and includes:
 - preventive and inventory base screens;
 - operational dashboard;
 - health endpoint;
-- login UI with an illustrative CMMS data preview.
+- login UI with an illustrative CMMS data preview;
+- official Desweb branding applied to login and authenticated shell;
+- official brand palette represented as CSS design tokens.
+
+## Brand implementation
+
+Official source palette:
+- `#293644`
+- `#FCFCFC`
+- `#BAE3E0`
+- `#79CAC4`
+- `#38B2A9`
+
+Brand documentation:
+- `docs/BRANDING.md`
+- `docs/DESIGN_SYSTEM.md`
+
+Logo asset:
+- `public/brand/desweb-logo-dark.webp`
 
 ## Authentication today
 

@@ -37,7 +37,8 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/` — Next.js routes, pages and API handlers.
 - `app/login/` — login UI and illustrative CMMS preview.
 - `app/dashboard/` — authenticated operational UI.
-- `app/dashboard/companies/[id]/` — company detail and site administration.
+- `app/dashboard/companies/CompanyDirectory.tsx` — protected directory detail popup, edit mode and destructive-action confirmation.
+- `app/dashboard/companies/[id]/` — full company and site administration.
 - `app/api/organizations/[id]/` — company updates, status changes, visual assets and site creation.
 - `app/api/organizations/[id]/assets/[asset]/` — authenticated company logo and cover delivery.
 - `lib/organization-assets.ts` — company image validation and conversion.

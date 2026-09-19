@@ -10,8 +10,24 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 - `docs/PROJECT_CONTEXT.md` — visión del producto y estado actual.
 - `docs/ARCHITECTURE.md` — arquitectura, estructura y modelo de datos.
 - `docs/DECISIONS.md` — decisiones técnicas y de producto.
+- `docs/BRANDING.md` — identidad oficial Desweb, logo y paleta.
+- `docs/DESIGN_SYSTEM.md` — reglas visuales y componentes de interfaz.
 - `docs/ROADMAP.md` — prioridades de desarrollo.
 - `docs/CHANGELOG.md` — historial de cambios relevantes.
+
+## Branding
+
+Paleta oficial:
+
+- `#293644`
+- `#FCFCFC`
+- `#BAE3E0`
+- `#79CAC4`
+- `#38B2A9`
+
+Logo de aplicación:
+
+`public/brand/desweb-logo-dark.webp`
 
 ## Primera versión
 

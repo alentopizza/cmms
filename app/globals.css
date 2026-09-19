@@ -130,3 +130,10 @@ button,input,select,textarea{font:inherit}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.login-page{padding:0;background:#fff}.login-shell{border-radius:0;box-shadow:none;min-height:100vh}.login-panel{padding:28px 22px}.login-panel-inner{width:100%}.login-heading h1{font-size:30px}.page-header{display:block}.brand-pill{margin-top:14px;width:max-content}}
 
 .preventive-count span{position:relative;z-index:2}
+
+
+/* Logo visibility fix: official cropped transparent asset */
+.login-brand img{width:240px;max-width:100%;height:auto;object-fit:contain;display:block}
+.sidebar-brand{background:var(--brand-white);border-radius:12px;padding:11px 12px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.sidebar-brand img{width:100%;max-width:176px;height:auto;object-fit:contain;display:block}
+.sidebar-brand span{color:var(--brand-teal);font-size:9px;font-weight:900;letter-spacing:.18em;margin-left:2px}

@@ -409,3 +409,41 @@ html[data-theme="dark"] .company-current-cover{background:#1b2731}
   .company-modal-form{padding:18px}
   .modal-actions{bottom:-18px}
 }
+
+
+/* Protected company detail popup */
+.company-card-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:inherit;cursor:pointer}
+.company-detail-modal{width:min(860px,100%)}
+.company-detail-hero{position:relative;height:190px}
+.company-detail-cover{position:absolute;inset:0;overflow:hidden;background:#dbe6e8}
+.company-detail-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.company-detail-logo{position:absolute;z-index:2;left:28px;bottom:-46px;width:104px;height:104px;border:6px solid var(--surface);border-radius:50%;background:var(--surface);box-shadow:0 9px 24px rgba(20,31,39,.22);overflow:hidden}
+.company-detail-logo img,.company-detail-logo>span{width:100%;height:100%;display:grid;place-items:center;object-fit:contain;border-radius:50%;background:#fff}
+.company-detail-logo>span{background:var(--brand-teal);color:#fff;font-size:24px;font-weight:900}
+.company-detail-close{position:absolute;z-index:3;top:16px;right:16px;background:rgba(252,252,252,.94);color:var(--brand-dark)}
+.company-detail-modal-heading{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:58px 28px 20px;border-bottom:1px solid var(--border)}
+.company-detail-modal-heading h2{margin:8px 0 4px;color:var(--brand-dark);font-size:25px}
+.company-detail-modal-heading p{margin:0;color:var(--text-soft);font-size:12px}
+.locked-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--text-soft);font-size:10px;font-weight:800;white-space:nowrap}
+.company-detail-form{padding:22px 28px 0;display:grid;gap:24px}
+.company-detail-form input[readonly],
+.company-detail-form select:disabled{background:var(--bg);color:var(--text-soft);border-color:var(--border);cursor:not-allowed;opacity:1}
+.company-detail-form .field small{color:var(--text-soft);font-size:10px;line-height:1.4}
+.company-detail-actions{position:sticky;bottom:0;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:24px;padding:18px 28px;background:var(--surface);border-top:1px solid var(--border)}
+.company-detail-actions>div{display:flex;gap:10px;align-items:center}
+.detail-edit-actions{bottom:0;margin:0 -28px;padding:18px 28px}
+html[data-theme="dark"] .company-detail-modal-heading h2{color:var(--text)}
+html[data-theme="dark"] .company-detail-close{background:rgba(252,252,252,.94);color:var(--brand-dark)}
+html[data-theme="dark"] .company-detail-logo{border-color:var(--surface);background:var(--surface)}
+
+@media(max-width:760px){
+  .company-detail-hero{height:160px}
+  .company-detail-logo{left:18px;bottom:-40px;width:90px;height:90px}
+  .company-detail-modal-heading{padding:52px 18px 18px;flex-direction:column}
+  .company-detail-form{padding:18px 18px 0}
+  .company-detail-actions{padding:16px 18px;align-items:stretch;flex-direction:column-reverse}
+  .company-detail-actions>div,.company-detail-actions form,.company-detail-actions .button{width:100%}
+  .company-detail-actions>div{flex-direction:column}
+  .detail-edit-actions{margin:0 -18px;padding:16px 18px;flex-direction:column-reverse}
+  .detail-edit-actions .button{width:100%}
+}

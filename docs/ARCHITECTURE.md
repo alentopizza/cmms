@@ -156,3 +156,20 @@ Health check: `/api/health`
 ## Proxy redirects
 
 Never construct browser redirects solely from `request.url` behind Easypanel, because it may expose the internal container host. Use `publicUrl()` from `lib/urls.ts`.
+
+
+## Startup resilience
+
+Easypanel redeploys can create a short window where the application container starts before PostgreSQL is immediately reachable on the internal network.
+
+To avoid a crash-loop:
+
+- `scripts/migrate.mjs` retries PostgreSQL connectivity before applying migrations.
+- The default retry policy is 30 attempts with a 2-second delay.
+- Optional tuning:
+  - `DB_CONNECT_RETRIES`
+  - `DB_CONNECT_RETRY_MS`
+- The production container sets `HOSTNAME=0.0.0.0`.
+- Next.js must remain reachable on internal port `3000`.
+
+These behaviors are deployment safeguards and should be preserved in future refactors.

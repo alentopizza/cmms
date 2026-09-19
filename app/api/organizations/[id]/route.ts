@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { query } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 
@@ -19,6 +19,10 @@ function companyUrl(id: string, requestUrl: string, queryString = "") {
   return publicUrl(`/dashboard/companies/${id}${queryString}`, requestUrl);
 }
 
+function directoryUrl(requestUrl: string, queryString = "") {
+  return publicUrl(`/dashboard/companies${queryString}`, requestUrl);
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -30,6 +34,12 @@ export async function POST(
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
+
+  if (intent === "delete") {
+    const deleted = await query("DELETE FROM organizations WHERE id=$1", [id]);
+    if (!deleted.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
+    return NextResponse.redirect(directoryUrl(request.url, "?deleted=1"), 303);
+  }
 
   if (intent === "toggle") {
     const updated = await query<{ active: boolean }>(
@@ -78,30 +88,87 @@ export async function POST(
     }
   }
 
+  const returnToDirectory = String(form.get("return_to") || "") === "directory";
   const name = String(form.get("name") || "").trim();
   const legalName = String(form.get("legal_name") || "").trim();
   const taxId = String(form.get("tax_id") || "").trim();
   const timezone = String(form.get("timezone") || "America/Bogota").trim();
   const slug = slugify(String(form.get("slug") || name)) || slugify(name);
+  const primarySiteId = String(form.get("primary_site_id") || "");
+  const siteName = String(form.get("site_name") || "").trim();
+  const siteCode = String(form.get("site_code") || "").trim().toUpperCase();
+  const address = String(form.get("address") || "").trim();
+  const city = String(form.get("city") || "").trim();
+  const country = String(form.get("country") || "CO").trim().toUpperCase();
 
   if (!name || !slug || !timezone) {
-    return NextResponse.redirect(companyUrl(id, request.url, "?error=required"), 303);
+    const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
+    return NextResponse.redirect(target, 303);
   }
 
   try {
-    const updated = await query(
-      `UPDATE organizations
-       SET name=$1, slug=$2, legal_name=$3, tax_id=$4, timezone=$5, updated_at=now()
-       WHERE id=$6`,
-      [name, slug, legalName || null, taxId || null, timezone, id],
-    );
-    if (!updated.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
-  } catch (error) {
-    if ((error as { code?: string }).code === "23505") {
-      return NextResponse.redirect(companyUrl(id, request.url, "?error=slug"), 303);
+    const [logo, cover] = await Promise.all([
+      readImageUpload(form.get("logo"), { maxBytes: 2 * 1024 * 1024, label: "el logo" }),
+      readImageUpload(form.get("cover"), { maxBytes: 5 * 1024 * 1024, label: "la foto de portada" }),
+    ]);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const updated = await client.query(
+        `UPDATE organizations
+         SET name=$1,slug=$2,legal_name=$3,tax_id=$4,timezone=$5,updated_at=now()
+         WHERE id=$6`,
+        [name, slug, legalName || null, taxId || null, timezone, id],
+      );
+      if (!updated.rowCount) throw new Error("Empresa no encontrada");
+
+      if (primarySiteId && UUID_PATTERN.test(primarySiteId)) {
+        await client.query(
+          `UPDATE sites
+           SET name=$1,code=$2,address=$3,city=$4,country=$5
+           WHERE id=$6 AND organization_id=$7`,
+          [siteName || "Sede principal", siteCode || null, address || null, city || null, country || "CO", primarySiteId, id],
+        );
+      }
+
+      if (logo) {
+        await client.query(
+          `UPDATE organizations
+           SET logo_data=$1,logo_mime_type=$2,logo_file_name=$3,updated_at=now()
+           WHERE id=$4`,
+          [logo.bytes, logo.mime, logo.name, id],
+        );
+      }
+
+      if (cover) {
+        await client.query(
+          `UPDATE organizations
+           SET cover_data=$1,cover_mime_type=$2,cover_file_name=$3,updated_at=now()
+           WHERE id=$4`,
+          [cover.bytes, cover.mime, cover.name, id],
+        );
+      }
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
     }
-    throw error;
+  } catch (error) {
+    const errorCode = error instanceof ImageUploadError
+      ? error.code
+      : (error as { code?: string }).code === "23505" ? "duplicate" : "save";
+    const target = returnToDirectory
+      ? directoryUrl(request.url, `?error=${errorCode}`)
+      : companyUrl(id, request.url, `?error=${errorCode === "duplicate" ? "slug" : errorCode}`);
+    return NextResponse.redirect(target, 303);
   }
 
-  return NextResponse.redirect(companyUrl(id, request.url, "?saved=company"), 303);
+  const target = returnToDirectory
+    ? directoryUrl(request.url, "?saved=company")
+    : companyUrl(id, request.url, "?saved=company");
+  return NextResponse.redirect(target, 303);
 }

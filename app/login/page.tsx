@@ -12,17 +12,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="login-panel">
         <div className="login-panel-inner">
           <div className="login-brand">
-            <div className="login-brand-dot" aria-hidden="true" />
-            <div className="login-brand-copy">
-              <span>DESWEB</span>
-              <strong>CMMS</strong>
-            </div>
+            <img src="/brand/desweb-logo-dark.webp" alt="Desweb - Desarrollo de Soluciones" />
+            <span>CMMS</span>
           </div>
 
           <div className="login-heading">
-            <span>Bienvenido a</span>
-            <h1>Desweb CMMS</h1>
-            <p>Gestiona mantenimiento, activos y operaciones desde un solo lugar.</p>
+            <span>Gestión de mantenimiento</span>
+            <h1>Bienvenido</h1>
+            <p>Administra equipos, órdenes de trabajo, preventivos e inventario desde una sola plataforma.</p>
           </div>
 
           <LoginForm hasError={params.error === "1"} />

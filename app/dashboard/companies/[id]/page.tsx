@@ -15,6 +15,8 @@ type Organization = {
   updated_at: string;
   asset_count: string;
   work_order_count: string;
+  has_logo: boolean;
+  has_cover: boolean;
 };
 
 type Site = {
@@ -32,10 +34,14 @@ type Site = {
 function Feedback({ saved, created, error }: { saved?: string; created?: string; error?: string }) {
   if (error === "slug") return <div className="notice error">El identificador ya está siendo usado por otra empresa.</div>;
   if (error === "site-code") return <div className="notice error">Ese código de sede ya existe dentro de esta empresa.</div>;
+  if (error === "image-type") return <div className="notice error">Las imágenes deben ser PNG, JPG o WebP.</div>;
+  if (error === "image-size") return <div className="notice error">Una de las imágenes supera el tamaño permitido.</div>;
+  if (error === "image-required") return <div className="notice error">Selecciona al menos una imagen para actualizar.</div>;
   if (error) return <div className="notice error">Revisa los campos obligatorios e inténtalo nuevamente.</div>;
   if (created === "company") return <div className="notice success">La empresa y su sede principal fueron creadas correctamente.</div>;
   if (created === "site") return <div className="notice success">La nueva sede fue creada correctamente.</div>;
   if (saved === "company") return <div className="notice success">La información de la empresa fue actualizada.</div>;
+  if (saved === "assets") return <div className="notice success">El logo y la portada fueron actualizados.</div>;
   if (saved === "status") return <div className="notice success">El estado de la empresa fue actualizado.</div>;
   if (saved === "site-status") return <div className="notice success">El estado de la sede fue actualizado.</div>;
   if (saved === "site") return <div className="notice success">La información de la sede fue actualizada.</div>;
@@ -55,6 +61,8 @@ export default async function CompanyDetailPage({
   const [organizationResult, sitesResult] = await Promise.all([
     query<Organization>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,o.updated_at::text,
+        (o.logo_data IS NOT NULL) has_logo,
+        (o.cover_data IS NOT NULL) has_cover,
         (SELECT count(*)::text FROM assets a WHERE a.organization_id=o.id) asset_count,
         (SELECT count(*)::text FROM work_orders w WHERE w.organization_id=o.id) work_order_count
        FROM organizations o WHERE o.id=$1`,
@@ -101,6 +109,31 @@ export default async function CompanyDetailPage({
       <div className="card compact-metric"><span>Sedes activas</span><strong>{activeSites}</strong><small>de {sites.length} registradas</small></div>
       <div className="card compact-metric"><span>Activos</span><strong>{organization.asset_count}</strong><small>equipos registrados</small></div>
       <div className="card compact-metric"><span>Órdenes</span><strong>{organization.work_order_count}</strong><small>histórico total</small></div>
+    </section>
+
+    <section className="card section company-visual-settings">
+      <div className="section-heading">
+        <div><span className="eyebrow">Identidad visual</span><h2>Logo y foto de portada</h2></div>
+        <small>Estas imágenes se muestran en la tarjeta de la empresa.</small>
+      </div>
+      <div className="company-assets-current">
+        <div className="company-current-logo">
+          {organization.has_logo
+            ? <img src={`/api/organizations/${organization.id}/assets/logo`} alt={`Logo de ${organization.name}`} />
+            : <span>Sin logo</span>}
+        </div>
+        <div className="company-current-cover">
+          {organization.has_cover
+            ? <img src={`/api/organizations/${organization.id}/assets/cover`} alt={`Portada de ${organization.name}`} />
+            : <span>Sin portada</span>}
+        </div>
+      </div>
+      <form className="form-grid company-assets-form" method="post" action={`/api/organizations/${organization.id}`} encType="multipart/form-data">
+        <input type="hidden" name="intent" value="assets" />
+        <div className="field"><label htmlFor="company-logo">Reemplazar logo</label><input id="company-logo" type="file" name="logo" accept="image/png,image/jpeg,image/webp" /></div>
+        <div className="field"><label htmlFor="company-cover">Reemplazar portada</label><input id="company-cover" type="file" name="cover" accept="image/png,image/jpeg,image/webp" /></div>
+        <div className="form-span-2 form-actions"><button className="button secondary" type="submit">Actualizar imágenes</button></div>
+      </form>
     </section>
 
     <section className="company-detail-grid section">

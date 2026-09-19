@@ -1,0 +1,93 @@
+# Roadmap
+
+This roadmap is directional and should be updated as priorities change.
+
+## Foundation — implemented
+
+- PostgreSQL database and migrations
+- Docker/Easypanel deployment
+- health endpoint
+- multi-company schema
+- sites
+- asset model
+- work-order model
+- preventive maintenance schema
+- meter schema
+- inventory schema
+- suppliers
+- audit log
+- bootstrap login
+- initial dashboard
+- visual login experience
+
+## Next functional priorities
+
+1. Company management
+   - edit company;
+   - multiple sites;
+   - company settings;
+   - active/inactive state.
+
+2. Asset management
+   - full asset detail;
+   - category management;
+   - asset hierarchy;
+   - serial/model/manufacturer;
+   - documents/photos;
+   - status changes;
+   - complete maintenance history.
+
+3. Work orders
+   - detail page;
+   - assignment;
+   - status workflow;
+   - tasks/checklist;
+   - comments;
+   - attachments;
+   - labor/time tracking;
+   - parts consumption;
+   - cost calculation;
+   - completion workflow.
+
+4. Preventive maintenance
+   - plan builder;
+   - recurrence;
+   - meter trigger;
+   - checklist templates;
+   - automatic work-order generation.
+
+5. Users and authorization
+   - real user login;
+   - password hashing;
+   - invitations;
+   - organization membership;
+   - site-level restrictions;
+   - role-based authorization.
+
+6. Inventory
+   - part creation/editing;
+   - stock movements;
+   - minimum stock alerts;
+   - work-order issue/return;
+   - supplier association.
+
+7. Reporting and KPIs
+   - MTTR;
+   - MTBF;
+   - availability;
+   - preventive compliance;
+   - downtime;
+   - maintenance costs;
+   - work-order backlog.
+
+## Later capabilities
+
+- notifications;
+- email;
+- mobile/PWA experience;
+- QR codes for assets;
+- work requests from operators;
+- recurring background jobs;
+- exports;
+- richer audit trails;
+- external API/integrations.

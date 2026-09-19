@@ -19,16 +19,13 @@ This roadmap is directional and should be updated as priorities change.
 - bootstrap login
 - initial dashboard
 - visual login experience
+- company detail and editing
+- multiple site creation and editing
+- company and site activation states
 
 ## Next functional priorities
 
-1. Company management
-   - edit company;
-   - multiple sites;
-   - company settings;
-   - active/inactive state.
-
-2. Asset management
+1. Asset management
    - full asset detail;
    - category management;
    - asset hierarchy;
@@ -37,7 +34,7 @@ This roadmap is directional and should be updated as priorities change.
    - status changes;
    - complete maintenance history.
 
-3. Work orders
+2. Work orders
    - detail page;
    - assignment;
    - status workflow;
@@ -49,14 +46,14 @@ This roadmap is directional and should be updated as priorities change.
    - cost calculation;
    - completion workflow.
 
-4. Preventive maintenance
+3. Preventive maintenance
    - plan builder;
    - recurrence;
    - meter trigger;
    - checklist templates;
    - automatic work-order generation.
 
-5. Users and authorization
+4. Users and authorization
    - real user login;
    - password hashing;
    - invitations;
@@ -64,14 +61,14 @@ This roadmap is directional and should be updated as priorities change.
    - site-level restrictions;
    - role-based authorization.
 
-6. Inventory
+5. Inventory
    - part creation/editing;
    - stock movements;
    - minimum stock alerts;
    - work-order issue/return;
    - supplier association.
 
-7. Reporting and KPIs
+6. Reporting and KPIs
    - MTTR;
    - MTBF;
    - availability;

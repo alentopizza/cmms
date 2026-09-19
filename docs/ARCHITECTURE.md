@@ -37,6 +37,9 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/` — Next.js routes, pages and API handlers.
 - `app/login/` — login UI and illustrative CMMS preview.
 - `app/dashboard/` — authenticated operational UI.
+- `app/dashboard/companies/[id]/` — company detail and site administration.
+- `app/api/organizations/[id]/` — company updates, status changes and site creation.
+- `app/api/sites/[id]/` — site updates and status changes.
 - `app/dashboard/personalization/` — global visual personalization UI.
 - `app/api/customization/` — branding upload and asset delivery routes.
 - `components/ThemeToggle.tsx` — persisted light/dark appearance switch.

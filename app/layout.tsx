@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Deswel CMMS",
+  title: "Desweb CMMS",
   description: "Sistema multiempresa de gestión de mantenimiento",
 };
 

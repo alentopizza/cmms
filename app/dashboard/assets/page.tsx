@@ -18,14 +18,22 @@ export default async function AssetsPage() {
           `SELECT a.id,a.code,a.name,o.name company,s.name site,a.status,a.criticality
            FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
            ORDER BY a.created_at DESC LIMIT 200`)
-      : query<{id:string;code:string;name:string;company:string;site:string;status:string;criticality:string}>(
-          `SELECT a.id,a.code,a.name,o.name company,s.name site,a.status,a.criticality
-           FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
-           WHERE a.organization_id=$1 ORDER BY a.created_at DESC LIMIT 200`, [orgId]),
+      : session.accessAllSites
+        ? query<{id:string;code:string;name:string;company:string;site:string;status:string;criticality:string}>(
+            `SELECT a.id,a.code,a.name,o.name company,s.name site,a.status,a.criticality
+             FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
+             WHERE a.organization_id=$1 ORDER BY a.created_at DESC LIMIT 200`, [orgId])
+        : query<{id:string;code:string;name:string;company:string;site:string;status:string;criticality:string}>(
+            `SELECT a.id,a.code,a.name,o.name company,s.name site,a.status,a.criticality
+             FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
+             WHERE a.organization_id=$1 AND a.site_id = ANY($2::uuid[])
+             ORDER BY a.created_at DESC LIMIT 200`, [orgId, session.siteIds]),
     canWrite
       ? (superadmin
           ? query<{id:string;label:string}>(`SELECT s.id,o.name || ' · ' || s.name label FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true ORDER BY o.name,s.name`)
-          : query<{id:string;label:string}>(`SELECT s.id,s.name label FROM sites s WHERE s.organization_id=$1 AND s.active=true ORDER BY s.name`, [orgId]))
+          : session.accessAllSites
+            ? query<{id:string;label:string}>(`SELECT s.id,s.name label FROM sites s WHERE s.organization_id=$1 AND s.active=true ORDER BY s.name`, [orgId])
+            : query<{id:string;label:string}>(`SELECT s.id,s.name label FROM sites s WHERE s.organization_id=$1 AND s.active=true AND s.id = ANY($2::uuid[]) ORDER BY s.name`, [orgId, session.siteIds]))
       : Promise.resolve({ rows: [] } as { rows: {id:string;label:string}[] }),
   ]);
 

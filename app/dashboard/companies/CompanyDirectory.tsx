@@ -15,6 +15,14 @@ export type CompanyDirectoryItem = {
   site_count: string;
   active_site_count: string;
   asset_count: string;
+  sublocation_count: string;
+  inventory_item_count: string;
+  technician_count: string;
+  max_sites: string;
+  max_sublocations: string;
+  max_assets: string;
+  max_inventory_items: string;
+  max_technicians: string;
   site_id: string | null;
   site_name: string | null;
   site_code: string | null;
@@ -29,7 +37,13 @@ function initials(name: string) {
   return name.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 }
 
-export default function CompanyDirectory({ companies }: { companies: CompanyDirectoryItem[] }) {
+export default function CompanyDirectory({
+  companies,
+  canManageResources,
+}: {
+  companies: CompanyDirectoryItem[];
+  canManageResources: boolean;
+}) {
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmation, setConfirmation] = useState<"save" | "delete" | null>(null);
@@ -194,6 +208,46 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
               <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
             </div>
           </div>
+
+          {canManageResources && <div className="modal-section company-resource-section">
+            <div className="modal-section-title">
+              <strong>Recursos asignados</strong>
+              <span>{editing ? "Editable solo por Superadministrador" : "Plan y consumo actual"}</span>
+            </div>
+            <p className="muted resource-help">Estos cupos controlan la capacidad operativa de la empresa. El Administrador de empresa no puede modificarlos.</p>
+
+            <div className="company-resource-grid">
+              <div className="company-resource-item">
+                <div className="company-resource-item-head"><span>Ubicaciones principales</span><strong>{selected.site_count} / {selected.max_sites}</strong></div>
+                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sites) > 0 ? (Number(selected.site_count) / Number(selected.max_sites)) * 100 : 0)}%` }} /></div>
+                {editing && <div className="field"><label htmlFor="detail-max-sites">Cupo asignado</label><input id="detail-max-sites" name="max_sites" type="number" min="1" defaultValue={selected.max_sites} required /></div>}
+              </div>
+
+              <div className="company-resource-item">
+                <div className="company-resource-item-head"><span>Sububicaciones</span><strong>{selected.sublocation_count} / {selected.max_sublocations}</strong></div>
+                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sublocations) > 0 ? (Number(selected.sublocation_count) / Number(selected.max_sublocations)) * 100 : 0)}%` }} /></div>
+                {editing && <div className="field"><label htmlFor="detail-max-sublocations">Cupo asignado</label><input id="detail-max-sublocations" name="max_sublocations" type="number" min="0" defaultValue={selected.max_sublocations} required /></div>}
+              </div>
+
+              <div className="company-resource-item">
+                <div className="company-resource-item-head"><span>Activos</span><strong>{selected.asset_count} / {selected.max_assets}</strong></div>
+                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_assets) > 0 ? (Number(selected.asset_count) / Number(selected.max_assets)) * 100 : 0)}%` }} /></div>
+                {editing && <div className="field"><label htmlFor="detail-max-assets">Cupo asignado</label><input id="detail-max-assets" name="max_assets" type="number" min="0" defaultValue={selected.max_assets} required /></div>}
+              </div>
+
+              <div className="company-resource-item">
+                <div className="company-resource-item-head"><span>Artículos de inventario</span><strong>{selected.inventory_item_count} / {selected.max_inventory_items}</strong></div>
+                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_inventory_items) > 0 ? (Number(selected.inventory_item_count) / Number(selected.max_inventory_items)) * 100 : 0)}%` }} /></div>
+                {editing && <div className="field"><label htmlFor="detail-max-inventory">Cupo asignado</label><input id="detail-max-inventory" name="max_inventory_items" type="number" min="0" defaultValue={selected.max_inventory_items} required /></div>}
+              </div>
+
+              <div className="company-resource-item">
+                <div className="company-resource-item-head"><span>Técnicos</span><strong>{selected.technician_count} / {selected.max_technicians}</strong></div>
+                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_technicians) > 0 ? (Number(selected.technician_count) / Number(selected.max_technicians)) * 100 : 0)}%` }} /></div>
+                {editing && <div className="field"><label htmlFor="detail-max-technicians">Cupo asignado</label><input id="detail-max-technicians" name="max_technicians" type="number" min="0" defaultValue={selected.max_technicians} required /></div>}
+              </div>
+            </div>
+          </div>}
 
           {editing && <div className="modal-section">
             <div className="modal-section-title"><strong>Actualizar imágenes</strong><span>Opcional</span></div>

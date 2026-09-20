@@ -4,7 +4,7 @@ import { can } from "@/lib/permissions";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
-import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
+import { getPlanByCode } from "@/lib/billing";
 
 function slugify(value: string) {
   return value
@@ -37,12 +37,16 @@ export async function POST(request: Request) {
     const address = String(form.get("address") || "").trim();
     const city = String(form.get("city") || "").trim();
     const country = String(form.get("country") || "CO").trim().toUpperCase();
+    const planCode = String(form.get("plan_code") || "medium");
+    const planResult = await getPlanByCode(planCode);
+    if (!planResult.rowCount) return creationError(request.url, "plan");
+    const plan = planResult.rows[0];
     const limits = {
-      max_sites: positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
-      max_sublocations: positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
-      max_assets: positiveLimit(form.get("max_assets"), DEFAULT_LIMITS.max_assets),
-      max_inventory_items: positiveLimit(form.get("max_inventory_items"), DEFAULT_LIMITS.max_inventory_items),
-      max_technicians: positiveLimit(form.get("max_technicians"), DEFAULT_LIMITS.max_technicians),
+      max_sites: plan.max_sites,
+      max_sublocations: plan.max_sublocations,
+      max_assets: plan.max_assets,
+      max_inventory_items: plan.max_inventory_items,
+      max_technicians: plan.max_technicians,
     };
 
     if (!name || !siteName || !city || !country) {
@@ -86,10 +90,31 @@ export async function POST(request: Request) {
         [organizationId, limits.max_sites, limits.max_sublocations, limits.max_assets, limits.max_inventory_items, limits.max_technicians],
       );
 
+      const isTrial = plan.code === "trial";
+      await client.query(
+        `INSERT INTO organization_subscriptions(
+          organization_id,plan_id,status,source,trial_started_at,trial_ends_at,current_period_start,current_period_end,auto_renew,has_custom_limits
+        ) VALUES(
+          $1,$2,$3,'manual',
+          CASE WHEN $3='trialing' THEN now() ELSE NULL END,
+          CASE WHEN $3='trialing' THEN now() + ($4 || ' days')::interval ELSE NULL END,
+          CASE WHEN $3='active' THEN now() ELSE NULL END,
+          CASE WHEN $3='active' THEN now() + interval '1 month' ELSE NULL END,
+          $5,false
+        )`,
+        [organizationId, plan.id, isTrial ? "trialing" : "active", plan.trial_days, !isTrial],
+      );
+
       await client.query(
         `INSERT INTO sites(organization_id,name,code,address,city,country)
          VALUES($1,$2,$3,$4,$5,$6)`,
         [organizationId, siteName, siteCode || null, address || null, city, country],
+      );
+
+      await client.query(
+        `INSERT INTO subscription_events(organization_id,event_type,source,metadata)
+         VALUES($1,$2,'manual',$3::jsonb)`,
+        [organizationId, isTrial ? "trial_started" : "subscription_activated", JSON.stringify({ plan: plan.code })],
       );
       await client.query("COMMIT");
     } catch (error) {

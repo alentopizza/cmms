@@ -151,3 +151,8 @@ export async function getSession(): Promise<AuthSession | null> {
 export async function isAuthenticated() {
   return Boolean(await getSession());
 }
+
+
+export function canAccessSite(session: AuthSession, siteId: string) {
+  return session.platformRole === "superadmin" || session.accessAllSites || session.siteIds.includes(siteId);
+}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -29,7 +30,9 @@ async function readFile(
 }
 
 export async function POST(request: Request) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(session, "personalization.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   try {
     const form = await request.formData();

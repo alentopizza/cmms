@@ -78,7 +78,7 @@ Status: accepted.
 
 Application accounts use the existing `users` and `organization_members` domain model. Passwords are stored only as scrypt-derived hashes with random salts. Session cookies contain signed identity references rather than trusting browser-supplied organization or role values.
 
-A platform role distinguishes superadministrators from organization users. Organization roles are `owner`, `admin`, `manager`, `technician`, `requester` and `viewer`. The permission matrix is centralized in `lib/permissions.ts`.
+A platform role distinguishes superadministrators from organization users. Active organization roles are `admin`, `manager`, `technician`, `requester` and `viewer`. The redundant `owner` role was retired and migrated to `admin`. The permission matrix is centralized in `lib/permissions.ts`.
 
 Authorization is defense-in-depth: navigation is filtered for usability, pages reject unauthorized direct access, API mutations re-check permissions, and tenant data queries are scoped by the organization resolved from the authenticated session.
 
@@ -90,3 +90,14 @@ Status: accepted.
 Organization resource limits are commercial/platform entitlements rather than daily maintenance configuration. Only a platform superadministrator may assign or change them. Company administrators and other organization roles consume those limits but do not receive entitlement-management permission.
 
 The company detail editor surfaces both current usage and configured capacity to authorized platform administrators, and entitlement changes are protected independently at the server route.
+
+
+## ADR-013 — Company administrator settings are informational, not contractual
+
+Status: accepted.
+
+The company administrator is the highest organization-level role. It may access a tenant-specific settings view containing organization information, assigned resource capacity and current consumption.
+
+Resource entitlement editing remains exclusive to the platform superadministrator. Company administrators receive a separate `settings.view` permission, while `company_resources.manage` remains platform-only.
+
+Capacity health uses three visual states: normal below 80%, warning from 80% through 94%, and critical at 95% or above.

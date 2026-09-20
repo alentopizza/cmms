@@ -44,7 +44,7 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/api/organizations/[id]/assets/[asset]/` — authenticated company logo and cover delivery.
 - `lib/organization-assets.ts` — company image validation and conversion.
 - `app/api/sites/[id]/` — site updates and status changes.
-- `app/dashboard/settings/` — centralized platform settings and appearance preferences.
+- `app/dashboard/settings/` — role-aware settings: global platform settings for superadministrators and read-only organization capacity/information for company administrators.
 - `app/dashboard/personalization/` — global visual branding resources, linked from settings.
 - `app/api/customization/` — branding upload and asset delivery routes.
 - `components/ThemePreferences.tsx` — persisted light/dark/system appearance preferences.
@@ -83,6 +83,8 @@ Authentication supports two account sources:
 User passwords are derived with Node.js `scrypt` using a random per-user salt. Session cookies are HTTP-only signed payloads protected by `AUTH_SECRET`; user identity is resolved from PostgreSQL on each authenticated request.
 
 Authorization is centralized in `lib/permissions.ts`. The navigation hides unavailable modules, while pages and mutation routes independently re-check permissions and tenant ownership. UI hiding is not considered a security boundary.
+
+The organization role `owner` was retired by migration `007_remove_owner_role.sql`; existing owners are migrated to `admin`. `admin` is now the highest organization-level role. Company administrators receive `settings.view`, which exposes tenant information and entitlement consumption without granting `company_resources.manage`.
 
 ## Global customization
 

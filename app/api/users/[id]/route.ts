@@ -4,7 +4,7 @@ import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { type OrganizationRole } from "@/lib/permissions";
 
-const ROLES = new Set<OrganizationRole>(["owner","admin","manager","technician","requester","viewer"]);
+const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL = /^\S+@\S+\.\S+$/;
 

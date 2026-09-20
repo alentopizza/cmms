@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const customization = await getCustomizationSummary();
   const visibleItems = navItems.filter(item => !item.permission || can(session, item.permission));
   const navigationItems: DashboardNavItem[] = visibleItems.map(({ icon, label, href }) => ({ icon, label, href }));
-  const canConfigure = can(session, "personalization.manage");
+  const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
 
   return <div className="shell">
     <aside className="sidebar">

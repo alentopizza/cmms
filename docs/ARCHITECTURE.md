@@ -150,3 +150,14 @@ These safeguards must be preserved.
 ## Proxy redirects
 
 Never construct browser redirects solely from `request.url` behind Easypanel. Use `publicUrl()` from `lib/urls.ts`.
+
+
+## Multi-site user scope
+
+Migration `006_multi_site_user_access.sql` adds explicit site scope to organization memberships.
+
+- `organization_members.access_all_sites=true` means the account can access every active site in its organization, including sites created later.
+- `organization_member_sites` stores the explicit site list when `access_all_sites=false`.
+- The legacy `organization_members.site_id` column remains for schema compatibility but is no longer the source of truth for authorization.
+- Auth sessions resolve both `accessAllSites` and `siteIds`.
+- Server routes must verify site scope with the authenticated session; UI filtering alone is not sufficient.

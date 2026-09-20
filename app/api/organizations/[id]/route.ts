@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
@@ -28,7 +29,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(session, "companies.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) return new NextResponse("Empresa inválida", { status: 400 });

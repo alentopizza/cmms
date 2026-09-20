@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     : await query<{organization_id:string}>("SELECT organization_id FROM sites WHERE id=$1 AND organization_id=$2 AND active=true", [siteId, session.organizationId]);
 
   if (!site.rowCount || !code || !name) return new NextResponse("Datos incompletos o sede no autorizada", { status: 400 });
+  if (!canAccessSite(session, siteId)) return new NextResponse("Forbidden", { status: 403 });
 
   await query(
     `INSERT INTO assets(organization_id,site_id,code,name,criticality,manufacturer,model)

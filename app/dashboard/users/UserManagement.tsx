@@ -20,10 +20,11 @@ export type ManagedUser = {
   organization_id: string | null;
   organization_name: string | null;
   role: OrganizationRole | null;
-  site_id: string | null;
-  site_name: string | null;
   last_login_at: string | null;
   has_activity: boolean;
+  access_all_sites: boolean;
+  site_ids: string[];
+  site_names: string[];
 };
 
 type Organization = { id: string; name: string };
@@ -36,10 +37,11 @@ type Draft = {
   password: string;
   organization_id: string;
   role: string;
-  site_id: string;
+  access_all_sites: boolean;
+  site_ids: string[];
 };
 
-type FieldErrors = Partial<Record<keyof Draft | "general", string>>;
+type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "organization_id" | "role" | "site_ids" | "general", string>>;
 
 const EMPTY_DRAFT: Draft = {
   full_name: "",
@@ -48,7 +50,8 @@ const EMPTY_DRAFT: Draft = {
   password: "",
   organization_id: "",
   role: "viewer",
-  site_id: "",
+  access_all_sites: true,
+  site_ids: [],
 };
 
 function roleKey(user: ManagedUser) {
@@ -69,6 +72,14 @@ function roleDescription(role: string) {
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+}
+
+function siteAccessLabel(user: ManagedUser) {
+  if (user.platform_role === "superadmin") return "Todas las empresas";
+  if (user.access_all_sites) return "Todas las sedes";
+  if (!user.site_names.length) return "Sin sedes asignadas";
+  if (user.site_names.length <= 2) return user.site_names.join(", ");
+  return `${user.site_names.slice(0, 2).join(", ")} +${user.site_names.length - 2}`;
 }
 
 export default function UserManagement({
@@ -122,12 +133,29 @@ export default function UserManagement({
     return sites.filter(site => site.organization_id === draft.organization_id);
   }, [draft.organization_id, sites]);
 
-  function setField<K extends keyof Draft>(field: K, value: Draft[K]) {
+  function updateDraft<K extends keyof Draft>(field: K, value: Draft[K]) {
     setDraft(previous => ({ ...previous, [field]: value }));
-    setErrors(previous => ({ ...previous, [field]: undefined, general: undefined }));
-    if (field === "organization_id") {
-      setDraft(previous => ({ ...previous, organization_id: value, site_id: "" }));
-    }
+    setErrors(previous => ({ ...previous, [field as keyof FieldErrors]: undefined, general: undefined }));
+  }
+
+  function changeOrganization(organizationId: string) {
+    setDraft(previous => ({
+      ...previous,
+      organization_id: organizationId,
+      access_all_sites: true,
+      site_ids: [],
+    }));
+    setErrors(previous => ({ ...previous, organization_id: undefined, site_ids: undefined, general: undefined }));
+  }
+
+  function toggleSite(siteId: string) {
+    setDraft(previous => ({
+      ...previous,
+      site_ids: previous.site_ids.includes(siteId)
+        ? previous.site_ids.filter(id => id !== siteId)
+        : [...previous.site_ids, siteId],
+    }));
+    setErrors(previous => ({ ...previous, site_ids: undefined, general: undefined }));
   }
 
   function openCreate() {
@@ -153,7 +181,8 @@ export default function UserManagement({
       password: "",
       organization_id: user.organization_id || "",
       role: user.platform_role === "superadmin" ? "superadmin" : user.role || "viewer",
-      site_id: user.site_id || "",
+      access_all_sites: user.platform_role === "superadmin" ? true : user.access_all_sites,
+      site_ids: user.platform_role === "superadmin" ? [] : user.site_ids,
     });
     setErrors({});
     setActionError("");
@@ -178,12 +207,10 @@ export default function UserManagement({
     if (draft.role !== "superadmin") {
       if (!draft.organization_id) next.organization_id = "Selecciona la empresa a la que pertenecerá.";
       if (!draft.role) next.role = "Selecciona un rol.";
+      if (!draft.access_all_sites && draft.site_ids.length === 0) next.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
+      if (draft.site_ids.some(id => !visibleSites.some(site => site.id === id))) next.site_ids = "Una de las sedes seleccionadas no pertenece a la empresa indicada.";
     }
     if (draft.role === "superadmin" && !isSuperadmin) next.role = "No tienes permiso para asignar este rol.";
-
-    if (draft.site_id && !visibleSites.some(site => site.id === draft.site_id)) {
-      next.site_id = "La sede seleccionada no pertenece a la empresa indicada.";
-    }
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -198,7 +225,14 @@ export default function UserManagement({
     try {
       const url = mode === "edit" && editingUser ? `/api/users/${editingUser.id}` : "/api/users";
       const body = new FormData();
-      Object.entries(draft).forEach(([key, value]) => body.set(key, value));
+      body.set("full_name", draft.full_name);
+      body.set("email", draft.email);
+      body.set("phone", draft.phone);
+      body.set("password", draft.password);
+      body.set("organization_id", draft.organization_id);
+      body.set("role", draft.role);
+      body.set("access_all_sites", draft.access_all_sites ? "true" : "false");
+      if (!draft.access_all_sites) draft.site_ids.forEach(siteId => body.append("site_ids", siteId));
       if (mode === "edit") body.set("intent", "update");
 
       const response = await fetch(url, {
@@ -214,13 +248,11 @@ export default function UserManagement({
         return;
       }
 
-      setSaving(false);
       setMode(null);
       setEditingUser(null);
       setDraft(EMPTY_DRAFT);
       setErrors({});
       router.refresh();
-      return;
     } finally {
       setSaving(false);
     }
@@ -271,12 +303,12 @@ export default function UserManagement({
       <div className="user-empty-icon" aria-hidden="true">◎</div>
       <span className="eyebrow">Control de acceso</span>
       <h2>Aún no tienes usuarios creados</h2>
-      <p>Crea la primera cuenta y asigna un rol para definir qué módulos y funciones podrá utilizar al iniciar sesión.</p>
+      <p>Crea la primera cuenta y asigna un rol para definir qué módulos y sedes podrá utilizar al iniciar sesión.</p>
       <button className="button" type="button" onClick={openCreate}>Crear usuario</button>
     </section> : <section className="section">
       <div className="section-heading user-directory-heading">
         <div><span className="eyebrow">Directorio de acceso</span><h2>Usuarios registrados ({users.length})</h2></div>
-        <small>Los accesos se limitan por empresa, rol y, cuando aplica, sede.</small>
+        <small>Los accesos se limitan por empresa, rol y sedes autorizadas.</small>
       </div>
 
       <div className="user-role-grid">
@@ -290,7 +322,7 @@ export default function UserManagement({
           <div className="user-role-meta">
             <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
-            <div><span>Sede</span><strong>{user.site_name || "Sin restricción específica"}</strong></div>
+            <div><span>Sedes</span><strong title={user.site_names.join(", ")}>{siteAccessLabel(user)}</strong></div>
             <div><span>Último acceso</span><strong>{user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
@@ -311,7 +343,7 @@ export default function UserManagement({
           <div>
             <span className="eyebrow">{mode === "edit" ? "Administración de acceso" : "Nueva cuenta"}</span>
             <h2 id="user-modal-title">{modalTitle}</h2>
-            <p>{mode === "edit" ? "Actualiza la identidad, alcance y credenciales del usuario." : "Completa los datos y revisa los permisos antes de habilitar la cuenta."}</p>
+            <p>{mode === "edit" ? "Actualiza la identidad, empresa, sedes y credenciales del usuario." : "Completa los datos y define el alcance del usuario dentro de la empresa."}</p>
           </div>
           <button className="modal-close" type="button" aria-label="Cerrar" onClick={closeModal}>×</button>
         </header>
@@ -322,28 +354,28 @@ export default function UserManagement({
           <div className="form-grid">
             <div className={`field ${errors.full_name ? "field-error" : ""}`}>
               <label htmlFor="managed-user-name">Nombre completo *</label>
-              <input id="managed-user-name" value={draft.full_name} onChange={event => setField("full_name", event.target.value)} autoFocus />
+              <input id="managed-user-name" value={draft.full_name} onChange={event => updateDraft("full_name", event.target.value)} autoFocus />
               {errors.full_name && <small className="field-error-message">{errors.full_name}</small>}
             </div>
             <div className={`field ${errors.email ? "field-error" : ""}`}>
               <label htmlFor="managed-user-email">Correo *</label>
-              <input id="managed-user-email" type="email" value={draft.email} onChange={event => setField("email", event.target.value)} />
+              <input id="managed-user-email" type="email" value={draft.email} onChange={event => updateDraft("email", event.target.value)} />
               {errors.email && <small className="field-error-message">{errors.email}</small>}
             </div>
             <div className="field">
               <label htmlFor="managed-user-phone">Teléfono</label>
-              <input id="managed-user-phone" value={draft.phone} onChange={event => setField("phone", event.target.value)} />
+              <input id="managed-user-phone" value={draft.phone} onChange={event => updateDraft("phone", event.target.value)} />
             </div>
             <div className={`field ${errors.password ? "field-error" : ""}`}>
               <label htmlFor="managed-user-password">{mode === "create" ? "Contraseña temporal *" : "Nueva contraseña (opcional)"}</label>
-              <input id="managed-user-password" type="password" value={draft.password} onChange={event => setField("password", event.target.value)} autoComplete="new-password" />
+              <input id="managed-user-password" type="password" value={draft.password} onChange={event => updateDraft("password", event.target.value)} autoComplete="new-password" />
               <small>{mode === "edit" ? "Déjala vacía para conservar la contraseña actual." : "Mínimo 8 caracteres."}</small>
               {errors.password && <small className="field-error-message">{errors.password}</small>}
             </div>
 
             {isSuperadmin ? <div className={`field ${errors.organization_id ? "field-error" : ""}`}>
               <label htmlFor="managed-user-org">Empresa {draft.role === "superadmin" ? "" : "*"}</label>
-              <select id="managed-user-org" value={draft.organization_id} disabled={draft.role === "superadmin"} onChange={event => setField("organization_id", event.target.value)}>
+              <select id="managed-user-org" value={draft.organization_id} disabled={draft.role === "superadmin"} onChange={event => changeOrganization(event.target.value)}>
                 <option value="">{draft.role === "superadmin" ? "Acceso global" : "Selecciona una empresa"}</option>
                 {organizations.map(org => <option value={org.id} key={org.id}>{org.name}</option>)}
               </select>
@@ -354,9 +386,10 @@ export default function UserManagement({
               <label htmlFor="managed-user-role">Rol *</label>
               <select id="managed-user-role" value={draft.role} onChange={event => {
                 const nextRole = event.target.value;
-                setField("role", nextRole);
                 if (nextRole === "superadmin") {
-                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", site_id: "" }));
+                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [] }));
+                } else {
+                  updateDraft("role", nextRole);
                 }
               }}>
                 {isSuperadmin && <option value="superadmin">Superadministrador</option>}
@@ -365,14 +398,44 @@ export default function UserManagement({
               {errors.role && <small className="field-error-message">{errors.role}</small>}
             </div>
 
-            <div className={`field form-span-2 ${errors.site_id ? "field-error" : ""}`}>
-              <label htmlFor="managed-user-site">Sede asignada (opcional)</label>
-              <select id="managed-user-site" value={draft.site_id} disabled={draft.role === "superadmin" || !draft.organization_id} onChange={event => setField("site_id", event.target.value)}>
-                <option value="">Todas las sedes permitidas por el rol</option>
-                {visibleSites.map(site => <option value={site.id} key={site.id}>{site.name}</option>)}
-              </select>
-              {errors.site_id && <small className="field-error-message">{errors.site_id}</small>}
-            </div>
+            {draft.role !== "superadmin" && <div className={`field form-span-2 site-access-field ${errors.site_ids ? "field-error" : ""}`}>
+              <label>Acceso a sedes *</label>
+              {!draft.organization_id ? <div className="site-access-empty">Selecciona primero una empresa para cargar sus sedes.</div> : visibleSites.length === 0 ? <div className="site-access-empty">La empresa seleccionada todavía no tiene sedes activas.</div> : <>
+                <div className="site-access-mode">
+                  <button
+                    type="button"
+                    className={draft.access_all_sites ? "active" : ""}
+                    onClick={() => {
+                      updateDraft("access_all_sites", true);
+                      setDraft(previous => ({ ...previous, access_all_sites: true, site_ids: [] }));
+                    }}
+                  >
+                    <span className="site-access-mode-icon">✓</span>
+                    <span><strong>Todas las sedes</strong><small>Acceso actual y a nuevas sedes que se creen.</small></span>
+                  </button>
+                  <button
+                    type="button"
+                    className={!draft.access_all_sites ? "active" : ""}
+                    onClick={() => updateDraft("access_all_sites", false)}
+                  >
+                    <span className="site-access-mode-icon">◎</span>
+                    <span><strong>Sedes específicas</strong><small>Selecciona individualmente dónde puede operar.</small></span>
+                  </button>
+                </div>
+
+                {!draft.access_all_sites && <div className="site-checkbox-grid">
+                  {visibleSites.map(site => {
+                    const checked = draft.site_ids.includes(site.id);
+                    return <label className={`site-checkbox-card ${checked ? "active" : ""}`} key={site.id}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleSite(site.id)} />
+                      <span className="site-checkbox-mark">{checked ? "✓" : ""}</span>
+                      <span><strong>{site.name}</strong><small>{site.organization_name}</small></span>
+                    </label>;
+                  })}
+                </div>}
+              </>}
+              {errors.site_ids && <small className="field-error-message">{errors.site_ids}</small>}
+            </div>}
           </div>
 
           <aside className="role-permission-note">

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
@@ -27,6 +27,7 @@ export async function POST(
     return new NextResponse("Sede inválida", { status: 400 });
   }
   if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
+  if (!canAccessSite(session, id)) return new NextResponse("Forbidden", { status: 403 });
 
   const site = await query<{ active: boolean }>(
     "SELECT active FROM sites WHERE id=$1 AND organization_id=$2",

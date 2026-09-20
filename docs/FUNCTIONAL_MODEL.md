@@ -20,7 +20,7 @@ This document preserves the product flow agreed with the project owner. Referenc
 
 The active access model now includes:
 
-- **Owner / company administrator:** users, locations and operational modules inside one organization.
+- **Owner / company administrator:** users, locations and operational modules inside one organization. User access can cover all active sites or an explicit subset of sites.
 - **Manager / supervisor:** locations, assets, work orders, preventive maintenance and inventory for one organization.
 - **Technician:** asset visibility, work-order operation, preventive visibility and inventory consultation.
 - **Requester:** creates maintenance requests/work orders and sees only requests created by that account in the current foundation.
@@ -33,7 +33,8 @@ User lifecycle rules:
 - creation is available to authorized account administrators;
 - editing, activation/deactivation and permanent deletion are reserved to the platform superadministrator in the current hierarchy;
 - users with operational history are never permanently deleted; they must be deactivated so work-order, meter, comment and audit traceability remains intact;
-- changing the organization/global scope of an account with recorded activity is blocked, while role changes inside the same organization remain possible.
+- changing the organization/global scope of an account with recorded activity is blocked, while role changes inside the same organization remain possible;
+- organization users can be granted **all-site access** or **specific-site access**; specific assignments are stored independently and applied to operational reads/writes for locations, assets, work orders, preventive maintenance and site-scoped inventory.
 
 ## Resource entitlements
 

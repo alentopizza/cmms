@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
@@ -32,6 +32,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   if (!siteResult.rowCount) notFound();
   const site = siteResult.rows[0];
   if (session.platformRole !== "superadmin" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
+  if (!canAccessSite(session, site.id)) redirect("/dashboard/locations");
   const locations = locationsResult.rows;
   const byParent = new Map<string | null, Location[]>();
   locations.forEach(location => byParent.set(location.parent_id, [...(byParent.get(location.parent_id) || []), location]));

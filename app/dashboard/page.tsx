@@ -18,24 +18,34 @@ export default async function Dashboard() {
     can(session, "assets.read")
       ? (superadmin
           ? query<{count:string}>("SELECT count(*)::text count FROM assets WHERE status <> 'retired'")
-          : query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND status <> 'retired'", [orgId]))
+          : session.accessAllSites
+            ? query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND status <> 'retired'", [orgId])
+            : query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND site_id = ANY($2::uuid[]) AND status <> 'retired'", [orgId, session.siteIds]))
       : Promise.resolve({ rows: [{ count: "0" }] } as { rows: {count:string}[] }),
     can(session, "work_orders.read")
       ? (superadmin
           ? query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE status IN ('open','assigned','in_progress','paused')")
           : requesterFilter
-            ? query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND requested_by=$2 AND status IN ('open','assigned','in_progress','paused')", [orgId, requesterFilter])
-            : query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND status IN ('open','assigned','in_progress','paused')", [orgId]))
+            ? (session.accessAllSites
+                ? query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND requested_by=$2 AND status IN ('open','assigned','in_progress','paused')", [orgId, requesterFilter])
+                : query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND requested_by=$2 AND site_id = ANY($3::uuid[]) AND status IN ('open','assigned','in_progress','paused')", [orgId, requesterFilter, session.siteIds]))
+            : (session.accessAllSites
+                ? query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND status IN ('open','assigned','in_progress','paused')", [orgId])
+                : query<{count:string}>("SELECT count(*)::text count FROM work_orders WHERE organization_id=$1 AND site_id = ANY($2::uuid[]) AND status IN ('open','assigned','in_progress','paused')", [orgId, session.siteIds])))
       : Promise.resolve({ rows: [{ count: "0" }] } as { rows: {count:string}[] }),
     can(session, "assets.read")
       ? (superadmin
           ? query<{count:string}>("SELECT count(*)::text count FROM assets WHERE status='down'")
-          : query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND status='down'", [orgId]))
+          : session.accessAllSites
+            ? query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND status='down'", [orgId])
+            : query<{count:string}>("SELECT count(*)::text count FROM assets WHERE organization_id=$1 AND site_id = ANY($2::uuid[]) AND status='down'", [orgId, session.siteIds]))
       : Promise.resolve({ rows: [{ count: "0" }] } as { rows: {count:string}[] }),
     can(session, "maintenance.read")
       ? (superadmin
           ? query<{count:string}>("SELECT count(*)::text count FROM maintenance_plans WHERE active=true AND next_due_at IS NOT NULL AND next_due_at <= now() + interval '7 days'")
-          : query<{count:string}>("SELECT count(*)::text count FROM maintenance_plans WHERE organization_id=$1 AND active=true AND next_due_at IS NOT NULL AND next_due_at <= now() + interval '7 days'", [orgId]))
+          : session.accessAllSites
+            ? query<{count:string}>("SELECT count(*)::text count FROM maintenance_plans WHERE organization_id=$1 AND active=true AND next_due_at IS NOT NULL AND next_due_at <= now() + interval '7 days'", [orgId])
+            : query<{count:string}>("SELECT count(*)::text count FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id WHERE p.organization_id=$1 AND a.site_id = ANY($2::uuid[]) AND p.active=true AND p.next_due_at IS NOT NULL AND p.next_due_at <= now() + interval '7 days'", [orgId, session.siteIds]))
       : Promise.resolve({ rows: [{ count: "0" }] } as { rows: {count:string}[] }),
   ]);
 

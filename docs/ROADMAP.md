@@ -74,7 +74,8 @@ This roadmap is directional and should be updated as priorities change.
    - role-based authorization — foundation implemented;
    - account editing, deactivation and password reset;
    - invitations;
-   - stronger site-level restrictions for operational records;
+   - multi-site assignment and site-level operational restrictions — implemented foundation;
+   - extend site scope to future suppliers, teams and remaining operational detail routes;
    - technician profile/account linkage.
 
 5. Inventory

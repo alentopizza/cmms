@@ -34,14 +34,23 @@ export default async function LocationsIndexPage({
          FROM sites s JOIN organizations o ON o.id=s.organization_id
          ORDER BY o.name,s.active DESC,s.name`,
       )
-    : await query<SiteRow>(
-        `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
-                (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
-         FROM sites s JOIN organizations o ON o.id=s.organization_id
-         WHERE s.organization_id=$1
-         ORDER BY s.active DESC,s.name`,
-        [session.organizationId],
-      );
+    : session.accessAllSites
+      ? await query<SiteRow>(
+          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
+                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
+           FROM sites s JOIN organizations o ON o.id=s.organization_id
+           WHERE s.organization_id=$1
+           ORDER BY s.active DESC,s.name`,
+          [session.organizationId],
+        )
+      : await query<SiteRow>(
+          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
+                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
+           FROM sites s JOIN organizations o ON o.id=s.organization_id
+           WHERE s.organization_id=$1 AND s.id = ANY($2::uuid[])
+           ORDER BY s.active DESC,s.name`,
+          [session.organizationId, session.siteIds],
+        );
 
   const message = params.error === "site-limit"
     ? "La empresa alcanzó el límite de ubicaciones principales asignado."
@@ -64,7 +73,7 @@ export default async function LocationsIndexPage({
     {params.created && <div className="notice success section">Ubicación principal creada correctamente.</div>}
     {message && <div className="notice error section">{message}</div>}
 
-    {!superadmin && session.organizationId && <section className="card section">
+    {!superadmin && session.organizationId && session.accessAllSites && <section className="card section">
       <div className="section-heading">
         <div><span className="eyebrow">Nueva ubicación principal</span><h2>Crear sede</h2></div>
         <small>{session.organizationName}</small>

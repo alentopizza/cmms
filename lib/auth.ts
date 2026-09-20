@@ -19,6 +19,8 @@ export type AuthSession = {
   organizationName: string | null;
   role: OrganizationRole | null;
   siteId: string | null;
+  accessAllSites: boolean;
+  siteIds: string[];
 };
 
 function secret() {
@@ -88,6 +90,8 @@ export async function getSession(): Promise<AuthSession | null> {
       organizationName: null,
       role: null,
       siteId: null,
+      accessAllSites: true,
+      siteIds: [],
     };
   }
 
@@ -100,12 +104,20 @@ export async function getSession(): Promise<AuthSession | null> {
     organization_name: string | null;
     role: OrganizationRole | null;
     site_id: string | null;
+    access_all_sites: boolean | null;
+    site_ids: string[] | null;
   }>(
     `SELECT u.id,u.email,u.full_name,u.platform_role,
-            membership.organization_id,membership.organization_name,membership.role,membership.site_id
+            membership.organization_id,membership.organization_name,membership.role,membership.site_id,
+            membership.access_all_sites,membership.site_ids
      FROM users u
      LEFT JOIN LATERAL (
-       SELECT om.organization_id,o.name organization_name,om.role,om.site_id
+       SELECT om.organization_id,o.name organization_name,om.role,om.site_id,om.access_all_sites,
+              COALESCE((
+                SELECT array_agg(oms.site_id::text ORDER BY oms.site_id::text)
+                FROM organization_member_sites oms
+                WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+              ), ARRAY[]::text[]) site_ids
        FROM organization_members om
        JOIN organizations o ON o.id=om.organization_id
        WHERE om.user_id=u.id AND o.active=true
@@ -131,9 +143,16 @@ export async function getSession(): Promise<AuthSession | null> {
     organizationName: user.organization_name,
     role: user.platform_role === "superadmin" ? null : user.role,
     siteId: user.site_id,
+    accessAllSites: user.platform_role === "superadmin" ? true : Boolean(user.access_all_sites),
+    siteIds: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
   };
 }
 
 export async function isAuthenticated() {
   return Boolean(await getSession());
+}
+
+
+export function canAccessSite(session: AuthSession, siteId: string) {
+  return session.platformRole === "superadmin" || session.accessAllSites || session.siteIds.includes(siteId);
 }

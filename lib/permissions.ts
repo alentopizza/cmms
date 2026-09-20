@@ -22,6 +22,17 @@ export const ROLE_LABELS: Record<OrganizationRole, string> = {
   viewer: "Consulta",
 };
 
+export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
+  owner: "Administra usuarios, ubicaciones y toda la operación de mantenimiento de su empresa.",
+  admin: "Administra usuarios, ubicaciones, activos, órdenes de trabajo, preventivos e inventario de su empresa.",
+  manager: "Opera ubicaciones, activos, órdenes de trabajo, preventivos e inventario, sin acceso a la configuración global de la plataforma.",
+  technician: "Consulta activos y preventivos, trabaja sobre órdenes de trabajo y puede consultar inventario relacionado con la operación.",
+  requester: "Crea solicitudes de mantenimiento y consulta únicamente las solicitudes generadas por su propia cuenta.",
+  viewer: "Acceso de consulta a activos, órdenes de trabajo, preventivos e inventario, sin funciones de creación o edición.",
+};
+
+export const SUPERADMIN_DESCRIPTION = "Acceso total a la plataforma: empresas, usuarios, límites, personalización global y todos los módulos operativos.";
+
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
   owner: ["users.manage","locations.manage","assets.read","assets.write","work_orders.read","work_orders.write","maintenance.read","maintenance.write","inventory.read","inventory.write"],
   admin: ["users.manage","locations.manage","assets.read","assets.write","work_orders.read","work_orders.write","maintenance.read","maintenance.write","inventory.read","inventory.write"],

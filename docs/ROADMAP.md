@@ -29,6 +29,7 @@ This roadmap is directional and should be updated as priorities change.
 - role-based navigation and server authorization
 - tenant-scoped operational queries
 - user and role administration module
+- company administrator settings with resource-capacity health
 
 ## Next functional priorities
 

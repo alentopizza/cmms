@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { pool } from "@/lib/db";
 import { canCreateLocation } from "@/lib/resource-limits";
@@ -32,6 +32,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new NextResponse("Ubicación no encontrada", { status: 404 });
     }
     const organizationId = site.rows[0].organization_id;
+    if (!canAccessSite(session, id)) {
+      await client.query("ROLLBACK");
+      return new NextResponse("Forbidden", { status: 403 });
+    }
     if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) {
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });

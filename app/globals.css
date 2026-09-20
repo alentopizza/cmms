@@ -496,3 +496,28 @@ html[data-theme="dark"] .confirm-dialog-danger .confirm-dialog-mark{background:#
 @keyframes confirm-rise-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:560px){.confirm-dialog-backdrop{padding:16px}.confirm-dialog{grid-template-columns:1fr;padding:20px}.confirm-dialog-mark{width:42px;height:42px}.confirm-dialog-actions{grid-column:1;flex-direction:column-reverse}.confirm-dialog-actions .button{width:100%}}
 @media(prefers-reduced-motion:reduce){.confirm-dialog-backdrop,.confirm-dialog{animation:none}}
+
+
+/* Identity and role-based access */
+.session-identity{display:grid;gap:2px;min-width:0;text-align:right}
+.session-identity strong{font-size:11px;color:var(--brand-dark);white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.session-identity span{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-teal)}
+html[data-theme="dark"] .session-identity strong{color:var(--text)}
+
+.user-create-form small{font-size:10px;color:var(--text-soft);line-height:1.45}
+.user-role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.user-role-card{display:grid;gap:18px}
+.user-role-card-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
+.user-role-card-head>div:nth-child(2){display:grid;gap:3px;min-width:0}
+.user-role-card-head strong{color:var(--brand-dark);font-size:14px}
+.user-role-card-head span:not(.status-badge){color:var(--text-soft);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-avatar{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--brand-mint-light);color:var(--brand-dark);font-size:12px;font-weight:900}
+.user-role-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:14px;border-top:1px solid var(--border)}
+.user-role-meta>div{display:grid;gap:4px;min-width:0}
+.user-role-meta span{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-soft)}
+.user-role-meta strong{font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+html[data-theme="dark"] .user-role-card-head strong{color:var(--text)}
+html[data-theme="dark"] .user-avatar{background:#31595b;color:#d8f4f1}
+
+@media(max-width:900px){.session-identity{display:none}.user-role-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.user-role-card-head{grid-template-columns:auto 1fr}.user-role-card-head .status-badge{grid-column:2;width:max-content}.user-role-meta{grid-template-columns:1fr}}

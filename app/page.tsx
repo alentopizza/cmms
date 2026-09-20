@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { isSubscriptionUsable } from "@/lib/billing";
 import { getActivePlans } from "@/lib/billing";
 
 export default async function Home() {
-  if (await isAuthenticated()) {
+  const session = await getSession();
+  if (session && (session.platformRole === "superadmin" || isSubscriptionUsable(session.subscriptionStatus, session.trialEndsAt))) {
     return <main className="marketing-page"><div className="marketing-shell"><p>Ya tienes una sesión activa.</p><Link className="button" href="/dashboard">Ir al dashboard</Link></div></main>;
   }
 
@@ -37,7 +39,7 @@ export default async function Home() {
             <li>{plan.max_technicians} técnicos</li>
             {plan.white_label && <li>Marca blanca y personalización</li>}
           </ul>
-          <Link className="button" href={`/checkout?plan=${plan.code}`}>{plan.code === "trial" ? "Iniciar prueba" : "Probar compra"}</Link>
+          <Link className="button" href={`/checkout?plan=${plan.code}`}>{session ? "Activar este plan" : plan.code === "trial" ? "Iniciar prueba" : "Probar compra"}</Link>
         </article>)}
       </div>
     </section>

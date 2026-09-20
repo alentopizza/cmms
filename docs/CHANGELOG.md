@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-19 — User management modal and lifecycle protection
+
+### Changed
+
+- Redesigned **Usuarios y roles** around a role summary, user directory and empty state instead of a permanently visible creation form.
+- Added a branded create/edit user modal with contextual role-permission explanations.
+- Added inline field validation that preserves entered values until the user explicitly cancels.
+- Added superadministrator-only editing, activation/deactivation and permanent deletion controls.
+- Added operational-history checks before deletion; users referenced by work orders, meter readings, comments or audit records must be deactivated instead.
+- Prevented moving accounts with recorded activity between organizations or between tenant/global access scopes.
+- Added protected password replacement during user editing and retained technician quota enforcement.
+
+
 ## 2026-09-19 — Users, roles and tenant-aware authentication
 
 ### Added

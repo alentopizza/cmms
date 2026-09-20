@@ -73,6 +73,13 @@ Company directory cards use a horizontal point-of-reference cover, a centered ci
 
 Card details open in a modal with read-only fields by default. Editing must be explicitly enabled, saving requires confirmation, and destructive deletion requires a separate irreversible-action confirmation.
 
+### Confirmation dialogs
+- application confirmations must use the branded in-app dialog instead of browser-native `window.confirm()`;
+- default confirmations use Desweb teal/mint accents;
+- irreversible actions use the semantic danger treatment and explicit action labels;
+- dialogs must support Escape, backdrop cancellation, keyboard focus, light/dark themes and reduced-motion preferences;
+- confirmation copy should explain the consequence rather than rely on generic “Aceptar” wording.
+
 ### Buttons
 Primary: Desweb teal with white label.  
 Secondary: neutral surface with theme-aware text.

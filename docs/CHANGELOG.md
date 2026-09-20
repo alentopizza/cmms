@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-19 — Branded confirmation dialogs
+
+### Changed
+
+- Replaced native browser confirmation prompts in company save and permanent-delete flows with Desweb-styled in-app dialogs.
+- Added a reusable confirmation dialog with default and destructive variants.
+- Updated `ConfirmSubmitButton` so future confirmation-based form actions inherit the same branded interaction.
+- Added keyboard Escape handling, focus restoration, light/dark theme support, responsive behavior and reduced-motion support.
+
+
 ## 2026-09-19 — Tenant limits and location hierarchy
 
 ### Added

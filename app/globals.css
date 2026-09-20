@@ -472,3 +472,27 @@ html[data-theme="dark"] .company-detail-logo{border-color:var(--surface);backgro
   .detail-edit-actions{margin:0 -18px;padding:16px 18px;flex-direction:column-reverse}
   .detail-edit-actions .button{width:100%}
 }
+
+
+/* Branded confirmation dialog */
+.confirm-dialog-open{overflow:hidden}
+.confirm-dialog-backdrop{position:fixed;z-index:1200;inset:0;display:grid;place-items:center;padding:24px;background:rgba(17,26,34,.62);backdrop-filter:blur(6px);animation:confirm-fade-in .16s ease-out}
+.confirm-dialog{width:min(520px,100%);display:grid;grid-template-columns:auto 1fr;gap:18px;padding:24px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.28);animation:confirm-rise-in .18s ease-out}
+.confirm-dialog-mark{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:var(--brand-mint-light);color:var(--brand-dark);font-size:20px;font-weight:900}
+.confirm-dialog-danger .confirm-dialog-mark{background:#fff1f2;color:#be123c}
+.confirm-dialog-content{min-width:0}
+.confirm-dialog-kicker{display:block;margin-bottom:7px;color:var(--brand-teal);font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+.confirm-dialog-danger .confirm-dialog-kicker{color:#be123c}
+.confirm-dialog h2{margin:0;color:var(--brand-dark);font-size:22px;letter-spacing:-.02em}
+.confirm-dialog p{margin:10px 0 0;color:var(--text-soft);font-size:13px;line-height:1.6}
+.confirm-dialog-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;padding-top:4px}
+.confirm-dialog-danger-action{background:#be123c}
+.confirm-dialog-danger-action:hover{background:#9f1239}
+html[data-theme="dark"] .confirm-dialog{box-shadow:0 28px 80px rgba(0,0,0,.5)}
+html[data-theme="dark"] .confirm-dialog h2{color:var(--text)}
+html[data-theme="dark"] .confirm-dialog-mark{background:#31595b;color:#d8f4f1}
+html[data-theme="dark"] .confirm-dialog-danger .confirm-dialog-mark{background:#431f27;color:#fecdd3}
+@keyframes confirm-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes confirm-rise-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:560px){.confirm-dialog-backdrop{padding:16px}.confirm-dialog{grid-template-columns:1fr;padding:20px}.confirm-dialog-mark{width:42px;height:42px}.confirm-dialog-actions{grid-column:1;flex-direction:column-reverse}.confirm-dialog-actions .button{width:100%}}
+@media(prefers-reduced-motion:reduce){.confirm-dialog-backdrop,.confirm-dialog{animation:none}}

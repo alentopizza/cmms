@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -31,6 +32,8 @@ function initials(name: string) {
 export default function CompanyDirectory({ companies }: { companies: CompanyDirectoryItem[] }) {
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
+  const [confirmation, setConfirmation] = useState<"save" | "delete" | null>(null);
+  const pendingForm = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -46,20 +49,28 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
   }, [selected, editing]);
 
   function close() {
+    setConfirmation(null);
+    pendingForm.current = null;
     setEditing(false);
     setSelected(null);
   }
 
-  function confirmSave(event: React.FormEvent<HTMLFormElement>) {
-    if (!window.confirm("¿Seguro que quieres guardar los cambios realizados?")) {
-      event.preventDefault();
-    }
+  function requestConfirmation(kind: "save" | "delete", event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    pendingForm.current = event.currentTarget;
+    setConfirmation(kind);
   }
 
-  function confirmDelete(event: React.FormEvent<HTMLFormElement>) {
-    if (!window.confirm("¿Seguro que quieres eliminar esta empresa? Se eliminarán también sus sedes y la información relacionada. Esta acción no se puede deshacer.")) {
-      event.preventDefault();
-    }
+  function cancelConfirmation() {
+    setConfirmation(null);
+    pendingForm.current = null;
+  }
+
+  function submitConfirmedForm() {
+    const form = pendingForm.current;
+    setConfirmation(null);
+    pendingForm.current = null;
+    form?.submit();
   }
 
   if (companies.length === 0) {
@@ -105,6 +116,25 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
       </article>)}
     </div>
 
+    <ConfirmDialog
+      open={confirmation === "save"}
+      title="Guardar cambios"
+      message="¿Deseas guardar los cambios realizados en esta empresa y su sede principal?"
+      confirmLabel="Guardar cambios"
+      onCancel={cancelConfirmation}
+      onConfirm={submitConfirmedForm}
+    />
+
+    <ConfirmDialog
+      open={confirmation === "delete"}
+      title="Eliminar empresa"
+      message="Esta acción eliminará también sus sedes y la información relacionada. No se puede deshacer."
+      confirmLabel="Sí, eliminar"
+      variant="danger"
+      onCancel={cancelConfirmation}
+      onConfirm={submitConfirmedForm}
+    />
+
     {selected && <div className="modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget && !editing) close();
     }}>
@@ -130,7 +160,7 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
           <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Información protegida"}</span>
         </div>
 
-        <form className="company-detail-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={confirmSave}>
+        <form className="company-detail-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
           <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
@@ -181,7 +211,7 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
 
         {!editing && <footer className="company-detail-actions">
           <div>
-            <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={confirmDelete}>
+            <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={event => requestConfirmation("delete", event)}>
               <input type="hidden" name="intent" value="delete" />
               <button className="button danger-secondary" type="submit">Eliminar empresa</button>
             </form>

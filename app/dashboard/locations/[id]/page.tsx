@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
@@ -9,6 +11,10 @@ type Site = { id: string; organization_id: string; organization_name: string; na
 type Location = { id: string; parent_id: string | null; name: string; code: string | null; type: string; description: string | null; active: boolean; asset_count: number; child_count: number; };
 
 export default async function LocationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; saved?: string; error?: string }> }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session, "locations.manage")) redirect("/dashboard");
+
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
   const [siteResult, locationsResult] = await Promise.all([
@@ -25,6 +31,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   ]);
   if (!siteResult.rowCount) notFound();
   const site = siteResult.rows[0];
+  if (session.platformRole !== "superadmin" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
   const locations = locationsResult.rows;
   const byParent = new Map<string | null, Location[]>();
   locations.forEach(location => byParent.set(location.parent_id, [...(byParent.get(location.parent_id) || []), location]));
@@ -58,7 +65,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   }
 
   return <>
-    <header className="page-header"><div><Link className="back-link" href={`/dashboard/companies/${site.organization_id}`}>← {site.organization_name}</Link><span className="eyebrow">Ubicación principal</span><h1 className="page-title">{site.name}</h1><p className="muted">{[site.address, site.city, site.country].filter(Boolean).join(" · ")}</p></div><span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span></header>
+    <header className="page-header"><div><Link className="back-link" href={session.platformRole === "superadmin" ? `/dashboard/companies/${site.organization_id}` : "/dashboard/locations"}>← {session.platformRole === "superadmin" ? site.organization_name : "Ubicaciones"}</Link><span className="eyebrow">Ubicación principal</span><h1 className="page-title">{site.name}</h1><p className="muted">{[site.address, site.city, site.country].filter(Boolean).join(" · ")}</p></div><span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span></header>
     {message && <div className={`notice ${feedback.error ? "error" : "success"}`}>{message}</div>}
     <section className="location-summary section"><div className="card compact-metric"><span>Sububicaciones</span><strong>{locations.length}</strong><small>de {site.max_sublocations} permitidas</small></div><div className="card compact-metric"><span>Disponibles</span><strong>{Math.max(site.max_sublocations - locations.length, 0)}</strong><small>según el plan asignado</small></div></section>
     <section className="card section location-create-card"><div className="section-heading"><div><span className="eyebrow">Jerarquía física</span><h2>Crear sububicación</h2></div><small>Puede depender de la ubicación principal o de otra sububicación.</small></div>

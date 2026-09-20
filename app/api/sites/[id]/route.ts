@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -13,7 +14,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(session, "locations.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   const { id } = await params;
   const form = await request.formData();
@@ -23,6 +26,7 @@ export async function POST(
   if (!UUID_PATTERN.test(id) || !UUID_PATTERN.test(organizationId)) {
     return new NextResponse("Sede inválida", { status: 400 });
   }
+  if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
 
   const site = await query<{ active: boolean }>(
     "SELECT active FROM sites WHERE id=$1 AND organization_id=$2",

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -62,6 +64,10 @@ export default async function CompanyDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string; created?: string; error?: string }>;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session, "companies.manage")) redirect("/dashboard");
+
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID_PATTERN.test(id)) notFound();
 

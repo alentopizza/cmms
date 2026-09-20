@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-19 — Users, roles and tenant-aware authentication
+
+### Added
+
+- Added migration `005_user_auth_and_roles.sql` for password credentials, platform roles and login metadata.
+- Added PostgreSQL-backed login while preserving the environment bootstrap account as a superadministrator fallback.
+- Added scrypt password hashing with a unique random salt per account.
+- Added signed HTTP-only identity sessions resolved against the database.
+- Added a centralized permission matrix for superadmin, owner, admin, manager, technician, requester and viewer.
+- Added the **Usuarios y roles** module for creating test/production accounts with company, optional site and role assignments.
+- Added a tenant-scoped **Ubicaciones** workspace for company roles.
+- Added role-filtered navigation and signed-in identity/role display.
+- Added tenant scoping to dashboard, assets, work orders, preventive maintenance and inventory.
+- Added read/write distinctions so viewer-like roles do not receive mutation forms.
+- Added requester behavior that limits the work-order list to requests created by that account.
+- Added server-side permission and tenant checks to core company, location, asset, work-order and personalization mutations.
+
+
 ## 2026-09-19 — Branded confirmation dialogs
 
 ### Changed

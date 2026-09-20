@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { pool } from "@/lib/db";
 import { canCreateLocation } from "@/lib/resource-limits";
 import { publicUrl } from "@/lib/urls";
@@ -7,7 +8,9 @@ import { publicUrl } from "@/lib/urls";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(session, "locations.manage")) return new NextResponse("Forbidden", { status: 403 });
   const { id: siteId } = await params;
   if (!UUID.test(siteId)) return new NextResponse("Ubicación inválida", { status: 400 });
 
@@ -29,6 +32,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new NextResponse("Ubicación no encontrada", { status: 404 });
     }
     const organizationId = site.rows[0].organization_id;
+    if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) {
+      await client.query("ROLLBACK");
+      return new NextResponse("Forbidden", { status: 403 });
+    }
 
     if (!(await canCreateLocation(client, organizationId))) {
       await client.query("ROLLBACK");

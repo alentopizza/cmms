@@ -49,7 +49,11 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `components/ThemeToggle.tsx` — persisted light/dark appearance switch.
 - `lib/customization.ts` — customization lookup and logo selection helpers.
 - `lib/db.ts` — shared PostgreSQL pool/query helper.
-- `lib/auth.ts` — bootstrap session logic.
+- `lib/auth.ts` — signed identity-aware sessions for bootstrap and database users.
+- `lib/passwords.ts` — password hashing and verification.
+- `lib/permissions.ts` — central role/permission matrix.
+- `app/dashboard/users/` — user and role administration.
+- `app/api/users/` — protected account creation.
 - `lib/urls.ts` — public URL helper for proxy-safe redirects.
 - `db/migrations/` — ordered SQL migrations.
 - `scripts/migrate.mjs` — migration runner.
@@ -64,6 +68,19 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - assets, work orders and inventory items may point to a precise `location_id` while retaining their principal `site_id`.
 
 Every operational query and mutation must validate `organization_id`; an identifier supplied by the browser is never sufficient tenant authorization by itself.
+
+## Authentication and authorization
+
+Migration `005_user_auth_and_roles.sql` extends the original user model with password credentials and a platform-level role.
+
+Authentication supports two account sources:
+
+1. the environment-configured bootstrap superadministrator (`APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD`) kept as an emergency/developer path;
+2. PostgreSQL-backed users created from **Usuarios y roles**.
+
+User passwords are derived with Node.js `scrypt` using a random per-user salt. Session cookies are HTTP-only signed payloads protected by `AUTH_SECRET`; user identity is resolved from PostgreSQL on each authenticated request.
+
+Authorization is centralized in `lib/permissions.ts`. The navigation hides unavailable modules, while pages and mutation routes independently re-check permissions and tenant ownership. UI hiding is not considered a security boundary.
 
 ## Global customization
 

@@ -28,11 +28,9 @@ Production deployment is from GitHub branch `main`, using `Dockerfile`, with Pos
 
 ## ADR-005 — Bootstrap admin authentication
 
-Status: temporary.
+Status: retained as fallback.
 
-Initial production access is protected by one environment-configured email and password. This allows product iteration before implementing full user authentication.
-
-The domain database already includes users and organization memberships to support the future replacement.
+The environment-configured administrator remains available as an emergency/developer superadministrator. Normal application users authenticate from PostgreSQL and receive role/tenant-aware sessions.
 
 ## ADR-006 — Public URL based redirects
 
@@ -72,3 +70,14 @@ The existing `sites` table represents the top-level operational location (for ex
 Status: accepted.
 
 The super administrator assigns creation limits in `organization_limits`. Limits must be checked by server-side mutations and never only by disabled UI controls. Current entitlements cover principal locations, sublocations, assets, inventory items and technicians; more resources can be added without changing the tenant model.
+
+
+## ADR-011 — Database users, signed sessions and centralized RBAC
+
+Status: accepted.
+
+Application accounts use the existing `users` and `organization_members` domain model. Passwords are stored only as scrypt-derived hashes with random salts. Session cookies contain signed identity references rather than trusting browser-supplied organization or role values.
+
+A platform role distinguishes superadministrators from organization users. Organization roles are `owner`, `admin`, `manager`, `technician`, `requester` and `viewer`. The permission matrix is centralized in `lib/permissions.ts`.
+
+Authorization is defense-in-depth: navigation is filtered for usability, pages reject unauthorized direct access, API mutations re-check permissions, and tenant data queries are scoped by the organization resolved from the authenticated session.

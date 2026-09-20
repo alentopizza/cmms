@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!can(session, "locations.manage")) return new NextResponse("Forbidden", { status: 403 });
   const { id } = await params;
   const form = await request.formData();
   const siteId = String(form.get("site_id") || "");
   if (!UUID.test(id) || !UUID.test(siteId)) return new NextResponse("Sububicación inválida", { status: 400 });
   const redirect = (suffix: string) => NextResponse.redirect(publicUrl(`/dashboard/locations/${siteId}${suffix}`, request.url), 303);
 
-  const current = await query("SELECT 1 FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
+  const current = await query<{ organization_id: string }>("SELECT organization_id FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
   if (!current.rowCount) return new NextResponse("Sububicación no encontrada", { status: 404 });
+  if (session.platformRole !== "superadmin" && session.organizationId !== current.rows[0].organization_id) return new NextResponse("Forbidden", { status: 403 });
   const intent = String(form.get("intent") || "update");
   if (intent === "toggle") {
     await query("UPDATE locations SET active=NOT active,updated_at=now() WHERE id=$1 AND site_id=$2", [id, siteId]);

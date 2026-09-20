@@ -73,6 +73,14 @@ Company directory cards use a horizontal point-of-reference cover, a centered ci
 
 Card details open in a modal with read-only fields by default. Editing must be explicitly enabled, saving requires confirmation, and destructive deletion requires a separate irreversible-action confirmation.
 
+### User administration
+- user creation and editing use an in-app modal instead of a permanently visible form;
+- empty directories show a clear empty state with one primary creation action;
+- role selection must show a plain-language explanation of the permissions being granted;
+- validation errors stay inside the modal and preserve all entered values until the user explicitly cancels;
+- user cards expose status, role, company, site and last access;
+- destructive account actions require branded confirmation and preserve operational history.
+
 ### Confirmation dialogs
 - application confirmations must use the branded in-app dialog instead of browser-native `window.confirm()`;
 - default confirmations use Desweb teal/mint accents;

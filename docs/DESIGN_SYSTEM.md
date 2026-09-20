@@ -36,9 +36,10 @@ Two themes are implemented.
 Mechanism:
 
 - `data-theme="light"` or `data-theme="dark"` on `<html>`;
-- persisted in `localStorage` under `desweb-theme`;
-- first visit honors `prefers-color-scheme`;
-- theme toggle in authenticated top bar.
+- preference persisted in `localStorage` under `desweb-theme`;
+- supported preferences: `light`, `dark` and `system`;
+- first visit and the `system` option honor `prefers-color-scheme`;
+- appearance is configured from **Dashboard → Configuración → Apariencia**, not from the operational header.
 
 Do not duplicate complete component styles per theme. Prefer semantic CSS variables and targeted overrides.
 
@@ -61,6 +62,15 @@ Guidelines:
 - do not apply arbitrary recoloring to uploaded logos.
 
 The module is designed to expand later with color, typography and other visual settings.
+
+## Application shell
+
+- desktop uses a persistent institutional sidebar and a compact floating workspace header;
+- the workspace header includes horizontal section tabs with a visible active indicator;
+- sidebar and header tabs share the same permission-filtered navigation source;
+- the authenticated workspace uses the available viewport width up to a large enterprise content ceiling instead of a narrow centered column;
+- settings and non-operational preferences live under **Configuración**, keeping the operational header focused on context and navigation;
+- surfaces use restrained elevation, subtle gradients and teal accents to communicate a modern technology product without overdecorating the maintenance UI.
 
 ## Components
 

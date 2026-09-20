@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-19 — Modern workspace shell and platform settings
+
+### Changed
+
+- Redesigned the authenticated shell with a denser technology-oriented workspace, larger usable content width and elevated surfaces.
+- Added a compact floating application header with permission-aware horizontal tabs and an active-section indicator.
+- Added active-state feedback to the persistent sidebar navigation.
+- Removed the light/dark switch from the operational header.
+- Added the global **Configuración** module with **Claro**, **Oscuro** and **Sistema** appearance preferences.
+- Linked branding/personalization and user administration from the centralized settings module.
+- Modernized the users workspace with a denser role summary, more compact empty state and three-column desktop directory where space allows.
+- Preserved responsive navigation through the horizontal header tabs when the desktop sidebar is hidden.
+
+
 ## 2026-09-19 — User management modal and lifecycle protection
 
 ### Changed

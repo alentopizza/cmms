@@ -44,9 +44,11 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/api/organizations/[id]/assets/[asset]/` — authenticated company logo and cover delivery.
 - `lib/organization-assets.ts` — company image validation and conversion.
 - `app/api/sites/[id]/` — site updates and status changes.
-- `app/dashboard/personalization/` — global visual personalization UI.
+- `app/dashboard/settings/` — centralized platform settings and appearance preferences.
+- `app/dashboard/personalization/` — global visual branding resources, linked from settings.
 - `app/api/customization/` — branding upload and asset delivery routes.
-- `components/ThemeToggle.tsx` — persisted light/dark appearance switch.
+- `components/ThemePreferences.tsx` — persisted light/dark/system appearance preferences.
+- `components/DashboardNavigation.tsx` — permission-filtered active sidebar/header navigation.
 - `lib/customization.ts` — customization lookup and logo selection helpers.
 - `lib/db.ts` — shared PostgreSQL pool/query helper.
 - `lib/auth.ts` — signed identity-aware sessions for bootstrap and database users.

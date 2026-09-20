@@ -85,12 +85,20 @@ export default async function UsersPage() {
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.active=true AND o.active=true ORDER BY o.name,s.name`,
         )
-      : query<Site>(
-          `SELECT s.id,s.organization_id,s.name,o.name organization_name
-           FROM sites s JOIN organizations o ON o.id=s.organization_id
-           WHERE s.active=true AND s.organization_id=$1 ORDER BY s.name`,
-          [session.organizationId],
-        ),
+      : session.accessAllSites
+        ? query<Site>(
+            `SELECT s.id,s.organization_id,s.name,o.name organization_name
+             FROM sites s JOIN organizations o ON o.id=s.organization_id
+             WHERE s.active=true AND s.organization_id=$1 ORDER BY s.name`,
+            [session.organizationId],
+          )
+        : query<Site>(
+            `SELECT s.id,s.organization_id,s.name,o.name organization_name
+             FROM sites s JOIN organizations o ON o.id=s.organization_id
+             WHERE s.active=true AND s.organization_id=$1 AND s.id = ANY($2::uuid[])
+             ORDER BY s.name`,
+            [session.organizationId, session.siteIds],
+          ),
   ]);
 
   return <>

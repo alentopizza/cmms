@@ -18,6 +18,10 @@ function response(request: Request, status: number, payload: { message?: string;
   return NextResponse.redirect(publicUrl(`/dashboard/users${redirectSuffix}`, request.url), 303);
 }
 
+function uniqueSiteIds(form: FormData) {
+  return [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
@@ -30,7 +34,8 @@ export async function POST(request: Request) {
   const password = String(form.get("password") || "");
   const requestedRole = String(form.get("role") || "");
   let organizationId = String(form.get("organization_id") || "");
-  const siteId = String(form.get("site_id") || "");
+  let accessAllSites = String(form.get("access_all_sites") || "true") === "true";
+  let siteIds = uniqueSiteIds(form);
   const creatingSuperadmin = requestedRole === "superadmin";
 
   const fields: FieldErrors = {};
@@ -42,13 +47,27 @@ export async function POST(request: Request) {
   if (session.platformRole !== "superadmin") {
     organizationId = session.organizationId || "";
     if (creatingSuperadmin) fields.role = "No tienes permiso para crear un superadministrador.";
+
+    if (accessAllSites && !session.accessAllSites) {
+      fields.site_ids = "No puedes otorgar acceso a todas las sedes porque tu propia cuenta tiene un alcance limitado.";
+    }
+    if (!accessAllSites && !session.accessAllSites) {
+      const allowed = new Set(session.siteIds);
+      if (siteIds.some(siteId => !allowed.has(siteId))) {
+        fields.site_ids = "Solo puedes asignar sedes a las que tu cuenta ya tiene acceso.";
+      }
+    }
   }
 
   if (!creatingSuperadmin) {
     if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
     if (!ROLES.has(requestedRole as OrganizationRole)) fields.role = "Selecciona un rol válido.";
+    if (!accessAllSites && siteIds.length === 0) fields.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
+    if (siteIds.some(siteId => !UUID.test(siteId))) fields.site_ids = "Una de las sedes seleccionadas no es válida.";
+  } else {
+    accessAllSites = true;
+    siteIds = [];
   }
-  if (siteId && !UUID.test(siteId)) fields.site_id = "Selecciona una sede válida.";
 
   if (Object.keys(fields).length) {
     return response(request, 422, { message: "Completa los campos marcados.", fields }, "?error=required");
@@ -71,11 +90,14 @@ export async function POST(request: Request) {
         return response(request, 422, { fields: { organization_id: "La empresa seleccionada no está disponible." } }, "?error=required");
       }
 
-      if (siteId) {
-        const site = await client.query("SELECT 1 FROM sites WHERE id=$1 AND organization_id=$2 AND active=true", [siteId, organizationId]);
-        if (!site.rowCount) {
+      if (!accessAllSites) {
+        const validSites = await client.query<{ id: string }>(
+          "SELECT id::text id FROM sites WHERE organization_id=$1 AND active=true AND id = ANY($2::uuid[])",
+          [organizationId, siteIds],
+        );
+        if (validSites.rowCount !== siteIds.length) {
           await client.query("ROLLBACK");
-          return response(request, 422, { fields: { site_id: "La sede no pertenece a la empresa seleccionada." } }, "?error=required");
+          return response(request, 422, { fields: { site_ids: "Todas las sedes seleccionadas deben pertenecer a la empresa y estar activas." } }, "?error=required");
         }
       }
 
@@ -102,10 +124,20 @@ export async function POST(request: Request) {
 
     if (!creatingSuperadmin) {
       await client.query(
-        `INSERT INTO organization_members(organization_id,user_id,role,site_id)
-         VALUES($1,$2,$3,$4)`,
-        [organizationId, user.rows[0].id, requestedRole, siteId || null],
+        `INSERT INTO organization_members(organization_id,user_id,role,site_id,access_all_sites)
+         VALUES($1,$2,$3,NULL,$4)`,
+        [organizationId, user.rows[0].id, requestedRole, accessAllSites],
       );
+
+      if (!accessAllSites) {
+        for (const siteId of siteIds) {
+          await client.query(
+            `INSERT INTO organization_member_sites(organization_id,user_id,site_id)
+             VALUES($1,$2,$3)`,
+            [organizationId, user.rows[0].id, siteId],
+          );
+        }
+      }
     }
 
     await client.query("COMMIT");

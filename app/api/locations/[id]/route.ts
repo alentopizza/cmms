@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { isProtectedDeletion } from "@/lib/deletion-policy";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -16,6 +17,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const current = await query("SELECT 1 FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
   if (!current.rowCount) return new NextResponse("Sububicación no encontrada", { status: 404 });
   const intent = String(form.get("intent") || "update");
+  if (intent === "delete") {
+    try {
+      const deleted = await query("DELETE FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
+      if (!deleted.rowCount) return new NextResponse("Sububicación no encontrada", { status: 404 });
+    } catch (error) {
+      if (isProtectedDeletion(error)) return redirect("?error=history");
+      throw error;
+    }
+    return redirect("?saved=deleted");
+  }
   if (intent === "toggle") {
     await query("UPDATE locations SET active=NOT active,updated_at=now() WHERE id=$1 AND site_id=$2", [id, siteId]);
     return redirect("?saved=status");

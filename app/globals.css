@@ -437,6 +437,25 @@ html[data-theme="dark"] .location-tree-row{box-shadow:0 7px 20px rgba(0,0,0,.18)
 
 
 /* Protected company detail popup */
+.confirmation-dialog{position:fixed;inset:0;width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:0;border:1px solid var(--border);border-radius:22px;background:var(--surface);color:var(--text);box-shadow:0 28px 90px rgba(12,24,32,.3);overflow:auto;animation:confirmation-enter .18s ease-out}
+.confirmation-dialog::backdrop{background:rgba(12,24,32,.6);backdrop-filter:blur(6px)}
+.confirmation-content{padding:30px 30px 24px}
+.confirmation-symbol{display:grid;place-items:center;width:54px;height:54px;margin-bottom:20px;border:1px solid var(--brand-mint);border-radius:17px;background:var(--brand-mint-light);color:var(--brand-dark)}
+.confirmation-dialog h2{margin:8px 0 12px;font-size:23px;line-height:1.25;color:var(--text);letter-spacing:-.03em}
+.confirmation-dialog p{margin:0;font-size:14px;line-height:1.65;color:var(--text-soft);overflow-wrap:anywhere}
+.confirmation-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:18px 24px;background:var(--bg);border-top:1px solid var(--border)}
+.confirmation-actions .button{min-height:44px;transition:transform .12s ease,background .12s ease}
+.confirmation-actions .button:active{transform:scale(.97)}
+.confirmation-actions .button:focus-visible{outline:3px solid var(--brand-teal);outline-offset:3px}
+.confirmation-danger .confirmation-symbol{background:#fff0f1;border-color:#f4c7ce;color:#b32940}
+.confirmation-actions .confirmation-delete{background:#b32940;color:#fff;border-color:#b32940}
+.confirmation-actions .confirmation-delete:hover{background:#962037}
+.confirmation-pending{display:block;color:var(--text-soft);font-size:12px;padding:8px 0}
+form[aria-busy="true"] button[type="submit"]{pointer-events:none;opacity:.6}
+html[data-theme="dark"] .confirmation-danger .confirmation-symbol{background:#422735;border-color:#704150;color:#ffb4c0}
+@keyframes confirmation-enter{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.confirmation-dialog{animation:none}.confirmation-actions .button{transition:none}.confirmation-actions .button:active{transform:none}}
+@media(max-width:480px){.confirmation-content{padding:24px}.confirmation-actions{padding:16px}.confirmation-actions .button{flex:1}}
 .company-card-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:inherit;cursor:pointer}
 .company-detail-modal{width:min(860px,100%)}
 .company-detail-hero{position:relative;height:190px}

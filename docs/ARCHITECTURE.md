@@ -65,6 +65,16 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 
 Every operational query and mutation must validate `organization_id`; an identifier supplied by the browser is never sufficient tenant authorization by itself.
 
+## Operational history safeguards (migration 005)
+
+`deletion_locked` on organizations, sites and locations is sticky. BEFORE INSERT/UPDATE triggers on operational tables mark and lock their company and physical ancestors in the same transaction. BEFORE DELETE guards raise SQLSTATE `P2001` when history or protected dependencies exist, before destructive cascades can start. Foreign-key errors (`23503`) are also surfaced as protected-deletion feedback by the API. No historical customer data is removed by the migration.
+
+Future operational tables must call `cmms_mark_record_history` (or a scope-aware equivalent) and add regression coverage. New physical movement features must mark old and new ancestor chains; status changes must never clear markers. The pre-existing bootstrap login is still global; role/tenant authorization remains separate work.
+
+## Testing
+
+`TEST_DATABASE_URL=postgresql://... npm run test:db` runs history-protection regression tests in a uniquely named schema and drops only that test schema afterward. Use a disposable database, never production. CI provisions PostgreSQL 16 and runs these tests before the Next.js build. For local environments without PostgreSQL, `CMMS_TEST_PGLITE_MODULE` can point to an installed PGlite module; only its unsupported pgcrypto extension declaration is omitted in that test mode. CI remains the native PostgreSQL check.
+
 ## Global customization
 
 Migration `002_app_customization.sql` creates a singleton `app_customization` row.

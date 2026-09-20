@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { isProtectedDeletion } from "@/lib/deletion-policy";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -29,6 +30,17 @@ export async function POST(
     [id, organizationId],
   );
   if (!site.rowCount) return new NextResponse("Sede no encontrada", { status: 404 });
+
+  if (intent === "delete") {
+    try {
+      const deleted = await query("DELETE FROM sites WHERE id=$1 AND organization_id=$2", [id, organizationId]);
+      if (!deleted.rowCount) return new NextResponse("Sede no encontrada", { status: 404 });
+    } catch (error) {
+      if (isProtectedDeletion(error)) return NextResponse.redirect(companyUrl(organizationId, request.url, "?error=history"), 303);
+      throw error;
+    }
+    return NextResponse.redirect(companyUrl(organizationId, request.url, "?saved=site-deleted"), 303);
+  }
 
   if (intent === "toggle") {
     await query(

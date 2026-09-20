@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { query } from "@/lib/db";
-import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import ConfirmForm from "@/components/ConfirmForm";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -30,6 +30,8 @@ export default async function LocationPage({ params, searchParams }: { params: P
   locations.forEach(location => byParent.set(location.parent_id, [...(byParent.get(location.parent_id) || []), location]));
 
   const message = feedback.error === "limit" ? `Se alcanzó el cupo de ${site.max_sublocations} sububicaciones.`
+    : feedback.error === "history" ? "No se puede eliminar: esta sububicación tiene movimientos, registros vinculados o espacios dependientes. Puedes desactivarla para conservar el historial."
+    : feedback.saved === "deleted" ? "La sububicación vacía fue eliminada."
     : feedback.error === "code" ? "Ese código ya existe dentro de esta ubicación."
     : feedback.error ? "Revisa la información e inténtalo nuevamente."
     : feedback.created ? "Sububicación creada correctamente."
@@ -43,15 +45,19 @@ export default async function LocationPage({ params, searchParams }: { params: P
       </div>
       <div className="location-tree-metrics"><span><b>{location.child_count}</b> áreas</span><span><b>{location.asset_count}</b> activos</span><span className={`status-badge ${location.active ? "status-active" : "status-inactive"}`}><i />{location.active ? "Activa" : "Inactiva"}</span></div>
       <details className="location-actions"><summary>Administrar</summary><div className="location-action-panel">
-        <form method="post" action={`/api/locations/${location.id}`} className="form-grid">
+        <ConfirmForm message="¿Seguro que quieres guardar los cambios de esta sububicación?" method="post" action={`/api/locations/${location.id}`} className="form-grid">
           <input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="update" />
           <div className="field"><label>Nombre</label><input name="name" defaultValue={location.name} required /></div>
           <div className="field"><label>Código</label><input name="code" defaultValue={location.code || ""} /></div>
           <div className="field"><label>Tipo</label><select name="type" defaultValue={location.type}><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
           <div className="field"><label>Descripción</label><input name="description" defaultValue={location.description || ""} /></div>
-          <div className="form-span-2 form-actions"><ConfirmSubmitButton className="button secondary" confirmation="¿Seguro que quieres guardar estos cambios?">Guardar cambios</ConfirmSubmitButton></div>
-        </form>
-        <form method="post" action={`/api/locations/${location.id}`}><input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="toggle" /><ConfirmSubmitButton className="text-button" confirmation={`¿Seguro que quieres ${location.active ? "desactivar" : "activar"} esta sububicación?`}>{location.active ? "Desactivar" : "Activar"}</ConfirmSubmitButton></form>
+          <div className="form-span-2 form-actions"><button type="submit" className="button secondary">Guardar cambios</button></div>
+        </ConfirmForm>
+        <ConfirmForm title="Cambiar estado" confirmLabel="Sí, cambiar estado" message={`¿Seguro que quieres ${location.active ? "desactivar" : "activar"} esta sububicación?`} method="post" action={`/api/locations/${location.id}`}><input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="toggle" /><button type="submit" className="text-button">{location.active ? "Desactivar" : "Activar"}</button></ConfirmForm>
+        <ConfirmForm method="post" action={`/api/locations/${location.id}`} title="¿Eliminar sububicación?" danger confirmLabel="Sí, eliminar sububicación" message={`Se eliminará ${location.name} solo si no tiene movimientos, registros vinculados ni sububicaciones. Esta acción no se puede deshacer.`}>
+          <input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="delete" />
+          <button className="text-button text-danger" type="submit">Eliminar sububicación</button>
+        </ConfirmForm>
       </div></details>
       {(byParent.get(location.id)?.length || 0) > 0 && <div className="location-tree-children">{tree(location.id, depth + 1)}</div>}
     </div>);

@@ -54,6 +54,17 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 
 ## Interaction rules
 
+### Deletion and historical integrity
+
+- Companies, principal locations and sublocations with operational history cannot be permanently deleted, including inactive records and cancelled work orders.
+- For safety, registering an asset, inventory article, work order, plan, reading, stock movement or operational audit record is sufficient to establish history.
+- The history marker remains after a transfer or deletion of the source record; it propagates to the original physical ancestors and company.
+- Existing data is backfilled by migration 005. Activity erased before this migration and absent from all surviving audit data cannot be reconstructed.
+- Empty leaf locations can be deleted with confirmation. Parents with sublocations or other linked dependencies must be resolved first. A company may delete its empty principal sites as part of confirmed deletion; operational data is never silently cascaded.
+- Use activation/deactivation to retire a record with history. This operation preserves data and does not release its resource entitlement.
+- Enforce this policy in PostgreSQL, not just by hiding buttons. API handlers translate blocked deletion to a clear message recommending deactivation.
+- Do not claim full tenant authorization: environment-based bootstrap authentication remains in use until the planned user/role module is implemented.
+
 - Directory information uses modern cards with search and filters.
 - Creation and detail actions normally open modal dialogs.
 - Detail dialogs start read-only to prevent accidental changes.

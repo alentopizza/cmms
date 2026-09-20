@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ConfirmForm from "@/components/ConfirmForm";
 import { useEffect, useState } from "react";
 
 export type CompanyDirectoryItem = {
@@ -48,18 +49,6 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
   function close() {
     setEditing(false);
     setSelected(null);
-  }
-
-  function confirmSave(event: React.FormEvent<HTMLFormElement>) {
-    if (!window.confirm("¿Seguro que quieres guardar los cambios realizados?")) {
-      event.preventDefault();
-    }
-  }
-
-  function confirmDelete(event: React.FormEvent<HTMLFormElement>) {
-    if (!window.confirm("¿Seguro que quieres eliminar esta empresa? Se eliminarán también sus sedes y la información relacionada. Esta acción no se puede deshacer.")) {
-      event.preventDefault();
-    }
   }
 
   if (companies.length === 0) {
@@ -130,7 +119,7 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
           <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Información protegida"}</span>
         </div>
 
-        <form className="company-detail-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={confirmSave}>
+        <ConfirmForm message="¿Seguro que quieres guardar los cambios de esta empresa?" className="company-detail-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data">
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
           <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
@@ -177,14 +166,14 @@ export default function CompanyDirectory({ companies }: { companies: CompanyDire
             <button className="button secondary" type="button" onClick={() => setEditing(false)}>Cancelar edición</button>
             <button className="button" type="submit">Guardar cambios</button>
           </footer>}
-        </form>
+        </ConfirmForm>
 
         {!editing && <footer className="company-detail-actions">
           <div>
-            <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={confirmDelete}>
+            <ConfirmForm method="post" action={`/api/organizations/${selected.id}`} title="¿Eliminar empresa?" danger confirmLabel="Sí, eliminar empresa" message={`Se eliminará ${selected.name} y sus ubicaciones vacías. No se puede deshacer. Si tiene movimientos o información operativa vinculada, la eliminación será bloqueada; podrás desactivarla.`}>
               <input type="hidden" name="intent" value="delete" />
               <button className="button danger-secondary" type="submit">Eliminar empresa</button>
-            </form>
+            </ConfirmForm>
           </div>
           <div>
             <Link className="button secondary" href={`/dashboard/companies/${selected.id}`}>Administrar sedes</Link>

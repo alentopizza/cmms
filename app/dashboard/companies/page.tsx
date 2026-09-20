@@ -45,7 +45,9 @@ export default async function CompaniesPage({
     {(params.saved || params.deleted || params.error) && <div className="section">
       {params.saved && <div className="notice success">Los cambios de la empresa se guardaron correctamente.</div>}
       {params.deleted && <div className="notice success">La empresa y su información relacionada fueron eliminadas.</div>}
-      {params.error && <div className="notice error">No fue posible completar la operación. Revisa la información e inténtalo nuevamente.</div>}
+      {params.error && <div className="notice error" role="alert">{params.error === "history"
+        ? "No se puede eliminar esta empresa: tiene movimientos o información vinculada. Puedes desactivarla desde su administración para conservar el historial."
+        : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."}</div>}
     </div>}
 
     <section className="section">

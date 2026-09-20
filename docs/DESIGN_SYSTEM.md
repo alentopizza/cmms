@@ -93,6 +93,14 @@ Semantic red/amber/green remain available where operational meaning requires the
 
 ## Accessibility
 
+### Confirmation dialogs
+
+Use `components/ConfirmForm.tsx` for forms that save edits or delete records. It intercepts the form submit event (including Enter), validates the form, opens `ConfirmationDialog`, and submits once after approval. Do not use `window.confirm` or `window.alert` for these operations.
+
+The native HTML `dialog` element supplies top-layer positioning and focus containment; its appearance is fully styled with Desweb tokens, teal save actions, restrained red destructive actions, rounded corners and a blurred backdrop. Cancel is initially focused. Escape cancels only the confirmation, without closing the underlying company detail. Cancellation preserves input values. Focus returns to the invoking control. Motion respects `prefers-reduced-motion` and no sound is played.
+
+Use contextual titles and explicit labels: “Sí, guardar cambios”, “Sí, eliminar empresa”, or “Sí, cambiar estado”. Do not promise successful deletion before the server has checked history and dependencies.
+
 - sufficient contrast in both themes;
 - visible focus state;
 - no status conveyed through color only;

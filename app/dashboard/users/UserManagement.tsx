@@ -22,9 +22,9 @@ export type ManagedUser = {
   role: OrganizationRole | null;
   last_login_at: string | null;
   has_activity: boolean;
-  access_all_sites: boolean;
-  site_ids: string[];
-  site_names: string[];
+  access_all_sites: boolean | null;
+  site_ids: string[] | null;
+  site_names: string[] | null;
 };
 
 type Organization = { id: string; name: string };
@@ -76,10 +76,11 @@ function initials(name: string) {
 
 function siteAccessLabel(user: ManagedUser) {
   if (user.platform_role === "superadmin") return "Todas las empresas";
-  if (user.access_all_sites) return "Todas las sedes";
-  if (!user.site_names.length) return "Sin sedes asignadas";
-  if (user.site_names.length <= 2) return user.site_names.join(", ");
-  return `${user.site_names.slice(0, 2).join(", ")} +${user.site_names.length - 2}`;
+  if (user.access_all_sites !== false) return "Todas las sedes";
+  const siteNames = user.site_names || [];
+  if (!siteNames.length) return "Sin sedes asignadas";
+  if (siteNames.length <= 2) return siteNames.join(", ");
+  return `${siteNames.slice(0, 2).join(", ")} +${siteNames.length - 2}`;
 }
 
 export default function UserManagement({
@@ -181,8 +182,8 @@ export default function UserManagement({
       password: "",
       organization_id: user.organization_id || "",
       role: user.platform_role === "superadmin" ? "superadmin" : user.role || "viewer",
-      access_all_sites: user.platform_role === "superadmin" ? true : user.access_all_sites,
-      site_ids: user.platform_role === "superadmin" ? [] : user.site_ids,
+      access_all_sites: user.platform_role === "superadmin" ? true : user.access_all_sites !== false,
+      site_ids: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
     });
     setErrors({});
     setActionError("");
@@ -322,7 +323,7 @@ export default function UserManagement({
           <div className="user-role-meta">
             <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
-            <div><span>Sedes</span><strong title={user.site_names.join(", ")}>{siteAccessLabel(user)}</strong></div>
+            <div><span>Sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
             <div><span>Último acceso</span><strong>{user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 

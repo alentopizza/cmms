@@ -18,7 +18,10 @@ export default async function UsersPage() {
     isSuperadmin
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
-                  membership.organization_id,membership.organization_name,membership.role,membership.access_all_sites,membership.site_ids,membership.site_names,
+                  membership.organization_id,membership.organization_name,membership.role,
+                  COALESCE(membership.access_all_sites,true) access_all_sites,
+                  COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
+                  COALESCE(membership.site_names,ARRAY[]::text[]) site_names,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)

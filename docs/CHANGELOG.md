@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-19 — Context header and account menu
+
+### Changed
+
+- Simplified the floating header so it only communicates the current section and organization context.
+- Removed duplicate horizontal module navigation from the header; the sidebar is again the single desktop navigation surface.
+- Removed **Configuración** from the permanent sidebar module list.
+- Added a compact account control at the bottom of the sidebar with the signed-in user's name and role.
+- Added a click-to-open account menu with access to **Configuración** and **Cerrar sesión**.
+- Preserved active-module indication in the sidebar and dark-theme support for the new account menu.
+
+
 ## 2026-09-19 — Modern workspace shell and platform settings
 
 ### Changed

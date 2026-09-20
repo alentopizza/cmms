@@ -66,10 +66,11 @@ The module is designed to expand later with color, typography and other visual s
 ## Application shell
 
 - desktop uses a persistent institutional sidebar and a compact floating workspace header;
-- the workspace header includes horizontal section tabs with a visible active indicator;
-- sidebar and header tabs share the same permission-filtered navigation source;
+- the workspace header is contextual only: it identifies the current module and optional organization, but does not duplicate the sidebar navigation;
+- the sidebar is the single desktop navigation source and clearly marks the active module;
+- authenticated account actions live in a compact bottom-of-sidebar account menu that opens upward;
+- global settings are accessed from that account menu rather than occupying permanent navigation space;
 - the authenticated workspace uses the available viewport width up to a large enterprise content ceiling instead of a narrow centered column;
-- settings and non-operational preferences live under **Configuración**, keeping the operational header focused on context and navigation;
 - surfaces use restrained elevation, subtle gradients and teal accents to communicate a modern technology product without overdecorating the maintenance UI.
 
 ## Components

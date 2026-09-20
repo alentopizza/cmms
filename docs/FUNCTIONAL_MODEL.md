@@ -18,7 +18,16 @@ This document preserves the product flow agreed with the project owner. Referenc
 - manages suppliers, assets, inventory, technicians and crews;
 - creates routines, work orders and preventive maintenance plans.
 
-Future roles include manager, technician, requester and viewer with narrower permissions.
+The active access model now includes:
+
+- **Owner / company administrator:** users, locations and operational modules inside one organization.
+- **Manager / supervisor:** locations, assets, work orders, preventive maintenance and inventory for one organization.
+- **Technician:** asset visibility, work-order operation, preventive visibility and inventory consultation.
+- **Requester:** creates maintenance requests/work orders and sees only requests created by that account in the current foundation.
+- **Viewer:** read-only visibility of assets, work orders, preventive maintenance and inventory.
+- **Super administrator:** platform-wide access including companies, global personalization and cross-company user creation.
+
+Permissions are enforced both in navigation and server-side routes. Tenant users derive their `organization_id` from the signed-in session; browser-supplied identifiers are never sufficient authorization.
 
 ## Resource entitlements
 
@@ -70,7 +79,7 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 2. Suppliers.
 3. Assets and asset hierarchy.
 4. Inventory and stock movements.
-5. Technicians and authorization.
+5. Technicians and authorization (authentication/RBAC foundation already implemented; technician operational profiles continue here).
 6. Crews and leadership.
 7. Routines/checklists.
 8. Work-order lifecycle.

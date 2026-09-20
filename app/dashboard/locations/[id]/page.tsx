@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
@@ -9,6 +11,10 @@ type Site = { id: string; organization_id: string; organization_name: string; na
 type Location = { id: string; parent_id: string | null; name: string; code: string | null; type: string; description: string | null; active: boolean; asset_count: number; child_count: number; };
 
 export default async function LocationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; saved?: string; error?: string }> }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session, "locations.manage")) redirect("/dashboard");
+
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
   const [siteResult, locationsResult] = await Promise.all([
@@ -25,6 +31,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   ]);
   if (!siteResult.rowCount) notFound();
   const site = siteResult.rows[0];
+  if (session.platformRole !== "superadmin" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
   const locations = locationsResult.rows;
   const byParent = new Map<string | null, Location[]>();
   locations.forEach(location => byParent.set(location.parent_id, [...(byParent.get(location.parent_id) || []), location]));

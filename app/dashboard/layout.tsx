@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, roleLabel, type Permission } from "@/lib/permissions";
+import { isSubscriptionUsable } from "@/lib/billing";
 import { getCustomizationSummary, logoOnDarkSrc } from "@/lib/customization";
 import { SidebarNavigation, type DashboardNavItem } from "@/components/DashboardNavigation";
 import { CurrentSectionHeader, SidebarAccountMenu } from "@/components/DashboardChrome";
@@ -23,6 +24,9 @@ const navItems: NavItem[] = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (session.platformRole !== "superadmin" && !isSubscriptionUsable(session.subscriptionStatus, session.trialEndsAt)) {
+    redirect("/subscription/expired");
+  }
 
   const customization = await getCustomizationSummary();
   const visibleItems = navItems.filter(item => !item.permission || can(session, item.permission));

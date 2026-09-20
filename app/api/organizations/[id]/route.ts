@@ -93,6 +93,7 @@ export async function POST(
   }
 
   if (intent === "limits") {
+    if (!can(session, "company_resources.manage")) return new NextResponse("Forbidden", { status: 403 });
     const limits = [
       positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
       positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
@@ -121,6 +122,14 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const canManageResources = can(session, "company_resources.manage");
+  const resourceLimits = canManageResources ? {
+    max_sites: positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
+    max_sublocations: positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
+    max_assets: positiveLimit(form.get("max_assets"), DEFAULT_LIMITS.max_assets),
+    max_inventory_items: positiveLimit(form.get("max_inventory_items"), DEFAULT_LIMITS.max_inventory_items),
+    max_technicians: positiveLimit(form.get("max_technicians"), DEFAULT_LIMITS.max_technicians),
+  } : null;
 
   if (!name || !slug || !timezone) {
     const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
@@ -150,6 +159,28 @@ export async function POST(
            SET name=$1,code=$2,address=$3,city=$4,country=$5
            WHERE id=$6 AND organization_id=$7`,
           [siteName || "Sede principal", siteCode || null, address || null, city || null, country || "CO", primarySiteId, id],
+        );
+      }
+
+      if (resourceLimits) {
+        await client.query(
+          `INSERT INTO organization_limits(organization_id,max_sites,max_sublocations,max_assets,max_inventory_items,max_technicians,updated_at)
+           VALUES($1,$2,$3,$4,$5,$6,now())
+           ON CONFLICT(organization_id) DO UPDATE
+           SET max_sites=EXCLUDED.max_sites,
+               max_sublocations=EXCLUDED.max_sublocations,
+               max_assets=EXCLUDED.max_assets,
+               max_inventory_items=EXCLUDED.max_inventory_items,
+               max_technicians=EXCLUDED.max_technicians,
+               updated_at=now()`,
+          [
+            id,
+            resourceLimits.max_sites,
+            resourceLimits.max_sublocations,
+            resourceLimits.max_assets,
+            resourceLimits.max_inventory_items,
+            resourceLimits.max_technicians,
+          ],
         );
       }
 

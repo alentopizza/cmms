@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 
 function formatSize(bytes: number) {
@@ -11,6 +14,10 @@ export default async function PersonalizationPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session, "personalization.manage")) redirect("/dashboard");
+
   const params = await searchParams;
   const customization = await getCustomizationSummary();
 

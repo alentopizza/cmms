@@ -20,7 +20,7 @@ This document preserves the product flow agreed with the project owner. Referenc
 
 The active access model now includes:
 
-- **Owner / company administrator:** users, locations and operational modules inside one organization. User access can cover all active sites or an explicit subset of sites.
+- **Company administrator:** users, locations and operational modules inside one organization. User access can cover all active sites or an explicit subset of sites. This is the highest organization-level role.
 - **Manager / supervisor:** locations, assets, work orders, preventive maintenance and inventory for one organization.
 - **Technician:** asset visibility, work-order operation, preventive visibility and inventory consultation.
 - **Requester:** creates maintenance requests/work orders and sees only requests created by that account in the current foundation.
@@ -46,7 +46,7 @@ Initial controlled resources:
 - inventory articles;
 - technicians.
 
-Only the **Super administrator** can assign or change these resource entitlements. Company administrators consume the assigned capacity but cannot view or edit contractual/platform limits from their operational role.
+Only the **Super administrator** can assign or change these resource entitlements. Company administrators can view assigned capacity, current consumption and proximity alerts from their own **Configuración de empresa**, but cannot edit contractual/platform limits.
 
 Creating a record at the limit must fail on the server with a clear message. Deactivation preserves history and does not normally release an entitlement; only permanent deletion does. This rule prevents plans from being bypassed by repeatedly deactivating records.
 

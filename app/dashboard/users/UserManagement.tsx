@@ -214,8 +214,13 @@ export default function UserManagement({
         return;
       }
 
-      closeModal();
+      setSaving(false);
+      setMode(null);
+      setEditingUser(null);
+      setDraft(EMPTY_DRAFT);
+      setErrors({});
       router.refresh();
+      return;
     } finally {
       setSaving(false);
     }

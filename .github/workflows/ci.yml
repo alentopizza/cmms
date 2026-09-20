@@ -8,12 +8,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cmms
+          POSTGRES_PASSWORD: cmms_test_only
+          POSTGRES_DB: cmms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm install
+      - run: npm run test:db
+        env:
+          TEST_DATABASE_URL: postgresql://cmms:cmms_test_only@localhost:5432/cmms_test
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

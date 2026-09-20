@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-20 — Branded confirmations and protected deletion
+
+- Replaced all native browser confirmations with a reusable, theme-aware modal.
+- Added form-level confirmation for company/site/sublocation edits, images, quotas and status changes, including Enter submissions.
+- Added contextual destructive confirmation and safe deletion of empty sites/sublocations.
+- Added migration `005_protect_operational_history.sql`: permanent history markers, legacy-data backfill and database deletion guards.
+- Blocked deletion of companies/locations with operational history or linked dependencies. Deactivation remains available.
+- Added database regression tests and a PostgreSQL 16 service to CI.
+- No customer records were deleted as part of this change.
+
 ## 2026-09-19 — Tenant limits and location hierarchy
 
 ### Added

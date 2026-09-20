@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ConfirmForm from "@/components/ConfirmForm";
 import { notFound } from "next/navigation";
 import { query } from "@/lib/db";
 
@@ -37,6 +38,8 @@ type Site = {
 };
 
 function Feedback({ saved, created, error }: { saved?: string; created?: string; error?: string }) {
+  if (error === "history") return <div className="notice error" role="alert">No se puede eliminar: existen movimientos o información vinculada. Desactiva la ubicación para conservar su historial.</div>;
+  if (saved === "site-deleted") return <div className="notice success">La ubicación vacía fue eliminada.</div>;
   if (error === "slug") return <div className="notice error">El identificador ya está siendo usado por otra empresa.</div>;
   if (error === "site-code") return <div className="notice error">Ese código de sede ya existe dentro de esta empresa.</div>;
   if (error === "site-limit") return <div className="notice error">La empresa alcanzó el límite de ubicaciones asignado.</div>;
@@ -140,12 +143,12 @@ export default async function CompanyDetailPage({
             : <span>Sin portada</span>}
         </div>
       </div>
-      <form className="form-grid company-assets-form" method="post" action={`/api/organizations/${organization.id}`} encType="multipart/form-data">
+      <ConfirmForm message="¿Seguro que quieres guardar estos cambios?" className="form-grid company-assets-form" method="post" action={`/api/organizations/${organization.id}`} encType="multipart/form-data">
         <input type="hidden" name="intent" value="assets" />
         <div className="field"><label htmlFor="company-logo">Reemplazar logo</label><input id="company-logo" type="file" name="logo" accept="image/png,image/jpeg,image/webp" /></div>
         <div className="field"><label htmlFor="company-cover">Reemplazar portada</label><input id="company-cover" type="file" name="cover" accept="image/png,image/jpeg,image/webp" /></div>
         <div className="form-span-2 form-actions"><button className="button secondary" type="submit">Actualizar imágenes</button></div>
-      </form>
+      </ConfirmForm>
     </section>
 
     <section className="company-detail-grid section">
@@ -154,7 +157,7 @@ export default async function CompanyDetailPage({
           <div><span className="eyebrow">Información general</span><h2>Editar empresa</h2></div>
           <small>Última actualización: {new Date(organization.updated_at).toLocaleDateString("es-CO")}</small>
         </div>
-        <form className="form-grid" method="post" action={`/api/organizations/${organization.id}`}>
+        <ConfirmForm message="¿Seguro que quieres guardar estos cambios?" className="form-grid" method="post" action={`/api/organizations/${organization.id}`}>
           <input type="hidden" name="intent" value="update" />
           <div className="field"><label htmlFor="company-name">Nombre comercial</label><input id="company-name" name="name" defaultValue={organization.name} required /></div>
           <div className="field"><label htmlFor="company-legal-name">Razón social</label><input id="company-legal-name" name="legal_name" defaultValue={organization.legal_name || ""} placeholder="Nombre legal de la empresa" /></div>
@@ -170,7 +173,7 @@ export default async function CompanyDetailPage({
             </select>
           </div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar cambios</button></div>
-        </form>
+        </ConfirmForm>
       </div>
 
       <aside className="card company-state-card">
@@ -181,18 +184,18 @@ export default async function CompanyDetailPage({
             ? "La empresa está disponible para la operación y sus datos permanecen visibles."
             : "La empresa conserva toda su información, pero queda marcada como inactiva."}</p>
         </div>
-        <form method="post" action={`/api/organizations/${organization.id}`}>
+        <ConfirmForm title="Cambiar estado" confirmLabel="Sí, cambiar estado" message="¿Seguro que quieres cambiar el estado de esta empresa? Se conservará toda su información." method="post" action={`/api/organizations/${organization.id}`}>
           <input type="hidden" name="intent" value="toggle" />
           <button className={`button ${organization.active ? "danger-secondary" : ""}`} type="submit">
             {organization.active ? "Desactivar empresa" : "Activar empresa"}
           </button>
-        </form>
+        </ConfirmForm>
       </aside>
     </section>
 
     <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Control del plan</span><h2>Recursos asignados</h2></div><small>Solo el superadministrador debe modificar estos cupos.</small></div>
-      <form className="resource-limit-grid" method="post" action={`/api/organizations/${organization.id}`}>
+      <ConfirmForm message="¿Seguro que quieres guardar estos cambios?" className="resource-limit-grid" method="post" action={`/api/organizations/${organization.id}`}>
         <input type="hidden" name="intent" value="limits" />
         <div className="field"><label>Ubicaciones principales</label><input name="max_sites" type="number" min="1" defaultValue={organization.max_sites} /></div>
         <div className="field"><label>Sububicaciones</label><input name="max_sublocations" type="number" min="0" defaultValue={organization.max_sublocations} /></div>
@@ -200,7 +203,7 @@ export default async function CompanyDetailPage({
         <div className="field"><label>Inventario</label><input name="max_inventory_items" type="number" min="0" defaultValue={organization.max_inventory_items} /></div>
         <div className="field"><label>Técnicos</label><input name="max_technicians" type="number" min="0" defaultValue={organization.max_technicians} /></div>
         <div className="field resource-save"><label>&nbsp;</label><button className="button" type="submit">Actualizar cupos</button></div>
-      </form>
+      </ConfirmForm>
     </section>
 
     <section className="card section">
@@ -237,7 +240,7 @@ export default async function CompanyDetailPage({
 
           <Link className="button secondary site-location-link" href={`/dashboard/locations/${site.id}`}>Ver sububicaciones</Link>
 
-          <form className="form-grid site-edit-form" method="post" action={`/api/sites/${site.id}`}>
+          <ConfirmForm message="¿Seguro que quieres guardar estos cambios?" className="form-grid site-edit-form" method="post" action={`/api/sites/${site.id}`}>
             <input type="hidden" name="organization_id" value={organization.id} />
             <input type="hidden" name="intent" value="update" />
             <div className="field"><label htmlFor={`site-name-${site.id}`}>Nombre</label><input id={`site-name-${site.id}`} name="name" defaultValue={site.name} required /></div>
@@ -246,15 +249,19 @@ export default async function CompanyDetailPage({
             <div className="field"><label htmlFor={`site-city-${site.id}`}>Ciudad</label><input id={`site-city-${site.id}`} name="city" defaultValue={site.city || ""} /></div>
             <div className="field"><label htmlFor={`site-country-${site.id}`}>País</label><input id={`site-country-${site.id}`} name="country" defaultValue={site.country} maxLength={2} /></div>
             <div className="form-span-2 form-actions"><button className="button secondary" type="submit">Guardar sede</button></div>
-          </form>
+          </ConfirmForm>
 
-          <form className="site-status-form" method="post" action={`/api/sites/${site.id}`}>
+          <ConfirmForm title="Cambiar estado" confirmLabel="Sí, cambiar estado" message="¿Seguro que quieres cambiar el estado de esta ubicación? Se conservará su historial." className="site-status-form" method="post" action={`/api/sites/${site.id}`}>
             <input type="hidden" name="organization_id" value={organization.id} />
             <input type="hidden" name="intent" value="toggle" />
             <button className={`text-button ${site.active ? "text-danger" : ""}`} type="submit">
               {site.active ? "Desactivar sede" : "Activar sede"}
             </button>
-          </form>
+          </ConfirmForm>
+          <ConfirmForm method="post" action={`/api/sites/${site.id}`} title="¿Eliminar ubicación?" danger confirmLabel="Sí, eliminar ubicación" message={`Se eliminará ${site.name} únicamente si no tiene movimientos, registros vinculados ni sububicaciones. Si tiene historial, utiliza Desactivar.`}>
+            <input type="hidden" name="organization_id" value={organization.id} /><input type="hidden" name="intent" value="delete" />
+            <button className="text-button text-danger" type="submit">Eliminar ubicación</button>
+          </ConfirmForm>
         </article>)}
       </div>}
     </section>

@@ -21,6 +21,11 @@ export type AuthSession = {
   siteId: string | null;
   accessAllSites: boolean;
   siteIds: string[];
+  planCode: "trial" | "basic" | "medium" | "pro" | null;
+  subscriptionStatus: "trialing" | "trial_expired" | "active" | "past_due" | "suspended" | "canceled" | null;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  whiteLabel: boolean;
 };
 
 function secret() {
@@ -92,6 +97,11 @@ export async function getSession(): Promise<AuthSession | null> {
       siteId: null,
       accessAllSites: true,
       siteIds: [],
+      planCode: null,
+      subscriptionStatus: "active",
+      trialEndsAt: null,
+      currentPeriodEnd: null,
+      whiteLabel: true,
     };
   }
 
@@ -106,10 +116,17 @@ export async function getSession(): Promise<AuthSession | null> {
     site_id: string | null;
     access_all_sites: boolean | null;
     site_ids: string[] | null;
+    plan_code: "trial" | "basic" | "medium" | "pro" | null;
+    subscription_status: "trialing" | "trial_expired" | "active" | "past_due" | "suspended" | "canceled" | null;
+    trial_ends_at: string | null;
+    current_period_end: string | null;
+    white_label: boolean | null;
   }>(
     `SELECT u.id,u.email,u.full_name,u.platform_role,
             membership.organization_id,membership.organization_name,membership.role,membership.site_id,
-            membership.access_all_sites,membership.site_ids
+            membership.access_all_sites,membership.site_ids,
+            subscription.plan_code,subscription.subscription_status,subscription.trial_ends_at,
+            subscription.current_period_end,subscription.white_label
      FROM users u
      LEFT JOIN LATERAL (
        SELECT om.organization_id,o.name organization_name,om.role,om.site_id,om.access_all_sites,
@@ -124,6 +141,15 @@ export async function getSession(): Promise<AuthSession | null> {
        ORDER BY om.created_at ASC
        LIMIT 1
      ) membership ON true
+     LEFT JOIN LATERAL (
+       SELECT bp.code plan_code,os.status subscription_status,
+              os.trial_ends_at::text trial_ends_at,os.current_period_end::text current_period_end,
+              bp.white_label
+       FROM organization_subscriptions os
+       JOIN billing_plans bp ON bp.id=os.plan_id
+       WHERE os.organization_id=membership.organization_id
+       LIMIT 1
+     ) subscription ON true
      WHERE u.id=$1 AND u.active=true`,
     [payload.userId],
   );
@@ -145,6 +171,11 @@ export async function getSession(): Promise<AuthSession | null> {
     siteId: user.site_id,
     accessAllSites: user.platform_role === "superadmin" ? true : Boolean(user.access_all_sites),
     siteIds: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
+    planCode: user.platform_role === "superadmin" ? null : user.plan_code,
+    subscriptionStatus: user.platform_role === "superadmin" ? "active" : user.subscription_status,
+    trialEndsAt: user.platform_role === "superadmin" ? null : user.trial_ends_at,
+    currentPeriodEnd: user.platform_role === "superadmin" ? null : user.current_period_end,
+    whiteLabel: user.platform_role === "superadmin" ? true : Boolean(user.white_label),
   };
 }
 

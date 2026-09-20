@@ -147,7 +147,7 @@ export async function POST(
         }
       }
 
-      if (requestedRole === "technician" && current.role !== "technician") {
+      if (requestedRole === "technician" && (current.role !== "technician" || current.organization_id !== organizationId)) {
         const quota = await client.query<{ used: number; allowed: number }>(
           `SELECT (SELECT count(*)::int FROM organization_members WHERE organization_id=$1 AND role='technician') used,
                   COALESCE((SELECT max_technicians FROM organization_limits WHERE organization_id=$1),50)::int allowed`,

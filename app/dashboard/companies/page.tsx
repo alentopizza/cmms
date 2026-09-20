@@ -20,10 +20,19 @@ export default async function CompaniesPage({
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id) site_count,
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id AND sx.active=true) active_site_count,
         (SELECT count(*)::text FROM assets ax WHERE ax.organization_id=o.id) asset_count,
+        (SELECT count(*)::text FROM locations lx WHERE lx.organization_id=o.id) sublocation_count,
+        (SELECT count(*)::text FROM inventory_items ix WHERE ix.organization_id=o.id) inventory_item_count,
+        (SELECT count(*)::text FROM organization_members om WHERE om.organization_id=o.id AND om.role='technician') technician_count,
+        COALESCE(ol.max_sites,5)::text max_sites,
+        COALESCE(ol.max_sublocations,100)::text max_sublocations,
+        COALESCE(ol.max_assets,500)::text max_assets,
+        COALESCE(ol.max_inventory_items,1000)::text max_inventory_items,
+        COALESCE(ol.max_technicians,50)::text max_technicians,
         s.id site_id,s.name site_name,s.code site_code,s.city,s.country,s.address,
         (o.logo_data IS NOT NULL) has_logo,
         (o.cover_data IS NOT NULL) has_cover
        FROM organizations o
+       LEFT JOIN organization_limits ol ON ol.organization_id=o.id
        LEFT JOIN LATERAL (
          SELECT id,name,code,city,country,address
          FROM sites
@@ -59,7 +68,10 @@ export default async function CompaniesPage({
       <div className="section-heading sites-heading">
         <div><span className="eyebrow">Directorio</span><h2>Empresas registradas ({companies.rowCount})</h2></div>
       </div>
-      <CompanyDirectory companies={companies.rows} />
+      <CompanyDirectory
+        companies={companies.rows}
+        canManageResources={can(session, "company_resources.manage")}
+      />
     </section>
   </>;
 }

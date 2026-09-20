@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
@@ -7,6 +10,10 @@ export default async function CompaniesPage({
 }: {
   searchParams: Promise<{ create_error?: string; saved?: string; deleted?: string; error?: string }>;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session, "companies.manage")) redirect("/dashboard");
+
   const [companies, params] = await Promise.all([
     query<CompanyDirectoryItem>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,

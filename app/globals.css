@@ -1249,3 +1249,101 @@ html[data-theme="dark"] .company-entitlement-critical .company-entitlement-icon{
   .company-settings-profile{grid-template-columns:1fr}
   .company-settings-profile-meta{grid-template-columns:1fr}
 }
+
+
+/* SaaS plans, landing and subscription lifecycle */
+.marketing-page{min-height:100vh;background:linear-gradient(180deg,#f6fbfb 0,#fff 45%,#f5f8f9 100%);color:var(--text)}
+.marketing-hero{max-width:1320px;margin:0 auto;padding:24px 28px 80px}
+.marketing-nav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px 0 72px}
+.marketing-nav>div:last-child{display:flex;align-items:center;gap:14px}
+.marketing-nav a:not(.button){font-size:11px;font-weight:800;color:var(--brand-dark)}
+.marketing-brand{display:flex;align-items:center;gap:10px}
+.marketing-brand>span{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(145deg,var(--brand-teal),var(--brand-mint));color:#fff;font-weight:950}
+.marketing-brand strong{font-size:12px;letter-spacing:.08em;color:var(--brand-dark)}
+.marketing-hero-copy{max-width:850px;padding:40px 0}
+.marketing-hero-copy h1{margin:10px 0 16px;font-size:48px;line-height:1.06;letter-spacing:-.04em;color:var(--brand-dark)}
+.marketing-hero-copy p{max-width:720px;margin:0;color:var(--text-soft);font-size:16px;line-height:1.65}
+.marketing-hero-actions{display:flex;gap:10px;margin-top:26px}
+.marketing-plans{max-width:1320px;margin:0 auto;padding:70px 28px 100px}
+.marketing-section-heading{max-width:720px;margin-bottom:26px}
+.marketing-section-heading h2{margin:8px 0;font-size:31px;color:var(--brand-dark)}
+.marketing-section-heading p{margin:0;color:var(--text-soft);font-size:12px;line-height:1.6}
+.marketing-plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.marketing-plan-card{display:grid;gap:18px;align-content:start;padding:22px;border:1px solid var(--border);border-radius:18px;background:#fff;box-shadow:0 12px 28px rgba(41,54,68,.06)}
+.marketing-plan-card.featured{border-color:var(--brand-teal);box-shadow:0 14px 34px rgba(56,178,169,.14)}
+.marketing-plan-card>div:first-child>span{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-teal)}
+.marketing-plan-card h3{margin:5px 0 4px;color:var(--brand-dark);font-size:21px}
+.marketing-plan-card p{margin:0;min-height:52px;color:var(--text-soft);font-size:10px;line-height:1.55}
+.marketing-plan-price{font-size:18px;font-weight:900;color:var(--brand-dark)}
+.marketing-plan-card ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.marketing-plan-card li{position:relative;padding-left:16px;font-size:10px;color:var(--text-soft)}
+.marketing-plan-card li:before{content:"✓";position:absolute;left:0;color:var(--brand-teal);font-weight:900}
+
+.checkout-page,.subscription-gate-page{min-height:100vh;display:grid;place-items:center;padding:28px;background:linear-gradient(145deg,#eef7f7,#f8fafb)}
+.checkout-card{width:min(980px,100%);display:grid;grid-template-columns:.9fr 1.1fr;overflow:hidden;border:1px solid var(--border);border-radius:20px;background:#fff;box-shadow:0 28px 70px rgba(41,54,68,.14)}
+.checkout-summary{padding:34px;background:linear-gradient(145deg,#243746,#2d4653);color:#fff}
+.checkout-summary h1{margin:8px 0;color:#fff;font-size:30px}
+.checkout-summary p{color:#cad7dd;font-size:11px;line-height:1.6}
+.checkout-plan-stats{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.checkout-plan-stats span{padding:6px 8px;border-radius:999px;background:rgba(121,202,196,.13);border:1px solid rgba(121,202,196,.18);font-size:9px;color:#d9efed}
+.checkout-summary .notice{margin-top:24px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1);color:#d8e4e8}
+.checkout-form{display:grid;gap:13px;padding:34px}
+.checkout-form>a{font-size:10px;color:var(--brand-teal);font-weight:800}
+.checkout-existing-company{display:grid;gap:4px;padding:14px;border-radius:12px;background:var(--surface-soft);border:1px solid var(--border)}
+.checkout-existing-company span{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:900}
+.checkout-existing-company strong{font-size:15px;color:var(--brand-dark)}
+.checkout-existing-company small{font-size:9px;color:var(--text-soft)}
+
+.subscription-gate-card{width:min(560px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:42px;border:1px solid var(--border);border-radius:20px;background:#fff;box-shadow:0 24px 60px rgba(41,54,68,.12)}
+.subscription-gate-icon{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#fff0f2;color:#b53342;font-size:22px;font-weight:950}
+.subscription-gate-card h1{margin:2px 0;color:var(--brand-dark);font-size:27px}
+.subscription-gate-card p{margin:0;color:var(--text-soft);font-size:12px;line-height:1.65}
+.subscription-gate-actions{display:flex;gap:10px;margin-top:12px}
+.subscription-gate-card>small{margin-top:8px;color:var(--text-soft);font-size:9px}
+
+.plan-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.plan-choice{position:relative;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft);cursor:pointer}
+.plan-choice:has(input:checked){border-color:var(--brand-teal);background:#eefaf8;box-shadow:0 0 0 3px rgba(56,178,169,.07)}
+.plan-choice input{accent-color:var(--brand-teal)}
+.plan-choice>span{display:grid;gap:3px}
+.plan-choice strong{font-size:11px;color:var(--brand-dark)}
+.plan-choice small{font-size:9px;color:var(--text-soft);line-height:1.4}
+
+.company-plan-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;border-left:4px solid var(--brand-teal)}
+.company-plan-banner h2{margin:0;color:var(--brand-dark);font-size:19px}
+.company-plan-banner p{margin:4px 0 0;color:var(--text-soft);font-size:10px}
+.company-plan-meta{display:grid;gap:4px;text-align:right}
+.company-plan-meta span{font-size:9px;font-weight:900;text-transform:uppercase;color:var(--brand-teal)}
+.company-plan-meta strong{font-size:10px;color:var(--brand-dark)}
+
+.white-label-panel{display:grid;gap:18px;padding:22px}
+.white-label-form{display:grid;gap:16px}
+.white-label-checkbox{display:flex;align-items:center;gap:9px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft);font-size:10px;color:var(--text)}
+.white-label-checkbox input{accent-color:var(--brand-teal)}
+
+html[data-theme="dark"] .marketing-page{background:linear-gradient(180deg,#17212a,#1b2730);color:var(--text)}
+html[data-theme="dark"] .marketing-brand strong,
+html[data-theme="dark"] .marketing-nav a:not(.button),
+html[data-theme="dark"] .marketing-hero-copy h1,
+html[data-theme="dark"] .marketing-section-heading h2,
+html[data-theme="dark"] .marketing-plan-card h3,
+html[data-theme="dark"] .marketing-plan-price,
+html[data-theme="dark"] .checkout-existing-company strong,
+html[data-theme="dark"] .subscription-gate-card h1,
+html[data-theme="dark"] .plan-choice strong,
+html[data-theme="dark"] .company-plan-banner h2,
+html[data-theme="dark"] .company-plan-meta strong{color:var(--text)}
+html[data-theme="dark"] .marketing-plan-card,
+html[data-theme="dark"] .checkout-card,
+html[data-theme="dark"] .subscription-gate-card{background:#22303c}
+html[data-theme="dark"] .checkout-page,
+html[data-theme="dark"] .subscription-gate-page{background:linear-gradient(145deg,#17212a,#1e2a34)}
+html[data-theme="dark"] .plan-choice{background:var(--surface-soft)}
+html[data-theme="dark"] .plan-choice:has(input:checked){background:#203c3d}
+
+@media(max-width:1080px){.marketing-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .marketing-hero{padding:18px 18px 56px}.marketing-nav{padding-bottom:44px}.marketing-hero-copy h1{font-size:36px}
+  .marketing-plans{padding:50px 18px 70px}.marketing-plan-grid{grid-template-columns:1fr}.checkout-card{grid-template-columns:1fr}
+  .plan-choice-grid{grid-template-columns:1fr}.company-plan-banner{align-items:flex-start;flex-direction:column}.company-plan-meta{text-align:left}
+}

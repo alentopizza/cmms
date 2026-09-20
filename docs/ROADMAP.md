@@ -30,6 +30,10 @@ This roadmap is directional and should be updated as priorities change.
 - tenant-scoped operational queries
 - user and role administration module
 - company administrator settings with resource-capacity health
+- SaaS plan catalog and organization subscriptions
+- 15-day trial lifecycle and expiration gate
+- public landing and simulated checkout/provisioning flow
+- Pro organization white-label foundation
 
 ## Next functional priorities
 
@@ -106,3 +110,13 @@ This roadmap is directional and should be updated as priorities change.
 - exports;
 - richer audit trails;
 - external API/integrations.
+
+
+## Commercialization path
+
+1. Validate Trial/Básico/Medio/Pro provisioning with the simulated checkout.
+2. Finalize monthly prices and commercial copy.
+3. Integrate the selected payment provider through hosted checkout + signed webhooks.
+4. Replace simulated paid activation with verified payment events.
+5. Add renewal, past-due and cancellation webhook handling.
+6. Finalize the public marketing landing and conversion analytics.

@@ -94,3 +94,17 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 8. Work-order lifecycle.
 9. Preventive maintenance generation and scheduling.
 10. Metrics, notifications and final visual refinement.
+
+
+## Commercial plans
+
+The SaaS catalog has four active tiers:
+
+- **Prueba:** 15 days, 1 principal location, 10 sublocations, 25 assets, 25 inventory items and 2 technicians.
+- **Básico:** 3 principal locations, 50 sublocations, 150 assets, 250 inventory items and 5 technicians.
+- **Medio:** 10 principal locations, 250 sublocations, 750 assets, 1,000 inventory items and 20 technicians.
+- **Pro:** 30 principal locations, 1,000 sublocations, 3,000 assets, 5,000 inventory items, 75 technicians and organization white-label branding.
+
+Paid tiers are modeled as monthly subscriptions. Pricing remains commercially configurable and is not hard-coded into product behavior.
+
+A trial expires 15 days after activation. After expiry, the organization data is preserved but tenant users are redirected to the subscription screen and cannot operate the CMMS until a paid plan is activated.

@@ -30,6 +30,7 @@ export default function NewCompanyModal({ error }: { error?: string }) {
     "image-required": "Debes cargar el logo y la foto de portada.",
     "image-type": "Las imágenes deben ser PNG, JPG o WebP.",
     "image-size": "Una de las imágenes supera el tamaño permitido.",
+    plan: "Selecciona un plan válido.",
   };
   const errorMessage = error ? errorMessages[error] || "No se pudo crear la empresa." : "";
 
@@ -97,14 +98,13 @@ export default function NewCompanyModal({ error }: { error?: string }) {
           </div>
 
           <div className="modal-section">
-            <div className="modal-section-title"><strong>Recursos asignados</strong><span>Límites del plan</span></div>
-            <p className="muted resource-help">Estos cupos controlan lo que la empresa podrá crear. Se pueden ampliar posteriormente.</p>
-            <div className="resource-limit-grid">
-              <div className="field"><label htmlFor="max-sites">Ubicaciones principales</label><input id="max-sites" name="max_sites" type="number" min="1" defaultValue="5" required /></div>
-              <div className="field"><label htmlFor="max-sublocations">Sububicaciones</label><input id="max-sublocations" name="max_sublocations" type="number" min="0" defaultValue="100" required /></div>
-              <div className="field"><label htmlFor="max-assets">Activos</label><input id="max-assets" name="max_assets" type="number" min="0" defaultValue="500" required /></div>
-              <div className="field"><label htmlFor="max-inventory">Artículos de inventario</label><input id="max-inventory" name="max_inventory_items" type="number" min="0" defaultValue="1000" required /></div>
-              <div className="field"><label htmlFor="max-technicians">Técnicos</label><input id="max-technicians" name="max_technicians" type="number" min="0" defaultValue="50" required /></div>
+            <div className="modal-section-title"><strong>Plan de la empresa</strong><span>Suscripción mensual</span></div>
+            <p className="muted resource-help">El plan define los cupos iniciales. Los ajustes comerciales especiales pueden hacerse después desde la edición de la empresa.</p>
+            <div className="plan-choice-grid">
+              <label className="plan-choice"><input type="radio" name="plan_code" value="trial" /><span><strong>Prueba</strong><small>15 días · 1 sede · 25 activos · 2 técnicos</small></span></label>
+              <label className="plan-choice"><input type="radio" name="plan_code" value="basic" /><span><strong>Básico</strong><small>3 sedes · 150 activos · 5 técnicos</small></span></label>
+              <label className="plan-choice"><input type="radio" name="plan_code" value="medium" defaultChecked /><span><strong>Medio</strong><small>10 sedes · 750 activos · 20 técnicos</small></span></label>
+              <label className="plan-choice"><input type="radio" name="plan_code" value="pro" /><span><strong>Pro</strong><small>30 sedes · 3000 activos · 75 técnicos · marca blanca</small></span></label>
             </div>
           </div>
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-20 — SaaS plans, trial lifecycle and test landing
+
+### Added
+
+- Added Trial, Básico, Medio and Pro billing plans with resource defaults.
+- Added organization subscriptions, monthly periods, subscription status and lifecycle events.
+- Added a 15-day Trial plan and operational access blocking after trial expiration.
+- Added a public product landing with plan comparison.
+- Added a clearly labeled simulated checkout for provisioning tests without card processing.
+- Added automatic creation of organization, limits, primary site, administrator and subscription from the test checkout.
+- Added simulated paid-plan activation for existing expired tenants without creating a duplicate organization.
+- Superadmin company creation now starts from a plan selection instead of arbitrary initial quotas.
+- Added Pro-only organization white-label persistence for platform name, colors and light/dark logos.
+- Added Pro white-label controls to company settings and applied tenant branding to the authenticated dashboard.
+- Existing companies are backfilled as active Medium subscriptions with preserved custom limits.
+
+
 ## 2026-09-20 — Company administrator settings and role simplification
 
 ### Changed

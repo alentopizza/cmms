@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { subscriptionLabel } from "@/lib/billing";
 import ThemePreferences from "@/components/ThemePreferences";
 
 type CompanySettingsRow = {
@@ -24,6 +25,19 @@ type CompanySettingsRow = {
   max_assets: number;
   max_inventory_items: number;
   max_technicians: number;
+  plan_code: "trial" | "basic" | "medium" | "pro";
+  plan_name: string;
+  plan_description: string | null;
+  subscription_status: "trialing" | "trial_expired" | "active" | "past_due" | "suspended" | "canceled";
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  white_label: boolean;
+  branding_app_name: string | null;
+  branding_primary_color: string | null;
+  branding_secondary_color: string | null;
+  branding_logo_light: boolean;
+  branding_logo_dark: boolean;
+  show_desweb_branding: boolean;
 };
 
 type ResourceCard = {
@@ -43,7 +57,15 @@ function resourceState(used: number, limit: number) {
   return { ratio, state: "normal", label: "Disponible" };
 }
 
-function CompanySettings({ company }: { company: CompanySettingsRow }) {
+function CompanySettings({
+  company,
+  brandingSaved,
+  brandingError,
+}: {
+  company: CompanySettingsRow;
+  brandingSaved?: boolean;
+  brandingError?: boolean;
+}) {
   const resources: ResourceCard[] = [
     { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "⌂" },
     { key: "locations", label: "Sububicaciones", description: "Áreas, pisos, habitaciones y demás espacios internos.", used: company.sublocation_count, limit: company.max_sublocations, icon: "⌗" },
@@ -63,6 +85,22 @@ function CompanySettings({ company }: { company: CompanySettingsRow }) {
     </header>
 
     <section className="company-settings-hero section">
+      <article className="card company-plan-banner">
+        <div>
+          <span className="settings-kicker">Plan actual</span>
+          <h2>{company.plan_name}</h2>
+          <p>{company.plan_description}</p>
+        </div>
+        <div className="company-plan-meta">
+          <span>{subscriptionLabel(company.subscription_status, company.trial_ends_at)}</span>
+          <strong>{company.subscription_status === "trialing" && company.trial_ends_at
+            ? `Vence ${new Date(company.trial_ends_at).toLocaleDateString("es-CO")}`
+            : company.current_period_end
+              ? `Renueva ${new Date(company.current_period_end).toLocaleDateString("es-CO")}`
+              : "Sin fecha de renovación"}</strong>
+        </div>
+      </article>
+
       <article className="card company-settings-profile">
         <div className="company-settings-profile-mark">{company.name.split(/\s+/).slice(0,2).map(part => part[0]).join("").toUpperCase()}</div>
         <div>
@@ -119,6 +157,30 @@ function CompanySettings({ company }: { company: CompanySettingsRow }) {
       </div>
     </section>
 
+    {company.white_label && <section className="card section white-label-panel">
+      <div className="settings-panel-head">
+        <div>
+          <span className="settings-kicker">Pro · Marca blanca</span>
+          <h2>Identidad de tu plataforma</h2>
+          <p>Personaliza el nombre, colores y logos visibles dentro del panel de tu empresa.</p>
+        </div>
+        <span className="settings-panel-icon" aria-hidden="true">✦</span>
+      </div>
+      {brandingSaved && <div className="notice success">La identidad visual de tu empresa se actualizó correctamente.</div>}
+      {brandingError && <div className="notice error">No fue posible guardar la personalización. Revisa colores y archivos.</div>}
+      <form className="white-label-form" method="post" action="/api/organization-branding" encType="multipart/form-data">
+        <div className="form-grid">
+          <div className="field form-span-2"><label>Nombre de la plataforma</label><input name="app_name" defaultValue={company.branding_app_name || `${company.name} CMMS`} required /></div>
+          <div className="field"><label>Color principal</label><input name="primary_color" type="color" defaultValue={company.branding_primary_color || "#38B2A9"} required /></div>
+          <div className="field"><label>Color secundario</label><input name="secondary_color" type="color" defaultValue={company.branding_secondary_color || "#79CAC4"} required /></div>
+          <div className="field"><label>Logo para fondo claro</label><input name="logo_on_light" type="file" accept="image/png,image/jpeg,image/webp" /><small>{company.branding_logo_light ? "Logo personalizado cargado." : "PNG, JPG o WebP · máximo 2 MB."}</small></div>
+          <div className="field"><label>Logo para fondo oscuro</label><input name="logo_on_dark" type="file" accept="image/png,image/jpeg,image/webp" /><small>{company.branding_logo_dark ? "Logo personalizado cargado." : "PNG, JPG o WebP · máximo 2 MB."}</small></div>
+          <label className="white-label-checkbox form-span-2"><input name="show_desweb_branding" type="checkbox" defaultChecked={company.show_desweb_branding} /><span>Mostrar “Desweb · Desarrollo de Soluciones” en el pie del panel.</span></label>
+        </div>
+        <div className="form-actions"><button className="button" type="submit">Guardar identidad visual</button></div>
+      </form>
+    </section>}
+
     <section className="settings-grid section company-settings-actions">
       <article className="card settings-panel">
         <div className="settings-panel-head">
@@ -153,9 +215,14 @@ function CompanySettings({ company }: { company: CompanySettingsRow }) {
   </>;
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ branding_saved?: string; branding_error?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const params = await searchParams;
 
   const isPlatformAdmin = can(session, "personalization.manage");
   const isCompanyAdmin = can(session, "settings.view");
@@ -234,14 +301,29 @@ export default async function SettingsPage() {
             COALESCE(ol.max_sublocations,100)::int max_sublocations,
             COALESCE(ol.max_assets,500)::int max_assets,
             COALESCE(ol.max_inventory_items,1000)::int max_inventory_items,
-            COALESCE(ol.max_technicians,50)::int max_technicians
+            COALESCE(ol.max_technicians,50)::int max_technicians,
+            bp.code plan_code,bp.name plan_name,bp.description plan_description,
+            os.status subscription_status,os.trial_ends_at::text trial_ends_at,
+            os.current_period_end::text current_period_end,bp.white_label,
+            ob.app_name branding_app_name,ob.primary_color branding_primary_color,
+            ob.secondary_color branding_secondary_color,
+            (ob.logo_on_light IS NOT NULL) branding_logo_light,
+            (ob.logo_on_dark IS NOT NULL) branding_logo_dark,
+            COALESCE(ob.show_desweb_branding,false) show_desweb_branding
      FROM organizations o
      LEFT JOIN organization_limits ol ON ol.organization_id=o.id
+     JOIN organization_subscriptions os ON os.organization_id=o.id
+     JOIN billing_plans bp ON bp.id=os.plan_id
+     LEFT JOIN organization_branding ob ON ob.organization_id=o.id
      WHERE o.id=$1
      LIMIT 1`,
     [session.organizationId],
   );
 
   if (!company.rowCount) redirect("/dashboard");
-  return <CompanySettings company={company.rows[0]} />;
+  return <CompanySettings
+    company={company.rows[0]}
+    brandingSaved={params.branding_saved === "1"}
+    brandingError={Boolean(params.branding_error)}
+  />;
 }

@@ -163,3 +163,17 @@ Migration `006_multi_site_user_access.sql` adds explicit site scope to organizat
 - The legacy `organization_members.site_id` column remains for schema compatibility but is no longer the source of truth for authorization.
 - Auth sessions resolve both `accessAllSites` and `siteIds`.
 - Server routes must verify site scope with the authenticated session; UI filtering alone is not sufficient.
+
+
+## SaaS plans and subscriptions
+
+Migration `008_saas_plans_and_subscriptions.sql` introduces the commercial SaaS layer.
+
+- `billing_plans` stores Trial, Básico, Medio and Pro definitions and their default entitlements.
+- `organization_subscriptions` stores one effective subscription per organization, including status, trial dates, monthly period dates, source and whether limits were commercially overridden.
+- `subscription_events` records plan lifecycle events.
+- effective operational limits continue to live in `organization_limits`; assigning or changing a plan copies the plan defaults there, allowing later per-customer overrides without mutating the catalog plan.
+- expired/suspended/canceled tenant subscriptions are blocked from the authenticated dashboard while their data remains intact.
+- the public test checkout is intentionally a provisioning simulator, not a payment processor. It can be disabled with `TEST_CHECKOUT_ENABLED=false`.
+
+Migration `009_organization_branding.sql` adds per-organization white-label branding. Only an active Pro company administrator may change tenant branding. The dashboard shell applies the organization name/colors/logos after authentication; global Desweb branding remains the fallback.

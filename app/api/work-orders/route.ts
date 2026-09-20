@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     : await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND organization_id=$2", [assetId, session.organizationId]);
 
   if (!asset.rowCount || !title) return new NextResponse("Equipo o título inválido", { status: 400 });
+  if (!canAccessSite(session, asset.rows[0].site_id)) return new NextResponse("Forbidden", { status: 403 });
 
   await query(
     `INSERT INTO work_orders(organization_id,site_id,asset_id,title,type,priority,requested_by)

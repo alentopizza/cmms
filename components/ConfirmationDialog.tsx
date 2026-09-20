@@ -32,7 +32,15 @@ export default function ConfirmationDialog({ title = "Guardar cambios", message,
 
   return createPortal(<dialog ref={ref} className={`confirmation-dialog ${danger ? "confirmation-danger" : ""}`} aria-labelledby={titleId} aria-describedby={messageId}
     onCancel={event => { event.preventDefault(); onCancel(); }}
-    onKeyDown={event => { if (event.key === "Escape") event.stopPropagation(); }}>
+    onKeyDown={event => {
+      if (event.key === "Escape") event.stopPropagation();
+      if (event.key !== "Tab") return;
+      const buttons = ref.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+      if (!buttons?.length) return;
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }}>
     <div className="confirmation-content">
       <div className="confirmation-symbol" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">

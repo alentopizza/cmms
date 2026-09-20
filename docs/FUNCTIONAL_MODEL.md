@@ -46,6 +46,8 @@ Initial controlled resources:
 - inventory articles;
 - technicians.
 
+Only the **Super administrator** can assign or change these resource entitlements. Company administrators consume the assigned capacity but cannot view or edit contractual/platform limits from their operational role.
+
 Creating a record at the limit must fail on the server with a clear message. Deactivation preserves history and does not normally release an entitlement; only permanent deletion does. This rule prevents plans from being bypassed by repeatedly deactivating records.
 
 ## Operational creation flow

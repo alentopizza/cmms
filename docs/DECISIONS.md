@@ -81,3 +81,12 @@ Application accounts use the existing `users` and `organization_members` domain 
 A platform role distinguishes superadministrators from organization users. Organization roles are `owner`, `admin`, `manager`, `technician`, `requester` and `viewer`. The permission matrix is centralized in `lib/permissions.ts`.
 
 Authorization is defense-in-depth: navigation is filtered for usability, pages reject unauthorized direct access, API mutations re-check permissions, and tenant data queries are scoped by the organization resolved from the authenticated session.
+
+
+## ADR-012 — Resource entitlements are platform-admin controls
+
+Status: accepted.
+
+Organization resource limits are commercial/platform entitlements rather than daily maintenance configuration. Only a platform superadministrator may assign or change them. Company administrators and other organization roles consume those limits but do not receive entitlement-management permission.
+
+The company detail editor surfaces both current usage and configured capacity to authorized platform administrators, and entitlement changes are protected independently at the server route.

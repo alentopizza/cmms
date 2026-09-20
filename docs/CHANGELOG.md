@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-20 — Company resource entitlement editing
+
+### Changed
+
+- Added current usage and assigned resource limits to the company detail modal.
+- Superadministrators can now edit principal-location, sublocation, asset, inventory and technician quotas from the same **Editar información** flow.
+- Resource changes are saved transactionally with the company update.
+- Added an explicit `company_resources.manage` authorization capability reserved to platform superadministrators.
+- Company administrators remain unable to modify platform resource entitlements.
+
+
 ## 2026-09-19 — Users directory null-scope fix
 
 ### Fixed

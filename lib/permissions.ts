@@ -1,6 +1,7 @@
 export type OrganizationRole = "owner" | "admin" | "manager" | "technician" | "requester" | "viewer";
 export type Permission =
   | "companies.manage"
+  | "company_resources.manage"
   | "personalization.manage"
   | "users.manage"
   | "locations.manage"

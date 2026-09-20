@@ -1129,3 +1129,28 @@ html[data-theme="dark"] .site-checkbox-card strong{color:var(--text)}
 @media(max-width:620px){
   .site-access-mode,.site-checkbox-grid{grid-template-columns:1fr}
 }
+
+
+/* Company resource entitlements */
+.company-resource-section{gap:12px}
+.company-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.company-resource-item{
+  display:grid;
+  gap:10px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-soft);
+}
+.company-resource-item-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.company-resource-item-head span{font-size:10px;font-weight:800;color:var(--text-soft)}
+.company-resource-item-head strong{font-size:11px;color:var(--brand-dark)}
+.company-resource-track{height:6px;overflow:hidden;border-radius:999px;background:#dde7ea}
+.company-resource-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand-teal),var(--brand-mint))}
+.company-resource-item .field{gap:5px}
+.company-resource-item .field label{font-size:9px}
+.company-resource-item .field input{min-height:38px}
+html[data-theme="dark"] .company-resource-item{background:var(--surface-soft)}
+html[data-theme="dark"] .company-resource-item-head strong{color:var(--text)}
+html[data-theme="dark"] .company-resource-track{background:#334550}
+@media(max-width:700px){.company-resource-grid{grid-template-columns:1fr}}

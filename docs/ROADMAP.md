@@ -24,6 +24,11 @@ This roadmap is directional and should be updated as priorities change.
 - company and site activation states
 - visual company directory with logo and cover images
 - popup-based company creation
+- database-backed user login and password hashing
+- signed identity sessions
+- role-based navigation and server authorization
+- tenant-scoped operational queries
+- user and role administration module
 
 ## Next functional priorities
 
@@ -63,12 +68,14 @@ This roadmap is directional and should be updated as priorities change.
    - automatic work-order generation.
 
 4. Users and authorization
-   - real user login;
-   - password hashing;
+   - real user login — foundation implemented;
+   - password hashing — implemented;
+   - organization membership — implemented;
+   - role-based authorization — foundation implemented;
+   - account editing, deactivation and password reset;
    - invitations;
-   - organization membership;
-   - site-level restrictions;
-   - role-based authorization.
+   - stronger site-level restrictions for operational records;
+   - technician profile/account linkage.
 
 5. Inventory
    - part creation/editing;

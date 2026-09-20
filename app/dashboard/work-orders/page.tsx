@@ -19,18 +19,32 @@ export default async function WorkOrdersPage() {
           `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id ORDER BY w.requested_at DESC LIMIT 200`)
       : requesterOnly
-        ? query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
-            `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-             FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
-             WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`, [orgId, session.userId])
-        : query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
-            `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-             FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
-             WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 200`, [orgId]),
+        ? (session.accessAllSites
+            ? query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
+                `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+                 FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+                 WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`, [orgId, session.userId])
+            : query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
+                `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+                 FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+                 WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id = ANY($3::uuid[])
+                 ORDER BY w.requested_at DESC LIMIT 200`, [orgId, session.userId, session.siteIds]))
+        : (session.accessAllSites
+            ? query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
+                `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+                 FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+                 WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 200`, [orgId])
+            : query<{id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string}>(
+                `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+                 FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+                 WHERE w.organization_id=$1 AND w.site_id = ANY($2::uuid[])
+                 ORDER BY w.requested_at DESC LIMIT 200`, [orgId, session.siteIds])),
     canWrite
       ? (superadmin
           ? query<{id:string;label:string}>(`SELECT a.id,o.name || ' · ' || s.name || ' · ' || a.code || ' ' || a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status <> 'retired' ORDER BY o.name,a.name`)
-          : query<{id:string;label:string}>(`SELECT a.id,s.name || ' · ' || a.code || ' ' || a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status <> 'retired' ORDER BY a.name`, [orgId]))
+          : session.accessAllSites
+            ? query<{id:string;label:string}>(`SELECT a.id,s.name || ' · ' || a.code || ' ' || a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status <> 'retired' ORDER BY a.name`, [orgId])
+            : query<{id:string;label:string}>(`SELECT a.id,s.name || ' · ' || a.code || ' ' || a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id = ANY($2::uuid[]) AND a.status <> 'retired' ORDER BY a.name`, [orgId, session.siteIds]))
       : Promise.resolve({ rows: [] } as { rows: {id:string;label:string}[] }),
   ]);
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-20 — Company administrator settings and role simplification
+
+### Changed
+
+- Removed the redundant **Propietario** organization role.
+- Added migration `007_remove_owner_role.sql` to convert existing `owner` memberships to `admin` and tighten the database role constraint.
+- **Administrador de empresa** is now the highest organization-level role.
+- Added `settings.view` for company administrators without granting global personalization or resource-entitlement editing.
+- Added a tenant-specific **Configuración de empresa** view with company information and resource consumption.
+- Resource cards show assigned capacity, consumed capacity, remaining capacity and percentage used.
+- Resource status changes from teal to warning at 80% and critical at 95% or above.
+- Resource limits remain read-only for company administrators and editable only by Superadministrators.
+
+
 ## 2026-09-20 — Company resource entitlement editing
 
 ### Changed

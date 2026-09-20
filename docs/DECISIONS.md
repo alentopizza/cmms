@@ -101,3 +101,22 @@ The company administrator is the highest organization-level role. It may access 
 Resource entitlement editing remains exclusive to the platform superadministrator. Company administrators receive a separate `settings.view` permission, while `company_resources.manage` remains platform-only.
 
 Capacity health uses three visual states: normal below 80%, warning from 80% through 94%, and critical at 95% or above.
+
+
+## ADR-014 — Plans define defaults; organization limits remain effective entitlements
+
+Status: accepted.
+
+Commercial plans define default capacity and product capabilities. Assigning a plan copies its capacity into `organization_limits`, which remains the effective enforcement source. This allows negotiated per-customer overrides without changing the shared plan catalog.
+
+## ADR-015 — Trial expiration blocks operation without deleting tenant data
+
+Status: accepted.
+
+The Trial plan lasts 15 days. When it expires, tenant authentication may still identify the account, but operational dashboard access is blocked and the user is directed to select a paid plan. Tenant data is retained for recovery after purchase.
+
+## ADR-016 — Pro enables organization white label
+
+Status: accepted.
+
+White-label branding is an entitlement of the Pro plan. Organization administrators on Pro may configure their panel name, primary/secondary colors and light/dark logos. Non-Pro tenants always use platform branding.

@@ -11,6 +11,7 @@ export type DashboardNavItem = {
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/dashboard/settings" && pathname.startsWith("/dashboard/personalization")) return true;
   return pathname === href || pathname.startsWith(href + "/");
 }
 

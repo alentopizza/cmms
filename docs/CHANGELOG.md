@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-19 — Multi-site user access
+
+### Added
+
+- Added migration `006_multi_site_user_access.sql` with all-site or explicit multi-site membership scope.
+- Replaced the single-site user selector with company-dependent **Todas las sedes / Sedes específicas** access controls.
+- Added individual site checkboxes that only show active sites belonging to the selected company.
+- Persisted selected sites in `organization_member_sites` and exposed them in authenticated sessions.
+- Updated user cards to summarize all authorized sites.
+- Scoped dashboard metrics, locations, assets, work orders, preventive plans and inventory by assigned sites.
+- Added server-side site authorization to asset/work-order creation and location mutations.
+- Restricted limited-scope administrators from granting sites outside their own authorized scope.
+
+
 ## 2026-09-19 — Context header and account menu
 
 ### Changed

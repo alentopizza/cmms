@@ -13,9 +13,11 @@ const themeScript = `
 (function () {
   try {
     var saved = localStorage.getItem("desweb-theme");
+    var preference = saved === "dark" || saved === "light" || saved === "system" ? saved : "system";
     var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var theme = saved === "dark" || saved === "light" ? saved : (systemDark ? "dark" : "light");
+    var theme = preference === "system" ? (systemDark ? "dark" : "light") : preference;
     document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.themePreference = preference;
   } catch (_) {
     document.documentElement.dataset.theme = "light";
   }

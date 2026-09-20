@@ -29,11 +29,12 @@ function currentSection(pathname: string) {
 export function CurrentSectionHeader({ organizationName }: { organizationName: string | null }) {
   const pathname = usePathname();
   const section = currentSection(pathname);
+  const contextualEyebrow = pathname.startsWith("/dashboard/settings") && organizationName ? "Empresa" : section.eyebrow;
 
   return <header className="context-header">
     <div className="context-header-icon" aria-hidden="true">{section.icon}</div>
     <div className="context-header-copy">
-      <span>{section.eyebrow}</span>
+      <span>{contextualEyebrow}</span>
       <strong>{section.label}</strong>
       {organizationName && <small>{organizationName}</small>}
     </div>
@@ -77,7 +78,7 @@ export function SidebarAccountMenu({
       </div>
       {canConfigure && <Link role="menuitem" href="/dashboard/settings" onClick={() => setOpen(false)}>
         <span className="account-menu-icon">⚙</span>
-        <span><strong>Configuración</strong><small>Apariencia y plataforma</small></span>
+        <span><strong>Configuración</strong><small>Cuenta, empresa y plataforma</small></span>
       </Link>}
       <form method="post" action="/api/auth/logout">
         <button type="submit" role="menuitem">

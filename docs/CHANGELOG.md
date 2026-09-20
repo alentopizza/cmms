@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-19 — Users directory null-scope fix
+
+### Fixed
+
+- Normalized site access arrays for global/superadministrator accounts that do not have an organization membership row.
+- Made the user directory and edit modal null-safe when rendering site assignments.
+- Prevented `/dashboard/users` from failing when a global account is included in the directory.
+
+
 ## 2026-09-19 — Multi-site user access
 
 ### Added

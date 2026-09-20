@@ -32,7 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new NextResponse("Ubicación no encontrada", { status: 404 });
     }
     const organizationId = site.rows[0].organization_id;
-    if (!canAccessSite(session, id)) {
+    if (!canAccessSite(session, siteId)) {
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });
     }

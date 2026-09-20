@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, roleLabel, type Permission } from "@/lib/permissions";
 import { getCustomizationSummary, logoOnDarkSrc } from "@/lib/customization";
-import { HeaderTabs, SidebarNavigation, type DashboardNavItem } from "@/components/DashboardNavigation";
+import { SidebarNavigation, type DashboardNavItem } from "@/components/DashboardNavigation";
+import { CurrentSectionHeader, SidebarAccountMenu } from "@/components/DashboardChrome";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,6 @@ const navItems: NavItem[] = [
   { icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
   { icon: "↻", label: "Preventivos", href: "/dashboard/maintenance", permission: "maintenance.read" },
   { icon: "▤", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
-  { icon: "⚙", label: "Configuración", href: "/dashboard/settings", permission: "personalization.manage" },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const customization = await getCustomizationSummary();
   const visibleItems = navItems.filter(item => !item.permission || can(session, item.permission));
   const navigationItems: DashboardNavItem[] = visibleItems.map(({ icon, label, href }) => ({ icon, label, href }));
+  const canConfigure = can(session, "personalization.manage");
 
   return <div className="shell">
     <aside className="sidebar">
@@ -43,36 +43,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <SidebarNavigation items={navigationItems} />
 
-      <div className="sidebar-footer">
-        <span>DESWEB</span>
-        <small>Desarrollo de Soluciones</small>
+      <div className="sidebar-bottom">
+        <SidebarAccountMenu
+          fullName={session.fullName}
+          role={roleLabel(session)}
+          canConfigure={canConfigure}
+        />
+        <div className="sidebar-signature">
+          <span>DESWEB</span>
+          <small>Desarrollo de Soluciones</small>
+        </div>
       </div>
     </aside>
 
     <main className="main">
-      <header className="app-header">
-        <div className="app-header-top">
-          <div className="app-header-brand">
-            <span className="app-header-mark">D</span>
-            <div>
-              <span>{session.organizationName || "Desweb CMMS"}</span>
-              <strong>Centro de mantenimiento</strong>
-            </div>
-          </div>
-
-          <div className="app-header-actions">
-            <div className="session-identity">
-              <strong>{session.fullName}</strong>
-              <span>{roleLabel(session)}</span>
-            </div>
-            {can(session, "personalization.manage") && <Link className="header-icon-button" href="/dashboard/settings" aria-label="Configuración" title="Configuración">⚙</Link>}
-            <form method="post" action="/api/auth/logout"><button className="header-logout" type="submit">Salir</button></form>
-          </div>
-        </div>
-
-        <HeaderTabs items={navigationItems} />
-      </header>
-
+      <CurrentSectionHeader organizationName={session.organizationName} />
       <div className="workspace-content">{children}</div>
     </main>
   </div>;

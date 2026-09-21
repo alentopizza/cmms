@@ -177,3 +177,14 @@ Rules:
 - field-worker productivity must be based on assigned activities / attendance evidence, not global organization totals;
 - requester metrics must use only requests created by that requester;
 - do not label subscription-plan arithmetic as collected revenue. Until payment ledger/reconciliation exists, use **MRR estimado** or equivalent explicit wording.
+
+
+## Dashboard filtering/export invariant
+
+Dashboard filters must never broaden authorization. Date/status filters are applied after the same role, organization, site, assignee/provider/requester scope used by the on-screen dashboard.
+
+Dashboard exports must preserve those exact scopes and selected filters.
+
+Power BI export means an interoperable tabular dataset (currently UTF-8 CSV), not a generated proprietary PBIX file.
+
+PDF exports are generated server-side and must not include records outside the authenticated user's dashboard scope.

@@ -188,3 +188,17 @@ Dashboard exports must preserve those exact scopes and selected filters.
 Power BI export means an interoperable tabular dataset (currently UTF-8 CSV), not a generated proprietary PBIX file.
 
 PDF exports are generated server-side and must not include records outside the authenticated user's dashboard scope.
+
+
+## Per-company hierarchy isolation
+
+Never aggregate creation prerequisites across organizations as if they formed one hierarchy.
+
+Platform roles may see many companies, but readiness must be evaluated independently for each organization. It is invalid to satisfy:
+- company from organization A,
+- site from organization B,
+- sub-location or supplier from organization C.
+
+When no organization can complete a target creation, show the shared prerequisite state and route to the first missing dependency on the closest valid organization path.
+
+Creation endpoints must re-check the resolved organization, even when the UI already gated the action.

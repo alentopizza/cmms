@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
+import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -40,8 +41,18 @@ export async function POST(
   const intent = String(form.get("intent") || "update");
 
   if (intent === "delete") {
-    const deleted = await query("DELETE FROM organizations WHERE id=$1", [id]);
-    if (!deleted.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
+    if (!isPlatformOwner(session)) return new NextResponse("Forbidden", { status: 403 });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await forceDeleteRecord(client, "organizations", id, { userId: session.userId, email: session.email });
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
     return NextResponse.redirect(directoryUrl(request.url, "?deleted=1"), 303);
   }
 

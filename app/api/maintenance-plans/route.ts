@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 const UNITS=new Set(["day","week","month","year"]);
 
@@ -37,6 +38,9 @@ export async function POST(request:Request) {
 
   if(!asset.rowCount) return NextResponse.redirect(target("?error=asset"),303);
   if(!canAccessSite(session,asset.rows[0].site_id)) return new NextResponse("Forbidden",{status:403});
+
+  const gate=await getCreationGateForScope("routine",asset.rows[0].organization_id,false);
+  if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
 
   await query(
     `INSERT INTO maintenance_plans(organization_id,asset_id,name,description,trigger_type,frequency_value,frequency_unit,next_due_at,estimated_minutes)

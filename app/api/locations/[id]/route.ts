@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const current = await query<{ organization_id: string }>("SELECT organization_id FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
   if (!current.rowCount) return new NextResponse("Sububicación no encontrada", { status: 404 });
-  if (session.platformRole !== "superadmin" && session.organizationId !== current.rows[0].organization_id) return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole === "user" && session.organizationId !== current.rows[0].organization_id) return new NextResponse("Forbidden", { status: 403 });
   if (!canAccessSite(session, siteId)) return new NextResponse("Forbidden", { status: 403 });
   const intent = String(form.get("intent") || "update");
   if (intent === "toggle") {

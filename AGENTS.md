@@ -125,3 +125,12 @@ Important:
 - Company Administrator remains the highest tenant role;
 - every user-creation UI must explain role purpose, scope, permissions, restrictions and which lower roles it may create;
 - destructive exceptional powers must use a governed approval/re-authentication/audit workflow rather than ordinary CRUD controls.
+
+
+## Universal deletion invariant
+
+`platform_owner` is the only role allowed to invoke universal/forced deletion.
+
+Do not grant this capability through a broad permission such as `users.manage`, `companies.manage` or Superadministrator status. Every endpoint that invokes `lib/platform-owner-purge.ts` must independently verify `isPlatformOwner(session)`.
+
+Normal roles must retain standard history, FK and traceability behavior. Never remove the Platform Owner self-protection from the purge engine.

@@ -11,7 +11,7 @@ import {
 } from "@/lib/organization-documents";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DATE_PATTERN = /^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function redirectToCompany(id: string, requestUrl: string, queryString: string) {
   return NextResponse.redirect(publicUrl("/dashboard/companies/" + id + "?" + queryString + "#documents", requestUrl), 303);
@@ -45,7 +45,7 @@ export async function GET(
     return new NextResponse("Archivo no disponible", { status: 404 });
   }
 
-  const safeName = document.file_name.replace(/[\\r\\n"]/g, "_");
+  const safeName = document.file_name.replace(/[\r\n"]/g, "_");
   return new NextResponse(new Uint8Array(document.file_data), {
     headers: {
       "Content-Type": document.file_mime_type,

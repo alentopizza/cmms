@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
+declare global {
+  interface Window {
+    Human?: any;
+  }
+}
+
 type Site = {
   id:string;
   name:string;
@@ -91,9 +97,28 @@ export default function AttendanceCapture({
   async function ensureHuman() {
     if(humanRef.current) return humanRef.current;
     setMessage("Cargando verificación facial…");
-    const module=await import("@vladmandic/human/dist/human.esm.js");
-    const Human=module.default;
-    const human=new Human({
+    if(!window.Human){
+      await new Promise<void>((resolve,reject)=>{
+        const existing=document.querySelector<HTMLScriptElement>('script[data-biometric-human="true"]');
+        if(existing){
+          if(window.Human){resolve();return;}
+          existing.addEventListener("load",()=>resolve(),{once:true});
+          existing.addEventListener("error",()=>reject(new Error("No fue posible cargar el motor biométrico.")),{once:true});
+          return;
+        }
+        const script=document.createElement("script");
+        script.src="/biometric-human.js";
+        script.async=true;
+        script.dataset.biometricHuman="true";
+        script.onload=()=>resolve();
+        script.onerror=()=>reject(new Error("No fue posible cargar el motor biométrico."));
+        document.head.appendChild(script);
+      });
+    }
+    const namespace=window.Human;
+    const HumanCtor=namespace?.Human || namespace?.default || namespace;
+    if(typeof HumanCtor!=="function") throw new Error("El motor biométrico no está disponible.");
+    const human=new HumanCtor({
       backend:"webgl",
       modelBasePath:"/biometric-models/",
       face:{

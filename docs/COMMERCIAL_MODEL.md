@@ -126,3 +126,19 @@ Thresholds:
 - 100%: creation must be blocked server-side.
 
 Only the Superadministrator may change contractual resource limits.
+
+
+## Checkout UX requirements
+
+The provisioning checkout must preserve user-entered data when validation or server errors occur.
+
+Required behavior:
+
+- validate required fields client-side before submission;
+- validate again server-side;
+- return field-specific errors for recoverable issues;
+- duplicate email must be reported explicitly as an email conflict;
+- failed provisioning must not clear company/name/email/password/city/site inputs in the active browser form;
+- checkout screens must always offer a direct path back to Home and to plan comparison;
+- after successful provisioning, redirect the tenant to company settings so the acquired plan, subscription dates and resource entitlements are immediately visible;
+- plan upgrades from company settings return to the same settings view and refresh effective limits.

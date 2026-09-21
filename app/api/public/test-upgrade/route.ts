@@ -4,25 +4,35 @@ import { getPlanByCode } from "@/lib/billing";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
+function wantsJson(request: Request) { return request.headers.get("accept")?.includes("application/json"); }
+
 export async function POST(request: Request) {
   if (process.env.TEST_CHECKOUT_ENABLED === "false") {
-    return new NextResponse("Checkout de prueba deshabilitado", { status: 403 });
+    return wantsJson(request)
+      ? NextResponse.json({ message: "El checkout de prueba está deshabilitado." }, { status: 403 })
+      : new NextResponse("Checkout de prueba deshabilitado", { status: 403 });
   }
 
   const session = await getSession();
   if (!session || session.platformRole === "superadmin" || !session.organizationId) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    return wantsJson(request)
+      ? NextResponse.json({ message: "Debes iniciar sesión con una cuenta de empresa." }, { status: 401 })
+      : new NextResponse("Unauthorized", { status: 401 });
   }
 
   const form = await request.formData();
   const planCode = String(form.get("plan_code") || "");
   if (planCode === "trial") {
-    return NextResponse.redirect(publicUrl("/checkout?plan=trial&error=1", request.url), 303);
+    return wantsJson(request)
+      ? NextResponse.json({ message: "La prueba gratuita solo está disponible al crear una empresa nueva." }, { status: 422 })
+      : NextResponse.redirect(publicUrl("/checkout?plan=trial&error=1", request.url), 303);
   }
 
   const planResult = await getPlanByCode(planCode);
   if (!planResult.rowCount) {
-    return NextResponse.redirect(publicUrl("/#planes", request.url), 303);
+    return wantsJson(request)
+      ? NextResponse.json({ message: "El plan seleccionado no está disponible." }, { status: 404 })
+      : NextResponse.redirect(publicUrl("/#planes", request.url), 303);
   }
   const plan = planResult.rows[0];
 
@@ -70,10 +80,14 @@ export async function POST(request: Request) {
     await client.query("COMMIT");
   } catch {
     await client.query("ROLLBACK");
-    return NextResponse.redirect(publicUrl(`/checkout?plan=${encodeURIComponent(planCode)}&error=1`, request.url), 303);
+    return wantsJson(request)
+      ? NextResponse.json({ message: "No fue posible actualizar el plan. Intenta nuevamente." }, { status: 500 })
+      : NextResponse.redirect(publicUrl(`/checkout?plan=${encodeURIComponent(planCode)}&error=1`, request.url), 303);
   } finally {
     client.release();
   }
 
-  return NextResponse.redirect(publicUrl("/dashboard", request.url), 303);
+  return wantsJson(request)
+    ? NextResponse.json({ ok: true, redirect: "/dashboard/settings?plan_updated=1" })
+    : NextResponse.redirect(publicUrl("/dashboard/settings?plan_updated=1", request.url), 303);
 }

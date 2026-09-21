@@ -29,7 +29,9 @@ type CompanySettingsRow = {
   plan_name: string;
   plan_description: string | null;
   subscription_status: "trialing" | "trial_expired" | "active" | "past_due" | "suspended" | "canceled";
+  trial_started_at: string | null;
   trial_ends_at: string | null;
+  current_period_start: string | null;
   current_period_end: string | null;
   white_label: boolean;
   branding_app_name: string | null;
@@ -61,10 +63,14 @@ function CompanySettings({
   company,
   brandingSaved,
   brandingError,
+  planUpdated,
+  welcome,
 }: {
   company: CompanySettingsRow;
   brandingSaved?: boolean;
   brandingError?: boolean;
+  planUpdated?: boolean;
+  welcome?: boolean;
 }) {
   const resources: ResourceCard[] = [
     { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "⌂" },
@@ -84,6 +90,9 @@ function CompanySettings({
       <span className="settings-status"><i /> {company.active ? "Empresa activa" : "Empresa inactiva"}</span>
     </header>
 
+    {welcome && <div className="notice success section">Tu empresa fue creada correctamente. Ya puedes revisar el plan, sus fechas y los recursos disponibles.</div>}
+    {planUpdated && <div className="notice success section">Tu plan fue actualizado correctamente y los nuevos recursos ya están disponibles.</div>}
+
     <section className="company-settings-hero section">
       <article className="card company-plan-banner">
         <div>
@@ -91,13 +100,15 @@ function CompanySettings({
           <h2>{company.plan_name}</h2>
           <p>{company.plan_description}</p>
         </div>
-        <div className="company-plan-meta">
-          <span>{subscriptionLabel(company.subscription_status, company.trial_ends_at)}</span>
-          <strong>{company.subscription_status === "trialing" && company.trial_ends_at
-            ? `Vence ${new Date(company.trial_ends_at).toLocaleDateString("es-CO")}`
+        <div className="company-plan-meta company-plan-meta-detailed">
+          <div><span>Estado</span><strong>{subscriptionLabel(company.subscription_status, company.trial_ends_at)}</strong></div>
+          <div><span>Inicio</span><strong>{company.trial_started_at || company.current_period_start ? new Date(company.trial_started_at || company.current_period_start || "").toLocaleDateString("es-CO") : "No registrado"}</strong></div>
+          <div><span>{company.subscription_status === "trialing" ? "Fin de prueba" : "Fin del periodo"}</span><strong>{company.subscription_status === "trialing" && company.trial_ends_at
+            ? new Date(company.trial_ends_at).toLocaleDateString("es-CO")
             : company.current_period_end
-              ? `Renueva ${new Date(company.current_period_end).toLocaleDateString("es-CO")}`
-              : "Sin fecha de renovación"}</strong>
+              ? new Date(company.current_period_end).toLocaleDateString("es-CO")
+              : "No registrado"}</strong></div>
+          <Link className="button company-plan-upgrade" href="/#planes">{company.plan_code === "pro" ? "Ver planes" : "Mejorar plan"}</Link>
         </div>
       </article>
 
@@ -218,7 +229,7 @@ function CompanySettings({
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ branding_saved?: string; branding_error?: string }>;
+  searchParams: Promise<{ branding_saved?: string; branding_error?: string; plan_updated?: string; welcome?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -303,7 +314,8 @@ export default async function SettingsPage({
             COALESCE(ol.max_inventory_items,1000)::int max_inventory_items,
             COALESCE(ol.max_technicians,50)::int max_technicians,
             bp.code plan_code,bp.name plan_name,bp.description plan_description,
-            os.status subscription_status,os.trial_ends_at::text trial_ends_at,
+            os.status subscription_status,os.trial_started_at::text trial_started_at,
+            os.trial_ends_at::text trial_ends_at,os.current_period_start::text current_period_start,
             os.current_period_end::text current_period_end,bp.white_label,
             ob.app_name branding_app_name,ob.primary_color branding_primary_color,
             ob.secondary_color branding_secondary_color,
@@ -325,5 +337,7 @@ export default async function SettingsPage({
     company={company.rows[0]}
     brandingSaved={params.branding_saved === "1"}
     brandingError={Boolean(params.branding_error)}
+    planUpdated={params.plan_updated === "1"}
+    welcome={params.welcome === "1"}
   />;
 }

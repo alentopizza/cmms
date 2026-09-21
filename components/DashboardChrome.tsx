@@ -11,7 +11,7 @@ type Section = {
 };
 
 const sections: Array<{ match: (pathname: string) => boolean; section: Section }> = [
-  { match: pathname => pathname === "/dashboard", section: { label: "Resumen", eyebrow: "Visión general", icon: "▦" } },
+  { match: pathname => pathname === "/dashboard", section: { label: "Dashboard", eyebrow: "Indicadores", icon: "▦" } },
   { match: pathname => pathname.startsWith("/dashboard/companies"), section: { label: "Empresas", eyebrow: "Administración", icon: "◫" } },
   { match: pathname => pathname.startsWith("/dashboard/leads"), section: { label: "Leads", eyebrow: "Comercial", icon: "✦" } },
   { match: pathname => pathname.startsWith("/dashboard/locations"), section: { label: "Ubicaciones", eyebrow: "Estructura física", icon: "⌂" } },

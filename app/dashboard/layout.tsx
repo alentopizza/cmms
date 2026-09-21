@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 type NavItem = DashboardNavItem & { id: string; permission?: Permission; anyPermissions?: Permission[] };
 
 const navItems: NavItem[] = [
-  { id: "dashboard", icon: "▦", label: "Resumen", href: "/dashboard" },
+  { id: "dashboard", icon: "▦", label: "Dashboard", href: "/dashboard" },
   { id: "companies", icon: "◫", label: "Empresas", href: "/dashboard/companies", permission: "companies.manage" },
   { id: "leads", icon: "✦", label: "Leads", href: "/dashboard/leads", permission: "leads.manage" },
   { id: "locations", icon: "⌂", label: "Ubicaciones", href: "/dashboard/locations", permission: "locations.manage" },

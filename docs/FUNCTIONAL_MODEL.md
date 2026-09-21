@@ -299,3 +299,80 @@ Core rules:
 - Every user creation/edit experience must show an explanation of the selected role, scope, key permissions, restrictions and which lower roles it may create/manage.
 
 The canonical matrix and per-role explanatory copy live in `docs/ROLE_MODEL.md`.
+
+
+## Role-aware Dashboard
+
+The former generic **Resumen** entry is now **Dashboard** and adapts its KPIs and analytical blocks to the signed-in role.
+
+### Platform Owner
+
+Focus:
+- active paid subscriptions / plans sold;
+- estimated MRR based on configured monthly plan prices;
+- active customer organizations;
+- lead funnel and conversion;
+- plan distribution;
+- recent subscription status.
+
+Important: estimated MRR is not presented as collected revenue because the current billing model does not yet maintain a payment ledger or reconciliation table.
+
+### Superadministrator
+
+Focus:
+- active companies;
+- active trials;
+- payment/subscription alerts;
+- global open work orders and stopped assets;
+- plan distribution and customer subscription state.
+
+### Company Administrator
+
+Focus:
+- assets;
+- open/overdue work orders;
+- work completed in the month;
+- technical workforce;
+- low-stock alerts;
+- operational costs, downtime and recent work.
+
+### Manager / Supervisor
+
+Focus:
+- visible assets;
+- work-order backlog;
+- completed work;
+- maintenance cost and downtime;
+- 90-day work-order distribution;
+- recent operational activity.
+
+### Technician / External collaborator
+
+Focus:
+- assigned activities completed, pending and in progress;
+- productivity validated inside an attendance shift;
+- worked hours from attendance shifts;
+- current open shift;
+- recent assigned activities.
+
+### Service provider
+
+Focus:
+- assigned supplier activity workload;
+- completed, pending and in-progress activities;
+- recent supplier work.
+
+### Requester
+
+Focus:
+- own open requests;
+- own requests completed in the month;
+- average resolution time;
+- recent request history.
+
+### Viewer
+
+Focus:
+- read-only operational KPIs such as visible assets, work-order load and low-stock items.
+
+All dashboard queries must preserve organization/site scope and role permissions.

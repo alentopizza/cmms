@@ -166,3 +166,75 @@ Current shortcuts:
 - routines module → preventive routine.
 
 When the parent context is already known, the corresponding relationship is preselected and hidden from redundant user input. The server still validates the relationship and permission independently. After a successful contextual creation, the user returns to the originating screen with success feedback.
+
+
+## Field attendance, facial verification and geofencing
+
+The CMMS includes an optional tenant-level attendance control for field personnel.
+
+### Attendance policy
+
+Each organization can independently enable the feature and define:
+
+- which organization roles must register attendance;
+- whether facial verification is mandatory;
+- whether precise geolocation is mandatory;
+- maximum accepted GPS accuracy;
+- facial-similarity threshold;
+- liveness / anti-spoof threshold.
+
+Default intended field roles are **Técnico**, **Colaborador externo** and **Proveedor de servicios**. Administrators and Managers may also be included when the organization wants them to clock field attendance.
+
+### Facial verification
+
+Facial verification is 1:1 verification against the authenticated user's enrolled template; it is not a search across all employees.
+
+Enrollment:
+1. the authenticated user grants explicit consent in the UI;
+2. the browser captures multiple live camera readings;
+3. face description, liveness and anti-spoof checks run in the browser;
+4. only the numeric face embedding is sent to the server;
+5. the server encrypts the embedding with AES-256-GCM before database persistence;
+6. the application does not persist the enrollment photograph.
+
+Users can delete their biometric template from the attendance workspace. Deletion removes the stored template rather than only hiding it.
+
+### Geofencing
+
+Sites can store:
+- latitude;
+- longitude;
+- permitted geofence radius in meters.
+
+When geolocation is required, a clock-in/out request is accepted only when:
+- browser location is available;
+- reported GPS accuracy is within the organization threshold;
+- the selected site belongs to the authenticated user's allowed scope;
+- the measured distance is inside the site's configured radius.
+
+### Attendance shift
+
+A field shift contains:
+- user;
+- organization;
+- site;
+- check-in/check-out timestamps;
+- GPS coordinates and accuracy;
+- distance from the configured site point;
+- facial verification confidence;
+- liveness and anti-spoof confidence.
+
+Only one open shift per user is allowed.
+
+### Activity/attendance correlation
+
+Activity status changes create execution events. For authenticated executors, the event records whether an open attendance shift existed for that organization and site at execution time.
+
+The reporting workspace shows descriptive operational measures such as:
+- field hours;
+- number of shifts;
+- activities completed during an open shift;
+- activities completed outside an open shift;
+- average activity duration.
+
+These are descriptive operational statistics only. They are not an automated employee ranking, disciplinary score, hiring/firing signal or other automated employment decision.

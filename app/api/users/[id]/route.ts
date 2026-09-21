@@ -22,6 +22,8 @@ async function hasActivity(client: import("pg").PoolClient, userId: string) {
       OR EXISTS(SELECT 1 FROM meter_readings WHERE recorded_by=$1)
       OR EXISTS(SELECT 1 FROM work_order_comments WHERE user_id=$1)
       OR EXISTS(SELECT 1 FROM audit_log WHERE user_id=$1)
+      OR EXISTS(SELECT 1 FROM work_order_tasks WHERE assigned_to=$1)
+      OR EXISTS(SELECT 1 FROM crew_members WHERE user_id=$1)
     ) has_activity`,
     [userId],
   );

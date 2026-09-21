@@ -2,34 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { isPlatformOwner } from "@/lib/permissions";
 import { pool } from "@/lib/db";
-import { forceDeleteRecord, listPurgeableRecords, listPurgeableTables } from "@/lib/platform-owner-purge";
-
-export async function GET(request: Request) {
-  const session = await getSession();
-  if (!session) return new NextResponse("Unauthorized", { status: 401 });
-  if (!isPlatformOwner(session)) {
-    return NextResponse.json(
-      { message: "La eliminación universal está reservada exclusivamente al Propietario Desweb." },
-      { status: 403 },
-    );
-  }
-
-  const url = new URL(request.url);
-  const table = String(url.searchParams.get("table") || "").trim();
-
-  if (!table) {
-    const tables = await listPurgeableTables();
-    return NextResponse.json({ tables });
-  }
-
-  try {
-    const records = await listPurgeableRecords(table, 150);
-    return NextResponse.json({ records });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "No fue posible consultar los registros.";
-    return NextResponse.json({ message }, { status: 422 });
-  }
-}
+import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
 export async function POST(request: Request) {
   const session = await getSession();

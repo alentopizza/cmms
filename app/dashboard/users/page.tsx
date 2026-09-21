@@ -20,6 +20,7 @@ export default async function UsersPage() {
     isGlobalOperator
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
+                  (u.avatar_data IS NOT NULL) has_avatar,
                   membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
@@ -60,6 +61,7 @@ export default async function UsersPage() {
         )
       : query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
+                  (u.avatar_data IS NOT NULL) has_avatar,
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE((
                     SELECT array_agg(oms.site_id::text ORDER BY site.name)

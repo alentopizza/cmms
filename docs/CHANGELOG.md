@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-21 — Dashboard filters and exports
+
+### Added
+
+- Month filter on every role-aware dashboard.
+- Explicit From / To date range filters.
+- Company active/inactive filter for Platform Owner and Superadministrator.
+- Subscription status filter for platform dashboards.
+- Work-order status filters for Company Administrator, Manager, Viewer and Requester dashboards.
+- Activity status filters for Technician, External collaborator and Provider dashboards.
+- Filter-aware KPI, distribution and recent-record queries.
+- PDF dashboard export generated server-side.
+- Power BI-compatible UTF-8 CSV export.
+- Exported datasets preserve the authenticated role, tenant/site scope and selected filters.
+
+### Export semantics
+
+- PDF provides a portable filtered dashboard report.
+- Power BI export is CSV for direct import into Power BI / Power Query; the application does not fabricate proprietary PBIX files.
+
+
 ## 2026-09-21 — Role-aware Dashboard
 
 ### Changed

@@ -271,7 +271,7 @@ export default function DashboardSidebar({
           fullName={fullName}
           role={role}
           canConfigure={canConfigure}
-          collapsed={collapsed}
+          collapsed={collapsed && !mobileOpen}
         />
         {showDeswebBranding && <div className="sidebar-signature smart-sidebar-signature">
           <span>DESWEB</span>

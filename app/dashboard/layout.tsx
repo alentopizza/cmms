@@ -64,8 +64,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? "/api/organization-branding/logo/dark"
     : logoOnDarkSrc(customization);
   const productName = organizationBranding?.appName || "Desweb CMMS";
+  const mobileNavigationMode = session.platformRole === "user" && (session.role === "technician" || session.role === "external")
+    ? "field"
+    : "drawer";
 
-  return <div className="shell" style={shellStyle}>
+  return <div className={"shell mobile-nav-" + mobileNavigationMode} style={shellStyle}>
     <DashboardSidebar
       items={navigationItems}
       initialOrder={initialSidebarOrder}
@@ -77,6 +80,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       role={roleLabel(session)}
       canConfigure={canConfigure}
       showDeswebBranding={!organizationBranding || organizationBranding.showDeswebBranding}
+      mobileNavigationMode={mobileNavigationMode}
     />
 
     <main className="main">

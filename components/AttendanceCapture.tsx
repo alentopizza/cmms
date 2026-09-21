@@ -95,7 +95,7 @@ export default function AttendanceCapture({
     const Human=module.default;
     const human=new Human({
       backend:"webgl",
-      modelBasePath:"https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/",
+      modelBasePath:"/biometric-models/",
       face:{
         enabled:true,
         detector:{enabled:true,maxDetected:1,minConfidence:0.65},
@@ -170,6 +170,26 @@ export default function AttendanceCapture({
     }
   }
 
+  async function revokeBiometric() {
+    if(openShift){
+      setError("Registra la salida antes de revocar tu biometría.");
+      return;
+    }
+    setBusy(true); setError(""); setMessage("");
+    try{
+      const response=await fetch("/api/attendance/enroll",{method:"DELETE"});
+      const data=await response.json();
+      if(!response.ok) throw new Error(data.message || "No fue posible revocar la biometría.");
+      setEnrolled(false);
+      setConsent(false);
+      setMessage("Plantilla biométrica eliminada. Puedes registrarla nuevamente cuando lo necesites.");
+    }catch(cause){
+      setError(cause instanceof Error ? cause.message : "No fue posible revocar la biometría.");
+    }finally{
+      setBusy(false);
+    }
+  }
+
   async function clock(action:"check_in"|"check_out") {
     if(!siteId) { setError("Selecciona una sede."); return; }
     setBusy(true); setError(""); setMessage("");
@@ -204,7 +224,8 @@ export default function AttendanceCapture({
         setMessage("Salida registrada correctamente.");
       }
     }catch(cause){
-      if(cause instanceof GeolocationPositionError){
+      const geoCode = typeof cause === "object" && cause !== null && "code" in cause ? Number((cause as {code?:unknown}).code) : null;
+      if(geoCode === 1 || geoCode === 2 || geoCode === 3){
         setError("No fue posible obtener tu ubicación. Autoriza la ubicación precisa del navegador e intenta nuevamente.");
       }else{
         setError(cause instanceof Error ? cause.message : "No fue posible registrar la asistencia.");
@@ -252,6 +273,7 @@ export default function AttendanceCapture({
         <button className="button attendance-clock-button" type="button" disabled={busy || !siteId} onClick={()=>clock(openShift?"check_out":"check_in")}>
           {busy?"Validando identidad y ubicación…":openShift?"Registrar salida":"Registrar entrada"}
         </button>
+        {requireFace && enrolled && !openShift && <button className="text-button attendance-revoke" type="button" disabled={busy} onClick={revokeBiometric}>Eliminar mi plantilla biométrica</button>}
       </>}
 
       {message && <div className="notice success">{message}</div>}

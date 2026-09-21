@@ -407,7 +407,7 @@ export default function UserManagement({
               <select id="managed-user-role" value={draft.role} onChange={event => {
                 const nextRole = event.target.value;
                 if (nextRole === "superadmin") {
-                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [] }));
+                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [], external_supplier_id: "" }));
                 } else {
                   setDraft(previous => ({ ...previous, role: nextRole, external_supplier_id: nextRole === "external" || nextRole === "provider" ? previous.external_supplier_id : "" }));
                   setErrors(previous => ({ ...previous, role: undefined, external_supplier_id: undefined, general: undefined }));

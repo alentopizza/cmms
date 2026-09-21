@@ -11,8 +11,9 @@ import CreateRecordModal from "@/components/CreateRecordModal";
 
 type OrderRow={id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string};
 
-export default async function WorkOrdersPage() {
+export default async function WorkOrdersPage({searchParams}:{searchParams:Promise<{error?:string}>}) {
   const session=await getSession();
+  const feedback=await searchParams;
   if(!session) redirect("/login");
   if(!can(session,"work_orders.read")) redirect("/dashboard");
 
@@ -131,6 +132,8 @@ export default async function WorkOrdersPage() {
         </form>
       </CreateRecordModal> : undefined}
     />
+
+    {feedback.error==="sequence" && <div className="notice error section">{creationGate.message}</div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="✓"

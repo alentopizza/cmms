@@ -206,3 +206,31 @@ export function creationPrerequisiteFor(
 
   return { ready:true,title:"Jerarquía completa",message:"Se cumplen todos los requisitos previos para continuar." };
 }
+
+
+export async function getCreationHierarchyContext(organizationId?: string | null): Promise<CreationHierarchyContext> {
+  const params = organizationId ? [organizationId] : [];
+  const orgFilter = organizationId ? "AND o.id=$1" : "";
+  const entityFilter = organizationId ? "AND organization_id=$1" : "";
+  const memberFilter = organizationId ? "AND om.organization_id=$1" : "";
+
+  const result = await query<CreationHierarchyContext>(
+    `SELECT
+      (SELECT count(*)::int FROM organizations o WHERE o.active=true ${orgFilter}) organizations,
+      (SELECT count(*)::int FROM sites WHERE active=true ${entityFilter}) sites,
+      (SELECT count(*)::int FROM locations WHERE active=true ${entityFilter}) sublocations,
+      (SELECT count(*)::int FROM suppliers WHERE active=true ${entityFilter}) suppliers,
+      (
+        SELECT count(*)::int
+        FROM organization_members om
+        JOIN users u ON u.id=om.user_id
+        WHERE u.active=true
+          AND om.role IN ('technician','external')
+          ${memberFilter}
+      ) workforce,
+      (SELECT count(*)::int FROM assets WHERE status<>'retired' ${entityFilter}) assets`,
+    params,
+  );
+
+  return result.rows[0];
+}

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-20 — Landing branding, themes and advisor lead capture
+
+### Changed
+
+- Replaced the cramped text/initial landing identity with the configured Desweb logo in the public header and footer.
+- Added responsive logo contrast handling when no dedicated dark-background logo exists.
+- Added a light/dark appearance switch to the landing using the shared `desweb-theme` preference.
+- Added a commercial FAQ section based on current product behavior and capabilities.
+- Added an advisor-contact conversion section without reusing unverifiable legacy testimonials or outdated pricing.
+- Added migration `010_sales_leads.sql`, public lead persistence and a Superadministrator-only **Leads** workspace with follow-up statuses.
+- Redesigned the footer into a product/commercial navigation surface with a direct sales CTA.
+- Documented the landing as a dual conversion surface: self-service checkout plus advisor-assisted lead generation.
+
+
 ## 2026-09-20 — Dark technology landing visual system
 
 ### Changed

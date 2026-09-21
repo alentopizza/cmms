@@ -70,7 +70,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
   const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
   const creationGate=creationPrerequisiteFor(hierarchy,"crew");
 
-  const error=params.error==="sequence" ? "Primero crea al menos un técnico interno o colaborador externo."
+  const error=params.error==="sequence" ? creationGate.message
     : params.error==="members" ? "Selecciona al menos un integrante válido para la cuadrilla."
     : params.error==="leader" ? "El líder debe pertenecer a la misma cuadrilla."
     : params.error ? "No fue posible crear la cuadrilla." : "";

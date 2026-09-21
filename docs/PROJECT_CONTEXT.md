@@ -66,7 +66,7 @@ The application runs pending migrations before starting the production server.
 
 Authentication supports:
 
-- an environment-configured bootstrap Superadministrator for emergency/developer access;
+- an environment-configured bootstrap **Propietario Desweb / Platform Owner** for emergency/developer access;
 - database-backed application users with scrypt password hashing;
 - signed HTTP-only session cookies.
 
@@ -82,15 +82,15 @@ Active organization roles:
 
 The redundant `owner` role was removed. Administrador de empresa is the highest organization-level role.
 
-A new platform-governance hierarchy has been **approved as future product direction but is not yet fully implemented**:
+The platform-governance hierarchy is being implemented incrementally. **Platform Owner is now active**; sales/distribution roles remain pending:
 
-- **Propietario Desweb / Platform Owner** — maximum platform authority and the only role allowed to create/revoke Superadministrators;
+- **Propietario Desweb / Platform Owner** — implemented maximum platform authority; the current project-owner account is `admin@dominio.com`, and it is the only role allowed to create/revoke Superadministrators;
 - **Superadministrador** — trusted Desweb platform operator that provisions/supports customers but cannot create peers or the Platform Owner;
 - **Comercial Desweb** — internal sales/advisor role with commercial scope rather than unrestricted maintenance administration;
 - **Partner / Distribuidor** — external distribution role restricted to its authorized portfolio;
 - customer-side roles continue below the tenant boundary, with **Administrador de empresa** as the highest customer role.
 
-The detailed target permission model, user-creation matrix, role descriptions and destructive-operation rules are maintained in `docs/ROLE_MODEL.md`.
+The detailed target permission model, user-creation matrix, role descriptions and destructive-operation rules are maintained in `docs/ROLE_MODEL.md`. During development, Platform Owner bypasses normal RBAC permission restrictions across modules. Database referential integrity and explicit lifecycle safeguards remain separate from RBAC until controlled destructive workflows are implemented.
 
 ### User administration
 

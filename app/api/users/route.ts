@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { can, type OrganizationRole } from "@/lib/permissions";
+import { can, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
@@ -49,9 +49,9 @@ export async function POST(request: Request) {
   else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
   if (password.length < 8) fields.password = "Usa una contraseña de al menos 8 caracteres.";
 
-  if (session.platformRole !== "superadmin") {
+  if (session.platformRole === "user") {
     organizationId = session.organizationId || "";
-    if (creatingSuperadmin) fields.role = "No tienes permiso para crear un superadministrador.";
+    if (creatingSuperadmin) fields.role = "No tienes permiso para crear un Superadministrador.";
 
     if (accessAllSites && !session.accessAllSites) {
       fields.site_ids = "No puedes otorgar acceso a todas las sedes porque tu propia cuenta tiene un alcance limitado.";
@@ -62,6 +62,10 @@ export async function POST(request: Request) {
         fields.site_ids = "Solo puedes asignar sedes a las que tu cuenta ya tiene acceso.";
       }
     }
+  }
+
+  if (creatingSuperadmin && !isPlatformOwner(session)) {
+    fields.role = "Solo el Propietario Desweb puede crear Superadministradores.";
   }
 
   if (!creatingSuperadmin) {

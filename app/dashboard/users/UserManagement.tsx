@@ -6,6 +6,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
+  PLATFORM_OWNER_DESCRIPTION,
   SUPERADMIN_DESCRIPTION,
   type OrganizationRole,
 } from "@/lib/permissions";
@@ -16,7 +17,7 @@ export type ManagedUser = {
   full_name: string;
   phone: string | null;
   active: boolean;
-  platform_role: "superadmin" | "user";
+  platform_role: "platform_owner" | "superadmin" | "user";
   organization_id: string | null;
   organization_name: string | null;
   role: OrganizationRole | null;
@@ -60,19 +61,19 @@ const EMPTY_DRAFT: Draft = {
 };
 
 function roleKey(user: ManagedUser) {
-  return user.platform_role === "superadmin" ? "superadmin" : user.role || "viewer";
+  return user.platform_role !== "user" ? user.platform_role : user.role || "viewer";
 }
 
 function roleName(role: string) {
-  return role === "superadmin"
-    ? "Superadministrador"
-    : ROLE_LABELS[role as OrganizationRole] || role;
+  if (role === "platform_owner") return "Propietario Desweb";
+  if (role === "superadmin") return "Superadministrador";
+  return ROLE_LABELS[role as OrganizationRole] || role;
 }
 
 function roleDescription(role: string) {
-  return role === "superadmin"
-    ? SUPERADMIN_DESCRIPTION
-    : ROLE_DESCRIPTIONS[role as OrganizationRole] || "";
+  if (role === "platform_owner") return PLATFORM_OWNER_DESCRIPTION;
+  if (role === "superadmin") return SUPERADMIN_DESCRIPTION;
+  return ROLE_DESCRIPTIONS[role as OrganizationRole] || "";
 }
 
 function initials(name: string) {
@@ -80,7 +81,7 @@ function initials(name: string) {
 }
 
 function siteAccessLabel(user: ManagedUser) {
-  if (user.platform_role === "superadmin") return "Todas las empresas";
+  if (user.platform_role !== "user") return "Todas las empresas";
   if (user.access_all_sites !== false) return "Todas las sedes";
   const siteNames = user.site_names || [];
   if (!siteNames.length) return "Sin sedes asignadas";
@@ -92,7 +93,8 @@ export default function UserManagement({
   users,
   organizations,
   sites,
-  isSuperadmin,
+  isPlatformOperator,
+  isPlatformOwner,
   fixedOrganizationId,
   currentUserId,
   serviceSuppliers,
@@ -100,7 +102,8 @@ export default function UserManagement({
   users: ManagedUser[];
   organizations: Organization[];
   sites: Site[];
-  isSuperadmin: boolean;
+  isPlatformOperator: boolean;
+  isPlatformOwner: boolean;
   fixedOrganizationId: string | null;
   currentUserId: string | null;
   serviceSuppliers: ServiceSupplier[];
@@ -185,7 +188,9 @@ export default function UserManagement({
   }
 
   function openEdit(user: ManagedUser) {
-    if (!isSuperadmin) return;
+    if (!isPlatformOperator) return;
+    if (user.platform_role === "platform_owner") return;
+    if (user.platform_role === "superadmin" && !isPlatformOwner) return;
     setMode("edit");
     setEditingUser(user);
     setDraft({
@@ -194,10 +199,10 @@ export default function UserManagement({
       phone: user.phone || "",
       password: "",
       organization_id: user.organization_id || "",
-      role: user.platform_role === "superadmin" ? "superadmin" : user.role || "viewer",
-      access_all_sites: user.platform_role === "superadmin" ? true : user.access_all_sites !== false,
-      site_ids: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
-      external_supplier_id: user.platform_role === "superadmin" ? "" : (user.external_supplier_id || ""),
+      role: user.platform_role !== "user" ? user.platform_role : user.role || "viewer",
+      access_all_sites: user.platform_role !== "user" ? true : user.access_all_sites !== false,
+      site_ids: user.platform_role !== "user" ? [] : (user.site_ids || []),
+      external_supplier_id: user.platform_role !== "user" ? "" : (user.external_supplier_id || ""),
     });
     setErrors({});
     setActionError("");
@@ -229,7 +234,7 @@ export default function UserManagement({
         next.external_supplier_id = "El proveedor debe pertenecer a la empresa y prestar servicios.";
       }
     }
-    if (draft.role === "superadmin" && !isSuperadmin) next.role = "No tienes permiso para asignar este rol.";
+    if (draft.role === "superadmin" && !isPlatformOwner) next.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -346,7 +351,7 @@ export default function UserManagement({
             <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
-          {isSuperadmin && <div className="user-card-actions">
+          {isPlatformOperator && user.platform_role !== "platform_owner" && (isPlatformOwner || user.platform_role !== "superadmin") && <div className="user-card-actions">
             <button className="text-button" type="button" onClick={() => openEdit(user)}>Editar</button>
             {user.id !== currentUserId && <button className={`text-button ${user.active ? "text-danger" : ""}`} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
             {user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}
@@ -393,7 +398,7 @@ export default function UserManagement({
               {errors.password && <small className="field-error-message">{errors.password}</small>}
             </div>
 
-            {isSuperadmin ? <div className={`field ${errors.organization_id ? "field-error" : ""}`}>
+            {isPlatformOperator ? <div className={`field ${errors.organization_id ? "field-error" : ""}`}>
               <label htmlFor="managed-user-org">Empresa {draft.role === "superadmin" ? "" : "*"}</label>
               <select id="managed-user-org" value={draft.organization_id} disabled={draft.role === "superadmin"} onChange={event => changeOrganization(event.target.value)}>
                 <option value="">{draft.role === "superadmin" ? "Acceso global" : "Selecciona una empresa"}</option>
@@ -413,7 +418,7 @@ export default function UserManagement({
                   setErrors(previous => ({ ...previous, role: undefined, external_supplier_id: undefined, general: undefined }));
                 }
               }}>
-                {isSuperadmin && <option value="superadmin">Superadministrador</option>}
+                {isPlatformOwner && <option value="superadmin">Superadministrador</option>}
                 {Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
               {errors.role && <small className="field-error-message">{errors.role}</small>}

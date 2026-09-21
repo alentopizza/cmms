@@ -232,11 +232,11 @@ A sales or partner relationship does not grant operational authority over custom
 
 ## ADR-023 — Platform Owner is the final privilege ceiling
 
-Status: accepted for future implementation.
+Status: accepted and foundation implemented.
 
 `platform_owner` is the intended internal key for the maximum Desweb authority. The UI should use **Propietario Desweb** or **Propietario de plataforma**, not SeoAdmin as the canonical role name.
 
-Only the Platform Owner may create or revoke Superadministrators. No ordinary account may promote itself to Platform Owner, and Superadministrators cannot create peers.
+Only the Platform Owner may create or revoke Superadministrators. No ordinary account may promote itself to Platform Owner, and Superadministrators cannot create peers. Migration `015_platform_owner_role.sql` adds the persistent role and promotes `admin@dominio.com` when present; the environment bootstrap account also resolves as Platform Owner.
 
 Exceptional destructive operations remain governed workflows requiring explicit validation, reauthentication, audit evidence and any configured backup/approval/cooling-off steps. Maximum role level is not a one-click bypass of lifecycle safeguards.
 

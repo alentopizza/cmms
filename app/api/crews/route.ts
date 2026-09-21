@@ -12,7 +12,7 @@ export async function POST(request:Request) {
 
   const form=await request.formData();
   let organizationId=String(form.get("organization_id")||"");
-  if(session.platformRole!=="superadmin") organizationId=session.organizationId || "";
+  if(session.platformRole==="user") organizationId=session.organizationId || "";
   const siteId=String(form.get("site_id")||"");
   const name=String(form.get("name")||"").trim();
   const leaderUserId=String(form.get("leader_user_id")||"");

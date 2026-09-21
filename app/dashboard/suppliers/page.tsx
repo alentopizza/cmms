@@ -31,7 +31,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   if(!session) redirect("/login");
   if(!can(session,"suppliers.manage")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole==="superadmin";
+  const superadmin=session.platformRole!=="user";
 
   const [suppliers,organizations]=await Promise.all([
     superadmin

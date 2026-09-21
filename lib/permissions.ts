@@ -1,4 +1,6 @@
 export type OrganizationRole = "admin" | "manager" | "technician" | "requester" | "viewer" | "provider" | "external";
+export type PlatformRole = "platform_owner" | "superadmin" | "user";
+
 export type Permission =
   | "companies.manage"
   | "leads.manage"
@@ -34,16 +36,20 @@ export const ROLE_LABELS: Record<OrganizationRole, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
-  admin: "Administra usuarios, ubicaciones, activos, órdenes de trabajo, preventivos, inventario y consulta la configuración de su empresa.",
-  manager: "Opera ubicaciones, activos, órdenes de trabajo, preventivos e inventario, sin acceso a la configuración global de la plataforma.",
-  technician: "Consulta activos y preventivos, trabaja sobre órdenes de trabajo y puede consultar inventario relacionado con la operación.",
-  requester: "Crea solicitudes de mantenimiento y consulta únicamente las solicitudes generadas por su propia cuenta.",
-  viewer: "Acceso de consulta a activos, órdenes de trabajo, preventivos e inventario, sin funciones de creación o edición.",
-  provider: "Cuenta del proveedor de servicios. Consulta y ejecuta únicamente órdenes o actividades asignadas a su empresa proveedora.",
-  external: "Colaborador externo de apoyo. Consulta activos y ejecuta únicamente actividades asignadas directamente a su cuenta o cuadrilla.",
+  admin: "Máximo nivel dentro de una empresa cliente. Administra usuarios, ubicaciones y módulos operativos de su organización, sin acceso a otras empresas ni a roles de plataforma.",
+  manager: "Coordina la operación de mantenimiento dentro de las sedes autorizadas. Gestiona trabajo operativo y equipos, sin permisos de administración global de la empresa ni de la plataforma.",
+  technician: "Ejecuta mantenimiento sobre los trabajos y sedes autorizados. Consulta activos, preventivos e inventario necesarios para su labor, sin administrar usuarios ni configuración empresarial.",
+  requester: "Reporta necesidades de mantenimiento y consulta el avance de sus solicitudes permitidas. No administra la operación ni la configuración del CMMS.",
+  viewer: "Acceso de solo lectura a la información autorizada. Puede consultar datos operativos, pero no crear, editar ni eliminar registros.",
+  provider: "Representa a una empresa proveedora de servicios y solo puede consultar o ejecutar trabajos asignados a ese proveedor.",
+  external: "Persona externa autorizada para trabajos específicos. Solo accede a actividades asignadas directamente o mediante sus cuadrillas autorizadas.",
 };
 
-export const SUPERADMIN_DESCRIPTION = "Acceso total a la plataforma: empresas, usuarios, límites, personalización global y todos los módulos operativos.";
+export const PLATFORM_OWNER_DESCRIPTION =
+  "Máxima autoridad de Desweb CMMS. Tiene acceso total de plataforma y es el único nivel autorizado para crear o retirar Superadministradores. Durante la fase de desarrollo puede visualizar, crear, editar y administrar todos los módulos sin restricciones funcionales de RBAC.";
+
+export const SUPERADMIN_DESCRIPTION =
+  "Administra clientes y la operación global de Desweb. Puede crear empresas, asignar planes y administrar usuarios de cliente, pero no puede crear otros Superadministradores ni modificar al Propietario Desweb.";
 
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
   admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write"],
@@ -56,12 +62,21 @@ const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
 };
 
 export type PermissionSubject = {
-  platformRole: "superadmin" | "user";
+  platformRole: PlatformRole;
   role: OrganizationRole | null;
 };
 
+export function isPlatformOperator(subject: PermissionSubject | null) {
+  return Boolean(subject && subject.platformRole !== "user");
+}
+
+export function isPlatformOwner(subject: PermissionSubject | null) {
+  return subject?.platformRole === "platform_owner";
+}
+
 export function can(subject: PermissionSubject | null, permission: Permission) {
   if (!subject) return false;
+  if (subject.platformRole === "platform_owner") return true;
   if (subject.platformRole === "superadmin") return true;
   if (!subject.role) return false;
   return ROLE_PERMISSIONS[subject.role].includes(permission);
@@ -69,6 +84,7 @@ export function can(subject: PermissionSubject | null, permission: Permission) {
 
 export function roleLabel(subject: PermissionSubject | null) {
   if (!subject) return "";
+  if (subject.platformRole === "platform_owner") return "Propietario Desweb";
   if (subject.platformRole === "superadmin") return "Superadministrador";
   return subject.role ? ROLE_LABELS[subject.role] : "Sin rol";
 }

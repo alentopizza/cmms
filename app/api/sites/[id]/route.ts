@@ -29,7 +29,7 @@ export async function POST(
   if (!UUID_PATTERN.test(id) || !UUID_PATTERN.test(organizationId)) {
     return new NextResponse("Sede inválida", { status: 400 });
   }
-  if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole === "user" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
   if (!canAccessSite(session, id)) return new NextResponse("Forbidden", { status: 403 });
 
   const site = await query<{ active: boolean }>(

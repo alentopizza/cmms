@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, type OrganizationRole } from "@/lib/permissions";
+import { can, isPlatformOperator, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import UserManagement, { type ManagedUser } from "./UserManagement";
 
@@ -13,10 +13,11 @@ export default async function UsersPage() {
   if (!session) redirect("/login");
   if (!can(session, "users.manage")) redirect("/dashboard");
 
-  const isSuperadmin = session.platformRole === "superadmin";
+  const isGlobalOperator = isPlatformOperator(session);
+  const ownerAccess = isPlatformOwner(session);
 
   const [users, organizations, sites, serviceSuppliers] = await Promise.all([
-    isSuperadmin
+    isGlobalOperator
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
                   membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
@@ -90,10 +91,10 @@ export default async function UsersPage() {
            ORDER BY u.active DESC,u.full_name`,
           [session.organizationId],
         ),
-    isSuperadmin
+    isGlobalOperator
       ? query<Organization>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
       : query<Organization>("SELECT id,name FROM organizations WHERE id=$1", [session.organizationId]),
-    isSuperadmin
+    isGlobalOperator
       ? query<Site>(
           `SELECT s.id,s.organization_id,s.name,o.name organization_name
            FROM sites s JOIN organizations o ON o.id=s.organization_id
@@ -113,7 +114,7 @@ export default async function UsersPage() {
              ORDER BY s.name`,
             [session.organizationId, session.siteIds],
           ),
-    isSuperadmin
+    isGlobalOperator
       ? query<ServiceSupplier>(
           `SELECT id,organization_id,name
            FROM suppliers
@@ -143,7 +144,8 @@ export default async function UsersPage() {
       users={users.rows}
       organizations={organizations.rows}
       sites={sites.rows}
-      isSuperadmin={isSuperadmin}
+      isPlatformOperator={isGlobalOperator}
+      isPlatformOwner={ownerAccess}
       fixedOrganizationId={session.organizationId}
       currentUserId={session.userId}
       serviceSuppliers={serviceSuppliers.rows}

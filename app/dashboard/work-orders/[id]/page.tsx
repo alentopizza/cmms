@@ -37,7 +37,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   if(!orderResult.rowCount) notFound();
   const order=orderResult.rows[0];
 
-  if(session.platformRole!=="superadmin"){
+  if(session.platformRole==="user"){
     if(session.organizationId!==order.organization_id || !canAccessSite(session,order.site_id)) redirect("/dashboard/work-orders");
     if(session.role==="provider"){
       const visible=await query(

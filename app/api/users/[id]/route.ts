@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
-import { type OrganizationRole } from "@/lib/permissions";
+import { isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
@@ -38,7 +38,7 @@ export async function POST(
 ) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
-  if (session.platformRole !== "superadmin") return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole === "user") return new NextResponse("Forbidden", { status: 403 });
 
   const { id } = await params;
   if (!UUID.test(id)) return json(400, { message: "Usuario inválido." });
@@ -53,7 +53,7 @@ export async function POST(
 
     const existing = await client.query<{
       id: string;
-      platform_role: "superadmin" | "user";
+      platform_role: PlatformRole;
       organization_id: string | null;
       role: OrganizationRole | null;
       site_id: string | null;
@@ -71,6 +71,16 @@ export async function POST(
     if (!existing.rowCount) {
       await client.query("ROLLBACK");
       return json(404, { message: "Usuario no encontrado." });
+    }
+
+    const target = existing.rows[0];
+    if (target.platform_role === "platform_owner") {
+      await client.query("ROLLBACK");
+      return json(403, { message: "La cuenta Propietario Desweb está protegida y no se modifica desde el directorio de usuarios." });
+    }
+    if (session.platformRole === "superadmin" && target.platform_role !== "user") {
+      await client.query("ROLLBACK");
+      return json(403, { message: "Un Superadministrador no puede modificar otras cuentas de plataforma." });
     }
 
     if (intent === "activate" || intent === "deactivate") {
@@ -101,6 +111,10 @@ export async function POST(
     let siteIds = [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
     const makingSuperadmin = requestedRole === "superadmin";
     const fields: FieldErrors = {};
+
+    if (makingSuperadmin && !isPlatformOwner(session)) {
+      fields.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
+    }
 
     if (!fullName) fields.full_name = "Ingresa el nombre completo.";
     if (!email) fields.email = "Ingresa el correo electrónico.";

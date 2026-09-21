@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-21 — Platform Owner access foundation
+
+### Added / changed
+
+- Added persistent platform role `platform_owner` through migration `015_platform_owner_role.sql`.
+- The environment bootstrap account configured by `APP_ADMIN_EMAIL` now resolves as **Propietario Desweb** instead of Developer/Superadministrator.
+- Migration 015 promotes the existing database account `admin@dominio.com` to Platform Owner when present and removes tenant memberships from that platform identity.
+- Platform Owner receives unrestricted RBAC access to every current permission and global module scope during the development phase.
+- Updated dashboard, assets, work orders, routines, inventory, locations, suppliers, crews and attendance global scoping so Platform Owner is treated as a platform-level identity.
+- Reserved Superadministrator creation and assignment exclusively to Platform Owner.
+- Superadministrators can continue managing tenant users but cannot edit another platform account or the Platform Owner.
+- Protected the Platform Owner account from accidental deactivation/deletion/demotion through the normal user directory.
+- Updated role labels/descriptions so the sidebar/account menu identifies the owner as **Propietario Desweb**.
+- Updated the role model and project documentation to distinguish implemented Platform Owner behavior from pending Commercial/Partner roles.
+
+### Development safety boundary
+
+- Platform Owner bypasses application RBAC restrictions.
+- PostgreSQL referential integrity and explicit historical/lifecycle safeguards are not globally disabled; irreversible purge/reset operations will receive the previously designed controlled workflow before commercial release.
+
+
 ## 2026-09-21 — Approved platform-owner, sales and distribution role model
 
 ### Product decision

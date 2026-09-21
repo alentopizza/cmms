@@ -14,7 +14,7 @@ export async function POST(request:Request) {
 
   const form=await request.formData();
   let organizationId=String(form.get("organization_id")||"");
-  if(session.platformRole!=="superadmin") organizationId=session.organizationId || "";
+  if(session.platformRole==="user") organizationId=session.organizationId || "";
 
   const name=String(form.get("name")||"").trim();
   const supplierType=String(form.get("supplier_type")||"materials");

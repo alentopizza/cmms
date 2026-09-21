@@ -2,9 +2,9 @@
 
 This document is the source of truth for the approved Desweb CMMS role hierarchy and for the explanatory copy that must appear when administrators create users.
 
-> Status: **approved product direction, not yet fully implemented in code**.
+> Status: **Platform Owner foundation implemented; commercial roles still pending**.
 >
-> The current application still has the existing platform/tenant RBAC. A future implementation must migrate to this model explicitly; documentation must not be interpreted as permissions already active in production.
+> `platform_owner` is now active in authentication/RBAC. The bootstrap account configured by `APP_ADMIN_EMAIL` resolves as Platform Owner, and migration 015 promotes the database account `admin@dominio.com` when present. Superadministrator creation is reserved to Platform Owner. Comercial Desweb and Partner / Distribuidor remain approved future roles and are not yet active.
 
 ## Core principle: two separate hierarchies
 
@@ -44,13 +44,15 @@ A commercial relationship does **not** make a seller the operational superior of
 
 ### 1. Propietario Desweb / Platform Owner
 
-Suggested internal role key: `platform_owner`.
+Internal role key: `platform_owner`.
 
 This is the maximum platform authority and the final ceiling of the hierarchy. The UI label should be **Propietario Desweb** or **Propietario de plataforma**. Avoid using `SeoAdmin` as the canonical product name because it can be confused with Search Engine Optimization.
 
 Product rule:
 
 - one primary active Platform Owner identity;
+- current project-owner identity: `admin@dominio.com`;
+- the environment bootstrap account (`APP_ADMIN_EMAIL`) resolves as Platform Owner;
 - no normal role can promote itself to Platform Owner;
 - no Superadministrator can create, edit the authority level of, suspend or delete the Platform Owner;
 - only the Platform Owner can create or revoke Superadministrators;

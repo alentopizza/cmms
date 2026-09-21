@@ -25,7 +25,7 @@ export async function POST(request:Request) {
 
   const target=(suffix:string)=>publicUrl(appendFeedback(safeDashboardReturn(returnTo,"/dashboard/assets"),suffix),request.url);
 
-  const site=session.platformRole==="superadmin"
+  const site=session.platformRole!=="user"
     ? await query<{organization_id:string}>("SELECT organization_id FROM sites WHERE id=$1 AND active=true",[siteId])
     : await query<{organization_id:string}>("SELECT organization_id FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",[siteId,session.organizationId]);
 

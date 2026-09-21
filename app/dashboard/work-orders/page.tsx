@@ -11,7 +11,7 @@ export default async function WorkOrdersPage() {
   if(!session) redirect("/login");
   if(!can(session,"work_orders.read")) redirect("/dashboard");
 
-  const superadmin=session.platformRole==="superadmin";
+  const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"work_orders.write");
   const requesterOnly=session.role==="requester" && session.userId;

@@ -4,8 +4,9 @@ import { can, type OrganizationRole } from "@/lib/permissions";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { gateFor, getSetupState } from "@/lib/setup-sequence";
 
-const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer"]);
+const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL = /^\S+@\S+\.\S+$/;
 
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
   const phone = String(form.get("phone") || "").trim();
   const password = String(form.get("password") || "");
   const requestedRole = String(form.get("role") || "");
+  const externalSupplierId = String(form.get("external_supplier_id") || "");
   let organizationId = String(form.get("organization_id") || "");
   let accessAllSites = String(form.get("access_all_sites") || "true") === "true";
   let siteIds = uniqueSiteIds(form);
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
   if (!creatingSuperadmin) {
     if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
     if (!ROLES.has(requestedRole as OrganizationRole)) fields.role = "Selecciona un rol válido.";
+    if (requestedRole === "external" && !UUID.test(externalSupplierId)) fields.external_supplier_id = "Selecciona el proveedor de servicios al que pertenece.";
     if (!accessAllSites && siteIds.length === 0) fields.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
     if (siteIds.some(siteId => !UUID.test(siteId))) fields.site_ids = "Una de las sedes seleccionadas no es válida.";
   } else {
@@ -101,6 +104,30 @@ export async function POST(request: Request) {
         }
       }
 
+      if (requestedRole === "technician" || requestedRole === "external") {
+        const setupGate = gateFor(await getSetupState(organizationId, client), requestedRole === "external" ? "external" : "workforce");
+        if (!setupGate.ready) {
+          await client.query("ROLLBACK");
+          return response(request, 409, {
+            fields: {
+              role: setupGate.message,
+              ...(requestedRole === "external" ? { external_supplier_id: setupGate.message } : {}),
+            },
+          }, "?error=sequence");
+        }
+      }
+
+      if (requestedRole === "external") {
+        const supplier = await client.query(
+          "SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('services','both')",
+          [externalSupplierId, organizationId],
+        );
+        if (!supplier.rowCount) {
+          await client.query("ROLLBACK");
+          return response(request, 422, { fields: { external_supplier_id: "El proveedor debe pertenecer a la empresa y prestar servicios." } }, "?error=required");
+        }
+      }
+
       if (requestedRole === "technician") {
         const quota = await client.query<{ used: number; allowed: number }>(
           `SELECT (SELECT count(*)::int FROM organization_members WHERE organization_id=$1 AND role='technician') used,
@@ -124,9 +151,9 @@ export async function POST(request: Request) {
 
     if (!creatingSuperadmin) {
       await client.query(
-        `INSERT INTO organization_members(organization_id,user_id,role,site_id,access_all_sites)
-         VALUES($1,$2,$3,NULL,$4)`,
-        [organizationId, user.rows[0].id, requestedRole, accessAllSites],
+        `INSERT INTO organization_members(organization_id,user_id,role,site_id,access_all_sites,external_supplier_id)
+         VALUES($1,$2,$3,NULL,$4,$5)`,
+        [organizationId, user.rows[0].id, requestedRole, accessAllSites, requestedRole === "external" ? externalSupplierId : null],
       );
 
       if (!accessAllSites) {

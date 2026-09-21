@@ -30,7 +30,7 @@ export default async function LocationsIndexPage({
   if (!can(session, "locations.manage")) redirect("/dashboard");
 
   const params = await searchParams;
-  const superadmin = session.platformRole === "superadmin";
+  const superadmin = session.platformRole !== "user";
   const sites = superadmin
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,

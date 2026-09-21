@@ -241,3 +241,26 @@ Only the Platform Owner may create or revoke Superadministrators. No ordinary ac
 Exceptional destructive operations remain governed workflows requiring explicit validation, reauthentication, audit evidence and any configured backup/approval/cooling-off steps. Maximum role level is not a one-click bypass of lifecycle safeguards.
 
 See `docs/ROLE_MODEL.md` for the approved target matrix.
+
+
+## ADR-024 — Universal destructive delete is exclusive to Platform Owner during development
+
+Status: accepted and implemented.
+
+The development environment requires the project owner to be able to remove test data even when historical or dependent records would normally block deletion.
+
+This capability is implemented as a separate Platform Owner operation rather than weakening normal CRUD rules.
+
+The implementation:
+
+- authorizes only `platform_owner` on the server;
+- discovers real PostgreSQL foreign-key dependencies at runtime;
+- recursively deletes RESTRICT / NO ACTION / CASCADE-owned dependent records;
+- preserves SET NULL / SET DEFAULT semantics;
+- performs all work in one transaction;
+- protects the active Platform Owner identity;
+- records successful purges in `audit_log`.
+
+Superadministrators and tenant roles do not inherit this capability.
+
+Before commercial release, this development capability must be reviewed against the previously approved reauthentication/MFA/approval/retention process for irreversible production operations.

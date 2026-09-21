@@ -59,7 +59,7 @@ export function gateFor(state: SetupState, target: "supplier" | "workforce" | "p
   if (target === "provider" && state.serviceSuppliers < 1) return {
     ready:false,
     title:"Registra un proveedor de servicios",
-    message:"Los colaboradores externos deben quedar vinculados a una empresa proveedora de servicios.",
+    message:"Las cuentas con rol Proveedor de servicios deben vincularse a un proveedor activo de tipo Servicios o Materiales + servicios.",
     href:"/dashboard/suppliers",
     action:"Crear proveedor de servicios",
   };

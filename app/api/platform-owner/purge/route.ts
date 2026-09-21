@@ -4,6 +4,22 @@ import { isPlatformOwner } from "@/lib/permissions";
 import { pool } from "@/lib/db";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
+const CONTEXTUAL_DELETE_TABLES = new Set([
+  "organizations",
+  "sites",
+  "locations",
+  "users",
+  "sales_leads",
+  "assets",
+  "work_orders",
+  "work_order_tasks",
+  "maintenance_plans",
+  "inventory_items",
+  "suppliers",
+  "crews",
+  "organization_documents",
+]);
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
@@ -24,12 +40,12 @@ export async function POST(request: Request) {
   const id = String(body?.id || "").trim();
   const confirmation = String(body?.confirmation || "").trim();
 
-  if (!table || !id) {
-    return NextResponse.json({ message: "Selecciona un registro válido." }, { status: 422 });
+  if (!table || !id || !CONTEXTUAL_DELETE_TABLES.has(table)) {
+    return NextResponse.json({ message: "Registro o módulo no permitido para eliminación contextual." }, { status: 422 });
   }
   if (confirmation !== "ELIMINAR") {
     return NextResponse.json(
-      { message: "Escribe ELIMINAR para confirmar la eliminación universal." },
+      { message: "Confirma la eliminación desde el registro seleccionado." },
       { status: 422 },
     );
   }

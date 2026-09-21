@@ -18,7 +18,7 @@ export async function POST(request:Request) {
   const leaderUserId=String(form.get("leader_user_id")||"");
   const description=String(form.get("description")||"").trim();
   const memberIds=[...new Set(form.getAll("member_ids").map(v=>String(v)).filter(Boolean))];
-  const target=(suffix:string)=>publicUrl(\`/dashboard/crews\${suffix}\`,request.url);
+  const target=(suffix:string)=>publicUrl(`/dashboard/crews\${suffix}`,request.url);
 
   if(!organizationId||!siteId||!name||!leaderUserId||memberIds.length<1) {
     return NextResponse.redirect(target("?error=members"),303);
@@ -43,13 +43,13 @@ export async function POST(request:Request) {
     }
 
     const members=await client.query<{id:string}>(
-      \`SELECT u.id::text id
+      `SELECT u.id::text id
        FROM organization_members om
        JOIN users u ON u.id=om.user_id
        WHERE om.organization_id=$1
          AND u.active=true
          AND om.role IN ('technician','external')
-         AND u.id = ANY($2::uuid[])\`,
+         AND u.id = ANY($2::uuid[])`,
       [organizationId,memberIds],
     );
 
@@ -59,9 +59,9 @@ export async function POST(request:Request) {
     }
 
     const crew=await client.query<{id:string}>(
-      \`INSERT INTO crews(organization_id,site_id,name,description,leader_user_id)
+      `INSERT INTO crews(organization_id,site_id,name,description,leader_user_id)
        VALUES($1,$2,$3,$4,$5)
-       RETURNING id\`,
+       RETURNING id`,
       [organizationId,siteId,name,description||null,leaderUserId],
     );
 

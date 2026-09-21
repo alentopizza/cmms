@@ -195,3 +195,20 @@ Status: accepted.
 The CMMS may aggregate attendance and activity execution into descriptive metrics such as field hours, activity completion during a registered shift and average activity duration.
 
 The platform must not automatically rank workers, assign disciplinary outcomes, make termination/hiring decisions or otherwise make high-impact employment decisions from biometric, location or productivity data. Such interpretation remains under accountable human review.
+
+
+## ADR-020 — Enterprise profile is separate from operational sites
+
+Status: accepted.
+
+An organization is both a SaaS tenant and a business/legal entity. Its administrative/fiscal address and corporate contact data belong to the organization profile. Physical operating places continue to belong to `sites`.
+
+The application must not infer or synchronize these addresses automatically because a legal/administrative office may differ from every maintenance site.
+
+## ADR-021 — Corporate documents use a dedicated governed dossier
+
+Status: accepted.
+
+Corporate/legal/commercial documents require requirement level, issue/expiry dates, references and dossier-specific lifecycle semantics. They therefore use `organization_documents` instead of logo/cover columns or generic maintenance attachments.
+
+The dossier is tenant scoped. Requirement classification is per company rather than globally hard-coded, so country-specific documents can be marked required, optional or not applicable. Current files are retained in PostgreSQL for the same durability reasons as other configuration assets, with a 10 MB per-document upload limit.

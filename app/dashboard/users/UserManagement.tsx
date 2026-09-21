@@ -29,6 +29,7 @@ export type ManagedUser = {
   site_names: string[] | null;
   external_supplier_id: string | null;
   external_supplier_name: string | null;
+  has_avatar: boolean;
 };
 
 type Organization = { id: string; name: string };
@@ -117,6 +118,7 @@ export default function UserManagement({
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<{ kind: "delete" | "status"; user: ManagedUser } | null>(null);
   const [actionError, setActionError] = useState("");
+  const [avatarFile,setAvatarFile]=useState<File|null>(null);
 
   useEffect(() => {
     if (!mode) return;
@@ -177,6 +179,7 @@ export default function UserManagement({
     });
     setErrors({});
     setActionError("");
+    setAvatarFile(null);
   }
 
   function openEdit(user: ManagedUser) {
@@ -198,6 +201,7 @@ export default function UserManagement({
     });
     setErrors({});
     setActionError("");
+    setAvatarFile(null);
   }
 
   function closeModal() {
@@ -206,6 +210,7 @@ export default function UserManagement({
     setEditingUser(null);
     setDraft(EMPTY_DRAFT);
     setErrors({});
+    setAvatarFile(null);
   }
 
   function validate() {
@@ -249,6 +254,7 @@ export default function UserManagement({
       body.set("role", draft.role);
       body.set("access_all_sites", draft.access_all_sites ? "true" : "false");
       body.set("external_supplier_id", draft.external_supplier_id);
+      if(avatarFile) body.set("avatar",avatarFile);
       if (!draft.access_all_sites) draft.site_ids.forEach(siteId => body.append("site_ids", siteId));
       if (mode === "edit") body.set("intent", "update");
 
@@ -309,7 +315,7 @@ export default function UserManagement({
       count={users.length}
       countLabel="cuentas"
       searchPlaceholder="Buscar nombre, correo, empresa o rol"
-      action={<button className="button module-add-button" type="button" onClick={openCreate}><span className="module-add-button-icon">◎</span><span>Agregar</span></button>}
+      action={<button className="button module-add-button" type="button" onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}><span className="module-add-button-icon">◎</span><span>{organizations.length ? "Agregar" : "Crear empresa"}</span></button>}
     />
 
     {actionError && <div className="notice error section">{actionError}</div>}
@@ -317,9 +323,9 @@ export default function UserManagement({
     {users.length === 0 ? <section className="card user-empty-state section">
       <div className="user-empty-icon" aria-hidden="true">◎</div>
       <span className="eyebrow">Control de acceso</span>
-      <h2>Aún no tienes usuarios creados</h2>
-      <p>Crea la primera cuenta y asigna un rol para definir qué módulos y sedes podrá utilizar al iniciar sesión.</p>
-      <button className="button" type="button" onClick={openCreate}>Crear usuario</button>
+      <h2>{organizations.length ? "Aún no tienes usuarios creados" : "Primero debes crear una empresa"}</h2>
+      <p>{organizations.length ? "Crea la primera cuenta. El usuario pertenecerá a una empresa; las sedes solo definen posteriormente su alcance de acceso." : "No puedes crear usuarios de empresa todavía. Primero registra la empresa a la que pertenecerán."}</p>
+      <button className="button" type="button" onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}>{organizations.length ? "Crear usuario" : "Crear empresa"}</button>
     </section> : <section className="section">
       <div className="section-heading user-directory-heading">
         <div><span className="eyebrow">Directorio de acceso</span><h2>Usuarios registrados ({users.length})</h2></div>
@@ -335,7 +341,7 @@ export default function UserManagement({
           data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[])].filter(Boolean).join(" ")}
         >
           <div className="user-role-card-head">
-            <div className="user-avatar" aria-hidden="true">{initials(user.full_name)}</div>
+            <div className="user-avatar" aria-hidden="true">{user.has_avatar ? <img src={`/api/users/${user.id}/avatar`} alt="" /> : initials(user.full_name)}</div>
             <div><strong>{user.full_name}</strong><span>{user.email}</span></div>
             <span className={`status-badge ${user.active ? "status-active" : "status-inactive"}`}><i />{user.active ? "Activo" : "Inactivo"}</span>
           </div>
@@ -373,6 +379,13 @@ export default function UserManagement({
           {errors.general && <div className="notice error">{errors.general}</div>}
 
           <div className="form-grid">
+            <div className="field form-span-2 user-photo-field">
+              <label>Foto de perfil</label>
+              <div className="user-photo-upload">
+                <div className="user-photo-preview">{avatarFile ? <img src={URL.createObjectURL(avatarFile)} alt="Vista previa" /> : editingUser?.has_avatar ? <img src={`/api/users/${editingUser.id}/avatar`} alt="" /> : <span>{initials(draft.full_name||"Usuario")}</span>}</div>
+                <div><input type="file" accept="image/png,image/jpeg,image/webp" onChange={event=>setAvatarFile(event.target.files?.[0]||null)} /><small>JPG, PNG o WEBP · máximo 5 MB. Esta foto identificará al usuario en sus tarjetas.</small></div>
+              </div>
+            </div>
             <div className={`field ${errors.full_name ? "field-error" : ""}`}>
               <label htmlFor="managed-user-name">Nombre completo *</label>
               <input id="managed-user-name" placeholder="Ej. Laura Gómez" value={draft.full_name} onChange={event => updateDraft("full_name", event.target.value)} autoFocus />
@@ -432,8 +445,8 @@ export default function UserManagement({
             </div>}
 
             {draft.role !== "superadmin" && <div className={`field form-span-2 site-access-field ${errors.site_ids ? "field-error" : ""}`}>
-              <label>Acceso a sedes *</label>
-              {!draft.organization_id ? <div className="site-access-empty">Selecciona primero una empresa para cargar sus sedes.</div> : visibleSites.length === 0 ? <div className="site-access-empty">La empresa seleccionada todavía no tiene sedes activas.</div> : <>
+              <label>Alcance de acceso a sedes <span className="muted">(opcional)</span></label>
+              {!draft.organization_id ? <div className="site-access-empty">Selecciona primero la empresa. El usuario pertenece a la empresa; este bloque solo restringe qué sedes podrá operar.</div> : visibleSites.length === 0 ? <div className="site-access-empty">La empresa todavía no tiene sedes. Puedes crear el usuario igualmente con alcance general de empresa.</div> : <>
                 <div className="site-access-mode">
                   <button
                     type="button"

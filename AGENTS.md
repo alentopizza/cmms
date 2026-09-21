@@ -217,3 +217,25 @@ For Pro organizations with white-label enabled, reports must resolve organizatio
 Non-Pro tenants and platform-level reports use Desweb report identity.
 
 A PDF report should remain useful without a compatible logo format: never fail the export solely because a logo cannot be embedded.
+
+
+## User/supplier ownership invariant
+
+Users and suppliers are organization-level entities.
+
+Do not block their creation because a company lacks sites or sub-locations.
+
+A user's site assignment is an optional access-control scope and must never be treated as the entity's owner relationship.
+
+Provider-role accounts may require a same-company service supplier, but not a site.
+
+## Location visual invariant
+
+Principal location cards should remain visual and scannable:
+- three per row on wide screens;
+- site photo cover;
+- company logo overlap;
+- physical/address summary;
+- sub-location and asset counts.
+
+The site detail popup is the primary drill-down for contact, copy/WhatsApp actions, sub-location management and maintenance-service browsing.

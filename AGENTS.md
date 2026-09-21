@@ -202,3 +202,18 @@ Platform roles may see many companies, but readiness must be evaluated independe
 When no organization can complete a target creation, show the shared prerequisite state and route to the first missing dependency on the closest valid organization path.
 
 Creation endpoints must re-check the resolved organization, even when the UI already gated the action.
+
+
+## Branded report invariant
+
+Dashboard PDF export must use the same filtered/authorized dataset as the on-screen dashboard.
+
+For Pro organizations with white-label enabled, reports must resolve organization branding before rendering:
+1. organization branding light logo;
+2. organization visual logo fallback;
+3. branded name and primary/secondary colors;
+4. Desweb attribution only when `show_desweb_branding` permits it.
+
+Non-Pro tenants and platform-level reports use Desweb report identity.
+
+A PDF report should remain useful without a compatible logo format: never fail the export solely because a logo cannot be embedded.

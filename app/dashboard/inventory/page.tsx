@@ -14,7 +14,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   if(!session) redirect("/login");
   if(!can(session,"inventory.read")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole==="superadmin";
+  const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"inventory.write");
 

@@ -228,7 +228,7 @@ Non-Pro tenants use the global Desweb branding.
 
 ## Navigation/UI direction
 
-The public landing follows a premium control-center visual direction with Desweb teal/mint telemetry accents, technical grid treatments and product-relevant dashboard visualization. It supports both dark and light modes and uses the globally configured Desweb logos in its header/footer. This visual direction is the standard reference for future commercial surfaces.
+The public landing follows a premium dark control-center visual direction with Desweb teal/mint telemetry accents, technical grid treatments and product-relevant dashboard visualization. The landing itself is dark-only; the authenticated product may still support light/dark/system appearance. The public header uses a floating light navigation surface with the configured Desweb logo, while the footer remains dark and uses the appropriate dark-background logo variant.
 
 The public login intentionally includes only lightweight navigation back to Home, Plans and Self-hosted, plus a 15-day Trial CTA. It does not expose operational modules before authentication.
 

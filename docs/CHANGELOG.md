@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-20 — Floating corporate landing header and dark-only policy
+
+### Changed
+
+- Replaced the full-width dark landing header with a floating white navigation surface inspired by the supplied Desweb web identity example.
+- Enlarged and simplified logo presentation to improve legibility and breathing room.
+- Kept the landing permanently dark while preserving theme support for the authenticated application.
+- Removed the public landing theme switch.
+- Refined the footer to use a larger brand lockup, contact details and restrained Desweb geometric accents.
+- Documented production logo usage: isolated assets only, never crops from the composite identity board.
+
+
 ## 2026-09-20 — Landing branding, themes and advisor lead capture
 
 ### Changed

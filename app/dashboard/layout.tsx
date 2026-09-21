@@ -14,6 +14,7 @@ type NavItem = DashboardNavItem & { permission?: Permission };
 const navItems: NavItem[] = [
   { icon: "▦", label: "Resumen", href: "/dashboard" },
   { icon: "◫", label: "Empresas", href: "/dashboard/companies", permission: "companies.manage" },
+  { icon: "✦", label: "Leads", href: "/dashboard/leads", permission: "leads.manage" },
   { icon: "⌂", label: "Ubicaciones", href: "/dashboard/locations", permission: "locations.manage" },
   { icon: "◎", label: "Usuarios", href: "/dashboard/users", permission: "users.manage" },
   { icon: "◇", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },

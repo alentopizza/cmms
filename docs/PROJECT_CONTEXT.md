@@ -207,7 +207,10 @@ Company settings include:
 
 - company information;
 - current plan/subscription;
+- subscription start and end/renewal dates;
 - resource consumption and remaining capacity;
+- capacity warning/critical states;
+- a **Mejorar plan** action that returns to public plan selection and updates the effective subscription after checkout;
 - links to tenant user/location administration.
 
 ### Pro white label

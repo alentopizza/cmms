@@ -17,6 +17,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_single_platform_owner_idx
 -- Promote the project owner's database account when it already exists.
 UPDATE users
 SET platform_role='platform_owner',
+    full_name='Propietario Desweb',
     active=true,
     updated_at=now()
 WHERE lower(email)=lower('admin@dominio.com');

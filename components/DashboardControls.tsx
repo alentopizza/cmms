@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import DashboardDateRangePicker from "@/components/DashboardDateRangePicker";
 
 type Option={value:string;label:string};
 
@@ -48,9 +49,12 @@ export default function DashboardControls({
 
   return <section className="dashboard-filterbar">
     <div className="dashboard-filter-group">
-      <label><span>Mes</span><input type="month" value={month} onChange={event=>apply({month:event.target.value,from:"",to:""})}/></label>
-      <label><span>Desde</span><input type="date" value={from} onChange={event=>apply({from:event.target.value})}/></label>
-      <label><span>Hasta</span><input type="date" value={to} onChange={event=>apply({to:event.target.value})}/></label>
+      <DashboardDateRangePicker
+        initialFrom={from}
+        initialTo={to}
+        initialMonth={month}
+        onApply={({from:nextFrom,to:nextTo})=>apply({from:nextFrom,to:nextTo,month:""})}
+      />
       {mode==="platform"&&companyStatusOptions.length>0&&<label><span>Empresa</span><select value={companyStatus} onChange={event=>apply({company_status:event.target.value})}><option value="all">Todas</option>{companyStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
       {activityStatusOptions.length>0&&<label><span>{mode==="platform"?"Suscripción":mode==="field"?"Actividad":"Estado"}</span><select value={activityStatus} onChange={event=>apply({activity_status:event.target.value})}><option value="all">Todos</option>{activityStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
       <button className="text-button dashboard-clear-filters" type="button" onClick={clear}>Limpiar</button>

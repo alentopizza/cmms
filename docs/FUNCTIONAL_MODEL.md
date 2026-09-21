@@ -410,3 +410,43 @@ The Dashboard can generate a server-side PDF report containing the authorized fi
 The Power BI action exports UTF-8 CSV with a stable tabular schema suitable for Power BI Desktop / Power Query import.
 
 The product does not generate proprietary `.pbix` files. CSV is the supported interoperable data export.
+
+
+## Modern date range and branded PDF reports
+
+Dashboard date filtering uses one Spanish range picker instead of separate month/from/to controls.
+
+The picker provides:
+- two-calendar desktop view;
+- single-calendar responsive mobile view;
+- direct From / To inputs;
+- quick ranges: Hoy, Últimos 7 días, Últimos 30 días, Este mes and Mes anterior;
+- explicit Apply action;
+- the same query-string filters used by dashboard metrics and exports.
+
+### Enterprise PDF report
+
+PDF export is an executive business report, not a raw table.
+
+It includes:
+- branded letterhead;
+- report owner and period;
+- KPI summary cards;
+- status distribution chart;
+- record-type distribution chart;
+- executive interpretation block;
+- detailed paginated table;
+- branded footer and pagination.
+
+### Pro white-label reports
+
+When the authenticated organization is on the Pro plan with white-label enabled:
+- organization branding name is used;
+- configured primary / secondary colors are used;
+- organization light-background logo is preferred;
+- organization visual logo is used as fallback;
+- Desweb attribution follows the organization's `show_desweb_branding` setting.
+
+For non-Pro organizations and platform reports, Desweb branding is used.
+
+PDF-lib currently embeds configured PNG and JPEG logos directly. Other image formats retain the report colors/name and fall back gracefully when the raster logo cannot be embedded.

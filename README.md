@@ -62,9 +62,18 @@ NEXT_PUBLIC_APP_URL=https://cmms.desweb.cloud
 TEST_CHECKOUT_ENABLED=false
 ```
 
+## Accesos públicos
+
+- `/` — landing y planes.
+- `/login` — acceso a la plataforma.
+- `/downloads` — información de la edición self-hosted/descargable.
+- `/dashboard` — aplicación autenticada.
+
 ## Instalación descargable / self-hosted
 
 El repositorio incluye `compose.yaml` y `scripts/install.sh` para instalar la misma plataforma web con Docker Compose y PostgreSQL persistente.
+
+Durante beta, el workflow de GitHub Actions **Package self-hosted** genera paquetes ZIP/TAR versionados para distribución privada.
 
 Consulta `docs/INSTALLATION.md` antes de usar esta modalidad en producción.
 

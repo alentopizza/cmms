@@ -60,7 +60,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const creationGate=creationPrerequisiteFor(hierarchy,"supplier");
 
   const error = params.error==="sequence"
-    ? "Primero crea una ubicación principal y al menos una sububicación para la empresa."
+    ? creationGate.message
     : params.error==="required"
       ? "Completa el nombre y tipo de proveedor."
       : params.error

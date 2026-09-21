@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { SiteCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
+import { LocationCreateModal } from "@/components/ContextCreateModals";
+import ModuleHeader from "@/components/ModuleHeader";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type OrganizationRow = { id: string; name: string };
@@ -107,43 +108,29 @@ export default async function LocationsIndexPage({
         : "";
 
   return <>
-    <header className="page-header">
-      <div>
-        <span className="eyebrow">Estructura física</span>
-        <h1 className="page-title">Ubicaciones</h1>
-        <p className="muted">Administra las sedes principales y entra a su jerarquía de áreas, pisos, habitaciones y zonas.</p>
-      </div>
-      <div className="brand-pill"><span /> {sites.rowCount} sedes</div>
-    </header>
+    <ModuleHeader
+      eyebrow="Estructura física"
+      title="Ubicaciones"
+      description="Administra las sedes principales y entra a su jerarquía de áreas, pisos, habitaciones y zonas."
+      count={sites.rowCount || 0}
+      countLabel="sedes"
+      searchPlaceholder="Buscar sede, empresa, ciudad o código"
+      action={<LocationCreateModal
+        organizations={organizations.rows}
+        sites={siteOptions}
+        locations={sublocations.rows}
+        fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
+        fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
+        returnTo="/dashboard/locations"
+      />}
+    />
 
     {params.created && <div className="notice success section">{params.created === "location" ? "Sububicación creada correctamente." : "Ubicación principal creada correctamente."}</div>}
     {message && <div className="notice error section">{message}</div>}
 
-    <section className="contextual-action-bar section">
-      <div>
-        <span className="eyebrow">Creación rápida</span>
-        <strong>Ubicaciones y sububicaciones</strong>
-        <small>Desde este módulo puedes crear ambos niveles; al entrar a una sede el contexto quedará preseleccionado.</small>
-      </div>
-      <div className="contextual-action-buttons">
-        {(superadmin || session.accessAllSites) && <SiteCreateModal
-          organizations={organizations.rows}
-          fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
-          fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
-          returnTo="/dashboard/locations"
-        />}
-        <SubLocationCreateModal
-          sites={siteOptions}
-          locations={sublocations.rows}
-          returnTo="/dashboard/locations"
-          secondary
-        />
-      </div>
-    </section>
-
     <section className="section">
       <div className="site-grid">
-        {sites.rows.map(site => <article className="card site-card" key={site.id}>
+        {sites.rows.map(site => <article className="card site-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"} data-search={[site.name,site.organization_name,site.code,site.city,site.country].filter(Boolean).join(" ")}>
           <div className="site-card-header">
             <div>
               <span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span>

@@ -66,7 +66,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="notice success section">Rutina creada correctamente.</div>}
-    {feedback.error && <div className="notice error section">No fue posible crear la rutina. Revisa los datos e inténtalo nuevamente.</div>}
+    {feedback.error && <div className="notice error section">{feedback.error==="sequence" ? creationGate.message : "No fue posible crear la rutina. Revisa los datos e inténtalo nuevamente."}</div>}
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="↻"
       eyebrow="Jerarquía de creación"

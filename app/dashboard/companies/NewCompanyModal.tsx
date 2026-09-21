@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-export default function NewCompanyModal({ error }: { error?: string }) {
-  const [open, setOpen] = useState(Boolean(error));
+export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(error) || autoOpen);
   const [logoPreview, setLogoPreview] = useState("");
   const [coverPreview, setCoverPreview] = useState("");
+
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen]);
 
   useEffect(() => {
     if (!open) return;

@@ -164,3 +164,16 @@ Preserve this dependency order where applicable:
 Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine.
 
 The UI is guidance only. Keep equivalent server-side validation in creation endpoints.
+
+
+## Role-aware Dashboard invariant
+
+The root `/dashboard` is not a generic summary. It must render analytics relevant to the authenticated role.
+
+Rules:
+- never show platform commercial metrics to tenant roles;
+- never show cross-company data to organization users;
+- tenant dashboards must respect site scope;
+- field-worker productivity must be based on assigned activities / attendance evidence, not global organization totals;
+- requester metrics must use only requests created by that requester;
+- do not label subscription-plan arithmetic as collected revenue. Until payment ledger/reconciliation exists, use **MRR estimado** or equivalent explicit wording.

@@ -64,7 +64,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
 
   const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
   const creationGate=creationPrerequisiteFor(hierarchy,"asset");
-  const error=params.error==="sequence" ? "Primero completa la estructura física y registra al menos un proveedor."
+  const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de activos de su plan."
     : params.error ? "Revisa la información del activo." : "";
 
@@ -108,6 +108,6 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
           {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}
         ]},
       ]}/></td>}</tr>)}
-    </tbody></table>{!assets.rowCount && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>Completa primero ubicaciones, sububicaciones y proveedores.</span></div>}</section>
+    </tbody></table>{!assets.rowCount && creationGate.ready && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>La jerarquía está lista. Usa Agregar para registrar el primer activo.</span></div>}</section>
   </>;
 }

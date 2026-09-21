@@ -8,7 +8,7 @@ import { AssetCreateModal, SubLocationCreateModal } from "@/components/ContextCr
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; };
+type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; latitude:number|null; longitude:number|null; geofence_radius_m:number; };
 type Location = { id: string; parent_id: string | null; name: string; code: string | null; type: string; description: string | null; active: boolean; asset_count: number; child_count: number; };
 type Supplier = { id: string; organization_id: string; name: string };
 
@@ -22,6 +22,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   const [siteResult, locationsResult] = await Promise.all([
     query<Site>(
       `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
+              s.latitude,s.longitude,s.geofence_radius_m,
               COALESCE(ol.max_sublocations,100)::int max_sublocations
        FROM sites s JOIN organizations o ON o.id=s.organization_id
        LEFT JOIN organization_limits ol ON ol.organization_id=o.id WHERE s.id=$1`, [id]),
@@ -53,6 +54,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
 
   const message = feedback.error === "limit" ? `Se alcanzó el cupo de ${site.max_sublocations} sububicaciones.`
     : feedback.error === "code" ? "Ese código ya existe dentro de esta ubicación."
+    : feedback.error === "site-geofence" ? "Revisa las coordenadas o el radio de la geocerca."
     : feedback.error ? "Revisa la información e inténtalo nuevamente."
     : feedback.created === "asset" ? "Activo creado y asociado a la sububicación seleccionada."
     : feedback.created ? "Sububicación creada correctamente."
@@ -124,6 +126,23 @@ export default async function LocationPage({ params, searchParams }: { params: P
       </div>
     </section>
     <section className="location-summary section"><div className="card compact-metric"><span>Sububicaciones</span><strong>{locations.length}</strong><small>de {site.max_sublocations} permitidas</small></div><div className="card compact-metric"><span>Disponibles</span><strong>{Math.max(site.max_sublocations - locations.length, 0)}</strong><small>según el plan asignado</small></div></section>
+    <section className="card section">
+      <div className="section-heading"><div><span className="eyebrow">Control de campo</span><h2>Geocerca de asistencia</h2><p className="muted">Define el punto GPS de esta sede y el radio permitido para entradas y salidas del personal de campo.</p></div><span className={`setup-flow-state ${site.latitude!==null && site.longitude!==null ? "ready":"blocked"}`}>{site.latitude!==null && site.longitude!==null ? "Configurada":"Pendiente"}</span></div>
+      <form method="post" action={"/api/sites/"+site.id} className="form-grid">
+        <input type="hidden" name="organization_id" value={site.organization_id}/>
+        <input type="hidden" name="return_to" value={"/dashboard/locations/"+site.id}/>
+        <input type="hidden" name="name" value={site.name}/>
+        <input type="hidden" name="code" value={site.code||""}/>
+        <input type="hidden" name="address" value={site.address||""}/>
+        <input type="hidden" name="city" value={site.city||""}/>
+        <input type="hidden" name="country" value={site.country}/>
+        <div className="field"><label>Latitud</label><input name="latitude" type="number" step="0.000001" min="-90" max="90" defaultValue={site.latitude??""} placeholder="4.711000"/></div>
+        <div className="field"><label>Longitud</label><input name="longitude" type="number" step="0.000001" min="-180" max="180" defaultValue={site.longitude??""} placeholder="-74.072100"/></div>
+        <div className="field"><label>Radio permitido (metros)</label><input name="geofence_radius_m" type="number" min="20" max="5000" defaultValue={site.geofence_radius_m||250}/><small>Recomendado en campo: 100–300 m según precisión GPS y tamaño de la sede.</small></div>
+        <div className="field"><label>Estado</label><div className="geofence-status-copy">{site.latitude!==null && site.longitude!==null ? `Punto: ${site.latitude.toFixed(6)}, ${site.longitude.toFixed(6)}` : "Aún sin coordenadas"}</div></div>
+        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar geocerca</button></div>
+      </form>
+    </section>
     <section className="section"><div className="section-heading"><div><span className="eyebrow">Estructura</span><h2>Mapa de espacios</h2></div><small>{locations.length} sububicaciones registradas</small></div>{locations.length ? <div className="location-tree">{tree(null)}</div> : <div className="card empty-state"><strong>Aún no hay sububicaciones.</strong><span>Crea la primera área dentro de {site.name}.</span></div>}</section>
   </>;
 }

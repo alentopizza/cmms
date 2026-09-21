@@ -118,8 +118,9 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 The approved target hierarchy is documented in `docs/ROLE_MODEL.md` and must be read before changing authentication, RBAC, user creation, sales-channel permissions or destructive administration.
 
 Important:
-- this hierarchy is approved product direction but is not fully implemented yet;
-- Platform Owner / Propietario Desweb is the maximum level and the only role allowed to create/revoke Superadministrators;
+- Platform Owner / Propietario Desweb is implemented as `platform_owner`;
+- the environment bootstrap account resolves as Platform Owner and migration 015 promotes `admin@dominio.com` when present;
+- Platform Owner is the maximum level and the only role allowed to create/revoke Superadministrators;
 - sales and partner roles are platform/commercial identities, not customer maintenance administrators;
 - Company Administrator remains the highest tenant role;
 - every user-creation UI must explain role purpose, scope, permissions, restrictions and which lower roles it may create;

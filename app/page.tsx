@@ -38,13 +38,14 @@ export default async function Home() {
   const session = await getSession();
   const [plans, customization] = await Promise.all([getActivePlans(), getCustomizationSummary()]);
   const lightLogo = logoOnLightSrc(customization);
-  const darkLogo = logoOnDarkSrc(customization);
+  const darkLogo = customization.hasLogoOnDark ? logoOnDarkSrc(customization) : lightLogo;
+  const darkLogoNeedsPlate = !customization.hasLogoOnDark;
 
   return <main className="marketing-page marketing-page-pro">
     <section className="marketing-top">
       <nav className="marketing-nav marketing-nav-pro">
         <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/" aria-label="Desweb CMMS">
-          <span className="marketing-logo-wrap">
+          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
             <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
             <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
           </span>
@@ -288,7 +289,7 @@ export default async function Home() {
     <footer className="marketing-footer marketing-footer-pro">
       <div className="marketing-footer-brand">
         <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/">
-          <span className="marketing-logo-wrap">
+          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
             <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
             <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
           </span>

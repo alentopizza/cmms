@@ -345,3 +345,8 @@ Before modifying the project, future contributors/AI agents must read:
 12. `docs/IP_AND_DISTRIBUTION.md`
 
 Meaningful implementation work is incomplete until the relevant documentation is updated.
+
+
+### Contextual creation pattern
+
+The UI now supports parent-aware creation popups in addition to global module creation. A known parent is carried into the form instead of asking the operator to select it again. Examples include creating a site from a company, a user from a company, an asset from a sublocation, and a routine from an asset. Mutation routes accept a safe dashboard-only return path so successful creation returns to the originating context.

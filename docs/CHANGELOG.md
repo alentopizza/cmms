@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-21 — Approved platform-owner, sales and distribution role model
+
+### Product decision
+
+- Approved **Propietario Desweb / Platform Owner** as the future maximum platform role.
+- Reserved Superadministrator creation/revocation exclusively to Platform Owner.
+- Defined Superadministrator as a trusted platform operator rather than the final authority.
+- Approved future **Comercial Desweb** and **Partner / Distribuidor** roles so sales/distribution do not require global technical administration.
+- Preserved **Administrador de empresa** as the highest customer/tenant role.
+- Defined platform/commercial hierarchy and tenant operational hierarchy as separate authorization domains.
+- Defined a target server-enforced "who may create whom" matrix.
+- Required every user-creation/edit interface to explain role scope, permissions, restrictions and creation authority.
+- Required exceptional destructive operations to use a governed reauthentication/validation/audit process instead of normal CRUD deletion.
+- Added `docs/ROLE_MODEL.md` as the canonical source of truth.
+
+### Implementation status
+
+- Documentation/product model only.
+- No production RBAC behavior changed in this entry.
+
+
 ## 2026-09-21 — Company Profile v2 and corporate document dossier
 
 ### Added

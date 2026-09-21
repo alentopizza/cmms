@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getActivePlans } from "@/lib/billing";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
-import MarketingThemeToggle from "@/components/MarketingThemeToggle";
 import MarketingLeadForm from "@/components/MarketingLeadForm";
 
 const features = [
@@ -42,20 +41,14 @@ export default async function Home() {
   const darkLogoNeedsPlate = !customization.hasLogoOnDark;
 
   return <main className="marketing-page marketing-page-pro">
-    <section className="marketing-top">
-      <nav className="marketing-nav marketing-nav-pro">
-        <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/" aria-label="Desweb CMMS">
-          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
-            <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
-            <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
-          </span>
-          <span className="marketing-brand-copy">
-            <strong>CMMS</strong>
-            <small>Mantenimiento inteligente</small>
-          </span>
+    <section className="marketing-top marketing-top-floating">
+      <nav className="marketing-nav marketing-nav-pro marketing-nav-floating">
+        <Link className="marketing-header-logo" href="/" aria-label="Desweb CMMS">
+          <img src={lightLogo} alt="Desweb - Desarrollo de Soluciones" />
+          <span>CMMS</span>
         </Link>
 
-        <div className="marketing-nav-links">
+        <div className="marketing-nav-links marketing-nav-links-floating">
           <a href="#solucion">Solución</a>
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#planes">Planes</a>
@@ -64,8 +57,7 @@ export default async function Home() {
           <Link href="/downloads">Self-hosted</Link>
         </div>
 
-        <div className="marketing-nav-actions">
-          <MarketingThemeToggle />
+        <div className="marketing-nav-actions marketing-nav-actions-floating">
           {session
             ? <Link className="marketing-login-link" href="/dashboard">Ir al panel</Link>
             : <Link className="marketing-login-link" href="/login">Iniciar sesión</Link>}
@@ -288,15 +280,18 @@ export default async function Home() {
 
     <footer className="marketing-footer marketing-footer-pro">
       <div className="marketing-footer-brand">
-        <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/">
-          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
-            <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
-            <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
+        <Link className="marketing-footer-logo-link" href="/">
+          <span className={`marketing-footer-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
+            <img src={darkLogo} alt="Desweb - Desarrollo de Soluciones" />
           </span>
-          <span className="marketing-brand-copy"><strong>CMMS</strong><small>Mantenimiento inteligente</small></span>
+          <strong>CMMS</strong>
         </Link>
         <p>Una plataforma Desweb para centralizar y escalar la gestión de mantenimiento.</p>
-        <span>Desarrollo de Soluciones · Colombia</span>
+        <div className="marketing-footer-contact">
+          <a href="mailto:contacto@deswebcol.com">contacto@deswebcol.com</a>
+          <a href="tel:+573134373474">+57 313 437 3474</a>
+          <span>Bogotá, Colombia</span>
+        </div>
       </div>
 
       <div className="marketing-footer-column">

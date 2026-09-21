@@ -194,7 +194,7 @@ An external distribution account is limited to its authorized leads and attribut
 
 ### Platform governance
 
-Propietario Desweb / Platform Owner is the maximum platform authority. Superadministrators remain trusted platform operators, but only the Platform Owner may create/revoke Superadministrators.
+Propietario Desweb / Platform Owner is now implemented as the maximum platform authority. Superadministrators remain trusted platform operators, but only the Platform Owner may create/revoke Superadministrators. The current project-owner identity is `admin@dominio.com`.
 
 The detailed role and account-creation rules are maintained in `docs/ROLE_MODEL.md`.
 

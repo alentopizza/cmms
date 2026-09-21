@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-20 — Login public navigation
+
+### Changed
+
+- Added a lightweight public navigation bar to `/login` with **Inicio**, **Ver planes** and **Self-hosted**.
+- Made the Desweb logo on login clickable and linked it back to Home.
+- Added a compact post-form CTA for the 15-day Trial plus links to plan comparison and the self-hosted edition.
+- Kept the login authentication-first and intentionally avoided operational navigation or a fake password-recovery action.
+
+
 ## 2026-09-20 — Resilient checkout and subscription settings
 
 ### Fixed

@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-21 — Role-aware Dashboard
+
+### Changed
+
+- Renamed the former **Resumen** navigation item to **Dashboard**.
+- Replaced the generic operational summary with role-specific KPIs and analytical panels.
+- Added Platform Owner business KPIs: paid active plans, estimated MRR, active companies and lead conversion.
+- Added Superadministrator customer/subscription and global operational KPIs.
+- Added Company Administrator and Manager maintenance, cost, downtime, inventory and workload analytics.
+- Added Technician / External productivity, assigned activity and attendance metrics.
+- Added Service Provider workload metrics.
+- Added Requester request-resolution metrics.
+- Added Viewer read-only operational metrics.
+- Added plan-distribution, lead-funnel, work-order-distribution and recent-activity tables.
+- Added responsive light/dark dashboard styling inspired by the supplied dashboard reference.
+
+### Data semantics
+
+- Revenue is labeled **MRR estimado** because it is calculated from active subscriptions and configured plan prices.
+- It is not represented as collected cash until a payment ledger / provider reconciliation model is implemented.
+
+
 ## 2026-09-21 — Guided creation hierarchy
 
 ### Changed

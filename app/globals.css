@@ -3567,3 +3567,60 @@ html[data-theme="dark"] .company-resource-track span{background:var(--brand-mint
   .location-create-switch{grid-template-columns:1fr;padding:14px 14px 2px}
   .company-visual-card-v2{min-height:auto}
 }
+
+
+/* Creation hierarchy prerequisite states */
+.creation-prerequisite-state{
+  min-height:330px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:10px;
+  padding:44px;
+  border-style:dashed;
+}
+.creation-prerequisite-icon{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  background:var(--brand-mint-light);
+  color:var(--brand-dark);
+  font-size:24px;
+  font-weight:900;
+}
+.creation-prerequisite-state h2{
+  margin:2px 0 0;
+  color:var(--brand-dark);
+  font-size:22px;
+}
+.creation-prerequisite-state p{
+  max-width:660px;
+  margin:0 0 8px;
+  color:var(--text-soft);
+  font-size:13px;
+  line-height:1.65;
+}
+.creation-prerequisite-state .button{
+  min-width:150px;
+  justify-content:center;
+}
+html[data-theme="dark"] .creation-prerequisite-icon{
+  background:#31595b;
+  color:#d8f4f1;
+}
+html[data-theme="dark"] .creation-prerequisite-state h2{
+  color:var(--text);
+}
+@media(max-width:760px){
+  .creation-prerequisite-state{
+    min-height:280px;
+    padding:30px 20px;
+  }
+  .creation-prerequisite-state .button{
+    width:100%;
+  }
+}

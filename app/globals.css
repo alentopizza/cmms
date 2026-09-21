@@ -2090,3 +2090,36 @@ html .marketing-page-pro.marketing-dark-only .marketing-final-cta p{color:#8da2a
   .marketing-nav-actions-floating .marketing-login-link{display:none}
   .marketing-nav-actions-floating .marketing-nav-cta{min-height:38px;padding:0 13px!important}
 }
+
+
+/* Header refinement: principal logo + larger navigation typography */
+.marketing-header-logo-principal{
+  min-width:220px;
+}
+.marketing-header-logo-principal img{
+  width:178px;
+  max-height:48px;
+  object-fit:contain;
+  object-position:left center;
+}
+.marketing-nav-links-floating a{
+  font-size:10.5px!important;
+  letter-spacing:.005em;
+}
+.marketing-nav-actions-floating .marketing-login-link{
+  font-size:10.5px!important;
+}
+.marketing-nav-actions-floating .marketing-nav-cta{
+  font-size:10.5px!important;
+  min-height:42px;
+  padding-inline:18px!important;
+}
+@media(max-width:1080px){
+  .marketing-header-logo-principal{min-width:178px}
+  .marketing-header-logo-principal img{width:160px}
+  .marketing-nav-links-floating a{font-size:10px!important}
+}
+@media(max-width:780px){
+  .marketing-header-logo-principal{min-width:auto}
+  .marketing-header-logo-principal img{width:132px}
+}

@@ -6,7 +6,7 @@ export default function DownloadsPage() {
       <header className="downloads-header downloads-header-pro">
         <Link className="marketing-brand marketing-brand-pro" href="/">
           <span className="marketing-brand-mark">D</span>
-          <span className="marketing-brand-copy"><strong>DESWEB</strong><small>CMMS · Self-hosted</small></span>
+          <span className="marketing-brand-copy"><strong>DESWEB</strong><small>CMMS · Instalación propia</small></span>
         </Link>
         <div>
           <Link href="/">Landing</Link>
@@ -17,9 +17,9 @@ export default function DownloadsPage() {
 
       <section className="downloads-hero downloads-hero-pro">
         <div>
-          <div className="marketing-beta-pill"><i /> Edición self-hosted · Beta privada</div>
+          <div className="marketing-beta-pill"><i /> Edición instalación propia · Beta privada</div>
           <h1>La misma plataforma CMMS, instalada en tu propia infraestructura.</h1>
-          <p>Desweb CMMS self-hosted conserva la arquitectura web del SaaS: aplicación Next.js, PostgreSQL persistente, migraciones versionadas y despliegue con Docker Compose.</p>
+          <p>Desweb CMMS instalación propia conserva la arquitectura web del SaaS: aplicación Next.js, PostgreSQL persistente, migraciones versionadas y despliegue con Docker Compose.</p>
           <div className="downloads-hero-actions">
             <a className="button" href="#obtener">Cómo obtener el paquete</a>
             <Link className="button secondary" href="/">Volver al producto</Link>
@@ -38,7 +38,7 @@ export default function DownloadsPage() {
         <article><span>⌂</span><div><strong>Infraestructura propia</strong><p>Despliega la aplicación dentro de tu servidor, VPS o entorno on-premise.</p></div></article>
         <article><span>↻</span><div><strong>Migraciones controladas</strong><p>Las actualizaciones mantienen un historial de esquema versionado.</p></div></article>
         <article><span>▣</span><div><strong>Datos persistentes</strong><p>PostgreSQL mantiene la información fuera del ciclo de vida del contenedor.</p></div></article>
-        <article><span>✓</span><div><strong>Mismo producto</strong><p>No mantenemos una segunda aplicación: SaaS y self-hosted comparten código base.</p></div></article>
+        <article><span>✓</span><div><strong>Mismo producto</strong><p>No mantenemos una segunda aplicación: SaaS y instalación propia comparten código base.</p></div></article>
       </section>
 
       <section id="obtener" className="downloads-grid downloads-grid-pro">
@@ -50,7 +50,7 @@ export default function DownloadsPage() {
           <p>Durante la beta los binarios se generan de forma privada desde el repositorio para validar instalación, actualización y soporte antes de abrir la distribución comercial.</p>
           <div className="downloads-package-list">
             <div><span>01</span><div><strong>Abre GitHub Actions</strong><small>Repositorio alentopizza/cmms</small></div></div>
-            <div><span>02</span><div><strong>Ejecuta Package self-hosted</strong><small>Define una versión como 0.1.0-beta</small></div></div>
+            <div><span>02</span><div><strong>Ejecuta Package instalación propia</strong><small>Define una versión como 0.1.0-beta</small></div></div>
             <div><span>03</span><div><strong>Descarga el artefacto</strong><small>Obtendrás ZIP y TAR.GZ</small></div></div>
             <div><span>04</span><div><strong>Configura e instala</strong><small>Usa .env + Docker Compose</small></div></div>
           </div>
@@ -72,7 +72,7 @@ export default function DownloadsPage() {
             <span className="downloads-card-icon">◎</span>
             <div><span className="downloads-card-kicker">Licenciamiento</span><h2>Edición comercial</h2></div>
           </div>
-          <p>La versión final descargable estará ligada a un modelo de licencia self-hosted y releases controlados.</p>
+          <p>La versión final descargable estará ligada a un modelo de licencia instalación propia y releases controlados.</p>
           <ul>
             <li>versiones estables y notas de release;</li>
             <li>derechos de actualización y soporte;</li>
@@ -84,7 +84,7 @@ export default function DownloadsPage() {
       </section>
 
       <section className="downloads-cta">
-        <div><span className="eyebrow">¿SaaS o self-hosted?</span><h2>Podemos adaptar la distribución al entorno de tu empresa.</h2><p>Para la mayoría de clientes el SaaS será el camino más simple. Self-hosted está pensado para organizaciones con requisitos de infraestructura propios.</p></div>
+        <div><span className="eyebrow">¿SaaS o instalación propia?</span><h2>Podemos adaptar la distribución al entorno de tu empresa.</h2><p>Para la mayoría de clientes el SaaS será el camino más simple. Instalación propia está pensado para organizaciones con requisitos de infraestructura propios.</p></div>
         <Link className="button" href="/#planes">Comparar planes</Link>
       </section>
     </section>

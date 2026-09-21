@@ -88,3 +88,10 @@ The supplied identity board establishes distinct brand-use contexts:
 The marketing header should use the light-background logo variant on its floating white surface. The marketing footer should use the negative/dark-background variant where available.
 
 Do not crop logos from a composite identity-board image for production. Use isolated PNG/WebP/SVG assets uploaded through the branding system.
+
+
+## Principal marketing logo
+
+The principal Desweb logo supplied on 2026-09-20 is the preferred asset for the light floating landing header. The header should display the logo as a complete lockup with **no additional “CMMS” label beside it**.
+
+Navigation typography should be large enough to remain clearly readable at desktop widths and should not visually compete with the primary Trial CTA.

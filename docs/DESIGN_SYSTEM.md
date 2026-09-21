@@ -221,3 +221,10 @@ Footer:
 - remains dark and uses the dark-background/negative logo variant when available;
 - groups Product, Start and advisor-conversion links;
 - may use restrained geometric brand accents derived from the Desweb identity system.
+
+
+## Public wording for downloadable deployment
+
+Use **Instalación propia** in customer-facing navigation and marketing instead of the technical term **Self-hosted**.
+
+The technical documentation may continue to use `self-hosted` when discussing architecture, Docker or deployment internals, but public CTAs, menus and sales copy should prefer terminology a non-technical buyer can understand.

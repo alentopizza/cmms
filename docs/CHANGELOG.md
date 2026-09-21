@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-20 — Principal logo and clearer installation terminology
+
+### Changed
+
+- Applied the supplied principal Desweb logo to the public landing header.
+- Removed the redundant **CMMS** text from beside the header logo.
+- Increased header navigation, login and Trial CTA typography for better readability.
+- Replaced the public-facing term **Self-hosted** with **Instalación propia** across the landing and downloads experience.
+- Kept `self-hosted` as an internal/technical term where deployment precision is useful.
+
+
 ## 2026-09-20 — Floating corporate landing header and dark-only policy
 
 ### Changed

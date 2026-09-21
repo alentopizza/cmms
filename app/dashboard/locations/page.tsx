@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { SiteCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
+
+type OrganizationRow = { id: string; name: string };
+type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
 
 type SiteRow = {
   id: string;
@@ -52,6 +56,46 @@ export default async function LocationsIndexPage({
           [session.organizationId, session.siteIds],
         );
 
+  const [organizations, sublocations] = await Promise.all([
+    superadmin
+      ? query<OrganizationRow>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
+      : query<OrganizationRow>("SELECT id,name FROM organizations WHERE id=$1", [session.organizationId]),
+    superadmin
+      ? query<LocationOption>(
+          `SELECT l.id,l.organization_id,l.site_id,l.name,
+                  o.name || ' · ' || s.name || ' · ' || l.name label
+           FROM locations l
+           JOIN sites s ON s.id=l.site_id
+           JOIN organizations o ON o.id=l.organization_id
+           WHERE l.active=true
+           ORDER BY o.name,s.name,l.name`,
+        )
+      : session.accessAllSites
+        ? query<LocationOption>(
+            `SELECT l.id,l.organization_id,l.site_id,l.name,
+                    s.name || ' · ' || l.name label
+             FROM locations l JOIN sites s ON s.id=l.site_id
+             WHERE l.organization_id=$1 AND l.active=true
+             ORDER BY s.name,l.name`,
+            [session.organizationId],
+          )
+        : query<LocationOption>(
+            `SELECT l.id,l.organization_id,l.site_id,l.name,
+                    s.name || ' · ' || l.name label
+             FROM locations l JOIN sites s ON s.id=l.site_id
+             WHERE l.organization_id=$1 AND l.active=true AND l.site_id = ANY($2::uuid[])
+             ORDER BY s.name,l.name`,
+            [session.organizationId, session.siteIds],
+          ),
+  ]);
+
+  const siteOptions = sites.rows.map(site => ({
+    id: site.id,
+    organization_id: site.organization_id,
+    name: site.name,
+    organization_name: site.organization_name,
+  }));
+
   const message = params.error === "site-limit"
     ? "La empresa alcanzó el límite de ubicaciones principales asignado."
     : params.error === "site-code"
@@ -70,23 +114,30 @@ export default async function LocationsIndexPage({
       <div className="brand-pill"><span /> {sites.rowCount} sedes</div>
     </header>
 
-    {params.created && <div className="notice success section">Ubicación principal creada correctamente.</div>}
+    {params.created && <div className="notice success section">{params.created === "location" ? "Sububicación creada correctamente." : "Ubicación principal creada correctamente."}</div>}
     {message && <div className="notice error section">{message}</div>}
 
-    {!superadmin && session.organizationId && session.accessAllSites && <section className="card section">
-      <div className="section-heading">
-        <div><span className="eyebrow">Nueva ubicación principal</span><h2>Crear sede</h2></div>
-        <small>{session.organizationName}</small>
+    <section className="contextual-action-bar section">
+      <div>
+        <span className="eyebrow">Creación rápida</span>
+        <strong>Ubicaciones y sububicaciones</strong>
+        <small>Desde este módulo puedes crear ambos niveles; al entrar a una sede el contexto quedará preseleccionado.</small>
       </div>
-      <form className="form-grid" method="post" action={`/api/organizations/${session.organizationId}/sites`}>
-        <div className="field"><label>Nombre</label><input name="name" required placeholder="Sede principal" /></div>
-        <div className="field"><label>Código</label><input name="code" placeholder="MED-01" /></div>
-        <div className="field form-span-2"><label>Dirección</label><input name="address" /></div>
-        <div className="field"><label>Ciudad</label><input name="city" /></div>
-        <div className="field"><label>País</label><input name="country" defaultValue="CO" maxLength={2} /></div>
-        <div className="form-span-2 form-actions"><button className="button">Crear ubicación</button></div>
-      </form>
-    </section>}
+      <div className="contextual-action-buttons">
+        {(superadmin || session.accessAllSites) && <SiteCreateModal
+          organizations={organizations.rows}
+          fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
+          fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
+          returnTo="/dashboard/locations"
+        />}
+        <SubLocationCreateModal
+          sites={siteOptions}
+          locations={sublocations.rows}
+          returnTo="/dashboard/locations"
+          secondary
+        />
+      </div>
+    </section>
 
     <section className="section">
       <div className="site-grid">

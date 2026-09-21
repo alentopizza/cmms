@@ -142,3 +142,39 @@ Required behavior:
 - checkout screens must always offer a direct path back to Home and to plan comparison;
 - after successful provisioning, redirect the tenant to company settings so the acquired plan, subscription dates and resource entitlements are immediately visible;
 - plan upgrades from company settings return to the same settings view and refresh effective limits.
+
+
+## Lead generation
+
+The public landing supports advisor-assisted sales in addition to self-service checkout.
+
+`sales_leads` stores:
+- contact name;
+- company;
+- corporate email;
+- phone;
+- interest type;
+- optional operation/request description;
+- source;
+- commercial status;
+- timestamps.
+
+Current interest categories:
+- demonstration;
+- Trial;
+- Basic;
+- Medium;
+- Pro/white-label;
+- self-hosted;
+- other.
+
+Lead statuses:
+- new;
+- contacted;
+- qualified;
+- closed;
+- discarded.
+
+Superadministrators have a **Leads** workspace for viewing landing inquiries and updating follow-up status. Company roles do not receive lead-management access.
+
+Future commercialization work should add anti-spam/rate limiting, assignment to advisors, notes, source/campaign attribution, notifications and conversion analytics.

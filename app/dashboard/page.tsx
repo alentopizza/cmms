@@ -80,18 +80,22 @@ async function platform(session:NonNullable<Awaited<ReturnType<typeof getSession
   const companyPeriod=appendPeriod(orgParams,"o.created_at",filters);
   const companies=await query<C>("SELECT count(*)::text count FROM organizations o WHERE "+companyStatus+" AND "+companyPeriod,orgParams);
 
-  const subBaseParams:unknown[]=[];
-  const subPeriod=appendPeriod(subBaseParams,"s.created_at",filters);
-  const subCompany=appendCompanyStatus(subBaseParams,"o.active",filters);
-  const subStatus=filters.activityStatus!=="all" ? " AND "+appendValue(subBaseParams,"s.status",filters.activityStatus) : "";
+  const subscriptionWhere=(withActivityStatus=false)=>{
+    const params:unknown[]=[];
+    const period=appendPeriod(params,"s.created_at",filters);
+    const company=appendCompanyStatus(params,"o.active",filters);
+    const status=withActivityStatus&&filters.activityStatus!=="all" ? " AND "+appendValue(params,"s.status",filters.activityStatus) : "";
+    return {params,where:period+" AND "+company+status};
+  };
+  const paidFilter=subscriptionWhere(),trialFilter=subscriptionWhere(),pastDueFilter=subscriptionWhere(),mrrFilter=subscriptionWhere(),planFilter=subscriptionWhere(true),recentFilter=subscriptionWhere(true);
 
   const [paid,trials,pastDue,mrr,plans,recent,openWo,down]=await Promise.all([
-    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+subPeriod+" AND "+subCompany+" AND s.status='active' AND p.code<>'trial'"),
-    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE "+subPeriod+" AND "+subCompany+" AND s.status='trialing'",subBaseParams),
-    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE "+subPeriod+" AND "+subCompany+" AND s.status='past_due'",subBaseParams),
-    query<{amount:string}>("SELECT COALESCE(sum(COALESCE(p.monthly_price_cop,0)),0)::text amount FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+subPeriod+" AND "+subCompany+" AND s.status='active' AND p.code<>'trial'",subBaseParams),
-    query<{code:string;name:string;count:string}>("SELECT p.code,p.name,count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+subPeriod+" AND "+subCompany+subStatus+" GROUP BY p.code,p.name,p.sort_order ORDER BY p.sort_order",subBaseParams),
-    query<{id:string;name:string;plan:string;status:string;period_end:string|null}>("SELECT o.id,o.name,p.name plan,s.status,s.current_period_end::text period_end FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+subPeriod+" AND "+subCompany+subStatus+" ORDER BY s.updated_at DESC LIMIT 10",subBaseParams),
+    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+paidFilter.where+" AND s.status='active' AND p.code<>'trial'",paidFilter.params),
+    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE "+trialFilter.where+" AND s.status='trialing'",trialFilter.params),
+    query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE "+pastDueFilter.where+" AND s.status='past_due'",pastDueFilter.params),
+    query<{amount:string}>("SELECT COALESCE(sum(COALESCE(p.monthly_price_cop,0)),0)::text amount FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+mrrFilter.where+" AND s.status='active' AND p.code<>'trial'",mrrFilter.params),
+    query<{code:string;name:string;count:string}>("SELECT p.code,p.name,count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+planFilter.where+" GROUP BY p.code,p.name,p.sort_order ORDER BY p.sort_order",planFilter.params),
+    query<{id:string;name:string;plan:string;status:string;period_end:string|null}>("SELECT o.id,o.name,p.name plan,s.status,s.current_period_end::text period_end FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+recentFilter.where+" ORDER BY s.updated_at DESC LIMIT 10",recentFilter.params),
     query<C>("SELECT count(*)::text count FROM work_orders WHERE created_at >= $1::date AND created_at < $2::date AND status IN ('open','assigned','in_progress','paused')",[filters.startDate,filters.endDateExclusive]),
     query<C>("SELECT count(*)::text count FROM assets WHERE created_at >= $1::date AND created_at < $2::date AND status='down'",[filters.startDate,filters.endDateExclusive]),
   ]);

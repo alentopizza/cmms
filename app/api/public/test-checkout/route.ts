@@ -5,13 +5,24 @@ import { hashPassword } from "@/lib/passwords";
 import { COOKIE_NAME, userSessionToken } from "@/lib/auth";
 import { publicUrl } from "@/lib/urls";
 
+const EMAIL = /^\S+@\S+\.\S+$/;
+
 function slugify(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function wantsJson(request: Request) {
+  return request.headers.get("accept")?.includes("application/json");
+}
+
+function failure(request: Request, planCode: string, status: number, message: string, fields?: Record<string,string>) {
+  if (wantsJson(request)) return NextResponse.json({ message, fields }, { status });
+  return NextResponse.redirect(publicUrl(`/checkout?plan=${encodeURIComponent(planCode)}&error=1`, request.url), 303);
+}
+
 export async function POST(request: Request) {
   if (process.env.TEST_CHECKOUT_ENABLED === "false") {
-    return new NextResponse("Checkout de prueba deshabilitado", { status: 403 });
+    return failure(request, "trial", 403, "El checkout de prueba está deshabilitado.");
   }
 
   const form = await request.formData();
@@ -21,21 +32,38 @@ export async function POST(request: Request) {
   const email = String(form.get("email") || "").trim().toLowerCase();
   const password = String(form.get("password") || "");
   const city = String(form.get("city") || "").trim();
-  const siteName = String(form.get("site_name") || "Sede principal").trim();
+  const siteName = String(form.get("site_name") || "").trim();
+
+  const fields: Record<string,string> = {};
+  if (!companyName) fields.company_name = "Ingresa el nombre de la empresa.";
+  if (!fullName) fields.full_name = "Ingresa el nombre del administrador.";
+  if (!email) fields.email = "Ingresa el correo electrónico.";
+  else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
+  if (password.length < 8) fields.password = "La contraseña debe tener al menos 8 caracteres.";
+  if (!city) fields.city = "Ingresa la ciudad.";
+  if (!siteName) fields.site_name = "Ingresa el nombre de la sede principal.";
 
   const planResult = await getPlanByCode(planCode);
-  if (!planResult.rowCount || !companyName || !fullName || !email || password.length < 8 || !city || !siteName) {
-    return NextResponse.redirect(publicUrl(`/checkout?plan=${encodeURIComponent(planCode)}&error=1`, request.url), 303);
-  }
-  const plan = planResult.rows[0];
+  if (!planResult.rowCount) fields.general = "El plan seleccionado no está disponible.";
 
+  if (Object.keys(fields).length) {
+    return failure(request, planCode, 422, "Completa los campos marcados.", fields);
+  }
+
+  const plan = planResult.rows[0];
   const client = await pool.connect();
   let userId = "";
+
   try {
     await client.query("BEGIN");
 
     const duplicate = await client.query("SELECT 1 FROM users WHERE lower(email)=lower($1)", [email]);
-    if (duplicate.rowCount) throw Object.assign(new Error("duplicate"), { code: "23505" });
+    if (duplicate.rowCount) {
+      await client.query("ROLLBACK");
+      return failure(request, planCode, 409, "Ese correo ya está registrado.", {
+        email: "Este correo ya existe. Inicia sesión o utiliza otro correo.",
+      });
+    }
 
     let slug = slugify(companyName) || "empresa";
     const slugExists = await client.query("SELECT 1 FROM organizations WHERE slug=$1", [slug]);
@@ -55,7 +83,6 @@ export async function POST(request: Request) {
       [organizationId, plan.max_sites, plan.max_sublocations, plan.max_assets, plan.max_inventory_items, plan.max_technicians],
     );
 
-    const now = new Date();
     const isTrial = plan.code === "trial";
     await client.query(
       `INSERT INTO organization_subscriptions(
@@ -63,7 +90,7 @@ export async function POST(request: Request) {
        ) VALUES(
          $1,$2,$3,'test_checkout',
          CASE WHEN $3='trialing' THEN now() ELSE NULL END,
-         CASE WHEN $3='trialing' THEN now() + ($4 || ' days')::interval ELSE NULL END,
+         CASE WHEN $3='trialing' THEN now() + make_interval(days => $4::int) ELSE NULL END,
          CASE WHEN $3='active' THEN now() ELSE NULL END,
          CASE WHEN $3='active' THEN now() + interval '1 month' ELSE NULL END,
          $5,false
@@ -99,14 +126,34 @@ export async function POST(request: Request) {
     );
 
     await client.query("COMMIT");
-  } catch {
+  } catch (error) {
     await client.query("ROLLBACK");
-    return NextResponse.redirect(publicUrl(`/checkout?plan=${encodeURIComponent(planCode)}&error=1`, request.url), 303);
+    const code = (error as { code?: string }).code;
+    if (code === "23505") {
+      return failure(request, planCode, 409, "Ya existe información registrada con uno de estos datos.", {
+        email: "Este correo ya existe. Inicia sesión o utiliza otro correo.",
+      });
+    }
+    return failure(request, planCode, 500, "No fue posible crear la cuenta. Tus datos se conservarán para que puedas corregirlos e intentar de nuevo.", {
+      general: "Ocurrió un error al crear la cuenta. Intenta nuevamente.",
+    });
   } finally {
     client.release();
   }
 
-  const response = NextResponse.redirect(publicUrl("/dashboard", request.url), 303);
+  if (wantsJson(request)) {
+    const response = NextResponse.json({ ok: true, redirect: "/dashboard/settings?welcome=1" });
+    response.cookies.set(COOKIE_NAME, userSessionToken(userId), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 12,
+    });
+    return response;
+  }
+
+  const response = NextResponse.redirect(publicUrl("/dashboard/settings?welcome=1", request.url), 303);
   response.cookies.set(COOKIE_NAME, userSessionToken(userId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

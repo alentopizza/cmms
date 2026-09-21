@@ -9,7 +9,7 @@ import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory"
 export default async function CompaniesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ create_error?: string; saved?: string; deleted?: string; error?: string }>;
+  searchParams: Promise<{ create?: string; create_error?: string; saved?: string; deleted?: string; error?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -83,7 +83,7 @@ export default async function CompaniesPage({
       count={companies.rowCount || 0}
       countLabel="compañías"
       searchPlaceholder="Buscar compañía, ciudad, NIT o plan"
-      action={<NewCompanyModal error={params.create_error} />}
+      action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} />}
     />
 
     {(params.saved || params.deleted || params.error) && <div className="section">

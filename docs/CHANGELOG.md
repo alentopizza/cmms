@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-21 — Guided creation hierarchy
+
+### Changed
+
+- Added a shared prerequisite-state component matching the Users empty-state design.
+- Creation now routes users to the earliest missing dependency with explicit copy and one CTA.
+- Added hierarchy-aware guidance to Locations/Sub-locations, Suppliers, Crews, Assets, Inventory, Work Orders and Maintenance Routines.
+- Company prerequisite CTAs open the Company creation popup directly.
+- Location and Sub-location prerequisite CTAs open the Location popup at the required hierarchy level.
+- Suppressed duplicate generic empty states while a prerequisite blocker is active.
+- Centralized hierarchy resolution in `lib/setup-sequence.ts`.
+- Fixed sub-location authorization so `platform_owner` is not incorrectly treated as a tenant user while tenant scoping remains enforced for normal users.
+
+### Hierarchy
+
+Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine.
+
+
 ## 2026-09-21 — Unified module directories and popup creation
 
 ### Design system

@@ -99,3 +99,138 @@ export function gateFor(state: SetupState, target: "supplier" | "workforce" | "p
 
   return { ready:true,title:"Proceso habilitado",message:"Se cumplen los pasos previos requeridos." };
 }
+
+
+export type CreationHierarchyContext = {
+  organizations: number;
+  sites: number;
+  sublocations: number;
+  suppliers: number;
+  workforce: number;
+  assets: number;
+};
+
+export type CreationHierarchyTarget =
+  | "sublocation"
+  | "supplier"
+  | "workforce"
+  | "crew"
+  | "asset"
+  | "inventory"
+  | "work_order"
+  | "routine";
+
+export function creationPrerequisiteFor(
+  context: CreationHierarchyContext,
+  target: CreationHierarchyTarget,
+): SetupGate {
+  if (context.organizations < 1) {
+    return {
+      ready:false,
+      title:"Primero debes crear una empresa",
+      message:"No puedes continuar con este registro porque todavía no existe una empresa activa. La empresa es el primer nivel de la jerarquía y define dónde quedarán asociados los demás datos.",
+      href:"/dashboard/companies?create=1",
+      action:"Crear empresa",
+    };
+  }
+
+  if (context.sites < 1) {
+    return {
+      ready:false,
+      title:"Primero debes crear una ubicación principal",
+      message: target === "sublocation"
+        ? "No puedes crear una sububicación todavía. Ya existe una empresa, pero primero debes registrar al menos una ubicación principal o sede."
+        : "La empresa ya existe, pero falta una ubicación principal. Crea una sede antes de continuar con los siguientes registros.",
+      href:"/dashboard/locations?create=site",
+      action:"Crear ubicación",
+    };
+  }
+
+  if (target === "sublocation") {
+    return { ready:true,title:"Ubicación disponible",message:"Ya puedes crear una sububicación." };
+  }
+
+  if (context.sublocations < 1) {
+    return {
+      ready:false,
+      title:"Primero debes crear una sububicación",
+      message:"La empresa y su ubicación principal ya existen. Ahora crea al menos un área, piso, habitación o zona interna para continuar con la jerarquía operativa.",
+      href:"/dashboard/locations?create=sub",
+      action:"Crear sububicación",
+    };
+  }
+
+  if (target === "supplier" || target === "workforce") {
+    return { ready:true,title:"Estructura física completa",message:"Ya puedes continuar con este registro." };
+  }
+
+  if ((target === "asset" || target === "inventory" || target === "work_order" || target === "routine") && context.suppliers < 1) {
+    return {
+      ready:false,
+      title:"Primero debes registrar un proveedor",
+      message:"La estructura física está completa, pero todavía no existe un proveedor activo. Registra uno antes de crear activos, inventario o registros que dependan de ellos.",
+      href:"/dashboard/suppliers",
+      action:"Crear proveedor",
+    };
+  }
+
+  if (target === "asset" || target === "inventory") {
+    return { ready:true,title:"Requisitos completos",message:"Ya puedes crear el registro." };
+  }
+
+  if (target === "crew" && context.workforce < 1) {
+    return {
+      ready:false,
+      title:"Primero debes crear personal ejecutor",
+      message:"No puedes crear una cuadrilla sin integrantes. Registra al menos un técnico interno o colaborador externo antes de conformar el equipo.",
+      href:"/dashboard/users",
+      action:"Crear personal",
+    };
+  }
+
+  if (target === "crew") {
+    return { ready:true,title:"Personal disponible",message:"Ya puedes crear una cuadrilla." };
+  }
+
+  if ((target === "work_order" || target === "routine") && context.assets < 1) {
+    return {
+      ready:false,
+      title:"Primero debes registrar un activo",
+      message: target === "routine"
+        ? "No puedes crear una rutina sin un activo. Completa primero el registro del equipo al que se asociará el mantenimiento preventivo."
+        : "No puedes crear una orden de trabajo sin un activo. Registra primero el equipo que recibirá la intervención.",
+      href:"/dashboard/assets",
+      action:"Crear activo",
+    };
+  }
+
+  return { ready:true,title:"Jerarquía completa",message:"Se cumplen todos los requisitos previos para continuar." };
+}
+
+
+export async function getCreationHierarchyContext(organizationId?: string | null): Promise<CreationHierarchyContext> {
+  const params = organizationId ? [organizationId] : [];
+  const orgFilter = organizationId ? "AND o.id=$1" : "";
+  const entityFilter = organizationId ? "AND organization_id=$1" : "";
+  const memberFilter = organizationId ? "AND om.organization_id=$1" : "";
+
+  const result = await query<CreationHierarchyContext>(
+    `SELECT
+      (SELECT count(*)::int FROM organizations o WHERE o.active=true ${orgFilter}) organizations,
+      (SELECT count(*)::int FROM sites WHERE active=true ${entityFilter}) sites,
+      (SELECT count(*)::int FROM locations WHERE active=true ${entityFilter}) sublocations,
+      (SELECT count(*)::int FROM suppliers WHERE active=true ${entityFilter}) suppliers,
+      (
+        SELECT count(*)::int
+        FROM organization_members om
+        JOIN users u ON u.id=om.user_id
+        WHERE u.active=true
+          AND om.role IN ('technician','external')
+          ${memberFilter}
+      ) workforce,
+      (SELECT count(*)::int FROM assets WHERE status<>'retired' ${entityFilter}) assets`,
+    params,
+  );
+
+  return result.rows[0];
+}

@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
 import Link from "next/link";
 import { AssetCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
+import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 
 type Asset={id:string;code:string;name:string;company:string;site:string;location:string|null;supplier:string|null;status:string;criticality:string};
 type Site={id:string;organization_id:string;label:string};
@@ -61,8 +62,9 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
   ]);
 
-  const gate=orgId ? gateFor(await getSetupState(orgId),"asset") : null;
-  const error=params.error==="sequence" ? "Primero completa la estructura física y registra al menos un proveedor."
+  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
+  const creationGate=creationPrerequisiteFor(hierarchy,"asset");
+  const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de activos de su plan."
     : params.error ? "Revisa la información del activo." : "";
 
@@ -81,16 +83,19 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         {value:"down",label:"Detenidos"},
         {value:"retired",label:"Retirados"},
       ]}
-      action={canWrite && gate?.ready ? <AssetCreateModal triggerLabel="Agregar" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
+      action={canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
     />
     {params.created && <div className="notice success section">Activo creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
-    {canWrite && <section className="card section setup-flow-card">
-      <div className="setup-flow-head"><div><span className="eyebrow">Secuencia obligatoria</span><h2>Activos después de proveedores</h2></div><span className={"setup-flow-state "+(gate?.ready?"ready":"blocked")}>{gate?.ready?"Habilitado":"Paso pendiente"}</span></div>
-      <div className="setup-flow-steps"><span className="done"><b>1</b> Empresa</span><span className="done"><b>2</b> Ubicación</span><span className="done"><b>3</b> Sububicación</span><span className={gate?.ready?"done":""}><b>4</b> Proveedor</span><span className={gate?.ready?"active":""}><b>5</b> Activo</span></div>
-      {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
-    </section>}
+    {canWrite && !creationGate.ready && <CreationPrerequisiteState
+      icon="◇"
+      eyebrow="Jerarquía de creación"
+      title={creationGate.title}
+      message={creationGate.message}
+      href={creationGate.href || "/dashboard/locations"}
+      action={creationGate.action || "Continuar"}
+    />}
 
     <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
       {assets.rows.map(a=><tr key={a.id} data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
@@ -103,6 +108,6 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
           {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}
         ]},
       ]}/></td>}</tr>)}
-    </tbody></table>{!assets.rowCount && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>Completa primero ubicaciones, sububicaciones y proveedores.</span></div>}</section>
+    </tbody></table>{!assets.rowCount && creationGate.ready && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>La jerarquía está lista. Usa Agregar para registrar el primer activo.</span></div>}</section>
   </>;
 }

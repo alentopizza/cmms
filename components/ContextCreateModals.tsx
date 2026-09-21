@@ -344,6 +344,8 @@ export function LocationCreateModal({
   fixedOrganizationId,
   fixedOrganizationName,
   returnTo,
+  autoOpen = false,
+  initialKind = "site",
 }: {
   organizations: OrganizationOption[];
   sites: SiteOption[];
@@ -351,22 +353,28 @@ export function LocationCreateModal({
   fixedOrganizationId?: string;
   fixedOrganizationName?: string;
   returnTo: string;
+  autoOpen?: boolean;
+  initialKind?: "site" | "sub";
 }) {
   const initialOrganization=fixedOrganizationId || (organizations.length===1 ? organizations[0].id : "");
   const initialSite=sites.length===1 ? sites[0].id : "";
-  const [open,setOpen]=useState(false);
-  const [kind,setKind]=useState<"site"|"sub">("site");
+  const [open,setOpen]=useState(autoOpen);
+  const [kind,setKind]=useState<"site"|"sub">(initialKind);
   const [organizationId,setOrganizationId]=useState(initialOrganization);
   const [siteId,setSiteId]=useState(initialSite);
   const [parentId,setParentId]=useState("");
 
   useEffect(()=>{
+    if(autoOpen) setOpen(true);
+  },[autoOpen]);
+
+  useEffect(()=>{
     if(!open) return;
-    setKind("site");
+    setKind(initialKind);
     setOrganizationId(initialOrganization);
     setSiteId(initialSite);
     setParentId("");
-  },[open,initialOrganization,initialSite]);
+  },[open,initialOrganization,initialSite,initialKind]);
 
   const visibleSites=sites.filter(site=>!organizationId || site.organization_id===organizationId);
   const resolvedSiteId=visibleSites.some(site=>site.id===siteId) ? siteId : (visibleSites.length===1 ? visibleSites[0].id : "");

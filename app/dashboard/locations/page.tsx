@@ -6,6 +6,8 @@ import { query } from "@/lib/db";
 import { LocationCreateModal } from "@/components/ContextCreateModals";
 import ModuleHeader from "@/components/ModuleHeader";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
+import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
 
 type OrganizationRow = { id: string; name: string };
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
@@ -25,7 +27,7 @@ type SiteRow = {
 export default async function LocationsIndexPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; error?: string; create?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -34,6 +36,8 @@ export default async function LocationsIndexPage({
   const params = await searchParams;
   const superadmin = session.platformRole !== "user";
   const owner = isPlatformOwner(session);
+  const hierarchy = await getCreationHierarchyContext(session.platformRole === "user" ? session.organizationId : null);
+  const sublocationGate = creationPrerequisiteFor(hierarchy, "sublocation");
   const sites = superadmin
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
@@ -115,18 +119,29 @@ export default async function LocationsIndexPage({
       count={sites.rowCount || 0}
       countLabel="sedes"
       searchPlaceholder="Buscar sede, empresa, ciudad o código"
-      action={<LocationCreateModal
+      action={hierarchy.organizations > 0 ? <LocationCreateModal
         organizations={organizations.rows}
         sites={siteOptions}
         locations={sublocations.rows}
         fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
         fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
         returnTo="/dashboard/locations"
-      />}
+        autoOpen={params.create==="site" || params.create==="sub"}
+        initialKind={params.create==="sub" ? "sub" : "site"}
+      /> : undefined}
     />
 
     {params.created && <div className="notice success section">{params.created === "location" ? "Sububicación creada correctamente." : "Ubicación principal creada correctamente."}</div>}
     {message && <div className="notice error section">{message}</div>}
+
+    {!sublocationGate.ready && <CreationPrerequisiteState
+      icon="⌁"
+      eyebrow="Jerarquía de ubicaciones"
+      title={sublocationGate.title}
+      message={sublocationGate.message}
+      href={sublocationGate.href || "/dashboard/companies"}
+      action={sublocationGate.action || "Continuar"}
+    />}
 
     <section className="section">
       <div className="site-grid">
@@ -151,7 +166,7 @@ export default async function LocationsIndexPage({
           </div>
         </article>)}
       </div>
-      {!sites.rowCount && <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div>}
+      {!sites.rowCount && sublocationGate.ready && <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div>}
     </section>
   </>;
 }

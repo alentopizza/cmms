@@ -12,3 +12,17 @@ ALTER TABLE users
 CREATE UNIQUE INDEX IF NOT EXISTS users_single_platform_owner_idx
   ON users(platform_role)
   WHERE platform_role='platform_owner';
+
+
+-- Promote the project owner's database account when it already exists.
+UPDATE users
+SET platform_role='platform_owner',
+    active=true,
+    updated_at=now()
+WHERE lower(email)=lower('admin@dominio.com');
+
+-- Platform accounts do not inherit a tenant membership.
+DELETE FROM organization_members
+WHERE user_id IN (
+  SELECT id FROM users WHERE platform_role='platform_owner'
+);

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-20 — Public landing access and self-hosted package workflow
+
+### Added
+
+- Kept the public SaaS landing visible at `/` even when an authenticated session exists.
+- Added a **Descargas** link from the landing and a public `/downloads` page explaining the self-hosted edition.
+- Added the **Package self-hosted** GitHub Actions workflow to build versioned ZIP and TAR.GZ installation artifacts for private/internal beta distribution.
+- Packaged artifacts include source commit/version metadata and exclude local secrets, Git history, dependencies and build output.
+- Documented that anonymous commercial downloads remain deferred until licensing and release controls are defined.
+
+
 ## 2026-09-20 — Documentation continuity, self-hosting and IP strategy
 
 ### Added

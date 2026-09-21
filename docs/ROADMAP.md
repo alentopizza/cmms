@@ -36,6 +36,8 @@ This roadmap is directional and should be updated as priorities change.
 - Pro organization white-label foundation
 - repository continuity documentation for AI/developer handoff
 - Docker Compose self-hosted installation foundation
+- public /downloads information page
+- versioned private self-hosted ZIP/TAR packaging workflow
 
 ## Next functional priorities
 

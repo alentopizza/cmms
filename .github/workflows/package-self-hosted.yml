@@ -1,0 +1,50 @@
+name: Package self-hosted
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version (for example 0.1.0-beta)"
+        required: true
+        default: "0.1.0-beta"
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare package directory
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          PACKAGE="desweb-cmms-${VERSION}"
+          mkdir -p "dist/${PACKAGE}"
+
+          rsync -a ./ "dist/${PACKAGE}/"             --exclude ".git"             --exclude ".github"             --exclude ".next"             --exclude "node_modules"             --exclude "dist"             --exclude ".env"             --exclude ".env.local"
+
+          cp .env.example "dist/${PACKAGE}/.env.example"
+
+          cat > "dist/${PACKAGE}/VERSION" <<EOF
+          DESWEB_CMMS_VERSION=${VERSION}
+          SOURCE_COMMIT=${{ github.sha }}
+          BUILT_AT=${{ github.run_id }}
+          EOF
+
+      - name: Create archive
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          cd dist
+          tar -czf "desweb-cmms-${VERSION}.tar.gz" "desweb-cmms-${VERSION}"
+          zip -qr "desweb-cmms-${VERSION}.zip" "desweb-cmms-${VERSION}"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desweb-cmms-${{ github.event.inputs.version }}
+          path: |
+            dist/desweb-cmms-${{ github.event.inputs.version }}.tar.gz
+            dist/desweb-cmms-${{ github.event.inputs.version }}.zip
+          if-no-files-found: error
+          retention-days: 30

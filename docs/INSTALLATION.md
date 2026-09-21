@@ -128,3 +128,37 @@ The target commercial distribution model is:
 5. later, an installation wizard and license/activation mechanism if commercial requirements justify it.
 
 The repository does not currently declare an open-source license. Do not assume redistribution rights or add a public software license without an explicit product-owner decision.
+
+
+## Public downloads page
+
+The application exposes a public installation-information page at:
+
+`/downloads`
+
+During beta, this page does **not** serve anonymous commercial binaries. It explains how authorized/internal users obtain a package from the private GitHub Actions workflow.
+
+## Versioned package workflow
+
+Workflow:
+
+`.github/workflows/package-self-hosted.yml`
+
+Manual process:
+
+1. Open GitHub → Actions.
+2. Select **Package self-hosted**.
+3. Run the workflow.
+4. Enter a version such as `0.1.0-beta`.
+5. Download the generated Actions artifact.
+
+The artifact contains both:
+
+- `desweb-cmms-VERSION.zip`
+- `desweb-cmms-VERSION.tar.gz`
+
+Each package includes a `VERSION` file with the requested version and source commit.
+
+The package intentionally excludes Git history, CI definitions, local secrets, `node_modules`, build output and other development-only files.
+
+Before public/commercial distribution, replace private Actions artifacts with controlled commercial releases or authenticated downloads tied to the agreed license model.

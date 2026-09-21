@@ -224,8 +224,8 @@ export default function UserManagement({
       if (!draft.role) next.role = "Selecciona un rol.";
       if (!draft.access_all_sites && draft.site_ids.length === 0) next.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
       if (draft.site_ids.some(id => !visibleSites.some(site => site.id === id))) next.site_ids = "Una de las sedes seleccionadas no pertenece a la empresa indicada.";
-      if (draft.role === "external" && !draft.external_supplier_id) next.external_supplier_id = "Selecciona el proveedor de servicios al que pertenece.";
-      if (draft.role === "external" && draft.external_supplier_id && !visibleServiceSuppliers.some(supplier => supplier.id === draft.external_supplier_id)) {
+      if (draft.role === "provider" && !draft.external_supplier_id) next.external_supplier_id = "Selecciona el proveedor de servicios al que representa.";
+      if ((draft.role === "provider" || draft.role === "external") && draft.external_supplier_id && !visibleServiceSuppliers.some(supplier => supplier.id === draft.external_supplier_id)) {
         next.external_supplier_id = "El proveedor debe pertenecer a la empresa y prestar servicios.";
       }
     }
@@ -343,7 +343,7 @@ export default function UserManagement({
             <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
             <div><span>Sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
-            <div><span>{user.role === "external" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" ? (user.external_supplier_name || "Sin proveedor") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
+            <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
           {isSuperadmin && <div className="user-card-actions">
@@ -409,7 +409,7 @@ export default function UserManagement({
                 if (nextRole === "superadmin") {
                   setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [] }));
                 } else {
-                  setDraft(previous => ({ ...previous, role: nextRole, external_supplier_id: nextRole === "external" ? previous.external_supplier_id : "" }));
+                  setDraft(previous => ({ ...previous, role: nextRole, external_supplier_id: nextRole === "external" || nextRole === "provider" ? previous.external_supplier_id : "" }));
                   setErrors(previous => ({ ...previous, role: undefined, external_supplier_id: undefined, general: undefined }));
                 }
               }}>
@@ -419,13 +419,14 @@ export default function UserManagement({
               {errors.role && <small className="field-error-message">{errors.role}</small>}
             </div>
 
-            {draft.role === "external" && <div className={`field ${errors.external_supplier_id ? "field-error" : ""}`}>
-              <label htmlFor="managed-user-supplier">Proveedor de servicios *</label>
+            {(draft.role === "provider" || draft.role === "external") && <div className={`field ${errors.external_supplier_id ? "field-error" : ""}`}>
+              <label htmlFor="managed-user-supplier">Proveedor de servicios {draft.role === "provider" ? "*" : "(opcional)"}</label>
               <select id="managed-user-supplier" value={draft.external_supplier_id} onChange={event => updateDraft("external_supplier_id", event.target.value)}>
                 <option value="">Selecciona proveedor</option>
                 {visibleServiceSuppliers.map(supplier => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
               </select>
               {visibleServiceSuppliers.length === 0 && <small>Primero registra un proveedor de tipo Servicios o Materiales + servicios.</small>}
+              {draft.role === "external" && visibleServiceSuppliers.length > 0 && <small>Déjalo vacío si la persona externa no pertenece a un proveedor contratado.</small>}
               {errors.external_supplier_id && <small className="field-error-message">{errors.external_supplier_id}</small>}
             </div>}
 

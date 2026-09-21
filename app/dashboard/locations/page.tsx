@@ -7,7 +7,7 @@ import { LocationCreateModal } from "@/components/ContextCreateModals";
 import ModuleHeader from "@/components/ModuleHeader";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 type OrganizationRow = { id: string; name: string };
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
@@ -36,8 +36,7 @@ export default async function LocationsIndexPage({
   const params = await searchParams;
   const superadmin = session.platformRole !== "user";
   const owner = isPlatformOwner(session);
-  const hierarchy = await getCreationHierarchyContext(session.platformRole === "user" ? session.organizationId : null);
-  const sublocationGate = creationPrerequisiteFor(hierarchy, "sublocation");
+  const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, superadmin);
   const sites = superadmin
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,

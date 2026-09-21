@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { canCreateAsset } from "@/lib/resource-limits";
+import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 
 export async function POST(request:Request) {
   const session=await getSession();
@@ -20,8 +21,9 @@ export async function POST(request:Request) {
   const criticality=String(form.get("criticality")||"medium");
   const manufacturer=String(form.get("manufacturer")||"").trim();
   const model=String(form.get("model")||"").trim();
+  const returnTo=String(form.get("return_to")||"");
 
-  const target=(suffix:string)=>publicUrl("/dashboard/assets"+suffix,request.url);
+  const target=(suffix:string)=>publicUrl(appendFeedback(safeDashboardReturn(returnTo,"/dashboard/assets"),suffix),request.url);
 
   const site=session.platformRole==="superadmin"
     ? await query<{organization_id:string}>("SELECT organization_id FROM sites WHERE id=$1 AND active=true",[siteId])

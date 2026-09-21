@@ -39,19 +39,25 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
 
   if(session.platformRole!=="superadmin"){
     if(session.organizationId!==order.organization_id || !canAccessSite(session,order.site_id)) redirect("/dashboard/work-orders");
+    if(session.role==="provider"){
+      const visible=await query(
+        `SELECT 1 FROM work_orders w
+         WHERE w.id=$1 AND $2::uuid IS NOT NULL AND (
+           w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
+         )`,
+        [id,session.externalSupplierId],
+      );
+      if(!visible.rowCount) redirect("/dashboard/work-orders");
+    }
     if(session.role==="external"){
       const visible=await query(
         `SELECT 1 FROM work_orders w
          WHERE w.id=$1 AND (
-           w.assigned_to=$2 OR
-           ($3::uuid IS NOT NULL AND w.service_supplier_id=$3) OR
-           EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
-             t.assigned_to=$2 OR
-             ($3::uuid IS NOT NULL AND t.service_supplier_id=$3) OR
-             EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
+           w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
+             t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
            ))
          )`,
-        [id,session.userId,session.externalSupplierId],
+        [id,session.userId],
       );
       if(!visible.rowCount) redirect("/dashboard/work-orders");
     }

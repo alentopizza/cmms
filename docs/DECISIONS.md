@@ -139,3 +139,30 @@ The first installable edition of Desweb CMMS is a Docker Compose/self-hosted pac
 Status: accepted.
 
 Software copyright/authorship, trademarks, patents for any qualifying technical invention, and commercial self-hosted licensing are separate protection mechanisms. No open-source license will be added without explicit product-owner approval.
+
+
+## ADR-014 — Operational entities are created in dependency order
+
+Status: accepted.
+
+The CMMS does not allow operational master data to be created in an arbitrary order. The required dependency chain is:
+
+`organization → site → sublocation → supplier → workforce/crew → asset/inventory → work order/activity`
+
+This order is a domain-integrity rule, not merely onboarding guidance. Mutation routes must reject creation when prerequisites do not exist, and affected screens must tell the user which previous step is missing and link to it.
+
+New assets and inventory articles require a supplier and an exact sublocation. Activities require exactly one executable target: person, crew or service supplier.
+
+## ADR-015 — Outsourced companies and external individuals are separate access concepts
+
+Status: accepted.
+
+A commercial **service supplier** and a human **external collaborator** are different domain concepts.
+
+The organization role `provider` represents an authenticated account for a supplier that provides services. It must reference `organization_members.external_supplier_id`, and visibility/execution is restricted to work assigned to that supplier.
+
+The organization role `external` represents an individual external collaborator. Supplier linkage is optional. This identity may execute only activities assigned directly to the user or to a crew containing that user.
+
+Crews contain internal technicians and external collaborators. Provider-representative accounts are excluded from crew membership.
+
+This separation avoids granting an entire supplier's scope to every external individual and preserves auditable responsibility for outsourced work.

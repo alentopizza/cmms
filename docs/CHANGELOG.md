@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-20 — Retractable and user-orderable dashboard sidebar
+
+### Added
+
+- Redesigned the authenticated sidebar into a compact dark technology rail with Desweb teal/cyan accents.
+- Added expanded and collapsed desktop navigation states.
+- Added responsive mobile drawer navigation.
+- Added per-user module ordering with drag-and-drop.
+- Added accessible **Subir / Bajar** reorder controls for keyboard/touch workflows.
+- Added **Restaurar** to return modules to the default permission-filtered order.
+- Added migration `012_user_dashboard_preferences.sql` for persistent sidebar order and collapsed state.
+- Added authenticated preferences API; module IDs are allow-listed before persistence.
+- Database-backed users keep preferences across browsers/devices.
+- The bootstrap developer account falls back to browser-local persistence because it has no user row.
+- Updated context-header labels for Leads, Proveedores, Cuadrillas and Rutinas.
+
+
 ## 2026-09-20 — Context-aware creation popups
 
 ### Added

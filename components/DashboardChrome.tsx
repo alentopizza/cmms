@@ -13,11 +13,14 @@ type Section = {
 const sections: Array<{ match: (pathname: string) => boolean; section: Section }> = [
   { match: pathname => pathname === "/dashboard", section: { label: "Resumen", eyebrow: "Visión general", icon: "▦" } },
   { match: pathname => pathname.startsWith("/dashboard/companies"), section: { label: "Empresas", eyebrow: "Administración", icon: "◫" } },
+  { match: pathname => pathname.startsWith("/dashboard/leads"), section: { label: "Leads", eyebrow: "Comercial", icon: "✦" } },
   { match: pathname => pathname.startsWith("/dashboard/locations"), section: { label: "Ubicaciones", eyebrow: "Estructura física", icon: "⌂" } },
+  { match: pathname => pathname.startsWith("/dashboard/suppliers"), section: { label: "Proveedores", eyebrow: "Abastecimiento y terceros", icon: "▣" } },
   { match: pathname => pathname.startsWith("/dashboard/users"), section: { label: "Usuarios y roles", eyebrow: "Control de acceso", icon: "◎" } },
+  { match: pathname => pathname.startsWith("/dashboard/crews"), section: { label: "Cuadrillas", eyebrow: "Ejecución operativa", icon: "◉" } },
   { match: pathname => pathname.startsWith("/dashboard/assets"), section: { label: "Activos y equipos", eyebrow: "Gestión de activos", icon: "◇" } },
   { match: pathname => pathname.startsWith("/dashboard/work-orders"), section: { label: "Órdenes de trabajo", eyebrow: "Operación", icon: "✓" } },
-  { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Preventivos", eyebrow: "Planificación", icon: "↻" } },
+  { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "↻" } },
   { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "▤" } },
   { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "⚙" } },
 ];
@@ -45,10 +48,12 @@ export function SidebarAccountMenu({
   fullName,
   role,
   canConfigure,
+  collapsed = false,
 }: {
   fullName: string;
   role: string;
   canConfigure: boolean;
+  collapsed?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -70,7 +75,7 @@ export function SidebarAccountMenu({
 
   const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
 
-  return <div className="sidebar-account" ref={wrapperRef}>
+  return <div className={"sidebar-account" + (collapsed ? " collapsed" : "")} ref={wrapperRef}>
     {open && <div className="sidebar-account-popover" role="menu">
       <div className="sidebar-account-popover-head">
         <span>{fullName}</span>
@@ -94,13 +99,14 @@ export function SidebarAccountMenu({
       onClick={() => setOpen(value => !value)}
       aria-expanded={open}
       aria-haspopup="menu"
+      title={collapsed ? fullName + " · " + role : undefined}
     >
       <span className="sidebar-account-avatar">{initials}</span>
-      <span className="sidebar-account-copy">
+      {!collapsed && <span className="sidebar-account-copy">
         <strong>{fullName}</strong>
         <small>{role}</small>
-      </span>
-      <span className="sidebar-account-chevron" aria-hidden="true">{open ? "⌃" : "⌄"}</span>
+      </span>}
+      {!collapsed && <span className="sidebar-account-chevron" aria-hidden="true">{open ? "⌃" : "⌄"}</span>}
     </button>
   </div>;
 }

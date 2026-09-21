@@ -4,6 +4,8 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
+import CreateRecordModal from "@/components/CreateRecordModal";
 
 type Crew = {
   id:string;
@@ -73,10 +75,26 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     : params.error ? "No fue posible crear la cuadrilla." : "";
 
   return <>
-    <header className="page-header">
-      <div><span className="eyebrow">Ejecución operativa</span><h1 className="page-title">Cuadrillas</h1><p className="muted">Agrupa técnicos internos y colaboradores externos en equipos de trabajo con un líder definido.</p></div>
-      <div className="brand-pill"><span /> {crews.rowCount} cuadrillas</div>
-    </header>
+    <ModuleHeader
+      eyebrow="Ejecución operativa"
+      title="Cuadrillas"
+      description="Agrupa técnicos internos y colaboradores externos en equipos de trabajo con un líder definido."
+      count={crews.rowCount || 0}
+      countLabel="cuadrillas"
+      searchPlaceholder="Buscar cuadrilla, empresa, sede o líder"
+      action={<CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉" disabled={!gate?.ready}>
+        <form className="form-grid unified-popup-form" method="post" action="/api/crews">
+          {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
+            : <input type="hidden" name="organization_id" value={session.organizationId||""}/>}
+          <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona una sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.organization_name} · {s.name}</option>)}</select></div>
+          <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Cuadrilla refrigeración norte" /></div>
+          <div className="field"><label>Líder *</label><select name="leader_user_id" required><option value="">Selecciona líder</option>{workers.rows.map(w=><option key={w.id} value={w.id}>{w.full_name} · {w.role==="external" ? `Externo · ${w.supplier_name||"Proveedor"}` : "Técnico"}</option>)}</select></div>
+          <div className="field form-span-2"><label>Integrantes *</label><div className="crew-member-options">{workers.rows.map(w=><label key={w.id}><input type="checkbox" name="member_ids" value={w.id}/><span><strong>{w.full_name}</strong><small>{w.role==="external" ? `Externo · ${w.supplier_name||"Proveedor"}` : "Técnico interno"}</small></span></label>)}</div></div>
+          <div className="field form-span-2"><label>Descripción</label><textarea name="description" rows={3} placeholder="Ej. Equipo de atención de refrigeración para turno diurno." /></div>
+          <div className="form-span-2 form-actions"><button className="button" type="submit">Crear cuadrilla</button></div>
+        </form>
+      </CreateRecordModal>}
+    />
 
     {params.created && <div className="notice success section">Cuadrilla creada correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
@@ -87,23 +105,9 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
     </section>
 
-    <section className="card section">
-      <div className="section-heading"><div><span className="eyebrow">Nueva cuadrilla</span><h2>Conformar equipo de trabajo</h2><p className="muted">Puedes mezclar técnicos internos y colaboradores externos. Todos deben pertenecer a la misma empresa.</p></div></div>
-      <form className="form-grid" method="post" action="/api/crews">
-        {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
-          : <input type="hidden" name="organization_id" value={session.organizationId||""}/>}
-        <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona una sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.organization_name} · {s.name}</option>)}</select></div>
-        <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Cuadrilla refrigeración 1" /></div>
-        <div className="field"><label>Líder *</label><select name="leader_user_id" required><option value="">Selecciona líder</option>{workers.rows.map(w=><option key={w.id} value={w.id}>{w.full_name} · {w.role==="external" ? `Externo · ${w.supplier_name||"Proveedor"}` : "Técnico"}</option>)}</select></div>
-        <div className="field form-span-2"><label>Integrantes *</label><div className="crew-member-options">{workers.rows.map(w=><label key={w.id}><input type="checkbox" name="member_ids" value={w.id}/><span><strong>{w.full_name}</strong><small>{w.role==="external" ? `Externo · ${w.supplier_name||"Proveedor"}` : "Técnico interno"}</small></span></label>)}</div></div>
-        <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Especialidad, turno o alcance de esta cuadrilla." /></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Crear cuadrilla</button></div>
-      </form>
-    </section>
-
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Equipos</span><h2>Cuadrillas registradas</h2></div></div>
-      {crews.rowCount ? <div className="crew-grid">{crews.rows.map(c=><article className="card crew-card" key={c.id}>
+      {crews.rowCount ? <div className="crew-grid">{crews.rows.map(c=><article className="card crew-card" key={c.id} data-module-record data-status={c.active?"active":"inactive"} data-search={[c.name,c.organization_name,c.site_name,c.leader_name,c.description].filter(Boolean).join(" ")}>
         <div className="crew-card-head"><span className="crew-icon">◉</span><div><strong>{c.name}</strong><span>{c.organization_name}{c.site_name?` · ${c.site_name}`:""}</span></div><span className={`status-badge ${c.active?"status-active":"status-inactive"}`}><i />{c.active?"Activa":"Inactiva"}</span></div>
         <div className="crew-card-meta"><div><span>Líder</span><strong>{c.leader_name||"Sin líder"}</strong></div><div><span>Integrantes</span><strong>{c.member_count}</strong></div></div>
         {c.description && <p>{c.description}</p>}

@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -54,6 +55,14 @@ export async function POST(
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
   const radiusRaw = String(form.get("geofence_radius_m") || "").trim();
+  const contactName = String(form.get("contact_name") || "").trim();
+  const contactPhone = String(form.get("contact_phone") || "").trim();
+  const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
+  let image=null;
+  try { image=await readImageUpload(form,"image"); }
+  catch(error) {
+    return NextResponse.redirect(targetUrl(organizationId,request.url,returnTo,imageUploadMessage(error).includes("5 MB")?"?error=site-image-size":"?error=site-image-type"),303);
+  }
   const latitude = latitudeRaw ? Number(latitudeRaw) : null;
   const longitude = longitudeRaw ? Number(longitudeRaw) : null;
   const geofenceRadius = radiusRaw ? Number.parseInt(radiusRaw,10) : 250;
@@ -71,11 +80,18 @@ export async function POST(
   try {
     await query(
       `UPDATE sites
-       SET name=$1, code=$2, address=$3, city=$4, country=$5,
-           latitude=$6,longitude=$7,geofence_radius_m=$8
-       WHERE id=$9 AND organization_id=$10`,
-      [name, code || null, address || null, city || null, country || "CO",
-       latitude,longitude,geofenceRadius,id,organizationId],
+       SET name=$1,code=$2,address=$3,city=$4,country=$5,
+           latitude=$6,longitude=$7,geofence_radius_m=$8,
+           contact_name=$9,contact_phone=$10,contact_email=$11,
+           image_data=COALESCE($12,image_data),
+           image_mime_type=CASE WHEN $12 IS NULL THEN image_mime_type ELSE $13 END
+       WHERE id=$14 AND organization_id=$15`,
+      [
+        name,code||null,address||null,city||null,country||"CO",
+        latitude,longitude,geofenceRadius,
+        contactName||null,contactPhone||null,contactEmail||null,
+        image?.data||null,image?.mime||null,id,organizationId,
+      ],
     );
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {

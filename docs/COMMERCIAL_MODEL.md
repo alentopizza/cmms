@@ -178,3 +178,33 @@ Lead statuses:
 Superadministrators have a **Leads** workspace for viewing landing inquiries and updating follow-up status. Company roles do not receive lead-management access.
 
 Future commercialization work should add anti-spam/rate limiting, assignment to advisors, notes, source/campaign attribution, notifications and conversion analytics.
+
+
+## Approved sales and distribution account model — pending implementation
+
+Commercial growth will use dedicated platform roles rather than granting Superadministrator access to every seller.
+
+### Comercial Desweb
+
+An internal seller/advisor may manage assigned leads, opportunities, plan information, demonstrations, onboarding steps and future renewals/commissions. This role does not receive unrestricted customer maintenance-data administration or destructive tenant controls.
+
+### Partner / Distribuidor
+
+An external distribution account is limited to its authorized leads and attributed customer portfolio. It does not see the full Desweb customer base by default and does not receive Superadministrator privileges.
+
+### Platform governance
+
+Propietario Desweb / Platform Owner is the maximum platform authority. Superadministrators remain trusted platform operators, but only the Platform Owner may create/revoke Superadministrators.
+
+The detailed role and account-creation rules are maintained in `docs/ROLE_MODEL.md`.
+
+Future commercial data should support:
+- lead/customer attribution to a Commercial or Partner;
+- portfolio scoping;
+- commissions;
+- renewals;
+- sales goals;
+- channel/partner codes;
+- approved discount workflows.
+
+These commercial relationships must remain separate from tenant operational authorization.

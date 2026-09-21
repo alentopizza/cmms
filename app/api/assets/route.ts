@@ -48,5 +48,5 @@ export async function POST(request:Request) {
      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [organizationId,siteId,locationId,supplierId,code,name,criticality,manufacturer||null,model||null],
   );
-  return NextResponse.redirect(target("?created=1"),303);
+  return NextResponse.redirect(target("?created=asset"),303);
 }

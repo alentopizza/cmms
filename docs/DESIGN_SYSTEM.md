@@ -364,3 +364,29 @@ Company cards use:
 - no fabricated quota for resources that are currently unlimited.
 
 The layout should remain readable in two columns on wide screens and one column on narrow screens.
+
+
+## Creation hierarchy blocker pattern
+
+When a module cannot create its entity because a prerequisite is missing, do not leave a disabled form or a vague error.
+
+Show the shared prerequisite state, visually aligned with the Users empty state:
+
+- entity/process icon;
+- eyebrow describing the creation hierarchy;
+- explicit blocking title;
+- one sentence explaining exactly what exists and what is still missing;
+- one primary CTA that navigates to the earliest missing prerequisite.
+
+Examples:
+
+- no company → **Primero debes crear una empresa** → **Crear empresa**;
+- company exists but no principal location → **Primero debes crear una ubicación principal** → **Crear ubicación**;
+- location exists but no sub-location → **Primero debes crear una sububicación** → **Crear sububicación**;
+- physical hierarchy exists but supplier is missing → **Primero debes registrar un proveedor**;
+- crew without executable staff → **Primero debes crear personal ejecutor**;
+- work order or routine without an asset → **Primero debes registrar un activo**.
+
+The CTA must point to the earliest missing dependency, not merely the immediately previous module.
+
+When the prerequisite state is visible, suppress duplicate generic empty-state copy such as “No records yet”.

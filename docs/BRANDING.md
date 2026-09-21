@@ -75,3 +75,16 @@ Preferred hierarchy:
 - white/off-white for contrast and legibility.
 
 Dark marketing surfaces may use deeper derived shades of the institutional dark while keeping teal/mint as the recognisable signature.
+
+
+## Logo usage on public marketing
+
+The supplied identity board establishes distinct brand-use contexts:
+- principal/negative logo for dark backgrounds;
+- alternative dark logo for light backgrounds;
+- icon/isotype for compact applications and favicon;
+- teal/mint geometric accents.
+
+The marketing header should use the light-background logo variant on its floating white surface. The marketing footer should use the negative/dark-background variant where available.
+
+Do not crop logos from a composite identity-board image for production. Use isolated PNG/WebP/SVG assets uploaded through the branding system.

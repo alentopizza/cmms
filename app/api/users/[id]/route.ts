@@ -5,7 +5,7 @@ import { pool } from "@/lib/db";
 import { type OrganizationRole } from "@/lib/permissions";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 
-const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","external"]);
+const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL = /^\S+@\S+\.\S+$/;
 
@@ -106,7 +106,8 @@ export async function POST(
     if (!makingSuperadmin) {
       if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
       if (!ROLES.has(requestedRole as OrganizationRole)) fields.role = "Selecciona un rol válido.";
-      if (requestedRole === "external" && !UUID.test(externalSupplierId)) fields.external_supplier_id = "Selecciona el proveedor de servicios al que pertenece.";
+      if (requestedRole === "provider" && !UUID.test(externalSupplierId)) fields.external_supplier_id = "Selecciona el proveedor de servicios al que representa.";
+      if (requestedRole === "external" && externalSupplierId && !UUID.test(externalSupplierId)) fields.external_supplier_id = "El proveedor seleccionado no es válido.";
       if (!accessAllSites && siteIds.length === 0) fields.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
       if (siteIds.some(siteId => !UUID.test(siteId))) fields.site_ids = "Una de las sedes seleccionadas no es válida.";
     } else {
@@ -159,15 +160,15 @@ export async function POST(
         }
       }
 
-      if (requestedRole === "technician" || requestedRole === "external") {
-        const setupGate = gateFor(await getSetupState(organizationId, client), requestedRole === "external" ? "external" : "workforce");
+      if (requestedRole === "technician" || requestedRole === "external" || requestedRole === "provider") {
+        const setupGate = gateFor(await getSetupState(organizationId, client), requestedRole === "provider" ? "provider" : "workforce");
         if (!setupGate.ready) {
           await client.query("ROLLBACK");
-          return json(409, { fields: { role: setupGate.message, ...(requestedRole === "external" ? { external_supplier_id: setupGate.message } : {}) } });
+          return json(409, { fields: { role: setupGate.message, ...(requestedRole === "provider" ? { external_supplier_id: setupGate.message } : {}) } });
         }
       }
 
-      if (requestedRole === "external") {
+      if ((requestedRole === "provider" || requestedRole === "external") && externalSupplierId) {
         const supplier = await client.query(
           "SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('services','both')",
           [externalSupplierId, organizationId],
@@ -209,7 +210,7 @@ export async function POST(
          VALUES($1,$2,$3,NULL,$4,$5)
          ON CONFLICT(organization_id,user_id)
          DO UPDATE SET role=EXCLUDED.role,site_id=NULL,access_all_sites=EXCLUDED.access_all_sites,external_supplier_id=EXCLUDED.external_supplier_id`,
-        [organizationId, id, requestedRole, accessAllSites, requestedRole === "external" ? externalSupplierId : null],
+        [organizationId, id, requestedRole, accessAllSites, (requestedRole === "provider" || requestedRole === "external") && externalSupplierId ? externalSupplierId : null],
       );
 
       if (current.organization_id && current.organization_id !== organizationId) {

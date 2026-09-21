@@ -6,6 +6,7 @@ import UserManagement, { type ManagedUser } from "./UserManagement";
 
 type Organization = { id: string; name: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
+type ServiceSupplier = { id: string; organization_id: string; name: string };
 
 export default async function UsersPage() {
   const session = await getSession();
@@ -14,11 +15,11 @@ export default async function UsersPage() {
 
   const isSuperadmin = session.platformRole === "superadmin";
 
-  const [users, organizations, sites] = await Promise.all([
+  const [users, organizations, sites, serviceSuppliers] = await Promise.all([
     isSuperadmin
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
-                  membership.organization_id,membership.organization_name,membership.role,
+                  membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
                   COALESCE(membership.site_names,ARRAY[]::text[]) site_names,
@@ -27,10 +28,12 @@ export default async function UsersPage() {
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
                     OR EXISTS(SELECT 1 FROM work_order_comments wc WHERE wc.user_id=u.id)
                     OR EXISTS(SELECT 1 FROM audit_log al WHERE al.user_id=u.id)
+                    OR EXISTS(SELECT 1 FROM work_order_tasks wt WHERE wt.assigned_to=u.id)
+                    OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.user_id=u.id)
                   ) has_activity
            FROM users u
            LEFT JOIN LATERAL (
-             SELECT om.organization_id,o.name organization_name,om.role,om.access_all_sites,
+             SELECT om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                     COALESCE((
                       SELECT array_agg(oms.site_id::text ORDER BY site.name)
                       FROM organization_member_sites oms
@@ -45,6 +48,7 @@ export default async function UsersPage() {
                     ), ARRAY[]::text[]) site_names
              FROM organization_members om
              JOIN organizations o ON o.id=om.organization_id
+             LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
              WHERE om.user_id=u.id
              ORDER BY om.created_at ASC
              LIMIT 1
@@ -53,7 +57,7 @@ export default async function UsersPage() {
         )
       : query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
-                  om.organization_id,o.name organization_name,om.role,om.access_all_sites,
+                  om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE((
                     SELECT array_agg(oms.site_id::text ORDER BY site.name)
                     FROM organization_member_sites oms
@@ -71,10 +75,13 @@ export default async function UsersPage() {
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
                     OR EXISTS(SELECT 1 FROM work_order_comments wc WHERE wc.user_id=u.id)
                     OR EXISTS(SELECT 1 FROM audit_log al WHERE al.user_id=u.id)
+                    OR EXISTS(SELECT 1 FROM work_order_tasks wt WHERE wt.assigned_to=u.id)
+                    OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.user_id=u.id)
                   ) has_activity
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            JOIN organizations o ON o.id=om.organization_id
+           LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
            WHERE om.organization_id=$1
            ORDER BY u.active DESC,u.full_name`,
           [session.organizationId],
@@ -102,6 +109,20 @@ export default async function UsersPage() {
              ORDER BY s.name`,
             [session.organizationId, session.siteIds],
           ),
+    isSuperadmin
+      ? query<ServiceSupplier>(
+          `SELECT id,organization_id,name
+           FROM suppliers
+           WHERE active=true AND supplier_type IN ('services','both')
+           ORDER BY organization_id,name`,
+        )
+      : query<ServiceSupplier>(
+          `SELECT id,organization_id,name
+           FROM suppliers
+           WHERE active=true AND supplier_type IN ('services','both') AND organization_id=$1
+           ORDER BY name`,
+          [session.organizationId],
+        ),
   ]);
 
   return <>
@@ -121,6 +142,7 @@ export default async function UsersPage() {
       isSuperadmin={isSuperadmin}
       fixedOrganizationId={session.organizationId}
       currentUserId={session.userId}
+      serviceSuppliers={serviceSuppliers.rows}
     />
   </>;
 }

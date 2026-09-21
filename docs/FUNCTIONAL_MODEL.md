@@ -108,3 +108,43 @@ The SaaS catalog has four active tiers:
 Paid tiers are modeled as monthly subscriptions. Pricing remains commercially configurable and is not hard-coded into product behavior.
 
 A trial expires 15 days after activation. After expiry, the organization data is preserved but tenant users are redirected to the subscription screen and cannot operate the CMMS until a paid plan is activated.
+
+
+## Mandatory operational setup sequence
+
+The product enforces the following dependency order in both UI and mutation routes:
+
+1. **Company** exists and is active.
+2. At least one **principal location/site** exists.
+3. At least one active **sublocation** exists inside the company structure.
+4. **Suppliers** may now be registered.
+5. **Internal technicians**, **service-provider accounts** and **external collaborators** may now be created.
+6. **Crews** may be formed only after at least one executable person exists.
+7. **Assets** and **inventory articles** may be created only after at least one supplier exists, and new records must reference both a supplier and a physical sublocation.
+8. **Work orders** require a previously registered asset.
+9. **Activities** inside a work order require an executable resource and exactly one executor: a person, a crew or a service supplier.
+
+When a prerequisite is missing, the UI must explain the pending step and provide a direct route to the module that resolves it. Server-side routes independently enforce the same dependency; hiding or disabling a form is not considered sufficient validation.
+
+### Outsourced-service model
+
+Suppliers have one commercial type:
+
+- **Materials / supplies** — supplies assets, materials or inventory;
+- **Services** — performs outsourced maintenance/services;
+- **Materials + services** — can participate in both relationships.
+
+Execution identities are distinct:
+
+- **Técnico** — internal maintenance worker belonging to the tenant.
+- **Proveedor de servicios** — authenticated account representing a registered supplier whose type includes services. This account must be linked to that supplier and may only view/execute work assigned to the supplier.
+- **Colaborador externo** — authenticated individual supporting specific work. A supplier relationship is optional; this user only sees/executes activities directly assigned to the person or to a crew containing that person.
+- **Cuadrilla** — stable or temporary group composed of internal technicians and external collaborators, with one leader. Provider-representative accounts are not crew members.
+
+A work activity may be assigned to exactly one of:
+
+- an internal technician or external collaborator;
+- a crew;
+- a service supplier.
+
+The assignment is traceable through the activity lifecycle: pending, in progress, completed or cancelled, with start/end timestamps and execution notes.

@@ -26,6 +26,7 @@ export type AuthSession = {
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   whiteLabel: boolean;
+  externalSupplierId: string | null;
 };
 
 function secret() {
@@ -102,6 +103,7 @@ export async function getSession(): Promise<AuthSession | null> {
       trialEndsAt: null,
       currentPeriodEnd: null,
       whiteLabel: true,
+      externalSupplierId: null,
     };
   }
 
@@ -121,15 +123,16 @@ export async function getSession(): Promise<AuthSession | null> {
     trial_ends_at: string | null;
     current_period_end: string | null;
     white_label: boolean | null;
+    external_supplier_id: string | null;
   }>(
     `SELECT u.id,u.email,u.full_name,u.platform_role,
             membership.organization_id,membership.organization_name,membership.role,membership.site_id,
-            membership.access_all_sites,membership.site_ids,
+            membership.access_all_sites,membership.site_ids,membership.external_supplier_id,
             subscription.plan_code,subscription.subscription_status,subscription.trial_ends_at,
             subscription.current_period_end,subscription.white_label
      FROM users u
      LEFT JOIN LATERAL (
-       SELECT om.organization_id,o.name organization_name,om.role,om.site_id,om.access_all_sites,
+       SELECT om.organization_id,o.name organization_name,om.role,om.site_id,om.access_all_sites,om.external_supplier_id,
               COALESCE((
                 SELECT array_agg(oms.site_id::text ORDER BY oms.site_id::text)
                 FROM organization_member_sites oms
@@ -176,6 +179,7 @@ export async function getSession(): Promise<AuthSession | null> {
     trialEndsAt: user.platform_role === "superadmin" ? null : user.trial_ends_at,
     currentPeriodEnd: user.platform_role === "superadmin" ? null : user.current_period_end,
     whiteLabel: user.platform_role === "superadmin" ? true : Boolean(user.white_label),
+    externalSupplierId: user.platform_role === "superadmin" ? null : user.external_supplier_id,
   };
 }
 

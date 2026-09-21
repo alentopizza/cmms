@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-09-20 — Operational setup sequence and outsourced maintenance
+
+### Added
+
+- Added migration `011_operational_sequence_external_services.sql`.
+- Added mandatory setup gates for company → principal location → sublocation → supplier → workforce/crews → assets/inventory → activities.
+- Added the **Proveedores** module with Materials, Services and Materials + services classifications.
+- Added **Proveedor de servicios** and **Colaborador externo** organization roles with distinct access semantics.
+- Provider accounts must be linked to a service-capable supplier; external collaborators may optionally be linked to one.
+- Added **Cuadrillas** with leader and membership made of internal technicians and external collaborators.
+- New assets now require an exact sublocation and supplier relationship.
+- Added inventory-item creation with required sublocation and supplier relationship.
+- Added work-order activity planning and execution with exactly one executor: person, crew or service supplier.
+- Added activity lifecycle states, execution notes and timestamps.
+- Provider accounts only see work assigned to their supplier; external collaborators only see work assigned directly or through their crew.
+- Extended user-history protection to activity assignments and crew membership so traceable users cannot be permanently removed.
+- Added modern setup-progress messages that explain missing prerequisites and route users to the correct previous step.
+
+
 ## 2026-09-20 — Direct installation download and restored branding editor
 
 ### Added

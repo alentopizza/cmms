@@ -15,6 +15,7 @@ export default async function WorkOrdersPage() {
   const orgId=session.organizationId;
   const canWrite=can(session,"work_orders.write");
   const requesterOnly=session.role==="requester" && session.userId;
+  const providerOnly=session.role==="provider" && session.userId;
   const externalOnly=session.role==="external" && session.userId;
 
   let orders;
@@ -36,37 +37,47 @@ export default async function WorkOrdersPage() {
            WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id=ANY($3::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId,session.siteIds]);
-  }else if(externalOnly){
+  }else if(providerOnly){
     const supplierId=session.externalSupplierId;
     orders=session.accessAllSites
       ? await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
-           WHERE w.organization_id=$1 AND (
-             w.assigned_to=$2 OR
-             ($3::uuid IS NOT NULL AND w.service_supplier_id=$3) OR
-             EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
-               t.assigned_to=$2 OR
-               ($3::uuid IS NOT NULL AND t.service_supplier_id=$3) OR
-               EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
-             ))
+           WHERE w.organization_id=$1 AND $2::uuid IS NOT NULL AND (
+             w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId,supplierId])
+          [orgId,supplierId])
       : await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
-           WHERE w.organization_id=$1 AND w.site_id=ANY($4::uuid[]) AND (
-             w.assigned_to=$2 OR
-             ($3::uuid IS NOT NULL AND w.service_supplier_id=$3) OR
-             EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
-               t.assigned_to=$2 OR
-               ($3::uuid IS NOT NULL AND t.service_supplier_id=$3) OR
-               EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
+           WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND $2::uuid IS NOT NULL AND (
+             w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
+           )
+           ORDER BY w.requested_at DESC LIMIT 200`,
+          [orgId,supplierId,session.siteIds]);
+  }else if(externalOnly){
+    orders=session.accessAllSites
+      ? await query<OrderRow>(
+          `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           WHERE w.organization_id=$1 AND (
+             w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
+               t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
              ))
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId,supplierId,session.siteIds]);
+          [orgId,session.userId])
+      : await query<OrderRow>(
+          `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND (
+             w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
+               t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
+             ))
+           )
+           ORDER BY w.requested_at DESC LIMIT 200`,
+          [orgId,session.userId,session.siteIds]);
   }else{
     orders=session.accessAllSites
       ? await query<OrderRow>(
@@ -89,7 +100,7 @@ export default async function WorkOrdersPage() {
     : {rows:[]} as {rows:{id:string;label:string}[]};
 
   return <>
-    <header className="page-header"><div><span className="eyebrow">Mantenimiento</span><h1 className="page-title">Órdenes de trabajo</h1><p className="muted">{externalOnly?"Solo ves órdenes y actividades vinculadas a tu cuenta, cuadrilla o proveedor.":requesterOnly?"Consulta y registra tus solicitudes de mantenimiento.":"Correctivos, preventivos, inspecciones y emergencias."}</p></div><div className="brand-pill"><span /> {orders.rowCount} órdenes</div></header>
+    <header className="page-header"><div><span className="eyebrow">Mantenimiento</span><h1 className="page-title">Órdenes de trabajo</h1><p className="muted">{providerOnly?"Solo ves trabajo asignado a tu empresa proveedora.":externalOnly?"Solo ves órdenes y actividades asignadas directamente a tu cuenta o cuadrilla.":requesterOnly?"Consulta y registra tus solicitudes de mantenimiento.":"Correctivos, preventivos, inspecciones y emergencias."}</p></div><div className="brand-pill"><span /> {orders.rowCount} órdenes</div></header>
 
     {canWrite && <section className="card section"><h2>{requesterOnly?"Nueva solicitud":"Nueva orden"}</h2>
       {assets.rows.length===0 ? <div className="setup-block"><strong>Primero registra un activo.</strong><span>Las órdenes necesitan un equipo previamente creado y relacionado con la estructura física.</span><Link className="button secondary" href="/dashboard/assets">Ir a activos</Link></div> :
@@ -103,6 +114,6 @@ export default async function WorkOrdersPage() {
 
     <section className="section"><table className="table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead><tbody>
       {orders.rows.map(w=><tr key={w.id}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td></tr>)}
-    </tbody></table>{!orders.rowCount && <div className="card empty-state"><strong>No hay órdenes disponibles.</strong><span>{externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"Crea la primera orden cuando exista un activo."}</span></div>}</section>
+    </tbody></table>{!orders.rowCount && <div className="card empty-state"><strong>No hay órdenes disponibles.</strong><span>{providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"Crea la primera orden cuando exista un activo."}</span></div>}</section>
   </>;
 }

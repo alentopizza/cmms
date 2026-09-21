@@ -9,8 +9,6 @@ import { getCreationGateForScope } from "@/lib/setup-sequence";
 import LocationDirectory, { type LocationDirectoryService, type LocationDirectorySite, type LocationDirectorySub } from "@/components/LocationDirectory";
 
 type OrganizationRow = { id: string; name: string };
-type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
-
 type SiteRow = LocationDirectorySite;
 
 export default async function LocationsIndexPage({
@@ -123,7 +121,7 @@ export default async function LocationsIndexPage({
           ),
   ]);
 
-  const siteOptions  const siteOptions = sites.rows.map(site => ({
+  const siteOptions = sites.rows.map(site => ({
     id: site.id,
     organization_id: site.organization_id,
     name: site.name,

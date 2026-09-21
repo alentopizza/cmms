@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { roleLabel } from "@/lib/permissions";
@@ -55,66 +55,267 @@ function wrap(text:string,font:any,size:number,width:number){
   if(current) lines.push(current);
   return lines.length?lines:[""];
 }
-async function pdfReport(role:string,period:string,filters:string,rows:ExportRow[]){
+type ReportBranding={
+  brandName:string;
+  reportOwner:string;
+  primary:string;
+  secondary:string;
+  logo:Buffer|null;
+  logoMime:string|null;
+  whiteLabel:boolean;
+  showDeswebBranding:boolean;
+};
+
+function validHex(value:string|null|undefined,fallback:string){
+  return value&&/^#[0-9a-f]{6}$/i.test(value)?value:fallback;
+}
+function pdfColor(hex:string){
+  const value=validHex(hex,"#38B2A9").slice(1);
+  return rgb(
+    Number.parseInt(value.slice(0,2),16)/255,
+    Number.parseInt(value.slice(2,4),16)/255,
+    Number.parseInt(value.slice(4,6),16)/255,
+  );
+}
+async function getReportBranding(session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<ReportBranding>{
+  const global=await query<{logo:Buffer|null;mime:string|null}>(
+    "SELECT logo_on_light logo,logo_on_light_mime mime FROM app_customization WHERE id=1",
+  );
+  const globalLogo=global.rows[0]?.logo||null;
+  const globalMime=global.rows[0]?.mime||null;
+
+  if(session.platformRole!=="user"||!session.organizationId){
+    return {
+      brandName:"DESWEB",
+      reportOwner:"Desweb CMMS",
+      primary:"#38B2A9",
+      secondary:"#293644",
+      logo:globalLogo,
+      logoMime:globalMime,
+      whiteLabel:false,
+      showDeswebBranding:true,
+    };
+  }
+
+  const result=await query<{
+    organization_name:string;
+    legal_name:string|null;
+    organization_logo:Buffer|null;
+    organization_logo_mime:string|null;
+    plan_code:string|null;
+    white_label:boolean|null;
+    app_name:string|null;
+    primary_color:string|null;
+    secondary_color:string|null;
+    brand_logo:Buffer|null;
+    brand_logo_mime:string|null;
+    show_desweb_branding:boolean|null;
+  }>(
+    \`SELECT
+      o.name organization_name,o.legal_name,
+      o.logo_data organization_logo,o.logo_mime_type organization_logo_mime,
+      p.code plan_code,p.white_label,
+      b.app_name,b.primary_color,b.secondary_color,
+      b.logo_on_light brand_logo,b.logo_on_light_mime brand_logo_mime,
+      b.show_desweb_branding
+    FROM organizations o
+    LEFT JOIN organization_subscriptions s ON s.organization_id=o.id
+    LEFT JOIN billing_plans p ON p.id=s.plan_id
+    LEFT JOIN organization_branding b ON b.organization_id=o.id
+    WHERE o.id=$1\`,
+    [session.organizationId],
+  );
+  const row=result.rows[0];
+  const pro=Boolean(row?.plan_code==="pro"&&row?.white_label);
+  if(pro){
+    return {
+      brandName:row?.app_name||row?.organization_name||"Empresa",
+      reportOwner:row?.legal_name||row?.organization_name||"Empresa",
+      primary:validHex(row?.primary_color,"#38B2A9"),
+      secondary:validHex(row?.secondary_color,"#293644"),
+      logo:row?.brand_logo||row?.organization_logo||null,
+      logoMime:row?.brand_logo_mime||row?.organization_logo_mime||null,
+      whiteLabel:true,
+      showDeswebBranding:row?.show_desweb_branding??false,
+    };
+  }
+  return {
+    brandName:"DESWEB",
+    reportOwner:row?.legal_name||row?.organization_name||session.organizationName||"Desweb CMMS",
+    primary:"#38B2A9",
+    secondary:"#293644",
+    logo:globalLogo,
+    logoMime:globalMime,
+    whiteLabel:false,
+    showDeswebBranding:true,
+  };
+}
+
+async function embedReportLogo(doc:PDFDocument,branding:ReportBranding):Promise<PDFImage|null>{
+  if(!branding.logo||!branding.logoMime)return null;
+  try{
+    if(branding.logoMime.includes("png"))return await doc.embedPng(branding.logo);
+    if(branding.logoMime.includes("jpeg")||branding.logoMime.includes("jpg"))return await doc.embedJpg(branding.logo);
+  }catch{}
+  return null;
+}
+
+function statusLabel(status:string){
+  const labels:Record<string,string>={
+    active:"Activa",trialing:"Prueba",trial_expired:"Prueba vencida",past_due:"Pago pendiente",suspended:"Suspendida",canceled:"Cancelada",
+    open:"Abierta",assigned:"Asignada",in_progress:"En progreso",paused:"Pausada",completed:"Completada",cancelled:"Cancelada",
+    pending:"Pendiente",closed:"Cerrada",contacted:"Contactado",qualified:"Calificado",new:"Nuevo",discarded:"Descartado",
+  };
+  return labels[status]||status.replaceAll("_"," ");
+}
+function distribution(rows:ExportRow[]){
+  const map=new Map<string,number>();
+  for(const row of rows)map.set(row.status,(map.get(row.status)||0)+1);
+  return [...map.entries()].map(([key,count])=>({key,label:statusLabel(key),count})).sort((a,b)=>b.count-a.count);
+}
+function typeDistribution(rows:ExportRow[]){
+  const map=new Map<string,number>();
+  for(const row of rows)map.set(row.type,(map.get(row.type)||0)+1);
+  return [...map.entries()].map(([key,count])=>({key,label:key,count})).sort((a,b)=>b.count-a.count);
+}
+async function pdfReport(
+  role:string,
+  period:string,
+  filters:string,
+  rows:ExportRow[],
+  branding:ReportBranding,
+){
   const doc=await PDFDocument.create();
   const regular=await doc.embedFont(StandardFonts.Helvetica);
   const bold=await doc.embedFont(StandardFonts.HelveticaBold);
-  const teal=rgb(0.15,0.55,0.52);
-  const dark=rgb(0.12,0.18,0.23);
+  const primary=pdfColor(branding.primary);
+  const secondary=pdfColor(branding.secondary);
+  const dark=rgb(0.10,0.15,0.19);
   const soft=rgb(0.42,0.48,0.52);
-  const border=rgb(0.86,0.89,0.9);
+  const border=rgb(0.86,0.89,0.90);
+  const pale=rgb(0.96,0.98,0.98);
+  const white=rgb(1,1,1);
+  const logo=await embedReportLogo(doc,branding);
   const pageSize:[number,number]=[841.89,595.28];
+  const statusRows=distribution(rows);
+  const typeRows=typeDistribution(rows);
+  const complete=rows.filter(row=>["completed","closed","active"].includes(row.status)).length;
+  const alerts=rows.filter(row=>["past_due","suspended","cancelled","canceled","paused"].includes(row.status)).length;
   let page=doc.addPage(pageSize);
-  let y=pageSize[1]-46;
+  let y=pageSize[1]-36;
 
-  function header(){
-    page.drawText("DESWEB CMMS", {x:42,y,size:18,font:bold,color:dark});
-    page.drawText("Dashboard - "+cleanText(role), {x:42,y:y-24,size:11,font:bold,color:teal});
-    page.drawText("Periodo: "+cleanText(period), {x:42,y:y-42,size:9,font:regular,color:soft});
-    page.drawText(cleanText(filters), {x:42,y:y-57,size:8,font:regular,color:soft});
-    page.drawLine({start:{x:42,y:y-68},end:{x:800,y:y-68},thickness:1,color:border});
-    y-=92;
+  function drawLogo(target:any,x:number,top:number,maxW:number,maxH:number){
+    if(!logo)return;
+    const scale=Math.min(maxW/logo.width,maxH/logo.height,1);
+    const w=logo.width*scale,h=logo.height*scale;
+    target.drawImage(logo,{x,y:top-h,width:w,height:h});
+  }
+  function letterhead(){
+    page.drawRectangle({x:0,y:pageSize[1]-88,width:pageSize[0],height:88,color:secondary});
+    page.drawRectangle({x:0,y:pageSize[1]-88,width:pageSize[0],height:5,color:primary});
+    if(logo)drawLogo(page,40,pageSize[1]-20,155,48);
+    else page.drawText(branding.brandName,{x:42,y:pageSize[1]-54,size:22,font:bold,color:white});
+    page.drawText("REPORTE EJECUTIVO",{x:pageSize[0]-210,y:pageSize[1]-42,size:10,font:bold,color:white});
+    page.drawText(cleanText(role),{x:pageSize[0]-210,y:pageSize[1]-58,size:8,font:regular,color:rgb(.83,.9,.91)});
+  }
+  function footer(){
+    const pages=doc.getPages();
+    for(const [index,p] of pages.entries()){
+      p.drawLine({start:{x:40,y:28},end:{x:802,y:28},thickness:.5,color:border});
+      p.drawText(cleanText(branding.reportOwner),{x:40,y:14,size:7,font:bold,color:secondary});
+      const powered=branding.whiteLabel&&!branding.showDeswebBranding?"":branding.whiteLabel?" · Tecnología Desweb CMMS":" · Desweb CMMS";
+      p.drawText(powered,{x:180,y:14,size:7,font:regular,color:soft});
+      p.drawText(String(index+1)+" / "+String(pages.length),{x:770,y:14,size:7,font:regular,color:soft});
+    }
   }
   function newPage(){
     page=doc.addPage(pageSize);
-    y=pageSize[1]-46;
-    header();
+    letterhead();
+    y=pageSize[1]-118;
   }
-  header();
+  function card(x:number,top:number,w:number,label:string,value:string,hint:string){
+    page.drawRectangle({x,y:top-72,width:w,height:72,color:white,borderColor:border,borderWidth:.7});
+    page.drawRectangle({x,y:top-72,width:4,height:72,color:primary});
+    page.drawText(label.toUpperCase(),{x:x+14,y:top-20,size:7,font:bold,color:soft});
+    page.drawText(value,{x:x+14,y:top-45,size:18,font:bold,color:secondary});
+    page.drawText(hint,{x:x+14,y:top-61,size:7,font:regular,color:soft});
+  }
+  function barChart(x:number,top:number,w:number,h:number,title:string,data:{label:string;count:number}[]){
+    page.drawText(title,{x,y:top,size:10,font:bold,color:secondary});
+    const list=data.slice(0,6);
+    const max=Math.max(...list.map(row=>row.count),1);
+    let cy=top-22;
+    for(const item of list){
+      page.drawText(cleanText(item.label).slice(0,26),{x,y:cy,size:7.5,font:regular,color:dark});
+      const bx=x+120,bw=w-150;
+      page.drawRectangle({x:bx,y:cy-2,width:bw,height:8,color:pale});
+      page.drawRectangle({x:bx,y:cy-2,width:bw*(item.count/max),height:8,color:primary});
+      page.drawText(String(item.count),{x:x+w-24,y:cy,size:7.5,font:bold,color:secondary});
+      cy-=24;
+    }
+    if(!list.length)page.drawText("Sin datos para graficar.",{x,y:top-28,size:8,font:regular,color:soft});
+    return Math.max(h,Math.max(list.length,1)*24+28);
+  }
 
+  // Cover / executive summary
+  letterhead();
+  y=pageSize[1]-122;
+  page.drawText("Informe de Dashboard",{x:42,y,size:24,font:bold,color:secondary});
+  page.drawText(cleanText(branding.reportOwner),{x:42,y:y-22,size:11,font:bold,color:primary});
+  page.drawText("Periodo: "+cleanText(period),{x:42,y:y-42,size:9,font:regular,color:dark});
+  page.drawText(cleanText(filters),{x:42,y:y-57,size:8,font:regular,color:soft});
+  page.drawText("Generado: "+new Date().toLocaleString("es-CO"),{x:600,y:y-42,size:7.5,font:regular,color:soft});
+  y-=86;
+
+  card(42,y,175,"Registros",String(rows.length),"Elementos del periodo");
+  card(229,y,175,"Cumplidos",String(complete),rows.length?String(Math.round(complete/rows.length*100))+"% del total":"Sin registros");
+  card(416,y,175,"Alertas",String(alerts),"Estados que requieren revisión");
+  card(603,y,197,"Estados",String(statusRows.length),"Categorías presentes");
+  y-=102;
+
+  const chartHeight=barChart(42,y,360,150,"Distribución por estado",statusRows);
+  barChart(438,y,360,150,"Distribución por tipo",typeRows);
+  y-=chartHeight+20;
+
+  page.drawRectangle({x:42,y:y-54,width:756,height:54,color:pale,borderColor:border,borderWidth:.6});
+  page.drawText("LECTURA EJECUTIVA",{x:56,y:y-18,size:7,font:bold,color:primary});
+  const insight=rows.length
+    ? "El reporte consolida los registros visibles para el rol y filtros seleccionados. Revise los estados con mayor volumen y las alertas para priorizar acciones."
+    : "No se encontraron registros para el periodo y filtros seleccionados.";
+  wrap(insight,regular,8,720).slice(0,3).forEach((line,index)=>page.drawText(line,{x:56,y:y-34-index*10,size:8,font:regular,color:dark}));
+
+  // Detailed records
+  newPage();
+  page.drawText("Detalle de registros",{x:42,y,size:15,font:bold,color:secondary});
+  page.drawText("Trazabilidad del periodo seleccionado",{x:42,y:y-16,size:8,font:regular,color:soft});
+  y-=36;
   const columnX=[42,112,180,280,465,535];
   const columnW=[64,62,94,179,64,260];
   const headers=["Tipo","Fecha","Referencia","Entidad / asunto","Estado","Detalle / valor"];
-  headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:8,font:bold,color:dark}));
+  headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:8,font:bold,color:secondary}));
   y-=14;
   page.drawLine({start:{x:42,y},end:{x:800,y},thickness:.7,color:border});
   y-=10;
 
-  for(const row of rows.slice(0,250)){
-    const cells=[
-      row.type,row.date,row.reference,row.subject,row.status,
-      row.detail+(row.value?" | "+row.value:""),
-    ];
+  for(const row of rows.slice(0,350)){
+    const cells=[row.type,row.date,row.reference,row.subject,statusLabel(row.status),row.detail+(row.value?" | "+row.value:"")];
     const wrapped=cells.map((cell,i)=>wrap(cell,regular,7.5,columnW[i]));
     const lineCount=Math.max(...wrapped.map(lines=>lines.length));
     const rowHeight=Math.max(22,lineCount*10+8);
-    if(y-rowHeight<42) newPage();
+    if(y-rowHeight<45){
+      newPage();
+      headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:8,font:bold,color:secondary}));
+      y-=22;
+    }
     wrapped.forEach((lines,i)=>{
-      lines.slice(0,5).forEach((line,j)=>{
-        page.drawText(line,{x:columnX[i],y:y-j*10,size:7.5,font:regular,color:dark});
-      });
+      lines.slice(0,5).forEach((line,j)=>page.drawText(line,{x:columnX[i],y:y-j*10,size:7.5,font:regular,color:dark}));
     });
     y-=rowHeight;
     page.drawLine({start:{x:42,y:y+4},end:{x:800,y:y+4},thickness:.35,color:border});
   }
-  if(!rows.length){
-    page.drawText("No hay registros para los filtros seleccionados.",{x:42,y,size:10,font:regular,color:soft});
-  }
+  if(!rows.length)page.drawText("No hay registros para los filtros seleccionados.",{x:42,y,size:10,font:regular,color:soft});
 
-  const pages=doc.getPages();
-  pages.forEach((p,index)=>{
-    p.drawText("Generado por Desweb CMMS · "+String(index+1)+"/"+String(pages.length),{x:42,y:20,size:7,font:regular,color:soft});
-  });
+  footer();
   return doc.save();
 }
 
@@ -232,7 +433,8 @@ export async function GET(request:Request){
     filters.companyStatus!=="all"?"Empresa: "+filters.companyStatus:"",
     filters.activityStatus!=="all"?"Estado: "+filters.activityStatus:"",
   ].filter(Boolean).join(" · ")||"Sin filtros de estado";
-  const bytes=await pdfReport(roleLabel(session),filters.label,filterDescription,rows);
+  const branding=await getReportBranding(session);
+  const bytes=await pdfReport(roleLabel(session),filters.label,filterDescription,rows,branding);
   return new NextResponse(Buffer.from(bytes),{
     headers:{
       "Content-Type":"application/pdf",

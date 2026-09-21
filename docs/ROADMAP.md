@@ -40,6 +40,16 @@ This roadmap is directional and should be updated as priorities change.
 - public /downloads information page
 - versioned private self-hosted ZIP/TAR packaging workflow
 
+## Implemented operational dependency foundation
+
+- mandatory company → site → sublocation → supplier dependency;
+- supplier types for materials, services or both;
+- provider and external-collaborator access roles;
+- crew creation with internal/external members and a leader;
+- supplier + sublocation relationship on new assets and inventory items;
+- activity assignment to a person, crew or service supplier;
+- external/provider work visibility restricted to assigned execution scope.
+
 ## Next functional priorities
 
 ### Current foundation slice

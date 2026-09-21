@@ -67,6 +67,7 @@ TEST_CHECKOUT_ENABLED=false
 - `/` — landing y planes.
 - `/login` — acceso a la plataforma.
 - `/downloads` — información de la edición self-hosted/descargable.
+- `/descargas` — alias en español de la misma página.
 - `/dashboard` — aplicación autenticada.
 
 ## Instalación descargable / self-hosted

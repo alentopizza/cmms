@@ -2,45 +2,243 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getActivePlans } from "@/lib/billing";
 
+const features = [
+  { icon: "◇", title: "Activos bajo control", text: "Centraliza equipos, ubicación, criticidad y estado operativo en una sola vista." },
+  { icon: "✓", title: "Órdenes de trabajo", text: "Organiza solicitudes, prioridades, responsables y ejecución con trazabilidad." },
+  { icon: "↻", title: "Mantenimiento preventivo", text: "Planifica rutinas para anticiparte a fallas y reducir paradas no programadas." },
+  { icon: "▤", title: "Inventario técnico", text: "Controla repuestos, consumos y disponibilidad para que el mantenimiento no se detenga." },
+  { icon: "◎", title: "Roles y sedes", text: "Define qué puede ver y hacer cada usuario según su empresa, rol y sedes autorizadas." },
+  { icon: "⌁", title: "SaaS o self-hosted", text: "Opera en la nube con Desweb o instala la plataforma en infraestructura propia." },
+];
+
+const workflow = [
+  { step: "01", title: "Registra tu operación", text: "Crea empresa, sedes, ubicaciones y usuarios." },
+  { step: "02", title: "Carga tus activos", text: "Organiza equipos y define dónde están instalados." },
+  { step: "03", title: "Gestiona el mantenimiento", text: "Opera OT, preventivos, técnicos e inventario." },
+  { step: "04", title: "Escala según tu plan", text: "Aumenta capacidad sin cambiar tu forma de trabajo." },
+];
+
+function formatCapacity(value: number) {
+  return new Intl.NumberFormat("es-CO").format(value);
+}
+
 export default async function Home() {
   const session = await getSession();
   const plans = await getActivePlans();
 
-  return <main className="marketing-page">
-    <section className="marketing-hero">
-      <div className="marketing-nav">
-        <div className="marketing-brand"><span>D</span><strong>DESWEB CMMS</strong></div>
-        <div>
-          <Link href="/downloads">Descargas</Link>
-          {session ? <Link href="/dashboard">Ir al panel</Link> : <Link href="/login">Iniciar sesión</Link>}
-          <a href="#planes" className="button">Ver planes</a>
+  return <main className="marketing-page marketing-page-pro">
+    <section className="marketing-top">
+      <nav className="marketing-nav marketing-nav-pro">
+        <Link className="marketing-brand marketing-brand-pro" href="/" aria-label="Desweb CMMS">
+          <span className="marketing-brand-mark">D</span>
+          <span className="marketing-brand-copy">
+            <strong>DESWEB</strong>
+            <small>CMMS · Mantenimiento inteligente</small>
+          </span>
+        </Link>
+
+        <div className="marketing-nav-links">
+          <a href="#solucion">Solución</a>
+          <a href="#como-funciona">Cómo funciona</a>
+          <a href="#planes">Planes</a>
+          <Link href="/downloads">Self-hosted</Link>
         </div>
-      </div>
-      <div className="marketing-hero-copy">
-        <span className="eyebrow">Mantenimiento inteligente</span>
-        <h1>Organiza activos, órdenes de trabajo, preventivos e inventario desde una sola plataforma.</h1>
-        <p>Empieza con una prueba de 15 días o elige un plan mensual según el tamaño de tu operación.</p>
-        <div className="marketing-hero-actions"><Link className="button" href="/checkout?plan=trial">Probar 15 días</Link><a className="button secondary" href="#planes">Comparar planes</a></div>
+
+        <div className="marketing-nav-actions">
+          {session
+            ? <Link className="marketing-login-link" href="/dashboard">Ir al panel</Link>
+            : <Link className="marketing-login-link" href="/login">Iniciar sesión</Link>}
+          <Link className="button marketing-nav-cta" href="/checkout?plan=trial">Probar 15 días</Link>
+        </div>
+      </nav>
+    </section>
+
+    <section className="marketing-hero marketing-hero-pro">
+      <div className="marketing-hero-grid">
+        <div className="marketing-hero-copy marketing-hero-copy-pro">
+          <div className="marketing-beta-pill"><i /> Plataforma CMMS multiempresa</div>
+          <h1>Convierte el mantenimiento en una operación <em>visible, ordenada y medible.</em></h1>
+          <p>Desweb CMMS conecta activos, sedes, órdenes de trabajo, mantenimiento preventivo, inventario y equipos técnicos en una plataforma diseñada para crecer con tu operación.</p>
+          <div className="marketing-hero-actions">
+            <Link className="button marketing-primary-cta" href="/checkout?plan=trial">Iniciar prueba gratis</Link>
+            <a className="button secondary marketing-secondary-cta" href="#solucion">Explorar plataforma</a>
+          </div>
+          <div className="marketing-hero-proof">
+            <span><b>15 días</b><small>de prueba</small></span>
+            <span><b>Multiempresa</b><small>y multisedes</small></span>
+            <span><b>Pro</b><small>con marca blanca</small></span>
+          </div>
+        </div>
+
+        <div className="marketing-product-stage" aria-label="Vista ilustrativa de Desweb CMMS">
+          <div className="marketing-product-glow" />
+          <div className="marketing-product-window">
+            <div className="marketing-product-window-head">
+              <div className="marketing-window-dots"><i /><i /><i /></div>
+              <span>cmms.desweb.cloud</span>
+              <b>DESWEB CMMS</b>
+            </div>
+            <div className="marketing-product-body">
+              <aside className="marketing-product-sidebar">
+                <div className="marketing-product-logo">D</div>
+                <span className="active">▦ <b>Resumen</b></span>
+                <span>◇ <b>Activos</b></span>
+                <span>✓ <b>Órdenes</b></span>
+                <span>↻ <b>Preventivos</b></span>
+                <span>▤ <b>Inventario</b></span>
+              </aside>
+              <div className="marketing-product-main">
+                <div className="marketing-product-title">
+                  <div><small>VISIÓN GENERAL</small><strong>Resumen operativo</strong></div>
+                  <span>Empresa activa</span>
+                </div>
+                <div className="marketing-mini-metrics">
+                  <article><span>Activos disponibles</span><strong>148</strong><small>96.8% disponibilidad</small></article>
+                  <article><span>OT abiertas</span><strong>12</strong><small>4 alta prioridad</small></article>
+                  <article><span>Preventivos</span><strong>91%</strong><small>cumplimiento mensual</small></article>
+                </div>
+                <div className="marketing-product-grid">
+                  <article className="marketing-chart-card">
+                    <div><span>Órdenes de trabajo</span><b>Últimos 7 días</b></div>
+                    <div className="marketing-bars">
+                      {[34,62,48,78,56,88,70].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}
+                    </div>
+                    <div className="marketing-chart-foot"><span><i /> Completadas</span><strong>32 OT</strong></div>
+                  </article>
+                  <article className="marketing-health-card">
+                    <span>Estado de activos</span>
+                    <div className="marketing-health-ring"><strong>97%</strong></div>
+                    <small>Operación saludable</small>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="marketing-float-card marketing-float-card-one"><span>✓</span><div><strong>OT #1048 completada</strong><small>Compresor principal</small></div></div>
+          <div className="marketing-float-card marketing-float-card-two"><span>↻</span><div><strong>Preventivo programado</strong><small>Próximo: 22 sep.</small></div></div>
+        </div>
       </div>
     </section>
 
-    <section id="planes" className="marketing-plans">
-      <div className="marketing-section-heading"><span className="eyebrow">Planes mensuales</span><h2>Escala el CMMS con tu operación</h2><p>Esta landing usa checkout simulado para validar el alta. Los cobros reales se conectarán después por webhook.</p></div>
-      <div className="marketing-plan-grid">
-        {plans.rows.map(plan => <article className={`marketing-plan-card ${plan.code === "pro" ? "featured" : ""}`} key={plan.id}>
-          <div><span>{plan.code === "trial" ? "15 días" : plan.code === "pro" ? "Marca blanca" : "Mensual"}</span><h3>{plan.name}</h3><p>{plan.description}</p></div>
-          <div className="marketing-plan-price">{plan.code === "trial" ? "Gratis" : "Precio por definir"}</div>
-          <ul>
-            <li>{plan.max_sites} ubicaciones principales</li>
-            <li>{plan.max_sublocations} sububicaciones</li>
-            <li>{plan.max_assets} activos</li>
-            <li>{plan.max_inventory_items} artículos de inventario</li>
-            <li>{plan.max_technicians} técnicos</li>
-            {plan.white_label && <li>Marca blanca y personalización</li>}
-          </ul>
-          <Link className="button" href={`/checkout?plan=${plan.code}`}>{session ? "Activar este plan" : plan.code === "trial" ? "Iniciar prueba" : "Probar compra"}</Link>
+    <section className="marketing-trust-strip">
+      <div><span>CMMS</span><strong>Una plataforma para toda la operación de mantenimiento</strong></div>
+      <div className="marketing-trust-items">
+        <span>Multiempresa</span><i />
+        <span>Multisedes</span><i />
+        <span>Roles por usuario</span><i />
+        <span>Self-hosted</span>
+      </div>
+    </section>
+
+    <section id="solucion" className="marketing-section marketing-solution">
+      <div className="marketing-section-heading marketing-section-heading-center">
+        <span className="eyebrow">Todo conectado</span>
+        <h2>Menos hojas de cálculo. Más control operativo.</h2>
+        <p>Diseñado para centralizar la información que mantenimiento necesita sin perder trazabilidad entre empresas, sedes, personas y equipos.</p>
+      </div>
+      <div className="marketing-feature-grid">
+        {features.map(feature => <article className="marketing-feature-card" key={feature.title}>
+          <span className="marketing-feature-icon">{feature.icon}</span>
+          <h3>{feature.title}</h3>
+          <p>{feature.text}</p>
         </article>)}
       </div>
     </section>
+
+    <section id="como-funciona" className="marketing-section marketing-workflow">
+      <div className="marketing-workflow-intro">
+        <span className="eyebrow">Implementación sencilla</span>
+        <h2>Empieza pequeño y construye una operación más madura.</h2>
+        <p>La estructura del CMMS acompaña el crecimiento de la empresa: primero organizas la base, luego incorporas procesos y finalmente escalas capacidad.</p>
+        <Link className="marketing-inline-link" href="/checkout?plan=trial">Empezar ahora <b>→</b></Link>
+      </div>
+      <div className="marketing-workflow-steps">
+        {workflow.map(item => <article key={item.step}>
+          <span>{item.step}</span>
+          <div><strong>{item.title}</strong><p>{item.text}</p></div>
+        </article>)}
+      </div>
+    </section>
+
+    <section id="planes" className="marketing-plans marketing-plans-pro">
+      <div className="marketing-section-heading marketing-section-heading-center">
+        <span className="eyebrow">Planes mensuales</span>
+        <h2>Una capacidad adecuada para cada etapa.</h2>
+        <p>Empieza con 15 días de prueba y evoluciona a un plan mensual cuando tu operación esté lista.</p>
+      </div>
+
+      <div className="marketing-plan-grid marketing-plan-grid-pro">
+        {plans.rows.map(plan => {
+          const isTrial = plan.code === "trial";
+          const isPro = plan.code === "pro";
+          const isMedium = plan.code === "medium";
+          return <article className={`marketing-plan-card marketing-plan-card-pro ${isPro ? "featured" : ""} ${isMedium ? "recommended" : ""}`} key={plan.id}>
+            {isMedium && <span className="marketing-plan-ribbon">Más equilibrado</span>}
+            {isPro && <span className="marketing-plan-ribbon pro">Marca blanca</span>}
+            <div className="marketing-plan-top">
+              <span>{isTrial ? "Explora la plataforma" : "Suscripción mensual"}</span>
+              <h3>{plan.name}</h3>
+              <p>{plan.description}</p>
+            </div>
+            <div className="marketing-plan-price">
+              {isTrial ? <><strong>Gratis</strong><small>por 15 días</small></> : <><strong>Mensual</strong><small>precio comercial por definir</small></>}
+            </div>
+            <div className="marketing-plan-divider" />
+            <ul>
+              <li><b>{formatCapacity(plan.max_sites)}</b> ubicaciones principales</li>
+              <li><b>{formatCapacity(plan.max_sublocations)}</b> sububicaciones</li>
+              <li><b>{formatCapacity(plan.max_assets)}</b> activos</li>
+              <li><b>{formatCapacity(plan.max_inventory_items)}</b> artículos de inventario</li>
+              <li><b>{formatCapacity(plan.max_technicians)}</b> técnicos</li>
+              {plan.white_label && <li><b>Marca blanca</b> y personalización visual</li>}
+            </ul>
+            <Link className={`button ${isTrial ? "secondary" : ""}`} href={`/checkout?plan=${plan.code}`}>
+              {session?.organizationId ? (isTrial ? "Ver condiciones" : `Activar ${plan.name}`) : isTrial ? "Iniciar prueba" : "Probar checkout"}
+            </Link>
+          </article>;
+        })}
+      </div>
+      <p className="marketing-test-note">Entorno comercial en construcción: los planes pagos usan actualmente un checkout simulado y no procesan tarjetas.</p>
+    </section>
+
+    <section className="marketing-selfhost">
+      <div className="marketing-selfhost-copy">
+        <span className="eyebrow">También disponible self-hosted</span>
+        <h2>¿Necesitas ejecutar el CMMS en tu propia infraestructura?</h2>
+        <p>Desweb CMMS puede distribuirse como una instalación web contenerizada con PostgreSQL, migraciones automáticas y un proceso de actualización controlado.</p>
+        <div className="marketing-selfhost-actions">
+          <Link className="button" href="/downloads">Conocer versión self-hosted</Link>
+          <span>Docker Compose · PostgreSQL · instalación licenciada</span>
+        </div>
+      </div>
+      <div className="marketing-selfhost-terminal" aria-hidden="true">
+        <div><i /><i /><i /><span>desweb-cmms</span></div>
+        <code>$ ./scripts/install.sh</code>
+        <code><b>✓</b> PostgreSQL healthy</code>
+        <code><b>✓</b> Migrations applied</code>
+        <code><b>✓</b> Desweb CMMS ready on :3000</code>
+      </div>
+    </section>
+
+    <section className="marketing-final-cta">
+      <div>
+        <span className="eyebrow">Empieza hoy</span>
+        <h2>Tu operación de mantenimiento puede estar mejor organizada en 15 días.</h2>
+        <p>Prueba la plataforma con recursos limitados y valida cómo se adapta a tu forma de trabajar antes de elegir un plan.</p>
+      </div>
+      <div>
+        <Link className="button" href="/checkout?plan=trial">Crear prueba gratuita</Link>
+        {session ? <Link className="button secondary" href="/dashboard">Volver al panel</Link> : <Link className="button secondary" href="/login">Ya tengo cuenta</Link>}
+      </div>
+    </section>
+
+    <footer className="marketing-footer">
+      <Link className="marketing-brand marketing-brand-pro" href="/">
+        <span className="marketing-brand-mark">D</span>
+        <span className="marketing-brand-copy"><strong>DESWEB</strong><small>Desarrollo de Soluciones</small></span>
+      </Link>
+      <p>Desweb CMMS · Plataforma de gestión de mantenimiento</p>
+      <div><Link href="/downloads">Self-hosted</Link><Link href="/login">Acceso</Link><a href="#planes">Planes</a></div>
+    </footer>
   </main>;
 }

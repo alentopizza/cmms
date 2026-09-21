@@ -124,3 +124,19 @@ Semantic red/amber/green remain available where operational meaning requires the
 - no status conveyed through color only;
 - avoid tiny essential text;
 - uploaded branding must not compromise readability.
+
+
+## Public marketing surfaces
+
+The public landing and self-hosted/download pages are commercial product surfaces, not internal admin screens.
+
+Required principles:
+
+- retain the Desweb palette and product identity;
+- use a professional technology/SaaS visual language with strong hierarchy and generous spacing;
+- communicate product value before implementation details;
+- show the CMMS through illustrative product UI rather than generic decoration;
+- landing navigation must expose solution, workflow, plans, login and self-hosted entry points;
+- plan cards must communicate capacity clearly without inventing unapproved prices;
+- technical-beta notices must be visually secondary to the product proposition;
+- `/downloads` and `/descargas` must resolve to the same self-hosted information experience during beta.

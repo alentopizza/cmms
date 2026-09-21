@@ -61,3 +61,17 @@ Future scope may include:
 - email/report branding.
 
 Future work should extend the existing module and storage model rather than hardcoding per-screen branding.
+
+
+## Technology-forward expression
+
+The Desweb CMMS commercial identity should express technology through the existing Desweb palette rather than adopting a separate blue/cyan brand.
+
+Preferred hierarchy:
+
+- institutional dark `#293644` as the structural anchor;
+- teal `#38B2A9` for primary interactive/highlight states;
+- mint `#79CAC4` and `#BAE3E0` for glow, telemetry, secondary emphasis and gradients;
+- white/off-white for contrast and legibility.
+
+Dark marketing surfaces may use deeper derived shades of the institutional dark while keeping teal/mint as the recognisable signature.

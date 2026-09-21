@@ -355,3 +355,16 @@ The UI now supports parent-aware creation popups in addition to global module cr
 ### Personalized dashboard navigation
 
 The authenticated shell now uses a retractable Desweb technology sidebar. Its visible module order is user configurable through drag-and-drop or accessible up/down controls. Database-backed users persist both module order and collapsed state in `user_dashboard_preferences`; the bootstrap developer account uses local browser persistence because it has no database user identity. Permissions are evaluated before preferences, so navigation customization cannot reveal unauthorized modules.
+
+
+### Field attendance and biometric verification
+
+The dashboard now includes **Asistencia** for optional field-work traceability. Tenant administrators/managers configure which roles are subject to attendance control, whether facial verification/geolocation are required and the accepted thresholds.
+
+Facial authentication is implemented as one-to-one verification for the already authenticated account. Browser-side Human 3.3.6 models generate face embeddings plus liveness/anti-spoof signals. Model files are packaged locally under `public/biometric-models` so SaaS and self-hosted runtime do not depend on a model CDN.
+
+The server stores only an AES-256-GCM encrypted numeric template, not the camera photograph. Production should define a separate `BIOMETRIC_ENCRYPTION_KEY`.
+
+Sites now support latitude, longitude and a geofence radius. Attendance events persist check-in/out time, location accuracy, distance to site and verification confidence. Activity execution is correlated to an open field shift for descriptive 30-day operational statistics.
+
+Do not convert these statistics into automatic employment rankings or employment decisions. Human review is required for any personnel-management interpretation.

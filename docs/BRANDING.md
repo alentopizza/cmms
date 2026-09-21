@@ -95,3 +95,15 @@ Do not crop logos from a composite identity-board image for production. Use isol
 The principal Desweb logo supplied on 2026-09-20 is the preferred asset for the light floating landing header. The header should display the logo as a complete lockup with **no additional “CMMS” label beside it**.
 
 Navigation typography should be large enough to remain clearly readable at desktop widths and should not visually compete with the primary Trial CTA.
+
+
+## Upload constraints
+
+Global Desweb branding assets are persisted in PostgreSQL and survive redeploys.
+
+- Logos: PNG, JPG/JPEG, WebP or SVG; maximum 2 MB per file.
+- Favicon: ICO, PNG, WebP or SVG; maximum 2 MB.
+- Logos should preferably use transparent backgrounds and a wide horizontal proportion near 1200×320 px.
+- Favicons should be square; 64×64 or 128×128 px is recommended.
+
+The Superadministrator edits these assets directly from Configuración, with previews for light, dark and browser-icon contexts.

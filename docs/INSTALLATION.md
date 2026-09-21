@@ -162,3 +162,33 @@ Each package includes a `VERSION` file with the requested version and source com
 The package intentionally excludes Git history, CI definitions, local secrets, `node_modules`, build output and other development-only files.
 
 Before public/commercial distribution, replace private Actions artifacts with controlled commercial releases or authenticated downloads tied to the agreed license model.
+
+
+## Direct public beta download
+
+The public **Instalación propia** page exposes a direct beta package at:
+
+`/downloads/desweb-cmms-latest.tar.gz`
+
+The package is generated automatically after the production Next.js build by:
+
+`scripts/package-runtime.sh`
+
+It contains:
+
+- the compiled Next.js standalone runtime;
+- static/public assets required by the application;
+- SQL migrations;
+- migration runner;
+- a Dockerfile for the packaged runtime;
+- Docker Compose with PostgreSQL 17;
+- `.env.example`;
+- `install.sh`;
+- `README-INSTALLACION.md`;
+- a `VERSION` file.
+
+The package intentionally does not require the customer to clone the private GitHub repository or run `npm install`.
+
+Current beta recommendation: Linux x64 or a compatible Docker host.
+
+This direct download is a **technical beta distribution**. Before broad commercial distribution, add license enforcement, signed/versioned releases, checksum/signature publication and a formal update channel.

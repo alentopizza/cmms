@@ -37,6 +37,7 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const reset = String(form.get("reset") || "");
+    const returnTo = String(form.get("return_to") || "") === "settings" ? "/dashboard/settings" : "/dashboard/personalization";
 
     if (reset === "logo-on-light") {
       await query("UPDATE app_customization SET logo_on_light=NULL,logo_on_light_mime=NULL,logo_on_light_name=NULL,updated_at=now() WHERE id=1");
@@ -71,11 +72,12 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.redirect(publicUrl("/dashboard/personalization?saved=1", request.url), 303);
+    return NextResponse.redirect(publicUrl(`${returnTo}?branding_saved=1`, request.url), 303);
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo guardar la personalización.";
-    const url = publicUrl("/dashboard/personalization", request.url);
-    url.searchParams.set("error", message);
+    const fallback = request.headers.get("referer")?.includes("/dashboard/settings") ? "/dashboard/settings" : "/dashboard/personalization";
+    const url = publicUrl(fallback, request.url);
+    url.searchParams.set("branding_error", message);
     return NextResponse.redirect(url, 303);
   }
 }

@@ -199,7 +199,7 @@ Consumption health:
 
 ### Superadministrator
 
-Global settings include platform appearance and global Desweb branding.
+Global settings include platform appearance and global Desweb branding. The Superadministrator branding editor is directly embedded in Configuración and exposes the light-background logo, dark-background logo and favicon with previews, accepted formats, file-size limits and recommended dimensions.
 
 ### Company administrator
 
@@ -291,7 +291,7 @@ See `docs/INSTALLATION.md`.
 
 Do not create a separate desktop application merely to make the product "downloadable"; the intended downloadable edition is the same web platform packaged for self-hosting.
 
-During beta, downloadable ZIP/TAR packages are generated privately by the GitHub Actions workflow **Package self-hosted**. Public anonymous package downloads should wait until commercial licensing and release controls are defined.
+During beta, the production build also generates a direct downloadable `.tar.gz` runtime package available from the public **Instalación propia** page. It contains the compiled standalone runtime, Docker Compose, PostgreSQL configuration, migrations and installer, so beta testers do not need repository access. GitHub Actions packaging remains useful for internal/versioned testing. Broad commercial distribution still requires licensing, signed releases and update controls.
 
 ## Intellectual-property direction
 

@@ -5,6 +5,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { subscriptionLabel } from "@/lib/billing";
 import ThemePreferences from "@/components/ThemePreferences";
+import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 
 type CompanySettingsRow = {
   id: string;
@@ -241,6 +242,7 @@ export default async function SettingsPage({
   if (!isPlatformAdmin && !isCompanyAdmin) redirect("/dashboard");
 
   if (isPlatformAdmin) {
+    const customization = await getCustomizationSummary();
     return <>
       <header className="page-header settings-page-header">
         <div>
@@ -250,6 +252,9 @@ export default async function SettingsPage({
         </div>
         <span className="settings-status"><i /> Configuración global</span>
       </header>
+
+      {params.branding_saved === "1" && <div className="notice success section">La identidad visual global se actualizó correctamente.</div>}
+      {params.branding_error && <div className="notice error section">{params.branding_error}</div>}
 
       <section className="settings-grid section">
         <article className="card settings-panel settings-panel-wide">
@@ -264,19 +269,88 @@ export default async function SettingsPage({
           <ThemePreferences />
         </article>
 
-        <article className="card settings-panel">
+        <article className="card settings-panel settings-panel-branding settings-panel-wide">
           <div className="settings-panel-head">
             <div>
               <span className="settings-kicker">Identidad visual</span>
               <h2>Marca de la plataforma</h2>
-              <p>Administra logos, favicon y recursos gráficos globales de la instalación.</p>
+              <p>Administra directamente los recursos gráficos globales usados por Desweb CMMS.</p>
             </div>
             <span className="settings-panel-icon" aria-hidden="true">✦</span>
           </div>
-          <Link className="settings-link-card" href="/dashboard/personalization">
-            <div><strong>Personalización de marca</strong><span>Logos claros/oscuros y favicon</span></div>
-            <b aria-hidden="true">→</b>
-          </Link>
+
+          <form className="platform-branding-form" method="post" action="/api/customization" encType="multipart/form-data">
+            <input type="hidden" name="return_to" value="settings" />
+            <div className="platform-branding-grid">
+              <article className="platform-brand-asset">
+                <div className="platform-brand-preview platform-brand-preview-light">
+                  <img src={logoOnLightSrc(customization)} alt="Logo actual para fondos claros" />
+                </div>
+                <div className="platform-brand-copy">
+                  <span>Logo para fondos claros</span>
+                  <strong>Versión oscura / principal</strong>
+                  <p>Se usa sobre superficies blancas o muy claras.</p>
+                  <ul>
+                    <li>Formatos: PNG, JPG, WebP o SVG</li>
+                    <li>Tamaño máximo: 2 MB</li>
+                    <li>Recomendado: fondo transparente, 1200×320 px aprox.</li>
+                  </ul>
+                </div>
+                <div className="field">
+                  <label htmlFor="settings-logo-light">Reemplazar archivo</label>
+                  <input id="settings-logo-light" name="logo_on_light" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
+                </div>
+              </article>
+
+              <article className="platform-brand-asset">
+                <div className="platform-brand-preview platform-brand-preview-dark">
+                  <img src={logoOnDarkSrc(customization)} alt="Logo actual para fondos oscuros" />
+                </div>
+                <div className="platform-brand-copy">
+                  <span>Logo para fondos oscuros</span>
+                  <strong>Versión blanca / negativa</strong>
+                  <p>Se usa en sidebar, fondos oscuros y superficies de alto contraste.</p>
+                  <ul>
+                    <li>Formatos: PNG, JPG, WebP o SVG</li>
+                    <li>Tamaño máximo: 2 MB</li>
+                    <li>Recomendado: fondo transparente, 1200×320 px aprox.</li>
+                  </ul>
+                </div>
+                <div className="field">
+                  <label htmlFor="settings-logo-dark">Reemplazar archivo</label>
+                  <input id="settings-logo-dark" name="logo_on_dark" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
+                </div>
+              </article>
+
+              <article className="platform-brand-asset">
+                <div className="platform-brand-preview platform-brand-preview-favicon">
+                  <img src="/api/customization/assets/favicon" alt="Favicon actual" />
+                </div>
+                <div className="platform-brand-copy">
+                  <span>Favicon</span>
+                  <strong>Icono del navegador</strong>
+                  <p>Se muestra en pestañas, accesos directos y marcadores.</p>
+                  <ul>
+                    <li>Formatos: ICO, PNG, WebP o SVG</li>
+                    <li>Tamaño máximo: 2 MB</li>
+                    <li>Recomendado: cuadrado, 64×64 o 128×128 px</li>
+                  </ul>
+                </div>
+                <div className="field">
+                  <label htmlFor="settings-favicon">Reemplazar archivo</label>
+                  <input id="settings-favicon" name="favicon" type="file" accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" />
+                </div>
+              </article>
+            </div>
+
+            <div className="platform-branding-actions">
+              <div>
+                <strong>Guardar identidad visual</strong>
+                <span>Solo se reemplazan los archivos que selecciones.</span>
+              </div>
+              <button className="button" type="submit">Guardar cambios</button>
+            </div>
+          </form>
         </article>
 
         <article className="card settings-panel">

@@ -2,41 +2,30 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { isPlatformOwner } from "@/lib/permissions";
 import { pool } from "@/lib/db";
-import { forceDeleteRecord, listPurgeableRecords, listPurgeableTables } from "@/lib/platform-owner-purge";
+import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
-export async function GET(request: Request) {
-  const session = await getSession();
-  if (!session) return new NextResponse("Unauthorized", { status: 401 });
-  if (!isPlatformOwner(session)) {
-    return NextResponse.json(
-      { message: "La eliminación universal está reservada exclusivamente al Propietario Desweb." },
-      { status: 403 },
-    );
-  }
-
-  const url = new URL(request.url);
-  const table = String(url.searchParams.get("table") || "").trim();
-
-  if (!table) {
-    const tables = await listPurgeableTables();
-    return NextResponse.json({ tables });
-  }
-
-  try {
-    const records = await listPurgeableRecords(table, 150);
-    return NextResponse.json({ records });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "No fue posible consultar los registros.";
-    return NextResponse.json({ message }, { status: 422 });
-  }
-}
+const CONTEXTUAL_DELETE_TABLES = new Set([
+  "organizations",
+  "sites",
+  "locations",
+  "users",
+  "sales_leads",
+  "assets",
+  "work_orders",
+  "work_order_tasks",
+  "maintenance_plans",
+  "inventory_items",
+  "suppliers",
+  "crews",
+  "organization_documents",
+]);
 
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
   if (!isPlatformOwner(session)) {
     return NextResponse.json(
-      { message: "La eliminación universal está reservada exclusivamente al Propietario Desweb." },
+      { message: "La eliminación definitiva de estos registros está reservada al Propietario Desweb." },
       { status: 403 },
     );
   }
@@ -51,12 +40,12 @@ export async function POST(request: Request) {
   const id = String(body?.id || "").trim();
   const confirmation = String(body?.confirmation || "").trim();
 
-  if (!table || !id) {
-    return NextResponse.json({ message: "Selecciona un registro válido." }, { status: 422 });
+  if (!table || !id || !CONTEXTUAL_DELETE_TABLES.has(table)) {
+    return NextResponse.json({ message: "Registro o módulo no permitido para eliminación contextual." }, { status: 422 });
   }
   if (confirmation !== "ELIMINAR") {
     return NextResponse.json(
-      { message: "Escribe ELIMINAR para confirmar la eliminación universal." },
+      { message: "Confirma la eliminación desde el registro seleccionado." },
       { status: 422 },
     );
   }
@@ -70,12 +59,12 @@ export async function POST(request: Request) {
     });
     await client.query("COMMIT");
     return NextResponse.json({
-      message: "Eliminación universal completada.",
+      message: "Registro eliminado definitivamente.",
       result,
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    const message = error instanceof Error ? error.message : "No fue posible completar la eliminación universal.";
+    const message = error instanceof Error ? error.message : "No fue posible eliminar el registro.";
     const status = message === "Registro no encontrado." ? 404 : 409;
     return NextResponse.json({ message }, { status });
   } finally {

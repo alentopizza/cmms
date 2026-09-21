@@ -354,7 +354,7 @@ export default function UserManagement({
           {isPlatformOperator && user.platform_role !== "platform_owner" && (isPlatformOwner || user.platform_role !== "superadmin") && <div className="user-card-actions">
             <button className="text-button" type="button" onClick={() => openEdit(user)}>Editar</button>
             {user.id !== currentUserId && <button className={`text-button ${user.active ? "text-danger" : ""}`} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
-            {user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}
+            {isPlatformOwner && user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}
           </div>}
         </article>)}
       </div>

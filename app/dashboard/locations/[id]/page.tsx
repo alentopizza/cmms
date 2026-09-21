@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canAccessSite, getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import { AssetCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,6 +17,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   const session = await getSession();
   if (!session) redirect("/login");
   if (!can(session, "locations.manage")) redirect("/dashboard");
+  const owner = isPlatformOwner(session);
 
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
@@ -100,7 +102,10 @@ export default async function LocationPage({ params, searchParams }: { params: P
           <div className="field"><label>Descripción</label><input name="description" defaultValue={location.description || ""} /></div>
           <div className="form-span-2 form-actions"><ConfirmSubmitButton className="button secondary" confirmation="¿Seguro que quieres guardar estos cambios?">Guardar cambios</ConfirmSubmitButton></div>
         </form>
-        <form method="post" action={`/api/locations/${location.id}`}><input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="toggle" /><ConfirmSubmitButton className="text-button" confirmation={`¿Seguro que quieres ${location.active ? "desactivar" : "activar"} esta sububicación?`}>{location.active ? "Desactivar" : "Activar"}</ConfirmSubmitButton></form>
+        <div className="owner-inline-row">
+          <form method="post" action={`/api/locations/${location.id}`}><input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="toggle" /><ConfirmSubmitButton className="text-button" confirmation={`¿Seguro que quieres ${location.active ? "desactivar" : "activar"} esta sububicación?`}>{location.active ? "Desactivar" : "Activar"}</ConfirmSubmitButton></form>
+          {owner && <OwnerDeleteButton table="locations" id={location.id} label={location.name} />}
+        </div>
       </div></details>
       {(byParent.get(location.id)?.length || 0) > 0 && <div className="location-tree-children">{tree(location.id, depth + 1)}</div>}
     </div>);

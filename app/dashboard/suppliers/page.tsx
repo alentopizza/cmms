@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type Supplier = {
   id:string;
@@ -32,6 +33,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   if(!can(session,"suppliers.manage")) redirect("/dashboard");
   const params=await searchParams;
   const superadmin=session.platformRole!=="user";
+  const owner=isPlatformOwner(session);
 
   const [suppliers,organizations]=await Promise.all([
     superadmin
@@ -124,6 +126,18 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
             <div><span>Servicio</span><strong>{s.service_category || "No aplica"}</strong></div>
             <div><span>Contacto</span><strong>{s.contact_name || s.email || s.phone || "Sin registrar"}</strong></div>
           </div>
+          {owner&&<OwnerRecordActions table="suppliers" id={s.id} label={s.name} fields={[
+            {name:"name",label:"Nombre",value:s.name},
+            {name:"tax_id",label:"Identificación",value:s.tax_id||""},
+            {name:"supplier_type",label:"Tipo",value:s.supplier_type,type:"select",options:[
+              {value:"materials",label:"Materiales"},{value:"services",label:"Servicios"},{value:"both",label:"Materiales + servicios"}
+            ]},
+            {name:"service_category",label:"Categoría",value:s.service_category||""},
+            {name:"contact_name",label:"Contacto",value:s.contact_name||""},
+            {name:"email",label:"Correo",value:s.email||""},
+            {name:"phone",label:"Teléfono",value:s.phone||""},
+            {name:"active",label:"Estado",value:s.active,type:"checkbox"},
+          ]}/>}
         </article>)}
       </div> : <div className="card empty-state"><strong>Aún no hay proveedores.</strong><span>Registra el primero antes de crear activos o artículos de inventario.</span></div>}
     </section>

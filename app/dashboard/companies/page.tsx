@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
@@ -99,6 +99,7 @@ export default async function CompaniesPage({
       <CompanyDirectory
         companies={companies.rows}
         canManageResources={can(session, "company_resources.manage")}
+        canDelete={isPlatformOwner(session)}
       />
     </section>
   </>;

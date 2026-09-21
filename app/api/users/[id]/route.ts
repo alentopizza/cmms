@@ -91,6 +91,10 @@ export async function POST(
     }
 
     if (intent === "delete") {
+      if (!isPlatformOwner(session)) {
+        await client.query("ROLLBACK");
+        return json(403, { message: "Solo el Propietario Desweb puede eliminar usuarios definitivamente." });
+      }
       if (isPlatformOwner(session)) {
         const result = await forceDeleteRecord(client, "users", id, {
           userId: session.userId,

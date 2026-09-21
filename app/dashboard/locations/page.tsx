@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { SiteCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type OrganizationRow = { id: string; name: string };
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
@@ -31,6 +32,7 @@ export default async function LocationsIndexPage({
 
   const params = await searchParams;
   const superadmin = session.platformRole !== "user";
+  const owner = isPlatformOwner(session);
   const sites = superadmin
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
@@ -150,7 +152,16 @@ export default async function LocationsIndexPage({
             </div>
             <div className="site-stats"><strong>{site.location_count}</strong><span>sububicaciones</span></div>
           </div>
-          <Link className="button" href={`/dashboard/locations/${site.id}`}>Administrar jerarquía</Link>
+          <div className="owner-inline-row">
+            <Link className="button" href={`/dashboard/locations/${site.id}`}>Administrar jerarquía</Link>
+            {owner && <OwnerRecordActions table="sites" id={site.id} label={site.name} fields={[
+              {name:"name",label:"Nombre",value:site.name},
+              {name:"code",label:"Código",value:site.code||""},
+              {name:"city",label:"Ciudad",value:site.city||""},
+              {name:"country",label:"País",value:site.country},
+              {name:"active",label:"Estado",value:site.active,type:"checkbox"},
+            ]}/>}
+          </div>
         </article>)}
       </div>
       {!sites.rowCount && <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div>}

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canAccessSite, getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 
 type Order={
   id:string;organization_id:string;site_id:string;number:string;title:string;description:string|null;
@@ -21,6 +22,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"work_orders.read")) redirect("/dashboard");
+  const owner=isPlatformOwner(session);
 
   const [{id},feedback]=await Promise.all([params,searchParams]);
 
@@ -167,6 +169,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
           <input name="notes" defaultValue={activity.notes||""} placeholder="Observación de ejecución"/>
           <button className="button secondary" type="submit">Actualizar</button>
         </form>}
+        {owner&&<div className="owner-inline-row"><OwnerDeleteButton table="work_order_tasks" id={activity.id} label={activity.description} /></div>}
       </article>)}</div> : <div className="card empty-state"><strong>Aún no hay actividades.</strong><span>Define el trabajo, el responsable y luego registra su ejecución.</span></div>}
     </section>
   </>;

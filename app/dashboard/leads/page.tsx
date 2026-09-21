@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type Lead = {
   id:string;
@@ -29,6 +30,7 @@ export default async function LeadsPage() {
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"leads.manage")) redirect("/dashboard");
+  const owner=isPlatformOwner(session);
 
   const leads=await query<Lead>(
     `SELECT id,full_name,company_name,email,phone,interest,message,status,created_at::text
@@ -86,6 +88,21 @@ export default async function LeadsPage() {
             </label>
             <button className="button secondary" type="submit">Actualizar</button>
           </form>
+          {owner && <OwnerRecordActions
+            table="sales_leads"
+            id={lead.id}
+            label={lead.full_name}
+            fields={[
+              {name:"full_name",label:"Nombre",value:lead.full_name},
+              {name:"company_name",label:"Empresa",value:lead.company_name},
+              {name:"email",label:"Correo",value:lead.email},
+              {name:"phone",label:"Teléfono",value:lead.phone||""},
+              {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea"},
+              {name:"status",label:"Estado",value:lead.status,type:"select",options:[
+                {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
+              ]},
+            ]}
+          />}
         </article>)}
     </section>
   </>;

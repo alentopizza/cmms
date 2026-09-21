@@ -176,11 +176,13 @@ Canonical target behavior: `docs/ROLE_MODEL.md`.
 
 ## Completed development tooling
 
-- Platform Owner-only universal deletion workspace;
-- PostgreSQL FK-driven recursive deletion engine;
+- contextual owner-only Edit/Delete actions in the normal CMMS modules;
+- no standalone destructive module or data browser;
+- PostgreSQL FK-driven recursive deletion engine used internally;
+- allow-listed Platform Owner direct-edit endpoint for modules that do not otherwise expose full editing;
 - transaction rollback on unresolved restrictive cycles;
 - Platform Owner self-protection;
-- audit entry for successful forced purges;
-- existing user deletion integrated with forced deletion only when the actor is Platform Owner.
+- audit entries for forced updates and deletes;
+- definitive user/company deletion reserved to Platform Owner.
 
-Before production hardening, replace/reinforce this development workflow with the approved reauthentication, MFA, retention, backup and final-approval process.
+Before production hardening, reinforce this development workflow with the approved reauthentication, MFA, retention, backup and final-approval process.

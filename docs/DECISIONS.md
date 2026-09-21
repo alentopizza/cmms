@@ -243,24 +243,20 @@ Exceptional destructive operations remain governed workflows requiring explicit 
 See `docs/ROLE_MODEL.md` for the approved target matrix.
 
 
-## ADR-024 — Universal destructive delete is exclusive to Platform Owner during development
+## ADR-024 — Contextual forced edit/delete is exclusive to Platform Owner during development
 
 Status: accepted and implemented.
 
-The development environment requires the project owner to be able to remove test data even when historical or dependent records would normally block deletion.
+The project owner requires unrestricted cleanup and correction of development data, but this capability must live inside the normal CMMS modules rather than in a separate destructive administration module.
 
-This capability is implemented as a separate Platform Owner operation rather than weakening normal CRUD rules.
+Therefore:
 
-The implementation:
+- records expose contextual **Editar / Eliminar** actions to `platform_owner` only where an owner override is needed;
+- no standalone purge workspace, sidebar module or table browser is exposed;
+- Superadministrators and tenant roles retain their existing authorization hierarchy and normal traceability rules;
+- forced deletion uses the PostgreSQL FK-driven transactional engine internally;
+- forced owner updates use a server-side allow-list of tables and editable fields;
+- Platform Owner self-deletion remains blocked;
+- forced updates/deletes are recorded in `audit_log`.
 
-- authorizes only `platform_owner` on the server;
-- discovers real PostgreSQL foreign-key dependencies at runtime;
-- recursively deletes RESTRICT / NO ACTION / CASCADE-owned dependent records;
-- preserves SET NULL / SET DEFAULT semantics;
-- performs all work in one transaction;
-- protects the active Platform Owner identity;
-- records successful purges in `audit_log`.
-
-Superadministrators and tenant roles do not inherit this capability.
-
-Before commercial release, this development capability must be reviewed against the previously approved reauthentication/MFA/approval/retention process for irreversible production operations.
+Before commercial release, destructive owner behavior must be hardened with the previously approved reauthentication/MFA/approval/retention controls.

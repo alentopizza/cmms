@@ -46,9 +46,11 @@ function initials(name: string) {
 export default function CompanyDirectory({
   companies,
   canManageResources,
+  canDelete,
 }: {
   companies: CompanyDirectoryItem[];
   canManageResources: boolean;
+  canDelete: boolean;
 }) {
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
@@ -291,10 +293,10 @@ export default function CompanyDirectory({
 
         {!editing && <footer className="company-detail-actions">
           <div>
-            <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={event => requestConfirmation("delete", event)}>
+            {canDelete && <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={event => requestConfirmation("delete", event)}>
               <input type="hidden" name="intent" value="delete" />
               <button className="button danger-secondary" type="submit">Eliminar empresa</button>
-            </form>
+            </form>}
           </div>
           <div>
             <Link className="button" href={`/dashboard/companies/${selected.id}`}>Abrir ficha empresarial</Link>

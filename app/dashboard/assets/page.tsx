@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import Link from "next/link";
 import { AssetCreateModal } from "@/components/ContextCreateModals";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type Asset={id:string;code:string;name:string;company:string;site:string;location:string|null;supplier:string|null;status:string;criticality:string};
 type Site={id:string;organization_id:string;label:string};
@@ -20,6 +21,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"assets.write");
+  const owner=isPlatformOwner(session);
 
   const [assets,sites,locations,suppliers]=await Promise.all([
     superadmin
@@ -74,8 +76,17 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
       {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
     </section>}
 
-    <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th></tr></thead><tbody>
-      {assets.rows.map(a=><tr key={a.id}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td></tr>)}
+    <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
+      {assets.rows.map(a=><tr key={a.id}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+        {name:"code",label:"Código",value:a.code},
+        {name:"name",label:"Nombre",value:a.name},
+        {name:"status",label:"Estado",value:a.status,type:"select",options:[
+          {value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Detenido"},{value:"retired",label:"Retirado"}
+        ]},
+        {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[
+          {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}
+        ]},
+      ]}/></td>}</tr>)}
     </tbody></table>{!assets.rowCount && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>Completa primero ubicaciones, sububicaciones y proveedores.</span></div>}</section>
   </>;
 }

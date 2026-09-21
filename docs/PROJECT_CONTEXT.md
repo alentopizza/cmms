@@ -399,10 +399,10 @@ The full company page includes:
 Corporate documents are stored in `organization_documents` with metadata and durable PostgreSQL file bytes. They are intentionally separate from company logo/cover assets and from maintenance-operation attachments.
 
 
-### Platform Owner universal deletion
+### Platform Owner contextual development actions
 
-The active Platform Owner can now use an owner-only destructive workspace at `/dashboard/platform-owner/purge`.
+The Platform Owner receives contextual **Editar / Eliminar** controls directly inside the normal CMMS modules. There is intentionally no standalone deletion workspace or sidebar module.
 
-It is intended for development/test-data cleanup and can delete a selected record even when dependent history would normally prevent removal. The server derives dependencies from PostgreSQL foreign keys and resolves them transactionally.
+When the owner deletes a record, the backend can remove dependent development history transactionally using PostgreSQL foreign-key metadata. Owner-only direct edits use an allow-listed update endpoint.
 
-This is not a global weakening of CMMS traceability rules. Superadministrators and tenant users retain normal restrictions. The current Platform Owner identity remains protected from deletion.
+Superadministrators and tenant users retain their existing hierarchy, creation flows and traceability restrictions. The Platform Owner identity itself remains protected from deletion.

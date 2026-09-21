@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type OrderRow={id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string};
 
@@ -14,6 +15,7 @@ export default async function WorkOrdersPage() {
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"work_orders.write");
+  const owner=isPlatformOwner(session);
   const requesterOnly=session.role==="requester" && session.userId;
   const providerOnly=session.role==="provider" && session.userId;
   const externalOnly=session.role==="external" && session.userId;
@@ -112,8 +114,16 @@ export default async function WorkOrdersPage() {
       </form>}
     </section>}
 
-    <section className="section"><table className="table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead><tbody>
-      {orders.rows.map(w=><tr key={w.id}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td></tr>)}
+    <section className="section"><table className="table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
+      {orders.rows.map(w=><tr key={w.id}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td>{owner&&<td><OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+        {name:"title",label:"Título",value:w.title},
+        {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
+          {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
+        ]},
+        {name:"status",label:"Estado",value:w.status,type:"select",options:[
+          {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
+        ]},
+      ]}/></td>}</tr>)}
     </tbody></table>{!orders.rowCount && <div className="card empty-state"><strong>No hay órdenes disponibles.</strong><span>{providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"Crea la primera orden cuando exista un activo."}</span></div>}</section>
   </>;
 }

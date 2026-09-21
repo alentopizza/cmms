@@ -1,5 +1,4 @@
 import type { PoolClient } from "pg";
-import { pool, query } from "@/lib/db";
 
 type ForeignKeyDependency = {
   constraint_oid: string;
@@ -7,12 +6,6 @@ type ForeignKeyDependency = {
   delete_action: "a" | "r" | "c" | "n" | "d";
   child_columns: string[];
   parent_columns: string[];
-};
-
-export type PurgeRecord = {
-  id: string;
-  label: string;
-  detail: string;
 };
 
 export type PurgeResult = {
@@ -45,17 +38,6 @@ function rowLabel(row: Record<string, unknown>, fallback: string) {
     if (value !== null && value !== undefined && String(value).trim()) return String(value);
   }
   return fallback;
-}
-
-function rowDetail(row: Record<string, unknown>) {
-  const parts: string[] = [];
-  for (const key of ["organization_id", "site_id", "status", "role", "platform_role", "created_at"]) {
-    const value = row[key];
-    if (value !== null && value !== undefined && String(value).trim()) {
-      parts.push(key + ": " + String(value));
-    }
-  }
-  return parts.slice(0, 3).join(" · ");
 }
 
 async function assertPurgeableTable(client: PoolClient, table: string) {
@@ -189,45 +171,6 @@ async function deleteRowByCtid(
   visited.add(key);
 }
 
-export async function listPurgeableTables() {
-  const result = await query<{ table_name: string }>(
-    `SELECT DISTINCT t.table_name
-     FROM information_schema.tables t
-     JOIN information_schema.columns c
-       ON c.table_schema=t.table_schema AND c.table_name=t.table_name
-     WHERE t.table_schema='public'
-       AND t.table_type='BASE TABLE'
-       AND c.column_name='id'
-     ORDER BY t.table_name`,
-  );
-
-  return result.rows
-    .map(row => row.table_name)
-    .filter(table => IDENTIFIER.test(table) && !EXCLUDED_ROOT_TABLES.has(table));
-}
-
-export async function listPurgeableRecords(table: string, limit = 100): Promise<PurgeRecord[]> {
-  const client = await pool.connect();
-  try {
-    await assertPurgeableTable(client, table);
-    const safeLimit = Math.max(1, Math.min(250, Math.trunc(limit)));
-    const result = await client.query<{ id: string; row_data: Record<string, unknown> }>(
-      `SELECT id::text id,to_jsonb(t) row_data
-       FROM ${tableRef(table)} t
-       ORDER BY id::text
-       LIMIT ${safeLimit}`,
-    );
-
-    return result.rows.map(item => ({
-      id: item.id,
-      label: rowLabel(item.row_data, item.id),
-      detail: rowDetail(item.row_data),
-    }));
-  } finally {
-    client.release();
-  }
-}
-
 export async function forceDeleteRecord(
   client: PoolClient,
   table: string,
@@ -278,7 +221,7 @@ export async function forceDeleteRecord(
         target_label: label,
         deleted_rows: deletedRows,
         deleted_by_table: deletedByTable,
-        mode: "platform_owner_universal_delete",
+        mode: "platform_owner_contextual_delete",
       }),
     ],
   );

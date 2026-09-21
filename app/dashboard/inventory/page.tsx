@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
-type Item={id:string;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string};
+type Item={id:string;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
 type Site={id:string;label:string};
 type Location={id:string;label:string};
 type Supplier={id:string;name:string};
@@ -17,19 +18,20 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"inventory.write");
+  const owner=isPlatformOwner(session);
 
   const [items,sites,locations,suppliers]=await Promise.all([
     superadmin
-      ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit
+      ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                      LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                      WHERE i.active=true ORDER BY i.name LIMIT 300`)
       : session.accessAllSites
-        ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit
+        ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 ORDER BY i.name LIMIT 300`,[orgId])
-        : query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit
+        : query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))
@@ -82,8 +84,16 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       </form>
     </section>}
 
-    <section className="section"><table className="table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th></tr></thead><tbody>
-      {items.rows.map(i=><tr key={i.id}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td></tr>)}
+    <section className="section"><table className="table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
+      {items.rows.map(i=><tr key={i.id}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
+        {name:"sku",label:"SKU",value:i.sku},
+        {name:"name",label:"Nombre",value:i.name},
+        {name:"unit",label:"Unidad",value:i.unit},
+        {name:"quantity",label:"Existencia",value:i.quantity,type:"number"},
+        {name:"min_quantity",label:"Mínimo",value:i.min_quantity,type:"number"},
+        {name:"unit_cost",label:"Costo unitario",value:i.unit_cost,type:"number"},
+        {name:"storage_location",label:"Almacenamiento",value:i.storage_location||""},
+      ]}/></td>}</tr>)}
     </tbody></table>{!items.rowCount && <div className="card empty-state"><strong>Aún no hay artículos.</strong><span>Registra proveedores antes de crear inventario.</span></div>}</section>
   </>;
 }

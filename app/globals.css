@@ -3011,3 +3011,242 @@ html[data-theme="dark"] .supplier-icon,html[data-theme="dark"] .crew-icon,html[d
 @media(prefers-reduced-motion:reduce){
   .smart-sidebar,.smart-sidebar-link,.smart-sidebar-item-wrap,.main{transition:none!important}
 }
+
+
+/* Field attendance, face verification and geofence */
+.attendance-capture{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+  gap:16px;
+}
+.attendance-camera-card,
+.attendance-action-card{
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--surface);
+  box-shadow:0 10px 28px rgba(41,54,68,.07);
+}
+.attendance-camera-card{overflow:hidden}
+.attendance-camera-stage{
+  position:relative;
+  min-height:430px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(77,213,203,.12),transparent 14rem),
+    linear-gradient(145deg,#172634,#223747);
+}
+.attendance-camera-stage:before{
+  content:"";
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.attendance-camera-stage video{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  opacity:0;
+  transform:scaleX(-1);
+  transition:opacity .2s ease;
+}
+.attendance-camera-stage video.ready{opacity:.88}
+.attendance-face-guide{
+  position:relative;
+  z-index:2;
+  width:min(230px,58%);
+  aspect-ratio:.78;
+  border:2px solid rgba(117,238,225,.78);
+  border-radius:48% 48% 45% 45%;
+  box-shadow:
+    0 0 0 999px rgba(10,19,28,.18),
+    0 0 24px rgba(91,230,218,.18);
+  pointer-events:none;
+}
+.attendance-face-guide:before,
+.attendance-face-guide:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  width:42px;height:2px;
+  transform:translateX(-50%);
+  background:#7beadd;
+  box-shadow:0 0 12px rgba(123,234,221,.65);
+}
+.attendance-face-guide:before{top:-2px}
+.attendance-face-guide:after{bottom:-2px}
+.attendance-camera-placeholder{
+  position:absolute;
+  z-index:3;
+  width:min(280px,72%);
+  display:grid;
+  justify-items:center;
+  gap:7px;
+  padding:20px;
+  text-align:center;
+  color:#d8e7ec;
+}
+.attendance-camera-placeholder>span{
+  width:54px;height:54px;
+  display:grid;place-items:center;
+  border-radius:16px;
+  background:rgba(93,220,208,.13);
+  border:1px solid rgba(121,202,196,.19);
+  color:#78e7dc;
+  font-size:24px;
+}
+.attendance-camera-placeholder strong{font-size:14px}
+.attendance-camera-placeholder small{font-size:10px;line-height:1.5;color:#9fb4bf}
+.attendance-camera-state{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:11px 13px;
+  border-top:1px solid var(--border);
+  background:var(--surface-soft);
+}
+.attendance-camera-state span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--text-soft);
+  font-size:8px;
+  font-weight:800;
+}
+.attendance-camera-state i{
+  width:7px;height:7px;border-radius:50%;
+  background:#aab5bb;
+}
+.attendance-camera-state span.ready i{background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.10)}
+.attendance-action-card{
+  display:grid;
+  align-content:start;
+  gap:14px;
+  padding:22px;
+}
+.attendance-action-card h2{
+  margin:0;
+  color:var(--text);
+  font-size:21px;
+  letter-spacing:-.02em;
+}
+.attendance-action-card>p{
+  margin:0;
+  color:var(--text-soft);
+  font-size:11px;
+  line-height:1.65;
+}
+.attendance-consent{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:flex-start;
+  gap:10px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--surface-soft);
+  cursor:pointer;
+}
+.attendance-consent input{margin-top:3px}
+.attendance-consent>span{display:grid;gap:4px}
+.attendance-consent strong{font-size:10px;color:var(--text);line-height:1.45}
+.attendance-consent small{font-size:8px;color:var(--text-soft);line-height:1.45}
+.attendance-open-shift{
+  display:grid;
+  gap:4px;
+  padding:13px;
+  border:1px solid #cae9e5;
+  border-radius:13px;
+  background:#eefaf8;
+}
+.attendance-open-shift span{
+  font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#36857e;
+}
+.attendance-open-shift strong{font-size:13px;color:var(--text)}
+.attendance-open-shift small{font-size:9px;color:var(--text-soft)}
+.attendance-clock-button{min-height:46px}
+.attendance-revoke{
+  justify-self:start;
+  margin-top:-3px;
+  font-size:9px;
+}
+.attendance-role-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.attendance-role-grid label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:44px;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface-soft);
+  color:var(--text);
+  font-size:9px;
+  font-weight:750;
+  cursor:pointer;
+}
+.attendance-site-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.attendance-site-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:15px;
+}
+.attendance-site-card>div{display:grid;gap:3px}
+.attendance-site-card strong{font-size:11px;color:var(--text)}
+.attendance-site-card>div span{font-size:8px;color:var(--text-soft)}
+.attendance-site-card .text-button{grid-column:1/-1;justify-self:start}
+.attendance-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.attendance-report-table-wrap{
+  margin-top:12px;
+  overflow-x:auto;
+  border-radius:14px;
+}
+.attendance-report-table{min-width:980px}
+.geofence-status-copy{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-soft);
+  color:var(--text-soft);
+  font-size:9px;
+}
+
+html[data-theme="dark"] .attendance-camera-card,
+html[data-theme="dark"] .attendance-action-card{background:var(--surface);border-color:var(--border)}
+html[data-theme="dark"] .attendance-open-shift{background:#203c3d;border-color:#355958}
+html[data-theme="dark"] .attendance-consent,
+html[data-theme="dark"] .attendance-camera-state,
+html[data-theme="dark"] .attendance-role-grid label,
+html[data-theme="dark"] .geofence-status-copy{background:var(--surface-soft);border-color:var(--border)}
+
+@media(max-width:980px){
+  .attendance-capture{grid-template-columns:1fr}
+  .attendance-camera-stage{min-height:390px}
+  .attendance-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+  .attendance-role-grid,.attendance-site-grid,.attendance-summary-grid{grid-template-columns:1fr}
+  .attendance-camera-stage{min-height:330px}
+  .attendance-action-card{padding:18px}
+}

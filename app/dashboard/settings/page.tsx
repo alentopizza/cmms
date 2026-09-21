@@ -253,6 +253,9 @@ export default async function SettingsPage({
         <span className="settings-status"><i /> Configuración global</span>
       </header>
 
+      {params.branding_saved === "1" && <div className="notice success section">La identidad visual global se actualizó correctamente.</div>}
+      {params.branding_error && <div className="notice error section">{params.branding_error}</div>}
+
       <section className="settings-grid section">
         <article className="card settings-panel settings-panel-wide">
           <div className="settings-panel-head">
@@ -277,6 +280,7 @@ export default async function SettingsPage({
           </div>
 
           <form className="platform-branding-form" method="post" action="/api/customization" encType="multipart/form-data">
+            <input type="hidden" name="return_to" value="settings" />
             <div className="platform-branding-grid">
               <article className="platform-brand-asset">
                 <div className="platform-brand-preview platform-brand-preview-light">

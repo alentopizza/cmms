@@ -17,7 +17,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
   if(!can(session,"assets.read")) redirect("/dashboard");
 
   const params=await searchParams;
-  const superadmin=session.platformRole==="superadmin";
+  const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"assets.write");
 

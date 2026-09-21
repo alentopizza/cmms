@@ -504,13 +504,15 @@ export default function UserManagement({
       open={confirm?.kind === "delete"}
       title="Eliminar usuario"
       message={confirm?.user.has_activity
-        ? "Este usuario tiene movimientos registrados. Por trazabilidad no puede eliminarse; debes desactivarlo para conservar el historial."
-        : "Esta acción eliminará definitivamente la cuenta y su membresía. Solo es posible si no tiene movimientos registrados."}
-      confirmLabel={confirm?.user.has_activity ? "Entendido" : "Eliminar definitivamente"}
+        ? isPlatformOwner
+          ? "Este usuario tiene movimientos registrados. Como Propietario Desweb puedes eliminar universalmente la cuenta y las dependencias que impidan su borrado. Esta acción es irreversible."
+          : "Este usuario tiene movimientos registrados. Por trazabilidad no puede eliminarse; debes desactivarlo para conservar el historial."
+        : "Esta acción eliminará definitivamente la cuenta y su membresía."}
+      confirmLabel={confirm?.user.has_activity && !isPlatformOwner ? "Entendido" : "Eliminar definitivamente"}
       variant="danger"
       onCancel={() => setConfirm(null)}
       onConfirm={() => {
-        if (confirm?.user.has_activity) {
+        if (confirm?.user.has_activity && !isPlatformOwner) {
           setConfirm(null);
           return;
         }

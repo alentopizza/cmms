@@ -78,8 +78,8 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     if(session.platformRole!=="superadmin" && !can(session,"activities.manage")){
       const row=activity.rows[0];
       const direct=row.assigned_to===session.userId;
-      const supplier=Boolean(row.service_supplier_id && session.externalSupplierId===row.service_supplier_id);
-      const crew=row.crew_id && session.userId
+      const supplier=session.role==="provider" && Boolean(row.service_supplier_id && session.externalSupplierId===row.service_supplier_id);
+      const crew=row.crew_id && session.userId && session.role!=="provider"
         ? await client.query("SELECT 1 FROM crew_members WHERE crew_id=$1 AND user_id=$2",[row.crew_id,session.userId])
         : {rowCount:0};
       if(!direct&&!supplier&&!crew.rowCount){await client.query("ROLLBACK");return new NextResponse("Esta actividad no está asignada a tu cuenta",{status:403});}

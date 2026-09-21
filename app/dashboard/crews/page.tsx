@@ -83,7 +83,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       count={crews.rowCount || 0}
       countLabel="cuadrillas"
       searchPlaceholder="Buscar cuadrilla, empresa, sede o líder"
-      action={<CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉" disabled={!creationGate.ready}>
+      action={creationGate.ready ? <CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉">
         <form className="form-grid unified-popup-form" method="post" action="/api/crews">
           {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
             : <input type="hidden" name="organization_id" value={session.organizationId||""}/>}
@@ -94,7 +94,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
           <div className="field form-span-2"><label>Descripción</label><textarea name="description" rows={3} placeholder="Ej. Equipo de atención de refrigeración para turno diurno." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear cuadrilla</button></div>
         </form>
-      </CreateRecordModal>}
+      </CreateRecordModal> : undefined}
     />
 
     {params.created && <div className="notice success section">Cuadrilla creada correctamente.</div>}

@@ -56,9 +56,9 @@ export default async function Home() {
     <section className="marketing-hero marketing-hero-pro">
       <div className="marketing-hero-grid">
         <div className="marketing-hero-copy marketing-hero-copy-pro">
-          <div className="marketing-beta-pill"><i /> Plataforma CMMS multiempresa</div>
-          <h1>Convierte el mantenimiento en una operación <em>visible, ordenada y medible.</em></h1>
-          <p>Desweb CMMS conecta activos, sedes, órdenes de trabajo, mantenimiento preventivo, inventario y equipos técnicos en una plataforma diseñada para crecer con tu operación.</p>
+          <div className="marketing-beta-pill"><i /> Plataforma CMMS multiempresa · SaaS + self-hosted</div>
+          <h1>El centro de control para un mantenimiento <em>más inteligente.</em></h1>
+          <p>Conecta activos, sedes, órdenes de trabajo, mantenimiento preventivo, inventario y equipos técnicos en una experiencia visual diseñada para operar, medir y escalar.</p>
           <div className="marketing-hero-actions">
             <Link className="button marketing-primary-cta" href="/checkout?plan=trial">Iniciar prueba gratis</Link>
             <a className="button secondary marketing-secondary-cta" href="#solucion">Explorar plataforma</a>
@@ -125,16 +125,17 @@ export default async function Home() {
       <div className="marketing-trust-items">
         <span>Multiempresa</span><i />
         <span>Multisedes</span><i />
-        <span>Roles por usuario</span><i />
+        <span>Roles y permisos</span><i />
+        <span>Telemetría operativa</span><i />
         <span>Self-hosted</span>
       </div>
     </section>
 
     <section id="solucion" className="marketing-section marketing-solution">
       <div className="marketing-section-heading marketing-section-heading-center">
-        <span className="eyebrow">Todo conectado</span>
-        <h2>Menos hojas de cálculo. Más control operativo.</h2>
-        <p>Diseñado para centralizar la información que mantenimiento necesita sin perder trazabilidad entre empresas, sedes, personas y equipos.</p>
+        <span className="eyebrow">Capacidades centrales</span>
+        <h2>Información conectada. Decisiones más claras.</h2>
+        <p>Una arquitectura modular que centraliza la información que mantenimiento necesita sin perder trazabilidad entre empresas, sedes, personas y equipos.</p>
       </div>
       <div className="marketing-feature-grid">
         {features.map(feature => <article className="marketing-feature-card" key={feature.title}>
@@ -147,9 +148,9 @@ export default async function Home() {
 
     <section id="como-funciona" className="marketing-section marketing-workflow">
       <div className="marketing-workflow-intro">
-        <span className="eyebrow">Implementación sencilla</span>
-        <h2>Empieza pequeño y construye una operación más madura.</h2>
-        <p>La estructura del CMMS acompaña el crecimiento de la empresa: primero organizas la base, luego incorporas procesos y finalmente escalas capacidad.</p>
+        <span className="eyebrow">Flujo operativo</span>
+        <h2>De la estructura inicial al control diario, sin fricción.</h2>
+        <p>La plataforma acompaña el crecimiento de la empresa: primero organiza la base, luego conecta procesos y finalmente escala capacidad según el plan.</p>
         <Link className="marketing-inline-link" href="/checkout?plan=trial">Empezar ahora <b>→</b></Link>
       </div>
       <div className="marketing-workflow-steps">

@@ -61,6 +61,7 @@ POSTGRES_PASSWORD=use-a-strong-database-password
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=use-a-strong-bootstrap-password
 AUTH_SECRET=use-a-long-random-secret
+BIOMETRIC_ENCRYPTION_KEY=use-a-separate-long-random-secret
 
 NEXT_PUBLIC_APP_NAME=Desweb CMMS
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -192,3 +193,24 @@ The package intentionally does not require the customer to clone the private Git
 Current beta recommendation: Linux x64 or a compatible Docker host.
 
 This direct download is a **technical beta distribution**. Before broad commercial distribution, add license enforcement, signed/versioned releases, checksum/signature publication and a formal update channel.
+
+
+## Biometric attendance requirements
+
+If the **Asistencia** module is enabled:
+
+- production must use HTTPS because browsers restrict camera and precise geolocation on insecure origins;
+- define `BIOMETRIC_ENCRYPTION_KEY` separately from `AUTH_SECRET`;
+- biometric face templates are encrypted at rest with AES-256-GCM;
+- source photographs are not persisted by the application;
+- the browser face-analysis models are packaged locally under `public/biometric-models`, so self-hosted installations do not depend on a third-party model CDN at runtime;
+- configure latitude, longitude and geofence radius for each site before making geolocation mandatory;
+- establish an organization-specific privacy notice, legal basis/consent process and retention policy before production use.
+
+Generate the biometric encryption key independently, for example:
+
+```bash
+openssl rand -hex 32
+```
+
+Changing `BIOMETRIC_ENCRYPTION_KEY` after users have enrolled will make existing encrypted templates unreadable. Plan key rotation with explicit biometric re-enrollment.

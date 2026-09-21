@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import Link from "next/link";
+import { AssetCreateModal } from "@/components/ContextCreateModals";
 
 type Asset={id:string;code:string;name:string;company:string;site:string;location:string|null;supplier:string|null;status:string;criticality:string};
 type Site={id:string;organization_id:string;label:string};
@@ -62,7 +64,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
     : params.error ? "Revisa la información del activo." : "";
 
   return <>
-    <header className="page-header"><div><span className="eyebrow">Registro técnico</span><h1 className="page-title">Activos y equipos</h1><p className="muted">Cada activo debe quedar vinculado a empresa, sede, sububicación y proveedor.</p></div><div className="brand-pill"><span /> {assets.rowCount} activos</div></header>
+    <header className="page-header"><div><span className="eyebrow">Registro técnico</span><h1 className="page-title">Activos y equipos</h1><p className="muted">Cada activo debe quedar vinculado a empresa, sede, sububicación y proveedor.</p></div><div className="page-header-actions"><div className="brand-pill"><span /> {assets.rowCount} activos</div>{canWrite && gate?.ready && <AssetCreateModal sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" />}</div></header>
     {params.created && <div className="notice success section">Activo creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
@@ -72,22 +74,8 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
       {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
     </section>}
 
-    {canWrite && gate?.ready && <section className="card section"><div className="section-heading"><div><span className="eyebrow">Nuevo activo</span><h2>Registrar equipo</h2></div></div>
-      <form className="form-grid" method="post" action="/api/assets">
-        <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
-        <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
-        <div className="field"><label>Proveedor *</label><select name="supplier_id" required><option value="">Selecciona proveedor</option>{suppliers.rows.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-        <div className="field"><label>Código *</label><input name="code" required placeholder="HORNO-001"/></div>
-        <div className="field"><label>Nombre *</label><input name="name" required placeholder="Horno principal"/></div>
-        <div className="field"><label>Criticidad</label><select name="criticality"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="critical">Crítica</option></select></div>
-        <div className="field"><label>Fabricante</label><input name="manufacturer"/></div>
-        <div className="field"><label>Modelo</label><input name="model"/></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Registrar activo</button></div>
-      </form>
-    </section>}
-
     <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th></tr></thead><tbody>
-      {assets.rows.map(a=><tr key={a.id}><td>{a.code}</td><td><strong>{a.name}</strong><small className="table-subline">{a.company}</small></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td></tr>)}
+      {assets.rows.map(a=><tr key={a.id}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td></tr>)}
     </tbody></table>{!assets.rowCount && <div className="card empty-state"><strong>Aún no hay activos.</strong><span>Completa primero ubicaciones, sububicaciones y proveedores.</span></div>}</section>
   </>;
 }

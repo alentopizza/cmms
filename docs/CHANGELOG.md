@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-20 — Context-aware creation popups
+
+### Added
+
+- Added reusable contextual creation popups for locations, sublocations, assets, routines and company-scoped users.
+- Company detail now exposes **Nueva ubicación** and **Nuevo usuario** without asking for the company again.
+- Locations module now creates both principal locations and sublocations from popups.
+- Site detail now creates sublocations with the site preselected.
+- Sublocation administration now offers **Crear activo aquí**, preserving company, site and exact sublocation.
+- Assets module now creates assets from a popup and links into a new asset detail workspace.
+- Asset detail now exposes **Nueva rutina** with the asset already selected.
+- Preventive maintenance navigation is labeled **Rutinas**, and the module can create routines by selecting an asset.
+- Contextual mutation routes return to the originating dashboard screen while re-validating all server-side relationships and permissions.
+
+
 ## 2026-09-20 — Operational setup sequence and outsourced maintenance
 
 ### Added

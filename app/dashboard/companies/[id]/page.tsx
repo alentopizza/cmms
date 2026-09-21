@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { ContextUserCreateModal, SiteCreateModal } from "@/components/ContextCreateModals";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -25,6 +26,8 @@ type Organization = {
   max_inventory_items: number;
   max_technicians: number;
 };
+
+type ServiceSupplier = { id: string; name: string };
 
 type Site = {
   id: string;
@@ -71,7 +74,7 @@ export default async function CompanyDetailPage({
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID_PATTERN.test(id)) notFound();
 
-  const [organizationResult, sitesResult] = await Promise.all([
+  const [organizationResult, sitesResult, serviceSuppliersResult] = await Promise.all([
     query<Organization>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,o.updated_at::text,
         (o.logo_data IS NOT NULL) has_logo,
@@ -98,6 +101,12 @@ export default async function CompanyDetailPage({
        ORDER BY s.active DESC,s.name`,
       [id],
     ),
+    query<ServiceSupplier>(
+      `SELECT id,name FROM suppliers
+       WHERE organization_id=$1 AND active=true AND supplier_type IN ('services','both')
+       ORDER BY name`,
+      [id],
+    ),
   ]);
 
   if (!organizationResult.rowCount) notFound();
@@ -121,7 +130,30 @@ export default async function CompanyDetailPage({
 
     <div className="section">
       <Feedback saved={feedback.saved} created={feedback.created} error={feedback.error} />
+      {feedback.created === "user" && <div className="notice success">Usuario creado y vinculado a {organization.name}.</div>}
     </div>
+
+    <section className="contextual-action-bar section">
+      <div>
+        <span className="eyebrow">Acciones de {organization.name}</span>
+        <strong>Crear sin volver a seleccionar la empresa</strong>
+        <small>La relación con esta empresa se conserva automáticamente.</small>
+      </div>
+      <div className="contextual-action-buttons">
+        <SiteCreateModal
+          organizations={[]}
+          fixedOrganizationId={organization.id}
+          fixedOrganizationName={organization.name}
+          returnTo={"/dashboard/companies/"+organization.id}
+        />
+        <ContextUserCreateModal
+          organizationId={organization.id}
+          organizationName={organization.name}
+          serviceSuppliers={serviceSuppliersResult.rows}
+          returnTo={"/dashboard/companies/"+organization.id}
+        />
+      </div>
+    </section>
 
     <section className="company-metrics section">
       <div className="card compact-metric"><span>Sedes activas</span><strong>{activeSites}</strong><small>de {sites.length} registradas</small></div>
@@ -206,21 +238,6 @@ export default async function CompanyDetailPage({
         <div className="field"><label>Inventario</label><input name="max_inventory_items" type="number" min="0" defaultValue={organization.max_inventory_items} /></div>
         <div className="field"><label>Técnicos</label><input name="max_technicians" type="number" min="0" defaultValue={organization.max_technicians} /></div>
         <div className="field resource-save"><label>&nbsp;</label><button className="button" type="submit">Actualizar cupos</button></div>
-      </form>
-    </section>
-
-    <section className="card section">
-      <div className="section-heading">
-        <div><span className="eyebrow">Nueva ubicación</span><h2>Crear sede</h2></div>
-        <small>Puedes registrar todas las sedes necesarias.</small>
-      </div>
-      <form className="form-grid site-create-form" method="post" action={`/api/organizations/${organization.id}/sites`}>
-        <div className="field"><label htmlFor="new-site-name">Nombre de la sede</label><input id="new-site-name" name="name" required placeholder="Sede principal" /></div>
-        <div className="field"><label htmlFor="new-site-code">Código</label><input id="new-site-code" name="code" placeholder="BOG-01" /></div>
-        <div className="field"><label htmlFor="new-site-address">Dirección</label><input id="new-site-address" name="address" placeholder="Calle 00 # 00-00" /></div>
-        <div className="field"><label htmlFor="new-site-city">Ciudad</label><input id="new-site-city" name="city" placeholder="Bogotá" /></div>
-        <div className="field"><label htmlFor="new-site-country">País</label><input id="new-site-country" name="country" defaultValue="CO" maxLength={2} /></div>
-        <div className="field site-create-action"><label>&nbsp;</label><button className="button" type="submit">Crear sede</button></div>
       </form>
     </section>
 

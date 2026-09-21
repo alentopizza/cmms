@@ -21,7 +21,7 @@ const navItems: NavItem[] = [
   { icon: "◉", label: "Cuadrillas", href: "/dashboard/crews", permission: "crews.manage" },
   { icon: "◇", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },
   { icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
-  { icon: "↻", label: "Preventivos", href: "/dashboard/maintenance", permission: "maintenance.read" },
+  { icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
   { icon: "▤", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
 ];
 

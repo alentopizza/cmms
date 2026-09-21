@@ -264,9 +264,9 @@ Document metadata may include issue date, expiry date, external reference and no
 Archiving removes a document from the current dossier without rewriting historical migrations or conflating it with operational attachments.
 
 
-## Approved target role hierarchy — pending implementation
+## Platform role hierarchy — Platform Owner implemented
 
-The project owner approved a future separation between Desweb platform roles and customer/tenant roles. This section records product intent; it does **not** mean these new platform roles are active in production yet.
+Desweb platform roles and customer/tenant roles are separate security domains. The **Platform Owner** layer is now implemented in authentication/RBAC; Comercial Desweb and Partner / Distribuidor remain future work.
 
 Platform hierarchy:
 

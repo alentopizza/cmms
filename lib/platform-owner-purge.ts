@@ -1,5 +1,4 @@
 import type { PoolClient } from "pg";
-import { pool } from "@/lib/db";
 
 type ForeignKeyDependency = {
   constraint_oid: string;
@@ -39,17 +38,6 @@ function rowLabel(row: Record<string, unknown>, fallback: string) {
     if (value !== null && value !== undefined && String(value).trim()) return String(value);
   }
   return fallback;
-}
-
-function rowDetail(row: Record<string, unknown>) {
-  const parts: string[] = [];
-  for (const key of ["organization_id", "site_id", "status", "role", "platform_role", "created_at"]) {
-    const value = row[key];
-    if (value !== null && value !== undefined && String(value).trim()) {
-      parts.push(key + ": " + String(value));
-    }
-  }
-  return parts.slice(0, 3).join(" · ");
 }
 
 async function assertPurgeableTable(client: PoolClient, table: string) {
@@ -233,7 +221,7 @@ export async function forceDeleteRecord(
         target_label: label,
         deleted_rows: deletedRows,
         deleted_by_table: deletedByTable,
-        mode: "platform_owner_universal_delete",
+        mode: "platform_owner_contextual_delete",
       }),
     ],
   );

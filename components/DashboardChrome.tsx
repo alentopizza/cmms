@@ -23,6 +23,7 @@ const sections: Array<{ match: (pathname: string) => boolean; section: Section }
   { match: pathname => pathname.startsWith("/dashboard/work-orders"), section: { label: "Órdenes de trabajo", eyebrow: "Operación", icon: "✓" } },
   { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "↻" } },
   { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "▤" } },
+  { match: pathname => pathname.startsWith("/dashboard/platform-owner/purge"), section: { label: "Eliminación universal", eyebrow: "Propietario Desweb", icon: "⌫" } },
   { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "⚙" } },
 ];
 

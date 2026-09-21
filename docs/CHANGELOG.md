@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-20 — Direct installation download and restored branding editor
+
+### Added
+
+- Simplified **Instalación propia** into a short, focused beta landing with a primary direct-download CTA.
+- Added automatic production-build packaging through `scripts/package-runtime.sh`.
+- The direct `.tar.gz` package contains the compiled Next.js standalone runtime, Dockerfile, Docker Compose, PostgreSQL migration assets, environment template and installation helper.
+- Restored global logo/favicon administration directly inside Superadministrator **Configuración**.
+- Added modern previews and clear upload guidance for light-background logo, dark-background logo and favicon.
+- Documented accepted image formats, 2 MB maximum file size and recommended dimensions.
+- Branding uploads made from Configuración now return to the same module with success/error feedback.
+
+
 ## 2026-09-20 — Principal logo and clearer installation terminology
 
 ### Changed

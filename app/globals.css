@@ -3511,7 +3511,7 @@ html[data-theme="dark"] .owner-record-edit-form{background:var(--surface)}
 html[data-theme="dark"] .location-create-switch button.active{background:#203c3d;color:#e7f7f5}
 
 /* Company directory reference layout */
-.company-card-grid{grid-template-columns:repeat(2,minmax(340px,1fr));gap:20px}
+.company-card-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 .company-visual-card-v2{min-height:560px;border-radius:0;overflow:hidden}
 .company-visual-card-v2 .company-card-button{height:100%;display:flex;flex-direction:column}
 .company-visual-card-v2 .company-card-cover{height:150px;min-height:150px;border-radius:0}

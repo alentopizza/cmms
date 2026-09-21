@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 
 type Crew = {
   id:string;
@@ -66,8 +67,8 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
            ORDER BY u.full_name`,[session.organizationId]),
   ]);
 
-  const selectedOrgId=superadmin ? (organizations.rows[0]?.id||null) : session.organizationId;
-  const gate=selectedOrgId ? gateFor(await getSetupState(selectedOrgId),"crew") : null;
+  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
+  const creationGate=creationPrerequisiteFor(hierarchy,"crew");
 
   const error=params.error==="sequence" ? "Primero crea al menos un técnico interno o colaborador externo."
     : params.error==="members" ? "Selecciona al menos un integrante válido para la cuadrilla."
@@ -82,7 +83,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       count={crews.rowCount || 0}
       countLabel="cuadrillas"
       searchPlaceholder="Buscar cuadrilla, empresa, sede o líder"
-      action={<CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉" disabled={!gate?.ready}>
+      action={<CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉" disabled={!creationGate.ready}>
         <form className="form-grid unified-popup-form" method="post" action="/api/crews">
           {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
             : <input type="hidden" name="organization_id" value={session.organizationId||""}/>}
@@ -99,11 +100,14 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     {params.created && <div className="notice success section">Cuadrilla creada correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
-    <section className="card section setup-flow-card">
-      <div className="setup-flow-head"><div><span className="eyebrow">Secuencia</span><h2>Las cuadrillas dependen del personal previamente registrado</h2></div><span className={`setup-flow-state ${gate?.ready ? "ready":"blocked"}`}>{gate?.ready?"Habilitado":"Paso pendiente"}</span></div>
-      <div className="setup-flow-steps"><span className="done"><b>1</b> Empresa</span><span className="done"><b>2</b> Ubicación</span><span className="done"><b>3</b> Sububicación</span><span className={gate?.ready?"done":""}><b>4</b> Personal</span><span className={gate?.ready?"active":""}><b>5</b> Cuadrilla</span></div>
-      {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
-    </section>
+    {!creationGate.ready && <CreationPrerequisiteState
+      icon="◉"
+      eyebrow="Jerarquía de creación"
+      title={creationGate.title}
+      message={creationGate.message}
+      href={creationGate.href || "/dashboard/users"}
+      action={creationGate.action || "Continuar"}
+    />}
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Equipos</span><h2>Cuadrillas registradas</h2></div></div>

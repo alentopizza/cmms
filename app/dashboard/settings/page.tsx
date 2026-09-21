@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { subscriptionLabel } from "@/lib/billing";
 import ThemePreferences from "@/components/ThemePreferences";
@@ -352,6 +352,21 @@ export default async function SettingsPage({
             </div>
           </form>
         </article>
+
+        {isPlatformOwner(session) && <article className="card settings-panel">
+          <div className="settings-panel-head">
+            <div>
+              <span className="settings-kicker">Propietario Desweb</span>
+              <h2>Eliminación universal</h2>
+              <p>Herramienta exclusiva de desarrollo para eliminar registros aunque tengan dependencias o historial relacionado.</p>
+            </div>
+            <span className="settings-panel-icon" aria-hidden="true">⌫</span>
+          </div>
+          <Link className="settings-link-card" href="/dashboard/platform-owner/purge">
+            <div><strong>Abrir zona destructiva</strong><span>Eliminación por tabla, registro y dependencias FK</span></div>
+            <b aria-hidden="true">→</b>
+          </Link>
+        </article>}
 
         <article className="card settings-panel">
           <div className="settings-panel-head">

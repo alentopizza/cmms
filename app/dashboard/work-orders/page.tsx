@@ -6,7 +6,7 @@ import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 import CreateRecordModal from "@/components/CreateRecordModal";
 
 type OrderRow={id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string};
@@ -20,8 +20,7 @@ export default async function WorkOrdersPage() {
   const orgId=session.organizationId;
   const canWrite=can(session,"work_orders.write");
   const owner=isPlatformOwner(session);
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"work_order");
+  const creationGate=await getCreationGateForScope("work_order",session.organizationId,superadmin);
   const requesterOnly=session.role==="requester" && session.userId;
   const providerOnly=session.role==="provider" && session.userId;
   const externalOnly=session.role==="external" && session.userId;

@@ -148,3 +148,19 @@ When adding or redesigning a primary directory module:
 - preserve server-side RBAC, tenant/site scoping and setup-sequence gates independently of client-side filtering;
 - client search/filter only operates on records the server already authorized;
 - do not invent resource quotas for visual progress bars. Only display a denominator when the backend actually enforces that limit.
+
+
+## Creation hierarchy invariant
+
+For any entity with prerequisites, determine the earliest missing dependency before exposing creation.
+
+Use the shared creation prerequisite state rather than:
+- disabled create buttons without explanation;
+- generic “complete setup first” copy;
+- routing users to a later step that itself cannot be completed.
+
+Preserve this dependency order where applicable:
+
+Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine.
+
+The UI is guidance only. Keep equivalent server-side validation in creation endpoints.

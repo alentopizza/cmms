@@ -39,3 +39,22 @@ export async function canCreateLocation(client: PoolClient, organizationId: stri
   );
   return result.rows[0].used < result.rows[0].allowed;
 }
+
+
+export async function canCreateAsset(organizationId: string) {
+  const result = await query<{ used: number; allowed: number }>(
+    `SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) used,
+            COALESCE((SELECT max_assets FROM organization_limits WHERE organization_id=$1), $2)::int allowed`,
+    [organizationId, DEFAULT_LIMITS.max_assets],
+  );
+  return result.rows[0].used < result.rows[0].allowed;
+}
+
+export async function canCreateInventoryItem(organizationId: string) {
+  const result = await query<{ used: number; allowed: number }>(
+    `SELECT (SELECT count(*)::int FROM inventory_items WHERE organization_id=$1) used,
+            COALESCE((SELECT max_inventory_items FROM organization_limits WHERE organization_id=$1), $2)::int allowed`,
+    [organizationId, DEFAULT_LIMITS.max_inventory_items],
+  );
+  return result.rows[0].used < result.rows[0].allowed;
+}

@@ -131,15 +131,6 @@ export default async function UsersPage() {
   ]);
 
   return <>
-    <header className="page-header users-page-header">
-      <div>
-        <span className="eyebrow">Control de acceso</span>
-        <h1 className="page-title">Usuarios y roles</h1>
-        <p className="muted">Administra cuentas, roles y alcance operativo sin perder la trazabilidad de las acciones realizadas.</p>
-      </div>
-      <div className="brand-pill"><span /> {users.rowCount} cuentas</div>
-    </header>
-
     <UserManagement
       users={users.rows}
       organizations={organizations.rows}

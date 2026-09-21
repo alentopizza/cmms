@@ -66,6 +66,7 @@ services:
       APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:?Define APP_ADMIN_EMAIL in .env}
       APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:?Define APP_ADMIN_PASSWORD in .env}
       AUTH_SECRET: ${AUTH_SECRET:?Define AUTH_SECRET in .env}
+      BIOMETRIC_ENCRYPTION_KEY: ${BIOMETRIC_ENCRYPTION_KEY:?Define BIOMETRIC_ENCRYPTION_KEY in .env}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Desweb CMMS}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       TEST_CHECKOUT_ENABLED: ${TEST_CHECKOUT_ENABLED:-false}
@@ -92,6 +93,7 @@ POSTGRES_PASSWORD=change-this-database-password
 APP_ADMIN_EMAIL=admin@empresa.com
 APP_ADMIN_PASSWORD=change-this-bootstrap-password
 AUTH_SECRET=change-this-long-random-secret
+BIOMETRIC_ENCRYPTION_KEY=change-this-separate-biometric-encryption-key
 
 NEXT_PUBLIC_APP_NAME=Desweb CMMS
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -170,6 +172,7 @@ La aplicación quedará disponible en el puerto configurado por APP_PORT (3000 p
 No expongas PostgreSQL a Internet.
 Usa HTTPS mediante un proxy reverso en producción.
 Realiza backup antes de cada actualización.
+Si habilitas biometría, usa HTTPS y una clave BIOMETRIC_ENCRYPTION_KEY independiente de AUTH_SECRET.
 
 Consulta la documentación completa del proyecto para procedimientos de backup, restauración y actualización.
 EOF

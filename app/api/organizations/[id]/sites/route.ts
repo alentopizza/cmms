@@ -4,11 +4,13 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
+import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function companyUrl(id: string, requestUrl: string, queryString = "") {
-  return publicUrl(`/dashboard/companies/${id}${queryString}`, requestUrl);
+function targetUrl(id: string, requestUrl: string, returnTo: string, queryString = "") {
+  const fallback = `/dashboard/companies/${id}`;
+  return publicUrl(appendFeedback(safeDashboardReturn(returnTo, fallback), queryString), requestUrl);
 }
 
 export async function POST(
@@ -30,15 +32,16 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const returnTo = String(form.get("return_to") || "");
 
   if (!name) {
-    return NextResponse.redirect(companyUrl(id, request.url, "?error=site-required"), 303);
+    return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-required"), 303);
   }
 
   const organization = await query("SELECT 1 FROM organizations WHERE id=$1", [id]);
   if (!organization.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
   if (!(await canCreateSite(id))) {
-    return NextResponse.redirect(companyUrl(id, request.url, "?error=site-limit"), 303);
+    return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-limit"), 303);
   }
 
   try {
@@ -49,10 +52,10 @@ export async function POST(
     );
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
-      return NextResponse.redirect(companyUrl(id, request.url, "?error=site-code"), 303);
+      return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-code"), 303);
     }
     throw error;
   }
 
-  return NextResponse.redirect(companyUrl(id, request.url, "?created=site"), 303);
+  return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?created=site"), 303);
 }

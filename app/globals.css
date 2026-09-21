@@ -3392,3 +3392,35 @@ html[data-theme="dark"] .document-state-na{background:#33414b;color:#c3ced4}
   .company-document-title-row{flex-direction:column}
   .company-document-edit-form{position:fixed;left:12px;right:12px;top:90px;width:auto;max-height:75vh;overflow:auto}
 }
+
+
+/* Platform Owner universal deletion */
+.owner-purge-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:16px;align-items:start}
+.owner-purge-panel{display:grid;gap:18px}
+.owner-purge-warning{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#9f1239}
+.owner-purge-warning>span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#be123c;color:#fff;font-weight:900;flex:0 0 auto}
+.owner-purge-warning strong{display:block;margin-bottom:4px}
+.owner-purge-warning p{margin:0;font-size:12px;line-height:1.5}
+.owner-purge-form{margin-top:2px}
+.owner-purge-target{border:1px solid #fecaca;border-radius:12px;background:#fff8f8;padding:13px;display:grid;gap:5px}
+.owner-purge-target>span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:#be123c}
+.owner-purge-target>strong{font-size:14px;color:var(--brand-dark)}
+.owner-purge-target code{font-size:10px;overflow-wrap:anywhere;color:#7f1d1d}
+.owner-purge-target small{color:var(--text-soft)}
+.owner-purge-actions{display:flex;justify-content:flex-end;border-top:1px solid var(--border);padding-top:15px}
+.owner-purge-actions .button{min-width:210px}
+.owner-purge-actions .button:disabled{opacity:.45;cursor:not-allowed}
+.owner-purge-help h2{margin:0 0 12px;color:var(--brand-dark);font-size:18px}
+.owner-purge-help ul{margin:0;padding-left:18px;display:grid;gap:9px;font-size:12px;line-height:1.45}
+.owner-purge-help p{font-size:11px;line-height:1.55;margin:16px 0 0}
+.owner-purge-help code{font-size:10px}
+
+html[data-theme="dark"] .owner-purge-warning{background:#431f27;border-color:#6e303e;color:#fecdd3}
+html[data-theme="dark"] .owner-purge-target{background:#321b21;border-color:#6e303e}
+html[data-theme="dark"] .owner-purge-target>strong,
+html[data-theme="dark"] .owner-purge-help h2{color:var(--text)}
+html[data-theme="dark"] .owner-purge-target code{color:#fecdd3}
+
+@media(max-width:980px){
+  .owner-purge-layout{grid-template-columns:1fr}
+}

@@ -55,7 +55,7 @@ export async function DELETE() {
   if (!can(session, "attendance.self")) return new NextResponse("Forbidden", { status: 403 });
 
   await query(
-    "UPDATE user_biometric_profiles SET revoked_at=now(),updated_at=now() WHERE user_id=$1 AND organization_id=$2",
+    "DELETE FROM user_biometric_profiles WHERE user_id=$1 AND organization_id=$2",
     [session.userId, session.organizationId],
   );
   return NextResponse.json({ revoked: true });

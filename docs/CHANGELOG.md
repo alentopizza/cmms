@@ -1,24 +1,19 @@
 # Changelog
 
-## 2026-09-21 — Platform Owner universal deletion
+## 2026-09-21 — Platform Owner contextual edit/delete controls
 
-### Added
+### Changed
 
-- Added owner-only destructive workspace at `/dashboard/platform-owner/purge`.
-- Added `lib/platform-owner-purge.ts`, a PostgreSQL foreign-key-driven recursive deletion engine.
-- Added owner-only discovery/execution API at `/api/platform-owner/purge`.
-- Added table/record selection, explicit `ELIMINAR` confirmation and deletion summaries.
-- Added sidebar and Settings access visible only to Platform Owner.
-- Integrated user deletion so Platform Owner can remove users with historical records while other roles keep the existing traceability restriction.
-- Added audit events using action `platform_owner.force_delete`.
-- Protected the active Platform Owner account from universal deletion.
-- Added transactional rollback when restrictive FK cycles cannot be resolved safely.
-
-### Authorization
-
-- Universal deletion is checked server-side with `isPlatformOwner(session)`.
-- Superadministrators, Company Administrators and all operational roles receive no access to the destructive endpoint.
-
+- Removed the standalone destructive workspace, sidebar item and Settings card.
+- Added contextual **Editar / Eliminar** actions directly to records in the normal CMMS modules for Platform Owner.
+- Added owner actions to Leads, Empresas, Ubicaciones/Sububicaciones, Usuarios, Activos, OT/actividades, Rutinas, Inventario, Proveedores and Cuadrillas.
+- Kept the PostgreSQL FK-driven recursive delete engine as an internal backend service only.
+- Removed table/record discovery from the forced-delete API.
+- Added an allow-listed owner-only update endpoint for modules that did not already expose full editing.
+- Reserved definitive user and company deletion to Platform Owner.
+- Kept existing edit permissions, hierarchy, creation flows and restrictions unchanged for all other roles.
+- Forced updates and deletes remain server-authorized and audited.
+- Platform Owner self-deletion remains blocked.
 
 ## 2026-09-21 — Platform Owner access foundation
 

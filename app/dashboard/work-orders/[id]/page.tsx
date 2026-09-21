@@ -64,17 +64,43 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   }
 
   const [activities,workers,crews,suppliers]=await Promise.all([
-    query<Activity>(
-      `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
-              t.started_at::text,t.completed_at::text,t.notes
-       FROM work_order_tasks t
-       LEFT JOIN users u ON u.id=t.assigned_to
-       LEFT JOIN crews c ON c.id=t.crew_id
-       LEFT JOIN suppliers s ON s.id=t.service_supplier_id
-       WHERE t.work_order_id=$1
-       ORDER BY t.sort_order,t.id`,
-      [id],
-    ),
+    session.role === "provider"
+      ? query<Activity>(
+          `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
+                  t.started_at::text,t.completed_at::text,t.notes
+           FROM work_order_tasks t
+           LEFT JOIN users u ON u.id=t.assigned_to
+           LEFT JOIN crews c ON c.id=t.crew_id
+           LEFT JOIN suppliers s ON s.id=t.service_supplier_id
+           WHERE t.work_order_id=$1 AND t.service_supplier_id=$2
+           ORDER BY t.sort_order,t.id`,
+          [id,session.externalSupplierId],
+        )
+      : session.role === "external"
+        ? query<Activity>(
+            `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
+                    t.started_at::text,t.completed_at::text,t.notes
+             FROM work_order_tasks t
+             LEFT JOIN users u ON u.id=t.assigned_to
+             LEFT JOIN crews c ON c.id=t.crew_id
+             LEFT JOIN suppliers s ON s.id=t.service_supplier_id
+             WHERE t.work_order_id=$1 AND (
+               t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
+             )
+             ORDER BY t.sort_order,t.id`,
+            [id,session.userId],
+          )
+        : query<Activity>(
+            `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
+                    t.started_at::text,t.completed_at::text,t.notes
+             FROM work_order_tasks t
+             LEFT JOIN users u ON u.id=t.assigned_to
+             LEFT JOIN crews c ON c.id=t.crew_id
+             LEFT JOIN suppliers s ON s.id=t.service_supplier_id
+             WHERE t.work_order_id=$1
+             ORDER BY t.sort_order,t.id`,
+            [id],
+          ),
     query<Worker>(
       `SELECT u.id,u.full_name,om.role,s.name supplier_name
        FROM organization_members om JOIN users u ON u.id=om.user_id

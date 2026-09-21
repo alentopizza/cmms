@@ -6,7 +6,7 @@ import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
 
@@ -17,8 +17,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const feedback=await searchParams;
   const canWrite=can(session,"maintenance.write");
   const owner=isPlatformOwner(session);
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"routine");
+  const creationGate=await getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
 
   const plans = session.platformRole !== "user"
     ? await query<{id:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean}>(
@@ -67,7 +66,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="notice success section">Rutina creada correctamente.</div>}
-    {feedback.error && <div className="notice error section">No fue posible crear la rutina. Revisa los datos e inténtalo nuevamente.</div>}
+    {feedback.error && <div className="notice error section">{feedback.error==="sequence" ? creationGate.message : "No fue posible crear la rutina. Revisa los datos e inténtalo nuevamente."}</div>}
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="↻"
       eyebrow="Jerarquía de creación"

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
@@ -66,9 +66,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
            WHERE u.active=true AND om.organization_id=$1 AND om.role IN ('technician','external')
            ORDER BY u.full_name`,[session.organizationId]),
   ]);
-
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"crew");
+  const creationGate=await getCreationGateForScope("crew",session.organizationId,superadmin);
 
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="members" ? "Selecciona al menos un integrante válido para la cuadrilla."

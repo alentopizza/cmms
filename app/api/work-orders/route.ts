@@ -3,6 +3,7 @@ import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -23,10 +24,16 @@ export async function POST(request: Request) {
   if (!asset.rowCount || !title) return new NextResponse("Equipo o título inválido", { status: 400 });
   if (!canAccessSite(session, asset.rows[0].site_id)) return new NextResponse("Forbidden", { status: 403 });
 
+  const organizationId=asset.rows[0].organization_id;
+  const gate=await getCreationGateForScope("work_order",organizationId,false);
+  if(!gate.ready) {
+    return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=sequence",request.url),303);
+  }
+
   await query(
     `INSERT INTO work_orders(organization_id,site_id,asset_id,title,type,priority,requested_by)
      VALUES($1,$2,$3,$4,$5,$6,$7)`,
-    [asset.rows[0].organization_id,asset.rows[0].site_id,assetId,title,type,priority,session.userId],
+    [organizationId,asset.rows[0].site_id,assetId,title,type,priority,session.userId],
   );
   return NextResponse.redirect(publicUrl("/dashboard/work-orders", request.url), 303);
 }

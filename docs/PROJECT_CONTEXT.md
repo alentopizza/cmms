@@ -446,3 +446,15 @@ The Dashboard is role-aware:
 - Viewer: read-only operational KPIs.
 
 The commercial dashboard deliberately labels recurring revenue as **MRR estimado** until real payment/reconciliation data exists.
+
+
+### Per-company creation hierarchy
+
+Creation hierarchy checks are company-specific.
+
+For platform-level roles, the system must never combine prerequisites from different companies when deciding whether a module can create a record. A company with a site but no sub-location is still incomplete even if another company has sub-locations.
+
+The guided blocker always points to the first missing prerequisite for a viable company path:
+Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine.
+
+Work-order and routine creation also enforce this hierarchy server-side using the organization resolved from the selected asset.

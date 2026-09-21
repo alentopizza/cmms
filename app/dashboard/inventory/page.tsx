@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
@@ -53,9 +53,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       ? query<Supplier>("SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
   ]);
-
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"inventory");
+  const creationGate=await getCreationGateForScope("inventory",session.organizationId,superadmin);
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de artículos de inventario."
     : params.error ? "Revisa la información del artículo." : "";

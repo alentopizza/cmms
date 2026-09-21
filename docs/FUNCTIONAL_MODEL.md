@@ -376,3 +376,37 @@ Focus:
 - read-only operational KPIs such as visible assets, work-order load and low-stock items.
 
 All dashboard queries must preserve organization/site scope and role permissions.
+
+
+## Dashboard filters and exports
+
+Role-aware dashboards support analytical filtering without changing the user's authorization scope.
+
+Common filters:
+- month;
+- explicit date range (from / to).
+
+Platform filters:
+- company active/inactive state;
+- subscription state.
+
+Operational filters:
+- work-order state.
+
+Field-worker/provider filters:
+- activity/task state.
+
+Requester filters:
+- own work-order/request state.
+
+Exports preserve the selected dashboard filters.
+
+### PDF export
+
+The Dashboard can generate a server-side PDF report containing the authorized filtered dataset and filter context.
+
+### Power BI export
+
+The Power BI action exports UTF-8 CSV with a stable tabular schema suitable for Power BI Desktop / Power Query import.
+
+The product does not generate proprietary `.pbix` files. CSV is the supported interoperable data export.

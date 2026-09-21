@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, roleLabel, type Permission } from "@/lib/permissions";
+import { can, isPlatformOwner, roleLabel, type Permission } from "@/lib/permissions";
 import { isSubscriptionUsable } from "@/lib/billing";
 import { getCustomizationSummary, logoOnDarkSrc } from "@/lib/customization";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
@@ -11,7 +11,7 @@ import { getOrganizationBranding } from "@/lib/organization-branding";
 
 export const dynamic = "force-dynamic";
 
-type NavItem = DashboardNavItem & { id: string; permission?: Permission; anyPermissions?: Permission[] };
+type NavItem = DashboardNavItem & { id: string; permission?: Permission; anyPermissions?: Permission[]; ownerOnly?: boolean };
 
 const navItems: NavItem[] = [
   { id: "dashboard", icon: "▦", label: "Resumen", href: "/dashboard" },
@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
   { id: "work_orders", icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
   { id: "maintenance", icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
   { id: "inventory", icon: "▤", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
+  { id: "owner_purge", icon: "⌫", label: "Eliminar datos", href: "/dashboard/platform-owner/purge", ownerOnly: true },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? await getOrganizationBranding(session.organizationId)
     : null;
   const visibleItems = navItems.filter(item =>
+    (!item.ownerOnly || isPlatformOwner(session)) &&
     (!item.permission || can(session, item.permission)) &&
     (!item.anyPermissions || item.anyPermissions.some(permission => can(session, permission)))
   );

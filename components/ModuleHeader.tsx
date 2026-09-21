@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type FilterOption = { value: string; label: string };
 
@@ -30,8 +31,13 @@ export default function ModuleHeader({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(filters[0]?.value || "all");
   const [visibleCount, setVisibleCount] = useState(count);
+  const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
 
   const normalizedSearch = useMemo(() => search.trim().toLocaleLowerCase("es"), [search]);
+
+  useEffect(()=>{
+    setPortalHost(document.getElementById("context-header-tools"));
+  },[]);
 
   useEffect(() => {
     const records = Array.from(document.querySelectorAll<HTMLElement>("[data-module-record]"));
@@ -50,33 +56,30 @@ export default function ModuleHeader({
     setVisibleCount(records.length ? visible : count);
   }, [normalizedSearch, filter, count]);
 
-  return <header className="module-page-header">
-    <div className="module-page-heading">
-      <span className="eyebrow">{eyebrow}</span>
-      <h1>{title}</h1>
-      {description && <p>{description}</p>}
-      <small>{visibleCount} {countLabel}{visibleCount !== count ? ` de ${count}` : ""}</small>
-    </div>
+  if(!portalHost) return null;
 
-    <div className="module-page-tools">
+  return createPortal(
+    <div className="module-page-tools module-page-tools-portal" aria-label={title}>
       <label className="module-search-control">
         <span aria-hidden="true">⌕</span>
         <input
           value={search}
           onChange={event => setSearch(event.target.value)}
           placeholder={searchPlaceholder}
-          aria-label="Buscar registros"
+          aria-label={`Buscar en ${title}`}
         />
       </label>
 
       <label className="module-filter-control">
         <span aria-hidden="true">☷</span>
-        <select value={filter} onChange={event => setFilter(event.target.value)} aria-label="Filtrar registros">
+        <select value={filter} onChange={event => setFilter(event.target.value)} aria-label={`Filtrar ${title}`}>
           {filters.map(option => <option value={option.value} key={option.value}>{option.label}</option>)}
         </select>
       </label>
 
       {action && <div className="module-add-action">{action}</div>}
-    </div>
-  </header>;
+      <span className="module-visible-count" aria-live="polite">{visibleCount}/{count}</span>
+    </div>,
+    portalHost,
+  );
 }

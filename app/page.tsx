@@ -40,7 +40,7 @@ export default async function Home() {
   const darkLogo = customization.hasLogoOnDark ? logoOnDarkSrc(customization) : lightLogo;
   const darkLogoNeedsPlate = !customization.hasLogoOnDark;
 
-  return <main className="marketing-page marketing-page-pro">
+  return <main className="marketing-page marketing-page-pro marketing-dark-only">
     <section className="marketing-top marketing-top-floating">
       <nav className="marketing-nav marketing-nav-pro marketing-nav-floating">
         <Link className="marketing-header-logo" href="/" aria-label="Desweb CMMS">

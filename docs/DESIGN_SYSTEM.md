@@ -228,3 +228,32 @@ Footer:
 Use **Instalación propia** in customer-facing navigation and marketing instead of the technical term **Self-hosted**.
 
 The technical documentation may continue to use `self-hosted` when discussing architecture, Docker or deployment internals, but public CTAs, menus and sales copy should prefer terminology a non-technical buyer can understand.
+
+
+## Global branding editor
+
+Superadministrator global branding must be directly visible inside **Configuración**, not hidden only behind a secondary module link.
+
+The editor uses three visual asset cards:
+
+- logo for light backgrounds;
+- logo for dark backgrounds;
+- favicon.
+
+Each card must show:
+- current preview;
+- intended usage;
+- accepted formats;
+- maximum file size;
+- recommended pixel dimensions;
+- file input.
+
+Current constraints:
+
+| Asset | Accepted formats | Maximum | Recommended |
+| --- | --- | ---: | --- |
+| Light-background logo | PNG, JPG, WebP, SVG | 2 MB | transparent, approximately 1200×320 px |
+| Dark-background logo | PNG, JPG, WebP, SVG | 2 MB | transparent, approximately 1200×320 px |
+| Favicon | ICO, PNG, WebP, SVG | 2 MB | square, 64×64 or 128×128 px |
+
+The legacy dedicated personalization route may remain available, but **Configuración** is the primary Superadministrator entry point.

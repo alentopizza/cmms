@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 
 type Item={id:string;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
 type Site={id:string;label:string};
@@ -53,7 +54,8 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
   ]);
 
-  const gate=orgId ? gateFor(await getSetupState(orgId),"inventory") : null;
+  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
+  const creationGate=creationPrerequisiteFor(hierarchy,"inventory");
   const error=params.error==="sequence" ? "Primero completa ubicaciones y registra al menos un proveedor."
     : params.error==="limit" ? "La empresa alcanzó el límite de artículos de inventario."
     : params.error ? "Revisa la información del artículo." : "";
@@ -67,7 +69,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       countLabel="artículos"
       searchPlaceholder="Buscar SKU, artículo, ubicación o proveedor"
       filters={[{value:"all",label:"Todos"}]}
-      action={canWrite && gate?.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el repuesto o material, su proveedor y su ubicación física." triggerLabel="Agregar" icon="▤">
+      action={canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el repuesto o material, su proveedor y su ubicación física." triggerLabel="Agregar" icon="▤">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory">
           <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
           <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
@@ -86,11 +88,14 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     {params.created && <div className="notice success section">Artículo de inventario creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
-    {canWrite && <section className="card section setup-flow-card">
-      <div className="setup-flow-head"><div><span className="eyebrow">Secuencia obligatoria</span><h2>Inventario después de proveedores</h2></div><span className={"setup-flow-state "+(gate?.ready?"ready":"blocked")}>{gate?.ready?"Habilitado":"Paso pendiente"}</span></div>
-      <div className="setup-flow-steps"><span className="done"><b>1</b> Empresa</span><span className="done"><b>2</b> Ubicación</span><span className="done"><b>3</b> Sububicación</span><span className={gate?.ready?"done":""}><b>4</b> Proveedor</span><span className={gate?.ready?"active":""}><b>5</b> Artículo</span></div>
-      {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
-    </section>}
+    {canWrite && !creationGate.ready && <CreationPrerequisiteState
+      icon="▤"
+      eyebrow="Jerarquía de creación"
+      title={creationGate.title}
+      message={creationGate.message}
+      href={creationGate.href || "/dashboard/locations"}
+      action={creationGate.action || "Continuar"}
+    />}
 
     <section className="section"><table className="table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
       {items.rows.map(i=><tr key={i.id} data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[

@@ -177,3 +177,24 @@ Migration `008_saas_plans_and_subscriptions.sql` introduces the commercial SaaS 
 - the public test checkout is intentionally a provisioning simulator, not a payment processor. It can be disabled with `TEST_CHECKOUT_ENABLED=false`.
 
 Migration `009_organization_branding.sql` adds per-organization white-label branding. Only an active Pro company administrator may change tenant branding. The dashboard shell applies the organization name/colors/logos after authentication; global Desweb branding remains the fallback.
+
+
+## Company enterprise profile and documents
+
+Migration `014_company_profile_documents.sql` extends `organizations` with legal/administrative/contact profile fields. These fields describe the tenant as a business entity and must not be confused with `sites`, which remain physical operational locations.
+
+`organization_documents` stores the current corporate-document dossier. Each record includes:
+
+- organization scope;
+- category;
+- required / optional / not-applicable classification;
+- display name and external reference;
+- issue and expiry dates;
+- notes;
+- optional PDF/image file bytes and MIME metadata;
+- uploader and timestamps;
+- archival timestamp.
+
+Active company documents are retrieved only within their organization and downloads pass through authenticated application routes with `no-store` and `nosniff` response controls. Current accepted files are PDF, PNG, JPEG and WebP up to 10 MB.
+
+Corporate documents are not stored in the generic operational attachment relationship because their lifecycle, requirement state and expiry semantics belong to the enterprise profile rather than to work orders/assets.

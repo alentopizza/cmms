@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.platformRole !== "superadmin" && !isSubscriptionUsable(session.subscriptionStatus, session.trialEndsAt)) {
+  if (session.platformRole === "user" && !isSubscriptionUsable(session.subscriptionStatus, session.trialEndsAt)) {
     redirect("/subscription/expired");
   }
 

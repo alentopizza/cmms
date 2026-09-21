@@ -25,10 +25,13 @@ export type ManagedUser = {
   access_all_sites: boolean | null;
   site_ids: string[] | null;
   site_names: string[] | null;
+  external_supplier_id: string | null;
+  external_supplier_name: string | null;
 };
 
 type Organization = { id: string; name: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
+type ServiceSupplier = { id: string; organization_id: string; name: string };
 
 type Draft = {
   full_name: string;
@@ -39,9 +42,10 @@ type Draft = {
   role: string;
   access_all_sites: boolean;
   site_ids: string[];
+  external_supplier_id: string;
 };
 
-type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "organization_id" | "role" | "site_ids" | "general", string>>;
+type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
 
 const EMPTY_DRAFT: Draft = {
   full_name: "",
@@ -52,6 +56,7 @@ const EMPTY_DRAFT: Draft = {
   role: "viewer",
   access_all_sites: true,
   site_ids: [],
+  external_supplier_id: "",
 };
 
 function roleKey(user: ManagedUser) {
@@ -90,6 +95,7 @@ export default function UserManagement({
   isSuperadmin,
   fixedOrganizationId,
   currentUserId,
+  serviceSuppliers,
 }: {
   users: ManagedUser[];
   organizations: Organization[];
@@ -97,6 +103,7 @@ export default function UserManagement({
   isSuperadmin: boolean;
   fixedOrganizationId: string | null;
   currentUserId: string | null;
+  serviceSuppliers: ServiceSupplier[];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"create" | "edit" | null>(null);
@@ -134,6 +141,11 @@ export default function UserManagement({
     return sites.filter(site => site.organization_id === draft.organization_id);
   }, [draft.organization_id, sites]);
 
+  const visibleServiceSuppliers = useMemo(() => {
+    if (!draft.organization_id) return [];
+    return serviceSuppliers.filter(supplier => supplier.organization_id === draft.organization_id);
+  }, [draft.organization_id, serviceSuppliers]);
+
   function updateDraft<K extends keyof Draft>(field: K, value: Draft[K]) {
     setDraft(previous => ({ ...previous, [field]: value }));
     setErrors(previous => ({ ...previous, [field as keyof FieldErrors]: undefined, general: undefined }));
@@ -145,6 +157,7 @@ export default function UserManagement({
       organization_id: organizationId,
       access_all_sites: true,
       site_ids: [],
+      external_supplier_id: "",
     }));
     setErrors(previous => ({ ...previous, organization_id: undefined, site_ids: undefined, general: undefined }));
   }
@@ -184,6 +197,7 @@ export default function UserManagement({
       role: user.platform_role === "superadmin" ? "superadmin" : user.role || "viewer",
       access_all_sites: user.platform_role === "superadmin" ? true : user.access_all_sites !== false,
       site_ids: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
+      external_supplier_id: user.platform_role === "superadmin" ? "" : (user.external_supplier_id || ""),
     });
     setErrors({});
     setActionError("");
@@ -210,6 +224,10 @@ export default function UserManagement({
       if (!draft.role) next.role = "Selecciona un rol.";
       if (!draft.access_all_sites && draft.site_ids.length === 0) next.site_ids = "Selecciona al menos una sede o habilita el acceso a todas.";
       if (draft.site_ids.some(id => !visibleSites.some(site => site.id === id))) next.site_ids = "Una de las sedes seleccionadas no pertenece a la empresa indicada.";
+      if (draft.role === "external" && !draft.external_supplier_id) next.external_supplier_id = "Selecciona el proveedor de servicios al que pertenece.";
+      if (draft.role === "external" && draft.external_supplier_id && !visibleServiceSuppliers.some(supplier => supplier.id === draft.external_supplier_id)) {
+        next.external_supplier_id = "El proveedor debe pertenecer a la empresa y prestar servicios.";
+      }
     }
     if (draft.role === "superadmin" && !isSuperadmin) next.role = "No tienes permiso para asignar este rol.";
 
@@ -233,6 +251,7 @@ export default function UserManagement({
       body.set("organization_id", draft.organization_id);
       body.set("role", draft.role);
       body.set("access_all_sites", draft.access_all_sites ? "true" : "false");
+      body.set("external_supplier_id", draft.external_supplier_id);
       if (!draft.access_all_sites) draft.site_ids.forEach(siteId => body.append("site_ids", siteId));
       if (mode === "edit") body.set("intent", "update");
 
@@ -324,7 +343,7 @@ export default function UserManagement({
             <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
             <div><span>Sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
-            <div><span>Último acceso</span><strong>{user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
+            <div><span>{user.role === "external" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" ? (user.external_supplier_name || "Sin proveedor") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
           {isSuperadmin && <div className="user-card-actions">
@@ -390,7 +409,8 @@ export default function UserManagement({
                 if (nextRole === "superadmin") {
                   setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [] }));
                 } else {
-                  updateDraft("role", nextRole);
+                  setDraft(previous => ({ ...previous, role: nextRole, external_supplier_id: nextRole === "external" ? previous.external_supplier_id : "" }));
+                  setErrors(previous => ({ ...previous, role: undefined, external_supplier_id: undefined, general: undefined }));
                 }
               }}>
                 {isSuperadmin && <option value="superadmin">Superadministrador</option>}
@@ -398,6 +418,16 @@ export default function UserManagement({
               </select>
               {errors.role && <small className="field-error-message">{errors.role}</small>}
             </div>
+
+            {draft.role === "external" && <div className={`field ${errors.external_supplier_id ? "field-error" : ""}`}>
+              <label htmlFor="managed-user-supplier">Proveedor de servicios *</label>
+              <select id="managed-user-supplier" value={draft.external_supplier_id} onChange={event => updateDraft("external_supplier_id", event.target.value)}>
+                <option value="">Selecciona proveedor</option>
+                {visibleServiceSuppliers.map(supplier => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+              </select>
+              {visibleServiceSuppliers.length === 0 && <small>Primero registra un proveedor de tipo Servicios o Materiales + servicios.</small>}
+              {errors.external_supplier_id && <small className="field-error-message">{errors.external_supplier_id}</small>}
+            </div>}
 
             {draft.role !== "superadmin" && <div className={`field form-span-2 site-access-field ${errors.site_ids ? "field-error" : ""}`}>
               <label>Acceso a sedes *</label>

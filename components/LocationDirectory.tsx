@@ -146,7 +146,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
         {selectedSub&&<div className="sublocation-inline-detail">
           <div className="sublocation-inline-head"><div><span className="eyebrow">{selectedSub.type}</span><h3>{selectedSub.name}</h3><p>{selectedSub.code||"Sin código"} · {selectedSub.description||"Sin descripción"}</p></div><button type="button" onClick={()=>setSelectedSubId(null)}>×</button></div>
           <form method="post" encType="multipart/form-data" action={"/api/locations/"+selectedSub.id} className="form-grid">
-            <input type="hidden" name="site_id" value={selected.id}/><input type="hidden" name="intent" value="update"/>
+            <input type="hidden" name="site_id" value={selected.id}/><input type="hidden" name="intent" value="update"/><input type="hidden" name="return_to" value="/dashboard/locations"/>
             <div className="field"><label>Nombre</label><input name="name" defaultValue={selectedSub.name} required/></div>
             <div className="field"><label>Código</label><input name="code" defaultValue={selectedSub.code||""}/></div>
             <div className="field"><label>Tipo</label><select name="type" defaultValue={selectedSub.type}><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>

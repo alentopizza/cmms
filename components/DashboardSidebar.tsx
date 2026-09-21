@@ -19,6 +19,7 @@ type Props = {
   role: string;
   canConfigure: boolean;
   showDeswebBranding: boolean;
+  mobileNavigationMode: "drawer" | "field";
 };
 
 function isActive(pathname: string, href: string) {
@@ -54,6 +55,7 @@ export default function DashboardSidebar({
   role,
   canConfigure,
   showDeswebBranding,
+  mobileNavigationMode,
 }: Props) {
   const pathname = usePathname();
   const defaultOrder = useMemo(() => items.map(item => item.id), [items]);
@@ -95,6 +97,15 @@ export default function DashboardSidebar({
     const byId = new Map(items.map(item => [item.id, item]));
     return order.map(id => byId.get(id)).filter((item): item is ReorderableNavItem => Boolean(item));
   }, [items, order]);
+
+  const mobileFieldItems = useMemo(() => {
+    const priority = ["dashboard", "work_orders", "attendance", "assets"];
+    const byId = new Map(orderedItems.map(item => [item.id, item]));
+    return priority.map(id => byId.get(id)).filter((item): item is ReorderableNavItem => Boolean(item));
+  }, [orderedItems]);
+
+  const mobileFieldHasOtherActive = mobileNavigationMode === "field" &&
+    !mobileFieldItems.some(item => isActive(pathname,item.href));
 
   function persist(nextOrder = order, nextCollapsed = collapsed) {
     if (!persistentUser) {
@@ -161,13 +172,41 @@ export default function DashboardSidebar({
 
   return <>
     <button
-      className="dashboard-mobile-menu"
+      className={"dashboard-mobile-menu" + (mobileNavigationMode === "field" ? " field-hidden" : "")}
       type="button"
       onClick={() => setMobileOpen(true)}
       aria-label="Abrir navegación"
     >
       <span>☰</span>
     </button>
+
+    {mobileNavigationMode === "field" && <nav className="field-mobile-nav" aria-label="Navegación móvil del técnico">
+      <div className="field-mobile-nav-shell">
+        {mobileFieldItems.map(item => {
+          const active=isActive(pathname,item.href);
+          return <Link
+            key={item.id}
+            href={item.href}
+            className={"field-mobile-nav-item" + (active ? " active" : "")}
+            aria-current={active ? "page" : undefined}
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className="field-mobile-nav-icon">{item.icon}</span>
+            <small>{item.label}</small>
+          </Link>;
+        })}
+        <button
+          type="button"
+          className={"field-mobile-nav-item field-mobile-nav-more" + (mobileFieldHasOtherActive || mobileOpen ? " active" : "")}
+          onClick={()=>setMobileOpen(true)}
+          aria-expanded={mobileOpen}
+          aria-label="Ver todos los módulos"
+        >
+          <span className="field-mobile-nav-icon">☰</span>
+          <small>Más</small>
+        </button>
+      </div>
+    </nav>}
 
     {mobileOpen && <button
       className="dashboard-sidebar-overlay"

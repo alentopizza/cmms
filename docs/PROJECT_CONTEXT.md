@@ -76,7 +76,9 @@ Active organization roles:
 - Manager / Supervisor;
 - Técnico;
 - Solicitante;
-- Consulta.
+- Consulta;
+- Proveedor de servicios;
+- Colaborador externo.
 
 The redundant `owner` role was removed. Administrador de empresa is the highest organization-level role.
 
@@ -98,17 +100,22 @@ The user-management module supports:
 Current foundations exist for:
 
 - dashboard summary;
-- locations;
-- assets/equipment;
+- locations and recursive sublocations;
+- supplier directory with materials/services/both classification;
+- internal technicians, provider accounts and external collaborators;
+- crews with a leader and mixed internal/external membership;
+- assets/equipment with required supplier + sublocation relation on new records;
+- inventory with required supplier + sublocation relation on new records;
 - work orders;
+- work-order activities with person/crew/service-supplier assignment and execution state;
 - preventive maintenance;
-- inventory;
-- suppliers/data model;
 - meters/readings;
 - attachments;
 - audit records.
 
 The operational modules are still being expanded; see `docs/ROADMAP.md`.
+
+Operational creation now follows a mandatory dependency chain: company → principal location → sublocation → suppliers → executable workforce/crews → assets/inventory → work orders/activities. The same prerequisites are checked in the UI and server-side mutation routes.
 
 ## SaaS commercial model
 

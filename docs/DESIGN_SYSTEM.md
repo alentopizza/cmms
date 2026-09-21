@@ -140,3 +140,18 @@ Required principles:
 - plan cards must communicate capacity clearly without inventing unapproved prices;
 - technical-beta notices must be visually secondary to the product proposition;
 - `/downloads` and `/descargas` must resolve to the same self-hosted information experience during beta.
+
+
+## Login public navigation
+
+The login screen remains authentication-first and must not duplicate the full marketing landing.
+
+Public navigation allowed from login:
+
+- **Inicio**;
+- **Ver planes**;
+- **Self-hosted**;
+- clickable Desweb logo returning to Home;
+- a compact post-form CTA to start the 15-day Trial.
+
+Do not expose operational modules before authentication. Do not show password-recovery affordances until a real recovery flow exists.

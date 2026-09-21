@@ -228,6 +228,8 @@ Non-Pro tenants use the global Desweb branding.
 
 ## Navigation/UI direction
 
+The public login intentionally includes only lightweight navigation back to Home, Plans and Self-hosted, plus a 15-day Trial CTA. It does not expose operational modules before authentication.
+
 The authenticated desktop interface uses:
 
 - one persistent sidebar as the primary module navigation;

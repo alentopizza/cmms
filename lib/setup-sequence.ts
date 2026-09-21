@@ -306,3 +306,21 @@ export function creationPrerequisiteAcrossOrganizations(
     message:`Ninguna empresa activa está lista para este registro. ${closest.context.organizationName}: ${closest.gate.message}`,
   };
 }
+
+
+export async function getCreationGateForScope(
+  target: CreationHierarchyTarget,
+  organizationId: string | null | undefined,
+  platformWide: boolean,
+): Promise<SetupGate> {
+  if (platformWide) {
+    return creationPrerequisiteAcrossOrganizations(
+      await getOrganizationCreationHierarchies(),
+      target,
+    );
+  }
+  return creationPrerequisiteFor(
+    await getCreationHierarchyContext(organizationId),
+    target,
+  );
+}

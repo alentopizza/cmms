@@ -11,7 +11,7 @@ import { getOrganizationBranding } from "@/lib/organization-branding";
 
 export const dynamic = "force-dynamic";
 
-type NavItem = DashboardNavItem & { id: string; permission?: Permission };
+type NavItem = DashboardNavItem & { id: string; permission?: Permission; anyPermissions?: Permission[] };
 
 const navItems: NavItem[] = [
   { id: "dashboard", icon: "▦", label: "Resumen", href: "/dashboard" },
@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { id: "suppliers", icon: "▣", label: "Proveedores", href: "/dashboard/suppliers", permission: "suppliers.manage" },
   { id: "users", icon: "◎", label: "Usuarios", href: "/dashboard/users", permission: "users.manage" },
   { id: "crews", icon: "◉", label: "Cuadrillas", href: "/dashboard/crews", permission: "crews.manage" },
+  { id: "attendance", icon: "◌", label: "Asistencia", href: "/dashboard/attendance", anyPermissions: ["attendance.self","attendance.manage","attendance.reports"] },
   { id: "assets", icon: "◇", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },
   { id: "work_orders", icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
   { id: "maintenance", icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
@@ -38,7 +39,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const organizationBranding = session.whiteLabel && session.organizationId
     ? await getOrganizationBranding(session.organizationId)
     : null;
-  const visibleItems = navItems.filter(item => !item.permission || can(session, item.permission));
+  const visibleItems = navItems.filter(item =>
+    (!item.permission || can(session, item.permission)) &&
+    (!item.anyPermissions || item.anyPermissions.some(permission => can(session, permission)))
+  );
   const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({ id, icon, label, href }));
   const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
 

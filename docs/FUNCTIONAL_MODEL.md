@@ -262,3 +262,40 @@ The platform does not assume that Colombia-specific records such as RUT or chamb
 Document metadata may include issue date, expiry date, external reference and notes. Expired required documents are treated as pending for the company profile. Documents approaching expiry within 30 days receive an early visual warning.
 
 Archiving removes a document from the current dossier without rewriting historical migrations or conflating it with operational attachments.
+
+
+## Approved target role hierarchy — pending implementation
+
+The project owner approved a future separation between Desweb platform roles and customer/tenant roles. This section records product intent; it does **not** mean these new platform roles are active in production yet.
+
+Platform hierarchy:
+
+```text
+Propietario Desweb / Platform Owner
+├── Superadministrador
+├── Comercial Desweb
+└── Partner / Distribuidor
+```
+
+Tenant hierarchy remains independent:
+
+```text
+Administrador de empresa
+├── Manager / Supervisor
+├── Técnico
+├── Solicitante
+├── Consulta
+├── Proveedor de servicios
+└── Colaborador externo
+```
+
+Core rules:
+
+- Platform Owner is the maximum authority and the only role that may create/revoke Superadministrators.
+- Superadministrators manage customer organizations and onboarding but cannot create other Superadministrators or the Platform Owner.
+- Commercial and Partner accounts exist for sales/distribution and must not receive unrestricted maintenance/customer-data administration merely because they are above a customer commercially.
+- Company Administrator remains the maximum role inside one tenant.
+- Role level does not bypass retention, audit or destructive-action controls.
+- Every user creation/edit experience must show an explanation of the selected role, scope, key permissions, restrictions and which lower roles it may create/manage.
+
+The canonical matrix and per-role explanatory copy live in `docs/ROLE_MODEL.md`.

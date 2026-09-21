@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -32,7 +33,16 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const contactName = String(form.get("contact_name") || "").trim();
+  const contactPhone = String(form.get("contact_phone") || "").trim();
+  const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
   const returnTo = String(form.get("return_to") || "");
+  let image=null;
+  try { image=await readImageUpload(form,"image"); }
+  catch(error) {
+    const message=imageUploadMessage(error);
+    return NextResponse.redirect(targetUrl(id,request.url,returnTo,"?error="+(message.includes("5 MB")?"site-image-size":"site-image-type")),303);
+  }
 
   if (!name) {
     return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-required"), 303);
@@ -46,9 +56,16 @@ export async function POST(
 
   try {
     await query(
-      `INSERT INTO sites(organization_id,name,code,address,city,country)
-       VALUES($1,$2,$3,$4,$5,$6)`,
-      [id, name, code || null, address || null, city || null, country || "CO"],
+      `INSERT INTO sites(
+         organization_id,name,code,address,city,country,
+         contact_name,contact_phone,contact_email,image_data,image_mime_type
+       )
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [
+        id,name,code||null,address||null,city||null,country||"CO",
+        contactName||null,contactPhone||null,contactEmail||null,
+        image?.data||null,image?.mime||null,
+      ],
     );
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {

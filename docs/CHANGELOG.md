@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-09-21 — Visual locations and company-level users/suppliers
+
+### Business rules
+
+- Users now create directly under a company and no longer require a site/sub-location.
+- Suppliers now create directly under a company and no longer require a site/sub-location.
+- Site assignment remains an optional user access scope, not ownership.
+- Provider-role accounts continue to require a same-company service supplier.
+
+### Locations
+
+- Added three-column visual site cards with cover images and company-logo overlap.
+- Added site photos and contact fields.
+- Added rich site information popup with edit, copy and WhatsApp actions.
+- Added visual sub-location cards, search/filtering, inline detail/edit and photo upload.
+- Added maintenance-service/work-order browsing inside the site popup.
+- Added protected site and sub-location image endpoints.
+
+### Users
+
+- Added profile photo storage and protected avatar endpoint.
+- Added profile-photo input to user creation/editing.
+- User cards display avatar photography when available.
+
+### Database
+
+- Added migration 016 for site imagery/contact information, sub-location imagery and user avatars.
+
+
 ## 2026-09-21 — Modern date picker and enterprise PDF reports
 
 ### Changed

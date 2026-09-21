@@ -450,3 +450,53 @@ When the authenticated organization is on the Pro plan with white-label enabled:
 For non-Pro organizations and platform reports, Desweb branding is used.
 
 PDF-lib currently embeds configured PNG and JPEG logos directly. Other image formats retain the report colors/name and fall back gracefully when the raster logo cannot be embedded.
+
+
+## Company-level ownership: users and suppliers
+
+Users and suppliers belong directly to an organization.
+
+They do **not** require:
+- a principal site;
+- a sub-location.
+
+Sites can later restrict a user's operational access, but this is an authorization scope, not ownership. New user creation defaults to organization-level access; site restrictions can be configured afterward.
+
+Provider-role users must still reference an active service supplier from the same organization.
+
+### Physical hierarchy
+
+The physical branch remains:
+
+**Company → Principal location → Sub-location → Assets / maintenance context**
+
+This is independent from company-level Users and Suppliers.
+
+## Visual location directory
+
+Principal locations use a three-column visual card directory on wide screens.
+
+Each card includes:
+- site cover image;
+- circular company logo;
+- site name;
+- country, city and address;
+- sub-location count;
+- asset count.
+
+Selecting a site opens a rich information popup with:
+- site identity and contact information;
+- copy-data actions;
+- WhatsApp action when a phone is available;
+- edit action;
+- sub-location creation;
+- sub-location search and status filtering;
+- visual sub-location cards with optional images;
+- inline sub-location information/editing;
+- maintenance-service / work-order search and status filtering.
+
+Site and sub-location image uploads accept PNG/JPG/WEBP up to 5 MB.
+
+## User visual identity
+
+Users can store a profile photograph. User directory cards display the image when available and fall back to initials otherwise.

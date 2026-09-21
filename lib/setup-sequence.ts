@@ -39,6 +39,21 @@ export type SetupGate = {
 };
 
 export function gateFor(state: SetupState, target: "supplier" | "workforce" | "provider" | "external" | "asset" | "inventory" | "crew" | "activity"): SetupGate {
+  // Usuarios/proveedores pertenecen a la empresa. No requieren sede ni sububicación para existir.
+  if (target === "supplier" || target === "workforce" || target === "external") {
+    return { ready:true,title:"Empresa disponible",message:"Ya puedes crear este registro para la empresa." };
+  }
+  if (target === "provider") {
+    if (state.serviceSuppliers < 1) return {
+      ready:false,
+      title:"Registra un proveedor de servicios",
+      message:"La cuenta Proveedor debe vincularse a un proveedor activo de Servicios o Materiales + servicios de la misma empresa.",
+      href:"/dashboard/suppliers",
+      action:"Crear proveedor de servicios",
+    };
+    return { ready:true,title:"Proveedor disponible",message:"Ya puedes crear la cuenta de proveedor." };
+  }
+
   if (state.sites < 1) return {
     ready:false,
     title:"Primero crea una ubicación principal",
@@ -53,18 +68,6 @@ export function gateFor(state: SetupState, target: "supplier" | "workforce" | "p
     href:"/dashboard/locations",
     action:"Crear sububicación",
   };
-
-  if (target === "supplier") return { ready:true,title:"Estructura lista",message:"Ya puedes registrar proveedores." };
-
-  if (target === "provider" && state.serviceSuppliers < 1) return {
-    ready:false,
-    title:"Registra un proveedor de servicios",
-    message:"Las cuentas con rol Proveedor de servicios deben vincularse a un proveedor activo de tipo Servicios o Materiales + servicios.",
-    href:"/dashboard/suppliers",
-    action:"Crear proveedor de servicios",
-  };
-
-  if (target === "workforce") return { ready:true,title:"Estructura lista",message:"Ya puedes crear técnicos o colaboradores externos." };
 
   if ((target === "asset" || target === "inventory") && state.suppliers < 1) return {
     ready:false,
@@ -134,6 +137,11 @@ export function creationPrerequisiteFor(
     };
   }
 
+  // Proveedores y personal se crean directamente desde la empresa.
+  if (target === "supplier" || target === "workforce") {
+    return { ready:true,title:"Empresa disponible",message:"La empresa ya existe; puedes crear este registro sin una sede o sububicación." };
+  }
+
   if (context.sites < 1) {
     return {
       ready:false,
@@ -158,10 +166,6 @@ export function creationPrerequisiteFor(
       href:"/dashboard/locations?create=sub",
       action:"Crear sububicación",
     };
-  }
-
-  if (target === "supplier" || target === "workforce") {
-    return { ready:true,title:"Estructura física completa",message:"Ya puedes continuar con este registro." };
   }
 
   if ((target === "asset" || target === "inventory" || target === "work_order" || target === "routine") && context.suppliers < 1) {

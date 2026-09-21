@@ -5,6 +5,7 @@ import { pool } from "@/lib/db";
 import { isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -125,6 +126,9 @@ export async function POST(
     let siteIds = [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
     const makingSuperadmin = requestedRole === "superadmin";
     const fields: FieldErrors = {};
+    let avatar=null;
+    try { avatar=await readImageUpload(form,"avatar"); }
+    catch(error) { fields.general=imageUploadMessage(error); }
 
     if (makingSuperadmin && !isPlatformOwner(session)) {
       fields.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
@@ -225,8 +229,13 @@ export async function POST(
     }
 
     await client.query(
-      `UPDATE users SET full_name=$1,email=$2,phone=$3,platform_role=$4,updated_at=now() WHERE id=$5`,
-      [fullName, email, phone || null, makingSuperadmin ? "superadmin" : "user", id],
+      `UPDATE users
+       SET full_name=$1,email=$2,phone=$3,platform_role=$4,
+           avatar_data=COALESCE($5,avatar_data),
+           avatar_mime_type=CASE WHEN $5 IS NULL THEN avatar_mime_type ELSE $6 END,
+           updated_at=now()
+       WHERE id=$7`,
+      [fullName,email,phone||null,makingSuperadmin?"superadmin":"user",avatar?.data||null,avatar?.mime||null,id],
     );
 
     if (password) {

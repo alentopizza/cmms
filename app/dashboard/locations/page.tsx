@@ -1,28 +1,15 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, isPlatformOwner } from "@/lib/permissions";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { LocationCreateModal } from "@/components/ContextCreateModals";
 import ModuleHeader from "@/components/ModuleHeader";
-import OwnerRecordActions from "@/components/OwnerRecordActions";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
+import LocationDirectory, { type LocationDirectoryService, type LocationDirectorySite, type LocationDirectorySub } from "@/components/LocationDirectory";
 
 type OrganizationRow = { id: string; name: string };
-type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
-
-type SiteRow = {
-  id: string;
-  organization_id: string;
-  organization_name: string;
-  name: string;
-  code: string | null;
-  city: string | null;
-  country: string;
-  active: boolean;
-  location_count: number;
-};
+type SiteRow = LocationDirectorySite;
 
 export default async function LocationsIndexPage({
   searchParams,
@@ -35,63 +22,102 @@ export default async function LocationsIndexPage({
 
   const params = await searchParams;
   const superadmin = session.platformRole !== "user";
-  const owner = isPlatformOwner(session);
   const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, superadmin);
   const sites = superadmin
     ? await query<SiteRow>(
-        `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
-                (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
+        `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
+                s.contact_name,s.contact_phone,s.contact_email,
+                (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
+                (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
+                (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
          FROM sites s JOIN organizations o ON o.id=s.organization_id
          ORDER BY o.name,s.active DESC,s.name`,
       )
     : session.accessAllSites
       ? await query<SiteRow>(
-          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
-                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
+          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
+                  s.contact_name,s.contact_phone,s.contact_email,
+                  (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
+                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
+                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.organization_id=$1
            ORDER BY s.active DESC,s.name`,
           [session.organizationId],
         )
       : await query<SiteRow>(
-          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.city,s.country,s.active,
-                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id) location_count
+          `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
+                  s.contact_name,s.contact_phone,s.contact_email,
+                  (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
+                  (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
+                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.organization_id=$1 AND s.id = ANY($2::uuid[])
            ORDER BY s.active DESC,s.name`,
           [session.organizationId, session.siteIds],
         );
 
-  const [organizations, sublocations] = await Promise.all([
+  const [organizations, sublocations, services] = await Promise.all([
     superadmin
       ? query<OrganizationRow>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
       : query<OrganizationRow>("SELECT id,name FROM organizations WHERE id=$1", [session.organizationId]),
     superadmin
-      ? query<LocationOption>(
-          `SELECT l.id,l.organization_id,l.site_id,l.name,
-                  o.name || ' · ' || s.name || ' · ' || l.name label
+      ? query<LocationDirectorySub>(
+          `SELECT l.id,l.organization_id,l.site_id,l.parent_id,l.name,l.code,l.type,l.description,l.active,
+                  (l.image_data IS NOT NULL) has_image,
+                  (SELECT count(*)::int FROM assets a WHERE a.location_id=l.id AND a.status<>'retired') asset_count,
+                  (SELECT count(*)::int FROM locations child WHERE child.parent_id=l.id AND child.active=true) child_count
            FROM locations l
            JOIN sites s ON s.id=l.site_id
            JOIN organizations o ON o.id=l.organization_id
-           WHERE l.active=true
            ORDER BY o.name,s.name,l.name`,
         )
       : session.accessAllSites
-        ? query<LocationOption>(
-            `SELECT l.id,l.organization_id,l.site_id,l.name,
-                    s.name || ' · ' || l.name label
-             FROM locations l JOIN sites s ON s.id=l.site_id
-             WHERE l.organization_id=$1 AND l.active=true
-             ORDER BY s.name,l.name`,
+        ? query<LocationDirectorySub>(
+            `SELECT l.id,l.organization_id,l.site_id,l.parent_id,l.name,l.code,l.type,l.description,l.active,
+                    (l.image_data IS NOT NULL) has_image,
+                    (SELECT count(*)::int FROM assets a WHERE a.location_id=l.id AND a.status<>'retired') asset_count,
+                    (SELECT count(*)::int FROM locations child WHERE child.parent_id=l.id AND child.active=true) child_count
+             FROM locations l WHERE l.organization_id=$1 ORDER BY l.name`,
             [session.organizationId],
           )
-        : query<LocationOption>(
-            `SELECT l.id,l.organization_id,l.site_id,l.name,
-                    s.name || ' · ' || l.name label
-             FROM locations l JOIN sites s ON s.id=l.site_id
-             WHERE l.organization_id=$1 AND l.active=true AND l.site_id = ANY($2::uuid[])
-             ORDER BY s.name,l.name`,
-            [session.organizationId, session.siteIds],
+        : query<LocationDirectorySub>(
+            `SELECT l.id,l.organization_id,l.site_id,l.parent_id,l.name,l.code,l.type,l.description,l.active,
+                    (l.image_data IS NOT NULL) has_image,
+                    (SELECT count(*)::int FROM assets a WHERE a.location_id=l.id AND a.status<>'retired') asset_count,
+                    (SELECT count(*)::int FROM locations child WHERE child.parent_id=l.id AND child.active=true) child_count
+             FROM locations l WHERE l.organization_id=$1 AND l.site_id=ANY($2::uuid[]) ORDER BY l.name`,
+            [session.organizationId,session.siteIds],
+          ),
+    superadmin
+      ? query<LocationDirectoryService>(
+          `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+                  l.name location_name
+           FROM work_orders w
+           LEFT JOIN assets a ON a.id=w.asset_id
+           LEFT JOIN locations l ON l.id=a.location_id
+           ORDER BY w.requested_at DESC LIMIT 500`,
+        )
+      : session.accessAllSites
+        ? query<LocationDirectoryService>(
+            `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+                    l.name location_name
+             FROM work_orders w
+             LEFT JOIN assets a ON a.id=w.asset_id
+             LEFT JOIN locations l ON l.id=a.location_id
+             WHERE w.organization_id=$1
+             ORDER BY w.requested_at DESC LIMIT 500`,
+            [session.organizationId],
+          )
+        : query<LocationDirectoryService>(
+            `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+                    l.name location_name
+             FROM work_orders w
+             LEFT JOIN assets a ON a.id=w.asset_id
+             LEFT JOIN locations l ON l.id=a.location_id
+             WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
+             ORDER BY w.requested_at DESC LIMIT 500`,
+            [session.organizationId,session.siteIds],
           ),
   ]);
 
@@ -121,7 +147,7 @@ export default async function LocationsIndexPage({
       action={organizations.rows.length > 0 ? <LocationCreateModal
         organizations={organizations.rows}
         sites={siteOptions}
-        locations={sublocations.rows}
+        locations={sublocations.rows.map(location=>({id:location.id,organization_id:location.organization_id,site_id:location.site_id,name:location.name,label:location.name}))}
         fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
         fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
         returnTo="/dashboard/locations"
@@ -143,29 +169,7 @@ export default async function LocationsIndexPage({
     />}
 
     <section className="section">
-      <div className="site-grid">
-        {sites.rows.map(site => <article className="card site-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"} data-search={[site.name,site.organization_name,site.code,site.city,site.country].filter(Boolean).join(" ")}>
-          <div className="site-card-header">
-            <div>
-              <span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span>
-              <h3>{site.name}</h3>
-              <p>{site.organization_name} · {site.city || "Ciudad sin registrar"} · {site.country}</p>
-            </div>
-            <div className="site-stats"><strong>{site.location_count}</strong><span>sububicaciones</span></div>
-          </div>
-          <div className="owner-inline-row">
-            <Link className="button" href={`/dashboard/locations/${site.id}`}>Administrar jerarquía</Link>
-            {owner && <OwnerRecordActions table="sites" id={site.id} label={site.name} fields={[
-              {name:"name",label:"Nombre",value:site.name},
-              {name:"code",label:"Código",value:site.code||""},
-              {name:"city",label:"Ciudad",value:site.city||""},
-              {name:"country",label:"País",value:site.country},
-              {name:"active",label:"Estado",value:site.active,type:"checkbox"},
-            ]}/>}
-          </div>
-        </article>)}
-      </div>
-      {!sites.rowCount && sublocationGate.ready && <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div>}
+      {sites.rowCount ? <LocationDirectory sites={sites.rows} sublocations={sublocations.rows} services={services.rows} /> : sublocationGate.ready ? <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div> : null}
     </section>
   </>;
 }

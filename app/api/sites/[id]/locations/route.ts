@@ -5,6 +5,7 @@ import { pool } from "@/lib/db";
 import { canCreateLocation } from "@/lib/resource-limits";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const description = String(form.get("description") || "").trim();
   const parentId = String(form.get("parent_id") || "").trim();
   const returnTo = String(form.get("return_to") || "");
+  let image=null;
+  try { image=await readImageUpload(form,"image"); }
+  catch(error) {
+    const code=imageUploadMessage(error).includes("5 MB")?"image-size":"image-type";
+    return NextResponse.redirect(publicUrl(appendFeedback(safeDashboardReturn(returnTo,`/dashboard/locations/${siteId}`),"?error="+code),request.url),303);
+  }
   const target = (suffix: string) => publicUrl(appendFeedback(safeDashboardReturn(returnTo, `/dashboard/locations/${siteId}`), suffix), request.url);
   if (!name || (parentId && !UUID.test(parentId))) return NextResponse.redirect(target("?error=required"), 303);
 
@@ -55,9 +62,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
     await client.query(
-      `INSERT INTO locations(organization_id,site_id,parent_id,name,code,type,description)
-       VALUES($1,$2,$3,$4,$5,$6,$7)`,
-      [organizationId, siteId, parentId || null, name, code || null, type || "area", description || null],
+      `INSERT INTO locations(
+         organization_id,site_id,parent_id,name,code,type,description,image_data,image_mime_type
+       )
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        organizationId,siteId,parentId||null,name,code||null,type||"area",description||null,
+        image?.data||null,image?.mime||null,
+      ],
     );
     await client.query("COMMIT");
     return NextResponse.redirect(target("?created=location"), 303);

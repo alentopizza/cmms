@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const type = requester ? "corrective" : String(form.get("type") || "corrective");
   const priority = requester ? "medium" : String(form.get("priority") || "medium");
 
-  const asset = session.platformRole === "superadmin"
+  const asset = session.platformRole !== "user"
     ? await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1", [assetId])
     : await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND organization_id=$2", [assetId, session.organizationId]);
 

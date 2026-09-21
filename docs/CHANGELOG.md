@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-20 — Resilient checkout and subscription settings
+
+### Fixed
+
+- Reworked the public checkout so validation errors no longer clear the user's entered data.
+- Added inline field-level validation for company, administrator name, email, password, city and primary site.
+- Added explicit duplicate-email feedback instead of a generic account-creation failure.
+- Replaced Trial interval string concatenation with PostgreSQL `make_interval(days => ...)` for reliable 15-day provisioning.
+- Added Home navigation to checkout flows.
+- Successful self-service provisioning now lands on company settings, where the acquired plan and resources are immediately visible.
+- Added subscription start/end dates and **Mejorar plan** to company settings.
+- Simulated plan upgrades now return to settings with refreshed entitlements and confirmation feedback.
+
+
 ## 2026-09-20 — Professional public landing and downloads recovery
 
 ### Changed

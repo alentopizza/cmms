@@ -18,6 +18,7 @@ export type CompanyDirectoryItem = {
   profile_completion: number;
   document_count: string;
   pending_document_count: string;
+  supplier_count: string;
   site_count: string;
   active_site_count: string;
   asset_count: string;
@@ -101,7 +102,13 @@ export default function CompanyDirectory({
 
   return <>
     <div className="company-card-grid">
-      {companies.map(company => <article className="company-visual-card" key={company.id}>
+      {companies.map(company => <article
+        className="company-visual-card company-visual-card-v2"
+        key={company.id}
+        data-module-record
+        data-status={company.active ? "active" : "inactive"}
+        data-search={[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" ")}
+      >
         <button className="company-card-button" type="button" onClick={() => {
           setSelected(company);
           setEditing(false);
@@ -120,32 +127,44 @@ export default function CompanyDirectory({
           </div>
 
           <div className="company-card-content">
-            <div className="company-card-heading-row">
+            <div className="company-card-heading-row company-card-heading-centered">
               <h3>{company.name}</h3>
               <span className="company-plan-pill company-plan-pill-card">{company.plan_name || "Sin plan"}</span>
             </div>
-            <div className="company-card-location">
-              <span>Sede: {company.site_name || "Sin sede principal"}</span>
-              <span>{company.city ? `${company.city} · ${company.country || "CO"}` : "Ciudad sin registrar"}</span>
-              <span>{company.address || "Dirección sin registrar"}</span>
+            <div className="company-card-primary-status">
+              <span className={company.active ? "company-state-dot active" : "company-state-dot"} aria-hidden="true">✓</span>
+              <span>{company.active ? "Activa" : "Inactiva"}</span>
             </div>
 
-            <div className="company-card-profile-health">
-              <div><span>Perfil empresarial</span><strong>{company.profile_completion}%</strong></div>
-              <div className="company-card-profile-track"><span style={{ width: company.profile_completion + "%" }} /></div>
-              <small className={Number(company.pending_document_count) > 0 ? "company-card-doc-alert" : ""}>
-                {Number(company.pending_document_count) > 0
-                  ? company.pending_document_count + " documento(s) requerido(s) pendiente(s)"
-                  : company.document_count + " documento(s) · expediente al día"}
-              </small>
+            <div className="company-resource-list">
+              {[
+                {label:"Proveedores",current:Number(company.supplier_count),max:null},
+                {label:"Ubicaciones",current:Number(company.site_count),max:Number(company.max_sites)},
+                {label:"Sub Ubicaciones",current:Number(company.sublocation_count),max:Number(company.max_sublocations)},
+                {label:"Activos",current:Number(company.asset_count),max:Number(company.max_assets)},
+              ].map(resource => {
+                const currentValue=Number(resource.current)||0;
+                const hasLimit=typeof resource.max==="number" && resource.max>0;
+                const maxValue=hasLimit ? Number(resource.max) : 0;
+                const percent=hasLimit ? Math.min(100,Math.round((currentValue/maxValue)*100)) : 0;
+                return <div className="company-resource-row" key={resource.label}>
+                  <div>
+                    <strong>{resource.label}</strong>
+                    <span>{hasLimit ? `${currentValue} / ${maxValue}` : `${currentValue} registrados`}</span>
+                    <b>{hasLimit ? currentValue : "Sin límite"}</b>
+                  </div>
+                  <div className={hasLimit ? "company-resource-track" : "company-resource-track company-resource-track-unlimited"}>
+                    {hasLimit && <span style={{width:percent+"%"}} />}
+                  </div>
+                </div>;
+              })}
             </div>
 
-            <div className="company-card-metrics">
-              <div><strong>{company.active_site_count}</strong><span>Sedes activas</span><small>{company.site_count} registradas</small></div>
-              <div><strong>{company.asset_count}</strong><span>Activos</span><small>Equipos vinculados</small></div>
+            <div className="company-card-footer-meta">
+              <span>{company.city || "Ciudad sin registrar"}</span>
+              <span>{company.profile_completion}% perfil</span>
+              <span>{company.pending_document_count} pendientes</span>
             </div>
-
-            <span className="company-card-action">Vista rápida <span aria-hidden="true">→</span></span>
           </div>
         </button>
       </article>)}

@@ -4,6 +4,7 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
 
@@ -52,18 +53,20 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     : {rows:[]} as {rows:AssetOption[]};
 
   return <>
-    <header className="page-header">
-      <div><span className="eyebrow">Mantenimiento preventivo</span><h1 className="page-title">Rutinas</h1><p className="muted">Planes por calendario asociados a los activos visibles para tu cuenta.</p></div>
-      <div className="page-header-actions">
-        <div className="brand-pill"><span /> {plans.rowCount} rutinas</div>
-        {canWrite && <RoutineCreateModal assets={assets.rows} returnTo="/dashboard/maintenance" />}
-      </div>
-    </header>
+    <ModuleHeader
+      eyebrow="Mantenimiento preventivo"
+      title="Rutinas"
+      description="Planes por calendario asociados a los activos visibles para tu cuenta."
+      count={plans.rowCount || 0}
+      countLabel="rutinas"
+      searchPlaceholder="Buscar rutina, empresa o activo"
+      action={canWrite ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
+    />
     {feedback.created==="routine" && <div className="notice success section">Rutina creada correctamente.</div>}
     {feedback.error && <div className="notice error section">No fue posible crear la rutina. Revisa los datos e inténtalo nuevamente.</div>}
     <section className="card section"><p>Desde el módulo puedes escoger el activo. Si creas la rutina entrando al activo, esa relación queda preseleccionada automáticamente.</p></section>
     <section className="section"><table className="table"><thead><tr><th>Plan</th><th>Empresa</th><th>Equipo</th><th>Frecuencia</th><th>Próximo vencimiento</th>{owner&&<th>Acciones</th>}</tr></thead>
-      <tbody>{plans.rows.map(p=><tr key={p.id}><td><strong>{p.name}</strong></td><td>{p.company}</td><td>{p.asset}</td><td>Cada {p.frequency_value} {p.frequency_unit}</td><td>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</td>{owner&&<td><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+      <tbody>{plans.rows.map(p=><tr key={p.id} data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.frequency_unit].filter(Boolean).join(" ")}><td><strong>{p.name}</strong></td><td>{p.company}</td><td>{p.asset}</td><td>Cada {p.frequency_value} {p.frequency_unit}</td><td>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</td>{owner&&<td><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
         {name:"name",label:"Nombre",value:p.name},
         {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
         {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[

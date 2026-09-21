@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
+import ModuleHeader from "@/components/ModuleHeader";
 import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
 
 export default async function CompaniesPage({
@@ -43,6 +44,7 @@ export default async function CompaniesPage({
         (SELECT count(*)::text FROM organization_documents od
           WHERE od.organization_id=o.id AND od.archived_at IS NULL AND od.requirement_level='required'
             AND (od.file_data IS NULL OR (od.expires_at IS NOT NULL AND od.expires_at < current_date))) pending_document_count,
+        (SELECT count(*)::text FROM suppliers sp WHERE sp.organization_id=o.id) supplier_count,
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id) site_count,
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id AND sx.active=true) active_site_count,
         (SELECT count(*)::text FROM assets ax WHERE ax.organization_id=o.id) asset_count,
@@ -74,17 +76,15 @@ export default async function CompaniesPage({
   ]);
 
   return <>
-    <div className="page-header companies-directory-header">
-      <div>
-        <span className="eyebrow">Configuración operativa</span>
-        <h1 className="page-title">Empresas y sedes</h1>
-        <p className="muted">Selecciona una empresa para consultar su información protegida o administrar sus sedes.</p>
-      </div>
-      <div className="companies-header-actions">
-        <span className="brand-pill"><span /> {companies.rows.filter(company => company.active).length} empresas activas</span>
-        <NewCompanyModal error={params.create_error} />
-      </div>
-    </div>
+    <ModuleHeader
+      eyebrow="Configuración operativa"
+      title="Compañías"
+      description="Administra empresas, planes, estructura operativa y recursos contratados desde un mismo directorio."
+      count={companies.rowCount || 0}
+      countLabel="compañías"
+      searchPlaceholder="Buscar compañía, ciudad, NIT o plan"
+      action={<NewCompanyModal error={params.create_error} />}
+    />
 
     {(params.saved || params.deleted || params.error) && <div className="section">
       {params.saved && <div className="notice success">Los cambios de la empresa se guardaron correctamente.</div>}
@@ -93,9 +93,6 @@ export default async function CompaniesPage({
     </div>}
 
     <section className="section">
-      <div className="section-heading sites-heading">
-        <div><span className="eyebrow">Directorio</span><h2>Empresas registradas ({companies.rowCount})</h2></div>
-      </div>
       <CompanyDirectory
         companies={companies.rows}
         canManageResources={can(session, "company_resources.manage")}

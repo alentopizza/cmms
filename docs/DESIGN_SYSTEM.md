@@ -309,3 +309,58 @@ Document states must use both text and color:
 - No aplica.
 
 The directory company card may show plan, profile completion and documentation health, but it should stay scan-friendly. The existing modal remains a quick-view/quick-edit surface; the full enterprise page is the canonical detailed workspace.
+
+
+## Unified module directory pattern
+
+All primary CMMS directory modules should use the shared module-directory visual language.
+
+### Header
+
+Use a clean header with:
+
+- module eyebrow/category;
+- module title;
+- short operational description;
+- keyword search;
+- contextual filter;
+- one primary **Agregar** action with an icon that represents the entity.
+
+Avoid secondary information bands between the header and directory unless they communicate an actual operational prerequisite or warning. In particular, the former **Roles en uso** summary band is not part of the general pattern.
+
+### Creation
+
+Creation from a directory must open a modal/popup instead of permanently occupying page space.
+
+Modal rules:
+
+- use the shared wide modal treatment;
+- target approximately 1040 px maximum width on desktop;
+- reflow to one column on narrow screens;
+- preserve the same server-side validation and authorization as the previous inline form;
+- use useful example placeholders, not generic labels repeated as placeholders;
+- keep contextual creation preselection when entering from a parent record.
+
+Examples:
+
+- `Carrera 15 # 93-47, Bogotá`
+- `HVAC-001`
+- `Servicios Técnicos Andinos S.A.S.`
+- `Almacén técnico · Estante A-03`
+
+### Search and filter
+
+Directory records expose searchable text and a normalized status. Search/filtering is a presentation layer over the already-authorized result set and must never replace server-side authorization or tenant/site scoping.
+
+### Company cards
+
+Company cards use:
+
+- wide cover image;
+- circular logo overlapping the cover;
+- centered company identity and status;
+- plan indicator;
+- operational resource rows and quota progress only where a real enforced quota exists;
+- no fabricated quota for resources that are currently unlimited.
+
+The layout should remain readable in two columns on wide screens and one column on narrow screens.

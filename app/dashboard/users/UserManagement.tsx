@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ModuleHeader from "@/components/ModuleHeader";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -129,15 +130,6 @@ export default function UserManagement({
       document.body.classList.remove("modal-open");
     };
   }, [mode, saving]);
-
-  const roleCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    users.forEach(user => {
-      const key = roleKey(user);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    });
-    return [...counts.entries()];
-  }, [users]);
 
   const visibleSites = useMemo(() => {
     if (!draft.organization_id) return [];
@@ -310,17 +302,15 @@ export default function UserManagement({
   const selectedDescription = roleDescription(draft.role);
 
   return <>
-    <section className="user-access-toolbar section">
-      <div>
-        <span className="eyebrow">Roles en uso</span>
-        <div className="role-summary-row">
-          {roleCounts.length
-            ? roleCounts.map(([role, count]) => <span className="role-summary-pill" key={role}><strong>{roleName(role)}</strong><b>{count}</b></span>)
-            : <span className="muted">Aún no hay roles asignados.</span>}
-        </div>
-      </div>
-      {users.length > 0 && <button className="button" type="button" onClick={openCreate}>Crear usuario</button>}
-    </section>
+    <ModuleHeader
+      eyebrow="Control de acceso"
+      title="Usuarios y roles"
+      description="Administra cuentas, roles y alcance operativo sin perder la trazabilidad de las acciones realizadas."
+      count={users.length}
+      countLabel="cuentas"
+      searchPlaceholder="Buscar nombre, correo, empresa o rol"
+      action={<button className="button module-add-button" type="button" onClick={openCreate}><span className="module-add-button-icon">◎</span><span>Agregar</span></button>}
+    />
 
     {actionError && <div className="notice error section">{actionError}</div>}
 
@@ -337,7 +327,13 @@ export default function UserManagement({
       </div>
 
       <div className="user-role-grid">
-        {users.map(user => <article className={`card user-role-card ${user.active ? "" : "user-role-card-inactive"}`} key={user.id}>
+        {users.map(user => <article
+          className={`card user-role-card ${user.active ? "" : "user-role-card-inactive"}`}
+          key={user.id}
+          data-module-record
+          data-status={user.active ? "active" : "inactive"}
+          data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[])].filter(Boolean).join(" ")}
+        >
           <div className="user-role-card-head">
             <div className="user-avatar" aria-hidden="true">{initials(user.full_name)}</div>
             <div><strong>{user.full_name}</strong><span>{user.email}</span></div>
@@ -363,7 +359,7 @@ export default function UserManagement({
     {mode && <div className="modal-backdrop user-modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget && !saving) closeModal();
     }}>
-      <section className="company-modal user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+      <section className="company-modal user-form-modal unified-create-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
         <header className="modal-header">
           <div>
             <span className="eyebrow">{mode === "edit" ? "Administración de acceso" : "Nueva cuenta"}</span>
@@ -379,21 +375,21 @@ export default function UserManagement({
           <div className="form-grid">
             <div className={`field ${errors.full_name ? "field-error" : ""}`}>
               <label htmlFor="managed-user-name">Nombre completo *</label>
-              <input id="managed-user-name" value={draft.full_name} onChange={event => updateDraft("full_name", event.target.value)} autoFocus />
+              <input id="managed-user-name" placeholder="Ej. Laura Gómez" value={draft.full_name} onChange={event => updateDraft("full_name", event.target.value)} autoFocus />
               {errors.full_name && <small className="field-error-message">{errors.full_name}</small>}
             </div>
             <div className={`field ${errors.email ? "field-error" : ""}`}>
               <label htmlFor="managed-user-email">Correo *</label>
-              <input id="managed-user-email" type="email" value={draft.email} onChange={event => updateDraft("email", event.target.value)} />
+              <input id="managed-user-email" type="email" placeholder="laura@empresa.com" value={draft.email} onChange={event => updateDraft("email", event.target.value)} />
               {errors.email && <small className="field-error-message">{errors.email}</small>}
             </div>
             <div className="field">
               <label htmlFor="managed-user-phone">Teléfono</label>
-              <input id="managed-user-phone" value={draft.phone} onChange={event => updateDraft("phone", event.target.value)} />
+              <input id="managed-user-phone" placeholder="+57 300 123 4567" value={draft.phone} onChange={event => updateDraft("phone", event.target.value)} />
             </div>
             <div className={`field ${errors.password ? "field-error" : ""}`}>
               <label htmlFor="managed-user-password">{mode === "create" ? "Contraseña temporal *" : "Nueva contraseña (opcional)"}</label>
-              <input id="managed-user-password" type="password" value={draft.password} onChange={event => updateDraft("password", event.target.value)} autoComplete="new-password" />
+              <input id="managed-user-password" type="password" placeholder="Mínimo 8 caracteres" value={draft.password} onChange={event => updateDraft("password", event.target.value)} autoComplete="new-password" />
               <small>{mode === "edit" ? "Déjala vacía para conservar la contraseña actual." : "Mínimo 8 caracteres."}</small>
               {errors.password && <small className="field-error-message">{errors.password}</small>}
             </div>

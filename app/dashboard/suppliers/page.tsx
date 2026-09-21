@@ -4,6 +4,8 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
+import CreateRecordModal from "@/components/CreateRecordModal";
 
 type Supplier = {
   id:string;
@@ -65,14 +67,29 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
         : "";
 
   return <>
-    <header className="page-header">
-      <div>
-        <span className="eyebrow">Abastecimiento y terceros</span>
-        <h1 className="page-title">Proveedores</h1>
-        <p className="muted">Registra quién suministra materiales, activos o servicios antes de crear recursos que dependan de esa relación.</p>
-      </div>
-      <div className="brand-pill"><span /> {suppliers.rowCount} proveedores</div>
-    </header>
+    <ModuleHeader
+      eyebrow="Abastecimiento y terceros"
+      title="Proveedores"
+      description="Registra quién suministra materiales, activos o servicios antes de crear recursos que dependan de esa relación."
+      count={suppliers.rowCount || 0}
+      countLabel="proveedores"
+      searchPlaceholder="Buscar proveedor, NIT, servicio o contacto"
+      action={<CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra la relación comercial y los datos de contacto del proveedor." triggerLabel="Agregar" icon="▣">
+        <form className="form-grid unified-popup-form" method="post" action="/api/suppliers">
+          {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
+            : <input type="hidden" name="organization_id" value={session.organizationId || ""}/>}
+          <div className="field"><label>Tipo *</label><select name="supplier_type" defaultValue="materials"><option value="materials">Materiales / suministros</option><option value="services">Servicios tercerizados</option><option value="both">Materiales + servicios</option></select></div>
+          <div className="field"><label>Nombre / razón social *</label><input name="name" required placeholder="Ej. Servicios Técnicos Andinos S.A.S." /></div>
+          <div className="field"><label>NIT / identificación</label><input name="tax_id" placeholder="Ej. 900123456-7" /></div>
+          <div className="field"><label>Categoría de servicio</label><input name="service_category" placeholder="Ej. Refrigeración, electricidad u obra civil" /></div>
+          <div className="field"><label>Persona de contacto</label><input name="contact_name" placeholder="Ej. Carlos Pérez" /></div>
+          <div className="field"><label>Correo</label><input name="email" type="email" placeholder="servicios@empresa.com" /></div>
+          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 000 0000" /></div>
+          <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} placeholder="Ej. Cobertura nacional, atención 24/7 y contacto de emergencias." /></div>
+          <div className="form-span-2 form-actions"><button className="button" type="submit">Crear proveedor</button></div>
+        </form>
+      </CreateRecordModal>}
+    />
 
     {params.created && <div className="notice success section">Proveedor creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
@@ -91,30 +108,10 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
     </section>
 
-    <section className="card section">
-      <div className="section-heading">
-        <div><span className="eyebrow">Nuevo proveedor</span><h2>Crear relación comercial</h2><p className="muted">Los proveedores de servicios también pueden tener colaboradores externos con acceso al CMMS.</p></div>
-      </div>
-
-      <form className="form-grid" method="post" action="/api/suppliers">
-        {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
-          : <input type="hidden" name="organization_id" value={session.organizationId || ""}/>}
-        <div className="field"><label>Tipo *</label><select name="supplier_type" defaultValue="materials"><option value="materials">Materiales / suministros</option><option value="services">Servicios tercerizados</option><option value="both">Materiales + servicios</option></select></div>
-        <div className="field"><label>Nombre / razón social *</label><input name="name" required placeholder="Ej. Servicios Técnicos Andinos" /></div>
-        <div className="field"><label>NIT / identificación</label><input name="tax_id" placeholder="900123456-7" /></div>
-        <div className="field"><label>Categoría de servicio</label><input name="service_category" placeholder="Ej. Refrigeración, electricidad, obra civil" /></div>
-        <div className="field"><label>Persona de contacto</label><input name="contact_name" placeholder="Ej. Carlos Pérez" /></div>
-        <div className="field"><label>Correo</label><input name="email" type="email" placeholder="servicios@empresa.com" /></div>
-        <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 000 0000" /></div>
-        <div className="field form-span-2"><label>Notas</label><input name="notes" placeholder="Cobertura, horarios, condiciones o referencias." /></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Crear proveedor</button></div>
-      </form>
-    </section>
-
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2></div></div>
       {suppliers.rowCount ? <div className="supplier-grid">
-        {suppliers.rows.map(s=><article className="card supplier-card" key={s.id}>
+        {suppliers.rows.map(s=><article className="card supplier-card" key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.organization_name,s.tax_id,s.service_category,s.contact_name,s.email,s.phone].filter(Boolean).join(" ")}>
           <div className="supplier-card-head">
             <div className="supplier-icon">{s.supplier_type==="services" ? "⚙" : s.supplier_type==="both" ? "◆" : "▤"}</div>
             <div><strong>{s.name}</strong><span>{s.organization_name}</span></div>

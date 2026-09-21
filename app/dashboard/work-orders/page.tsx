@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
+import CreateRecordModal from "@/components/CreateRecordModal";
 
 type OrderRow={id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string};
 
@@ -102,20 +104,33 @@ export default async function WorkOrdersPage() {
     : {rows:[]} as {rows:{id:string;label:string}[]};
 
   return <>
-    <header className="page-header"><div><span className="eyebrow">Mantenimiento</span><h1 className="page-title">Órdenes de trabajo</h1><p className="muted">{providerOnly?"Solo ves trabajo asignado a tu empresa proveedora.":externalOnly?"Solo ves órdenes y actividades asignadas directamente a tu cuenta o cuadrilla.":requesterOnly?"Consulta y registra tus solicitudes de mantenimiento.":"Correctivos, preventivos, inspecciones y emergencias."}</p></div><div className="brand-pill"><span /> {orders.rowCount} órdenes</div></header>
-
-    {canWrite && <section className="card section"><h2>{requesterOnly?"Nueva solicitud":"Nueva orden"}</h2>
-      {assets.rows.length===0 ? <div className="setup-block"><strong>Primero registra un activo.</strong><span>Las órdenes necesitan un equipo previamente creado y relacionado con la estructura física.</span><Link className="button secondary" href="/dashboard/assets">Ir a activos</Link></div> :
-      <form className="form-grid" method="post" action="/api/work-orders">
-        <div className="field"><label>Equipo</label><select name="asset_id" required>{assets.rows.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
-        <div className="field"><label>Título</label><input name="title" required placeholder="Revisar temperatura irregular"/></div>
-        {!requesterOnly && <><div className="field"><label>Tipo</label><select name="type"><option value="corrective">Correctivo</option><option value="preventive">Preventivo</option><option value="inspection">Inspección</option><option value="emergency">Emergencia</option><option value="improvement">Mejora</option></select></div><div className="field"><label>Prioridad</label><select name="priority"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></div></>}
-        <div><button className="button" type="submit">{requesterOnly?"Enviar solicitud":"Crear orden"}</button></div>
-      </form>}
-    </section>}
+    <ModuleHeader
+      eyebrow="Mantenimiento"
+      title="Órdenes de trabajo"
+      description={providerOnly?"Solo ves trabajo asignado a tu empresa proveedora.":externalOnly?"Solo ves órdenes y actividades asignadas directamente a tu cuenta o cuadrilla.":requesterOnly?"Consulta y registra tus solicitudes de mantenimiento.":"Correctivos, preventivos, inspecciones y emergencias."}
+      count={orders.rowCount || 0}
+      countLabel="órdenes"
+      searchPlaceholder="Buscar OT, trabajo, empresa o equipo"
+      filters={[
+        {value:"all",label:"Todas"},
+        {value:"open",label:"Abiertas"},
+        {value:"assigned",label:"Asignadas"},
+        {value:"in_progress",label:"En progreso"},
+        {value:"completed",label:"Completadas"},
+        {value:"cancelled",label:"Canceladas"},
+      ]}
+      action={canWrite && assets.rows.length>0 ? <CreateRecordModal title={requesterOnly?"Crear solicitud":"Crear orden de trabajo"} eyebrow={requesterOnly?"Nueva solicitud":"Nueva orden"} description="Relaciona el trabajo con un activo y define los datos iniciales de atención." triggerLabel="Agregar" icon="✓">
+        <form className="form-grid unified-popup-form" method="post" action="/api/work-orders">
+          <div className="field form-span-2"><label>Equipo *</label><select name="asset_id" required><option value="">Selecciona un activo</option>{assets.rows.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
+          <div className="field form-span-2"><label>Título *</label><input name="title" required placeholder="Ej. Revisar temperatura irregular en cámara 02"/></div>
+          {!requesterOnly && <><div className="field"><label>Tipo</label><select name="type"><option value="corrective">Correctivo</option><option value="preventive">Preventivo</option><option value="inspection">Inspección</option><option value="emergency">Emergencia</option><option value="improvement">Mejora</option></select></div><div className="field"><label>Prioridad</label><select name="priority"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></div></>}
+          <div className="form-span-2 form-actions"><button className="button" type="submit">{requesterOnly?"Enviar solicitud":"Crear orden"}</button></div>
+        </form>
+      </CreateRecordModal> : undefined}
+    />
 
     <section className="section"><table className="table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-      {orders.rows.map(w=><tr key={w.id}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td>{owner&&<td><OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+      {orders.rows.map(w=><tr key={w.id} data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.asset,w.priority,w.status].join(" ")}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td>{owner&&<td><OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
         {name:"title",label:"Título",value:w.title},
         {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
           {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}

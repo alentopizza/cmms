@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
+import CreateRecordModal from "@/components/CreateRecordModal";
 
 type Lead = {
   id:string;
@@ -26,11 +28,12 @@ const INTEREST_LABELS:Record<string,string>={
   other:"Otro",
 };
 
-export default async function LeadsPage() {
+export default async function LeadsPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"leads.manage")) redirect("/dashboard");
   const owner=isPlatformOwner(session);
+  const feedback=await searchParams;
 
   const leads=await query<Lead>(
     `SELECT id,full_name,company_name,email,phone,interest,message,status,created_at::text
@@ -46,14 +49,35 @@ export default async function LeadsPage() {
   const byStatus=Object.fromEntries(totals.rows.map(row=>[row.status,row.count]));
 
   return <>
-    <header className="page-header">
-      <div>
-        <span className="eyebrow">Comercial</span>
-        <h1 className="page-title">Leads de la landing</h1>
-        <p className="muted">Solicitudes registradas desde el formulario público para seguimiento por asesores.</p>
-      </div>
-      <div className="brand-pill"><span /> {leads.rowCount} registros</div>
-    </header>
+    <ModuleHeader
+      eyebrow="Comercial"
+      title="Leads"
+      description="Solicitudes registradas desde la landing o creadas manualmente para seguimiento comercial."
+      count={leads.rowCount || 0}
+      countLabel="leads"
+      searchPlaceholder="Buscar persona, empresa, correo o interés"
+      filters={[
+        {value:"all",label:"Todos"},
+        {value:"new",label:"Nuevos"},
+        {value:"contacted",label:"Contactados"},
+        {value:"qualified",label:"Calificados"},
+        {value:"closed",label:"Cerrados"},
+        {value:"discarded",label:"Descartados"},
+      ]}
+      action={<CreateRecordModal title="Crear lead" eyebrow="Nuevo prospecto" description="Registra manualmente una oportunidad comercial para darle seguimiento desde el CMMS." triggerLabel="Agregar" icon="✦">
+        <form className="form-grid unified-popup-form" method="post" action="/api/leads">
+          <div className="field"><label>Nombre completo *</label><input name="full_name" required placeholder="Ej. Andrea Martínez" /></div>
+          <div className="field"><label>Empresa *</label><input name="company_name" required placeholder="Ej. Alimentos Andinos S.A.S." /></div>
+          <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="andrea@empresa.com" /></div>
+          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>
+          <div className="field form-span-2"><label>Interés *</label><select name="interest" defaultValue="demo"><option value="demo">Demostración</option><option value="trial">Prueba 15 días</option><option value="basic">Plan Básico</option><option value="medium">Plan Medio</option><option value="pro">Plan Pro / marca blanca</option><option value="self_hosted">Self-hosted</option><option value="other">Otro</option></select></div>
+          <div className="field form-span-2"><label>Notas iniciales</label><textarea name="message" rows={4} placeholder="Ej. Busca controlar mantenimiento de 3 sedes y aproximadamente 120 activos." /></div>
+          <div className="form-span-2 form-actions"><button className="button" type="submit">Crear lead</button></div>
+        </form>
+      </CreateRecordModal>}
+    />
+    {feedback.created && <div className="notice success section">Lead creado correctamente.</div>}
+    {feedback.error && <div className="notice error section">Completa los campos obligatorios para crear el lead.</div>}
 
     <section className="grid section metric-grid leads-metrics">
       <div className="card metric-card"><div className="metric-icon">N</div><div><span className="muted">Nuevos</span><div className="metric">{byStatus.new || "0"}</div></div></div>
@@ -64,7 +88,7 @@ export default async function LeadsPage() {
 
     <section className="section leads-directory">
       {leads.rowCount===0 ? <div className="card empty-state"><span className="eyebrow">Sin oportunidades</span><h2>Aún no hay leads registrados</h2><p>Cuando alguien solicite contacto desde la landing aparecerá aquí.</p></div> :
-        leads.rows.map(lead=><article className="card lead-card" key={lead.id}>
+        leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" ")}>
           <div className="lead-card-head">
             <div><strong>{lead.full_name}</strong><span>{lead.company_name}</span></div>
             <span className={`lead-status lead-status-${lead.status}`}>{lead.status}</span>

@@ -120,3 +120,22 @@ The Trial plan lasts 15 days. When it expires, tenant authentication may still i
 Status: accepted.
 
 White-label branding is an entitlement of the Pro plan. Organization administrators on Pro may configure their panel name, primary/secondary colors and light/dark logos. Non-Pro tenants always use platform branding.
+
+
+## ADR-017 — Documentation is part of the product deliverable
+
+Status: accepted.
+
+Repository documentation is the continuity mechanism for developers and AI agents. Meaningful changes are incomplete until the changelog and all affected source-of-truth documents are updated. Chat history must not be required to reconstruct product direction.
+
+## ADR-018 — Downloadable edition uses the same web architecture
+
+Status: accepted.
+
+The first installable edition of Desweb CMMS is a Docker Compose/self-hosted package running the same Next.js application and PostgreSQL data model as the hosted service. A separate desktop application is not required for distribution.
+
+## ADR-019 — Licensing and IP are separate concerns
+
+Status: accepted.
+
+Software copyright/authorship, trademarks, patents for any qualifying technical invention, and commercial self-hosted licensing are separate protection mechanisms. No open-source license will be added without explicit product-owner approval.

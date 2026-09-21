@@ -12,6 +12,9 @@ Before making changes, read:
 6. `docs/CHANGELOG.md`
 7. `docs/ROADMAP.md`
 8. `docs/FUNCTIONAL_MODEL.md`
+9. `docs/COMMERCIAL_MODEL.md`
+10. `docs/INSTALLATION.md`
+11. `docs/IP_AND_DISTRIBUTION.md`
 
 ## Working rules
 
@@ -41,4 +44,24 @@ Future visual settings should extend this architecture.
 
 ## Documentation requirement
 
-Meaningful implementation changes must update `docs/CHANGELOG.md` and any relevant architecture, branding or design-system documents.
+Documentation is a required deliverable, not an optional follow-up.
+
+Every meaningful implementation change must:
+- update `docs/CHANGELOG.md`;
+- update every affected source-of-truth document;
+- add an ADR in `docs/DECISIONS.md` when a product/architecture rule changes;
+- update `docs/PROJECT_CONTEXT.md` when the current state or strategic direction changes;
+- keep `docs/COMMERCIAL_MODEL.md` synchronized with plans, subscriptions, entitlements and sales flows;
+- keep `docs/INSTALLATION.md` synchronized with deployment/distribution changes.
+
+An AI or developer resuming the project must be able to reconstruct the current product intent from repository documentation without relying on chat history.
+
+## Commercial and distribution invariants
+
+- Desweb CMMS is being developed as a commercial SaaS with Trial, Básico, Medio and Pro plans.
+- Trial lasts 15 days and expired tenants keep their data but lose operational access until a paid plan is activated.
+- Pro includes organization-level white label.
+- Plan defaults and effective organization entitlements are intentionally separate.
+- The project is also intended to support licensed self-hosted installation through Docker Compose.
+- Do not add an open-source license or change redistribution rights without explicit product-owner approval.
+- Payment activation must ultimately be driven by verified server-side provider webhooks, never only browser redirects.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-20 — Documentation continuity, self-hosting and IP strategy
+
+### Added
+
+- Made repository documentation an explicit required deliverable for meaningful product changes.
+- Refreshed `docs/PROJECT_CONTEXT.md` so another AI/developer can reconstruct current product, SaaS, RBAC, subscription and UI direction without chat history.
+- Added `docs/COMMERCIAL_MODEL.md` as the source of truth for Trial/Básico/Medio/Pro, subscription lifecycle and sales channels.
+- Added `docs/INSTALLATION.md`, `compose.yaml` and `scripts/install.sh` for a portable Docker Compose/self-hosted installation.
+- Added `docs/IP_AND_DISTRIBUTION.md` to separate software copyright, trademarks, patent evaluation and commercial licensing/distribution.
+- Documented that no open-source license has been approved and that payment activation must ultimately rely on verified server-side webhooks.
+
+
 ## 2026-09-20 — SaaS plans, trial lifecycle and test landing
 
 ### Added

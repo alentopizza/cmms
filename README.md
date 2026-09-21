@@ -14,6 +14,9 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 - `docs/DESIGN_SYSTEM.md` — reglas visuales y componentes de interfaz.
 - `docs/ROADMAP.md` — prioridades de desarrollo.
 - `docs/CHANGELOG.md` — historial de cambios relevantes.
+- `docs/COMMERCIAL_MODEL.md` — planes, suscripciones, ventas y entitlements.
+- `docs/INSTALLATION.md` — instalación descargable/self-hosted con Docker Compose.
+- `docs/IP_AND_DISTRIBUTION.md` — estrategia de propiedad intelectual y distribución.
 
 ## Branding
 
@@ -56,7 +59,14 @@ APP_ADMIN_PASSWORD=una-contrasena-segura
 AUTH_SECRET=una-cadena-aleatoria-larga
 NEXT_PUBLIC_APP_NAME=Desweb CMMS
 NEXT_PUBLIC_APP_URL=https://cmms.desweb.cloud
+TEST_CHECKOUT_ENABLED=false
 ```
+
+## Instalación descargable / self-hosted
+
+El repositorio incluye `compose.yaml` y `scripts/install.sh` para instalar la misma plataforma web con Docker Compose y PostgreSQL persistente.
+
+Consulta `docs/INSTALLATION.md` antes de usar esta modalidad en producción.
 
 ## Easypanel
 
@@ -83,6 +93,12 @@ Para ejecutar las migraciones:
 npm run migrate
 ```
 
-## Seguridad inicial
+## Seguridad y acceso
 
-La primera versión usa correo y contraseña administrativos definidos en `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. El modelo de datos ya contempla usuarios y roles; la autenticación individual por usuario será una de las siguientes iteraciones.
+`APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD` mantienen un acceso bootstrap de emergencia/Superadministrador. Los usuarios normales ya se almacenan en PostgreSQL, usan contraseñas derivadas con scrypt y sesiones firmadas con `AUTH_SECRET`.
+
+No publiques secretos ni habilites el checkout simulado en una instalación comercial sin intención explícita.
+
+## Licenciamiento
+
+El proyecto todavía no declara una licencia open source. La distribución descargable se está preparando como una modalidad comercial/self-hosted; no debe asumirse permiso de redistribución por la sola disponibilidad del código.

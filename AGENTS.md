@@ -127,10 +127,12 @@ Important:
 - destructive exceptional powers must use a governed approval/re-authentication/audit workflow rather than ordinary CRUD controls.
 
 
-## Universal deletion invariant
+## Platform Owner contextual destructive-action invariant
 
-`platform_owner` is the only role allowed to invoke universal/forced deletion.
+`platform_owner` is the only role allowed to invoke forced deletion or unrestricted owner-update overrides.
 
-Do not grant this capability through a broad permission such as `users.manage`, `companies.manage` or Superadministrator status. Every endpoint that invokes `lib/platform-owner-purge.ts` must independently verify `isPlatformOwner(session)`.
+Do not add a standalone purge module, table browser or sidebar entry. Owner controls belong contextually beside records in their existing modules.
 
-Normal roles must retain standard history, FK and traceability behavior. Never remove the Platform Owner self-protection from the purge engine.
+Do not grant the override through broad permissions such as `users.manage`, `companies.manage` or Superadministrator status. Every forced-update/delete endpoint must independently verify `isPlatformOwner(session)`.
+
+Normal roles retain their existing hierarchy, edit permissions, history/FK restrictions and creation flows. Never remove Platform Owner self-protection from the delete engine.

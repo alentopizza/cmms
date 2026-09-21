@@ -148,3 +148,21 @@ A work activity may be assigned to exactly one of:
 - a service supplier.
 
 The assignment is traceable through the activity lifecycle: pending, in progress, completed or cancelled, with start/end timestamps and execution notes.
+
+
+## Context-aware creation
+
+Operational entities may be created from their global module or from an already-known parent context. Contextual creation is intended to reduce redundant selections without weakening authorization or dependency rules.
+
+Current shortcuts:
+
+- company → principal location;
+- company → user;
+- locations module → principal location or sublocation;
+- site → sublocation;
+- sublocation → asset;
+- assets module → asset;
+- asset → preventive routine;
+- routines module → preventive routine.
+
+When the parent context is already known, the corresponding relationship is preselected and hidden from redundant user input. The server still validates the relationship and permission independently. After a successful contextual creation, the user returns to the originating screen with success feedback.

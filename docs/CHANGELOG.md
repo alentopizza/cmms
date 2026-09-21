@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-21 — Role-aware mobile navigation
+
+### Added
+
+- Added a documented mobile-first rule for dashboard UI changes.
+- Preserved hamburger / drawer navigation for roles with broad module access.
+- Added a dedicated Technician / External collaborator bottom navigation inspired by native field-service applications.
+- Field navigation prioritizes Dashboard, Orders, Attendance and Assets.
+- Added a **More** destination that opens the full permission-filtered module drawer.
+- Added safe-area-aware bottom spacing so mobile navigation does not cover page actions.
+- Reused the same authorized navigation item source across desktop, drawer and mobile bottom navigation.
+
+### Mobile architecture
+
+This responsive shell is the baseline for a future PWA/native application. Module screens should continue to be adapted responsively as they are changed so a later app shell requires minimal rework.
+
+
 ## 2026-09-21 — Visual locations and company-level users/suppliers
 
 ### Business rules

@@ -239,3 +239,17 @@ Principal location cards should remain visual and scannable:
 - sub-location and asset counts.
 
 The site detail popup is the primary drill-down for contact, copy/WhatsApp actions, sub-location management and maintenance-service browsing.
+
+
+## Mobile-first UI invariant
+
+Meaningful dashboard UI changes must include a mobile behavior in the same implementation and documentation update.
+
+Navigation rules below 900px:
+- broad/module-heavy roles use the hamburger drawer;
+- Technician and External collaborator use the field bottom navigation for Dashboard / Orders / Attendance / Assets / More;
+- More opens the same permission-filtered drawer used by the rest of the product.
+
+Never duplicate authorization rules inside mobile navigation. Desktop, drawer and bottom-nav visibility must originate from the same server-side permission-filtered item set.
+
+Design new cards, forms, popups and tables so they can collapse to mobile without requiring a separate future implementation. Preserve safe-area spacing and avoid fixed mobile controls covering primary actions.

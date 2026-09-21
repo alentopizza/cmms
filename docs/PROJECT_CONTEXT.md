@@ -458,3 +458,13 @@ The guided blocker always points to the first missing prerequisite for a viable 
 Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine.
 
 Work-order and routine creation also enforce this hierarchy server-side using the organization resolved from the selected asset.
+
+
+### Mobile-first dashboard shell
+
+The responsive dashboard shell now uses role-aware navigation.
+
+- Roles with many modules use the existing hamburger / slide-out navigation below 900px.
+- Technician and External collaborator roles use a persistent bottom navigation for Dashboard, Orders, Attendance and Assets, plus **More** to expose every other authorized module in the drawer.
+
+The same permission-filtered navigation list is reused across desktop, drawer and bottom navigation. This is the intended foundation for a future mobile/PWA application; new module UI should therefore be designed responsively in the same implementation rather than postponed to a separate mobile rewrite.

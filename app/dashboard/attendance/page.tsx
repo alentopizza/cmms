@@ -101,61 +101,83 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     ? session.platformRole==="superadmin"
       ? await query<ReportRow>(
           `SELECT u.id user_id,u.full_name,om.role,
-                  count(DISTINCT sh.id)::int shifts,
-                  COALESCE(round(sum(EXTRACT(EPOCH FROM (COALESCE(sh.check_out_at,now())-sh.check_in_at)))/3600.0::numeric,2),0)::text field_hours,
-                  count(DISTINCT t.id) FILTER (
-                    WHERE t.completed_at IS NOT NULL AND EXISTS(
-                      SELECT 1 FROM attendance_shifts sx
-                      WHERE sx.user_id=u.id AND sx.organization_id=om.organization_id
-                        AND t.completed_at BETWEEN sx.check_in_at AND COALESCE(sx.check_out_at,now())
-                    )
-                  )::int completed_in_shift,
-                  count(DISTINCT t.id) FILTER (
-                    WHERE t.completed_at IS NOT NULL AND NOT EXISTS(
-                      SELECT 1 FROM attendance_shifts sx
-                      WHERE sx.user_id=u.id AND sx.organization_id=om.organization_id
-                        AND t.completed_at BETWEEN sx.check_in_at AND COALESCE(sx.check_out_at,now())
-                    )
-                  )::int completed_outside_shift,
-                  round(avg(EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0) FILTER (WHERE t.started_at IS NOT NULL AND t.completed_at IS NOT NULL)::numeric,1)::text avg_activity_minutes,
-                  max(sh.check_in_at)::text last_check_in,
-                  bool_or(sh.status='open') open_now
+                  COALESCE(sh.shifts,0)::int shifts,
+                  COALESCE(sh.field_hours,0)::text field_hours,
+                  COALESCE(ev.completed_in_shift,0)::int completed_in_shift,
+                  COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
+                  ev.avg_activity_minutes::text avg_activity_minutes,
+                  sh.last_check_in::text last_check_in,
+                  COALESCE(sh.open_now,false) open_now
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
-           LEFT JOIN attendance_shifts sh ON sh.user_id=u.id AND sh.check_in_at>=now()-interval '30 days'
-           LEFT JOIN work_order_tasks t ON t.assigned_to=u.id AND t.completed_at>=now()-interval '30 days'
-           WHERE om.role IN ('technician','external','provider')
-           GROUP BY u.id,u.full_name,om.role
+           LEFT JOIN LATERAL (
+             SELECT count(*)::int shifts,
+                    round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
+                    max(s.check_in_at) last_check_in,
+                    bool_or(s.status='open') open_now
+             FROM attendance_shifts s
+             WHERE s.user_id=u.id AND s.organization_id=om.organization_id
+               AND s.check_in_at>=now()-interval '30 days'
+           ) sh ON true
+           LEFT JOIN LATERAL (
+             SELECT count(*) FILTER (WHERE x.within_shift)::int completed_in_shift,
+                    count(*) FILTER (WHERE NOT x.within_shift)::int completed_outside_shift,
+                    round(avg(x.duration_minutes)::numeric,1) avg_activity_minutes
+             FROM (
+               SELECT DISTINCT ON (e.task_id)
+                      e.task_id,e.within_shift,
+                      CASE WHEN t.started_at IS NOT NULL AND t.completed_at IS NOT NULL
+                           THEN EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0 END duration_minutes
+               FROM activity_execution_events e
+               JOIN work_order_tasks t ON t.id=e.task_id
+               WHERE e.user_id=u.id AND e.organization_id=om.organization_id
+                 AND e.event_type='completed'
+                 AND e.occurred_at>=now()-interval '30 days'
+               ORDER BY e.task_id,e.occurred_at DESC
+             ) x
+           ) ev ON true
+           WHERE om.role IN ('technician','external','provider','manager','admin')
            ORDER BY u.full_name`,
         )
       : organizationId
         ? await query<ReportRow>(
             `SELECT u.id user_id,u.full_name,om.role,
-                    count(DISTINCT sh.id)::int shifts,
-                    COALESCE(round(sum(EXTRACT(EPOCH FROM (COALESCE(sh.check_out_at,now())-sh.check_in_at)))/3600.0::numeric,2),0)::text field_hours,
-                    count(DISTINCT t.id) FILTER (
-                      WHERE t.completed_at IS NOT NULL AND EXISTS(
-                        SELECT 1 FROM attendance_shifts sx
-                        WHERE sx.user_id=u.id AND sx.organization_id=$1
-                          AND t.completed_at BETWEEN sx.check_in_at AND COALESCE(sx.check_out_at,now())
-                      )
-                    )::int completed_in_shift,
-                    count(DISTINCT t.id) FILTER (
-                      WHERE t.completed_at IS NOT NULL AND NOT EXISTS(
-                        SELECT 1 FROM attendance_shifts sx
-                        WHERE sx.user_id=u.id AND sx.organization_id=$1
-                          AND t.completed_at BETWEEN sx.check_in_at AND COALESCE(sx.check_out_at,now())
-                      )
-                    )::int completed_outside_shift,
-                    round(avg(EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0) FILTER (WHERE t.started_at IS NOT NULL AND t.completed_at IS NOT NULL)::numeric,1)::text avg_activity_minutes,
-                    max(sh.check_in_at)::text last_check_in,
-                    bool_or(sh.status='open') open_now
+                    COALESCE(sh.shifts,0)::int shifts,
+                    COALESCE(sh.field_hours,0)::text field_hours,
+                    COALESCE(ev.completed_in_shift,0)::int completed_in_shift,
+                    COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
+                    ev.avg_activity_minutes::text avg_activity_minutes,
+                    sh.last_check_in::text last_check_in,
+                    COALESCE(sh.open_now,false) open_now
              FROM organization_members om
              JOIN users u ON u.id=om.user_id
-             LEFT JOIN attendance_shifts sh ON sh.user_id=u.id AND sh.organization_id=$1 AND sh.check_in_at>=now()-interval '30 days'
-             LEFT JOIN work_order_tasks t ON t.assigned_to=u.id AND t.organization_id=$1 AND t.completed_at>=now()-interval '30 days'
-             WHERE om.organization_id=$1 AND om.role IN ('technician','external','provider')
-             GROUP BY u.id,u.full_name,om.role
+             LEFT JOIN LATERAL (
+               SELECT count(*)::int shifts,
+                      round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
+                      max(s.check_in_at) last_check_in,
+                      bool_or(s.status='open') open_now
+               FROM attendance_shifts s
+               WHERE s.user_id=u.id AND s.organization_id=$1
+                 AND s.check_in_at>=now()-interval '30 days'
+             ) sh ON true
+             LEFT JOIN LATERAL (
+               SELECT count(*) FILTER (WHERE x.within_shift)::int completed_in_shift,
+                      count(*) FILTER (WHERE NOT x.within_shift)::int completed_outside_shift,
+                      round(avg(x.duration_minutes)::numeric,1) avg_activity_minutes
+               FROM (
+                 SELECT DISTINCT ON (e.task_id)
+                        e.task_id,e.within_shift,
+                        CASE WHEN t.started_at IS NOT NULL AND t.completed_at IS NOT NULL
+                             THEN EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0 END duration_minutes
+                 FROM activity_execution_events e
+                 JOIN work_order_tasks t ON t.id=e.task_id
+                 WHERE e.user_id=u.id AND e.organization_id=$1
+                   AND e.event_type='completed'
+                   AND e.occurred_at>=now()-interval '30 days'
+                 ORDER BY e.task_id,e.occurred_at DESC
+               ) x
+             ) ev ON true
+             WHERE om.organization_id=$1 AND om.role IN ('technician','external','provider','manager','admin')
              ORDER BY u.full_name`,
             [organizationId],
           )

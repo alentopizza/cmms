@@ -152,6 +152,6 @@ export default async function WorkOrdersPage() {
           {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
         ]},
       ]}/></td>}</tr>)}
-    </tbody></table>{!orders.rowCount && <div className="card empty-state"><strong>No hay órdenes disponibles.</strong><span>{providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"Crea la primera orden cuando exista un activo."}</span></div>}</section>
+    </tbody></table>{!orders.rowCount && (providerOnly||externalOnly||creationGate.ready) && <div className="card empty-state"><strong>No hay órdenes disponibles.</strong><span>{providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"La jerarquía está lista. Usa Agregar para crear la primera orden."}</span></div>}</section>
   </>;
 }

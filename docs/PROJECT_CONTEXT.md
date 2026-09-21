@@ -417,3 +417,16 @@ Creation is popup-first across Companies, Users, Locations/Sub-locations, Suppli
 The Users-specific “Roles en uso” information band was intentionally removed from the reusable visual pattern.
 
 Company directory cards were aligned to the supplied visual reference with cover/logo identity and resource-progress rows. Progress denominators are shown only for actual enforced limits; suppliers are shown as unlimited because the current plan model does not enforce a supplier cap.
+
+
+### Creation hierarchy guidance
+
+Creation prerequisites are now represented as a shared guided state instead of compact setup banners or disabled forms.
+
+The hierarchy used by operational modules is:
+
+**Company → Principal location → Sub-location → Supplier / Workforce → Asset / Inventory / Crew → Work Order / Routine**
+
+The exact branch depends on the entity being created. The UI resolves the earliest missing prerequisite and directs the user there with a clear message and CTA. Company and Location CTAs can open the required creation popup directly through query parameters.
+
+Server-side gates remain authoritative; this UI guidance does not replace RBAC, tenant/site validation or route-level prerequisite checks.

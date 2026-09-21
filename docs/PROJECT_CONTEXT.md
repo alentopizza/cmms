@@ -262,6 +262,13 @@ Plan defaults are assigned automatically, with later Superadministrator override
 
 ## Installation/distribution direction
 
+Public product entry points during the current beta are:
+
+- `/` — public landing and plan comparison;
+- `/login` — application login;
+- `/downloads` — self-hosted/download information;
+- `/dashboard` — authenticated application.
+
 The first portable installation format is Docker Compose:
 
 - Next.js application;
@@ -273,6 +280,8 @@ The first portable installation format is Docker Compose:
 See `docs/INSTALLATION.md`.
 
 Do not create a separate desktop application merely to make the product "downloadable"; the intended downloadable edition is the same web platform packaged for self-hosting.
+
+During beta, downloadable ZIP/TAR packages are generated privately by the GitHub Actions workflow **Package self-hosted**. Public anonymous package downloads should wait until commercial licensing and release controls are defined.
 
 ## Intellectual-property direction
 

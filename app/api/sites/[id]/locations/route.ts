@@ -38,7 +38,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });
     }
-    if (session.platformRole !== "superadmin" && session.organizationId !== organizationId) {
+    if (session.platformRole === "user" && session.organizationId !== organizationId) {
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });
     }

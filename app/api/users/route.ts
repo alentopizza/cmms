@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -12,11 +13,12 @@ const EMAIL = /^\S+@\S+\.\S+$/;
 
 type FieldErrors = Record<string, string>;
 
-function response(request: Request, status: number, payload: { message?: string; fields?: FieldErrors }, redirectSuffix = "") {
+function response(request: Request, status: number, payload: { message?: string; fields?: FieldErrors }, redirectSuffix = "", returnTo = "") {
   if (request.headers.get("accept")?.includes("application/json")) {
     return NextResponse.json(payload, { status });
   }
-  return NextResponse.redirect(publicUrl(`/dashboard/users${redirectSuffix}`, request.url), 303);
+  const target = appendFeedback(safeDashboardReturn(returnTo, "/dashboard/users"), redirectSuffix);
+  return NextResponse.redirect(publicUrl(target, request.url), 303);
 }
 
 function uniqueSiteIds(form: FormData) {
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
   let accessAllSites = String(form.get("access_all_sites") || "true") === "true";
   let siteIds = uniqueSiteIds(form);
   const creatingSuperadmin = requestedRole === "superadmin";
+  const returnTo = String(form.get("return_to") || "");
 
   const fields: FieldErrors = {};
   if (!fullName) fields.full_name = "Ingresa el nombre completo.";
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
   }
 
   if (Object.keys(fields).length) {
-    return response(request, 422, { message: "Completa los campos marcados.", fields }, "?error=required");
+    return response(request, 422, { message: "Completa los campos marcados.", fields }, "?error=required", returnTo);
   }
 
   const client = await pool.connect();
@@ -84,14 +87,14 @@ export async function POST(request: Request) {
     const duplicate = await client.query("SELECT 1 FROM users WHERE lower(email)=lower($1)", [email]);
     if (duplicate.rowCount) {
       await client.query("ROLLBACK");
-      return response(request, 409, { fields: { email: "Ya existe una cuenta con este correo electrónico." } }, "?error=email");
+      return response(request, 409, { fields: { email: "Ya existe una cuenta con este correo electrónico." } }, "?error=email", returnTo);
     }
 
     if (!creatingSuperadmin) {
       const organization = await client.query("SELECT 1 FROM organizations WHERE id=$1 AND active=true", [organizationId]);
       if (!organization.rowCount) {
         await client.query("ROLLBACK");
-        return response(request, 422, { fields: { organization_id: "La empresa seleccionada no está disponible." } }, "?error=required");
+        return response(request, 422, { fields: { organization_id: "La empresa seleccionada no está disponible." } }, "?error=required", returnTo);
       }
 
       if (!accessAllSites) {
@@ -101,7 +104,7 @@ export async function POST(request: Request) {
         );
         if (validSites.rowCount !== siteIds.length) {
           await client.query("ROLLBACK");
-          return response(request, 422, { fields: { site_ids: "Todas las sedes seleccionadas deben pertenecer a la empresa y estar activas." } }, "?error=required");
+          return response(request, 422, { fields: { site_ids: "Todas las sedes seleccionadas deben pertenecer a la empresa y estar activas." } }, "?error=required", returnTo);
         }
       }
 
@@ -114,7 +117,7 @@ export async function POST(request: Request) {
               role: setupGate.message,
               ...(requestedRole === "provider" ? { external_supplier_id: setupGate.message } : {}),
             },
-          }, "?error=sequence");
+          }, "?error=sequence", returnTo);
         }
       }
 
@@ -125,7 +128,7 @@ export async function POST(request: Request) {
         );
         if (!supplier.rowCount) {
           await client.query("ROLLBACK");
-          return response(request, 422, { fields: { external_supplier_id: "El proveedor debe pertenecer a la empresa y prestar servicios." } }, "?error=required");
+          return response(request, 422, { fields: { external_supplier_id: "El proveedor debe pertenecer a la empresa y prestar servicios." } }, "?error=required", returnTo);
         }
       }
 
@@ -137,7 +140,7 @@ export async function POST(request: Request) {
         );
         if (quota.rows[0].used >= quota.rows[0].allowed) {
           await client.query("ROLLBACK");
-          return response(request, 409, { fields: { role: "La empresa alcanzó el límite de técnicos asignado." } }, "?error=technician-limit");
+          return response(request, 409, { fields: { role: "La empresa alcanzó el límite de técnicos asignado." } }, "?error=technician-limit", returnTo);
         }
       }
     }
@@ -169,11 +172,11 @@ export async function POST(request: Request) {
     }
 
     await client.query("COMMIT");
-    return response(request, 201, { message: "Usuario creado correctamente." }, "?created=1");
+    return response(request, 201, { message: "Usuario creado correctamente." }, "?created=user", returnTo);
   } catch (error) {
     await client.query("ROLLBACK");
     if ((error as { code?: string }).code === "23505") {
-      return response(request, 409, { fields: { email: "Ya existe una cuenta con este correo electrónico." } }, "?error=email");
+      return response(request, 409, { fields: { email: "Ya existe una cuenta con este correo electrónico." } }, "?error=email", returnTo);
     }
     throw error;
   } finally {

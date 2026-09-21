@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 
 type Supplier = {
   id:string;
@@ -55,8 +56,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       : query<Organization>("SELECT id,name FROM organizations WHERE id=$1",[session.organizationId]),
   ]);
 
-  const selectedOrgId = superadmin ? (organizations.rows[0]?.id || null) : session.organizationId;
-  const gate = selectedOrgId ? gateFor(await getSetupState(selectedOrgId),"supplier") : null;
+  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
+  const creationGate=creationPrerequisiteFor(hierarchy,"supplier");
 
   const error = params.error==="sequence"
     ? "Primero crea una ubicación principal y al menos una sububicación para la empresa."
@@ -74,7 +75,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       count={suppliers.rowCount || 0}
       countLabel="proveedores"
       searchPlaceholder="Buscar proveedor, NIT, servicio o contacto"
-      action={<CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra la relación comercial y los datos de contacto del proveedor." triggerLabel="Agregar" icon="▣">
+      action={creationGate.ready ? <CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra la relación comercial y los datos de contacto del proveedor." triggerLabel="Agregar" icon="▣">
         <form className="form-grid unified-popup-form" method="post" action="/api/suppliers">
           {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
             : <input type="hidden" name="organization_id" value={session.organizationId || ""}/>}
@@ -88,25 +89,20 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
           <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} placeholder="Ej. Cobertura nacional, atención 24/7 y contacto de emergencias." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear proveedor</button></div>
         </form>
-      </CreateRecordModal>}
+      </CreateRecordModal> : undefined}
     />
 
     {params.created && <div className="notice success section">Proveedor creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
-    <section className="card section setup-flow-card">
-      <div className="setup-flow-head">
-        <div><span className="eyebrow">Orden de configuración</span><h2>Este módulo se habilita después de la estructura física</h2></div>
-        <span className={`setup-flow-state ${gate?.ready ? "ready" : "blocked"}`}>{gate?.ready ? "Habilitado" : "Paso pendiente"}</span>
-      </div>
-      <div className="setup-flow-steps">
-        <span className="done"><b>1</b> Empresa</span>
-        <span className={gate?.ready ? "done" : ""}><b>2</b> Ubicación</span>
-        <span className={gate?.ready ? "done" : ""}><b>3</b> Sububicación</span>
-        <span className={gate?.ready ? "active" : ""}><b>4</b> Proveedores</span>
-      </div>
-      {!gate?.ready && gate?.href && <a className="button secondary" href={gate.href}>{gate.action}</a>}
-    </section>
+    {!creationGate.ready && <CreationPrerequisiteState
+      icon="▣"
+      eyebrow="Jerarquía de creación"
+      title={creationGate.title}
+      message={creationGate.message}
+      href={creationGate.href || "/dashboard/locations"}
+      action={creationGate.action || "Continuar"}
+    />}
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2></div></div>

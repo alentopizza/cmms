@@ -155,3 +155,20 @@ This roadmap is directional and should be updated as priorities change.
 - corporate document dossier with requirement level and expiry metadata;
 - authenticated document upload/download/archive flow;
 - profile-completeness and document-health indicators in the company workspace and directory.
+
+
+## Planned platform governance and distribution roles
+
+Approved but not yet implemented:
+
+- add **Propietario Desweb / Platform Owner** as the final platform privilege ceiling;
+- migrate current platform Superadministrator semantics so only Platform Owner can create/revoke Superadministrators;
+- add **Comercial Desweb** for internal sales/advisor workflows;
+- add **Partner / Distribuidor** with portfolio-scoped customer/commercial visibility;
+- keep customer operational hierarchy separate, with Administrador de empresa as the highest tenant role;
+- add server-enforced "who may create whom" rules;
+- display role purpose, scope, permissions and restrictions inside every user create/edit flow;
+- add privileged-action reauthentication/MFA/audit workflow before any exceptional irreversible operation;
+- later connect commercial roles to lead attribution, customer portfolios, commissions, renewals, partner codes and approved discounts.
+
+Canonical target behavior: `docs/ROLE_MODEL.md`.

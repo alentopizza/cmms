@@ -212,3 +212,32 @@ Status: accepted.
 Corporate/legal/commercial documents require requirement level, issue/expiry dates, references and dossier-specific lifecycle semantics. They therefore use `organization_documents` instead of logo/cover columns or generic maintenance attachments.
 
 The dossier is tenant scoped. Requirement classification is per company rather than globally hard-coded, so country-specific documents can be marked required, optional or not applicable. Current files are retained in PostgreSQL for the same durability reasons as other configuration assets, with a 10 MB per-document upload limit.
+
+
+## ADR-022 — Platform governance and tenant authorization are separate hierarchies
+
+Status: accepted for future implementation.
+
+Desweb CMMS will separate platform/commercial identities from customer operational identities.
+
+Platform roles:
+- Propietario Desweb / Platform Owner;
+- Superadministrador;
+- Comercial Desweb;
+- Partner / Distribuidor.
+
+Tenant roles continue to be scoped to one customer organization, with Administrador de empresa as the highest tenant role.
+
+A sales or partner relationship does not grant operational authority over customer maintenance records. Platform/commercial visibility and tenant permissions must be modeled independently.
+
+## ADR-023 — Platform Owner is the final privilege ceiling
+
+Status: accepted for future implementation.
+
+`platform_owner` is the intended internal key for the maximum Desweb authority. The UI should use **Propietario Desweb** or **Propietario de plataforma**, not SeoAdmin as the canonical role name.
+
+Only the Platform Owner may create or revoke Superadministrators. No ordinary account may promote itself to Platform Owner, and Superadministrators cannot create peers.
+
+Exceptional destructive operations remain governed workflows requiring explicit validation, reauthentication, audit evidence and any configured backup/approval/cooling-off steps. Maximum role level is not a one-click bypass of lifecycle safeguards.
+
+See `docs/ROLE_MODEL.md` for the approved target matrix.

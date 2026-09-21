@@ -15,6 +15,7 @@ Before making changes, read:
 9. `docs/COMMERCIAL_MODEL.md`
 10. `docs/INSTALLATION.md`
 11. `docs/IP_AND_DISTRIBUTION.md`
+12. `docs/ROLE_MODEL.md`
 
 ## Working rules
 
@@ -110,3 +111,16 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 - Corporate-document requirement level is tenant-specific: required, optional or not applicable.
 - Document files must remain organization scoped and downloads must be authenticated.
 - Company profile/document mutations currently remain behind platform-level `companies.manage`; do not broaden this privilege implicitly when adding tenant features.
+
+
+## Approved future role hierarchy
+
+The approved target hierarchy is documented in `docs/ROLE_MODEL.md` and must be read before changing authentication, RBAC, user creation, sales-channel permissions or destructive administration.
+
+Important:
+- this hierarchy is approved product direction but is not fully implemented yet;
+- Platform Owner / Propietario Desweb is the maximum level and the only role allowed to create/revoke Superadministrators;
+- sales and partner roles are platform/commercial identities, not customer maintenance administrators;
+- Company Administrator remains the highest tenant role;
+- every user-creation UI must explain role purpose, scope, permissions, restrictions and which lower roles it may create;
+- destructive exceptional powers must use a governed approval/re-authentication/audit workflow rather than ordinary CRUD controls.

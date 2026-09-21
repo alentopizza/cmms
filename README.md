@@ -17,6 +17,7 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 - `docs/COMMERCIAL_MODEL.md` — planes, suscripciones, ventas y entitlements.
 - `docs/INSTALLATION.md` — instalación descargable/self-hosted con Docker Compose.
 - `docs/IP_AND_DISTRIBUTION.md` — estrategia de propiedad intelectual y distribución.
+- `docs/ROLE_MODEL.md` — jerarquía aprobada de roles, permisos, creación de usuarios y límites de autoridad.
 
 ## Branding
 

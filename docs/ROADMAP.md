@@ -34,6 +34,8 @@ This roadmap is directional and should be updated as priorities change.
 - 15-day trial lifecycle and expiration gate
 - public landing and simulated checkout/provisioning flow
 - Pro organization white-label foundation
+- repository continuity documentation for AI/developer handoff
+- Docker Compose self-hosted installation foundation
 
 ## Next functional priorities
 
@@ -120,3 +122,13 @@ This roadmap is directional and should be updated as priorities change.
 4. Replace simulated paid activation with verified payment events.
 5. Add renewal, past-due and cancellation webhook handling.
 6. Finalize the public marketing landing and conversion analytics.
+
+
+## Distribution and protection path
+
+1. Stabilize a versioned release process and release notes.
+2. Add automated backup/restore verification for self-hosted deployments.
+3. Decide commercial self-hosted license terms before external distribution.
+4. Produce signed/versioned downloadable release artifacts or container images.
+5. Prepare software-authorship registration materials and trademark searches/filings.
+6. Evaluate patent protection only if a specific technical invention is identified and before public disclosure of that invention.

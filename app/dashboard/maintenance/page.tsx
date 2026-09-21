@@ -13,7 +13,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const feedback=await searchParams;
   const canWrite=can(session,"maintenance.write");
 
-  const plans = session.platformRole === "superadmin"
+  const plans = session.platformRole !== "user"
     ? await query<{id:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean}>(
         `SELECT p.id,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
          FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id
@@ -30,7 +30,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
            ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId, session.siteIds]);
 
   const assets=canWrite
-    ? session.platformRole==="superadmin"
+    ? session.platformRole!=="user"
       ? await query<AssetOption>(
           `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,o.name||' · '||s.name||' · '||a.code||' '||a.name label
            FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id

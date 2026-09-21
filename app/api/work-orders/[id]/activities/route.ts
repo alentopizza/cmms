@@ -94,6 +94,23 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       [status,notes||null,activityId],
     );
 
+    if(session.userId){
+      const shift=await client.query<{id:string}>(
+        `SELECT id FROM attendance_shifts
+         WHERE user_id=$1 AND organization_id=$2 AND site_id=$3 AND status='open'
+           AND check_in_at<=now()
+         ORDER BY check_in_at DESC LIMIT 1`,
+        [session.userId,organizationId,siteId],
+      );
+      const eventType=status==="in_progress" ? "started" : status==="completed" ? "completed" : "status_update";
+      await client.query(
+        `INSERT INTO activity_execution_events(
+           organization_id,work_order_id,task_id,user_id,attendance_shift_id,event_type,within_shift,within_site_geofence
+         ) VALUES($1,$2,$3,$4,$5,$6,$7,NULL)`,
+        [organizationId,workOrderId,activityId,session.userId,shift.rows[0]?.id||null,eventType,Boolean(shift.rowCount)],
+      );
+    }
+
     await client.query("COMMIT");
     return NextResponse.redirect(target("?updated=1"),303);
   }catch(error){

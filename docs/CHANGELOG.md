@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-09-21 — Unified module directories and popup creation
+
+### Design system
+
+- Added a shared module header with keyword search, contextual filter and one entity-specific **Agregar** action.
+- Removed the Users-only **Roles en uso** band from the general directory pattern.
+- Standardized wide responsive creation popups.
+- Improved form placeholders with realistic examples and clearer data-entry guidance.
+- Added client-side search/filtering over already-authorized server result sets.
+
+### Modules updated
+
+- Companies
+- Users
+- Locations / Sub-locations
+- Suppliers
+- Crews
+- Assets
+- Work Orders / Requests
+- Maintenance Routines
+- Inventory
+- Leads
+
+### Companies
+
+- Updated company cards toward the supplied visual reference: cover image, overlapping circular logo, centered identity/status and resource progress.
+- Resource denominators are shown only where the product has a real enforced limit.
+- Suppliers display as unlimited rather than implying an unenforced plan cap.
+
+### Creation flows
+
+- Moved supplier, crew, inventory and work-order creation out of inline page forms and into popups.
+- Added a single Locations **Agregar** popup with choice between principal location and sub-location.
+- Added manual Lead creation while retaining landing-page lead capture.
+- Existing contextual create modals for companies, users, assets and routines now use the wider popup treatment.
+
+
 ## 2026-09-21 — Platform Owner contextual edit/delete controls
 
 ### Changed

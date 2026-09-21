@@ -335,3 +335,77 @@ export function ContextUserCreateModal({
     </ModalShell>
   </>;
 }
+
+
+export function LocationCreateModal({
+  organizations,
+  sites,
+  locations,
+  fixedOrganizationId,
+  fixedOrganizationName,
+  returnTo,
+}: {
+  organizations: OrganizationOption[];
+  sites: SiteOption[];
+  locations: LocationOption[];
+  fixedOrganizationId?: string;
+  fixedOrganizationName?: string;
+  returnTo: string;
+}) {
+  const initialOrganization=fixedOrganizationId || (organizations.length===1 ? organizations[0].id : "");
+  const initialSite=sites.length===1 ? sites[0].id : "";
+  const [open,setOpen]=useState(false);
+  const [kind,setKind]=useState<"site"|"sub">("site");
+  const [organizationId,setOrganizationId]=useState(initialOrganization);
+  const [siteId,setSiteId]=useState(initialSite);
+  const [parentId,setParentId]=useState("");
+
+  useEffect(()=>{
+    if(!open) return;
+    setKind("site");
+    setOrganizationId(initialOrganization);
+    setSiteId(initialSite);
+    setParentId("");
+  },[open,initialOrganization,initialSite]);
+
+  const visibleSites=sites.filter(site=>!organizationId || site.organization_id===organizationId);
+  const resolvedSiteId=visibleSites.some(site=>site.id===siteId) ? siteId : (visibleSites.length===1 ? visibleSites[0].id : "");
+  const visibleLocations=locations.filter(location=>location.site_id===resolvedSiteId);
+
+  return <>
+    <TriggerButton label="Agregar" icon="⌂" onClick={()=>setOpen(true)} />
+    <ModalShell open={open} onClose={()=>setOpen(false)} eyebrow="Estructura física" title="Agregar ubicación" description="Crea una sede principal o una sububicación manteniendo la relación correcta con la empresa.">
+      <div className="location-create-switch" role="tablist" aria-label="Tipo de ubicación">
+        <button type="button" className={kind==="site"?"active":""} onClick={()=>setKind("site")}><strong>Ubicación principal</strong><span>Sede, planta o punto operativo</span></button>
+        <button type="button" className={kind==="sub"?"active":""} onClick={()=>setKind("sub")}><strong>Sububicación</strong><span>Área, piso, cuarto o zona interna</span></button>
+      </div>
+
+      {kind==="site" ? <form className="company-modal-form" method="post" action={organizationId ? `/api/organizations/${organizationId}/sites` : undefined}>
+        <input type="hidden" name="return_to" value={returnTo} />
+        {!fixedOrganizationId && <div className="field"><label>Empresa *</label><select value={organizationId} onChange={event=>setOrganizationId(event.target.value)} required><option value="">Selecciona una empresa</option>{organizations.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>}
+        {fixedOrganizationId && <input type="hidden" name="organization_id" value={fixedOrganizationId} />}
+        <div className="form-grid">
+          <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
+          <div className="field"><label>Código</label><input name="code" placeholder="Ej. BOG-01" /></div>
+          <div className="field form-span-2"><label>Dirección</label><input name="address" placeholder="Ej. Carrera 15 # 93-47, Bogotá" /></div>
+          <div className="field"><label>Ciudad</label><input name="city" placeholder="Ej. Bogotá" /></div>
+          <div className="field"><label>País</label><input name="country" defaultValue="CO" maxLength={2} placeholder="CO" /></div>
+        </div>
+        {fixedOrganizationName && <div className="modal-context-note">Empresa seleccionada: <strong>{fixedOrganizationName}</strong></div>}
+        <footer className="modal-actions"><button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="button" type="submit" disabled={!organizationId}>Crear ubicación</button></footer>
+      </form> :
+      <form className="company-modal-form" method="post" action={resolvedSiteId ? `/api/sites/${resolvedSiteId}/locations` : undefined}>
+        <input type="hidden" name="return_to" value={returnTo} />
+        <div className="form-grid">
+          <div className="field form-span-2"><label>Ubicación principal *</label><select value={resolvedSiteId} onChange={event=>{setSiteId(event.target.value);setParentId("");}} required><option value="">Selecciona una sede</option>{visibleSites.map(site=><option key={site.id} value={site.id}>{site.organization_name ? site.organization_name+" · " : ""}{site.name}</option>)}</select></div>
+          <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Cuarto de máquinas 2" /></div>
+          <div className="field"><label>Código</label><input name="code" placeholder="Ej. CM-02" /></div>
+          <div className="field"><label>Ubicación superior</label><select name="parent_id" value={parentId} onChange={event=>setParentId(event.target.value)}><option value="">Nivel principal de la sede</option>{visibleLocations.map(location=><option key={location.id} value={location.id}>{location.label || location.name}</option>)}</select></div>
+          <div className="field"><label>Tipo</label><select name="type" defaultValue="area"><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
+          <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Ej. Nivel -1, acceso por corredor técnico" /></div>
+        </div>
+        <footer className="modal-actions"><button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="button" type="submit" disabled={!resolvedSiteId}>Crear sububicación</button></footer>
+      </form>}
+    </ModalShell>
+  </>;
+}

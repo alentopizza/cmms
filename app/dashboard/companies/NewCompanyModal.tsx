@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
+  const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
+
+  useEffect(()=>{ setPortalHost(document.body); },[]);
   const [logoPreview, setLogoPreview] = useState("");
   const [coverPreview, setCoverPreview] = useState("");
 
@@ -44,7 +47,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
       Agregar
     </button>
 
-    {open && <div className="modal-backdrop" role="presentation" onMouseDown={event => {
+    {open && portalHost && createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget) setOpen(false);
     }}>
       <section className="company-modal unified-create-modal" role="dialog" aria-modal="true" aria-labelledby="new-company-title">
@@ -129,6 +132,6 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
           </footer>
         </form>
       </section>
-    </div>}
+    </div>,portalHost)}
   </>;
 }

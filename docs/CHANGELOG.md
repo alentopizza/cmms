@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-09-21 — Platform Owner universal deletion
+
+### Added
+
+- Added owner-only destructive workspace at `/dashboard/platform-owner/purge`.
+- Added `lib/platform-owner-purge.ts`, a PostgreSQL foreign-key-driven recursive deletion engine.
+- Added owner-only discovery/execution API at `/api/platform-owner/purge`.
+- Added table/record selection, explicit `ELIMINAR` confirmation and deletion summaries.
+- Added sidebar and Settings access visible only to Platform Owner.
+- Integrated user deletion so Platform Owner can remove users with historical records while other roles keep the existing traceability restriction.
+- Added audit events using action `platform_owner.force_delete`.
+- Protected the active Platform Owner account from universal deletion.
+- Added transactional rollback when restrictive FK cycles cannot be resolved safely.
+
+### Authorization
+
+- Universal deletion is checked server-side with `isPlatformOwner(session)`.
+- Superadministrators, Company Administrators and all operational roles receive no access to the destructive endpoint.
+
+
 ## 2026-09-21 — Platform Owner access foundation
 
 ### Added / changed

@@ -4,6 +4,7 @@ import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -90,6 +91,15 @@ export async function POST(
     }
 
     if (intent === "delete") {
+      if (isPlatformOwner(session)) {
+        const result = await forceDeleteRecord(client, "users", id, {
+          userId: session.userId,
+          email: session.email,
+        });
+        await client.query("COMMIT");
+        return json(200, { message: "Usuario y dependencias eliminados por Propietario Desweb (" + result.deletedRows + " filas)." });
+      }
+
       if (await hasActivity(client, id)) {
         await client.query("ROLLBACK");
         return json(409, { message: "Este usuario tiene movimientos registrados. Por trazabilidad no puede eliminarse; desactívalo para conservar su historial." });

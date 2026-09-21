@@ -172,3 +172,15 @@ Implementation status:
 - later connect commercial roles to lead attribution, customer portfolios, commissions, renewals, partner codes and approved discounts.
 
 Canonical target behavior: `docs/ROLE_MODEL.md`.
+
+
+## Completed development tooling
+
+- Platform Owner-only universal deletion workspace;
+- PostgreSQL FK-driven recursive deletion engine;
+- transaction rollback on unresolved restrictive cycles;
+- Platform Owner self-protection;
+- audit entry for successful forced purges;
+- existing user deletion integrated with forced deletion only when the actor is Platform Owner.
+
+Before production hardening, replace/reinforce this development workflow with the approved reauthentication, MFA, retention, backup and final-approval process.

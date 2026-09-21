@@ -397,3 +397,12 @@ The full company page includes:
 - a corporate document dossier with required/optional/not-applicable classification, issue/expiry dates and visual expiry alerts.
 
 Corporate documents are stored in `organization_documents` with metadata and durable PostgreSQL file bytes. They are intentionally separate from company logo/cover assets and from maintenance-operation attachments.
+
+
+### Platform Owner universal deletion
+
+The active Platform Owner can now use an owner-only destructive workspace at `/dashboard/platform-owner/purge`.
+
+It is intended for development/test-data cleanup and can delete a selected record even when dependent history would normally prevent removal. The server derives dependencies from PostgreSQL foreign keys and resolves them transactionally.
+
+This is not a global weakening of CMMS traceability rules. Superadministrators and tenant users retain normal restrictions. The current Platform Owner identity remains protected from deletion.

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
-import type { OrganizationRole } from "@/lib/permissions";
+import type { OrganizationRole, PlatformRole } from "@/lib/permissions";
 
 export const COOKIE_NAME = "cmms_session";
 
@@ -14,7 +14,7 @@ export type AuthSession = {
   userId: string | null;
   email: string;
   fullName: string;
-  platformRole: "superadmin" | "user";
+  platformRole: PlatformRole;
   organizationId: string | null;
   organizationName: string | null;
   role: OrganizationRole | null;
@@ -90,8 +90,8 @@ export async function getSession(): Promise<AuthSession | null> {
       kind: "bootstrap",
       userId: null,
       email,
-      fullName: "Desarrollador / Superadministrador",
-      platformRole: "superadmin",
+      fullName: "Propietario Desweb",
+      platformRole: "platform_owner",
       organizationId: null,
       organizationName: null,
       role: null,
@@ -111,7 +111,7 @@ export async function getSession(): Promise<AuthSession | null> {
     id: string;
     email: string;
     full_name: string;
-    platform_role: "superadmin" | "user";
+    platform_role: PlatformRole;
     organization_id: string | null;
     organization_name: string | null;
     role: OrganizationRole | null;
@@ -160,7 +160,7 @@ export async function getSession(): Promise<AuthSession | null> {
   if (!result.rowCount) return null;
   const user = result.rows[0];
 
-  if (user.platform_role !== "superadmin" && !user.organization_id) return null;
+  if (user.platform_role === "user" && !user.organization_id) return null;
 
   return {
     kind: "user",
@@ -170,16 +170,16 @@ export async function getSession(): Promise<AuthSession | null> {
     platformRole: user.platform_role,
     organizationId: user.organization_id,
     organizationName: user.organization_name,
-    role: user.platform_role === "superadmin" ? null : user.role,
+    role: user.platform_role !== "user" ? null : user.role,
     siteId: user.site_id,
-    accessAllSites: user.platform_role === "superadmin" ? true : Boolean(user.access_all_sites),
-    siteIds: user.platform_role === "superadmin" ? [] : (user.site_ids || []),
-    planCode: user.platform_role === "superadmin" ? null : user.plan_code,
-    subscriptionStatus: user.platform_role === "superadmin" ? "active" : user.subscription_status,
-    trialEndsAt: user.platform_role === "superadmin" ? null : user.trial_ends_at,
-    currentPeriodEnd: user.platform_role === "superadmin" ? null : user.current_period_end,
-    whiteLabel: user.platform_role === "superadmin" ? true : Boolean(user.white_label),
-    externalSupplierId: user.platform_role === "superadmin" ? null : user.external_supplier_id,
+    accessAllSites: user.platform_role !== "user" ? true : Boolean(user.access_all_sites),
+    siteIds: user.platform_role !== "user" ? [] : (user.site_ids || []),
+    planCode: user.platform_role !== "user" ? null : user.plan_code,
+    subscriptionStatus: user.platform_role !== "user" ? "active" : user.subscription_status,
+    trialEndsAt: user.platform_role !== "user" ? null : user.trial_ends_at,
+    currentPeriodEnd: user.platform_role !== "user" ? null : user.current_period_end,
+    whiteLabel: user.platform_role !== "user" ? true : Boolean(user.white_label),
+    externalSupplierId: user.platform_role !== "user" ? null : user.external_supplier_id,
   };
 }
 
@@ -189,5 +189,5 @@ export async function isAuthenticated() {
 
 
 export function canAccessSite(session: AuthSession, siteId: string) {
-  return session.platformRole === "superadmin" || session.accessAllSites || session.siteIds.includes(siteId);
+  return session.platformRole !== "user" || session.accessAllSites || session.siteIds.includes(siteId);
 }

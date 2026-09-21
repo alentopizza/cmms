@@ -136,3 +136,15 @@ Do not add a standalone purge module, table browser or sidebar entry. Owner cont
 Do not grant the override through broad permissions such as `users.manage`, `companies.manage` or Superadministrator status. Every forced-update/delete endpoint must independently verify `isPlatformOwner(session)`.
 
 Normal roles retain their existing hierarchy, edit permissions, history/FK restrictions and creation flows. Never remove Platform Owner self-protection from the delete engine.
+
+
+## Module directory UI invariant
+
+When adding or redesigning a primary directory module:
+
+- use the shared module header pattern: search, contextual filter, one Add action;
+- creation should open a wide popup/modal rather than consume permanent page space;
+- use entity-specific icons and practical example placeholders;
+- preserve server-side RBAC, tenant/site scoping and setup-sequence gates independently of client-side filtering;
+- client search/filter only operates on records the server already authorized;
+- do not invent resource quotas for visual progress bars. Only display a denominator when the backend actually enforces that limit.

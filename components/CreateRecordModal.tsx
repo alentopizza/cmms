@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function CreateRecordModal({
   title,
@@ -20,6 +21,9 @@ export default function CreateRecordModal({
   children: React.ReactNode;
 }) {
   const [open,setOpen]=useState(false);
+  const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
+
+  useEffect(()=>{ setPortalHost(document.body); },[]);
 
   useEffect(()=>{
     if(!open) return;
@@ -37,7 +41,7 @@ export default function CreateRecordModal({
       <span className="module-add-button-icon" aria-hidden="true">{icon}</span>
       <span>{triggerLabel}</span>
     </button>
-    {open && <div className="modal-backdrop unified-create-backdrop" role="presentation" onMouseDown={event=>{
+    {open && portalHost && createPortal(<div className="modal-backdrop unified-create-backdrop" role="presentation" onMouseDown={event=>{
       if(event.target===event.currentTarget) setOpen(false);
     }}>
       <section className="company-modal unified-create-modal" role="dialog" aria-modal="true">
@@ -51,6 +55,6 @@ export default function CreateRecordModal({
         </header>
         <div className="unified-create-modal-body">{children}</div>
       </section>
-    </div>}
+    </div>,portalHost)}
   </>;
 }

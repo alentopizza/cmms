@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -24,6 +25,10 @@ function ModalShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
+
+  useEffect(()=>{ setPortalHost(document.body); },[]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -37,9 +42,9 @@ function ModalShell({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !portalHost) return null;
 
-  return <div className="modal-backdrop contextual-create-backdrop" role="presentation" onMouseDown={event => {
+  return createPortal(<div className="modal-backdrop contextual-create-backdrop" role="presentation" onMouseDown={event => {
     if (event.target === event.currentTarget) onClose();
   }}>
     <section className="company-modal contextual-create-modal unified-create-modal" role="dialog" aria-modal="true">
@@ -53,7 +58,7 @@ function ModalShell({
       </header>
       {children}
     </section>
-  </div>;
+  </div>,portalHost);
 }
 
 function TriggerButton({

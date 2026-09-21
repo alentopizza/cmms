@@ -23,8 +23,8 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) return new NextResponse("Empresa inválida", { status: 400 });
-  if (session.platformRole !== "superadmin" && session.organizationId !== id) return new NextResponse("Forbidden", { status: 403 });
-  if (session.platformRole !== "superadmin" && !session.accessAllSites) return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole === "user" && session.organizationId !== id) return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole === "user" && !session.accessAllSites) return new NextResponse("Forbidden", { status: 403 });
 
   const form = await request.formData();
   const name = String(form.get("name") || "").trim();

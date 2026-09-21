@@ -36,12 +36,15 @@ export function CurrentSectionHeader({ organizationName }: { organizationName: s
   const contextualEyebrow = pathname.startsWith("/dashboard/settings") && organizationName ? "Empresa" : section.eyebrow;
 
   return <header className="context-header">
-    <div className="context-header-icon" aria-hidden="true">{section.icon}</div>
-    <div className="context-header-copy">
-      <span>{contextualEyebrow}</span>
-      <strong>{section.label}</strong>
-      {organizationName && <small>{organizationName}</small>}
+    <div className="context-header-left">
+      <div className="context-header-icon" aria-hidden="true">{section.icon}</div>
+      <div className="context-header-copy">
+        <span>{contextualEyebrow}</span>
+        <strong>{section.label}</strong>
+        {organizationName && <small>{organizationName}</small>}
+      </div>
     </div>
+    <div id="context-header-tools" className="context-header-tools-slot" />
   </header>;
 }
 

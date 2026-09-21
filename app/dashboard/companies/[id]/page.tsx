@@ -194,7 +194,7 @@ export default async function CompanyDetailPage({
     query<OrganizationDocument>(
       `SELECT d.id,d.category,d.requirement_level,d.display_name,d.reference,
               d.issue_date::text,d.expires_at::text,d.notes,d.file_name,d.file_mime_type,
-              d.file_size_bytes::text,d.created_at::text,d.updated_at::text,u.name uploaded_by_name
+              d.file_size_bytes::text,d.created_at::text,d.updated_at::text,u.full_name uploaded_by_name
        FROM organization_documents d
        LEFT JOIN users u ON u.id=d.uploaded_by
        WHERE d.organization_id=$1 AND d.archived_at IS NULL

@@ -131,15 +131,6 @@ export default function UserManagement({
     };
   }, [mode, saving]);
 
-  const roleCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    users.forEach(user => {
-      const key = roleKey(user);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    });
-    return [...counts.entries()];
-  }, [users]);
-
   const visibleSites = useMemo(() => {
     if (!draft.organization_id) return [];
     return sites.filter(site => site.organization_id === draft.organization_id);

@@ -35,15 +35,15 @@ export default function NewCompanyModal({ error }: { error?: string }) {
   const errorMessage = error ? errorMessages[error] || "No se pudo crear la empresa." : "";
 
   return <>
-    <button className="button company-new-button" type="button" onClick={() => setOpen(true)}>
-      <span aria-hidden="true">＋</span>
-      Nueva empresa
+    <button className="button company-new-button module-add-button" type="button" onClick={() => setOpen(true)}>
+      <span className="module-add-button-icon" aria-hidden="true">◫</span>
+      Agregar
     </button>
 
     {open && <div className="modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget) setOpen(false);
     }}>
-      <section className="company-modal" role="dialog" aria-modal="true" aria-labelledby="new-company-title">
+      <section className="company-modal unified-create-modal" role="dialog" aria-modal="true" aria-labelledby="new-company-title">
         <header className="modal-header">
           <div>
             <span className="eyebrow">Nuevo registro</span>
@@ -82,9 +82,9 @@ export default function NewCompanyModal({ error }: { error?: string }) {
           <div className="modal-section">
             <div className="modal-section-title"><strong>Información de la empresa</strong><span>Datos generales</span></div>
             <div className="form-grid">
-              <div className="field"><label htmlFor="new-company-name">Nombre comercial</label><input id="new-company-name" name="name" required placeholder="Centro Médico Madrid" /></div>
-              <div className="field"><label htmlFor="new-company-legal">Razón social</label><input id="new-company-legal" name="legal_name" placeholder="Nombre legal de la empresa" /></div>
-              <div className="field"><label htmlFor="new-company-tax">NIT / Identificación</label><input id="new-company-tax" name="tax_id" placeholder="900.000.000-0" /></div>
+              <div className="field"><label htmlFor="new-company-name">Nombre comercial</label><input id="new-company-name" name="name" required placeholder="Ej. The Shop Colombia" /></div>
+              <div className="field"><label htmlFor="new-company-legal">Razón social</label><input id="new-company-legal" name="legal_name" placeholder="Ej. The Shop Colombia S.A.S." /></div>
+              <div className="field"><label htmlFor="new-company-tax">NIT / Identificación</label><input id="new-company-tax" name="tax_id" placeholder="Ej. 901.234.567-8" /></div>
               <div className="field"><label htmlFor="new-company-timezone">Zona horaria</label>
                 <select id="new-company-timezone" name="timezone" defaultValue="America/Bogota">
                   <option value="America/Bogota">Colombia · America/Bogota</option>
@@ -111,9 +111,9 @@ export default function NewCompanyModal({ error }: { error?: string }) {
           <div className="modal-section">
             <div className="modal-section-title"><strong>Sede principal</strong><span>Primer punto de operación</span></div>
             <div className="form-grid">
-              <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Sede principal" /></div>
+              <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Ej. Sede Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-code">Código</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="MAIN" /></div>
-              <div className="field form-span-2"><label htmlFor="new-company-address">Dirección</label><input id="new-company-address" name="address" placeholder="Carrera 12 #34-56, Barrio El Porvenir" /></div>
+              <div className="field form-span-2"><label htmlFor="new-company-address">Dirección</label><input id="new-company-address" name="address" placeholder="Ej. Carrera 15 # 93-47, Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-city">Ciudad</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-country">País</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
             </div>

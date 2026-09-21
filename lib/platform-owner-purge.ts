@@ -141,7 +141,14 @@ async function deleteRowByCtid(
   const dependencies = await dependenciesFor(client, table);
 
   for (const dependency of dependencies) {
-    if (dependency.delete_action !== "a" && dependency.delete_action !== "r") continue;
+    // Delete branches that PostgreSQL would block (NO ACTION/RESTRICT) and
+    // branches that are semantically owned by the parent (CASCADE). Keep
+    // SET NULL / SET DEFAULT references intact.
+    if (
+      dependency.delete_action !== "a" &&
+      dependency.delete_action !== "r" &&
+      dependency.delete_action !== "c"
+    ) continue;
 
     const values = dependency.parent_columns.map(column => row[column]);
     if (values.some(value => value === null || value === undefined)) continue;
@@ -173,8 +180,9 @@ async function deleteRowByCtid(
     [ctid],
   );
 
-  if (deleted.rowCount) {
-    stats.set(table, (stats.get(table) || 0) + deleted.rowCount);
+  const deletedCount = deleted.rowCount || 0;
+  if (deletedCount) {
+    stats.set(table, (stats.get(table) || 0) + deletedCount);
   }
 
   active.delete(key);

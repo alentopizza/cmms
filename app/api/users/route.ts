@@ -6,6 +6,7 @@ import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -42,6 +43,11 @@ export async function POST(request: Request) {
   let siteIds = uniqueSiteIds(form);
   const creatingSuperadmin = requestedRole === "superadmin";
   const returnTo = String(form.get("return_to") || "");
+  let avatar=null;
+  try { avatar=await readImageUpload(form,"avatar"); }
+  catch(error) {
+    return response(request,422,{fields:{general:imageUploadMessage(error)}},"?error=avatar",returnTo);
+  }
 
   const fields: FieldErrors = {};
   if (!fullName) fields.full_name = "Ingresa el nombre completo.";
@@ -151,10 +157,15 @@ export async function POST(request: Request) {
 
     const { salt, hash } = hashPassword(password);
     const user = await client.query<{ id: string }>(
-      `INSERT INTO users(email,full_name,phone,password_hash,password_salt,platform_role)
-       VALUES($1,$2,$3,$4,$5,$6)
+      `INSERT INTO users(
+         email,full_name,phone,password_hash,password_salt,platform_role,avatar_data,avatar_mime_type
+       )
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING id`,
-      [email, fullName, phone || null, hash, salt, creatingSuperadmin ? "superadmin" : "user"],
+      [
+        email,fullName,phone||null,hash,salt,creatingSuperadmin?"superadmin":"user",
+        avatar?.data||null,avatar?.mime||null,
+      ],
     );
 
     if (!creatingSuperadmin) {

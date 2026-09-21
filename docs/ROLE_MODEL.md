@@ -418,27 +418,22 @@ The platform-role split is intended to support later features without granting m
 Commercial metrics must remain separate from tenant operational authorization.
 
 
-## Platform Owner universal deletion — development capability
+## Platform Owner contextual edit and forced delete — development capability
 
 Status: implemented.
 
-During the active development phase, `platform_owner` has an exclusive universal-deletion capability.
+During active development, `platform_owner` has exclusive contextual **Editar** and **Eliminar** actions inside the normal CMMS modules. There is no separate deletion module or destructive-data browser.
 
 Rules:
 
-- only a server-authenticated `platform_owner` session may access the purge discovery or execution endpoints;
-- Superadministrator and every tenant role receive HTTP 403 even if they manually call the endpoint;
-- the owner workspace is available at `/dashboard/platform-owner/purge`;
-- deletion targets any public base table that exposes an `id` column, except explicitly excluded migration metadata tables;
-- the engine discovers foreign-key dependencies from PostgreSQL catalogs rather than relying on a hard-coded list;
-- RESTRICT, NO ACTION and CASCADE-owned branches are recursively deleted before the target;
-- SET NULL and SET DEFAULT relationships keep their surviving records according to database semantics;
-- the whole operation runs in one transaction;
-- an unresolved restrictive FK cycle aborts and rolls back the entire operation;
-- the active Platform Owner account can never be deleted by this engine;
-- the user must explicitly confirm with the word `ELIMINAR` in the universal workspace;
-- successful operations write a `platform_owner.force_delete` audit event with target and deletion counts.
+- edit/delete controls are shown beside the record being managed (Lead, Empresa, Ubicación, Sububicación, Usuario, Activo, OT, Rutina, Inventario, Proveedor, Cuadrilla and related operational records);
+- server-side forced deletion remains exclusive to an authenticated `platform_owner`;
+- Superadministrator and tenant roles keep their existing hierarchy, create flows and traceability restrictions;
+- the deletion engine discovers PostgreSQL foreign-key dependencies at runtime and resolves RESTRICT / NO ACTION / CASCADE-owned branches transactionally;
+- SET NULL and SET DEFAULT relationships preserve surviving records according to database semantics;
+- unresolved restrictive cycles roll back the entire transaction;
+- the active Platform Owner identity cannot be deleted;
+- contextual owner updates are allow-listed by table and field and are audited as `platform_owner.force_update`;
+- successful forced deletes are audited as `platform_owner.force_delete`.
 
-Normal roles retain their existing delete/traceability rules. The universal behavior is not inherited by Superadministrators.
-
-Existing delete flows may opt into the universal engine only after verifying `platform_owner` server-side. User deletion is the first integrated normal-flow example: Platform Owner may remove a user with historical records while other roles remain blocked.
+Normal edit permissions that already existed for other roles remain unchanged. The new unrestricted contextual override is not inherited by Superadministrators.

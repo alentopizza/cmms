@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type Crew = {
   id:string;
@@ -26,6 +27,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
   if(!can(session,"crews.manage")) redirect("/dashboard");
   const params=await searchParams;
   const superadmin=session.platformRole!=="user";
+  const owner=isPlatformOwner(session);
 
   const [crews,organizations,sites,workers]=await Promise.all([
     superadmin
@@ -105,6 +107,11 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
         <div className="crew-card-head"><span className="crew-icon">◉</span><div><strong>{c.name}</strong><span>{c.organization_name}{c.site_name?` · ${c.site_name}`:""}</span></div><span className={`status-badge ${c.active?"status-active":"status-inactive"}`}><i />{c.active?"Activa":"Inactiva"}</span></div>
         <div className="crew-card-meta"><div><span>Líder</span><strong>{c.leader_name||"Sin líder"}</strong></div><div><span>Integrantes</span><strong>{c.member_count}</strong></div></div>
         {c.description && <p>{c.description}</p>}
+        {owner&&<OwnerRecordActions table="crews" id={c.id} label={c.name} fields={[
+          {name:"name",label:"Nombre",value:c.name},
+          {name:"description",label:"Descripción",value:c.description||"",type:"textarea"},
+          {name:"active",label:"Estado",value:c.active,type:"checkbox"},
+        ]}/>}
       </article>)}</div> : <div className="card empty-state"><strong>Aún no hay cuadrillas.</strong><span>Crea técnicos o colaboradores externos y luego conforma el primer equipo.</span></div>}
     </section>
   </>;

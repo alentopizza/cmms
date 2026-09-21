@@ -118,7 +118,7 @@ export default async function LocationsIndexPage({
       count={sites.rowCount || 0}
       countLabel="sedes"
       searchPlaceholder="Buscar sede, empresa, ciudad o código"
-      action={hierarchy.organizations > 0 ? <LocationCreateModal
+      action={organizations.rows.length > 0 ? <LocationCreateModal
         organizations={organizations.rows}
         sites={siteOptions}
         locations={sublocations.rows}

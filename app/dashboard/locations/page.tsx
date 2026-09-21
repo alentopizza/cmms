@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { SiteCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
-import OwnerDeleteButton from "@/components/OwnerDeleteButton";
+import OwnerRecordActions from "@/components/OwnerRecordActions";
 
 type OrganizationRow = { id: string; name: string };
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label: string };
@@ -152,7 +152,16 @@ export default async function LocationsIndexPage({
             </div>
             <div className="site-stats"><strong>{site.location_count}</strong><span>sububicaciones</span></div>
           </div>
-          <div className="owner-inline-row"><Link className="button" href={`/dashboard/locations/${site.id}`}>Administrar jerarquía</Link>{owner && <OwnerDeleteButton table="sites" id={site.id} label={site.name} />}</div>
+          <div className="owner-inline-row">
+            <Link className="button" href={`/dashboard/locations/${site.id}`}>Administrar jerarquía</Link>
+            {owner && <OwnerRecordActions table="sites" id={site.id} label={site.name} fields={[
+              {name:"name",label:"Nombre",value:site.name},
+              {name:"code",label:"Código",value:site.code||""},
+              {name:"city",label:"Ciudad",value:site.city||""},
+              {name:"country",label:"País",value:site.country},
+              {name:"active",label:"Estado",value:site.active,type:"checkbox"},
+            ]}/>}
+          </div>
         </article>)}
       </div>
       {!sites.rowCount && <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div>}

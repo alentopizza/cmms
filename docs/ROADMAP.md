@@ -159,14 +159,14 @@ This roadmap is directional and should be updated as priorities change.
 
 ## Planned platform governance and distribution roles
 
-Approved but not yet implemented:
+Implementation status:
 
-- add **Propietario Desweb / Platform Owner** as the final platform privilege ceiling;
-- migrate current platform Superadministrator semantics so only Platform Owner can create/revoke Superadministrators;
+- **completed:** add **Propietario Desweb / Platform Owner** as the final platform privilege ceiling;
+- **completed:** reserve Superadministrator creation/assignment to Platform Owner;
 - add **Comercial Desweb** for internal sales/advisor workflows;
 - add **Partner / Distribuidor** with portfolio-scoped customer/commercial visibility;
 - keep customer operational hierarchy separate, with Administrador de empresa as the highest tenant role;
-- add server-enforced "who may create whom" rules;
+- **partially completed:** server-enforced "who may create whom" rules for Platform Owner → Superadministrator; expand when Commercial/Partner roles are introduced;
 - display role purpose, scope, permissions and restrictions inside every user create/edit flow;
 - add privileged-action reauthentication/MFA/audit workflow before any exceptional irreversible operation;
 - later connect commercial roles to lead attribution, customer portfolios, commissions, renewals, partner codes and approved discounts.

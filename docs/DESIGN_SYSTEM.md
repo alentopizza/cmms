@@ -155,3 +155,29 @@ Public navigation allowed from login:
 - a compact post-form CTA to start the 15-day Trial.
 
 Do not expose operational modules before authentication. Do not show password-recovery affordances until a real recovery flow exists.
+
+
+## Global visual direction
+
+Desweb CMMS should consistently feel **fresh, modern and technological** across public and authenticated surfaces.
+
+For public/commercial pages, the preferred visual language is:
+
+- dark control-center backgrounds;
+- subtle technical grids and circuit-like separators;
+- Desweb teal/mint as the primary glow/accent family;
+- restrained glass/translucent surfaces;
+- data visualization and operational telemetry as decoration with product relevance;
+- compact, high-contrast typography and strong information hierarchy;
+- premium SaaS feel without copying third-party layouts or brand identities.
+
+The landing reference direction is inspiration only. Do not reproduce third-party artwork, logos, exact compositions or proprietary visual assets.
+
+Avoid:
+- generic neon-blue cyberpunk styling that ignores Desweb colors;
+- oversized decorative gradients without product meaning;
+- generic stock illustrations;
+- fake customer logos, testimonials or performance claims;
+- excessive animation that harms readability.
+
+Authenticated product surfaces should stay calmer than the public landing while preserving the same technological DNA.

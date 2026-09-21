@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-20 — Dark technology landing visual system
+
+### Changed
+
+- Reworked the public landing CSS into a dark technology/control-center aesthetic inspired by the supplied visual reference while preserving the Desweb identity.
+- Added institutional dark backgrounds, teal/mint glow, technical grid treatments, darker product telemetry panels and premium SaaS surface styling.
+- Refined hero and section copy toward a technology-first maintenance-control proposition.
+- Extended the same visual language to the self-hosted/downloads page.
+- Added global design-system guidance requiring future project surfaces to feel fresh, modern and technological without copying third-party branding or artwork.
+
+
 ## 2026-09-20 — Login public navigation
 
 ### Changed

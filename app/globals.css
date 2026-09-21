@@ -1506,3 +1506,249 @@ html[data-theme="dark"] .login-conversion>div a{color:#aebbc4}
   .login-public-nav a{font-size:9px}
   .login-public-nav>div a:last-child{display:none}
 }
+
+
+/* Landing visual direction: dark technological control-center aesthetic */
+.marketing-page-pro{
+  --landing-bg:#0b141b;
+  --landing-bg-soft:#10202a;
+  --landing-panel:#12232d;
+  --landing-panel-2:#162a35;
+  --landing-line:rgba(121,202,196,.13);
+  --landing-border:rgba(186,227,224,.14);
+  --landing-text:#f4fbfc;
+  --landing-muted:#9cb0b9;
+  --landing-glow:rgba(56,178,169,.28);
+  background:
+    radial-gradient(circle at 78% 8%,rgba(56,178,169,.17),transparent 28rem),
+    radial-gradient(circle at 12% 22%,rgba(121,202,196,.08),transparent 22rem),
+    linear-gradient(180deg,#091219 0,#0c171f 42%,#0a1218 100%);
+  color:var(--landing-text);
+  position:relative;
+  overflow:hidden;
+}
+.marketing-page-pro:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    linear-gradient(var(--landing-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--landing-line) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent 90%);
+  opacity:.25;
+}
+.marketing-top{background:rgba(8,18,24,.82)!important;border-bottom:1px solid rgba(186,227,224,.08)!important}
+.marketing-nav-pro{position:relative}
+.marketing-brand-copy strong{color:#fff}
+.marketing-brand-copy small{color:#7f949e}
+.marketing-nav-links a,.marketing-login-link{color:#aebfc6!important}
+.marketing-nav-links a:hover,.marketing-login-link:hover{color:#eafafa!important}
+.marketing-nav-cta{
+  box-shadow:0 0 0 1px rgba(121,202,196,.18),0 0 24px rgba(56,178,169,.22);
+}
+.marketing-hero-pro{position:relative;padding-top:96px;padding-bottom:82px}
+.marketing-hero-copy-pro h1{color:#f7fcfd;text-shadow:0 6px 30px rgba(0,0,0,.24)}
+.marketing-hero-copy-pro h1 em{
+  background:linear-gradient(90deg,#72ddd4,#b7f0eb);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:none;
+}
+.marketing-hero-copy-pro p{color:#a8bbc3}
+.marketing-beta-pill{
+  border-color:rgba(121,202,196,.22);
+  background:rgba(56,178,169,.08);
+  color:#a9e8e2;
+  box-shadow:inset 0 0 18px rgba(56,178,169,.05);
+}
+.marketing-primary-cta{
+  background:linear-gradient(90deg,#36b8af,#68d9d0)!important;
+  color:#071318!important;
+  box-shadow:0 0 0 1px rgba(186,227,224,.2),0 12px 30px rgba(56,178,169,.25);
+}
+.marketing-primary-cta:hover{filter:brightness(1.06)}
+.marketing-secondary-cta{
+  background:rgba(255,255,255,.03)!important;
+  color:#dceced!important;
+  border:1px solid rgba(186,227,224,.13);
+}
+.marketing-hero-proof{border-top-color:rgba(186,227,224,.11)}
+.marketing-hero-proof b{color:#eefafb}
+.marketing-hero-proof small{color:#7f939d}
+.marketing-product-stage{min-height:560px}
+.marketing-product-glow{
+  inset:0;
+  background:
+    radial-gradient(circle at 50% 44%,rgba(56,178,169,.34),rgba(56,178,169,.08) 33%,transparent 68%);
+  filter:blur(24px);
+}
+.marketing-product-window{
+  border-color:rgba(186,227,224,.2);
+  background:#0f1d25;
+  box-shadow:
+    0 0 0 1px rgba(121,202,196,.05),
+    0 36px 90px rgba(0,0,0,.44),
+    0 0 55px rgba(56,178,169,.12);
+}
+.marketing-product-window-head{background:#0c1820;border-bottom-color:rgba(186,227,224,.08)}
+.marketing-product-window-head>span{color:#5f7782}
+.marketing-product-window-head>b{color:#67d2c9}
+.marketing-product-body{background:#0e1b23}
+.marketing-product-sidebar{
+  background:
+    linear-gradient(180deg,rgba(39,60,73,.98),rgba(22,39,50,.98)),
+    #1d313d;
+  border-right:1px solid rgba(186,227,224,.07);
+}
+.marketing-product-sidebar span{color:#839aa4}
+.marketing-product-sidebar span.active{
+  background:linear-gradient(90deg,rgba(56,178,169,.18),rgba(56,178,169,.04));
+  box-shadow:inset 2px 0 0 #56c8bf;
+}
+.marketing-product-main{background:
+  linear-gradient(rgba(121,202,196,.028) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(121,202,196,.028) 1px,transparent 1px),
+  #0d1921;
+  background-size:30px 30px;
+}
+.marketing-product-title strong,.marketing-mini-metrics strong,.marketing-chart-foot strong,.marketing-health-ring strong{color:#edf8fa}
+.marketing-product-title>span{background:rgba(56,178,169,.12);color:#8ae1d9}
+.marketing-mini-metrics article,
+.marketing-chart-card,
+.marketing-health-card{
+  background:linear-gradient(180deg,rgba(24,42,53,.95),rgba(17,31,40,.95));
+  border-color:rgba(186,227,224,.1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.015);
+}
+.marketing-mini-metrics span,.marketing-mini-metrics small,.marketing-chart-card span,.marketing-health-card>span,.marketing-chart-card b{color:#7f969f}
+.marketing-bars i{background:linear-gradient(180deg,#8be0d9,#32b1a7);box-shadow:0 0 12px rgba(56,178,169,.2)}
+.marketing-health-ring{background:conic-gradient(#55c8be 0 97%,#21333d 97%)}
+.marketing-health-ring:after{background:#132630}
+.marketing-float-card{
+  background:rgba(15,29,37,.9);
+  border-color:rgba(186,227,224,.15);
+  box-shadow:0 18px 42px rgba(0,0,0,.36),0 0 22px rgba(56,178,169,.08);
+}
+.marketing-float-card strong{color:#edf8f9}
+.marketing-float-card small{color:#7e939c}
+.marketing-float-card>span{background:rgba(56,178,169,.12);color:#79d9d1}
+.marketing-trust-strip{
+  border-color:rgba(186,227,224,.08);
+  background:linear-gradient(90deg,rgba(255,255,255,.012),rgba(56,178,169,.025),rgba(255,255,255,.012));
+}
+.marketing-trust-strip>div:first-child strong{color:#d9e8eb}
+.marketing-trust-items span{color:#8298a1}
+.marketing-section{position:relative}
+.marketing-section-heading h2,
+.marketing-workflow-intro h2,
+.marketing-selfhost-copy h2,
+.marketing-final-cta h2{color:#f2fafb}
+.marketing-section-heading p,.marketing-workflow-intro p{color:#8fa4ad}
+.marketing-feature-card,
+.marketing-workflow-steps article,
+.marketing-plan-card-pro{
+  background:
+    linear-gradient(180deg,rgba(19,36,46,.92),rgba(13,27,35,.96));
+  border-color:rgba(186,227,224,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.015),0 12px 30px rgba(0,0,0,.14);
+}
+.marketing-feature-card:hover{
+  border-color:rgba(121,202,196,.28);
+  box-shadow:0 18px 42px rgba(0,0,0,.25),0 0 24px rgba(56,178,169,.08);
+}
+.marketing-feature-icon,
+.marketing-workflow-steps article>span{
+  background:rgba(56,178,169,.09);
+  border:1px solid rgba(121,202,196,.12);
+  color:#77d8d0;
+}
+.marketing-feature-card h3,.marketing-workflow-steps strong,.marketing-plan-card h3,.marketing-plan-price strong,.marketing-plan-card-pro li b{color:#eaf6f8}
+.marketing-feature-card p,.marketing-workflow-steps p,.marketing-plan-card p,.marketing-plan-card li,.marketing-plan-price small{color:#81959e}
+.marketing-inline-link{color:#69d4cb}
+.marketing-plan-card-pro.recommended{
+  border-color:rgba(121,202,196,.34);
+  box-shadow:0 0 0 1px rgba(56,178,169,.06),0 18px 44px rgba(0,0,0,.22),0 0 30px rgba(56,178,169,.08);
+}
+.marketing-plan-card-pro.featured{
+  border-color:rgba(186,227,224,.24);
+  background:linear-gradient(180deg,rgba(25,49,58,.96),rgba(14,29,36,.98));
+}
+.marketing-plan-divider{background:rgba(186,227,224,.08)}
+.marketing-plan-ribbon{box-shadow:0 0 20px rgba(56,178,169,.18)}
+.marketing-test-note{color:#627984}
+.marketing-selfhost{
+  background:
+    radial-gradient(circle at 85% 18%,rgba(56,178,169,.18),transparent 18rem),
+    linear-gradient(145deg,#111f28,#152c35 60%,#11222a);
+  border:1px solid rgba(186,227,224,.1);
+  box-shadow:0 30px 65px rgba(0,0,0,.3),0 0 40px rgba(56,178,169,.05);
+}
+.marketing-selfhost-terminal{
+  background:#081219;
+  border-color:rgba(121,202,196,.13);
+  box-shadow:inset 0 0 30px rgba(56,178,169,.025);
+}
+.marketing-final-cta{
+  background:
+    radial-gradient(circle at 85% 40%,rgba(56,178,169,.14),transparent 18rem),
+    linear-gradient(120deg,#122630,#0d1c24);
+  border-color:rgba(186,227,224,.13);
+  box-shadow:0 24px 55px rgba(0,0,0,.2);
+}
+.marketing-final-cta p{color:#8da2ab}
+.marketing-footer{border-top-color:rgba(186,227,224,.08)}
+.marketing-footer p{color:#607782}
+.marketing-footer>div a{color:#80959e}
+.marketing-footer>div a:hover{color:#c9e9e6}
+
+/* Technical decorative circuit accents */
+.marketing-hero-pro:before,
+.marketing-solution:before,
+.marketing-plans-pro:before{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(121,202,196,.22),transparent);
+  height:1px;
+}
+.marketing-hero-pro:before{width:280px;right:4%;top:58px}
+.marketing-solution:before{width:180px;left:7%;top:44px}
+.marketing-plans-pro:before{width:220px;right:9%;top:48px}
+
+/* Downloads inherit the same technology language */
+.downloads-page-pro{
+  background:
+    radial-gradient(circle at 85% 8%,rgba(56,178,169,.15),transparent 24rem),
+    linear-gradient(180deg,#091219,#0d1921 45%,#0a1319);
+  color:#edf7f8;
+}
+.downloads-header-pro{border-bottom-color:rgba(186,227,224,.08)}
+.downloads-header-pro a{color:#aabcc3}
+.downloads-hero-pro h1,.downloads-card h2,.downloads-cta h2{color:#f2fafb}
+.downloads-hero-pro p,.downloads-card p,.downloads-cta p{color:#8fa3ac}
+.downloads-architecture,.downloads-benefits article,.downloads-card{
+  background:linear-gradient(180deg,rgba(19,36,46,.94),rgba(13,27,35,.97));
+  border-color:rgba(186,227,224,.09);
+  box-shadow:0 16px 34px rgba(0,0,0,.18);
+}
+.downloads-arch-node{background:#10232c}
+.downloads-arch-node.strong{background:rgba(56,178,169,.1)}
+.downloads-arch-node span,.downloads-benefits strong,.downloads-package-list strong{color:#e8f5f7}
+.downloads-benefits p,.downloads-package-list small{color:#7e949d}
+.downloads-package-list>div{background:#0e1e27;border-color:rgba(186,227,224,.08)}
+.downloads-private-note{background:rgba(180,132,36,.08);border-color:rgba(232,192,104,.18)}
+.downloads-private-note strong{color:#e3bf6d}
+.downloads-private-note span{color:#a99263}
+.downloads-cta{
+  background:linear-gradient(120deg,#112630,#0c1920);
+  border-color:rgba(186,227,224,.11);
+}
+
+@media(max-width:860px){
+  .marketing-page-pro:before{background-size:36px 36px}
+  .marketing-hero-pro{padding-top:72px}
+}

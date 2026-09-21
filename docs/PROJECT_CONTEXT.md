@@ -228,6 +228,8 @@ Non-Pro tenants use the global Desweb branding.
 
 ## Navigation/UI direction
 
+The public landing now follows a dark, premium control-center visual direction with Desweb teal/mint telemetry accents, technical grid treatments and product-relevant dashboard visualization. This visual direction is the standard reference for future commercial surfaces.
+
 The public login intentionally includes only lightweight navigation back to Home, Plans and Self-hosted, plus a 15-day Trial CTA. It does not expose operational modules before authentication.
 
 The authenticated desktop interface uses:

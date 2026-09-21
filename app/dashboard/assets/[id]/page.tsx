@@ -63,7 +63,7 @@ export default async function AssetDetailPage({
   if(!assetResult.rowCount) notFound();
   const asset=assetResult.rows[0];
 
-  if(session.platformRole!=="superadmin"){
+  if(session.platformRole==="user"){
     if(session.organizationId!==asset.organization_id || !canAccessSite(session,asset.site_id)) redirect("/dashboard/assets");
   }
 

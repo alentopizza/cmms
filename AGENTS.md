@@ -91,3 +91,13 @@ When a parent entity is already known, prefer contextual creation instead of for
 ## Dashboard navigation preferences
 
 The dashboard sidebar is retractable and user-orderable. Persist presentation preferences only after permission-filtering; never use saved navigation order as an authorization source. Stable module IDs are stored in `user_dashboard_preferences.sidebar_order`. New authorized modules not present in an old preference must be appended automatically. The bootstrap environment account has no user row and may use browser-local persistence only for this UI preference.
+
+
+## Biometric attendance invariants
+
+- Facial attendance is 1:1 verification of the authenticated account, never company-wide biometric identification.
+- Do not persist enrollment/check-in photographs unless a future explicitly approved privacy design requires it.
+- Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
+- Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
+- Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
+- Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.

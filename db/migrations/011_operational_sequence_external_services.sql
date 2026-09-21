@@ -27,7 +27,7 @@ ALTER TABLE organization_members
 
 ALTER TABLE organization_members
   ADD CONSTRAINT organization_members_role_check
-  CHECK (role IN ('admin','manager','technician','requester','viewer','external'));
+  CHECK (role IN ('admin','manager','technician','requester','viewer','provider','external'));
 
 CREATE INDEX IF NOT EXISTS organization_members_external_supplier_idx
   ON organization_members(organization_id, external_supplier_id);

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-20 — Professional public landing and downloads recovery
+
+### Changed
+
+- Rebuilt the public landing as a complete commercial SaaS experience with product hero, illustrative dashboard preview, benefits, workflow, plan comparison, self-hosted section and final conversion CTA.
+- Kept plan prices intentionally undefined while commercial pricing remains pending.
+- Redesigned the self-hosted downloads page with deployment architecture, package workflow, installation and licensing information.
+- Added `/descargas` as a Spanish alias of `/downloads` to reduce path ambiguity while diagnosing stale production deployments.
+- Documented public marketing surfaces in the design system and project context.
+
+
 ## 2026-09-20 — Public landing access and self-hosted package workflow
 
 ### Added

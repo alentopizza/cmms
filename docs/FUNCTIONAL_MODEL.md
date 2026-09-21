@@ -238,3 +238,27 @@ The reporting workspace shows descriptive operational measures such as:
 - average activity duration.
 
 These are descriptive operational statistics only. They are not an automated employee ranking, disciplinary score, hiring/firing signal or other automated employment decision.
+
+
+## Company enterprise record
+
+The company module has two distinct information layers:
+
+1. **Enterprise identity** — legal/commercial identity, tax identifier, administrative/fiscal address, communication channels and primary contact.
+2. **Operational structure** — principal sites and recursive sublocations where assets, inventory and maintenance work exist.
+
+Never reuse a site's physical address as the company's legal/administrative address unless the user explicitly enters the same value in both places.
+
+### Corporate document dossier
+
+A company document is classified as:
+
+- **Required** — expected for that tenant and contributes to the documentation-completeness signal;
+- **Optional** — useful but not mandatory;
+- **Not applicable** — explicitly records that the requirement does not apply to that tenant.
+
+The platform does not assume that Colombia-specific records such as RUT or chamber-of-commerce certificates are universally required. Categories provide common templates, while requirement level is set per company.
+
+Document metadata may include issue date, expiry date, external reference and notes. Expired required documents are treated as pending for the company profile. Documents approaching expiry within 30 days receive an early visual warning.
+
+Archiving removes a document from the current dossier without rewriting historical migrations or conflating it with operational attachments.

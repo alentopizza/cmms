@@ -81,3 +81,8 @@ An AI or developer resuming the project must be able to reconstruct the current 
 - External collaborators may optionally reference a supplier and only receive directly/crew-assigned work.
 - Crews may contain technicians and external collaborators, not provider-representative accounts.
 - Operational user deletion checks must include work-order tasks and crew membership.
+
+
+## Context-aware creation
+
+When a parent entity is already known, prefer contextual creation instead of forcing users to reselect the same relationship. Preserve global module creation as an alternative. Contextual forms must still submit immutable parent identifiers to server routes, and server routes must revalidate tenant ownership, site scope and domain prerequisites. Return paths from contextual forms must be restricted to internal `/dashboard` paths.

@@ -17,6 +17,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   const session = await getSession();
   if (!session) redirect("/login");
   if (!can(session, "locations.manage")) redirect("/dashboard");
+  const owner = isPlatformOwner(session);
 
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();

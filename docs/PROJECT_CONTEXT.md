@@ -430,3 +430,19 @@ The hierarchy used by operational modules is:
 The exact branch depends on the entity being created. The UI resolves the earliest missing prerequisite and directs the user there with a clear message and CTA. Company and Location CTAs can open the required creation popup directly through query parameters.
 
 Server-side gates remain authoritative; this UI guidance does not replace RBAC, tenant/site validation or route-level prerequisite checks.
+
+
+### Dashboard by role
+
+The navigation item previously called **Resumen** is now **Dashboard**.
+
+The Dashboard is role-aware:
+- Platform Owner: subscriptions, estimated MRR, plan mix, active companies and lead funnel;
+- Superadministrator: customer/subscription health and global maintenance alerts;
+- Company Administrator / Manager: maintenance operations, costs, downtime, inventory and recent work;
+- Technician / External: assigned activity execution, attendance hours and productivity;
+- Provider: supplier-assigned execution workload;
+- Requester: own maintenance requests and resolution performance;
+- Viewer: read-only operational KPIs.
+
+The commercial dashboard deliberately labels recurring revenue as **MRR estimado** until real payment/reconciliation data exists.

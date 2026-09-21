@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
@@ -55,9 +55,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       ? query<Organization>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
       : query<Organization>("SELECT id,name FROM organizations WHERE id=$1",[session.organizationId]),
   ]);
-
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"supplier");
+  const creationGate=await getCreationGateForScope("supplier",session.organizationId,superadmin);
 
   const error = params.error==="sequence"
     ? creationGate.message

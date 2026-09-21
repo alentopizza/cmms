@@ -349,7 +349,7 @@ export default function UserManagement({
           <div className="user-role-meta">
             <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
-            <div><span>Sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
+            <div><span>Alcance de sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
             <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
@@ -370,7 +370,7 @@ export default function UserManagement({
           <div>
             <span className="eyebrow">{mode === "edit" ? "Administración de acceso" : "Nueva cuenta"}</span>
             <h2 id="user-modal-title">{modalTitle}</h2>
-            <p>{mode === "edit" ? "Actualiza la identidad, empresa, sedes y credenciales del usuario." : "Completa los datos y define el alcance del usuario dentro de la empresa."}</p>
+            <p>{mode === "edit" ? "Actualiza identidad, empresa, permisos de sedes y credenciales." : "El usuario quedará vinculado a una empresa. Las sedes no son requisito para crear la cuenta."}</p>
           </div>
           <button className="modal-close" type="button" aria-label="Cerrar" onClick={closeModal}>×</button>
         </header>
@@ -444,7 +444,7 @@ export default function UserManagement({
               {errors.external_supplier_id && <small className="field-error-message">{errors.external_supplier_id}</small>}
             </div>}
 
-            {draft.role !== "superadmin" && <div className={`field form-span-2 site-access-field ${errors.site_ids ? "field-error" : ""}`}>
+            {mode === "edit" && draft.role !== "superadmin" && <div className={`field form-span-2 site-access-field ${errors.site_ids ? "field-error" : ""}`}>
               <label>Alcance de acceso a sedes <span className="muted">(opcional)</span></label>
               {!draft.organization_id ? <div className="site-access-empty">Selecciona primero la empresa. El usuario pertenece a la empresa; este bloque solo restringe qué sedes podrá operar.</div> : visibleSites.length === 0 ? <div className="site-access-empty">La empresa todavía no tiene sedes. Puedes crear el usuario igualmente con alcance general de empresa.</div> : <>
                 <div className="site-access-mode">

@@ -324,11 +324,12 @@ export function ContextUserCreateModal({
   return <>
     <TriggerButton label={triggerLabel} icon="◎" secondary onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Control de acceso" title="Crear usuario" description={`La cuenta quedará vinculada directamente a ${organizationName}; no tendrás que seleccionar la empresa nuevamente.`}>
-      <form className="company-modal-form" method="post" action="/api/users">
+      <form className="company-modal-form" method="post" encType="multipart/form-data" action="/api/users">
         <input type="hidden" name="organization_id" value={organizationId} />
         <input type="hidden" name="access_all_sites" value="true" />
         <input type="hidden" name="return_to" value={returnTo} />
         <div className="form-grid">
+          <div className="field form-span-2"><label>Foto de perfil</label><input name="avatar" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
           <div className="field"><label>Nombre completo *</label><input name="full_name" required autoFocus placeholder="Ej. Laura Gómez" /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="laura@empresa.com" /></div>
           <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>

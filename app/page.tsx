@@ -1,21 +1,20 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { isSubscriptionUsable } from "@/lib/billing";
 import { getActivePlans } from "@/lib/billing";
 
 export default async function Home() {
   const session = await getSession();
-  if (session && (session.platformRole === "superadmin" || isSubscriptionUsable(session.subscriptionStatus, session.trialEndsAt))) {
-    return <main className="marketing-page"><div className="marketing-shell"><p>Ya tienes una sesión activa.</p><Link className="button" href="/dashboard">Ir al dashboard</Link></div></main>;
-  }
-
   const plans = await getActivePlans();
 
   return <main className="marketing-page">
     <section className="marketing-hero">
       <div className="marketing-nav">
         <div className="marketing-brand"><span>D</span><strong>DESWEB CMMS</strong></div>
-        <div><Link href="/login">Iniciar sesión</Link><a href="#planes" className="button">Ver planes</a></div>
+        <div>
+          <Link href="/downloads">Descargas</Link>
+          {session ? <Link href="/dashboard">Ir al panel</Link> : <Link href="/login">Iniciar sesión</Link>}
+          <a href="#planes" className="button">Ver planes</a>
+        </div>
       </div>
       <div className="marketing-hero-copy">
         <span className="eyebrow">Mantenimiento inteligente</span>

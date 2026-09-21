@@ -406,3 +406,14 @@ The Platform Owner receives contextual **Editar / Eliminar** controls directly i
 When the owner deletes a record, the backend can remove dependent development history transactionally using PostgreSQL foreign-key metadata. Owner-only direct edits use an allow-listed update endpoint.
 
 Superadministrators and tenant users retain their existing hierarchy, creation flows and traceability restrictions. The Platform Owner identity itself remains protected from deletion.
+
+
+### Unified module UI
+
+Primary directory modules now share a reusable header with keyword search, contextual filters and a single Add action.
+
+Creation is popup-first across Companies, Users, Locations/Sub-locations, Suppliers, Crews, Assets, Work Orders, Maintenance Routines, Inventory and manual Leads. Existing authorization, setup-sequence and contextual-parent rules remain unchanged.
+
+The Users-specific “Roles en uso” information band was intentionally removed from the reusable visual pattern.
+
+Company directory cards were aligned to the supplied visual reference with cover/logo identity and resource-progress rows. Progress denominators are shown only for actual enforced limits; suppliers are shown as unlimited because the current plan model does not enforce a supplier cap.

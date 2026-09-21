@@ -56,7 +56,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
   const creationGate=creationPrerequisiteFor(hierarchy,"inventory");
-  const error=params.error==="sequence" ? "Primero completa ubicaciones y registra al menos un proveedor."
+  const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de artículos de inventario."
     : params.error ? "Revisa la información del artículo." : "";
 
@@ -107,6 +107,6 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {name:"unit_cost",label:"Costo unitario",value:i.unit_cost,type:"number"},
         {name:"storage_location",label:"Almacenamiento",value:i.storage_location||""},
       ]}/></td>}</tr>)}
-    </tbody></table>{!items.rowCount && <div className="card empty-state"><strong>Aún no hay artículos.</strong><span>Registra proveedores antes de crear inventario.</span></div>}</section>
+    </tbody></table>{!items.rowCount && creationGate.ready && <div className="card empty-state"><strong>Aún no hay artículos.</strong><span>La jerarquía está lista. Usa Agregar para registrar el primer artículo.</span></div>}</section>
   </>;
 }

@@ -390,3 +390,45 @@ Examples:
 The CTA must point to the earliest missing dependency, not merely the immediately previous module.
 
 When the prerequisite state is visible, suppress duplicate generic empty-state copy such as “No records yet”.
+
+
+## Mobile navigation strategy
+
+Dashboard navigation adapts by role instead of forcing the desktop sidebar pattern onto every mobile user.
+
+### Drawer navigation
+
+Roles with broad/module-heavy access use a hamburger-triggered drawer on screens below 900px.
+
+This applies to:
+- Platform Owner;
+- Superadministrator;
+- Company Administrator;
+- Manager / Supervisor;
+- Requester;
+- Viewer;
+- Provider and other roles with broader module discovery needs.
+
+The drawer reuses the same permission-filtered navigation items as desktop.
+
+### Field bottom navigation
+
+Technician and External collaborator roles use a mobile-first bottom navigation inspired by native field-service apps.
+
+Priority destinations:
+- Dashboard;
+- Orders;
+- Attendance;
+- Assets;
+- More.
+
+The active destination lifts visually above the bar. **More** opens the full permission-filtered drawer for secondary modules.
+
+The bottom navigation:
+- must never become a separate authorization source;
+- must use the same routes and permission-filtered items as desktop;
+- must respect mobile safe-area insets;
+- must leave enough bottom content padding so controls are not obscured;
+- must remain compatible with light/dark and organization white-label colors.
+
+This pattern is intentionally reusable for a future PWA/native shell so module screens require minimal visual restructuring.

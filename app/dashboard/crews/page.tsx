@@ -25,7 +25,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
   if(!session) redirect("/login");
   if(!can(session,"crews.manage")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole==="superadmin";
+  const superadmin=session.platformRole!=="user";
 
   const [crews,organizations,sites,workers]=await Promise.all([
     superadmin

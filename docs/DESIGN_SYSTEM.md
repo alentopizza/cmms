@@ -204,3 +204,20 @@ Footer requirements:
 - retain a compact legal/copyright strip.
 
 The landing supports both light and dark appearance using the same `desweb-theme` preference used elsewhere in the product.
+
+
+## Landing header and theme policy
+
+The public CMMS landing is intentionally **dark-only**. The authenticated application may continue to support light/dark/system themes independently.
+
+Header:
+- use a floating, compact white navigation surface over the dark landing background;
+- use the configured Desweb logo for light backgrounds;
+- preserve generous horizontal breathing room around the logo;
+- navigation should remain visually light, with one prominent conversion CTA;
+- mobile reduces navigation to brand + primary CTA.
+
+Footer:
+- remains dark and uses the dark-background/negative logo variant when available;
+- groups Product, Start and advisor-conversion links;
+- may use restrained geometric brand accents derived from the Desweb identity system.

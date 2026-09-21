@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);

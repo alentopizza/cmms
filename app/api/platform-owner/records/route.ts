@@ -12,6 +12,24 @@ type FieldKind =
   | { type: "enum"; values: string[] };
 
 const TABLES: Record<string, Record<string, FieldKind>> = {
+  sites: {
+    name: { type: "text" },
+    code: { type: "text", nullable: true },
+    address: { type: "text", nullable: true },
+    city: { type: "text", nullable: true },
+    country: { type: "text" },
+    latitude: { type: "number", nullable: true },
+    longitude: { type: "number", nullable: true },
+    geofence_radius_m: { type: "integer" },
+    active: { type: "boolean" },
+  },
+  locations: {
+    name: { type: "text" },
+    code: { type: "text", nullable: true },
+    type: { type: "enum", values: ["area","floor","room","department","zone"] },
+    description: { type: "text", nullable: true },
+    active: { type: "boolean" },
+  },
   sales_leads: {
     full_name: { type: "text" },
     company_name: { type: "text" },

@@ -350,3 +350,8 @@ Meaningful implementation work is incomplete until the relevant documentation is
 ### Contextual creation pattern
 
 The UI now supports parent-aware creation popups in addition to global module creation. A known parent is carried into the form instead of asking the operator to select it again. Examples include creating a site from a company, a user from a company, an asset from a sublocation, and a routine from an asset. Mutation routes accept a safe dashboard-only return path so successful creation returns to the originating context.
+
+
+### Personalized dashboard navigation
+
+The authenticated shell now uses a retractable Desweb technology sidebar. Its visible module order is user configurable through drag-and-drop or accessible up/down controls. Database-backed users persist both module order and collapsed state in `user_dashboard_preferences`; the bootstrap developer account uses local browser persistence because it has no database user identity. Permissions are evaluated before preferences, so navigation customization cannot reveal unauthorized modules.

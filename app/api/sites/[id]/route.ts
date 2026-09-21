@@ -33,8 +33,11 @@ export async function POST(
   if (session.platformRole === "user" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
   if (!canAccessSite(session, id)) return new NextResponse("Forbidden", { status: 403 });
 
-  const site = await query<{ active: boolean }>(
-    "SELECT active FROM sites WHERE id=$1 AND organization_id=$2",
+  const site = await query<{
+    active:boolean; latitude:number|null; longitude:number|null; geofence_radius_m:number;
+    contact_name:string|null; contact_phone:string|null; contact_email:string|null;
+  }>(
+    "SELECT active,latitude,longitude,geofence_radius_m,contact_name,contact_phone,contact_email FROM sites WHERE id=$1 AND organization_id=$2",
     [id, organizationId],
   );
   if (!site.rowCount) return new NextResponse("Sede no encontrada", { status: 404 });
@@ -55,17 +58,17 @@ export async function POST(
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
   const radiusRaw = String(form.get("geofence_radius_m") || "").trim();
-  const contactName = String(form.get("contact_name") || "").trim();
-  const contactPhone = String(form.get("contact_phone") || "").trim();
-  const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
+  const contactName = form.has("contact_name") ? String(form.get("contact_name") || "").trim() : (site.rows[0].contact_name||"");
+  const contactPhone = form.has("contact_phone") ? String(form.get("contact_phone") || "").trim() : (site.rows[0].contact_phone||"");
+  const contactEmail = form.has("contact_email") ? String(form.get("contact_email") || "").trim().toLowerCase() : (site.rows[0].contact_email||"");
   let image=null;
   try { image=await readImageUpload(form,"image"); }
   catch(error) {
     return NextResponse.redirect(targetUrl(organizationId,request.url,returnTo,imageUploadMessage(error).includes("5 MB")?"?error=site-image-size":"?error=site-image-type"),303);
   }
-  const latitude = latitudeRaw ? Number(latitudeRaw) : null;
-  const longitude = longitudeRaw ? Number(longitudeRaw) : null;
-  const geofenceRadius = radiusRaw ? Number.parseInt(radiusRaw,10) : 250;
+  const latitude = form.has("latitude") ? (latitudeRaw ? Number(latitudeRaw) : null) : site.rows[0].latitude;
+  const longitude = form.has("longitude") ? (longitudeRaw ? Number(longitudeRaw) : null) : site.rows[0].longitude;
+  const geofenceRadius = form.has("geofence_radius_m") ? (radiusRaw ? Number.parseInt(radiusRaw,10) : 250) : site.rows[0].geofence_radius_m;
 
   if ((latitude !== null && (!Number.isFinite(latitude) || latitude < -90 || latitude > 90)) ||
       (longitude !== null && (!Number.isFinite(longitude) || longitude < -180 || longitude > 180)) ||

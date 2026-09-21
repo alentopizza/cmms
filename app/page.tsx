@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getActivePlans } from "@/lib/billing";
+import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
+import MarketingThemeToggle from "@/components/MarketingThemeToggle";
+import MarketingLeadForm from "@/components/MarketingLeadForm";
 
 const features = [
   { icon: "◇", title: "Activos bajo control", text: "Centraliza equipos, ubicación, criticidad y estado operativo en una sola vista." },
@@ -9,6 +12,15 @@ const features = [
   { icon: "▤", title: "Inventario técnico", text: "Controla repuestos, consumos y disponibilidad para que el mantenimiento no se detenga." },
   { icon: "◎", title: "Roles y sedes", text: "Define qué puede ver y hacer cada usuario según su empresa, rol y sedes autorizadas." },
   { icon: "⌁", title: "SaaS o self-hosted", text: "Opera en la nube con Desweb o instala la plataforma en infraestructura propia." },
+];
+
+const faqs = [
+  { q: "¿Qué es un CMMS?", a: "Es una plataforma para organizar activos, órdenes de trabajo, mantenimiento preventivo, inventario, ubicaciones y usuarios de mantenimiento desde un mismo sistema." },
+  { q: "¿Puedo probar Desweb CMMS antes de contratar?", a: "Sí. El plan de prueba habilita 15 días con recursos limitados para que puedas validar el flujo real de la plataforma." },
+  { q: "¿Puedo manejar varias sedes?", a: "Sí. La plataforma es multiempresa y multisedes, y permite controlar el acceso de cada usuario según rol y sedes autorizadas." },
+  { q: "¿Qué sucede cuando consumo los recursos de mi plan?", a: "Configuración muestra el consumo y genera alertas al acercarse al límite. La creación de nuevos recursos se bloquea al alcanzar la capacidad efectiva del plan." },
+  { q: "¿El plan Pro permite usar mi propia marca?", a: "Sí. Pro habilita personalización por empresa para nombre de plataforma, colores y logos, además de mayor capacidad operativa." },
+  { q: "¿Existe una versión instalable?", a: "Sí. La edición self-hosted utiliza la misma aplicación web con PostgreSQL y Docker Compose. Durante la beta su distribución es privada y controlada." },
 ];
 
 const workflow = [
@@ -24,16 +36,22 @@ function formatCapacity(value: number) {
 
 export default async function Home() {
   const session = await getSession();
-  const plans = await getActivePlans();
+  const [plans, customization] = await Promise.all([getActivePlans(), getCustomizationSummary()]);
+  const lightLogo = logoOnLightSrc(customization);
+  const darkLogo = customization.hasLogoOnDark ? logoOnDarkSrc(customization) : lightLogo;
+  const darkLogoNeedsPlate = !customization.hasLogoOnDark;
 
   return <main className="marketing-page marketing-page-pro">
     <section className="marketing-top">
       <nav className="marketing-nav marketing-nav-pro">
-        <Link className="marketing-brand marketing-brand-pro" href="/" aria-label="Desweb CMMS">
-          <span className="marketing-brand-mark">D</span>
+        <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/" aria-label="Desweb CMMS">
+          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
+            <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
+            <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
+          </span>
           <span className="marketing-brand-copy">
-            <strong>DESWEB</strong>
-            <small>CMMS · Mantenimiento inteligente</small>
+            <strong>CMMS</strong>
+            <small>Mantenimiento inteligente</small>
           </span>
         </Link>
 
@@ -41,10 +59,13 @@ export default async function Home() {
           <a href="#solucion">Solución</a>
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#planes">Planes</a>
+          <a href="#preguntas">Preguntas</a>
+          <a href="#contacto">Contacto</a>
           <Link href="/downloads">Self-hosted</Link>
         </div>
 
         <div className="marketing-nav-actions">
+          <MarketingThemeToggle />
           {session
             ? <Link className="marketing-login-link" href="/dashboard">Ir al panel</Link>
             : <Link className="marketing-login-link" href="/login">Iniciar sesión</Link>}
@@ -202,6 +223,38 @@ export default async function Home() {
       <p className="marketing-test-note">Entorno comercial en construcción: los planes pagos usan actualmente un checkout simulado y no procesan tarjetas.</p>
     </section>
 
+    <section id="preguntas" className="marketing-section marketing-faq-section">
+      <div className="marketing-faq-intro">
+        <span className="eyebrow">Preguntas frecuentes</span>
+        <h2>Resuelve lo esencial antes de empezar.</h2>
+        <p>Concentramos las preguntas comerciales y operativas más comunes para que puedas evaluar si Desweb CMMS encaja en tu operación.</p>
+        <a className="marketing-inline-link" href="#contacto">Hablar con un asesor <b>→</b></a>
+      </div>
+      <div className="marketing-faq-list">
+        {faqs.map((item,index)=><details key={item.q} open={index===0}>
+          <summary><span>{String(index+1).padStart(2,"0")}</span><strong>{item.q}</strong><b>+</b></summary>
+          <p>{item.a}</p>
+        </details>)}
+      </div>
+    </section>
+
+    <section id="contacto" className="marketing-lead-section">
+      <div className="marketing-lead-copy">
+        <span className="eyebrow">Habla con un asesor</span>
+        <h2>¿Quieres evaluar el CMMS con tu operación real?</h2>
+        <p>Déjanos tus datos y cuéntanos qué necesitas. Este canal está pensado para empresas que requieren una demostración, asesoría de plan, marca blanca o instalación self-hosted.</p>
+        <div className="marketing-lead-points">
+          <span><i>✓</i><b>Demo orientada a tu operación</b><small>Revisamos sedes, activos, técnicos y necesidades reales.</small></span>
+          <span><i>✓</i><b>Plan adecuado a tu capacidad</b><small>Podemos partir del catálogo o evaluar un acuerdo comercial especial.</small></span>
+          <span><i>✓</i><b>SaaS o self-hosted</b><small>Definimos contigo el modelo de despliegue más conveniente.</small></span>
+        </div>
+      </div>
+      <div className="marketing-lead-card">
+        <div className="marketing-lead-card-head"><span>Solicitud comercial</span><strong>Cuéntanos sobre tu empresa</strong></div>
+        <MarketingLeadForm />
+      </div>
+    </section>
+
     <section className="marketing-selfhost">
       <div className="marketing-selfhost-copy">
         <span className="eyebrow">También disponible self-hosted</span>
@@ -233,13 +286,45 @@ export default async function Home() {
       </div>
     </section>
 
-    <footer className="marketing-footer">
-      <Link className="marketing-brand marketing-brand-pro" href="/">
-        <span className="marketing-brand-mark">D</span>
-        <span className="marketing-brand-copy"><strong>DESWEB</strong><small>Desarrollo de Soluciones</small></span>
-      </Link>
-      <p>Desweb CMMS · Plataforma de gestión de mantenimiento</p>
-      <div><Link href="/downloads">Self-hosted</Link><Link href="/login">Acceso</Link><a href="#planes">Planes</a></div>
+    <footer className="marketing-footer marketing-footer-pro">
+      <div className="marketing-footer-brand">
+        <Link className="marketing-brand marketing-brand-pro marketing-brand-logo" href="/">
+          <span className={`marketing-logo-wrap ${darkLogoNeedsPlate ? "marketing-logo-needs-plate" : ""}`}>
+            <img className="marketing-logo marketing-logo-light" src={lightLogo} alt="Desweb" />
+            <img className="marketing-logo marketing-logo-dark" src={darkLogo} alt="Desweb" />
+          </span>
+          <span className="marketing-brand-copy"><strong>CMMS</strong><small>Mantenimiento inteligente</small></span>
+        </Link>
+        <p>Una plataforma Desweb para centralizar y escalar la gestión de mantenimiento.</p>
+        <span>Desarrollo de Soluciones · Colombia</span>
+      </div>
+
+      <div className="marketing-footer-column">
+        <strong>Producto</strong>
+        <a href="#solucion">Solución</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#planes">Planes</a>
+        <Link href="/downloads">Self-hosted</Link>
+      </div>
+
+      <div className="marketing-footer-column">
+        <strong>Comenzar</strong>
+        <Link href="/checkout?plan=trial">Prueba 15 días</Link>
+        <Link href="/login">Iniciar sesión</Link>
+        <a href="#contacto">Hablar con un asesor</a>
+        <a href="#preguntas">Preguntas frecuentes</a>
+      </div>
+
+      <div className="marketing-footer-column marketing-footer-cta">
+        <strong>¿Evaluando un CMMS?</strong>
+        <p>Cuéntanos el tamaño de tu operación y un asesor podrá revisar contigo el plan o despliegue más adecuado.</p>
+        <a className="button" href="#contacto">Solicitar contacto</a>
+      </div>
+
+      <div className="marketing-footer-bottom">
+        <span>© {new Date().getFullYear()} Desweb. Todos los derechos reservados.</span>
+        <div><Link href="/">Inicio</Link><Link href="/downloads">Descargas</Link></div>
+      </div>
     </footer>
   </main>;
 }

@@ -228,7 +228,7 @@ Non-Pro tenants use the global Desweb branding.
 
 ## Navigation/UI direction
 
-The public landing now follows a dark, premium control-center visual direction with Desweb teal/mint telemetry accents, technical grid treatments and product-relevant dashboard visualization. This visual direction is the standard reference for future commercial surfaces.
+The public landing follows a premium control-center visual direction with Desweb teal/mint telemetry accents, technical grid treatments and product-relevant dashboard visualization. It supports both dark and light modes and uses the globally configured Desweb logos in its header/footer. This visual direction is the standard reference for future commercial surfaces.
 
 The public login intentionally includes only lightweight navigation back to Home, Plans and Self-hosted, plus a 15-day Trial CTA. It does not expose operational modules before authentication.
 
@@ -260,6 +260,8 @@ Landing
 ```
 
 The current landing implements the same provisioning concept with a simulated checkout. The public landing is intended to be a professional commercial surface, even during beta; technical checkout limitations are disclosed without dominating the value proposition.
+
+The landing also has an advisor-assisted conversion path. Public contact/demo requests are stored in `sales_leads` and surfaced only to the Superadministrator through the **Leads** module.
 
 ### Advisor/direct sale
 

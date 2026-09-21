@@ -33,6 +33,7 @@ This roadmap is directional and should be updated as priorities change.
 - SaaS plan catalog and organization subscriptions
 - 15-day trial lifecycle and expiration gate
 - public landing and simulated checkout/provisioning flow
+- advisor lead capture from the landing and Superadmin lead inbox
 - Pro organization white-label foundation
 - repository continuity documentation for AI/developer handoff
 - Docker Compose self-hosted installation foundation
@@ -124,6 +125,7 @@ This roadmap is directional and should be updated as priorities change.
 4. Replace simulated paid activation with verified payment events.
 5. Add renewal, past-due and cancellation webhook handling.
 6. Finalize the public marketing landing and conversion analytics.
+7. Add lead assignment, notifications, anti-spam/rate limiting and source/campaign attribution.
 
 
 ## Distribution and protection path

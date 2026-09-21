@@ -86,3 +86,8 @@ An AI or developer resuming the project must be able to reconstruct the current 
 ## Context-aware creation
 
 When a parent entity is already known, prefer contextual creation instead of forcing users to reselect the same relationship. Preserve global module creation as an alternative. Contextual forms must still submit immutable parent identifiers to server routes, and server routes must revalidate tenant ownership, site scope and domain prerequisites. Return paths from contextual forms must be restricted to internal `/dashboard` paths.
+
+
+## Dashboard navigation preferences
+
+The dashboard sidebar is retractable and user-orderable. Persist presentation preferences only after permission-filtering; never use saved navigation order as an authorization source. Stable module IDs are stored in `user_dashboard_preferences.sidebar_order`. New authorized modules not present in an old preference must be appended automatically. The bootstrap environment account has no user row and may use browser-local persistence only for this UI preference.

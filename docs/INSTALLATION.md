@@ -214,3 +214,12 @@ openssl rand -hex 32
 ```
 
 Changing `BIOMETRIC_ENCRYPTION_KEY` after users have enrolled will make existing encrypted templates unreadable. Plan key rotation with explicit biometric re-enrollment.
+
+
+## Bootstrap Platform Owner
+
+`APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` configure the emergency/developer bootstrap identity. This identity now resolves as **Propietario Desweb / Platform Owner**, the maximum platform role.
+
+For the current project deployment, the intended owner email is `admin@dominio.com`. Production must keep the password and `AUTH_SECRET` outside the repository.
+
+Migration `015_platform_owner_role.sql` also promotes a database-backed user with that email to `platform_owner` when present. The bootstrap path remains available so development/recovery access does not depend on a tenant membership.

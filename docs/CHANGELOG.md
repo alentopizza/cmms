@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-21 — Modern date picker and enterprise PDF reports
+
+### Changed
+
+- Replaced separate Month / From / To dashboard date inputs with a single modern Spanish date-range picker.
+- Added dual calendars, quick ranges and explicit Apply behavior.
+- Reworked Dashboard PDF export into a branded executive report.
+- Added KPI summary cards and graphical status/type distributions to PDF reports.
+- Added report letterhead, executive interpretation block, detailed paginated records and branded footer.
+- Added Pro white-label report branding using organization name, configured colors and organization logos.
+- Preserved Desweb branding for platform reports and non-Pro plans.
+- PDF export continues to preserve the exact dashboard role, tenant/site scope and filters.
+
+
 ## 2026-09-21 — Dashboard filters and exports
 
 ### Added

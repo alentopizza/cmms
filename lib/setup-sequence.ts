@@ -234,3 +234,75 @@ export async function getCreationHierarchyContext(organizationId?: string | null
 
   return result.rows[0];
 }
+
+
+export type OrganizationCreationHierarchy = CreationHierarchyContext & {
+  organizationId: string;
+  organizationName: string;
+};
+
+export async function getOrganizationCreationHierarchies(): Promise<OrganizationCreationHierarchy[]> {
+  const result = await query<OrganizationCreationHierarchy>(
+    `SELECT
+      o.id::text "organizationId",
+      o.name "organizationName",
+      1::int organizations,
+      (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id AND s.active=true) sites,
+      (SELECT count(*)::int FROM locations l WHERE l.organization_id=o.id AND l.active=true) sublocations,
+      (SELECT count(*)::int FROM suppliers sp WHERE sp.organization_id=o.id AND sp.active=true) suppliers,
+      (
+        SELECT count(*)::int
+        FROM organization_members om
+        JOIN users u ON u.id=om.user_id
+        WHERE om.organization_id=o.id
+          AND u.active=true
+          AND om.role IN ('technician','external')
+      ) workforce,
+      (SELECT count(*)::int FROM assets a WHERE a.organization_id=o.id AND a.status<>'retired') assets
+    FROM organizations o
+    WHERE o.active=true
+    ORDER BY o.name`,
+  );
+  return result.rows;
+}
+
+function prerequisiteDepth(gate: SetupGate): number {
+  if (gate.ready) return 99;
+  if (gate.href?.startsWith("/dashboard/companies")) return 0;
+  if (gate.href?.includes("create=site")) return 1;
+  if (gate.href?.includes("create=sub")) return 2;
+  if (gate.href?.startsWith("/dashboard/suppliers")) return 3;
+  if (gate.href?.startsWith("/dashboard/users")) return 4;
+  if (gate.href?.startsWith("/dashboard/assets")) return 5;
+  return 0;
+}
+
+export function creationPrerequisiteAcrossOrganizations(
+  contexts: OrganizationCreationHierarchy[],
+  target: CreationHierarchyTarget,
+): SetupGate {
+  if (contexts.length < 1) {
+    return creationPrerequisiteFor({
+      organizations:0,sites:0,sublocations:0,suppliers:0,workforce:0,assets:0,
+    }, target);
+  }
+
+  const gates = contexts.map(context => ({
+    context,
+    gate: creationPrerequisiteFor(context,target),
+  }));
+
+  if (gates.some(item => item.gate.ready)) {
+    return {
+      ready:true,
+      title:"Jerarquía disponible",
+      message:"Existe al menos una empresa que cumple los requisitos previos para crear este registro.",
+    };
+  }
+
+  const closest = [...gates].sort((a,b) => prerequisiteDepth(b.gate)-prerequisiteDepth(a.gate))[0];
+  return {
+    ...closest.gate,
+    message:`Ninguna empresa activa está lista para este registro. ${closest.context.organizationName}: ${closest.gate.message}`,
+  };
+}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
@@ -9,14 +10,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const [params, customization] = await Promise.all([searchParams, getCustomizationSummary()]);
 
   return <main className="login-page">
+    <div className="login-public-nav">
+      <Link href="/" className="login-public-home">← Inicio</Link>
+      <div>
+        <Link href="/#planes">Ver planes</Link>
+        <Link href="/downloads">Self-hosted</Link>
+      </div>
+    </div>
+
     <section className="login-shell">
       <div className="login-panel">
         <div className="login-panel-inner">
-          <div className={`login-brand ${customization.hasLogoOnDark ? "has-dark-logo" : "uses-fallback-logo"}`}>
+          <Link href="/" className={`login-brand ${customization.hasLogoOnDark ? "has-dark-logo" : "uses-fallback-logo"}`} aria-label="Volver al inicio">
             <img className="theme-logo theme-logo-light" src={logoOnLightSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
             <img className="theme-logo theme-logo-dark" src={logoOnDarkSrc(customization)} alt="Desweb - Desarrollo de Soluciones" />
             <span>CMMS</span>
-          </div>
+          </Link>
 
           <div className="login-heading">
             <span>Gestión de mantenimiento</span>
@@ -25,6 +34,16 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </div>
 
           <LoginForm hasError={params.error === "1"} />
+
+          <div className="login-conversion">
+            <span>¿Primera vez en Desweb CMMS?</span>
+            <Link href="/checkout?plan=trial">Prueba la plataforma durante 15 días</Link>
+            <div>
+              <Link href="/#planes">Comparar planes</Link>
+              <span aria-hidden="true">·</span>
+              <Link href="/downloads">Ver edición self-hosted</Link>
+            </div>
+          </div>
 
           <div className="login-security-note">
             <span aria-hidden="true">●</span>

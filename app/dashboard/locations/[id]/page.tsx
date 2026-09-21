@@ -34,7 +34,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   ]);
   if (!siteResult.rowCount) notFound();
   const site = siteResult.rows[0];
-  if (session.platformRole !== "superadmin" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
+  if (session.platformRole === "user" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
   if (!canAccessSite(session, site.id)) redirect("/dashboard/locations");
   const suppliers = await query<Supplier>(
     "SELECT id,organization_id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",
@@ -107,7 +107,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   }
 
   return <>
-    <header className="page-header"><div><Link className="back-link" href={session.platformRole === "superadmin" ? `/dashboard/companies/${site.organization_id}` : "/dashboard/locations"}>← {session.platformRole === "superadmin" ? site.organization_name : "Ubicaciones"}</Link><span className="eyebrow">Ubicación principal</span><h1 className="page-title">{site.name}</h1><p className="muted">{[site.address, site.city, site.country].filter(Boolean).join(" · ")}</p></div><span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span></header>
+    <header className="page-header"><div><Link className="back-link" href={session.platformRole !== "user" ? `/dashboard/companies/${site.organization_id}` : "/dashboard/locations"}>← {session.platformRole !== "user" ? site.organization_name : "Ubicaciones"}</Link><span className="eyebrow">Ubicación principal</span><h1 className="page-title">{site.name}</h1><p className="muted">{[site.address, site.city, site.country].filter(Boolean).join(" · ")}</p></div><span className={`status-badge ${site.active ? "status-active" : "status-inactive"}`}><span />{site.active ? "Activa" : "Inactiva"}</span></header>
     {message && <div className={`notice ${feedback.error ? "error" : "success"}`}>{message}</div>}
     <section className="contextual-action-bar section">
       <div>

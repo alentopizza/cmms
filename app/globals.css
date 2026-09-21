@@ -3786,3 +3786,89 @@ html[data-theme="dark"] .dashboard-status-cancelled{background:#431f27;color:#fe
   .dashboard-progress-track{grid-column:1/2}
   .dashboard-progress-row small{grid-column:2/3;grid-row:2}
 }
+
+
+/* Dashboard filters and exports */
+.dashboard-filterbar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 16px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+}
+.dashboard-filter-group{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  min-width:0;
+}
+.dashboard-filter-group label{
+  display:grid;
+  gap:5px;
+  min-width:130px;
+}
+.dashboard-filter-group label>span{
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--text-soft);
+}
+.dashboard-filter-group input,
+.dashboard-filter-group select{
+  height:38px;
+  min-width:130px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--bg);
+  color:var(--text);
+  padding:0 10px;
+  outline:none;
+  font-size:11px;
+}
+.dashboard-filter-group input:focus,
+.dashboard-filter-group select:focus{
+  border-color:var(--brand-teal);
+  box-shadow:0 0 0 3px rgba(56,178,169,.1);
+}
+.dashboard-clear-filters{
+  height:38px;
+  align-self:end;
+  padding:0 8px;
+}
+.dashboard-export-group{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+.dashboard-export-button{
+  min-width:92px;
+  height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+}
+.dashboard-export-button:first-child:before{content:"PDF";font-size:0}
+.dashboard-export-button:last-child:before{content:"";}
+
+@media(max-width:1180px){
+  .dashboard-filterbar{align-items:stretch;flex-direction:column}
+  .dashboard-export-group{justify-content:flex-end}
+}
+@media(max-width:760px){
+  .dashboard-filter-group{display:grid;grid-template-columns:1fr 1fr}
+  .dashboard-filter-group label{min-width:0}
+  .dashboard-filter-group input,.dashboard-filter-group select{width:100%;min-width:0}
+  .dashboard-clear-filters{width:100%}
+  .dashboard-export-group{display:grid;grid-template-columns:1fr 1fr}
+  .dashboard-export-button{width:100%}
+}
+@media(max-width:520px){
+  .dashboard-filter-group{grid-template-columns:1fr}
+}

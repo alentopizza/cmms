@@ -14,9 +14,7 @@ export type SetupState = {
 };
 
 export async function getSetupState(organizationId: string, client?: PoolClient): Promise<SetupState> {
-  const run = client ? client.query.bind(client) : query;
-  const result = await run<SetupState>(
-    `SELECT
+  const sql = `SELECT
       (SELECT count(*)::int FROM sites WHERE organization_id=$1 AND active=true) sites,
       (SELECT count(*)::int FROM locations WHERE organization_id=$1 AND active=true) sublocations,
       (SELECT count(*)::int FROM suppliers WHERE organization_id=$1 AND active=true) suppliers,
@@ -25,9 +23,10 @@ export async function getSetupState(organizationId: string, client?: PoolClient)
       (SELECT count(*)::int FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND om.role='external' AND u.active=true) "externalCollaborators",
       (SELECT count(*)::int FROM crews WHERE organization_id=$1 AND active=true) crews,
       (SELECT count(*)::int FROM assets WHERE organization_id=$1 AND status<>'retired') assets,
-      (SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) "inventoryItems"`,
-    [organizationId],
-  );
+      (SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) "inventoryItems"`;
+  const result = client
+    ? await client.query<SetupState>(sql,[organizationId])
+    : await query<SetupState>(sql,[organizationId]);
   return result.rows[0];
 }
 
@@ -39,7 +38,7 @@ export type SetupGate = {
   action?: string;
 };
 
-export function gateFor(state: SetupState, target: "supplier" | "workforce" | "external" | "asset" | "inventory" | "crew" | "activity"): SetupGate {
+export function gateFor(state: SetupState, target: "supplier" | "workforce" | "provider" | "external" | "asset" | "inventory" | "crew" | "activity"): SetupGate {
   if (state.sites < 1) return {
     ready:false,
     title:"Primero crea una ubicación principal",
@@ -57,7 +56,7 @@ export function gateFor(state: SetupState, target: "supplier" | "workforce" | "e
 
   if (target === "supplier") return { ready:true,title:"Estructura lista",message:"Ya puedes registrar proveedores." };
 
-  if (target === "external" && state.serviceSuppliers < 1) return {
+  if (target === "provider" && state.serviceSuppliers < 1) return {
     ready:false,
     title:"Registra un proveedor de servicios",
     message:"Los colaboradores externos deben quedar vinculados a una empresa proveedora de servicios.",

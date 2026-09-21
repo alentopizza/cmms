@@ -138,17 +138,24 @@ export default function CompanyDirectory({
 
             <div className="company-resource-list">
               {[
-                ["Proveedores", Number(company.supplier_count), 50],
-                ["Ubicaciones", Number(company.site_count), Number(company.max_sites)],
-                ["Sub Ubicaciones", Number(company.sublocation_count), Number(company.max_sublocations)],
-                ["Activos", Number(company.asset_count), Number(company.max_assets)],
-              ].map(([label,current,max]) => {
-                const currentValue=Number(current)||0;
-                const maxValue=Math.max(1,Number(max)||1);
-                const percent=Math.min(100,Math.round((currentValue/maxValue)*100));
-                return <div className="company-resource-row" key={String(label)}>
-                  <div><strong>{label}</strong><span>{currentValue} / {maxValue}</span><b>{currentValue}</b></div>
-                  <div className="company-resource-track"><span style={{width:percent+"%"}} /></div>
+                {label:"Proveedores",current:Number(company.supplier_count),max:null},
+                {label:"Ubicaciones",current:Number(company.site_count),max:Number(company.max_sites)},
+                {label:"Sub Ubicaciones",current:Number(company.sublocation_count),max:Number(company.max_sublocations)},
+                {label:"Activos",current:Number(company.asset_count),max:Number(company.max_assets)},
+              ].map(resource => {
+                const currentValue=Number(resource.current)||0;
+                const hasLimit=typeof resource.max==="number" && resource.max>0;
+                const maxValue=hasLimit ? Number(resource.max) : 0;
+                const percent=hasLimit ? Math.min(100,Math.round((currentValue/maxValue)*100)) : 0;
+                return <div className="company-resource-row" key={resource.label}>
+                  <div>
+                    <strong>{resource.label}</strong>
+                    <span>{hasLimit ? `${currentValue} / ${maxValue}` : `${currentValue} registrados`}</span>
+                    <b>{hasLimit ? currentValue : "Sin límite"}</b>
+                  </div>
+                  <div className={hasLimit ? "company-resource-track" : "company-resource-track company-resource-track-unlimited"}>
+                    {hasLimit && <span style={{width:percent+"%"}} />}
+                  </div>
                 </div>;
               })}
             </div>

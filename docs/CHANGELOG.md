@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-21 — Company Profile v2 and corporate document dossier
+
+### Added
+
+- Added migration `014_company_profile_documents.sql`.
+- Expanded company records with tax-ID type, legal/administrative address, phone, website, administrative/billing emails, primary-contact information and internal notes.
+- Redesigned the full company page into a visual enterprise profile with cover/logo hero, plan, status, profile completion and local section navigation.
+- Added a corporate document dossier with configurable Required / Optional / Not applicable classification.
+- Added document categories for tax, legal, commercial contract, privacy/data treatment, insurance, certifications and other corporate records.
+- Added issue date, expiry date, reference, notes, uploader and file metadata.
+- Added authenticated PDF/image download and archive/update flows.
+- Added document states for current, expiring within 30 days, expired, pending, optional without file and not applicable.
+- Added profile-completeness and documentation-health indicators to company directory cards and quick detail.
+- Kept administrative/fiscal addresses explicitly separate from operational sites.
+
+### Security / data handling
+
+- Corporate documents remain organization scoped.
+- Downloads require the same company-management authorization as the current company workspace.
+- Files are limited to PDF, PNG, JPEG or WebP up to 10 MB and are served with private/no-store and nosniff headers.
+
+
 ## 2026-09-21 — Facial attendance, geofencing and field execution analytics
 
 ### Added

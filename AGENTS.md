@@ -101,3 +101,12 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
+
+
+## Company enterprise-profile invariants
+
+- Organization legal/administrative addresses and operational site addresses are separate concepts; never auto-copy or synchronize them.
+- Corporate documents belong to the organization dossier, not to generic maintenance attachments or visual logo/cover storage.
+- Corporate-document requirement level is tenant-specific: required, optional or not applicable.
+- Document files must remain organization scoped and downloads must be authenticated.
+- Company profile/document mutations currently remain behind platform-level `companies.manage`; do not broaden this privilege implicitly when adding tenant features.

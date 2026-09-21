@@ -12,6 +12,12 @@ export type CompanyDirectoryItem = {
   tax_id: string | null;
   timezone: string;
   active: boolean;
+  admin_email: string | null;
+  primary_contact_name: string | null;
+  plan_name: string | null;
+  profile_completion: number;
+  document_count: string;
+  pending_document_count: string;
   site_count: string;
   active_site_count: string;
   asset_count: string;
@@ -112,11 +118,24 @@ export default function CompanyDirectory({
           </div>
 
           <div className="company-card-content">
-            <h3>{company.name}</h3>
+            <div className="company-card-heading-row">
+              <h3>{company.name}</h3>
+              <span className="company-plan-pill company-plan-pill-card">{company.plan_name || "Sin plan"}</span>
+            </div>
             <div className="company-card-location">
               <span>Sede: {company.site_name || "Sin sede principal"}</span>
               <span>{company.city ? `${company.city} · ${company.country || "CO"}` : "Ciudad sin registrar"}</span>
               <span>{company.address || "Dirección sin registrar"}</span>
+            </div>
+
+            <div className="company-card-profile-health">
+              <div><span>Perfil empresarial</span><strong>{company.profile_completion}%</strong></div>
+              <div className="company-card-profile-track"><span style={{ width: company.profile_completion + "%" }} /></div>
+              <small className={Number(company.pending_document_count) > 0 ? "company-card-doc-alert" : ""}>
+                {Number(company.pending_document_count) > 0
+                  ? company.pending_document_count + " documento(s) requerido(s) pendiente(s)"
+                  : company.document_count + " documento(s) · expediente al día"}
+              </small>
             </div>
 
             <div className="company-card-metrics">
@@ -124,7 +143,7 @@ export default function CompanyDirectory({
               <div><strong>{company.asset_count}</strong><span>Activos</span><small>Equipos vinculados</small></div>
             </div>
 
-            <span className="company-card-action">Ver detalle <span aria-hidden="true">→</span></span>
+            <span className="company-card-action">Vista rápida <span aria-hidden="true">→</span></span>
           </div>
         </button>
       </article>)}
@@ -169,7 +188,7 @@ export default function CompanyDirectory({
           <div>
             <span className={`status-badge ${selected.active ? "status-active" : "status-inactive"}`}><span aria-hidden="true" />{selected.active ? "Empresa activa" : "Empresa inactiva"}</span>
             <h2 id="company-detail-title">{selected.name}</h2>
-            <p>{selected.site_name || "Sin sede principal"} · {selected.city || "Ciudad sin registrar"}</p>
+            <p>{selected.site_name || "Sin sede principal"} · {selected.city || "Ciudad sin registrar"} · {selected.plan_name || "Sin plan"}</p>
           </div>
           <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Información protegida"}</span>
         </div>
@@ -178,6 +197,13 @@ export default function CompanyDirectory({
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
           <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
+
+          {!editing && <div className="company-modal-profile-summary">
+            <div><span>Completitud</span><strong>{selected.profile_completion}%</strong></div>
+            <div><span>Documentos</span><strong>{selected.document_count}</strong></div>
+            <div><span>Pendientes</span><strong>{selected.pending_document_count}</strong></div>
+            <div><span>Contacto</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
+          </div>}
 
           <div className="modal-section">
             <div className="modal-section-title"><strong>Información de la empresa</strong><span>{editing ? "Campos habilitados" : "Solo lectura"}</span></div>
@@ -271,8 +297,8 @@ export default function CompanyDirectory({
             </form>
           </div>
           <div>
-            <Link className="button secondary" href={`/dashboard/companies/${selected.id}`}>Administrar sedes</Link>
-            <button className="button" type="button" onClick={() => setEditing(true)}>Editar información</button>
+            <Link className="button" href={`/dashboard/companies/${selected.id}`}>Abrir ficha empresarial</Link>
+            <button className="button secondary" type="button" onClick={() => setEditing(true)}>Edición rápida</button>
           </div>
         </footer>}
       </section>

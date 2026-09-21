@@ -368,3 +368,21 @@ The server stores only an AES-256-GCM encrypted numeric template, not the camera
 Sites now support latitude, longitude and a geofence radius. Attendance events persist check-in/out time, location accuracy, distance to site and verification confidence. Activity execution is correlated to an open field shift for descriptive 30-day operational statistics.
 
 Do not convert these statistics into automatic employment rankings or employment decisions. Human review is required for any personnel-management interpretation.
+
+
+### Company Profile v2
+
+The Superadministrator company workspace now treats each organization as a governed enterprise record rather than only a tenant name plus sites.
+
+The full company page includes:
+
+- commercial/legal identity and tax-identification type;
+- administrative/fiscal address kept separate from operational sites;
+- administrative, billing and primary-contact channels;
+- internal administrative notes;
+- visual identity;
+- current plan and operational-resource summaries;
+- profile-completeness guidance;
+- a corporate document dossier with required/optional/not-applicable classification, issue/expiry dates and visual expiry alerts.
+
+Corporate documents are stored in `organization_documents` with metadata and durable PostgreSQL file bytes. They are intentionally separate from company logo/cover assets and from maintenance-operation attachments.

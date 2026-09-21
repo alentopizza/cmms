@@ -284,3 +284,28 @@ Visible modules can be reorganized per user.
 - The environment bootstrap Superadministrator has no user row, so its preference uses browser-local storage as a fallback.
 
 Navigation preference is presentation state only. Authorization and routing continue to come from the server-side permission model.
+
+
+## Company Profile v2 visual pattern
+
+The full company page is a structured enterprise profile, not a long CRUD form.
+
+Visual hierarchy:
+
+- cover image and logo establish organization identity;
+- status + plan + profile-completeness summary are visible in the hero;
+- sticky local navigation links to Summary, Information, Documents, Sites and Resources;
+- legal/administrative information uses calm card surfaces and clear field groups;
+- operational sites remain visually and semantically separate from the enterprise address;
+- corporate documents use compact dossier cards with visible status, dates, file metadata and actions.
+
+Document states must use both text and color:
+
+- Vigente;
+- Próximo a vencer;
+- Vencido;
+- Pendiente;
+- Sin archivo;
+- No aplica.
+
+The directory company card may show plan, profile completion and documentation health, but it should stay scan-friendly. The existing modal remains a quick-view/quick-edit surface; the full enterprise page is the canonical detailed workspace.

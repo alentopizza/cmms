@@ -146,3 +146,12 @@ This roadmap is directional and should be updated as priorities change.
 4. Produce signed/versioned downloadable release artifacts or container images.
 5. Prepare software-authorship registration materials and trademark searches/filings.
 6. Evaluate patent protection only if a specific technical invention is identified and before public disclosure of that invention.
+
+
+## Recently completed company-management slice
+
+- enterprise company profile with legal/admin/contact information;
+- explicit separation between enterprise address and operational sites;
+- corporate document dossier with requirement level and expiry metadata;
+- authenticated document upload/download/archive flow;
+- profile-completeness and document-health indicators in the company workspace and directory.

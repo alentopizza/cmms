@@ -16,7 +16,33 @@ export default async function CompaniesPage({
 
   const [companies, params] = await Promise.all([
     query<CompanyDirectoryItem>(
-      `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,
+      `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,o.admin_email,o.primary_contact_name,
+        bp.name plan_name,
+        round(100.0 * (
+          (o.name IS NOT NULL AND o.name <> '')::int +
+          (o.legal_name IS NOT NULL AND o.legal_name <> '')::int +
+          (o.tax_id IS NOT NULL AND o.tax_id <> '')::int +
+          (o.tax_id_type IS NOT NULL AND o.tax_id_type <> '')::int +
+          (o.legal_address IS NOT NULL AND o.legal_address <> '')::int +
+          (o.legal_city IS NOT NULL AND o.legal_city <> '')::int +
+          (o.legal_country IS NOT NULL AND o.legal_country <> '')::int +
+          (o.phone IS NOT NULL AND o.phone <> '')::int +
+          (o.admin_email IS NOT NULL AND o.admin_email <> '')::int +
+          (o.primary_contact_name IS NOT NULL AND o.primary_contact_name <> '')::int +
+          (o.primary_contact_email IS NOT NULL AND o.primary_contact_email <> '')::int +
+          (o.logo_data IS NOT NULL)::int +
+          (o.cover_data IS NOT NULL)::int +
+          (SELECT count(*)::int FROM organization_documents rd
+            WHERE rd.organization_id=o.id AND rd.archived_at IS NULL AND rd.requirement_level='required'
+              AND rd.file_data IS NOT NULL AND (rd.expires_at IS NULL OR rd.expires_at >= current_date))
+        ) / NULLIF(13 + (
+          SELECT count(*)::int FROM organization_documents rq
+          WHERE rq.organization_id=o.id AND rq.archived_at IS NULL AND rq.requirement_level='required'
+        ),0))::int profile_completion,
+        (SELECT count(*)::text FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL) document_count,
+        (SELECT count(*)::text FROM organization_documents od
+          WHERE od.organization_id=o.id AND od.archived_at IS NULL AND od.requirement_level='required'
+            AND (od.file_data IS NULL OR (od.expires_at IS NOT NULL AND od.expires_at < current_date))) pending_document_count,
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id) site_count,
         (SELECT count(*)::text FROM sites sx WHERE sx.organization_id=o.id AND sx.active=true) active_site_count,
         (SELECT count(*)::text FROM assets ax WHERE ax.organization_id=o.id) asset_count,
@@ -33,6 +59,8 @@ export default async function CompaniesPage({
         (o.cover_data IS NOT NULL) has_cover
        FROM organizations o
        LEFT JOIN organization_limits ol ON ol.organization_id=o.id
+       LEFT JOIN organization_subscriptions os ON os.organization_id=o.id
+       LEFT JOIN billing_plans bp ON bp.id=os.plan_id
        LEFT JOIN LATERAL (
          SELECT id,name,code,city,country,address
          FROM sites

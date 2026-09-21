@@ -252,7 +252,7 @@ Landing
  -> immediate access
 ```
 
-The current landing implements the same provisioning concept with a simulated checkout.
+The current landing implements the same provisioning concept with a simulated checkout. The public landing is intended to be a professional commercial surface, even during beta; technical checkout limitations are disclosed without dominating the value proposition.
 
 ### Advisor/direct sale
 
@@ -267,6 +267,7 @@ Public product entry points during the current beta are:
 - `/` — public landing and plan comparison;
 - `/login` — application login;
 - `/downloads` — self-hosted/download information;
+- `/descargas` — Spanish alias for the same self-hosted information page;
 - `/dashboard` — authenticated application.
 
 The first portable installation format is Docker Compose:

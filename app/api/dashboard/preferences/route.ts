@@ -10,6 +10,7 @@ const ALLOWED = new Set([
   "suppliers",
   "users",
   "crews",
+  "attendance",
   "assets",
   "work_orders",
   "maintenance",

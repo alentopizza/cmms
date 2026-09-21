@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && sh scripts/package-runtime.sh",
+    "build": "node scripts/prepare-biometric-models.mjs && next build && sh scripts/package-runtime.sh",
     "start": "next start -H 0.0.0.0 -p 3000",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs"
@@ -13,7 +13,8 @@
     "next": "^16.0.0",
     "pg": "^8.16.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "@vladmandic/human": "3.3.6"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

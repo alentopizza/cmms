@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-21 — Facial attendance, geofencing and field execution analytics
+
+### Added
+
+- Added migration `013_biometric_attendance_geolocation.sql`.
+- Added organization attendance policies with role scope, facial verification, geolocation and configurable accuracy/confidence thresholds.
+- Added site latitude, longitude and geofence radius configuration.
+- Added the **Asistencia** workspace and permission-aware navigation.
+- Added browser camera enrollment with face description, liveness and anti-spoof validation using Human 3.3.6.
+- Added local packaging of biometric ML model files for SaaS/self-hosted runtime.
+- Added AES-256-GCM encryption for persisted facial templates; enrollment photographs are not stored.
+- Added self-service biometric template deletion.
+- Added geofence-validated field clock-in and clock-out with one-open-shift-per-user enforcement.
+- Added activity execution events correlated with open attendance shifts.
+- Added descriptive 30-day field statistics for hours, shifts and activity timing without automated employee rankings.
+- Added self-hosted `BIOMETRIC_ENCRYPTION_KEY` deployment requirement and biometric/privacy guidance.
+
+
 ## 2026-09-20 — Retractable and user-orderable dashboard sidebar
 
 ### Added

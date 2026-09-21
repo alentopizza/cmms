@@ -166,3 +166,32 @@ The organization role `external` represents an individual external collaborator.
 Crews contain internal technicians and external collaborators. Provider-representative accounts are excluded from crew membership.
 
 This separation avoids granting an entire supplier's scope to every external individual and preserves auditable responsibility for outsourced work.
+
+
+## ADR-016 — Field attendance uses 1:1 facial verification, not employee identification
+
+Status: accepted.
+
+The attendance feature may verify that the already authenticated user matches that user's enrolled facial template. It must not scan the camera against a company-wide biometric gallery to determine identity.
+
+The browser performs face embedding, liveness and anti-spoof inference. The server receives the numeric embedding for one-to-one comparison with the authenticated user's encrypted template.
+
+Enrollment photographs are not persisted. Biometric templates are encrypted at rest and can be deleted by the enrolled user.
+
+## ADR-017 — Attendance geolocation is event-based and site-scoped
+
+Status: accepted.
+
+The product records precise location only during explicit attendance events (check-in/check-out) rather than implementing continuous background location tracking.
+
+Each site owns a geofence point and radius. Server-side validation checks GPS accuracy, tenant/site scope and distance to that geofence.
+
+This minimizes location collection while still supporting field attendance evidence.
+
+## ADR-018 — Productivity metrics are descriptive, not automated employment decisions
+
+Status: accepted.
+
+The CMMS may aggregate attendance and activity execution into descriptive metrics such as field hours, activity completion during a registered shift and average activity duration.
+
+The platform must not automatically rank workers, assign disciplinary outcomes, make termination/hiring decisions or otherwise make high-impact employment decisions from biometric, location or productivity data. Such interpretation remains under accountable human review.

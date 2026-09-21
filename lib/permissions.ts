@@ -11,6 +11,9 @@ export type Permission =
   | "crews.manage"
   | "activities.manage"
   | "activities.execute"
+  | "attendance.self"
+  | "attendance.manage"
+  | "attendance.reports"
   | "assets.read"
   | "assets.write"
   | "work_orders.read"
@@ -43,13 +46,13 @@ export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
 export const SUPERADMIN_DESCRIPTION = "Acceso total a la plataforma: empresas, usuarios, límites, personalización global y todos los módulos operativos.";
 
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
-  admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write"],
-  manager: ["locations.manage","suppliers.manage","crews.manage","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write"],
-  technician: ["assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
+  admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write"],
+  manager: ["locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write"],
+  technician: ["attendance.self","assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
   requester: ["work_orders.read","work_orders.write"],
   viewer: ["assets.read","work_orders.read","maintenance.read","inventory.read"],
-  provider: ["assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
-  external: ["assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
+  provider: ["attendance.self","assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
+  external: ["attendance.self","assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
 };
 
 export type PermissionSubject = {

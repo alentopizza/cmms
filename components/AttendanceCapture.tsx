@@ -91,7 +91,7 @@ export default function AttendanceCapture({
   async function ensureHuman() {
     if(humanRef.current) return humanRef.current;
     setMessage("Cargando verificación facial…");
-    const module=await import("@vladmandic/human");
+    const module=await import("@vladmandic/human/dist/human.esm.js");
     const Human=module.default;
     const human=new Human({
       backend:"webgl",

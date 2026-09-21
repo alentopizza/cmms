@@ -116,6 +116,20 @@ export async function POST(
   const taxId = String(form.get("tax_id") || "").trim();
   const timezone = String(form.get("timezone") || "America/Bogota").trim();
   const slug = slugify(String(form.get("slug") || name)) || slugify(name);
+  const profileV2 = form.get("profile_v2") === "1";
+  const taxIdType = String(form.get("tax_id_type") || "").trim();
+  const legalAddress = String(form.get("legal_address") || "").trim();
+  const legalCity = String(form.get("legal_city") || "").trim();
+  const legalCountry = String(form.get("legal_country") || "").trim().toUpperCase().slice(0, 2);
+  const phone = String(form.get("phone") || "").trim();
+  const adminEmail = String(form.get("admin_email") || "").trim().toLowerCase();
+  const billingEmail = String(form.get("billing_email") || "").trim().toLowerCase();
+  const website = String(form.get("website") || "").trim();
+  const primaryContactName = String(form.get("primary_contact_name") || "").trim();
+  const primaryContactTitle = String(form.get("primary_contact_title") || "").trim();
+  const primaryContactPhone = String(form.get("primary_contact_phone") || "").trim();
+  const primaryContactEmail = String(form.get("primary_contact_email") || "").trim().toLowerCase();
+  const internalNotes = String(form.get("internal_notes") || "").trim();
   const primarySiteId = String(form.get("primary_site_id") || "");
   const siteName = String(form.get("site_name") || "").trim();
   const siteCode = String(form.get("site_code") || "").trim().toUpperCase();
@@ -152,6 +166,23 @@ export async function POST(
         [name, slug, legalName || null, taxId || null, timezone, id],
       );
       if (!updated.rowCount) throw new Error("Empresa no encontrada");
+
+      if (profileV2) {
+        await client.query(
+          `UPDATE organizations SET
+            tax_id_type=$1,legal_address=$2,legal_city=$3,legal_country=$4,phone=$5,
+            admin_email=$6,billing_email=$7,website=$8,primary_contact_name=$9,
+            primary_contact_title=$10,primary_contact_phone=$11,primary_contact_email=$12,
+            internal_notes=$13,updated_at=now()
+           WHERE id=$14`,
+          [
+            taxIdType || null, legalAddress || null, legalCity || null, legalCountry || null, phone || null,
+            adminEmail || null, billingEmail || null, website || null, primaryContactName || null,
+            primaryContactTitle || null, primaryContactPhone || null, primaryContactEmail || null,
+            internalNotes || null, id,
+          ],
+        );
+      }
 
       if (primarySiteId && UUID_PATTERN.test(primarySiteId)) {
         await client.query(

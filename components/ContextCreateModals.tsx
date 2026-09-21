@@ -103,7 +103,7 @@ export function SiteCreateModal({
   return <>
     <TriggerButton label={triggerLabel} icon="⌂" onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Estructura física" title="Crear ubicación principal" description={fixedOrganizationName ? `Se creará directamente dentro de ${fixedOrganizationName}.` : "Selecciona la empresa y registra su nueva sede."}>
-      <form className="company-modal-form" method="post" action={organizationId ? `/api/organizations/${organizationId}/sites` : undefined}>
+      <form className="company-modal-form" method="post" encType="multipart/form-data" action={organizationId ? `/api/organizations/${organizationId}/sites` : undefined}>
         <input type="hidden" name="return_to" value={returnTo} />
         {!fixedOrganizationId && <div className="field">
           <label>Empresa *</label>
@@ -173,6 +173,7 @@ export function SubLocationCreateModal({
           <div className="field"><label>Ubicación superior</label><select name="parent_id" value={parentId} onChange={event => setParentId(event.target.value)} disabled={Boolean(fixedParentId)}><option value="">{fixedSiteName || sites.find(site=>site.id===siteId)?.name || "Sede"} (nivel principal)</option>{visibleLocations.map(location=><option key={location.id} value={location.id}>{location.label || location.name}</option>)}</select>{fixedParentId && <input type="hidden" name="parent_id" value={fixedParentId} />}</div>
           <div className="field"><label>Tipo</label><select name="type" defaultValue="area"><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
           <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Ej. Nivel -1, acceso por corredor técnico" /></div>
+          <div className="field form-span-2"><label>Foto de la sububicación</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
         </div>
         <footer className="modal-actions">
           <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancelar</button>
@@ -403,11 +404,15 @@ export function LocationCreateModal({
           <div className="field form-span-2"><label>Dirección</label><input name="address" placeholder="Ej. Carrera 15 # 93-47, Bogotá" /></div>
           <div className="field"><label>Ciudad</label><input name="city" placeholder="Ej. Bogotá" /></div>
           <div className="field"><label>País</label><input name="country" defaultValue="CO" maxLength={2} placeholder="CO" /></div>
+          <div className="field form-span-2"><label>Foto de la sede</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB. Se usará como portada de la tarjeta.</small></div>
+          <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
+          <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
+          <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
         </div>
         {fixedOrganizationName && <div className="modal-context-note">Empresa seleccionada: <strong>{fixedOrganizationName}</strong></div>}
         <footer className="modal-actions"><button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="button" type="submit" disabled={!organizationId}>Crear ubicación</button></footer>
       </form> :
-      <form className="company-modal-form" method="post" action={resolvedSiteId ? `/api/sites/${resolvedSiteId}/locations` : undefined}>
+      <form className="company-modal-form" method="post" encType="multipart/form-data" action={resolvedSiteId ? `/api/sites/${resolvedSiteId}/locations` : undefined}>
         <input type="hidden" name="return_to" value={returnTo} />
         <div className="form-grid">
           <div className="field form-span-2"><label>Ubicación principal *</label><select value={resolvedSiteId} onChange={event=>{setSiteId(event.target.value);setParentId("");}} required><option value="">Selecciona una sede</option>{visibleSites.map(site=><option key={site.id} value={site.id}>{site.organization_name ? site.organization_name+" · " : ""}{site.name}</option>)}</select></div>

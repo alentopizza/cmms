@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
   if (!isPlatformOwner(session)) {
     return NextResponse.json(
-      { message: "La eliminación universal está reservada exclusivamente al Propietario Desweb." },
+      { message: "La eliminación definitiva de estos registros está reservada al Propietario Desweb." },
       { status: 403 },
     );
   }
@@ -59,12 +59,12 @@ export async function POST(request: Request) {
     });
     await client.query("COMMIT");
     return NextResponse.json({
-      message: "Eliminación universal completada.",
+      message: "Registro eliminado definitivamente.",
       result,
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    const message = error instanceof Error ? error.message : "No fue posible completar la eliminación universal.";
+    const message = error instanceof Error ? error.message : "No fue posible eliminar el registro.";
     const status = message === "Registro no encontrado." ? 404 : 409;
     return NextResponse.json({ message }, { status });
   } finally {

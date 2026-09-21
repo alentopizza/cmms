@@ -18,7 +18,7 @@ export async function POST(request:Request) {
   const leaderUserId=String(form.get("leader_user_id")||"");
   const description=String(form.get("description")||"").trim();
   const memberIds=[...new Set(form.getAll("member_ids").map(v=>String(v)).filter(Boolean))];
-  const target=(suffix:string)=>publicUrl(`/dashboard/crews\${suffix}`,request.url);
+  const target=(suffix:string)=>publicUrl(`/dashboard/crews${suffix}`,request.url);
 
   if(!organizationId||!siteId||!name||!leaderUserId||memberIds.length<1) {
     return NextResponse.redirect(target("?error=members"),303);

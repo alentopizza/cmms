@@ -257,3 +257,30 @@ Current constraints:
 | Favicon | ICO, PNG, WebP, SVG | 2 MB | square, 64×64 or 128×128 px |
 
 The legacy dedicated personalization route may remain available, but **Configuración** is the primary Superadministrator entry point.
+
+
+## Retractable personalized sidebar
+
+The authenticated dashboard uses a technology-oriented dark sidebar with a vertical teal/cyan accent rail inspired by compact smart-control interfaces.
+
+Behavior:
+- expanded mode shows icon + module label;
+- collapsed mode shows the module icon rail;
+- desktop users can collapse/expand the sidebar;
+- mobile uses an overlay drawer;
+- active modules use a high-contrast teal capsule/icon treatment;
+- the account/configuration control remains anchored at the bottom.
+
+### User-defined module order
+
+Visible modules can be reorganized per user.
+
+- Use **Organizar** to enter reorder mode.
+- Desktop supports drag and drop.
+- Up/down controls provide an accessible and touch-friendly alternative.
+- **Restaurar** returns to the permission-filtered default module order.
+- A user can only reorder modules they are authorized to see; reordering never grants access to hidden modules.
+- Real database-backed users persist order and collapsed state in `user_dashboard_preferences`.
+- The environment bootstrap Superadministrator has no user row, so its preference uses browser-local storage as a fallback.
+
+Navigation preference is presentation state only. Authorization and routing continue to come from the server-side permission model.

@@ -31,7 +31,7 @@ export default async function UsersPage() {
                   ) has_activity
            FROM users u
            LEFT JOIN LATERAL (
-             SELECT om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,om.external_supplier_id,supplier.name external_supplier_name,
+             SELECT om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                     COALESCE((
                       SELECT array_agg(oms.site_id::text ORDER BY site.name)
                       FROM organization_member_sites oms

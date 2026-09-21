@@ -14,7 +14,8 @@
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@vladmandic/human": "3.3.6"
+    "@vladmandic/human": "3.3.6",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

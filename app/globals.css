@@ -1841,3 +1841,252 @@ html[data-theme="dark"] .lead-card-head strong{color:var(--text)}
 
 .marketing-logo-needs-plate{padding:5px 8px;border-radius:10px;background:rgba(255,255,255,.94)}
 html[data-theme="light"] .marketing-logo-needs-plate{padding:0;background:transparent}
+
+
+/* Floating Desweb landing header + permanent dark marketing theme */
+.marketing-top-floating{
+  position:sticky;
+  top:0;
+  z-index:110;
+  padding:18px 22px 0;
+  background:linear-gradient(180deg,rgba(7,17,24,.97),rgba(7,17,24,.72),transparent)!important;
+  border:0!important;
+  backdrop-filter:none;
+}
+.marketing-nav-floating{
+  width:min(1260px,100%);
+  min-height:64px;
+  margin:0 auto;
+  padding:9px 10px 9px 16px;
+  border:1px solid rgba(210,224,229,.86);
+  border-radius:15px;
+  background:rgba(252,253,253,.97);
+  box-shadow:0 16px 42px rgba(0,0,0,.25),0 1px 0 rgba(255,255,255,.8) inset;
+  backdrop-filter:blur(18px);
+}
+.marketing-header-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:196px;
+}
+.marketing-header-logo img{
+  width:132px;
+  max-height:38px;
+  object-fit:contain;
+  object-position:left center;
+  display:block;
+}
+.marketing-header-logo>span{
+  padding-left:11px;
+  border-left:1px solid #dce5e8;
+  color:#2c8780;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.16em;
+}
+.marketing-nav-links-floating{
+  margin-left:auto;
+  margin-right:20px;
+  gap:20px;
+}
+.marketing-nav-links-floating a{
+  position:relative;
+  padding:8px 0;
+  color:#53646d!important;
+  font-size:9px!important;
+  font-weight:800!important;
+}
+.marketing-nav-links-floating a:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  right:50%;
+  bottom:1px;
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#38b2a9,#72f1dc);
+  transition:left .18s ease,right .18s ease;
+}
+.marketing-nav-links-floating a:hover{
+  color:#17333b!important;
+}
+.marketing-nav-links-floating a:hover:after{
+  left:0;
+  right:0;
+}
+.marketing-nav-actions-floating{gap:9px}
+.marketing-nav-actions-floating .marketing-login-link{
+  padding:9px 11px;
+  color:#445861!important;
+  font-size:9px!important;
+}
+.marketing-nav-actions-floating .marketing-nav-cta{
+  min-height:40px;
+  display:inline-flex;
+  align-items:center;
+  padding:0 16px!important;
+  border-radius:10px;
+  background:linear-gradient(90deg,#39b8ae,#70e2d8)!important;
+  color:#092027!important;
+  box-shadow:0 7px 18px rgba(56,178,169,.22);
+}
+
+/* Marketing landing remains dark regardless of global application preference. */
+html .marketing-page-pro.marketing-dark-only{
+  background:
+    radial-gradient(circle at 78% 8%,rgba(56,178,169,.17),transparent 28rem),
+    radial-gradient(circle at 12% 22%,rgba(121,202,196,.08),transparent 22rem),
+    linear-gradient(180deg,#091219 0,#0c171f 42%,#0a1218 100%);
+  color:#f4fbfc;
+}
+html .marketing-page-pro.marketing-dark-only:before{
+  opacity:.25;
+  background-image:
+    linear-gradient(rgba(121,202,196,.13) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(121,202,196,.13) 1px,transparent 1px);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-hero-copy-pro h1,
+html .marketing-page-pro.marketing-dark-only .marketing-section-heading h2,
+html .marketing-page-pro.marketing-dark-only .marketing-workflow-intro h2,
+html .marketing-page-pro.marketing-dark-only .marketing-faq-intro h2{
+  color:#f7fcfd;
+}
+html .marketing-page-pro.marketing-dark-only .marketing-hero-copy-pro p,
+html .marketing-page-pro.marketing-dark-only .marketing-section-heading p,
+html .marketing-page-pro.marketing-dark-only .marketing-workflow-intro p,
+html .marketing-page-pro.marketing-dark-only .marketing-faq-intro p{
+  color:#91a6af;
+}
+html .marketing-page-pro.marketing-dark-only .marketing-feature-card,
+html .marketing-page-pro.marketing-dark-only .marketing-workflow-steps article,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-card-pro,
+html .marketing-page-pro.marketing-dark-only .marketing-faq-list details{
+  background:linear-gradient(180deg,rgba(19,36,46,.92),rgba(13,27,35,.96));
+  border-color:rgba(186,227,224,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.015),0 12px 30px rgba(0,0,0,.14);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-feature-card h3,
+html .marketing-page-pro.marketing-dark-only .marketing-workflow-steps strong,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-card h3,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-price strong,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-card-pro li b,
+html .marketing-page-pro.marketing-dark-only .marketing-faq-list summary>strong{
+  color:#eaf6f8;
+}
+html .marketing-page-pro.marketing-dark-only .marketing-feature-card p,
+html .marketing-page-pro.marketing-dark-only .marketing-workflow-steps p,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-card p,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-card li,
+html .marketing-page-pro.marketing-dark-only .marketing-plan-price small,
+html .marketing-page-pro.marketing-dark-only .marketing-faq-list details p{
+  color:#81959e;
+}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-section{
+  background:radial-gradient(circle at 8% 20%,rgba(56,178,169,.14),transparent 20rem),linear-gradient(145deg,#10222b,#0c1921);
+  border-color:rgba(186,227,224,.12);
+  box-shadow:0 28px 65px rgba(0,0,0,.24);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-copy h2{color:#f3fafb}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-copy>p{color:#93a8b0}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-points b{color:#dcebed}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-card{
+  background:rgba(7,17,23,.64);
+  border-color:rgba(186,227,224,.12);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-card-head strong{color:#edf8fa}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-grid label>span{color:#a9bbc2}
+html .marketing-page-pro.marketing-dark-only .marketing-lead-grid input,
+html .marketing-page-pro.marketing-dark-only .marketing-lead-grid select,
+html .marketing-page-pro.marketing-dark-only .marketing-lead-grid textarea{
+  background:#0e1c24;
+  color:#ecf7f8;
+  border-color:rgba(186,227,224,.12);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-final-cta{
+  background:radial-gradient(circle at 85% 40%,rgba(56,178,169,.14),transparent 18rem),linear-gradient(120deg,#122630,#0d1c24);
+  border-color:rgba(186,227,224,.13);
+}
+html .marketing-page-pro.marketing-dark-only .marketing-final-cta h2{color:#f2fafb}
+html .marketing-page-pro.marketing-dark-only .marketing-final-cta p{color:#8da2ab}
+
+/* Footer aligned with Desweb corporate system */
+.marketing-footer-pro{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 88% 12%,rgba(56,178,169,.12),transparent 24rem),
+    linear-gradient(180deg,#09151c,#071118)!important;
+  border-top:1px solid rgba(121,202,196,.12)!important;
+}
+.marketing-footer-pro:before{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  right:-90px;
+  bottom:-150px;
+  transform:rotate(35deg);
+  background:linear-gradient(135deg,rgba(56,178,169,.55),rgba(114,241,220,.18));
+  clip-path:polygon(0 55%,100% 0,100% 28%,20% 100%);
+  opacity:.36;
+}
+.marketing-footer-brand,
+.marketing-footer-column,
+.marketing-footer-bottom{position:relative;z-index:1}
+.marketing-footer-logo-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:max-content;
+}
+.marketing-footer-logo-wrap{
+  display:grid;
+  place-items:center;
+  width:150px;
+  min-height:46px;
+}
+.marketing-footer-logo-wrap img{
+  display:block;
+  width:146px;
+  max-height:44px;
+  object-fit:contain;
+  object-position:left center;
+}
+.marketing-footer-logo-link>strong{
+  padding-left:11px;
+  border-left:1px solid rgba(186,227,224,.12);
+  color:#72d9d0;
+  font-size:9px;
+  letter-spacing:.16em;
+}
+.marketing-footer-contact{
+  display:grid;
+  gap:6px;
+  margin-top:2px;
+}
+.marketing-footer-contact a,
+.marketing-footer-contact span{
+  width:max-content;
+  color:#708791;
+  font-size:8px;
+}
+.marketing-footer-contact a:hover{color:#bce8e4}
+
+@media(max-width:1080px){
+  .marketing-top-floating{padding-left:14px;padding-right:14px}
+  .marketing-header-logo{min-width:auto}
+  .marketing-header-logo>span{display:none}
+  .marketing-nav-links-floating{gap:14px;margin-right:12px}
+  .marketing-nav-links-floating a[href="#preguntas"],
+  .marketing-nav-links-floating a[href="#contacto"]{display:none}
+}
+@media(max-width:780px){
+  .marketing-top-floating{padding:10px 10px 0}
+  .marketing-nav-floating{min-height:58px;padding:8px 8px 8px 12px}
+  .marketing-header-logo img{width:112px}
+  .marketing-nav-links-floating{display:none}
+  .marketing-nav-actions-floating{margin-left:auto}
+  .marketing-nav-actions-floating .marketing-login-link{display:none}
+  .marketing-nav-actions-floating .marketing-nav-cta{min-height:38px;padding:0 13px!important}
+}

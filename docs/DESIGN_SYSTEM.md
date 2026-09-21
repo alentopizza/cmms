@@ -181,3 +181,26 @@ Avoid:
 - excessive animation that harms readability.
 
 Authenticated product surfaces should stay calmer than the public landing while preserving the same technological DNA.
+
+
+## Public landing conversion architecture
+
+The public landing is not only a product brochure. It is a commercial acquisition surface with two conversion paths:
+
+1. self-service Trial/plan checkout;
+2. advisor-assisted lead capture.
+
+Header requirements:
+- always use the configured Desweb logo rather than a text-only substitute;
+- preserve logo legibility in both light and dark themes;
+- include a compact light/dark switch;
+- keep navigation focused on Solution, Workflow, Plans, FAQ, Contact and Self-hosted;
+- keep Login/Dashboard and Trial CTA visually distinct.
+
+Footer requirements:
+- repeat the configured Desweb identity at a larger, legible size;
+- group links by Product and Start/Conversion;
+- include a direct advisor CTA;
+- retain a compact legal/copyright strip.
+
+The landing supports both light and dark appearance using the same `desweb-theme` preference used elsewhere in the product.

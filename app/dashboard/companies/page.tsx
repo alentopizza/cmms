@@ -31,8 +31,14 @@ export default async function CompaniesPage({
           (o.primary_contact_name IS NOT NULL AND o.primary_contact_name <> '')::int +
           (o.primary_contact_email IS NOT NULL AND o.primary_contact_email <> '')::int +
           (o.logo_data IS NOT NULL)::int +
-          (o.cover_data IS NOT NULL)::int
-        ) / 13)::int profile_completion,
+          (o.cover_data IS NOT NULL)::int +
+          (SELECT count(*)::int FROM organization_documents rd
+            WHERE rd.organization_id=o.id AND rd.archived_at IS NULL AND rd.requirement_level='required'
+              AND rd.file_data IS NOT NULL AND (rd.expires_at IS NULL OR rd.expires_at >= current_date))
+        ) / NULLIF(13 + (
+          SELECT count(*)::int FROM organization_documents rq
+          WHERE rq.organization_id=o.id AND rq.archived_at IS NULL AND rq.requirement_level='required'
+        ),0))::int profile_completion,
         (SELECT count(*)::text FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL) document_count,
         (SELECT count(*)::text FROM organization_documents od
           WHERE od.organization_id=o.id AND od.archived_at IS NULL AND od.requirement_level='required'

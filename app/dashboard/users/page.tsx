@@ -28,6 +28,8 @@ export default async function UsersPage() {
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
                     OR EXISTS(SELECT 1 FROM work_order_comments wc WHERE wc.user_id=u.id)
                     OR EXISTS(SELECT 1 FROM audit_log al WHERE al.user_id=u.id)
+                    OR EXISTS(SELECT 1 FROM work_order_tasks wt WHERE wt.assigned_to=u.id)
+                    OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.user_id=u.id)
                   ) has_activity
            FROM users u
            LEFT JOIN LATERAL (
@@ -73,6 +75,8 @@ export default async function UsersPage() {
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
                     OR EXISTS(SELECT 1 FROM work_order_comments wc WHERE wc.user_id=u.id)
                     OR EXISTS(SELECT 1 FROM audit_log al WHERE al.user_id=u.id)
+                    OR EXISTS(SELECT 1 FROM work_order_tasks wt WHERE wt.assigned_to=u.id)
+                    OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.user_id=u.id)
                   ) has_activity
            FROM organization_members om
            JOIN users u ON u.id=om.user_id

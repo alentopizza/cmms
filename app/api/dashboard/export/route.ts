@@ -111,7 +111,7 @@ async function getReportBranding(session:NonNullable<Awaited<ReturnType<typeof g
     brand_logo_mime:string|null;
     show_desweb_branding:boolean|null;
   }>(
-    \`SELECT
+    `SELECT
       o.name organization_name,o.legal_name,
       o.logo_data organization_logo,o.logo_mime_type organization_logo_mime,
       p.code plan_code,p.white_label,
@@ -122,7 +122,7 @@ async function getReportBranding(session:NonNullable<Awaited<ReturnType<typeof g
     LEFT JOIN organization_subscriptions s ON s.organization_id=o.id
     LEFT JOIN billing_plans p ON p.id=s.plan_id
     LEFT JOIN organization_branding b ON b.organization_id=o.id
-    WHERE o.id=$1\`,
+    WHERE o.id=$1`,
     [session.organizationId],
   );
   const row=result.rows[0];

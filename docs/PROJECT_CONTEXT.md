@@ -82,6 +82,16 @@ Active organization roles:
 
 The redundant `owner` role was removed. Administrador de empresa is the highest organization-level role.
 
+A new platform-governance hierarchy has been **approved as future product direction but is not yet fully implemented**:
+
+- **Propietario Desweb / Platform Owner** — maximum platform authority and the only role allowed to create/revoke Superadministrators;
+- **Superadministrador** — trusted Desweb platform operator that provisions/supports customers but cannot create peers or the Platform Owner;
+- **Comercial Desweb** — internal sales/advisor role with commercial scope rather than unrestricted maintenance administration;
+- **Partner / Distribuidor** — external distribution role restricted to its authorized portfolio;
+- customer-side roles continue below the tenant boundary, with **Administrador de empresa** as the highest customer role.
+
+The detailed target permission model, user-creation matrix, role descriptions and destructive-operation rules are maintained in `docs/ROLE_MODEL.md`.
+
 ### User administration
 
 The user-management module supports:
@@ -343,6 +353,7 @@ Before modifying the project, future contributors/AI agents must read:
 10. `docs/CHANGELOG.md`
 11. `docs/INSTALLATION.md`
 12. `docs/IP_AND_DISTRIBUTION.md`
+13. `docs/ROLE_MODEL.md`
 
 Meaningful implementation work is incomplete until the relevant documentation is updated.
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { ContextUserCreateModal, SiteCreateModal } from "@/components/ContextCreateModals";
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
+import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -140,6 +141,7 @@ export default async function CompanyDetailPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const owner = isPlatformOwner(session);
   if (!can(session, "companies.manage")) redirect("/dashboard");
 
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
@@ -456,6 +458,7 @@ export default async function CompanyDetailPage({
                 <input type="hidden" name="intent" value="archive" />
                 <button className="text-button text-danger" type="submit">Archivar</button>
               </form>
+              {owner && <OwnerDeleteButton table="organization_documents" id={document.id} label={document.display_name} />}
             </div>
           </article>;
         })}

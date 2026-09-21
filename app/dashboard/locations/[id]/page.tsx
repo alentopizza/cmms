@@ -54,6 +54,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
   const message = feedback.error === "limit" ? `Se alcanzó el cupo de ${site.max_sublocations} sububicaciones.`
     : feedback.error === "code" ? "Ese código ya existe dentro de esta ubicación."
     : feedback.error ? "Revisa la información e inténtalo nuevamente."
+    : feedback.created === "asset" ? "Activo creado y asociado a la sububicación seleccionada."
     : feedback.created ? "Sububicación creada correctamente."
     : feedback.saved ? "Cambios guardados correctamente." : "";
 
@@ -65,7 +66,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
       </div>
       <div className="location-tree-metrics"><span><b>{location.child_count}</b> áreas</span><span><b>{location.asset_count}</b> activos</span><span className={`status-badge ${location.active ? "status-active" : "status-inactive"}`}><i />{location.active ? "Activa" : "Inactiva"}</span></div>
       <details className="location-actions"><summary>Administrar</summary><div className="location-action-panel">
-        <div className="contextual-inline-actions">
+        {location.active && <div className="contextual-inline-actions">
           <AssetCreateModal
             sites={siteOptions}
             locations={locationOptions}
@@ -88,7 +89,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
             triggerLabel="Crear sububicación interna"
             secondary
           />
-        </div>
+        </div>}
         <form method="post" action={`/api/locations/${location.id}`} className="form-grid">
           <input type="hidden" name="site_id" value={site.id} /><input type="hidden" name="intent" value="update" />
           <div className="field"><label>Nombre</label><input name="name" defaultValue={location.name} required /></div>

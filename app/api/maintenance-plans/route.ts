@@ -31,7 +31,7 @@ export async function POST(request:Request) {
     return NextResponse.redirect(target("?error=required"),303);
   }
 
-  const asset=session.platformRole==="superadmin"
+  const asset=session.platformRole!=="user"
     ? await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND status<>'retired'",[assetId])
     : await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND organization_id=$2 AND status<>'retired'",[assetId,session.organizationId]);
 

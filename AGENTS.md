@@ -69,3 +69,15 @@ An AI or developer resuming the project must be able to reconstruct the current 
 - Payment activation must ultimately be driven by verified server-side provider webhooks, never only browser redirects.
 - The public landing has two commercial conversion paths: self-service checkout and advisor-assisted lead capture.
 - Public lead records are commercial platform data and must only be exposed to the Superadministrator unless a future sales/advisor role is explicitly introduced.
+
+
+## Operational dependency invariants
+
+- Creation order is enforced server-side: organization → principal location → sublocation → supplier → executable workforce/crew → asset/inventory → work order/activity.
+- Do not add creation shortcuts that bypass these prerequisites.
+- New assets and inventory articles must reference the same organization's supplier and exact sublocation.
+- `provider` and `external` are intentionally different roles: provider represents a service supplier; external represents an individual external collaborator.
+- Provider accounts must be linked to a service-capable supplier and only receive supplier-assigned work.
+- External collaborators may optionally reference a supplier and only receive directly/crew-assigned work.
+- Crews may contain technicians and external collaborators, not provider-representative accounts.
+- Operational user deletion checks must include work-order tasks and crew membership.

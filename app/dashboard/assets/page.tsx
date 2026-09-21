@@ -6,6 +6,7 @@ import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import Link from "next/link";
 import { AssetCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import ModuleHeader from "@/components/ModuleHeader";
 
 type Asset={id:string;code:string;name:string;company:string;site:string;location:string|null;supplier:string|null;status:string;criticality:string};
 type Site={id:string;organization_id:string;label:string};
@@ -66,7 +67,22 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
     : params.error ? "Revisa la información del activo." : "";
 
   return <>
-    <header className="page-header"><div><span className="eyebrow">Registro técnico</span><h1 className="page-title">Activos y equipos</h1><p className="muted">Cada activo debe quedar vinculado a empresa, sede, sububicación y proveedor.</p></div><div className="page-header-actions"><div className="brand-pill"><span /> {assets.rowCount} activos</div>{canWrite && gate?.ready && <AssetCreateModal sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" />}</div></header>
+    <ModuleHeader
+      eyebrow="Registro técnico"
+      title="Activos y equipos"
+      description="Cada activo debe quedar vinculado a empresa, sede, sububicación y proveedor."
+      count={assets.rowCount || 0}
+      countLabel="activos"
+      searchPlaceholder="Buscar código, activo, empresa, ubicación o proveedor"
+      filters={[
+        {value:"all",label:"Todos"},
+        {value:"operational",label:"Operativos"},
+        {value:"maintenance",label:"En mantenimiento"},
+        {value:"down",label:"Detenidos"},
+        {value:"retired",label:"Retirados"},
+      ]}
+      action={canWrite && gate?.ready ? <AssetCreateModal triggerLabel="Agregar" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
+    />
     {params.created && <div className="notice success section">Activo creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
 
@@ -77,7 +93,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
     </section>}
 
     <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-      {assets.rows.map(a=><tr key={a.id}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+      {assets.rows.map(a=><tr key={a.id} data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
         {name:"code",label:"Código",value:a.code},
         {name:"name",label:"Nombre",value:a.name},
         {name:"status",label:"Estado",value:a.status,type:"select",options:[

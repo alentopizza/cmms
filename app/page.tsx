@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getActivePlans } from "@/lib/billing";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 import MarketingLeadForm from "@/components/MarketingLeadForm";
+import { DESWEB_PRIMARY_LOGO_DATA_URI } from "@/lib/desweb-brand-assets";
 
 const features = [
   { icon: "◇", title: "Activos bajo control", text: "Centraliza equipos, ubicación, criticidad y estado operativo en una sola vista." },
@@ -10,7 +11,7 @@ const features = [
   { icon: "↻", title: "Mantenimiento preventivo", text: "Planifica rutinas para anticiparte a fallas y reducir paradas no programadas." },
   { icon: "▤", title: "Inventario técnico", text: "Controla repuestos, consumos y disponibilidad para que el mantenimiento no se detenga." },
   { icon: "◎", title: "Roles y sedes", text: "Define qué puede ver y hacer cada usuario según su empresa, rol y sedes autorizadas." },
-  { icon: "⌁", title: "SaaS o self-hosted", text: "Opera en la nube con Desweb o instala la plataforma en infraestructura propia." },
+  { icon: "⌁", title: "SaaS o instalación propia", text: "Opera en la nube con Desweb o instala la plataforma en infraestructura propia." },
 ];
 
 const faqs = [
@@ -19,7 +20,7 @@ const faqs = [
   { q: "¿Puedo manejar varias sedes?", a: "Sí. La plataforma es multiempresa y multisedes, y permite controlar el acceso de cada usuario según rol y sedes autorizadas." },
   { q: "¿Qué sucede cuando consumo los recursos de mi plan?", a: "Configuración muestra el consumo y genera alertas al acercarse al límite. La creación de nuevos recursos se bloquea al alcanzar la capacidad efectiva del plan." },
   { q: "¿El plan Pro permite usar mi propia marca?", a: "Sí. Pro habilita personalización por empresa para nombre de plataforma, colores y logos, además de mayor capacidad operativa." },
-  { q: "¿Existe una versión instalable?", a: "Sí. La edición self-hosted utiliza la misma aplicación web con PostgreSQL y Docker Compose. Durante la beta su distribución es privada y controlada." },
+  { q: "¿Existe una versión instalable?", a: "Sí. La edición instalación propia utiliza la misma aplicación web con PostgreSQL y Docker Compose. Durante la beta su distribución es privada y controlada." },
 ];
 
 const workflow = [
@@ -43,9 +44,8 @@ export default async function Home() {
   return <main className="marketing-page marketing-page-pro marketing-dark-only">
     <section className="marketing-top marketing-top-floating">
       <nav className="marketing-nav marketing-nav-pro marketing-nav-floating">
-        <Link className="marketing-header-logo" href="/" aria-label="Desweb CMMS">
-          <img src={lightLogo} alt="Desweb - Desarrollo de Soluciones" />
-          <span>CMMS</span>
+        <Link className="marketing-header-logo marketing-header-logo-principal" href="/" aria-label="Desweb">
+          <img src={DESWEB_PRIMARY_LOGO_DATA_URI} alt="Desweb - Desarrollo de Soluciones" />
         </Link>
 
         <div className="marketing-nav-links marketing-nav-links-floating">
@@ -54,7 +54,7 @@ export default async function Home() {
           <a href="#planes">Planes</a>
           <a href="#preguntas">Preguntas</a>
           <a href="#contacto">Contacto</a>
-          <Link href="/downloads">Self-hosted</Link>
+          <Link href="/downloads">Instalación propia</Link>
         </div>
 
         <div className="marketing-nav-actions marketing-nav-actions-floating">
@@ -69,7 +69,7 @@ export default async function Home() {
     <section className="marketing-hero marketing-hero-pro">
       <div className="marketing-hero-grid">
         <div className="marketing-hero-copy marketing-hero-copy-pro">
-          <div className="marketing-beta-pill"><i /> Plataforma CMMS multiempresa · SaaS + self-hosted</div>
+          <div className="marketing-beta-pill"><i /> Plataforma CMMS multiempresa · SaaS + instalación propia</div>
           <h1>El centro de control para un mantenimiento <em>más inteligente.</em></h1>
           <p>Conecta activos, sedes, órdenes de trabajo, mantenimiento preventivo, inventario y equipos técnicos en una experiencia visual diseñada para operar, medir y escalar.</p>
           <div className="marketing-hero-actions">
@@ -140,7 +140,7 @@ export default async function Home() {
         <span>Multisedes</span><i />
         <span>Roles y permisos</span><i />
         <span>Telemetría operativa</span><i />
-        <span>Self-hosted</span>
+        <span>Instalación propia</span>
       </div>
     </section>
 
@@ -234,11 +234,11 @@ export default async function Home() {
       <div className="marketing-lead-copy">
         <span className="eyebrow">Habla con un asesor</span>
         <h2>¿Quieres evaluar el CMMS con tu operación real?</h2>
-        <p>Déjanos tus datos y cuéntanos qué necesitas. Este canal está pensado para empresas que requieren una demostración, asesoría de plan, marca blanca o instalación self-hosted.</p>
+        <p>Déjanos tus datos y cuéntanos qué necesitas. Este canal está pensado para empresas que requieren una demostración, asesoría de plan, marca blanca o instalación instalación propia.</p>
         <div className="marketing-lead-points">
           <span><i>✓</i><b>Demo orientada a tu operación</b><small>Revisamos sedes, activos, técnicos y necesidades reales.</small></span>
           <span><i>✓</i><b>Plan adecuado a tu capacidad</b><small>Podemos partir del catálogo o evaluar un acuerdo comercial especial.</small></span>
-          <span><i>✓</i><b>SaaS o self-hosted</b><small>Definimos contigo el modelo de despliegue más conveniente.</small></span>
+          <span><i>✓</i><b>SaaS o instalación propia</b><small>Definimos contigo el modelo de despliegue más conveniente.</small></span>
         </div>
       </div>
       <div className="marketing-lead-card">
@@ -249,11 +249,11 @@ export default async function Home() {
 
     <section className="marketing-selfhost">
       <div className="marketing-selfhost-copy">
-        <span className="eyebrow">También disponible self-hosted</span>
+        <span className="eyebrow">También disponible instalación propia</span>
         <h2>¿Necesitas ejecutar el CMMS en tu propia infraestructura?</h2>
         <p>Desweb CMMS puede distribuirse como una instalación web contenerizada con PostgreSQL, migraciones automáticas y un proceso de actualización controlado.</p>
         <div className="marketing-selfhost-actions">
-          <Link className="button" href="/downloads">Conocer versión self-hosted</Link>
+          <Link className="button" href="/downloads">Conocer versión instalación propia</Link>
           <span>Docker Compose · PostgreSQL · instalación licenciada</span>
         </div>
       </div>
@@ -299,7 +299,7 @@ export default async function Home() {
         <a href="#solucion">Solución</a>
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#planes">Planes</a>
-        <Link href="/downloads">Self-hosted</Link>
+        <Link href="/downloads">Instalación propia</Link>
       </div>
 
       <div className="marketing-footer-column">

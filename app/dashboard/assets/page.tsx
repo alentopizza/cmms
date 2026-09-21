@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import { creationPrerequisiteFor, getCreationHierarchyContext } from "@/lib/setup-sequence";
+import { getCreationGateForScope } from "@/lib/setup-sequence";
 import Link from "next/link";
 import { AssetCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
@@ -61,9 +61,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         : query<Supplier>(`SELECT id,organization_id,name FROM suppliers WHERE active=true AND organization_id=$1 ORDER BY name`,[orgId])
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
   ]);
-
-  const hierarchy=await getCreationHierarchyContext(session.platformRole==="user" ? session.organizationId : null);
-  const creationGate=creationPrerequisiteFor(hierarchy,"asset");
+  const creationGate=await getCreationGateForScope("asset",session.organizationId,superadmin);
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de activos de su plan."
     : params.error ? "Revisa la información del activo." : "";

@@ -98,7 +98,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
 
   const reports=canReports
-    ? session.platformRole==="superadmin"
+    ? session.platformRole!=="user"
       ? await query<ReportRow>(
           `SELECT u.id user_id,u.full_name,om.role,
                   COALESCE(sh.shifts,0)::int shifts,

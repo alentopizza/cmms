@@ -278,6 +278,9 @@ export default function DashboardSidebar({
         <div className="field-mobile-more-section">
           <span className="field-mobile-more-label">Cuenta y sistema</span>
           <div className="field-mobile-more-account">
+            <Link href="/dashboard/preferences" onClick={()=>setMobileMoreOpen(false)}>
+              <span>◐</span><div><strong>Mi configuración</strong><small>Apariencia y preferencias personales</small></div>
+            </Link>
             <Link href="/dashboard/help" onClick={()=>setMobileMoreOpen(false)}>
               <span>?</span><div><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></div>
             </Link>

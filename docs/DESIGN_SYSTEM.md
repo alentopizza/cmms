@@ -657,3 +657,17 @@ The compact landing account button uses a stronger mint surface, darker icon col
 ### Mobile contextual-header alignment
 
 On drawer-mode mobile layouts, the hamburger remains anchored on the left side of the contextual header. The current-module identity is aligned to the right: the module icon sits at the far-right edge and the eyebrow/title/context copy sits immediately to its left with right-aligned text. This preserves a clear left navigation affordance while visually separating it from the current module identity.
+
+
+### Opaque decision-layer rule
+
+Glass/translucent surfaces are not used for components where the user must read, choose or confirm information. Popovers, dropdown panels, date pickers, account menus, contextual action panels and modals use an opaque surface so underlying page text cannot remain visible through the component.
+
+The rule is:
+
+- ordinary cards and contextual surfaces may retain restrained glass/depth treatment;
+- reading and decision layers use solid `--overlay-surface` / `--overlay-surface-soft` tokens;
+- shadows and borders provide depth instead of background transparency;
+- sticky modal headers/action bars use the same opaque surface as the modal body;
+- dark mode uses an equally opaque dark surface;
+- backdrop blur may remain on the page backdrop where useful, but never as a substitute for an opaque popup body.

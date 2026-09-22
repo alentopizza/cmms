@@ -437,3 +437,8 @@ Rules:
 - successful forced deletes are audited as `platform_owner.force_delete`.
 
 Normal edit permissions that already existed for other roles remain unchanged. The new unrestricted contextual override is not inherited by Superadministrators.
+
+
+## Company Administrator user-management scope
+
+A Company Administrator with `users.manage` can create, edit, activate and deactivate ordinary users that belong to the same organization. This capability does not extend to Platform Owner or Superadministrator identities and does not permit moving a user to another organization. Permanent destructive deletion remains governed by the Platform Owner exceptional-action rules.

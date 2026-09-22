@@ -221,3 +221,12 @@ Migration `014_company_profile_documents.sql` extends `organizations` with legal
 Active company documents are retrieved only within their organization and downloads pass through authenticated application routes with `no-store` and `nosniff` response controls. Current accepted files are PDF, PNG, JPEG and WebP up to 10 MB.
 
 Corporate documents are not stored in the generic operational attachment relationship because their lifecycle, requirement state and expiry semantics belong to the enterprise profile rather than to work orders/assets.
+
+
+### Interactive site geofence configuration
+
+`components/GeofenceMapPicker.tsx` is the shared site-position editor/viewer. It renders OpenStreetMap raster tiles, performs explicit marker adjustment and serializes address, latitude, longitude and geofence radius into the parent form. Address search is proxied through authenticated `/api/geocode` rather than exposing an unrestricted geocoder endpoint.
+
+No new location table was introduced: migration `013_biometric_attendance_geolocation.sql` already defines `sites.latitude`, `sites.longitude` and `sites.geofence_radius_m`. Site/company mutation routes now enforce coordinate bounds and the 20–5000 m database radius constraint before persistence.
+
+The attendance clock endpoint remains the server authority for field validation: it checks site authorization, GPS accuracy, Haversine distance against the stored site point/radius, live facial verification and the enrolled encrypted template. Client-side map circles are configuration/feedback only and never substitute server validation.

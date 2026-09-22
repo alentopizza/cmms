@@ -132,9 +132,13 @@ export default async function LocationsIndexPage({
     ? "La empresa alcanzó el límite de ubicaciones principales asignado."
     : params.error === "site-code"
       ? "Ese código de sede ya existe dentro de la empresa."
-      : params.error
-        ? "Revisa la información de la ubicación."
-        : "";
+      : params.error === "site-geofence"
+        ? "Valida la dirección en el mapa y define un radio de geocerca entre 20 y 5000 metros."
+        : params.error === "site-required"
+          ? "Completa nombre, dirección, ciudad, país y punto geográfico de la ubicación."
+          : params.error
+            ? "Revisa la información de la ubicación."
+            : "";
 
   return <>
     <ModuleHeader

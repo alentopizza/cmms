@@ -35,7 +35,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
 
   const errorMessages: Record<string, string> = {
     required: "Completa los campos obligatorios.",
-    "image-required": "Debes cargar el logo y la foto de portada.",
+    "image-required": "Debes cargar el logo de la empresa.",
     "image-type": "Las imágenes deben ser PNG, JPG o WebP.",
     "image-size": "Una de las imágenes supera el tamaño permitido.",
     plan: "Selecciona un plan válido.",
@@ -56,7 +56,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
           <div>
             <span className="eyebrow">Nuevo registro</span>
             <h2 id="new-company-title">Crear empresa</h2>
-            <p>Registra la empresa, su sede principal y las imágenes que identificarán su tarjeta.</p>
+            <p>Registra la empresa, su sede principal y el logo que identificará su tarjeta.</p>
           </div>
           <button className="modal-close" type="button" aria-label="Cerrar" onClick={() => setOpen(false)}>×</button>
         </header>
@@ -65,13 +65,13 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
 
         <form className="company-modal-form" method="post" action="/api/organizations" encType="multipart/form-data">
           <div className="modal-section">
-            <div className="modal-section-title"><strong>Identidad visual</strong><span>PNG, JPG o WebP</span></div>
+            <div className="modal-section-title"><strong>Identidad visual</strong><span>Logo obligatorio · portada opcional</span></div>
             <div className="company-upload-grid">
               <label className="company-upload company-upload-logo">
                 <span className="company-upload-preview">
                   {logoPreview ? <img src={logoPreview} alt="Vista previa del logo" /> : <span aria-hidden="true">LOGO</span>}
                 </span>
-                <strong>Cargar logo</strong>
+                <strong>Cargar logo *</strong>
                 <small>PNG, JPG o WebP · cuadrada · 800 × 800 px recomendado · máximo 2 MB</small>
                 <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" required onChange={event => previewFile(event.target.files?.[0], setLogoPreview)} />
               </label>
@@ -82,7 +82,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
                 </span>
                 <strong>Cargar foto del punto de referencia</strong>
                 <small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB</small>
-                <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" required onChange={event => previewFile(event.target.files?.[0], setCoverPreview)} />
+                <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" onChange={event => previewFile(event.target.files?.[0], setCoverPreview)} />
               </label>
             </div>
           </div>

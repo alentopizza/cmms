@@ -4688,3 +4688,490 @@ html[data-theme="dark"] .company-profile-tabs a.active{
     min-height:42px;
   }
 }
+
+
+/* Desweb reference-grid component system
+   Canonical UI geometry adapted from the supplied style reference.
+   This layer standardizes hierarchy across authenticated, public and
+   conversion surfaces while preserving Desweb branding and dark mode. */
+:root{
+  --ui-space:16px;
+  --ui-space-lg:24px;
+  --ui-radius-1:4px;
+  --ui-radius-2:8px;
+  --ui-radius-3:12px;
+  --ui-radius-4:16px;
+  --ui-radius-5:24px;
+  --ui-icon-1:16px;
+  --ui-icon-2:20px;
+  --ui-icon-3:24px;
+  --ui-border-fine:1px;
+  --ui-border-standard:2px;
+  --ui-border-strong:4px;
+  --ui-shadow-base:0 3px 10px rgba(41,54,68,.075),inset 0 1px 0 rgba(255,255,255,.58);
+  --ui-shadow-raised:0 12px 28px rgba(41,54,68,.13),0 3px 8px rgba(41,54,68,.06),inset 0 1px 0 rgba(255,255,255,.72);
+  --ui-shadow-inset:inset 0 2px 5px rgba(41,54,68,.11),inset 0 -1px 0 rgba(255,255,255,.64);
+  --ui-shadow-deep:0 28px 72px rgba(19,31,39,.25),0 8px 24px rgba(19,31,39,.12),inset 0 1px 0 rgba(255,255,255,.42);
+  --ui-control-height:42px;
+  --ui-control-height-compact:36px;
+  --ui-focus-ring:0 0 0 3px rgba(56,178,169,.14),0 0 0 1px rgba(56,178,169,.42),0 7px 18px rgba(56,178,169,.10);
+}
+html[data-theme="dark"]{
+  --ui-shadow-base:0 4px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.045);
+  --ui-shadow-raised:0 14px 32px rgba(0,0,0,.32),0 3px 9px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.055);
+  --ui-shadow-inset:inset 0 2px 5px rgba(0,0,0,.30),inset 0 -1px 0 rgba(255,255,255,.04);
+  --ui-shadow-deep:0 30px 78px rgba(0,0,0,.48),0 8px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* Reusable elevation vocabulary for current and future modules */
+.ui-elevation-base{box-shadow:var(--ui-shadow-base)}
+.ui-elevation-raised{box-shadow:var(--ui-shadow-raised)}
+.ui-elevation-inset{box-shadow:var(--ui-shadow-inset)}
+.ui-elevation-deep{box-shadow:var(--ui-shadow-deep)}
+.ui-radius-4{border-radius:var(--ui-radius-1)}
+.ui-radius-8{border-radius:var(--ui-radius-2)}
+.ui-radius-12{border-radius:var(--ui-radius-3)}
+.ui-radius-16{border-radius:var(--ui-radius-4)}
+.ui-radius-24{border-radius:var(--ui-radius-5)}
+
+/* Base containers: one predictable geometry throughout the product */
+.context-header,
+.module-page-header,
+.dashboard-filterbar,
+.workspace-tabs,
+.company-profile-tabs,
+.card,
+.settings-panel,
+.dashboard-panel,
+.dashboard-kpi-card,
+.user-access-toolbar,
+.company-visual-card,
+.site-visual-card,
+.user-role-card,
+.creation-prerequisite-state,
+.checkout-card,
+.login-shell,
+.marketing-feature-card,
+.marketing-workflow-steps article,
+.marketing-plan-card-pro,
+.marketing-lead-card,
+.marketing-faq-list details,
+.marketing-product-window,
+.marketing-float-card,
+.downloads-steps{
+  border-width:var(--ui-border-fine);
+  border-radius:var(--ui-radius-4);
+  box-shadow:var(--ui-shadow-base);
+}
+.context-header,
+.module-page-header,
+.dashboard-filterbar,
+.workspace-tabs,
+.company-profile-tabs,
+.marketing-nav-floating{
+  border-radius:var(--ui-radius-4);
+}
+.company-visual-card,
+.site-visual-card,
+.user-role-card,
+.marketing-feature-card,
+.marketing-workflow-steps article,
+.marketing-plan-card-pro{
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.company-visual-card:hover,
+.site-visual-card:hover,
+.user-role-card:hover,
+.marketing-feature-card:hover,
+.marketing-workflow-steps article:hover,
+.marketing-plan-card-pro:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--ui-shadow-raised);
+}
+
+/* Deep containers are reserved for overlays and modal decisions */
+.company-modal,
+.unified-create-modal,
+.location-detail-modal,
+.confirm-dialog,
+.dashboard-range-popover,
+.dashboard-export-popover,
+.sidebar-account-popover{
+  border-radius:var(--ui-radius-5);
+  box-shadow:var(--ui-shadow-deep);
+}
+.confirm-dialog-backdrop,
+.modal-backdrop{
+  backdrop-filter:blur(8px) saturate(108%);
+}
+
+/* Primary controls: priority 1 / important */
+.button,
+.module-add-button,
+.login-submit,
+.confirm-dialog .button{
+  min-height:var(--ui-control-height);
+  border-radius:var(--ui-radius-3);
+  border-width:var(--ui-border-fine);
+  padding-inline:18px;
+  font-weight:850;
+  letter-spacing:.005em;
+  box-shadow:0 8px 18px rgba(56,178,169,.19),inset 0 1px 0 rgba(255,255,255,.50);
+}
+.button:hover,
+.module-add-button:hover,
+.login-submit:hover{
+  box-shadow:0 12px 24px rgba(56,178,169,.25),inset 0 1px 0 rgba(255,255,255,.56);
+}
+.button:active,
+.module-add-button:active,
+.login-submit:active{
+  transform:translateY(0) scale(.985);
+  box-shadow:var(--ui-shadow-inset);
+}
+.button.secondary{
+  box-shadow:var(--ui-shadow-base);
+}
+.button.secondary:active{
+  box-shadow:var(--ui-shadow-inset);
+}
+.button:disabled,
+.module-add-button:disabled,
+.login-submit:disabled,
+button[disabled],
+[aria-disabled="true"]{
+  cursor:not-allowed!important;
+  opacity:.52;
+  filter:saturate(.55);
+  transform:none!important;
+  box-shadow:none!important;
+}
+
+/* Compact actions use the 36px tier */
+.header-icon-button,
+.header-logout,
+.theme-toggle,
+.modal-close,
+.location-square-action,
+.dashboard-range-calendar-nav button,
+.password-toggle,
+.field-mobile-nav-icon{
+  min-width:var(--ui-control-height-compact);
+  min-height:var(--ui-control-height-compact);
+  border-radius:var(--ui-radius-3);
+  box-shadow:var(--ui-shadow-base);
+}
+.header-icon-button:active,
+.header-logout:active,
+.theme-toggle:active,
+.modal-close:active,
+.location-square-action:active,
+.dashboard-range-calendar-nav button:active{
+  box-shadow:var(--ui-shadow-inset);
+  transform:none;
+}
+
+/* Icon grid: 16 / 20 / 24 px visual tiers */
+.module-search-control>span,
+.module-filter-control>span,
+.dashboard-range-icon,
+.marketing-feature-icon{
+  font-size:var(--ui-icon-1);
+}
+.context-header-icon,
+.metric-icon,
+.dashboard-kpi-icon,
+.settings-panel-icon,
+.module-header-icon,
+.creation-prerequisite-icon{
+  font-size:var(--ui-icon-2);
+}
+.user-empty-icon,
+.confirm-dialog-mark{
+  font-size:var(--ui-icon-3);
+}
+.context-header-icon,
+.metric-icon,
+.dashboard-kpi-icon,
+.settings-panel-icon,
+.module-header-icon,
+.user-empty-icon,
+.creation-prerequisite-icon,
+.marketing-feature-icon,
+.dashboard-range-icon,
+.confirm-dialog-mark{
+  border-radius:var(--ui-radius-3);
+  box-shadow:var(--ui-shadow-base);
+}
+
+/* Form wells: inset, quiet at rest, explicit on focus */
+.field input,
+.field select,
+.field textarea,
+.module-search-control input,
+.module-filter-control select,
+.dashboard-filter-group input,
+.dashboard-filter-group select,
+.dashboard-range-inputs input,
+.dashboard-range-trigger,
+.location-list-toolbar input,
+.location-list-toolbar select,
+.login-input-wrap input,
+.checkout-page input,
+.checkout-page select,
+.checkout-page textarea,
+.marketing-lead-card input,
+.marketing-lead-card select,
+.marketing-lead-card textarea{
+  min-height:var(--ui-control-height);
+  border-radius:var(--ui-radius-2);
+  border-width:var(--ui-border-fine);
+  box-shadow:var(--ui-shadow-inset);
+}
+.field textarea,
+.checkout-page textarea,
+.marketing-lead-card textarea{
+  min-height:96px;
+  resize:vertical;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.module-search-control input:focus,
+.module-filter-control select:focus,
+.dashboard-filter-group input:focus,
+.dashboard-filter-group select:focus,
+.dashboard-range-inputs input:focus,
+.dashboard-range-trigger.active,
+.location-list-toolbar input:focus,
+.location-list-toolbar select:focus,
+.login-input-wrap input:focus,
+.checkout-page input:focus,
+.checkout-page select:focus,
+.checkout-page textarea:focus,
+.marketing-lead-card input:focus,
+.marketing-lead-card select:focus,
+.marketing-lead-card textarea:focus{
+  outline:none;
+  box-shadow:var(--ui-focus-ring);
+}
+input::placeholder,
+textarea::placeholder{
+  opacity:.68;
+}
+input:disabled,
+select:disabled,
+textarea:disabled{
+  cursor:not-allowed;
+  opacity:.58;
+}
+
+/* Native selection controls keep browser semantics but follow Desweb state color */
+input[type="checkbox"],
+input[type="radio"]{
+  accent-color:var(--brand-teal);
+}
+input[type="range"]{
+  accent-color:var(--brand-teal);
+  cursor:pointer;
+}
+.site-checkbox-card,
+.theme-preference-card,
+.white-label-checkbox,
+.location-create-switch button,
+.site-access-mode>button{
+  border-radius:var(--ui-radius-3);
+  box-shadow:var(--ui-shadow-base);
+}
+.site-checkbox-card.active,
+.theme-preference-card.active,
+.location-create-switch button.active,
+.site-access-mode>button.active{
+  border-width:var(--ui-border-standard);
+  box-shadow:var(--ui-shadow-inset),0 0 0 2px rgba(56,178,169,.10);
+}
+
+/* Navigation: compact base, raised selected state */
+.workspace-tabs a,
+.company-profile-tabs a,
+.dashboard-sidebar a,
+.marketing-nav-links a{
+  border-radius:var(--ui-radius-2);
+}
+.workspace-tabs a.active,
+.company-profile-tabs a.active{
+  box-shadow:var(--ui-shadow-raised);
+}
+.field-mobile-nav-item,
+.field-mobile-nav-more{
+  border-radius:var(--ui-radius-3);
+}
+.field-mobile-nav-item.active{
+  box-shadow:var(--ui-shadow-raised);
+}
+
+/* Data presentation */
+.table{
+  border-radius:var(--ui-radius-4);
+  border-width:var(--ui-border-fine);
+  box-shadow:var(--ui-shadow-base);
+  border-collapse:separate;
+  border-spacing:0;
+}
+.table th{
+  font-weight:850;
+}
+.table tr:last-child td{
+  border-bottom:0;
+}
+.status,
+.status-badge,
+.brand-pill,
+.settings-status{
+  border-radius:999px;
+  border-width:var(--ui-border-fine);
+  box-shadow:0 2px 6px rgba(41,54,68,.055),inset 0 1px 0 rgba(255,255,255,.52);
+}
+
+/* Feedback states */
+.notice,
+.location-copy-toast{
+  border-radius:var(--ui-radius-3);
+  border-width:var(--ui-border-fine);
+  box-shadow:var(--ui-shadow-raised);
+}
+.notice.success{
+  border-left-width:var(--ui-border-strong);
+}
+.notice.error{
+  border-left-width:var(--ui-border-strong);
+}
+.confirm-dialog{
+  grid-template-columns:auto 1fr;
+}
+.confirm-dialog-mark{
+  width:48px;
+  height:48px;
+}
+
+/* Empty/prerequisite states use a clearly bounded, calm container */
+.empty-state,
+.user-empty-state,
+.creation-prerequisite-state{
+  border-radius:var(--ui-radius-4);
+}
+.user-empty-state{
+  border:1px dashed color-mix(in srgb,var(--border) 72%,var(--brand-mint) 28%);
+}
+.creation-prerequisite-state{
+  box-shadow:var(--ui-shadow-base);
+}
+
+/* Public/conversion surfaces inherit the same geometry without overriding
+   the landing's intentional dark-only color system. */
+.marketing-nav-floating{
+  box-shadow:var(--ui-shadow-raised);
+}
+.marketing-feature-card,
+.marketing-workflow-steps article,
+.marketing-plan-card-pro,
+.marketing-lead-card,
+.marketing-faq-list details{
+  border-radius:var(--ui-radius-4);
+}
+.marketing-plan-card-pro.featured,
+.marketing-plan-card-pro.recommended{
+  box-shadow:var(--ui-shadow-raised);
+}
+.marketing-product-window,
+.checkout-card,
+.login-shell{
+  border-radius:var(--ui-radius-5);
+  box-shadow:var(--ui-shadow-deep);
+}
+.marketing-float-card{
+  border-radius:var(--ui-radius-3);
+}
+.marketing-beta-pill,
+.marketing-plan-ribbon,
+.marketing-trust-items span{
+  border-radius:999px;
+}
+
+/* Priority helpers mirror the five-level reference hierarchy */
+.ui-priority-1{font-weight:900}
+.ui-priority-2{font-weight:800}
+.ui-priority-3{font-weight:750}
+.ui-priority-4{font-weight:650}
+.ui-priority-5{font-weight:600;color:var(--text-soft)}
+
+/* Universal focus visibility for interactive components */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible{
+  outline:none;
+  box-shadow:var(--ui-focus-ring);
+}
+
+/* 16px is the default internal rhythm; dense controls may use 8/12px.
+   24px separates major data/feedback groups. */
+.module-page-tools,
+.dashboard-filterbar,
+.form-actions,
+.confirm-dialog-actions,
+.marketing-hero-actions,
+.marketing-selfhost-actions{
+  gap:var(--ui-space);
+}
+.dashboard-panel,
+.settings-panel,
+.card.section,
+.marketing-lead-card{
+  padding-block:var(--ui-space-lg);
+}
+
+/* Mobile keeps the same hierarchy with reduced depth and touch-safe controls */
+@media(max-width:760px){
+  :root{
+    --ui-control-height:44px;
+    --ui-shadow-deep:0 18px 42px rgba(19,31,39,.22),0 5px 16px rgba(19,31,39,.10);
+  }
+  .context-header,
+  .module-page-header,
+  .dashboard-filterbar,
+  .card,
+  .settings-panel,
+  .dashboard-panel,
+  .dashboard-kpi-card,
+  .company-visual-card,
+  .site-visual-card,
+  .user-role-card,
+  .marketing-feature-card,
+  .marketing-workflow-steps article,
+  .marketing-plan-card-pro{
+    border-radius:var(--ui-radius-3);
+  }
+  .company-modal,
+  .unified-create-modal,
+  .location-detail-modal,
+  .confirm-dialog,
+  .checkout-card,
+  .login-shell{
+    border-radius:var(--ui-radius-4);
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .company-visual-card,
+  .site-visual-card,
+  .user-role-card,
+  .marketing-feature-card,
+  .marketing-workflow-steps article,
+  .marketing-plan-card-pro{
+    transition:none!important;
+  }
+}

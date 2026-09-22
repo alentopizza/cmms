@@ -139,7 +139,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/attendance",
     steps:[
       "El usuario debe existir y tener foto de perfil.",
-      "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento.",
+      "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento; puede ser la sede principal o cualquier otra sede autorizada.",
+      "El supervisor pulsa Verificar presencia en la sede. El GPS debe estar dentro de la geocerca antes de habilitar la cámara.",
       "La persona debe estar físicamente presente; el supervisor confirma visualmente su identidad.",
       "La persona acepta el tratamiento de su plantilla facial.",
       "Se activa la cámara y se capturan muestras en vivo con prueba de vida/anti-spoof.",

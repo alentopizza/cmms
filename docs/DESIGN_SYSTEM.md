@@ -630,3 +630,25 @@ The control follows the shared reference-grid rules: 20 px user icon, 42 px desk
 ### Export popover stacking rule
 
 Dropdowns that visually escape a dashboard toolbar must elevate the toolbar's stacking context while open. Raising only the child popover is insufficient when later content participates in another stacking context. Dashboard export therefore marks the filter bar as open, keeps overflow visible and raises the parent plus popover above following panels.
+
+
+### Mobile dashboard header and drawer
+
+The dashboard mobile menu is part of the contextual header, not a floating control detached from it. A dedicated mobile navigation slot keeps the hamburger aligned with the current module identity.
+
+For drawer-mode roles below 900 px:
+
+- the hamburger uses the compact 40 px control tier inside the contextual header;
+- opening navigation locks page scroll;
+- the drawer is a fixed, full-height mobile layer above the overlay;
+- the overlay uses dark translucency without backdrop blur so it cannot visually obscure or wash out the drawer;
+- the drawer explicitly overrides legacy generic `.sidebar{display:none}` mobile rules;
+- the open drawer remains interactive and visible through explicit visibility, opacity and pointer-event states;
+- the sidebar collapse control becomes a close control while the mobile drawer is open;
+- navigation closes on route change, Escape, overlay tap or module selection.
+
+Field-role bottom navigation continues to hide the header hamburger and uses **Más** to open the same authorized drawer.
+
+### Landing account icon contrast
+
+The compact landing account button uses a stronger mint surface, darker icon color and thicker 20–22 px user-icon stroke so the action remains visible against the white floating landing header on mobile.

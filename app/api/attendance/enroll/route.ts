@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { encryptEmbedding, validateEmbedding } from "@/lib/biometric";
 import { query } from "@/lib/db";
+import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -15,8 +16,8 @@ export async function POST(request: Request) {
     "SELECT enabled,enabled_roles FROM organization_attendance_policies WHERE organization_id=$1",
     [session.organizationId],
   );
-  const row = policy.rows[0];
-  if (!row?.enabled || !session.role || !row.enabled_roles.includes(session.role)) {
+  const row = policy.rows[0] || DEFAULT_ATTENDANCE_POLICY;
+  if (!row.enabled || !attendanceRoleEnabled(session, row.enabled_roles)) {
     return NextResponse.json({ message: "El control biométrico no está habilitado para tu rol." }, { status: 409 });
   }
 

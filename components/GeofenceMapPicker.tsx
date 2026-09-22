@@ -26,6 +26,8 @@ type GeofenceMapPickerProps = {
 
 const TILE_SIZE = 256;
 
+// ── Web-Mercator map math and coordinate conversion ────────────────────────
+
 function clampLatitude(value: number) {
   return Math.max(-85.05112878, Math.min(85.05112878, value));
 }
@@ -124,6 +126,8 @@ export default function GeofenceMapPicker({
     };
   }, [configured, currentLatitude, currentLongitude, center.lat, center.lon, zoom]);
 
+  // ── Address validation / point acquisition ────────────────────────────────
+
   async function searchAddress() {
     const query = [address.trim(), cityHint?.trim(), countryHint?.trim()].filter(Boolean).join(", ");
     if (query.length < 4) {
@@ -188,6 +192,8 @@ export default function GeofenceMapPicker({
     setResults([]);
     setMessage("Punto ajustado manualmente en el mapa.");
   }
+
+  // ── Interactive map and serialized form values ────────────────────────────
 
   return <div className={`geofence-picker ${readOnly ? "read-only" : ""} ${className}`.trim()}>
     <div className="geofence-picker-fields">

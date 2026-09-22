@@ -671,3 +671,14 @@ The rule is:
 - sticky modal headers/action bars use the same opaque surface as the modal body;
 - dark mode uses an equally opaque dark surface;
 - backdrop blur may remain on the page backdrop where useful, but never as a substitute for an opaque popup body.
+
+
+### Sticky module-header contrast
+
+The shared contextual header must remain visually distinct from scrolling module content. It uses a dedicated opaque module-header surface rather than the same white/card surface used by directories and panels.
+
+- Light mode uses a restrained mint/blue-gray surface with a stronger lower elevation shadow.
+- Dark mode uses a deeper blue-gray surface than the normal content cards.
+- A subtle Desweb teal lower accent reinforces the separation without becoming decorative.
+- The header remains opaque and does not depend on backdrop blur for readability.
+- This rule applies to every authenticated module that uses the shared `.context-header` shell, including mobile.

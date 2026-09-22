@@ -785,3 +785,16 @@ Biometric/geolocation contingency is an explicitly exceptional UI state, not a h
 - Supervisor review cards show subject, role, site, affected event, reason, diagnostic accuracy and an optional review note.
 - Reports expose contingency counts separately from ordinary attendance.
 - Contingency styling uses warning/exception semantics and must never visually imply ordinary biometric verification.
+
+
+### User manual / help-center pattern
+
+The help center is hybrid rather than role-exclusive.
+
+- Authenticated users land on content prioritized for their actual role.
+- A **Toda la plataforma** option explains the overall workflow and how modules relate.
+- Public `/manual` shows general platform guidance without private tenant context.
+- Articles are collapsible process cards with module, purpose, ordered steps, notes and optional direct module action.
+- Search operates over titles, summaries, keywords, steps and notes.
+- **Qué cambió** highlights user-relevant product changes.
+- Mobile uses one-column cards and full-width actions.

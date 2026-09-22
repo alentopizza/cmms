@@ -119,7 +119,6 @@ async function platform(session:NonNullable<Awaited<ReturnType<typeof getSession
 
   return <Frame
     cards={cards}
-    filters={filters}
     mode="platform"
     companyStatusOptions={[{value:"active",label:"Activas"},{value:"inactive",label:"Inactivas"}]}
     activityStatusOptions={SUBSCRIPTION_STATUS_OPTIONS}
@@ -177,7 +176,6 @@ async function operation(session:NonNullable<Awaited<ReturnType<typeof getSessio
 
   return <Frame
     cards={cards}
-    filters={filters}
     mode="operation"
     activityStatusOptions={WORK_ORDER_STATUS_OPTIONS}
   >
@@ -229,7 +227,6 @@ async function field(session:NonNullable<Awaited<ReturnType<typeof getSession>>>
 
   return <Frame
     cards={cards}
-    filters={filters}
     mode="field"
     activityStatusOptions={TASK_STATUS_OPTIONS}
   >
@@ -267,7 +264,6 @@ async function requester(session:NonNullable<Awaited<ReturnType<typeof getSessio
       {label:"Tiempo medio",value:hrs(n(avg.rows[0]?.hours)),hint:"Resolución del periodo",icon:"◷"},
       {label:"Resolución",value:String(pct(n(done.rows[0]?.count),total))+"%",hint:"Cerradas frente a abiertas",icon:"◎"},
     ]}
-    filters={filters}
     mode="requester"
     activityStatusOptions={WORK_ORDER_STATUS_OPTIONS}
   >

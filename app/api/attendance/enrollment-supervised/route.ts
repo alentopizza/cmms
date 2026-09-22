@@ -9,8 +9,8 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 // ── Authorization helpers ────────────────────────────────────────────────────
 
 async function targetUser(client:any, organizationId:string, userId:string){
-  return client.query<{id:string;role:string;has_avatar:boolean}>(
-    `SELECT u.id,om.role,(u.avatar_data IS NOT NULL) has_avatar
+  return client.query<{id:string;role:string;has_avatar:boolean;access_all_sites:boolean}>(
+    `SELECT u.id,om.role,(u.avatar_data IS NOT NULL) has_avatar,COALESCE(om.access_all_sites,true) access_all_sites
      FROM users u
      JOIN organization_members om ON om.user_id=u.id AND om.organization_id=$1
      WHERE u.id=$2 AND u.active=true`,
@@ -84,6 +84,18 @@ export async function POST(request:Request){
     if(!site.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"La sede seleccionada no está disponible."},{status:422});
+    }
+
+    if(!person.rows[0].access_all_sites){
+      const subjectSite=await client.query(
+        `SELECT 1 FROM organization_member_sites
+         WHERE organization_id=$1 AND user_id=$2 AND site_id=$3`,
+        [session.organizationId,userId,siteId],
+      );
+      if(!subjectSite.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"La persona seleccionada no tiene acceso autorizado a esta sede."},{status:422});
+      }
     }
 
     const existing=await client.query<{active:boolean}>(

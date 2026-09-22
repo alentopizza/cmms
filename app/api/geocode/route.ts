@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       headers: {
         Accept: "application/json",
         "Accept-Language": "es",
-        "User-Agent": "Desweb-CMMS/0.1 geocoder",
+        "User-Agent": "Desweb-CMMS/0.1 (https://desweb.cloud)",
       },
       cache: "no-store",
     });

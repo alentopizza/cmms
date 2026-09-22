@@ -718,3 +718,20 @@ The company quick-detail modal uses a structured profile layout instead of a tal
 A profile photo is mandatory when a user account is created and is used for human-readable identity in directories/cards. It is **not** the biometric reference used for attendance verification.
 
 Biometric enrollment remains a separate live-camera flow with liveness/anti-spoof checks. Attendance-controlled users must enroll a live facial template before field biometric verification can succeed. The encrypted facial template is distinct from the stored profile photo.
+
+
+### Site geofence map pattern
+
+Principal sites use an interactive map/geofence component wherever their physical position is created or edited.
+
+- The administrator enters a human-readable address and explicitly validates it.
+- Address validation returns candidate results; choosing one sets latitude/longitude.
+- The marker can then be adjusted manually by selecting a point on the map.
+- **Use my location** requests browser geolocation and may be used when the administrator is physically at the site.
+- A visible circular overlay represents the permitted geofence radius.
+- Radius is configurable between 20 and 5000 metres and is shown together with the exact stored coordinates.
+- Read-only company/location detail surfaces show the same map and radius without editing controls.
+- Map bodies are operational/reading layers and therefore follow the opaque-surface rule around their surrounding UI.
+- Mobile keeps the map touch-safe, stacks coordinates/radius vertically and preserves the same validation semantics.
+
+The map is not decorative: the saved latitude, longitude and radius are the same site values consumed by attendance verification.

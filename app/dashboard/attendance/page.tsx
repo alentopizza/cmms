@@ -287,31 +287,35 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     {feedback.error==="roles" && <div className="notice error section">Selecciona al menos un rol para aplicar el control de asistencia.</div>}
 
     {canSelf && organizationId && <>
-      {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles) ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Un administrador puede activarlo desde la política de asistencia.</span></section> :
-      <section className="section">
-        <AttendanceCapture
-          sites={sites.rows.map(site=>({
-            id:site.id,
-            name:site.name,
-            city:site.city,
-            latitude:site.latitude,
-            longitude:site.longitude,
-            geofenceRadius:site.geofence_radius_m,
-            geofenceConfigured:site.latitude!==null&&site.longitude!==null,
-          }))}
-          enrolled={Boolean(enrolled.rowCount)}
-          openShift={openShift.rows[0]||null}
-          requireFace={policy.require_face}
-          requireGeolocation={policy.require_geolocation}
-          maxLocationAccuracy={policy.max_location_accuracy_m}
-          livenessThreshold={policy.liveness_threshold}
-        />
-      </section>
-      {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
-        sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
-        openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
-        initialRequest={selfContingency.rows[0]||null}
-      />}
+      {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
+        ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Un administrador puede activarlo desde la política de asistencia.</span></section>
+        : <>
+            <section className="section">
+              <AttendanceCapture
+                sites={sites.rows.map(site=>({
+                  id:site.id,
+                  name:site.name,
+                  city:site.city,
+                  latitude:site.latitude,
+                  longitude:site.longitude,
+                  geofenceRadius:site.geofence_radius_m,
+                  geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+                }))}
+                enrolled={Boolean(enrolled.rowCount)}
+                openShift={openShift.rows[0]||null}
+                requireFace={policy.require_face}
+                requireGeolocation={policy.require_geolocation}
+                maxLocationAccuracy={policy.max_location_accuracy_m}
+                livenessThreshold={policy.liveness_threshold}
+              />
+            </section>
+            {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
+              sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
+              openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
+              initialRequest={selfContingency.rows[0]||null}
+            />}
+          </>
+      }
     </>}
 
     {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} />}

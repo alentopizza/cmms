@@ -557,3 +557,65 @@ The backdrop itself remains darkened and blurred without obscuring context compl
 - Preserve text labels and status text.
 - Respect `prefers-reduced-motion`.
 - Maintain sufficient hit areas on mobile.
+
+
+## Reference-grid component standard
+
+The supplied UI guide is now a canonical geometry and hierarchy reference for Desweb CMMS. It is adapted to the Desweb identity rather than copied literally.
+
+### Core scales
+
+Use these shared scales across authenticated modules, public/conversion pages and future mobile/PWA surfaces:
+
+- **Elevation:** Base, Raised, Inset and Deep.
+- **Visual priority:** Level 1 Important through Level 5 Optional.
+- **Border thickness:** 1 px fine, 2 px standard/selected and 4 px strong semantic accent.
+- **Radius scale:** 4, 8, 12, 16 and 24 px.
+- **Icon scale:** 16, 20 and 24 px. Icon strokes should visually approximate 2 px where vector icons are used.
+- **Spacing rhythm:** 16 px for normal component spacing and 24 px for larger content/feedback separation.
+- **Control height:** approximately 42 px desktop and 44 px mobile for primary interactive controls.
+
+These values are exposed in `app/globals.css` through the `--ui-*` design tokens and should be reused instead of inventing local geometry.
+
+### Elevation rules
+
+**Base** is the default card/container level. Use a restrained shadow and fine border.
+
+**Raised** is for hover, selected navigation, featured cards and interactive emphasis. It should be visibly above Base without becoming decorative.
+
+**Inset** is for input wells, pressed controls and selected/toggle interiors. It should communicate physical depth without lowering contrast.
+
+**Deep** is reserved for modals, popovers, checkout/login hero containers and decision layers. Do not use Deep elevation for ordinary directory cards.
+
+### Buttons and controls
+
+- Primary actions are priority level 1 and use Desweb teal with dimensional depth.
+- Secondary actions use a neutral raised surface and visible border.
+- Pressed states use inset depth rather than only a color change.
+- Disabled controls reduce saturation/elevation and must keep a clear disabled cursor/state.
+- Inputs, selects and textareas use inset wells with an explicit Desweb teal focus ring.
+- Native checkbox, radio and range controls use the Desweb accent color while retaining browser semantics and accessibility.
+- Compact icon actions use the 36 px tier; normal primary controls use the 42/44 px tier.
+
+### Navigation
+
+Tabs and segmented navigation remain visually calm at rest. The active item uses a raised state with a clear text/state cue. Mobile bottom navigation follows the same geometry and must not introduce a separate visual language.
+
+### Data display
+
+Tables use a 16 px outer radius, fine border and Base elevation. Status labels remain pill-shaped and combine text with semantic color. Directory cards may rise one level on hover but should preserve stable geometry.
+
+### Feedback and empty states
+
+- Success/error notices use Base/Raised surfaces with a 4 px semantic edge accent where appropriate.
+- Confirmation dialogs use Deep elevation and a 24 px radius.
+- Empty/prerequisite states use a bounded 16 px container; dashed borders are acceptable when communicating absence rather than an error.
+- Loading and future skeleton components should use the same radius/spacing scale rather than bespoke shapes.
+
+### Public and conversion surfaces
+
+The same geometry applies to landing, login, checkout and lead forms, but color rules remain context-specific. In particular, the public landing remains intentionally dark-only; the reference guide does not override that product decision.
+
+### Implementation rule
+
+When creating or redesigning a component, select values from the shared `--ui-*` scales first. A new radius, shadow, icon size or spacing value should only be introduced when the existing scale cannot satisfy a documented functional need.

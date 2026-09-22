@@ -5,6 +5,7 @@ import { can, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
+import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 type Policy={
@@ -46,6 +47,7 @@ type ReportRow={
   avg_activity_minutes:string|null;
   last_check_in:string|null;
   open_now:boolean;
+  contingency_events:number;
 };
 
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
@@ -108,6 +110,51 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       )
     : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
 
+  const selfContingency=canSelf && session.userId && organizationId
+    ? await query<ContingencyRequestView>(
+        `SELECT r.id,r.site_id,s.name site_name,r.action,r.reason_code,r.details,r.status,
+                r.requested_at::text,r.approved_until::text,r.review_note
+         FROM attendance_contingency_requests r
+         JOIN sites s ON s.id=r.site_id
+         WHERE r.user_id=$1 AND r.organization_id=$2
+           AND r.status IN ('pending','approved')
+           AND (r.status<>'approved' OR r.approved_until>now())
+         ORDER BY r.requested_at DESC
+         LIMIT 1`,
+        [session.userId,organizationId],
+      )
+    : {rows:[]} as {rows:ContingencyRequestView[]};
+
+  const contingencyReview=canManage && organizationId
+    ? session.accessAllSites
+      ? await query<ContingencyReviewItem>(
+          `SELECT r.id,r.user_id,u.full_name,om.role,r.site_id,s.name site_name,
+                  r.action,r.reason_code,r.details,r.status,r.requested_at::text,
+                  r.approved_until::text,r.review_note,
+                  r.requester_accuracy_m,r.requester_latitude,r.requester_longitude
+           FROM attendance_contingency_requests r
+           JOIN users u ON u.id=r.user_id
+           JOIN organization_members om ON om.user_id=r.user_id AND om.organization_id=r.organization_id
+           JOIN sites s ON s.id=r.site_id
+           WHERE r.organization_id=$1 AND r.status='pending'
+           ORDER BY r.requested_at`,
+          [organizationId],
+        )
+      : await query<ContingencyReviewItem>(
+          `SELECT r.id,r.user_id,u.full_name,om.role,r.site_id,s.name site_name,
+                  r.action,r.reason_code,r.details,r.status,r.requested_at::text,
+                  r.approved_until::text,r.review_note,
+                  r.requester_accuracy_m,r.requester_latitude,r.requester_longitude
+           FROM attendance_contingency_requests r
+           JOIN users u ON u.id=r.user_id
+           JOIN organization_members om ON om.user_id=r.user_id AND om.organization_id=r.organization_id
+           JOIN sites s ON s.id=r.site_id
+           WHERE r.organization_id=$1 AND r.status='pending' AND r.site_id=ANY($2::uuid[])
+           ORDER BY r.requested_at`,
+          [organizationId,session.siteIds],
+        )
+    : {rows:[]} as {rows:ContingencyReviewItem[]};
+
   const enrollmentPeople=canManage && organizationId
     ? await query<EnrollmentPerson>(
         `SELECT
@@ -139,14 +186,19 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                   COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
                   ev.avg_activity_minutes::text avg_activity_minutes,
                   sh.last_check_in::text last_check_in,
-                  COALESCE(sh.open_now,false) open_now
+                  COALESCE(sh.open_now,false) open_now,
+                  COALESCE(sh.contingency_events,0)::int contingency_events
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN LATERAL (
              SELECT count(*)::int shifts,
                     round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
                     max(s.check_in_at) last_check_in,
-                    bool_or(s.status='open') open_now
+                    bool_or(s.status='open') open_now,
+                    count(*) FILTER (
+                      WHERE s.check_in_verification_mode='contingency'
+                         OR s.check_out_verification_mode='contingency'
+                    )::int contingency_events
              FROM attendance_shifts s
              WHERE s.user_id=u.id AND s.organization_id=om.organization_id
                AND s.check_in_at>=now()-interval '30 days'
@@ -180,7 +232,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                     COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
                     ev.avg_activity_minutes::text avg_activity_minutes,
                     sh.last_check_in::text last_check_in,
-                    COALESCE(sh.open_now,false) open_now
+                    COALESCE(sh.open_now,false) open_now,
+                    COALESCE(sh.contingency_events,0)::int contingency_events
              FROM organization_members om
              JOIN users u ON u.id=om.user_id
              LEFT JOIN LATERAL (
@@ -249,8 +302,15 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           maxLocationAccuracy={policy.max_location_accuracy_m}
           livenessThreshold={policy.liveness_threshold}
         />
-      </section>}
+      </section>
+      {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
+        sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
+        openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
+        initialRequest={selfContingency.rows[0]||null}
+      />}
     </>}
+
+    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} />}
 
     {canManage && organizationId && <SupervisedBiometricEnrollment
       people={enrollmentPeople.rows}
@@ -284,7 +344,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         <article className="card compact-metric"><span>Horas registradas</span><strong>{totalHours.toFixed(1)}</strong><small>últimos 30 días</small></article>
         <article className="card compact-metric"><span>Actividades finalizadas en jornada</span><strong>{completedInShift}</strong><small>cruce horario descriptivo</small></article>
       </div>
-      {reports.rows.length ? <div className="attendance-report-table-wrap"><table className="table attendance-report-table"><thead><tr><th>Persona</th><th>Rol</th><th>Jornadas</th><th>Horas campo</th><th>Act. en jornada</th><th>Act. fuera de jornada</th><th>Duración media act.</th><th>Estado</th></tr></thead><tbody>{reports.rows.map(row=><tr key={row.user_id}><td><strong>{row.full_name}</strong>{row.last_check_in&&<small className="table-subline">Última entrada: {new Date(row.last_check_in).toLocaleString("es-CO")}</small>}</td><td>{ROLE_LABELS[row.role]}</td><td>{row.shifts}</td><td>{Number(row.field_hours).toFixed(1)} h</td><td>{row.completed_in_shift}</td><td>{row.completed_outside_shift}</td><td>{row.avg_activity_minutes ? row.avg_activity_minutes+" min":"—"}</td><td><span className={"status-badge "+(row.open_now?"status-active":"status-inactive")}><i />{row.open_now?"En campo":"Sin jornada"}</span></td></tr>)}</tbody></table></div> : <div className="card empty-state"><strong>Aún no hay datos de asistencia.</strong><span>Los registros aparecerán cuando el personal habilitado empiece a marcar entrada y salida.</span></div>}
+      {reports.rows.length ? <div className="attendance-report-table-wrap"><table className="table attendance-report-table"><thead><tr><th>Persona</th><th>Rol</th><th>Jornadas</th><th>Horas campo</th><th>Act. en jornada</th><th>Act. fuera de jornada</th><th>Duración media act.</th><th>Contingencias</th><th>Estado</th></tr></thead><tbody>{reports.rows.map(row=><tr key={row.user_id}><td><strong>{row.full_name}</strong>{row.last_check_in&&<small className="table-subline">Última entrada: {new Date(row.last_check_in).toLocaleString("es-CO")}</small>}</td><td>{ROLE_LABELS[row.role]}</td><td>{row.shifts}</td><td>{Number(row.field_hours).toFixed(1)} h</td><td>{row.completed_in_shift}</td><td>{row.completed_outside_shift}</td><td>{row.avg_activity_minutes ? row.avg_activity_minutes+" min":"—"}</td><td>{row.contingency_events}</td><td><span className={"status-badge "+(row.open_now?"status-active":"status-inactive")}><i />{row.open_now?"En campo":"Sin jornada"}</span></td></tr>)}</tbody></table></div> : <div className="card empty-state"><strong>Aún no hay datos de asistencia.</strong><span>Los registros aparecerán cuando el personal habilitado empiece a marcar entrada y salida.</span></div>}
     </section>}
   </>;
 }

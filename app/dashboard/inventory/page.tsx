@@ -13,6 +13,8 @@ type Site={id:string;label:string};
 type Location={id:string;label:string};
 type Supplier={id:string;name:string};
 
+// ── Responsive inventory directory: desktop table + mobile cards ──────────
+
 export default async function InventoryPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
@@ -95,16 +97,53 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       action={creationGate.action || "Continuar"}
     />}
 
-    <section className="section"><table className="table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-      {items.rows.map(i=><tr key={i.id} data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
-        {name:"sku",label:"SKU",value:i.sku},
-        {name:"name",label:"Nombre",value:i.name},
-        {name:"unit",label:"Unidad",value:i.unit},
-        {name:"quantity",label:"Existencia",value:i.quantity,type:"number"},
-        {name:"min_quantity",label:"Mínimo",value:i.min_quantity,type:"number"},
-        {name:"unit_cost",label:"Costo unitario",value:i.unit_cost,type:"number"},
-        {name:"storage_location",label:"Almacenamiento",value:i.storage_location||""},
-      ]}/></td>}</tr>)}
-    </tbody></table>{!items.rowCount && creationGate.ready && <div className="card empty-state"><strong>Aún no hay artículos.</strong><span>La jerarquía está lista. Usa Agregar para registrar el primer artículo.</span></div>}</section>
+    <section className="section inventory-directory-section">
+      <div className="inventory-mobile-list">
+        {items.rows.map(i=>{
+          const quantity=Number(i.quantity||0);
+          const minimum=Number(i.min_quantity||0);
+          const low=quantity<=minimum;
+          return <article key={i.id} className="inventory-mobile-card" data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}>
+            <div className="inventory-mobile-main">
+              <div className="inventory-mobile-icon" aria-hidden="true">▤</div>
+              <div className="inventory-mobile-copy">
+                <span>{i.sku}</span>
+                <strong>{i.name}</strong>
+                <small>{i.company}</small>
+              </div>
+              <span className={"inventory-stock-badge "+(low?"low":"ok")}>{quantity} {i.unit}</span>
+            </div>
+            <div className="inventory-mobile-meta">
+              <div><span>Ubicación</span><strong>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</strong></div>
+              <div><span>Proveedor</span><strong>{i.supplier||"Sin proveedor"}</strong></div>
+              <div><span>Mínimo</span><strong>{i.min_quantity} {i.unit}</strong></div>
+              <div><span>Almacenamiento</span><strong>{i.storage_location||"Sin registrar"}</strong></div>
+            </div>
+            {owner&&<div className="inventory-mobile-footer"><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
+              {name:"sku",label:"SKU",value:i.sku},
+              {name:"name",label:"Nombre",value:i.name},
+              {name:"unit",label:"Unidad",value:i.unit},
+              {name:"quantity",label:"Existencia",value:i.quantity,type:"number"},
+              {name:"min_quantity",label:"Mínimo",value:i.min_quantity,type:"number"},
+              {name:"unit_cost",label:"Costo unitario",value:i.unit_cost,type:"number"},
+              {name:"storage_location",label:"Almacenamiento",value:i.storage_location||""},
+            ]}/></div>}
+          </article>;
+        })}
+      </div>
+
+      <table className="table inventory-directory-table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
+        {items.rows.map(i=><tr key={i.id} data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
+          {name:"sku",label:"SKU",value:i.sku},
+          {name:"name",label:"Nombre",value:i.name},
+          {name:"unit",label:"Unidad",value:i.unit},
+          {name:"quantity",label:"Existencia",value:i.quantity,type:"number"},
+          {name:"min_quantity",label:"Mínimo",value:i.min_quantity,type:"number"},
+          {name:"unit_cost",label:"Costo unitario",value:i.unit_cost,type:"number"},
+          {name:"storage_location",label:"Almacenamiento",value:i.storage_location||""},
+        ]}/></td>}</tr>)}
+      </tbody></table>
+      {!items.rowCount && creationGate.ready && <div className="card empty-state"><strong>Aún no hay artículos.</strong><span>La jerarquía está lista. Usa Agregar para registrar el primer artículo.</span></div>}
+    </section>
   </>;
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-21 — Company profile redesign phase 1
+
+### Changed
+
+- Rebuilt the company quick-detail modal into a structured profile with a shallow hero, independent logo/identity block and fully readable company name.
+- Added quick actions for Locations, Assets, Users and the complete company record.
+- Added compact executive summaries for profile completion, location usage, asset usage and documentation state.
+- Reorganized company data into collapsible sections for general information, primary site/coverage, resources, documentation and visual identity.
+- Prepared the primary-site coverage section as the integration point for map, coordinates and geofence radius in the next phase.
+- Made profile photo mandatory when creating a user in both the client form and server endpoint.
+- Clarified that profile photos are not biometric reference data; facial attendance continues to require live-camera enrollment, liveness/anti-spoof validation and an encrypted facial template.
+
+
 ## 2026-09-21 — Compact company and location cards
 
 ### Changed

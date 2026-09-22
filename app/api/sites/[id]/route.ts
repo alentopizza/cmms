@@ -76,7 +76,7 @@ export async function POST(
     return NextResponse.redirect(targetUrl(organizationId, request.url, returnTo, "?error=site-geofence"), 303);
   }
 
-  if (!name) {
+  if (!name || !address || !city || !country || latitude === null || longitude === null) {
     return NextResponse.redirect(targetUrl(organizationId, request.url, returnTo, "?error=site-required"), 303);
   }
 

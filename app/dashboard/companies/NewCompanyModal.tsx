@@ -39,6 +39,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
     "image-required": "Debes cargar el logo de la empresa.",
     "image-type": "Las imágenes deben ser PNG, JPG o WebP.",
     "image-size": "Una de las imágenes supera el tamaño permitido.",
+    "site-geofence": "Valida la dirección de la sede en el mapa y define su radio permitido.",
     plan: "Selecciona un plan válido.",
   };
   const errorMessage = error ? errorMessages[error] || "No se pudo crear la empresa." : "";

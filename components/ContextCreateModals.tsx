@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -116,9 +117,9 @@ export function SiteCreateModal({
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código</label><input name="code" placeholder="Ej. BOG-01" /></div>
-          <div className="field form-span-2"><label>Dirección</label><input name="address" placeholder="Ej. Carrera 15 # 93-47, Bogotá" /></div>
-          <div className="field"><label>Ciudad</label><input name="city" placeholder="Ej. Bogotá" /></div>
-          <div className="field"><label>País</label><input name="country" defaultValue="CO" maxLength={2} /></div>
+          <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
+          <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required /></div>
+          <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="field form-span-2"><label>Foto de la sede</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>

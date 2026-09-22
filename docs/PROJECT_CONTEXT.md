@@ -531,3 +531,8 @@ Attendance is operational by default for organizations that have never configure
 ### Supervised biometric identity chain
 
 Biometric identity now has a supervised chain of trust. Initial/renewed enrollment is performed by an attendance manager with the user physically present. Existing self-enrolled profiles are treated as legacy and cannot authorize attendance until reenrolled. The system records the supervising user, site, enrollment method and verification time. Revocation nulls the usable encrypted embedding and keeps an audit event/metadata record.
+
+
+### Mobile field shell phase 4A
+
+Field mobile navigation now reserves four primary operational destinations (Dashboard, Orders, Attendance and Assets). **Más** is a bottom sheet for secondary authorized modules and account/system actions instead of reopening the full duplicate navigation drawer. The shell reserves safe-area-aware bottom space, and the Assets directory switches from the wide desktop table to compact mobile cards.

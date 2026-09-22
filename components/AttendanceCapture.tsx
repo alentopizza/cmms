@@ -76,7 +76,7 @@ export default function AttendanceCapture({
   const [phase,setPhase]=useState<Phase>("idle");
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
-  const [enrolled,setEnrolled]=useState(initialEnrolled);
+  const enrolled=initialEnrolled;
   const [openShift,setOpenShift]=useState(initialOpenShift);
   const [siteId,setSiteId]=useState(initialOpenShift?.site_id || sites[0]?.id || "");
   const [gps,setGps]=useState<GpsFix|null>(null);

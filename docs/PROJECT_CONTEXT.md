@@ -526,3 +526,8 @@ The client validates GPS/geofence first, then activates live facial verification
 ### Attendance default availability
 
 Attendance is operational by default for organizations that have never configured a policy. The default self-service role set is Admin, Manager, Technician, Provider and External collaborator, matching roles that have `attendance.self`. Explicitly disabled policies remain disabled. Existing organizations without a policy are backfilled by migration `017_attendance_policy_defaults.sql`; new organizations receive the policy during onboarding.
+
+
+### Supervised biometric identity chain
+
+Biometric identity now has a supervised chain of trust. Initial/renewed enrollment is performed by an attendance manager with the user physically present. Existing self-enrolled profiles are treated as legacy and cannot authorize attendance until reenrolled. The system records the supervising user, site, enrollment method and verification time. Revocation nulls the usable encrypted embedding and keeps an audit event/metadata record.

@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type GeocodeResult = {
   display_name: string;
   lat: number;
   lon: number;
+  place_id?: string;
+  provider?: "google" | "osm";
 };
 
 type GeofenceMapPickerProps = {
@@ -24,9 +26,46 @@ type GeofenceMapPickerProps = {
   className?: string;
 };
 
-const TILE_SIZE = 256;
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
-// ── Web-Mercator map math and coordinate conversion ────────────────────────
+const TILE_SIZE = 256;
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "";
+let googleMapsPromise: Promise<any> | null = null;
+
+// ── Google Maps loader / provider boundary ──────────────────────────────────
+
+function loadGoogleMaps() {
+  if (!GOOGLE_MAPS_API_KEY) return Promise.reject(new Error("Google Maps no está configurado."));
+  if (window.google?.maps?.importLibrary) return Promise.resolve(window.google);
+  if (googleMapsPromise) return googleMapsPromise;
+
+  googleMapsPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-desweb-google-maps="true"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.google), { once: true });
+      existing.addEventListener("error", () => reject(new Error("No fue posible cargar Google Maps.")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&v=weekly&loading=async`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.deswebGoogleMaps = "true";
+    script.onload = () => window.google ? resolve(window.google) : reject(new Error("Google Maps no respondió."));
+    script.onerror = () => reject(new Error("No fue posible cargar Google Maps."));
+    document.head.appendChild(script);
+  });
+
+  return googleMapsPromise;
+}
+
+// ── OSM fallback math (kept only for graceful provider fallback) ────────────
 
 function clampLatitude(value: number) {
   return Math.max(-85.05112878, Math.min(85.05112878, value));
@@ -68,25 +107,161 @@ export default function GeofenceMapPicker({
   className = "",
 }: GeofenceMapPickerProps) {
   const [address, setAddress] = useState(initialAddress || "");
-  const [latitude, setLatitude] = useState<number | null>(
-    Number.isFinite(initialLatitude) ? Number(initialLatitude) : null,
-  );
-  const [longitude, setLongitude] = useState<number | null>(
-    Number.isFinite(initialLongitude) ? Number(initialLongitude) : null,
-  );
-  const [radius, setRadius] = useState(
-    Number.isFinite(initialRadius) ? Math.max(20, Math.min(5000, Number(initialRadius))) : 250,
-  );
+  const [latitude, setLatitude] = useState<number | null>(Number.isFinite(initialLatitude) ? Number(initialLatitude) : null);
+  const [longitude, setLongitude] = useState<number | null>(Number.isFinite(initialLongitude) ? Number(initialLongitude) : null);
+  const [radius, setRadius] = useState(Number.isFinite(initialRadius) ? Math.max(20, Math.min(5000, Number(initialRadius))) : 250);
   const [zoom, setZoom] = useState(16);
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [message, setMessage] = useState("");
   const [validatedLabel, setValidatedLabel] = useState(initialLatitude !== null && initialLongitude !== null ? initialAddress || "Punto configurado" : "");
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleFailed, setGoogleFailed] = useState(false);
+
+  const googleHostRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const siteMarkerRef = useRef<any>(null);
+  const currentMarkerRef = useRef<any>(null);
+  const geofenceCircleRef = useRef<any>(null);
+  const accuracyCircleRef = useRef<any>(null);
 
   const configured = latitude !== null && longitude !== null;
   const center = configured ? { lat: latitude as number, lon: longitude as number } : { lat: 4.711, lon: -74.0721 };
+  const useGoogle = Boolean(GOOGLE_MAPS_API_KEY) && !googleFailed;
+
+  // ── Current Google map initialization ─────────────────────────────────────
+
+  useEffect(() => {
+    if (!useGoogle || !googleHostRef.current) return;
+    let disposed = false;
+    const listeners: any[] = [];
+
+    loadGoogleMaps().then(async google => {
+      if (disposed || !googleHostRef.current) return;
+      const { Map } = await google.maps.importLibrary("maps");
+      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+      if (disposed || !googleHostRef.current) return;
+
+      const map = new Map(googleHostRef.current, {
+        center: { lat: center.lat, lng: center.lon },
+        zoom,
+        mapId: GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID",
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false,
+        gestureHandling: readOnly ? "cooperative" : "greedy",
+      });
+      mapRef.current = map;
+
+      const sitePin = new PinElement({ background: "#38b2a9", borderColor: "#293644", glyphColor: "#ffffff" });
+      siteMarkerRef.current = new AdvancedMarkerElement({
+        map: configured ? map : null,
+        position: { lat: center.lat, lng: center.lon },
+        title: "Centro de geocerca",
+        content: sitePin.element,
+      });
+
+      const currentPin = new PinElement({ background: "#2563eb", borderColor: "#dbeafe", glyphColor: "#ffffff", scale: 0.82 });
+      currentMarkerRef.current = new AdvancedMarkerElement({
+        map: Number.isFinite(currentLatitude) && Number.isFinite(currentLongitude) ? map : null,
+        position: Number.isFinite(currentLatitude) && Number.isFinite(currentLongitude)
+          ? { lat: Number(currentLatitude), lng: Number(currentLongitude) }
+          : { lat: center.lat, lng: center.lon },
+        title: "Ubicación actual del dispositivo",
+        content: currentPin.element,
+      });
+
+      geofenceCircleRef.current = new google.maps.Circle({
+        map: configured ? map : null,
+        center: { lat: center.lat, lng: center.lon },
+        radius,
+        strokeColor: "#38b2a9",
+        strokeOpacity: 0.95,
+        strokeWeight: 2,
+        fillColor: "#38b2a9",
+        fillOpacity: 0.14,
+        clickable: false,
+      });
+
+      accuracyCircleRef.current = new google.maps.Circle({
+        map: Number.isFinite(currentLatitude) && Number.isFinite(currentLongitude) && Number.isFinite(currentAccuracy) ? map : null,
+        center: Number.isFinite(currentLatitude) && Number.isFinite(currentLongitude)
+          ? { lat: Number(currentLatitude), lng: Number(currentLongitude) }
+          : { lat: center.lat, lng: center.lon },
+        radius: Number.isFinite(currentAccuracy) ? Math.max(1, Number(currentAccuracy)) : 1,
+        strokeColor: "#2563eb",
+        strokeOpacity: 0.55,
+        strokeWeight: 1,
+        fillColor: "#2563eb",
+        fillOpacity: 0.08,
+        clickable: false,
+      });
+
+      if (!readOnly) {
+        listeners.push(map.addListener("click", (event:any) => {
+          const nextLat = event.latLng?.lat?.();
+          const nextLng = event.latLng?.lng?.();
+          if (!Number.isFinite(nextLat) || !Number.isFinite(nextLng)) return;
+          setLatitude(nextLat);
+          setLongitude(nextLng);
+          setValidatedLabel(address.trim() || "Punto seleccionado manualmente");
+          setResults([]);
+          setMessage("Punto ajustado manualmente en Google Maps.");
+        }));
+      }
+
+      setGoogleReady(true);
+    }).catch(() => {
+      if (!disposed) {
+        setGoogleFailed(true);
+        setGoogleReady(false);
+        setMessage("Google Maps no está disponible. Se activó el mapa de respaldo temporal.");
+      }
+    });
+
+    return () => {
+      disposed = true;
+      listeners.forEach(listener => listener?.remove?.());
+      if (siteMarkerRef.current) siteMarkerRef.current.map = null;
+      if (currentMarkerRef.current) currentMarkerRef.current.map = null;
+      geofenceCircleRef.current?.setMap?.(null);
+      accuracyCircleRef.current?.setMap?.(null);
+      mapRef.current = null;
+    };
+  }, [useGoogle, readOnly]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !googleReady) return;
+    const nextCenter = { lat: center.lat, lng: center.lon };
+    map.setCenter(nextCenter);
+    map.setZoom(zoom);
+
+    if (siteMarkerRef.current) {
+      siteMarkerRef.current.position = nextCenter;
+      siteMarkerRef.current.map = configured ? map : null;
+    }
+    if (geofenceCircleRef.current) {
+      geofenceCircleRef.current.setCenter(nextCenter);
+      geofenceCircleRef.current.setRadius(radius);
+      geofenceCircleRef.current.setMap(configured ? map : null);
+    }
+
+    const hasCurrent = Number.isFinite(currentLatitude) && Number.isFinite(currentLongitude);
+    if (currentMarkerRef.current) {
+      if (hasCurrent) currentMarkerRef.current.position = { lat: Number(currentLatitude), lng: Number(currentLongitude) };
+      currentMarkerRef.current.map = hasCurrent ? map : null;
+    }
+    if (accuracyCircleRef.current) {
+      if (hasCurrent) accuracyCircleRef.current.setCenter({ lat: Number(currentLatitude), lng: Number(currentLongitude) });
+      accuracyCircleRef.current.setRadius(Number.isFinite(currentAccuracy) ? Math.max(1, Number(currentAccuracy)) : 1);
+      accuracyCircleRef.current.setMap(hasCurrent && Number.isFinite(currentAccuracy) ? map : null);
+    }
+  }, [googleReady, configured, center.lat, center.lon, zoom, radius, currentLatitude, currentLongitude, currentAccuracy]);
 
   const tiles = useMemo(() => {
+    if (useGoogle) return [];
     const centerPoint = tilePoint(center.lat, center.lon, zoom);
     const baseX = Math.floor(centerPoint.x);
     const baseY = Math.floor(centerPoint.y);
@@ -105,28 +280,25 @@ export default function GeofenceMapPicker({
       }
     }
     return values;
-  }, [center.lat, center.lon, zoom]);
+  }, [useGoogle, center.lat, center.lon, zoom]);
 
   const radiusPixels = useMemo(() => {
-    if (!configured) return 0;
+    if (!configured || useGoogle) return 0;
     const metersPerPixel = 156543.03392 * Math.cos(center.lat * Math.PI / 180) / (2 ** zoom);
     return Math.max(7, Math.min(220, radius / metersPerPixel));
-  }, [configured, center.lat, radius, zoom]);
+  }, [configured, useGoogle, center.lat, radius, zoom]);
 
   const currentMarker = useMemo(() => {
-    if (!configured || !Number.isFinite(currentLatitude) || !Number.isFinite(currentLongitude)) return null;
+    if (useGoogle || !configured || !Number.isFinite(currentLatitude) || !Number.isFinite(currentLongitude)) return null;
     const centerPoint = tilePoint(center.lat, center.lon, zoom);
     const point = tilePoint(Number(currentLatitude), Number(currentLongitude), zoom);
     const dx = (point.x - centerPoint.x) * TILE_SIZE;
     const dy = (point.y - centerPoint.y) * TILE_SIZE;
     if (Math.abs(dx) > 900 || Math.abs(dy) > 700) return null;
-    return {
-      left: `calc(50% + ${dx}px)`,
-      top: `calc(50% + ${dy}px)`,
-    };
-  }, [configured, currentLatitude, currentLongitude, center.lat, center.lon, zoom]);
+    return { left: `calc(50% + ${dx}px)`, top: `calc(50% + ${dy}px)` };
+  }, [useGoogle, configured, currentLatitude, currentLongitude, center.lat, center.lon, zoom]);
 
-  // ── Address validation / point acquisition ────────────────────────────────
+  // ── Address validation / device-position acquisition ──────────────────────
 
   async function searchAddress() {
     const query = [address.trim(), cityHint?.trim(), countryHint?.trim()].filter(Boolean).join(", ");
@@ -157,7 +329,7 @@ export default function GeofenceMapPicker({
     setAddress(result.display_name);
     setValidatedLabel(result.display_name);
     setResults([]);
-    setMessage("Dirección validada. Puedes ajustar el punto tocando el mapa.");
+    setMessage(`Dirección validada con ${result.provider === "google" ? "Google Maps" : "el proveedor de respaldo"}. Puedes ajustar el punto en el mapa.`);
   }
 
   function useCurrentLocation() {
@@ -165,22 +337,22 @@ export default function GeofenceMapPicker({
       setMessage("Este navegador no permite obtener la ubicación del dispositivo.");
       return;
     }
-    setMessage("Obteniendo ubicación actual…");
+    setMessage("Obteniendo GPS actual del dispositivo…");
     navigator.geolocation.getCurrentPosition(
       position => {
         setLatitude(position.coords.latitude);
         setLongitude(position.coords.longitude);
         setValidatedLabel("Ubicación actual del dispositivo");
         setResults([]);
-        setMessage(`Ubicación obtenida con precisión aproximada de ${Math.round(position.coords.accuracy)} m.`);
+        setMessage(`GPS obtenido con precisión aproximada de ${Math.round(position.coords.accuracy)} m.`);
       },
       () => setMessage("No fue posible obtener la ubicación. Revisa el permiso de ubicación del navegador."),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
     );
   }
 
-  function selectPoint(event: React.MouseEvent<HTMLButtonElement>) {
-    if (readOnly) return;
+  function selectFallbackPoint(event: React.MouseEvent<HTMLButtonElement>) {
+    if (readOnly || useGoogle) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const dx = event.clientX - rect.left - rect.width / 2;
     const dy = event.clientY - rect.top - rect.height / 2;
@@ -190,10 +362,10 @@ export default function GeofenceMapPicker({
     setLongitude(next.lon);
     setValidatedLabel(address.trim() || "Punto seleccionado manualmente");
     setResults([]);
-    setMessage("Punto ajustado manualmente en el mapa.");
+    setMessage("Punto ajustado manualmente en el mapa de respaldo.");
   }
 
-  // ── Interactive map and serialized form values ────────────────────────────
+  // ── Interactive map and serialized geofence values ────────────────────────
 
   return <div className={`geofence-picker ${readOnly ? "read-only" : ""} ${className}`.trim()}>
     <div className="geofence-picker-fields">
@@ -205,11 +377,7 @@ export default function GeofenceMapPicker({
             value={address}
             required={addressRequired}
             readOnly={readOnly}
-            onChange={event => {
-              setAddress(event.target.value);
-              setValidatedLabel("");
-              setMessage("");
-            }}
+            onChange={event => { setAddress(event.target.value); setValidatedLabel(""); setMessage(""); }}
             placeholder="Ej. Carrera 15 # 93-47, Bogotá"
           />
           {!readOnly && <button className="button secondary" type="button" onClick={searchAddress} disabled={searching}>
@@ -219,53 +387,39 @@ export default function GeofenceMapPicker({
       </div>
 
       {!readOnly && <div className="geofence-picker-tools">
-        <button type="button" className="button secondary" onClick={useCurrentLocation}>Usar mi ubicación</button>
+        <button type="button" className="button secondary" onClick={useCurrentLocation}>Usar mi GPS</button>
         <span className={configured ? "geofence-state valid" : "geofence-state"}>{configured ? "Punto configurado" : "Falta validar el punto"}</span>
       </div>}
     </div>
 
     {results.length > 0 && <div className="geofence-search-results" role="listbox" aria-label="Coincidencias de dirección">
-      {results.map((result, index) => <button type="button" key={`${result.lat}-${result.lon}-${index}`} onClick={() => chooseResult(result)}>
+      {results.map((result, index) => <button type="button" key={`${result.place_id || ""}-${result.lat}-${result.lon}-${index}`} onClick={() => chooseResult(result)}>
         <span aria-hidden="true">⌖</span><strong>{result.display_name}</strong>
       </button>)}
     </div>}
 
     {message && <div className="geofence-message" role="status">{message}</div>}
 
-    <div className="geofence-map-shell">
-      <button
-        type="button"
-        className="geofence-map-canvas"
-        onClick={selectPoint}
-        aria-label={readOnly ? "Mapa de la geocerca configurada" : "Mapa. Toca para ajustar el punto central de la geocerca."}
-      >
+    <div className={"geofence-map-shell "+(useGoogle ? "google-provider" : "osm-provider")}>
+      {useGoogle ? <>
+        <div ref={googleHostRef} className="geofence-google-map" aria-label="Google Maps de la geocerca configurada" />
+        {!googleReady && <div className="geofence-map-empty">Cargando Google Maps…</div>}
+      </> : <button type="button" className="geofence-map-canvas" onClick={selectFallbackPoint} aria-label={readOnly ? "Mapa de respaldo de la geocerca configurada" : "Mapa de respaldo. Toca para ajustar el punto central."}>
         <span className="geofence-map-tiles" aria-hidden="true">
-          {tiles.map(tile => <img
-            key={tile.key}
-            src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`}
-            alt=""
-            style={{ left: tile.left, top: tile.top }}
-          />)}
+          {tiles.map(tile => <img key={tile.key} src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`} alt="" style={{ left: tile.left, top: tile.top }} />)}
         </span>
-        {configured && <span
-          className="geofence-radius-circle"
-          aria-hidden="true"
-          style={{ width: radiusPixels * 2, height: radiusPixels * 2 }}
-        />}
+        {configured && <span className="geofence-radius-circle" aria-hidden="true" style={{ width: radiusPixels * 2, height: radiusPixels * 2 }} />}
         {configured && <span className="geofence-map-marker" aria-hidden="true"><i /></span>}
-        {currentMarker && <span
-          className="geofence-current-marker"
-          aria-label={`Tu ubicación actual${Number.isFinite(currentAccuracy) ? `, precisión aproximada ${Math.round(Number(currentAccuracy))} metros` : ""}`}
-          style={currentMarker}
-        ><i /></span>}
+        {currentMarker && <span className="geofence-current-marker" aria-label={`Tu ubicación actual${Number.isFinite(currentAccuracy) ? `, precisión aproximada ${Math.round(Number(currentAccuracy))} metros` : ""}`} style={currentMarker}><i /></span>}
         {!configured && <span className="geofence-map-empty">Valida la dirección o selecciona el punto en el mapa</span>}
-      </button>
+      </button>}
 
-      <div className="geofence-map-controls">
+      {!useGoogle && <div className="geofence-map-controls">
         <button type="button" onClick={() => setZoom(value => Math.min(19, value + 1))} aria-label="Acercar mapa">+</button>
         <button type="button" onClick={() => setZoom(value => Math.max(12, value - 1))} aria-label="Alejar mapa">−</button>
-      </div>
-      <span className="geofence-map-attribution">© OpenStreetMap contributors</span>
+      </div>}
+      <span className="geofence-map-provider">{useGoogle ? "Google Maps" : "Mapa de respaldo · OpenStreetMap"}</span>
+      {!useGoogle && <span className="geofence-map-attribution">© OpenStreetMap contributors</span>}
     </div>
 
     <div className="geofence-config-row">
@@ -276,28 +430,10 @@ export default function GeofenceMapPicker({
       <div className="field geofence-radius-field">
         <label>Radio permitido</label>
         <div className="geofence-radius-control">
-          <input
-            name="geofence_radius_m"
-            type="range"
-            min="20"
-            max="5000"
-            step="10"
-            value={radius}
-            disabled={readOnly}
-            onChange={event => setRadius(Number(event.target.value))}
-          />
-          <div><input
-            type="number"
-            min="20"
-            max="5000"
-            step="10"
-            value={radius}
-            disabled={readOnly}
-            onChange={event => setRadius(Math.max(20, Math.min(5000, Number(event.target.value) || 20)))}
-            aria-label="Radio permitido en metros"
-          /><span>m</span></div>
+          <input name="geofence_radius_m" type="range" min="20" max="5000" step="10" value={radius} disabled={readOnly} onChange={event => setRadius(Number(event.target.value))} />
+          <div><input type="number" min="20" max="5000" step="10" value={radius} disabled={readOnly} onChange={event => setRadius(Math.max(20, Math.min(5000, Number(event.target.value) || 20)))} aria-label="Radio permitido en metros" /><span>m</span></div>
         </div>
-        <small>El inicio y cierre de actividades biométricas se permitirá dentro de este radio.</small>
+        <small>La geocerca visual proviene del mapa; la validación de entrada/salida se recalcula en el servidor con el GPS del dispositivo.</small>
       </div>
     </div>
 

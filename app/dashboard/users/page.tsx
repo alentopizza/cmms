@@ -8,6 +8,8 @@ type Organization = { id: string; name: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
+// ── Authorized user directory data and related scope options ────────────────
+
 export default async function UsersPage() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -21,6 +23,12 @@ export default async function UsersPage() {
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
                   (u.avatar_data IS NOT NULL) has_avatar,
+                  CASE
+                    WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+                    WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+                    WHEN bp.user_id IS NOT NULL THEN 'legacy'
+                    ELSE 'missing'
+                  END biometric_status,
                   membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
@@ -57,11 +65,18 @@ export default async function UsersPage() {
              ORDER BY om.created_at ASC
              LIMIT 1
            ) membership ON true
+           LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=membership.organization_id
            ORDER BY u.active DESC,u.full_name`,
         )
       : query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.active,u.platform_role,u.last_login_at::text,
                   (u.avatar_data IS NOT NULL) has_avatar,
+                  CASE
+                    WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+                    WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+                    WHEN bp.user_id IS NOT NULL THEN 'legacy'
+                    ELSE 'missing'
+                  END biometric_status,
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE((
                     SELECT array_agg(oms.site_id::text ORDER BY site.name)
@@ -89,6 +104,7 @@ export default async function UsersPage() {
            JOIN users u ON u.id=om.user_id
            JOIN organizations o ON o.id=om.organization_id
            LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
+           LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
            WHERE om.organization_id=$1
            ORDER BY u.active DESC,u.full_name`,
           [session.organizationId],

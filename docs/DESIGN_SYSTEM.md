@@ -619,3 +619,14 @@ The same geometry applies to landing, login, checkout and lead forms, but color 
 ### Implementation rule
 
 When creating or redesigning a component, select values from the shared `--ui-*` scales first. A new radius, shadow, icon size or spacing value should only be introduced when the existing scale cannot satisfy a documented functional need.
+
+
+### Landing account access control
+
+The public landing header uses a compact icon-only account control instead of text such as **Ir al panel** or **Iniciar sesión**. The destination is session-aware: unauthenticated visitors go to `/login`, while authenticated users go directly to `/dashboard`.
+
+The control follows the shared reference-grid rules: 20 px user icon, 42 px desktop control height, 38–40 px compact mobile size, 12 px radius tier, Base elevation at rest, Raised on hover and Inset on press. It must remain visible on mobile next to the trial CTA.
+
+### Export popover stacking rule
+
+Dropdowns that visually escape a dashboard toolbar must elevate the toolbar's stacking context while open. Raising only the child popover is insufficient when later content participates in another stacking context. Dashboard export therefore marks the filter bar as open, keeps overflow visible and raises the parent plus popover above following panels.

@@ -7199,3 +7199,190 @@ html[data-theme="dark"] .location-detail-section-title.compact h2{
     text-transform:capitalize;
   }
 }
+
+
+/* Phase 4B audited attendance contingency */
+.attendance-contingency-card,
+.attendance-contingency-review{
+  display:grid;
+  gap:14px;
+}
+.contingency-request-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.contingency-request-form textarea{
+  min-height:96px;
+}
+.contingency-warning{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:9px;
+  align-items:start;
+  padding:10px 11px;
+  border:1px solid rgba(245,158,11,.28);
+  border-radius:var(--ui-radius-3);
+  background:rgba(245,158,11,.08);
+}
+.contingency-warning>span{
+  width:26px;
+  height:26px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:#d99914;
+  color:#fff;
+  font-weight:900;
+}
+.contingency-warning p{
+  display:grid;
+  gap:2px;
+  margin:0;
+}
+.contingency-warning strong{
+  color:var(--text);
+  font-size:9px;
+}
+.contingency-warning small{
+  color:var(--text-soft);
+  font-size:8px;
+  line-height:1.45;
+}
+.contingency-active-state{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  padding:13px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--ui-radius-3);
+  background:var(--surface-soft);
+}
+.contingency-active-state.approved{
+  border-color:rgba(56,178,169,.38);
+  background:var(--brand-mint-light);
+}
+.contingency-active-icon{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--brand-teal);
+  font-size:15px;
+  font-weight:900;
+  box-shadow:var(--ui-shadow-base);
+}
+.contingency-active-state>div:nth-child(2){
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.contingency-active-state>div:nth-child(2)>span{
+  color:var(--text-soft);
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.contingency-active-state strong{
+  color:var(--text);
+  font-size:11px;
+}
+.contingency-active-state small{
+  color:var(--text-soft);
+  font-size:8px;
+  line-height:1.4;
+}
+.contingency-review-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+}
+.contingency-review-item{
+  display:grid;
+  gap:10px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:var(--ui-radius-3);
+  background:var(--surface-soft);
+  box-shadow:var(--ui-shadow-base);
+}
+.contingency-review-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:9px;
+  align-items:start;
+}
+.contingency-review-head>div{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.contingency-review-head span{
+  color:var(--brand-teal);
+  font-size:7px;
+  font-weight:850;
+  text-transform:uppercase;
+}
+.contingency-review-head strong{
+  color:var(--text);
+  font-size:11px;
+}
+.contingency-review-head small,
+.contingency-review-head time{
+  color:var(--text-soft);
+  font-size:7.5px;
+}
+.contingency-review-reason{
+  display:grid;
+  gap:4px;
+  padding:9px 10px;
+  border-radius:var(--ui-radius-2);
+  background:var(--surface);
+}
+.contingency-review-reason strong{
+  color:var(--text);
+  font-size:9px;
+}
+.contingency-review-reason p{
+  margin:0;
+  color:var(--text-soft);
+  font-size:8px;
+  line-height:1.45;
+}
+.contingency-review-diagnostic{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+  padding:7px 9px;
+  border:1px solid var(--border);
+  border-radius:var(--ui-radius-2);
+  background:var(--surface);
+}
+.contingency-review-diagnostic span{
+  color:var(--text-soft);
+  font-size:7px;
+  font-weight:800;
+}
+.contingency-review-diagnostic strong{
+  color:var(--text);
+  font-size:8px;
+}
+@media(max-width:800px){
+  .contingency-review-list{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .contingency-request-form{grid-template-columns:1fr}
+  .contingency-request-form .form-span-2{grid-column:1}
+  .contingency-active-state{
+    grid-template-columns:auto minmax(0,1fr);
+  }
+  .contingency-active-state>.button{
+    grid-column:1/-1;
+    width:100%;
+  }
+}

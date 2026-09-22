@@ -281,3 +281,8 @@ Normal attendance remains the preferred path. Contingency is isolated into separ
 - `POST /api/attendance/contingency/use`: consumes an approved, unexpired request once and marks the resulting attendance event as `contingency`.
 
 The contingency use endpoint rechecks user identity enrollment, organization/site scope, current shift state and authorization expiry. It records GPS evidence when available but does not pretend that missing biometric/GPS validation occurred. Reports therefore distinguish exceptional attendance from standard verification.
+
+
+### Client attendance state synchronization
+
+Normal attendance and contingency are separate client components but share one attendance page. Successful standard check-in/check-out emits the local `attendance:shift-changed` event so the contingency component immediately switches between check-in and check-out context without requiring a page reload. Server endpoints remain authoritative; this event only keeps the same-page UI coherent.

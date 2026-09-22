@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Supervised enrollment now verifies the device is physically inside the selected site's geofence before the facial camera can be used.
 - Personal settings are now available to every authenticated role through `/dashboard/preferences`.
 - Field-mobile **Más** and the account menu expose **Mi configuración** without granting administrative company settings.
 - New browsers default to the **Claro** theme; Oscuro and Sistema remain optional preferences.

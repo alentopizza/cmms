@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { encryptEmbedding, validateEmbedding } from "@/lib/biometric";
+import { encryptEmbedding, finiteCoordinate, haversineMeters, validateEmbedding } from "@/lib/biometric";
 import { pool } from "@/lib/db";
 import type { PoolClient } from "pg";
 
@@ -28,7 +28,7 @@ export async function POST(request:Request){
 
   const body=await request.json().catch(()=>null) as {
     userId?:unknown; siteId?:unknown; embedding?:unknown; consent?:unknown; identityChecked?:unknown;
-    live?:unknown; real?:unknown;
+    live?:unknown; real?:unknown; latitude?:unknown; longitude?:unknown; accuracy?:unknown;
   }|null;
 
   const userId=typeof body?.userId==="string"?body.userId:"";
@@ -36,6 +36,9 @@ export async function POST(request:Request){
   const embedding=validateEmbedding(body?.embedding);
   const live=Number(body?.live);
   const real=Number(body?.real);
+  const latitude=finiteCoordinate(body?.latitude,-90,90);
+  const longitude=finiteCoordinate(body?.longitude,-180,180);
+  const accuracy=Number(body?.accuracy);
 
   if(!UUID.test(userId)||!UUID.test(siteId)||!embedding||body?.consent!==true||body?.identityChecked!==true){
     return NextResponse.json({message:"El enrolamiento supervisado está incompleto."},{status:422});
@@ -81,10 +84,24 @@ export async function POST(request:Request){
       return new NextResponse("Forbidden",{status:403});
     }
 
-    const site=await client.query("SELECT 1 FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",[siteId,session.organizationId]);
+    const site=await client.query<{latitude:number|null;longitude:number|null;geofence_radius_m:number}>(
+      "SELECT latitude,longitude,geofence_radius_m FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",
+      [siteId,session.organizationId],
+    );
     if(!site.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"La sede seleccionada no está disponible."},{status:422});
+    }
+    const enrollmentSite=site.rows[0];
+    if(latitude===null||longitude===null||!Number.isFinite(accuracy)||accuracy<0||accuracy>120||
+       enrollmentSite.latitude===null||enrollmentSite.longitude===null){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"Debes validar una ubicación GPS precisa dentro de la sede antes de enrolar."},{status:422});
+    }
+    const enrollmentDistance=haversineMeters(latitude,longitude,enrollmentSite.latitude,enrollmentSite.longitude);
+    if(enrollmentDistance>enrollmentSite.geofence_radius_m){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"El dispositivo está fuera de la geocerca de la sede seleccionada."},{status:422});
     }
 
     if(!person.rows[0].access_all_sites){
@@ -125,7 +142,11 @@ export async function POST(request:Request){
       `INSERT INTO biometric_enrollment_events(
          organization_id,user_id,actor_user_id,site_id,event_type,enrollment_method,metadata
        ) VALUES($1,$2,$3,$4,$5,'supervised_camera',$6::jsonb)`,
-      [session.organizationId,userId,session.userId,siteId,eventType,JSON.stringify({identity_checked:true,consent:true})],
+      [session.organizationId,userId,session.userId,siteId,eventType,JSON.stringify({
+        identity_checked:true,
+        consent:true,
+        enrollment_location:{latitude,longitude,accuracy,distance_m:enrollmentDistance},
+      })],
     );
 
     await client.query("COMMIT");

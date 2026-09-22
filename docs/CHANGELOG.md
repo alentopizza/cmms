@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-21 — Tenant user-management scope repair
+
+### Fixed
+
+- Restored user edit/activate/deactivate actions for Company Administrators that already hold `users.manage`.
+- Enforced the same capability server-side while restricting tenant administrators to ordinary users in their own organization.
+- Preserved Platform Owner/Superadministrator protections and owner-only permanent deletion.
+- Added responsibility section comments to the large Users client/API files while reviewing the new biometric workflow.
+
 ## 2026-09-21 — Supervised biometric enrollment and code-context standard
 
 ### Added

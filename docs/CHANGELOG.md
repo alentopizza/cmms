@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-21 — Distinct sticky module headers
+
+### Changed
+
+- Changed the shared contextual header color across all authenticated modules so it no longer blends into white/light content cards.
+- Added dedicated light and dark module-header surface tokens.
+- Increased lower elevation/shadow so the sticky header reads clearly above scrolling content.
+- Added a restrained Desweb teal lower accent line for additional separation.
+- Kept the header opaque and consistent on desktop and mobile.
+
+
 ## 2026-09-21 — Opaque popup and modal surfaces
 
 ### Changed

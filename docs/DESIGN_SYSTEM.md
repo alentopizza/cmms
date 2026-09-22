@@ -682,3 +682,20 @@ The shared contextual header must remain visually distinct from scrolling module
 - A subtle Desweb teal lower accent reinforces the separation without becoming decorative.
 - The header remains opaque and does not depend on backdrop blur for readability.
 - This rule applies to every authenticated module that uses the shared `.context-header` shell, including mobile.
+
+
+### Compact directory-card pattern
+
+Company and principal-location directories use a compact card pattern optimized for dense operational browsing.
+
+- Desktop target is four cards per row when workspace width allows it; responsive breakpoints reduce to three, two and one columns.
+- Cover imagery is shallow and identity circles are smaller than the previous directory cards.
+- The main card body is a dedicated click target for opening detail; resource shortcuts are separate interactive links so nested-button/link markup is never used.
+- Resource shortcuts use icon + `used/assigned` for company entitlements, with a tooltip naming the resource on hover/focus.
+- Each resource shortcut navigates to its associated module: locations/sublocations → Locations, assets → Assets, inventory → Inventory, technicians → Users.
+- Location cards use the same compact pattern and expose direct shortcuts for their sublocations and assets.
+- Tooltip information must also be available through `title`/accessible labels so mouse and keyboard users receive equivalent context.
+
+### Company logo creation rule
+
+A company logo is mandatory when a company is created. The requirement is enforced both by the browser form and the server endpoint. The logo is the default identity image shown inside the circular company mark throughout company and location directory cards. A company cover/reference image is optional and must never replace the logo as the circular identity asset.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-21 — Dashboard single-header cleanup
+
+### Changed
+
+- Removed the redundant secondary Dashboard introduction panel.
+- Kept Dashboard aligned with the shared module header structure used by Empresas, Ubicaciones and other directories.
+- The primary header now carries the relevant company/role context.
+- Date range, filters, PDF/Power BI actions and KPIs remain directly below the single header.
+- Removed obsolete Dashboard intro/period styling.
+
+
 ## 2026-09-21 — Role-aware mobile navigation
 
 ### Added

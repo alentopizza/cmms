@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SubLocationCreateModal } from "@/components/ContextCreateModals";
+import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
   address:string|null; city:string|null; country:string; active:boolean; location_count:number; asset_count:number;
+  latitude:number|null; longitude:number|null; geofence_radius_m:number;
   has_image:boolean; organization_has_logo:boolean; contact_name:string|null; contact_phone:string|null; contact_email:string|null;
 };
 export type LocationDirectorySub={
@@ -129,14 +131,14 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           <div className="form-grid">
             <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
             <div className="field"><label>Código</label><input name="code" defaultValue={selected.code||""}/></div>
-            <div className="field form-span-2"><label>Dirección</label><input name="address" defaultValue={selected.address||""}/></div>
-            <div className="field"><label>Ciudad</label><input name="city" defaultValue={selected.city||""}/></div>
-            <div className="field"><label>País</label><input name="country" defaultValue={selected.country}/></div>
+            <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
+            <div className="field"><label>País *</label><input name="country" defaultValue={selected.country} required/></div>
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
             <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" defaultValue={selected.contact_phone||""}/></div>
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
             <div className="field form-span-2"><label>Nueva foto de sede</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"/></div>
           </div>
+          <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} />
           <div className="form-actions"><button className="button secondary" type="button" onClick={()=>setEditingSite(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
         </form>}
 
@@ -144,6 +146,10 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           <div><span>◉</span><p><strong>{countryName(selected.country)}</strong><small>País</small></p></div>
           <div><span>⌁</span><p><strong>{selected.city||"Sin registrar"}</strong><small>Ciudad</small></p></div>
           <div className="wide"><span>⌖</span><p><strong>{selected.address||"Dirección sin registrar"}</strong><small>Dirección</small></p><button type="button" onClick={()=>copy(selected.address||"","Dirección")}>Copiar</button></div>
+        </div>
+        <div className="location-geofence-view">
+          <div className="location-detail-section-title compact"><h2>Mapa y geocerca biométrica</h2><span className={selected.latitude!==null&&selected.longitude!==null?"status-badge status-active":"status-badge"}>{selected.latitude!==null&&selected.longitude!==null?"Configurada":"Pendiente"}</span></div>
+          <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} />
         </div>
 
         <div className="location-detail-section-title">

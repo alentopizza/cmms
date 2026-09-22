@@ -39,6 +39,10 @@ This roadmap is directional and should be updated as priorities change.
 - Docker Compose self-hosted installation foundation
 - public /downloads information page
 - versioned private self-hosted ZIP/TAR packaging workflow
+- retractable per-user dashboard sidebar with persisted module ordering and collapsed state
+- role-aware mobile navigation foundation: drawer for broad roles and bottom navigation for field roles
+- role-aware dashboard filters and executive exports in Excel (.xlsx), CSV and branded PDF
+- optional field attendance with 1:1 facial verification, geofencing and execution correlation
 
 ## Implemented operational dependency foundation
 
@@ -118,11 +122,11 @@ This roadmap is directional and should be updated as priorities change.
 
 - notifications;
 - email;
-- mobile/PWA experience;
+- full PWA/offline/mobile-native hardening beyond the implemented responsive role-aware shell;
 - QR codes for assets;
 - work requests from operators;
 - recurring background jobs;
-- exports;
+- module-wide, scheduled and additional-domain exports beyond the implemented Dashboard Excel/CSV/PDF exports;
 - richer audit trails;
 - external API/integrations.
 

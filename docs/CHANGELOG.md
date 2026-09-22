@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-21 — Mobile dashboard header and drawer repair
+
+### Fixed
+
+- Moved the drawer hamburger from a detached fixed position into the dashboard contextual header.
+- Added a dedicated mobile navigation slot so module identity and navigation align as one mobile header.
+- Fixed the mobile drawer being hidden by an older generic `.sidebar{display:none}` responsive rule.
+- Made the smart sidebar explicitly visible/interactable while open with fixed full-height positioning and a higher layer than the overlay.
+- Replaced overlay backdrop blur with a dark translucent scrim to prevent the “white/blurred screen” effect when opening navigation.
+- Added body scroll lock while the drawer is open and automatic close on route changes.
+- The sidebar collapse control now acts as a close control while the mobile drawer is open.
+- Increased contrast and stroke weight of the landing user icon for better mobile visibility.
+
+
 ## 2026-09-21 — Mobile account access and export overlay fix
 
 ### Changed

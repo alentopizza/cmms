@@ -478,3 +478,8 @@ The same permission-filtered navigation list is reused across desktop, drawer an
 ### Landing account access and export overlay behavior
 
 The landing header now always exposes a compact user-icon account action on desktop and mobile. Its route resolves to Login without a session and Dashboard when already authenticated. Dashboard export menus raise their containing filter bar while open so Excel/CSV/PDF choices render above subsequent panels instead of being visually clipped.
+
+
+### Mobile dashboard drawer stabilization
+
+The responsive dashboard now integrates the drawer trigger directly into the contextual header. The mobile drawer explicitly renders above a non-blurred overlay and overrides legacy generic sidebar hiding rules, resolving the previous state where the page dimmed/blurred but authorized navigation modules were not visible. Landing account access also uses increased icon contrast for compact screens.

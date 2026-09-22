@@ -541,3 +541,8 @@ Field mobile navigation now reserves four primary operational destinations (Dash
 ### Attendance contingency phase 4B
 
 Attendance now includes an audited exceptional path for operational failures after supervised biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without active supervised biometric enrollment.
+
+
+### Hybrid role-aware user manual
+
+The product now has one shared user-manual content source rendered in two contexts: public `/manual` for general product understanding and authenticated `/dashboard/help` for role-prioritized guidance. Users may switch to **Toda la plataforma** to understand broader product scope, while actual panel visibility/actions remain controlled by normal RBAC. Field mobile navigation exposes Manual/Ayuda from **Más**.

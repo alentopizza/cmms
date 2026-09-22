@@ -18,6 +18,9 @@ type GeofenceMapPickerProps = {
   readOnly?: boolean;
   addressRequired?: boolean;
   coordinateRequired?: boolean;
+  currentLatitude?: number | null;
+  currentLongitude?: number | null;
+  currentAccuracy?: number | null;
   className?: string;
 };
 
@@ -57,6 +60,9 @@ export default function GeofenceMapPicker({
   readOnly = false,
   addressRequired = true,
   coordinateRequired = true,
+  currentLatitude = null,
+  currentLongitude = null,
+  currentAccuracy = null,
   className = "",
 }: GeofenceMapPickerProps) {
   const [address, setAddress] = useState(initialAddress || "");
@@ -82,7 +88,7 @@ export default function GeofenceMapPicker({
     const centerPoint = tilePoint(center.lat, center.lon, zoom);
     const baseX = Math.floor(centerPoint.x);
     const baseY = Math.floor(centerPoint.y);
-    const values: Array<{ key: string; x: number; y: number; left: number; top: number }> = [];
+    const values: Array<{ key: string; x: number; y: number; left: string; top: string }> = [];
     for (let dy = -2; dy <= 2; dy += 1) {
       for (let dx = -3; dx <= 3; dx += 1) {
         const x = baseX + dx;
@@ -91,8 +97,8 @@ export default function GeofenceMapPicker({
           key: `${zoom}-${x}-${y}`,
           x,
           y,
-          left: (x - centerPoint.x) * TILE_SIZE + 640,
-          top: (y - centerPoint.y) * TILE_SIZE + 384,
+          left: `calc(50% + ${(x - centerPoint.x) * TILE_SIZE}px)`,
+          top: `calc(50% + ${(y - centerPoint.y) * TILE_SIZE}px)`,
         });
       }
     }
@@ -104,6 +110,19 @@ export default function GeofenceMapPicker({
     const metersPerPixel = 156543.03392 * Math.cos(center.lat * Math.PI / 180) / (2 ** zoom);
     return Math.max(7, Math.min(220, radius / metersPerPixel));
   }, [configured, center.lat, radius, zoom]);
+
+  const currentMarker = useMemo(() => {
+    if (!configured || !Number.isFinite(currentLatitude) || !Number.isFinite(currentLongitude)) return null;
+    const centerPoint = tilePoint(center.lat, center.lon, zoom);
+    const point = tilePoint(Number(currentLatitude), Number(currentLongitude), zoom);
+    const dx = (point.x - centerPoint.x) * TILE_SIZE;
+    const dy = (point.y - centerPoint.y) * TILE_SIZE;
+    if (Math.abs(dx) > 900 || Math.abs(dy) > 700) return null;
+    return {
+      left: `calc(50% + ${dx}px)`,
+      top: `calc(50% + ${dy}px)`,
+    };
+  }, [configured, currentLatitude, currentLongitude, center.lat, center.lon, zoom]);
 
   async function searchAddress() {
     const query = [address.trim(), cityHint?.trim(), countryHint?.trim()].filter(Boolean).join(", ");
@@ -228,6 +247,11 @@ export default function GeofenceMapPicker({
           style={{ width: radiusPixels * 2, height: radiusPixels * 2 }}
         />}
         {configured && <span className="geofence-map-marker" aria-hidden="true"><i /></span>}
+        {currentMarker && <span
+          className="geofence-current-marker"
+          aria-label={`Tu ubicación actual${Number.isFinite(currentAccuracy) ? `, precisión aproximada ${Math.round(Number(currentAccuracy))} metros` : ""}`}
+          style={currentMarker}
+        ><i /></span>}
         {!configured && <span className="geofence-map-empty">Valida la dirección o selecciona el punto en el mapa</span>}
       </button>
 

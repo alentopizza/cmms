@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-21 — Supervised biometric enrollment and code-context standard
+
+### Added
+
+- Added supervised facial enrollment for Admin/Manager attendance supervisors.
+- Added biometric enrollment audit metadata/events for supervisor, site, method, enrollment/reenrollment and revocation.
+- Added shared browser biometric helper `lib/client-biometric.ts` so enrollment and attendance use the same capture/model logic.
+- Added `docs/CODE_GUIDE.md` and repository section-comment conventions for complex/security-sensitive code.
+
+### Changed
+
+- Removed self-enrollment and self-revocation from the field-user attendance workflow.
+- Attendance now accepts only supervised, identity-verified, active facial templates.
+- Existing self-enrolled templates are classified as legacy and require supervised reenrollment.
+- Biometric revocation now invalidates the encrypted embedding while retaining non-biometric audit metadata.
+- Supervised enrollment revalidates tenant membership, controlled role, site scope, profile photo and liveness server-side.
+- Added section responsibility comments to the new biometric/geofence code paths and made this an ongoing contributor/AI requirement.
+
 ## 2026-09-21 — Attendance availability fix
 
 ### Fixed

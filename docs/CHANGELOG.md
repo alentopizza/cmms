@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-22 — Rutinas, Inventario mobile and dark dropdown contrast
+
+### Changed
+
+- Activated the prepared mobile-card layout for Rutinas instead of showing the desktop table on small screens.
+- Added a dedicated mobile-card layout for Inventario with stock/minimum emphasis, location and supplier context.
+- Added low-stock visual state on mobile inventory cards.
+- Hardened dark-theme modal/form surfaces so selects, options, optgroups, inputs and textareas keep dark backgrounds with readable light text.
+- Kept modal headers, sticky actions and location-type selectors aligned with the dark palette.
+
 ## 2026-09-22 — Personal settings and clearer attendance exit
 
 ### Changed

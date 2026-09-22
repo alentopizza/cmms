@@ -329,7 +329,14 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
     {canManage && organizationId && <SupervisedBiometricEnrollment
       people={enrollmentPeople.rows}
-      sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
+      sites={sites.rows.map(site=>({
+        id:site.id,
+        name:site.name,
+        city:site.city,
+        latitude:site.latitude,
+        longitude:site.longitude,
+        geofenceRadius:site.geofence_radius_m,
+      }))}
       livenessThreshold={policy.liveness_threshold}
     />}
 

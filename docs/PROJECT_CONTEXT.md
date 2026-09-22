@@ -507,3 +507,10 @@ Company creation now requires a logo at both client and server level. The logo i
 The company quick-detail experience was rebuilt as a modern structured profile: a non-overlapping hero/identity area, quick module actions, executive summary cards and collapsible information sections. The primary-site section is explicitly prepared for the next map/geofence phase so location validation can be added without another structural redesign.
 
 User creation now requires a profile photo at client and server level. The profile photo is identity/UI data only; facial attendance uses the existing separate live-camera enrollment pipeline with liveness checks and encrypted facial templates.
+
+
+### Geofence configuration phase 2
+
+Principal-site creation and editing now require a validated physical point. Company onboarding, contextual site creation, the Locations module and the company primary-site profile share one map/geofence control. It stores the existing `sites.latitude`, `sites.longitude` and `sites.geofence_radius_m` fields and exposes address search, manual map adjustment, current-device location and a visible radius circle.
+
+Existing sites without coordinates remain readable but are marked pending; editing them requires completing address, coordinates and radius. Attendance already consumes these same site fields, so the configured map directly governs whether field users are inside the permitted biometric attendance area.

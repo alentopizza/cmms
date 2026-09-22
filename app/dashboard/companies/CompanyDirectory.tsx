@@ -210,125 +210,184 @@ export default function CompanyDirectory({
     {selected && <div className="modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget && !editing) close();
     }}>
-      <section className="company-modal company-detail-modal" role="dialog" aria-modal="true" aria-labelledby="company-detail-title">
-        <header className="company-detail-hero">
+      <section className="company-modal company-detail-modal company-profile-modal" role="dialog" aria-modal="true" aria-labelledby="company-detail-title">
+        <header className="company-profile-hero">
           <div className={`company-detail-cover ${selected.has_cover ? "" : "company-card-cover-fallback"}`}>
             {selected.has_cover && <img src={`/api/organizations/${selected.id}/assets/cover`} alt={`Portada de ${selected.name}`} />}
           </div>
-          <div className="company-detail-logo">
+          <div className="company-profile-hero-shade" aria-hidden="true" />
+          <button className="modal-close company-detail-close" type="button" aria-label="Cerrar" onClick={close}>×</button>
+        </header>
+
+        <section className="company-profile-identity">
+          <div className="company-profile-logo">
             {selected.has_logo
               ? <img src={`/api/organizations/${selected.id}/assets/logo`} alt={`Logo de ${selected.name}`} />
               : <span>{initials(selected.name)}</span>}
           </div>
-          <button className="modal-close company-detail-close" type="button" aria-label="Cerrar" onClick={close}>×</button>
-        </header>
 
-        <div className="company-detail-modal-heading">
-          <div>
-            <span className={`status-badge ${selected.active ? "status-active" : "status-inactive"}`}><span aria-hidden="true" />{selected.active ? "Empresa activa" : "Empresa inactiva"}</span>
+          <div className="company-profile-copy">
+            <div className="company-profile-badges">
+              <span className={`status-badge ${selected.active ? "status-active" : "status-inactive"}`}><span aria-hidden="true" />{selected.active ? "Empresa activa" : "Empresa inactiva"}</span>
+              <span className="company-plan-pill">{selected.plan_name || "Sin plan"}</span>
+              <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Protegida"}</span>
+            </div>
             <h2 id="company-detail-title">{selected.name}</h2>
-            <p>{selected.site_name || "Sin sede principal"} · {selected.city || "Ciudad sin registrar"} · {selected.plan_name || "Sin plan"}</p>
+            <p>{selected.legal_name || selected.name}{selected.tax_id ? ` · Identificación ${selected.tax_id}` : ""}</p>
+            <small>{selected.site_name || "Sin sede principal"} · {selected.city || "Ciudad sin registrar"}{selected.country ? ` · ${selected.country}` : ""}</small>
           </div>
-          <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Información protegida"}</span>
+
+          <div className="company-profile-actions" aria-label="Acciones rápidas">
+            <Link href="/dashboard/locations" className="company-profile-action"><span aria-hidden="true">⌂</span><b>Ubicaciones</b></Link>
+            <Link href="/dashboard/assets" className="company-profile-action"><span aria-hidden="true">◇</span><b>Activos</b></Link>
+            <Link href="/dashboard/users" className="company-profile-action"><span aria-hidden="true">◎</span><b>Usuarios</b></Link>
+            <Link href={`/dashboard/companies/${selected.id}`} className="company-profile-action"><span aria-hidden="true">▤</span><b>Ficha completa</b></Link>
+          </div>
+        </section>
+
+        <div className="company-profile-summary">
+          <div><span>Perfil</span><strong>{selected.profile_completion}%</strong><small>completitud</small></div>
+          <div><span>Ubicaciones</span><strong>{selected.site_count}/{selected.max_sites}</strong><small>usadas / asignadas</small></div>
+          <div><span>Activos</span><strong>{selected.asset_count}/{selected.max_assets}</strong><small>usados / asignados</small></div>
+          <div><span>Documentos</span><strong>{selected.document_count}</strong><small>{selected.pending_document_count} pendientes</small></div>
         </div>
 
-        <form className="company-detail-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
+        <form className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
           <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
 
-          {!editing && <div className="company-modal-profile-summary">
-            <div><span>Completitud</span><strong>{selected.profile_completion}%</strong></div>
-            <div><span>Documentos</span><strong>{selected.document_count}</strong></div>
-            <div><span>Pendientes</span><strong>{selected.pending_document_count}</strong></div>
-            <div><span>Contacto</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
-          </div>}
-
-          <div className="modal-section">
-            <div className="modal-section-title"><strong>Información de la empresa</strong><span>{editing ? "Campos habilitados" : "Solo lectura"}</span></div>
-            <div className="form-grid">
-              <div className="field"><label htmlFor="detail-name">Nombre comercial</label><input id="detail-name" name="name" defaultValue={selected.name} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-legal">Razón social</label><input id="detail-legal" name="legal_name" defaultValue={selected.legal_name || ""} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-tax">NIT / Identificación</label><input id="detail-tax" name="tax_id" defaultValue={selected.tax_id || ""} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-slug">Identificador</label><input id="detail-slug" name="slug" defaultValue={selected.slug} readOnly={!editing} /></div>
-              <div className="field form-span-2"><label htmlFor="detail-timezone">Zona horaria</label>
-                <select id="detail-timezone" name="timezone" defaultValue={selected.timezone} disabled={!editing}>
-                  <option value="America/Bogota">Colombia · America/Bogota</option>
-                  <option value="America/Lima">Perú · America/Lima</option>
-                  <option value="America/Mexico_City">México · America/Mexico_City</option>
-                  <option value="America/New_York">Estados Unidos · America/New_York</option>
-                  <option value="UTC">UTC</option>
-                </select>
+          <details className="company-detail-accordion" open>
+            <summary>
+              <span className="company-detail-accordion-icon" aria-hidden="true">▤</span>
+              <span><strong>Información general</strong><small>Identidad legal, zona horaria y datos base de la empresa.</small></span>
+              <i aria-hidden="true">⌄</i>
+            </summary>
+            <div className="company-detail-accordion-body">
+              <div className="company-profile-contact-strip">
+                <div><span>Contacto principal</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
+                <div><span>Correo administrativo</span><strong>{selected.admin_email || "Sin registrar"}</strong></div>
+              </div>
+              <div className="form-grid">
+                <div className="field"><label htmlFor="detail-name">Nombre comercial</label><input id="detail-name" name="name" defaultValue={selected.name} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-legal">Razón social</label><input id="detail-legal" name="legal_name" defaultValue={selected.legal_name || ""} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-tax">NIT / Identificación</label><input id="detail-tax" name="tax_id" defaultValue={selected.tax_id || ""} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-slug">Identificador</label><input id="detail-slug" name="slug" defaultValue={selected.slug} readOnly={!editing} /></div>
+                <div className="field form-span-2"><label htmlFor="detail-timezone">Zona horaria</label>
+                  <select id="detail-timezone" name="timezone" defaultValue={selected.timezone} disabled={!editing}>
+                    <option value="America/Bogota">Colombia · America/Bogota</option>
+                    <option value="America/Lima">Perú · America/Lima</option>
+                    <option value="America/Mexico_City">México · America/Mexico_City</option>
+                    <option value="America/New_York">Estados Unidos · America/New_York</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          </details>
 
-          <div className="modal-section">
-            <div className="modal-section-title"><strong>Sede principal</strong><span>{editing ? "Editable" : "Solo lectura"}</span></div>
-            <div className="form-grid">
-              <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
-              <div className="field form-span-2"><label htmlFor="detail-address">Dirección</label><input id="detail-address" name="address" defaultValue={selected.address || ""} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
-              <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
-            </div>
-          </div>
-
-          {canManageResources && <div className="modal-section company-resource-section">
-            <div className="modal-section-title">
-              <strong>Recursos asignados</strong>
-              <span>{editing ? "Editable solo por Superadministrador" : "Plan y consumo actual"}</span>
-            </div>
-            <p className="muted resource-help">Estos cupos controlan la capacidad operativa de la empresa. El Administrador de empresa no puede modificarlos.</p>
-
-            <div className="company-resource-grid">
-              <div className="company-resource-item">
-                <div className="company-resource-item-head"><span>Ubicaciones principales</span><strong>{selected.site_count} / {selected.max_sites}</strong></div>
-                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sites) > 0 ? (Number(selected.site_count) / Number(selected.max_sites)) * 100 : 0)}%` }} /></div>
-                {editing && <div className="field"><label htmlFor="detail-max-sites">Cupo asignado</label><input id="detail-max-sites" name="max_sites" type="number" min="1" defaultValue={selected.max_sites} required /></div>}
+          <details className="company-detail-accordion" open>
+            <summary>
+              <span className="company-detail-accordion-icon" aria-hidden="true">⌖</span>
+              <span><strong>Sede principal y cobertura</strong><small>Dirección operativa y base para mapa, geocerca y asistencia biométrica.</small></span>
+              <i aria-hidden="true">⌄</i>
+            </summary>
+            <div className="company-detail-accordion-body">
+              <div className="form-grid">
+                <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
+                <div className="field form-span-2"><label htmlFor="detail-address">Dirección</label><input id="detail-address" name="address" defaultValue={selected.address || ""} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
               </div>
 
-              <div className="company-resource-item">
-                <div className="company-resource-item-head"><span>Sububicaciones</span><strong>{selected.sublocation_count} / {selected.max_sublocations}</strong></div>
-                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sublocations) > 0 ? (Number(selected.sublocation_count) / Number(selected.max_sublocations)) * 100 : 0)}%` }} /></div>
-                {editing && <div className="field"><label htmlFor="detail-max-sublocations">Cupo asignado</label><input id="detail-max-sublocations" name="max_sublocations" type="number" min="0" defaultValue={selected.max_sublocations} required /></div>}
-              </div>
-
-              <div className="company-resource-item">
-                <div className="company-resource-item-head"><span>Activos</span><strong>{selected.asset_count} / {selected.max_assets}</strong></div>
-                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_assets) > 0 ? (Number(selected.asset_count) / Number(selected.max_assets)) * 100 : 0)}%` }} /></div>
-                {editing && <div className="field"><label htmlFor="detail-max-assets">Cupo asignado</label><input id="detail-max-assets" name="max_assets" type="number" min="0" defaultValue={selected.max_assets} required /></div>}
-              </div>
-
-              <div className="company-resource-item">
-                <div className="company-resource-item-head"><span>Artículos de inventario</span><strong>{selected.inventory_item_count} / {selected.max_inventory_items}</strong></div>
-                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_inventory_items) > 0 ? (Number(selected.inventory_item_count) / Number(selected.max_inventory_items)) * 100 : 0)}%` }} /></div>
-                {editing && <div className="field"><label htmlFor="detail-max-inventory">Cupo asignado</label><input id="detail-max-inventory" name="max_inventory_items" type="number" min="0" defaultValue={selected.max_inventory_items} required /></div>}
-              </div>
-
-              <div className="company-resource-item">
-                <div className="company-resource-item-head"><span>Técnicos</span><strong>{selected.technician_count} / {selected.max_technicians}</strong></div>
-                <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_technicians) > 0 ? (Number(selected.technician_count) / Number(selected.max_technicians)) * 100 : 0)}%` }} /></div>
-                {editing && <div className="field"><label htmlFor="detail-max-technicians">Cupo asignado</label><input id="detail-max-technicians" name="max_technicians" type="number" min="0" defaultValue={selected.max_technicians} required /></div>}
+              <div className="company-geofence-prep">
+                <span className="company-geofence-prep-icon" aria-hidden="true">⌖</span>
+                <div><strong>Geocerca de asistencia</strong><p>Esta sede será el punto de validación para mapa, coordenadas y radio permitido. La configuración interactiva se incorpora en la siguiente fase.</p></div>
+                <span className="status-badge">Preparada</span>
               </div>
             </div>
-          </div>}
+          </details>
 
-          {editing && <div className="modal-section">
-            <div className="modal-section-title"><strong>Actualizar imágenes</strong><span>Opcional</span></div>
-            <div className="form-grid">
-              <div className="field"><label htmlFor="detail-logo">Logo</label><input id="detail-logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · cuadrado · 800 × 800 px recomendado · máximo 2 MB.</small></div>
-              <div className="field"><label htmlFor="detail-cover">Foto de portada</label><input id="detail-cover" name="cover" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB.</small></div>
+          {canManageResources && <details className="company-detail-accordion">
+            <summary>
+              <span className="company-detail-accordion-icon" aria-hidden="true">◫</span>
+              <span><strong>Recursos y consumo</strong><small>Cupos del plan y capacidad operativa utilizada.</small></span>
+              <i aria-hidden="true">⌄</i>
+            </summary>
+            <div className="company-detail-accordion-body">
+              <p className="muted resource-help">El Administrador de empresa puede consultar estos cupos; solo el Superadministrador puede modificarlos.</p>
+              <div className="company-resource-grid">
+                <div className="company-resource-item">
+                  <div className="company-resource-item-head"><span>Ubicaciones principales</span><strong>{selected.site_count} / {selected.max_sites}</strong></div>
+                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sites) > 0 ? (Number(selected.site_count) / Number(selected.max_sites)) * 100 : 0)}%` }} /></div>
+                  {editing && <div className="field"><label htmlFor="detail-max-sites">Cupo asignado</label><input id="detail-max-sites" name="max_sites" type="number" min="1" defaultValue={selected.max_sites} required /></div>}
+                </div>
+                <div className="company-resource-item">
+                  <div className="company-resource-item-head"><span>Sububicaciones</span><strong>{selected.sublocation_count} / {selected.max_sublocations}</strong></div>
+                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sublocations) > 0 ? (Number(selected.sublocation_count) / Number(selected.max_sublocations)) * 100 : 0)}%` }} /></div>
+                  {editing && <div className="field"><label htmlFor="detail-max-sublocations">Cupo asignado</label><input id="detail-max-sublocations" name="max_sublocations" type="number" min="0" defaultValue={selected.max_sublocations} required /></div>}
+                </div>
+                <div className="company-resource-item">
+                  <div className="company-resource-item-head"><span>Activos</span><strong>{selected.asset_count} / {selected.max_assets}</strong></div>
+                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_assets) > 0 ? (Number(selected.asset_count) / Number(selected.max_assets)) * 100 : 0)}%` }} /></div>
+                  {editing && <div className="field"><label htmlFor="detail-max-assets">Cupo asignado</label><input id="detail-max-assets" name="max_assets" type="number" min="0" defaultValue={selected.max_assets} required /></div>}
+                </div>
+                <div className="company-resource-item">
+                  <div className="company-resource-item-head"><span>Inventario</span><strong>{selected.inventory_item_count} / {selected.max_inventory_items}</strong></div>
+                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_inventory_items) > 0 ? (Number(selected.inventory_item_count) / Number(selected.max_inventory_items)) * 100 : 0)}%` }} /></div>
+                  {editing && <div className="field"><label htmlFor="detail-max-inventory">Cupo asignado</label><input id="detail-max-inventory" name="max_inventory_items" type="number" min="0" defaultValue={selected.max_inventory_items} required /></div>}
+                </div>
+                <div className="company-resource-item">
+                  <div className="company-resource-item-head"><span>Técnicos</span><strong>{selected.technician_count} / {selected.max_technicians}</strong></div>
+                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_technicians) > 0 ? (Number(selected.technician_count) / Number(selected.max_technicians)) * 100 : 0)}%` }} /></div>
+                  {editing && <div className="field"><label htmlFor="detail-max-technicians">Cupo asignado</label><input id="detail-max-technicians" name="max_technicians" type="number" min="0" defaultValue={selected.max_technicians} required /></div>}
+                </div>
+              </div>
             </div>
-          </div>}
+          </details>}
 
-          {editing && <footer className="modal-actions detail-edit-actions">
+          <details className="company-detail-accordion">
+            <summary>
+              <span className="company-detail-accordion-icon" aria-hidden="true">▧</span>
+              <span><strong>Documentación y cumplimiento</strong><small>Estado documental y pendientes de la empresa.</small></span>
+              <i aria-hidden="true">⌄</i>
+            </summary>
+            <div className="company-detail-accordion-body">
+              <div className="company-doc-summary">
+                <div><strong>{selected.document_count}</strong><span>Documentos registrados</span></div>
+                <div><strong>{selected.pending_document_count}</strong><span>Pendientes o vencidos</span></div>
+                <div><strong>{selected.profile_completion}%</strong><span>Perfil completo</span></div>
+              </div>
+              <Link className="button secondary company-profile-inline-action" href={`/dashboard/companies/${selected.id}`}>Abrir documentación completa</Link>
+            </div>
+          </details>
+
+          <details className="company-detail-accordion">
+            <summary>
+              <span className="company-detail-accordion-icon" aria-hidden="true">◉</span>
+              <span><strong>Identidad visual</strong><small>Logo corporativo y fotografía de referencia.</small></span>
+              <i aria-hidden="true">⌄</i>
+            </summary>
+            <div className="company-detail-accordion-body">
+              <div className="company-profile-assets">
+                <div><span>Logo</span><div className="company-profile-asset-preview logo">{selected.has_logo ? <img src={`/api/organizations/${selected.id}/assets/logo`} alt="" /> : <b>{initials(selected.name)}</b>}</div></div>
+                <div><span>Portada</span><div className="company-profile-asset-preview cover">{selected.has_cover ? <img src={`/api/organizations/${selected.id}/assets/cover`} alt="" /> : <b>Sin portada</b>}</div></div>
+              </div>
+              {editing && <div className="form-grid">
+                <div className="field"><label htmlFor="detail-logo">Actualizar logo</label><input id="detail-logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · cuadrado · 800 × 800 px recomendado · máximo 2 MB.</small></div>
+                <div className="field"><label htmlFor="detail-cover">Actualizar portada</label><input id="detail-cover" name="cover" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB.</small></div>
+              </div>}
+            </div>
+          </details>
+
+          {editing && <footer className="modal-actions detail-edit-actions company-profile-edit-actions">
             <button className="button secondary" type="button" onClick={() => setEditing(false)}>Cancelar edición</button>
             <button className="button" type="submit">Guardar cambios</button>
           </footer>}
         </form>
 
-        {!editing && <footer className="company-detail-actions">
+        {!editing && <footer className="company-detail-actions company-profile-footer">
           <div>
             {canDelete && <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={event => requestConfirmation("delete", event)}>
               <input type="hidden" name="intent" value="delete" />
@@ -336,8 +395,8 @@ export default function CompanyDirectory({
             </form>}
           </div>
           <div>
-            <Link className="button" href={`/dashboard/companies/${selected.id}`}>Abrir ficha empresarial</Link>
-            <button className="button secondary" type="button" onClick={() => setEditing(true)}>Edición rápida</button>
+            <Link className="button secondary" href={`/dashboard/companies/${selected.id}`}>Ficha completa</Link>
+            <button className="button" type="button" onClick={() => setEditing(true)}>Editar empresa</button>
           </div>
         </footer>}
       </section>

@@ -27,6 +27,7 @@ const navItems: NavItem[] = [
   { id: "maintenance", icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
   { id: "inventory", icon: "▤", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
   { id: "help", icon: "?", label: "Manual / Ayuda", href: "/dashboard/help" },
+  { id: "preferences", icon: "◐", label: "Mi configuración", href: "/dashboard/preferences" },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

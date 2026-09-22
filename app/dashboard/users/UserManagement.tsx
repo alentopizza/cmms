@@ -32,6 +32,7 @@ export type ManagedUser = {
   external_supplier_id: string | null;
   external_supplier_name: string | null;
   has_avatar: boolean;
+  biometric_status: "verified" | "legacy" | "revoked" | "missing";
 };
 
 type Organization = { id: string; name: string };
@@ -82,6 +83,13 @@ function roleDescription(role: string) {
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+}
+
+function biometricStatusLabel(status: ManagedUser["biometric_status"]) {
+  if (status === "verified") return "Verificada";
+  if (status === "legacy") return "Reenrolar";
+  if (status === "revoked") return "Revocada";
+  return "Pendiente";
 }
 
 function siteAccessLabel(user: ManagedUser) {
@@ -360,6 +368,7 @@ export default function UserManagement({
             <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
             <div><span>Alcance de sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
             <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
+            <div><span>Biometría</span><strong>{biometricStatusLabel(user.biometric_status)}</strong></div>
           </div>
 
           {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <div className="user-card-actions">

@@ -514,3 +514,10 @@ User creation now requires a profile photo at client and server level. The profi
 Principal-site creation and editing now require a validated physical point. Company onboarding, contextual site creation, the Locations module and the company primary-site profile share one map/geofence control. It stores the existing `sites.latitude`, `sites.longitude` and `sites.geofence_radius_m` fields and exposes address search, manual map adjustment, current-device location and a visible radius circle.
 
 Existing sites without coordinates remain readable but are marked pending; editing them requires completing address, coordinates and radius. Attendance already consumes these same site fields, so the configured map directly governs whether field users are inside the permitted biometric attendance area.
+
+
+### Field presence phase 3
+
+Field attendance now distinguishes site presence from assigned maintenance work. Technicians/external field users may open a biometric attendance shift with no assigned activities; the shift records that the authenticated person is physically present and available at an authorized site. Later task execution events can correlate against the already-open shift.
+
+The client validates GPS/geofence first, then activates live facial verification. The mobile workspace shows site map/radius, current-device location, GPS accuracy, range state, biometric enrollment and the primary **Iniciar actividades** action. The server-side attendance clock continues to repeat authorization, GPS accuracy, distance and facial checks before persistence.

@@ -13,17 +13,17 @@ function applyPreference(preference: ThemePreference) {
 }
 
 export default function ThemePreferences() {
-  const [preference, setPreference] = useState<ThemePreference>("system");
+  const [preference, setPreference] = useState<ThemePreference>("light");
 
   useEffect(() => {
     const saved = localStorage.getItem("desweb-theme");
-    const current: ThemePreference = saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
+    const current: ThemePreference = saved === "light" || saved === "dark" || saved === "system" ? saved : "light";
     setPreference(current);
     applyPreference(current);
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const update = () => {
-      if ((localStorage.getItem("desweb-theme") || "system") === "system") applyPreference("system");
+      if (localStorage.getItem("desweb-theme") === "system") applyPreference("system");
     };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);

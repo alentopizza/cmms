@@ -212,6 +212,18 @@ When geolocation is required, a clock-in/out request is accepted only when:
 - the selected site belongs to the authenticated user's allowed scope;
 - the measured distance is inside the site's configured radius.
 
+### Site configuration workflow
+
+Before a principal site can participate in geofenced attendance, its physical point is configured through the site map editor:
+
+1. enter the postal/physical address;
+2. validate/search the address and choose the appropriate result, or use the current device location when physically present;
+3. adjust the marker on the map when required;
+4. define the permitted radius between 20 and 5000 metres;
+5. save address, latitude, longitude and radius together.
+
+New principal sites and the initial site created during company onboarding require this configuration. Legacy sites without coordinates may still be viewed, but must be completed on their next edit. The browser map is an administrative configuration aid; attendance acceptance is always recalculated server-side from the device GPS coordinates and stored site geofence.
+
 ### Attendance shift
 
 A field shift contains:

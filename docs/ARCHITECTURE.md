@@ -246,3 +246,8 @@ Client sequence for check-in/out is:
 6. let the server independently repeat authorization, accuracy, Haversine/geofence and facial-threshold validation before opening/closing the shift.
 
 This sequencing reduces unnecessary camera use while preserving server authority. Task assignment is deliberately absent from the check-in preconditions. Later `activity_execution_events` correlate work against the open shift when tasks are started/completed.
+
+
+### Attendance policy defaults
+
+`lib/attendance-policy.ts` is the shared source for fallback attendance policy behavior and role evaluation. Missing policy rows resolve to an enabled default instead of silently disabling the feature. Migration `017_attendance_policy_defaults.sql` backfills only organizations with no policy row, preserving explicit tenant choices. Organization creation also inserts the default policy transactionally.

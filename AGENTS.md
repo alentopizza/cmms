@@ -300,3 +300,23 @@ Comments should explain responsibility, trust boundaries, invariants and non-obv
 When creating a complex file, add these section notes from the start. When materially editing a large existing file, improve its section readability opportunistically. Follow `docs/CODE_GUIDE.md`.
 
 For authentication, RBAC, biometrics, geolocation, subscriptions, tenant isolation and destructive actions, explicitly identify the server-authoritative validation section and never rely on client UI state as authorization.
+
+
+## User manual synchronization invariant
+
+The user manual is a product surface and must stay synchronized with the panel.
+
+Source-of-truth rules:
+- user-facing manual content lives in `lib/user-manual.ts`;
+- `/manual` is the public/general manual;
+- `/dashboard/help` is the authenticated role-prioritized manual;
+- the public manual may explain platform scope but must never expose tenant/private records;
+- authenticated manual links may point to modules, but authorization still comes from normal server-side RBAC.
+
+For every meaningful user-facing product change, explicitly review whether one or more of these must change:
+1. an existing manual article;
+2. a new manual article;
+3. the **Qué cambió** feed;
+4. role applicability of an article.
+
+A feature that changes how a user completes a task is not fully documented until the manual is reviewed in the same implementation.

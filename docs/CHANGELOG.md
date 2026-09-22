@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-21 — Field presence workflow phase 3
+
+### Changed
+
+- Reworked the self-attendance experience around **presence in site** rather than requiring assigned work.
+- Field users can now initiate a biometric shift even with zero assigned activities and remain marked as available in the validated site.
+- Renamed the primary self-service action to **Iniciar actividades / Finalizar actividades** while preserving attendance-shift semantics.
+- Added a mobile operational status card showing whether the person is in-site/available or has no open shift.
+- Added GPS, geofence and presence validation steps plus explicit guidance when location permission is blocked, precision is insufficient or the user is outside the permitted radius.
+- GPS/geofence validation now runs before activating the facial camera.
+- Added nearest-authorized-site assistance on the client when a current GPS fix falls inside a configured geofence.
+- Added a site map with configured radius and current-device marker to the field presence workspace.
+- Kept live-camera enrollment separate from uploaded profile photos; the enrollment flow explicitly requires the person to be present in front of the camera.
+
+
 ## 2026-09-21 — Geofence configuration phase 2
 
 ### Added

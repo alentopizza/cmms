@@ -3698,15 +3698,6 @@ html[data-theme="dark"] .creation-prerequisite-state h2{
 
 /* Role-aware dashboard */
 .role-dashboard{display:grid;gap:18px}
-.dashboard-intro{
-  display:flex;align-items:center;justify-content:space-between;gap:20px;
-  padding:20px 22px;border:1px solid var(--border);border-radius:18px;background:var(--surface)
-}
-.dashboard-intro h1{margin:3px 0 5px;color:var(--brand-dark);font-size:28px;letter-spacing:-.03em}
-.dashboard-intro p{margin:0;color:var(--text-soft);font-size:12px;line-height:1.5;max-width:760px}
-.dashboard-period{display:grid;gap:2px;min-width:130px;padding:11px 13px;border-radius:12px;background:var(--bg);border:1px solid var(--border)}
-.dashboard-period span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);font-weight:900}
-.dashboard-period strong{font-size:12px;color:var(--brand-dark)}
 .dashboard-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .dashboard-kpi-link{display:block}
 .dashboard-kpi{

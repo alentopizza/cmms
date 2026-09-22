@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-21 — Opaque popup and modal surfaces
+
+### Changed
+
+- Removed transparency from dashboard date-range and export popovers so background cards/text no longer bleed through.
+- Applied the same opaque-surface rule to account menus, contextual action panels, confirmation dialogs and application modals.
+- Added theme-aware solid overlay tokens for light and dark modes.
+- Made sticky modal headers/action bars use the same opaque surface as their parent layer.
+- Preserved the dimensional design through borders and deeper elevation shadows rather than translucent panel bodies.
+
+
 ## 2026-09-21 — Mobile header alignment refinement
 
 ### Changed

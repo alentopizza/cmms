@@ -749,3 +749,17 @@ The mobile attendance experience is modeled as **presence in site**, not as an a
 - The main mobile action is **Iniciar actividades** / **Finalizar actividades**; these actions open/close the attendance shift, not a work-order task.
 - A compact map can show the configured site point, radius and current-device marker during presence validation.
 - Camera UI is only surfaced during live enrollment or verification.
+
+
+### Supervised biometric enrollment pattern
+
+The Attendance module provides a dedicated administrator/manager enrollment surface.
+
+- Person and enrollment site are explicit selections.
+- The selected user's profile photo is shown as a human verification aid.
+- Users without a profile photo are visibly ineligible until their profile is completed.
+- Identity-verification and consent confirmations are separate controls.
+- The camera remains off until the supervisor starts enrollment.
+- Statuses distinguish **Verified**, **Requires reenrollment**, **Revoked** and **No biometric**.
+- Field users with no verified supervised template see a blocked explanatory state rather than a self-enrollment button.
+- Enrollment/revocation updates remain visually distinct from normal attendance check-in/out.

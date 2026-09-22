@@ -266,3 +266,19 @@ All three formats must use the same authorized, filtered dashboard dataset.
 - PDF is the executive visual report and may include charts and branded stationery.
 
 For Desweb/non-Pro reports, preserve the approved landscape letterhead composition. Pro white-label reports must substitute tenant branding while keeping the same report hierarchy. Do not let stationery or branding alter authorization scope or filtered data.
+
+
+## Dimensional glass UI invariant
+
+The approved visual direction is a restrained dimensional-glass system based on Desweb branding.
+
+When creating or revising UI:
+- avoid flat controls when an interactive surface would benefit from depth;
+- use the shared button/input/card/modal/tab treatments instead of screen-specific glow styles;
+- keep strong glow primarily for hover, focus and selected states;
+- preserve professional readability and avoid decorative neon excess;
+- maintain light/dark parity;
+- respect reduced-motion preferences;
+- keep mobile controls touch-friendly and visually simpler than desktop.
+
+Do not introduce cyan/purple styling merely because a reference image contains it. References define interaction depth and material behavior; Desweb brand variables define color identity unless a Pro white-label tenant overrides them.

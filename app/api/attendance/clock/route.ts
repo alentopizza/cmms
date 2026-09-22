@@ -3,6 +3,7 @@ import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { cosineSimilarity, decryptEmbedding, finiteCoordinate, haversineMeters, validateEmbedding } from "@/lib/biometric";
 import { pool } from "@/lib/db";
+import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 type Policy = {
   enabled:boolean;
@@ -49,8 +50,8 @@ export async function POST(request: Request) {
        FOR UPDATE`,
       [session.organizationId],
     );
-    const policy = policyResult.rows[0];
-    if (!policy?.enabled || !session.role || !policy.enabled_roles.includes(session.role)) {
+    const policy = policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
+    if (!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)) {
       await client.query("ROLLBACK");
       return NextResponse.json({ message: "El control de asistencia no está habilitado para tu rol." }, { status: 409 });
     }

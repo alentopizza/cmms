@@ -240,7 +240,11 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                SELECT count(*)::int shifts,
                       round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
                       max(s.check_in_at) last_check_in,
-                      bool_or(s.status='open') open_now
+                      bool_or(s.status='open') open_now,
+                      count(*) FILTER (
+                        WHERE s.check_in_verification_mode='contingency'
+                           OR s.check_out_verification_mode='contingency'
+                      )::int contingency_events
                FROM attendance_shifts s
                WHERE s.user_id=u.id AND s.organization_id=$1
                  AND s.check_in_at>=now()-interval '30 days'

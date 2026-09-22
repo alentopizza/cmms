@@ -54,6 +54,7 @@ export async function POST(request: Request) {
   if (!email) fields.email = "Ingresa el correo electrónico.";
   else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
   if (password.length < 8) fields.password = "Usa una contraseña de al menos 8 caracteres.";
+  if (!avatar) fields.avatar = "Adjunta una foto de perfil para crear la cuenta.";
 
   if (session.platformRole === "user") {
     organizationId = session.organizationId || "";

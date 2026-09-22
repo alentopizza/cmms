@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { can, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
+import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 type Policy={
@@ -25,6 +26,15 @@ type Site={
   geofence_radius_m:number;
 };
 
+type EnrollmentPerson={
+  id:string;
+  full_name:string;
+  email:string;
+  role:OrganizationRole;
+  has_avatar:boolean;
+  biometric_status:"verified"|"legacy"|"revoked"|"missing";
+};
+
 type ReportRow={
   user_id:string;
   full_name:string;
@@ -37,6 +47,8 @@ type ReportRow={
   last_check_in:string|null;
   open_now:boolean;
 };
+
+// ── Page orchestration: policy, sites, enrollment and reports ────────────────
 
 export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string}>}) {
   const session=await getSession();
@@ -76,7 +88,13 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
   const enrolled=canSelf && session.userId && organizationId
     ? await query(
-        "SELECT 1 FROM user_biometric_profiles WHERE user_id=$1 AND organization_id=$2 AND revoked_at IS NULL",
+        `SELECT 1
+         FROM user_biometric_profiles
+         WHERE user_id=$1 AND organization_id=$2
+           AND revoked_at IS NULL
+           AND encrypted_embedding IS NOT NULL
+           AND enrollment_method='supervised_camera'
+           AND identity_verified_at IS NOT NULL`,
         [session.userId,organizationId],
       )
     : {rowCount:0};
@@ -89,6 +107,27 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         [session.userId],
       )
     : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
+
+  const enrollmentPeople=canManage && organizationId
+    ? await query<EnrollmentPerson>(
+        `SELECT
+           u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
+           CASE
+             WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+             WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+             WHEN bp.user_id IS NOT NULL THEN 'legacy'
+             ELSE 'missing'
+           END biometric_status
+         FROM organization_members om
+         JOIN users u ON u.id=om.user_id
+         LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+         WHERE om.organization_id=$1
+           AND u.active=true
+           AND om.role IN ('admin','manager','technician','provider','external')
+         ORDER BY u.full_name`,
+        [organizationId],
+      )
+    : {rows:[]} as {rows:EnrollmentPerson[]};
 
   const reports=canReports
     ? session.platformRole!=="user"
@@ -212,6 +251,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         />
       </section>}
     </>}
+
+    {canManage && organizationId && <SupervisedBiometricEnrollment
+      people={enrollmentPeople.rows}
+      sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
+      livenessThreshold={policy.liveness_threshold}
+    />}
 
     {canManage && organizationId && <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><span className={"setup-flow-state "+(policy.enabled?"ready":"blocked")}>{policy.enabled?"Activo":"Inactivo"}</span></div>

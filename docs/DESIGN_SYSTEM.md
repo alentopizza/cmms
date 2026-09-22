@@ -652,3 +652,8 @@ Field-role bottom navigation continues to hide the header hamburger and uses **M
 ### Landing account icon contrast
 
 The compact landing account button uses a stronger mint surface, darker icon color and thicker 20–22 px user-icon stroke so the action remains visible against the white floating landing header on mobile.
+
+
+### Mobile contextual-header alignment
+
+On drawer-mode mobile layouts, the hamburger remains anchored on the left side of the contextual header. The current-module identity is aligned to the right: the module icon sits at the far-right edge and the eyebrow/title/context copy sits immediately to its left with right-aligned text. This preserves a clear left navigation affordance while visually separating it from the current module identity.

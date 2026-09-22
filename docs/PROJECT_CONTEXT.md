@@ -546,3 +546,8 @@ Attendance now includes an audited exceptional path for operational failures aft
 ### Hybrid role-aware user manual
 
 The product now has one shared user-manual content source rendered in two contexts: public `/manual` for general product understanding and authenticated `/dashboard/help` for role-prioritized guidance. Users may switch to **Toda la plataforma** to understand broader product scope, while actual panel visibility/actions remain controlled by normal RBAC. Field mobile navigation exposes Manual/Ayuda from **Más**.
+
+
+### Current location provider
+
+Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.

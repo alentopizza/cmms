@@ -97,17 +97,20 @@ export default function DashboardSidebar({
   }, [pathname]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!mobileOpen && !mobileMoreOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+        setMobileMoreOpen(false);
+      }
     };
     document.addEventListener("keydown", onKeyDown);
-    document.body.classList.add("dashboard-drawer-open");
+    document.body.classList.toggle("dashboard-drawer-open", mobileOpen);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.classList.remove("dashboard-drawer-open");
     };
-  }, [mobileOpen]);
+  }, [mobileOpen,mobileMoreOpen]);
 
   const orderedItems = useMemo(() => {
     const byId = new Map(items.map(item => [item.id, item]));
@@ -244,6 +247,52 @@ export default function DashboardSidebar({
         </button>
       </div>
     </nav>}
+
+    {mobileNavigationMode === "field" && mobileMoreOpen && <>
+      <button
+        className="field-mobile-more-overlay"
+        type="button"
+        aria-label="Cerrar opciones"
+        onClick={() => setMobileMoreOpen(false)}
+      />
+      <section id="field-mobile-more-sheet" className="field-mobile-more-sheet" role="dialog" aria-modal="true" aria-label="Más opciones">
+        <div className="field-mobile-more-handle" aria-hidden="true" />
+        <header className="field-mobile-more-head">
+          <div className="field-mobile-more-avatar">{fullName.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase() || "U"}</div>
+          <div><strong>{fullName}</strong><small>{role}</small></div>
+          <button type="button" onClick={()=>setMobileMoreOpen(false)} aria-label="Cerrar">×</button>
+        </header>
+
+        {mobileSecondaryItems.length > 0 && <div className="field-mobile-more-section">
+          <span className="field-mobile-more-label">Módulos secundarios</span>
+          <div className="field-mobile-more-grid">
+            {mobileSecondaryItems.map(item=>{
+              const active=isActive(pathname,item.href);
+              return <Link key={item.id} href={item.href} className={"field-mobile-more-action"+(active?" active":"")} onClick={()=>setMobileMoreOpen(false)}>
+                <span>{item.icon}</span><strong>{item.label}</strong>
+              </Link>;
+            })}
+          </div>
+        </div>}
+
+        <div className="field-mobile-more-section">
+          <span className="field-mobile-more-label">Cuenta y sistema</span>
+          <div className="field-mobile-more-account">
+            <Link href="/dashboard/help" onClick={()=>setMobileMoreOpen(false)}>
+              <span>?</span><div><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></div>
+            </Link>
+            {canConfigure && <Link href="/dashboard/settings" onClick={()=>setMobileMoreOpen(false)}>
+              <span>⚙</span><div><strong>Configuración</strong><small>Empresa, cuenta y preferencias</small></div>
+            </Link>}
+            <form method="post" action="/api/auth/logout">
+              <button type="submit">
+                <span>↪</span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </>}
 
     {mobileOpen && <button
       className="dashboard-sidebar-overlay"

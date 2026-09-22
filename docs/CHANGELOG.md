@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Biometric readiness is now visible in the Users directory as Verified, Reenroll, Revoked or Pending.
 - Restored user edit/activate/deactivate actions for Company Administrators that already hold `users.manage`.
 - Enforced the same capability server-side while restricting tenant administrators to ordinary users in their own organization.
 - Preserved Platform Owner/Superadministrator protections and owner-only permanent deletion.

@@ -252,6 +252,22 @@ A field user does **not** need an assigned maintenance activity in order to regi
 
 After these checks the user is considered **in site / available**. Activities may be assigned later. Any subsequent execution events can reference the open attendance shift and record whether the work occurred during a validated presence session.
 
+
+### Attendance contingency
+
+Contingency is available only after the user has a valid supervised biometric identity.
+
+1. Normal attendance fails or cannot be completed for an operational reason.
+2. The user selects the affected check-in/check-out event, site and reason, and describes the incident.
+3. The system captures available technical/GPS evidence without requiring it to succeed.
+4. An authorized attendance manager reviews the request.
+5. Approval creates a one-time authorization valid for 30 minutes by default.
+6. The authenticated user consumes that authorization to open/close the attendance shift.
+7. The shift event is permanently marked as `contingency` and linked to the reviewed request.
+8. Reports expose contingency use separately for human review.
+
+Contingency cannot replace initial biometric enrollment, cannot be reused, cannot silently convert into standard verification and must preserve the supervisor decision trail.
+
 ### Attendance shift
 
 A field shift contains:

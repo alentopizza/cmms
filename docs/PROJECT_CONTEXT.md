@@ -259,6 +259,11 @@ The authenticated desktop interface uses:
 
 UI conventions are documented in `docs/DESIGN_SYSTEM.md`.
 
+
+### Reference-grid UI standard
+
+The application now uses a sitewide component geometry system derived from the approved style reference. Shared CSS tokens define elevation, radius, border, icon-size, control-height and spacing scales, and they apply across authenticated modules, the responsive/mobile shell, public landing, login and checkout surfaces. Desweb color identity, dark/light behavior and tenant white-label rules remain authoritative over reference-image colors.
+
 ## Sales flows
 
 ### Self-service

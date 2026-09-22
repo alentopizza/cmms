@@ -55,6 +55,7 @@ export default async function Home() {
           <a href="#preguntas">Preguntas</a>
           <a href="#contacto">Contacto</a>
           <Link href="/downloads">Instalación propia</Link>
+          <Link href="/manual">Manual</Link>
         </div>
 
         <div className="marketing-nav-actions marketing-nav-actions-floating">

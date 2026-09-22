@@ -55,10 +55,10 @@ export async function POST(request: Request) {
 
     const [logo, cover] = await Promise.all([
       readImageUpload(form.get("logo"), { required: true, maxBytes: 2 * 1024 * 1024, label: "el logo" }),
-      readImageUpload(form.get("cover"), { required: true, maxBytes: 5 * 1024 * 1024, label: "la foto de portada" }),
+      readImageUpload(form.get("cover"), { required: false, maxBytes: 5 * 1024 * 1024, label: "la foto de portada" }),
     ]);
 
-    if (!logo || !cover) return creationError(request.url, "image-required");
+    if (!logo) return creationError(request.url, "image-required");
 
     const client = await pool.connect();
     let organizationId = "";
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         [
           name, slug, legalName || null, taxId || null, timezone,
           logo.bytes, logo.mime, logo.name,
-          cover.bytes, cover.mime, cover.name,
+          cover?.bytes || null, cover?.mime || null, cover?.name || null,
         ],
       );
       organizationId = organization.rows[0].id;

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-21 — Reference-grid sitewide component system
+
+### Changed
+
+- Adopted the supplied component/style guide as the canonical geometry reference for Desweb CMMS.
+- Added shared sitewide tokens for 4/8/12/16/24 px radii, 16/20/24 px icon tiers, 1/2/4 px border tiers, 16/24 px spacing and four elevation levels.
+- Standardized cards, headers, dashboard panels, modals, popovers, tables, status badges, empty states and prerequisite states around the shared scale.
+- Standardized primary, secondary, pressed and disabled button behavior plus compact icon-control sizing.
+- Standardized inputs, selects, textareas, focus states and native checkbox/radio/range accents.
+- Extended the same geometry to landing, login, checkout and lead-conversion surfaces while preserving the dark-only landing color policy.
+- Kept responsive touch targets, light/dark parity, reduced-motion behavior and Desweb/white-label color identity.
+
+
 ## 2026-09-21 — Documentation state alignment
 
 ### Changed

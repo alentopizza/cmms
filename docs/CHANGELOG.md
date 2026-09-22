@@ -28,6 +28,7 @@
 - Made the field bottom navigation fixed, safe-area-aware and reserved matching workspace bottom space so content no longer hides behind it.
 - Compacted shared module headers on field mobile layouts.
 - Added a dedicated mobile card/list representation for the Assets directory while retaining the desktop table on larger screens.
+- Added a dedicated mobile card/list representation for Work Orders, the other primary field destination.
 
 ## 2026-09-21 — Tenant user-management scope repair
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-21 — Mobile field optimization phase 4A
+
+### Changed
+
+- Rebuilt the field-role **Más** action as a bottom sheet instead of reopening the duplicate module drawer.
+- Kept Dashboard, Orders, Attendance and Assets as primary bottom-navigation destinations.
+- Moved secondary authorized modules plus Configuration and Sign out into the **Más** sheet.
+- Made the field bottom navigation fixed, safe-area-aware and reserved matching workspace bottom space so content no longer hides behind it.
+- Compacted shared module headers on field mobile layouts.
+- Added a dedicated mobile card/list representation for the Assets directory while retaining the desktop table on larger screens.
+
 ## 2026-09-21 — Tenant user-management scope repair
 
 ### Fixed

@@ -481,3 +481,79 @@ Pro white-label tenants retain the same report composition but substitute their 
 - Desweb attribution according to `show_desweb_branding`.
 
 A future portrait/vertical stationery variant should plug into the same report renderer without changing export permissions, filtering or dataset semantics.
+
+
+## Dimensional glass visual language
+
+Desweb CMMS uses a restrained dimensional-glass visual language for interactive surfaces.
+
+The reference direction is modern liquid-glass UI, adapted to a professional CMMS rather than copied literally.
+
+### Principles
+
+- Preserve Desweb brand colors as the primary visual identity.
+- Use depth, translucency and luminous edges to make controls feel interactive.
+- Keep the resting state calm; stronger glow belongs to hover, focus and selected states.
+- Avoid decorative neon that competes with data readability.
+- Do not reduce contrast for labels, tables, metrics or operational status information.
+- Light and dark themes must remain equally usable.
+- Mobile variants must preserve the same interaction hierarchy with lower visual density.
+
+### Buttons
+
+Primary buttons use:
+- teal dimensional gradient;
+- subtle highlight rim;
+- inner highlight;
+- soft elevation shadow;
+- slightly stronger hover glow.
+
+Secondary buttons use:
+- translucent neutral surface;
+- visible border;
+- mild depth;
+- teal-accent hover.
+
+### Inputs and selects
+
+Text fields, search boxes and selects use:
+- subtle inset surface;
+- dimensional border;
+- calm resting shadow;
+- stronger teal focus ring and depth when active.
+
+### Cards and module surfaces
+
+Headers, cards and analytical panels may use:
+- semi-translucent surfaces;
+- controlled backdrop blur;
+- soft gradient highlights;
+- one clear elevation level.
+
+Visual directory cards such as Companies, Locations and Users receive stronger hover elevation while retaining predictable card geometry.
+
+### Tabs and selectable controls
+
+Active tabs, checkbox cards and segmented controls use a glass-capsule selected state with:
+- brand edge;
+- light elevation;
+- subtle luminous accent;
+- no exaggerated glow.
+
+### Modals and popovers
+
+Modals, menus and popovers are the highest visual layer:
+- stronger blur;
+- deeper shadow;
+- bright surface rim;
+- clear separation from the backdrop.
+
+The backdrop itself remains darkened and blurred without obscuring context completely.
+
+### Accessibility
+
+- Focus-visible states must remain obvious.
+- Do not rely on glow/color alone to communicate state.
+- Preserve text labels and status text.
+- Respect `prefers-reduced-motion`.
+- Maintain sufficient hit areas on mobile.

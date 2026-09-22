@@ -272,12 +272,12 @@ export const MANUAL_CHANGES:ManualChange[] = [
 
 export function articlesForRole(role:ManualRole){
   if(role==="all") return MANUAL_ARTICLES;
-  return MANUAL_ARTICLES.filter(article=>article.roles.includes("all")||article.roles.includes(role));
+  return MANUAL_ARTICLES.filter(article=>article.roles.includes(role));
 }
 
 export function changesForRole(role:ManualRole){
   if(role==="all") return MANUAL_CHANGES;
-  return MANUAL_CHANGES.filter(change=>change.roles.includes("all")||change.roles.includes(role));
+  return MANUAL_CHANGES.filter(change=>change.roles.includes(role));
 }
 
 export function manualRoleFromSession(platformRole:string,role:string|null):ManualRole{

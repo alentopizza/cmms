@@ -190,7 +190,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
   return <>
     <header className="page-header">
-      <div><span className="eyebrow">Operación en campo</span><h1 className="page-title">Asistencia y trazabilidad</h1><p className="muted">Registro de entrada/salida con verificación facial y geocerca, más estadísticas descriptivas de ejecución en jornada.</p></div>
+      <div><span className="eyebrow">Operación en campo</span><h1 className="page-title">Presencia y actividades</h1><p className="muted">Valida presencia física en sitio con GPS y rostro en vivo. La jornada puede iniciar aunque todavía no existan actividades asignadas.</p></div>
       <div className="brand-pill"><span /> {activeNow} en campo</div>
     </header>
 
@@ -201,11 +201,20 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       {!policy.enabled || !session.role || !policy.enabled_roles.includes(session.role) ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Cuando la empresa lo active, aquí podrás registrar biometría, entrada y salida.</span></section> :
       <section className="section">
         <AttendanceCapture
-          sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city,geofenceConfigured:site.latitude!==null&&site.longitude!==null}))}
+          sites={sites.rows.map(site=>({
+            id:site.id,
+            name:site.name,
+            city:site.city,
+            latitude:site.latitude,
+            longitude:site.longitude,
+            geofenceRadius:site.geofence_radius_m,
+            geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+          }))}
           enrolled={Boolean(enrolled.rowCount)}
           openShift={openShift.rows[0]||null}
           requireFace={policy.require_face}
           requireGeolocation={policy.require_geolocation}
+          maxLocationAccuracy={policy.max_location_accuracy_m}
           livenessThreshold={policy.liveness_threshold}
         />
       </section>}

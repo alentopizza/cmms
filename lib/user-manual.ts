@@ -103,13 +103,13 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/locations",
     steps:[
-      "Escribe la dirección de la sede y selecciona Validar.",
-      "Elige la coincidencia correcta o usa la ubicación actual si estás físicamente en el sitio.",
+      "Escribe la dirección de la sede y selecciona Validar. Cuando Google Maps está configurado, la dirección se valida con Google Geocoding.",
+      "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
       "Ajusta el punto sobre el mapa si es necesario.",
       "Define el radio permitido entre 20 y 5000 metros.",
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
     ],
-    notes:["El círculo mostrado en pantalla es una ayuda visual; el servidor vuelve a calcular la distancia al registrar asistencia."],
+    notes:["Google Maps aporta mapa y geocodificación; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],
     keywords:["gps","geocerca","radio","dirección","mapa"],
   },
   {

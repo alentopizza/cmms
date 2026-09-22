@@ -769,7 +769,7 @@ The Attendance module provides a dedicated administrator/manager enrollment surf
 
 Field-role mobile navigation is a persistent safe-area-aware bottom bar with four primary operational modules and a **Más** action. **Más** must not duplicate the primary items. It opens a bottom sheet containing only secondary authorized modules plus account/system actions such as Configuration and Sign out.
 
-Mobile module directories must not force desktop tables into the viewport. Modules with dense columnar data should provide a compact card/list representation below 700 px while keeping the desktop table for larger widths. The Assets module is the reference implementation.
+Mobile module directories must not force desktop tables into the viewport. Modules with dense columnar data should provide a compact card/list representation below 700 px while keeping the desktop table for larger widths. Orders and Assets are the first field-directory references. Both switch from desktop tables to compact cards on small screens while preserving the same search/filter data attributes.
 
 The mobile workspace must reserve bottom padding equal to the navigation height plus device safe-area inset so content never hides behind the fixed navigation.
 

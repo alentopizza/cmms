@@ -7386,3 +7386,55 @@ html[data-theme="dark"] .location-detail-section-title.compact h2{
     width:100%;
   }
 }
+
+
+/* Work-order mobile directory */
+.work-order-mobile-list{display:none}
+@media(max-width:700px){
+  .work-order-directory-table{display:none}
+  .work-order-mobile-list{display:grid;gap:9px}
+  .work-order-directory-section{padding:0!important;margin-top:8px}
+  .work-order-mobile-card{
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface);
+    box-shadow:var(--ui-shadow-base);
+  }
+  .work-order-mobile-main{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:12px;
+    color:inherit;
+    text-decoration:none;
+  }
+  .work-order-mobile-icon{
+    width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--brand-mint-light);color:var(--brand-dark);font-size:15px;font-weight:900
+  }
+  .work-order-mobile-copy{display:grid;gap:2px;min-width:0}
+  .work-order-mobile-copy>span{font-size:7px;font-weight:850;letter-spacing:.07em;color:var(--brand-teal);text-transform:uppercase}
+  .work-order-mobile-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text)}
+  .work-order-mobile-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;color:var(--text-soft)}
+  .work-order-mobile-chevron{font-size:22px;color:var(--text-soft)}
+  .work-order-mobile-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    padding:0 12px 10px;
+  }
+  .work-order-mobile-meta>div{
+    display:grid;gap:2px;padding:8px 9px;border:1px solid var(--border);border-radius:9px;background:var(--surface-soft)
+  }
+  .work-order-mobile-meta span{font-size:6.5px;font-weight:850;text-transform:uppercase;color:var(--text-soft)}
+  .work-order-mobile-meta strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;color:var(--text);text-transform:capitalize}
+  .work-order-mobile-footer{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 12px;
+    border-top:1px solid var(--border);
+  }
+  .work-order-mobile-footer .text-button{margin-left:auto}
+}

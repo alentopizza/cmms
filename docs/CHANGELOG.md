@@ -4,6 +4,8 @@
 
 ### Added
 
+- Refined role filtering so authenticated manuals prioritize only articles explicitly applicable to the current role, while Toda la plataforma remains the complete reference.
+- Avoided duplicate Manual/Ayuda entries inside the field mobile Más sheet.
 - Added public `/manual` user-manual landing.
 - Added authenticated `/dashboard/help` manual prioritized for the signed-in user's role.
 - Added shared structured manual content for navigation, company/site setup, geofence, users, supervised biometrics, field presence, contingency, assets, work orders and settings.

@@ -16,7 +16,33 @@ type Site = {
   id:string;
   name:string;
   city:string|null;
+  latitude:number|null;
+  longitude:number|null;
+  geofenceRadius:number;
 };
+
+function haversineMeters(lat1:number,lon1:number,lat2:number,lon2:number) {
+  const r=6371000;
+  const toRad=(value:number)=>value*Math.PI/180;
+  const dLat=toRad(lat2-lat1);
+  const dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*r*Math.asin(Math.sqrt(a));
+}
+
+function currentPosition(){
+  return new Promise<GeolocationPosition>((resolve,reject)=>{
+    if(!navigator.geolocation){
+      reject(new Error("Este dispositivo no permite validar la ubicación."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve,reject,{
+      enableHighAccuracy:true,
+      timeout:15000,
+      maximumAge:0,
+    });
+  });
+}
 
 // ── Supervised identity verification workflow ───────────────────────────────
 
@@ -39,6 +65,8 @@ export default function SupervisedBiometricEnrollment({
   const [identityChecked,setIdentityChecked]=useState(false);
   const [cameraReady,setCameraReady]=useState(false);
   const [busy,setBusy]=useState(false);
+  const [locationVerified,setLocationVerified]=useState(false);
+  const [locationEvidence,setLocationEvidence]=useState<{latitude:number;longitude:number;accuracy:number;distance:number}|null>(null);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
   const [statusByUser,setStatusByUser]=useState<Record<string,Person["biometric_status"]>>(
@@ -46,6 +74,7 @@ export default function SupervisedBiometricEnrollment({
   );
 
   const selected=people.find(person=>person.id===userId)||null;
+  const selectedSite=sites.find(site=>site.id===siteId)||null;
   const selectedStatus=selected ? (statusByUser[selected.id] || selected.biometric_status) : "missing";
 
   useEffect(()=>()=>stopCamera(),[]);
@@ -72,9 +101,47 @@ export default function SupervisedBiometricEnrollment({
     }
   }
 
+  async function verifyEnrollmentLocation(){
+    if(!selectedSite){setError("Selecciona la sede donde se realizará el enrolamiento.");return;}
+    if(selectedSite.latitude===null||selectedSite.longitude===null){
+      setError("La sede seleccionada no tiene geocerca configurada.");
+      return;
+    }
+    setBusy(true);setError("");setMessage("");
+    try{
+      const position=await currentPosition();
+      const accuracy=position.coords.accuracy;
+      const distance=haversineMeters(
+        position.coords.latitude,
+        position.coords.longitude,
+        selectedSite.latitude,
+        selectedSite.longitude,
+      );
+      if(accuracy>120)throw new Error(`La precisión GPS es de ${Math.round(accuracy)} m. Acércate a una zona con mejor señal y vuelve a intentar.`);
+      if(distance>selectedSite.geofenceRadius){
+        throw new Error(`El dispositivo está a ${Math.round(distance)} m de ${selectedSite.name}; el radio permitido es ${selectedSite.geofenceRadius} m.`);
+      }
+      setLocationEvidence({
+        latitude:position.coords.latitude,
+        longitude:position.coords.longitude,
+        accuracy,
+        distance,
+      });
+      setLocationVerified(true);
+      setMessage(`Ubicación verificada en ${selectedSite.name}. Ya puedes iniciar la captura facial.`);
+    }catch(cause){
+      setLocationVerified(false);
+      setLocationEvidence(null);
+      setError(cause instanceof Error?cause.message:"No fue posible validar la ubicación del enrolamiento.");
+    }finally{
+      setBusy(false);
+    }
+  }
+
   async function enroll(){
     if(!selected){setError("Selecciona la persona que está físicamente presente.");return;}
     if(!siteId){setError("Selecciona la sede donde se realiza el enrolamiento.");return;}
+    if(!locationVerified||!locationEvidence){setError("Primero valida por GPS que estás físicamente en la sede de enrolamiento.");return;}
     if(!identityChecked){setError("Confirma que verificaste visualmente la identidad de la persona.");return;}
     if(!consent){setError("La persona debe autorizar el uso de la plantilla facial.");return;}
 
@@ -98,6 +165,9 @@ export default function SupervisedBiometricEnrollment({
           embedding:face.embedding,
           live:face.live,
           real:face.real,
+          latitude:locationEvidence.latitude,
+          longitude:locationEvidence.longitude,
+          accuracy:locationEvidence.accuracy,
           consent:true,
           identityChecked:true,
         }),
@@ -158,10 +228,17 @@ export default function SupervisedBiometricEnrollment({
 
         <div className="field">
           <label>Sede de enrolamiento *</label>
-          <select value={siteId} onChange={event=>setSiteId(event.target.value)} required>
+          <select value={siteId} onChange={event=>{setSiteId(event.target.value);setLocationVerified(false);setLocationEvidence(null);setMessage("");setError("");}} required>
             <option value="">Selecciona sede</option>
             {sites.map(site=><option key={site.id} value={site.id}>{site.name}{site.city?" · "+site.city:""}</option>)}
           </select>
+        </div>
+
+        <div className="biometric-enrollment-location-check">
+          <button className="button secondary" type="button" disabled={busy||!selectedSite} onClick={verifyEnrollmentLocation}>
+            {locationVerified?"✓ Ubicación verificada":"⌖ Verificar presencia en la sede"}
+          </button>
+          {locationVerified&&locationEvidence&&<small>GPS ±{Math.round(locationEvidence.accuracy)} m · distancia {Math.round(locationEvidence.distance)} m</small>}
         </div>
 
         {selected&&<div className="biometric-person-card">
@@ -189,7 +266,7 @@ export default function SupervisedBiometricEnrollment({
 
         <div className="form-actions">
           <button className="button secondary" type="button" disabled={busy||!selected} onClick={revoke}>Revocar biometría</button>
-          <button className="button" type="button" disabled={busy||!selected} onClick={enroll}>{busy?"Procesando…":"Activar cámara y enrolar"}</button>
+          <button className="button" type="button" disabled={busy||!selected||!locationVerified} onClick={enroll}>{busy?"Procesando…":"Activar cámara y enrolar"}</button>
         </div>
 
         {message&&<div className="notice success">{message}</div>}

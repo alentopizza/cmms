@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
@@ -121,9 +122,9 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Ej. Sede Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-code">Código</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="MAIN" /></div>
-              <div className="field form-span-2"><label htmlFor="new-company-address">Dirección</label><input id="new-company-address" name="address" placeholder="Ej. Carrera 15 # 93-47, Bogotá" /></div>
-              <div className="field"><label htmlFor="new-company-city">Ciudad</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
-              <div className="field"><label htmlFor="new-company-country">País</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
+              <div className="field"><label htmlFor="new-company-city">Ciudad *</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
+              <div className="field"><label htmlFor="new-company-country">País *</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
+              <div className="form-span-2"><GeofenceMapPicker cityHint="Bogotá" countryHint="CO" /></div>
             </div>
           </div>
 

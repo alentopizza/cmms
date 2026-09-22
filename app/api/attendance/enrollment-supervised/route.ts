@@ -3,12 +3,13 @@ import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { encryptEmbedding, validateEmbedding } from "@/lib/biometric";
 import { pool } from "@/lib/db";
+import type { PoolClient } from "pg";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // ── Authorization helpers ────────────────────────────────────────────────────
 
-async function targetUser(client:any, organizationId:string, userId:string){
+async function targetUser(client:PoolClient, organizationId:string, userId:string){
   return client.query<{id:string;role:string;has_avatar:boolean;access_all_sites:boolean}>(
     `SELECT u.id,om.role,(u.avatar_data IS NOT NULL) has_avatar,COALESCE(om.access_all_sites,true) access_all_sites
      FROM users u

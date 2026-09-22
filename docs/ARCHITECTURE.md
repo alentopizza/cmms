@@ -179,6 +179,29 @@ Migration `008_saas_plans_and_subscriptions.sql` introduces the commercial SaaS 
 Migration `009_organization_branding.sql` adds per-organization white-label branding. Only an active Pro company administrator may change tenant branding. The dashboard shell applies the organization name/colors/logos after authentication; global Desweb branding remains the fallback.
 
 
+
+## Dashboard shell, exports and field attendance
+
+The authenticated dashboard shell is shared across desktop and mobile and is permission filtered before any user customization is applied.
+
+- `components/DashboardSidebar.tsx` implements the retractable desktop sidebar, per-user module ordering, drag-and-drop plus accessible reorder controls, persisted collapsed state, the responsive drawer, and the field-role mobile navigation mode.
+- Database-backed users persist sidebar preferences through `user_dashboard_preferences` created by migration `012_user_dashboard_preferences.sql`; the bootstrap developer identity uses browser-local fallback preferences because it has no database user row.
+- Technician and External collaborator mobile layouts prioritize Dashboard, Orders, Attendance and Assets while preserving access to every authorized module through the full drawer.
+
+Dashboard reporting keeps one authorization/filter scope across interactive metrics and exports.
+
+- `components/DashboardControls.tsx` exposes one **Exportar** menu for Excel (.xlsx), CSV and PDF.
+- The dashboard export API generates native Excel workbooks with `exceljs`, interoperable CSV, and executive PDF reports with `pdf-lib`.
+- PDF reports use the Desweb letterhead composition by default and respect tenant white-label branding where the subscription permits it.
+
+Field attendance is optional per organization and is implemented as explicit event-based verification rather than continuous tracking.
+
+- Migration `013_biometric_attendance_geolocation.sql` adds attendance policy, site coordinates/geofence radius, biometric templates, attendance shifts and activity execution evidence.
+- `components/AttendanceCapture.tsx` performs browser camera capture and local Human 3.3.6 face description, liveness and anti-spoof inference using model files packaged under `public/biometric-models`.
+- Facial verification is 1:1 against the already authenticated user. Enrollment photographs are not persisted; the numeric template is encrypted at rest by the server.
+- Precise geolocation is requested only for attendance events when policy requires it. Server-side validation applies GPS accuracy, tenant/site scope and geofence distance rules.
+- Attendance/productivity reporting is descriptive operational evidence and must not become an automatic personnel ranking or employment-decision engine.
+
 ## Company enterprise profile and documents
 
 Migration `014_company_profile_documents.sql` extends `organizations` with legal/administrative/contact profile fields. These fields describe the tenant as a business entity and must not be confused with `sites`, which remain physical operational locations.

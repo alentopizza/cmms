@@ -36,6 +36,7 @@ export function CurrentSectionHeader({ contextName }: { contextName: string | nu
   const contextualEyebrow = pathname.startsWith("/dashboard/settings") && contextName ? "Empresa" : section.eyebrow;
 
   return <header className="context-header">
+    <div id="context-header-mobile-nav" className="context-header-mobile-nav-slot" />
     <div className="context-header-left">
       <div className="context-header-icon" aria-hidden="true">{section.icon}</div>
       <div className="context-header-copy">

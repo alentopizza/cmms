@@ -37,6 +37,12 @@ export async function POST(request: Request) {
     const address = String(form.get("address") || "").trim();
     const city = String(form.get("city") || "").trim();
     const country = String(form.get("country") || "CO").trim().toUpperCase();
+    const latitudeRaw = String(form.get("latitude") || "").trim();
+    const longitudeRaw = String(form.get("longitude") || "").trim();
+    const radiusRaw = String(form.get("geofence_radius_m") || "250").trim();
+    const latitude = latitudeRaw ? Number(latitudeRaw) : null;
+    const longitude = longitudeRaw ? Number(longitudeRaw) : null;
+    const geofenceRadius = Number.parseInt(radiusRaw, 10);
     const planCode = String(form.get("plan_code") || "medium");
     const planResult = await getPlanByCode(planCode);
     if (!planResult.rowCount) return creationError(request.url, "plan");
@@ -49,8 +55,14 @@ export async function POST(request: Request) {
       max_technicians: plan.max_technicians,
     };
 
-    if (!name || !siteName || !city || !country) {
+    if (!name || !siteName || !address || !city || !country) {
       return creationError(request.url, "required");
+    }
+    if (latitude === null || longitude === null ||
+        !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+        !Number.isFinite(geofenceRadius) || geofenceRadius < 20 || geofenceRadius > 5000) {
+      return creationError(request.url, "site-geofence");
     }
 
     const [logo, cover] = await Promise.all([
@@ -106,9 +118,9 @@ export async function POST(request: Request) {
       );
 
       await client.query(
-        `INSERT INTO sites(organization_id,name,code,address,city,country)
-         VALUES($1,$2,$3,$4,$5,$6)`,
-        [organizationId, siteName, siteCode || null, address || null, city, country],
+        `INSERT INTO sites(organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [organizationId, siteName, siteCode || null, address, city, country, latitude, longitude, geofenceRadius],
       );
 
       await client.query(

@@ -5462,3 +5462,85 @@ summary:focus-visible,
     flex-basis:100%;
   }
 }
+
+
+/* Opaque decision-layer surfaces
+   Glass/translucency is intentionally disabled for reading/decision layers.
+   Background content must never remain legible through a popup or modal. */
+:root{
+  --overlay-surface:#fcfcfc;
+  --overlay-surface-soft:#f4f8f9;
+  --overlay-border:#d6e2e6;
+}
+html[data-theme="dark"]{
+  --overlay-surface:#22303c;
+  --overlay-surface-soft:#263744;
+  --overlay-border:#435764;
+}
+
+.dashboard-range-popover,
+.dashboard-export-popover,
+.sidebar-account-popover,
+.company-modal,
+.unified-create-modal,
+.location-detail-modal,
+.confirm-dialog,
+.location-action-panel{
+  background:
+    linear-gradient(145deg,var(--overlay-surface),var(--overlay-surface-soft));
+  border-color:var(--overlay-border);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  opacity:1;
+}
+
+/* Sticky regions inside modal/scroll layers must remain just as opaque. */
+.modal-header,
+.modal-actions,
+.company-detail-actions,
+.location-detail-brandbar,
+.unified-create-modal-header,
+.user-modal-actions{
+  background:var(--overlay-surface);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+/* Date picker side panel and content share one solid visual plane. */
+.dashboard-range-main,
+.dashboard-range-presets{
+  background:var(--overlay-surface);
+}
+
+/* Popover items may use a subtle solid hover tone, never transparency. */
+.dashboard-export-popover a:hover,
+.sidebar-account-popover a:hover,
+.sidebar-account-popover button:hover{
+  background:var(--overlay-surface-soft);
+}
+
+/* Preserve separation from the page without making the panel translucent. */
+.dashboard-range-popover,
+.dashboard-export-popover,
+.sidebar-account-popover,
+.location-action-panel{
+  box-shadow:0 24px 58px rgba(13,27,36,.24),0 0 0 1px rgba(255,255,255,.42);
+}
+.company-modal,
+.unified-create-modal,
+.location-detail-modal,
+.confirm-dialog{
+  box-shadow:0 30px 86px rgba(13,27,36,.30),0 0 0 1px rgba(255,255,255,.34);
+}
+html[data-theme="dark"] .dashboard-range-popover,
+html[data-theme="dark"] .dashboard-export-popover,
+html[data-theme="dark"] .sidebar-account-popover,
+html[data-theme="dark"] .location-action-panel{
+  box-shadow:0 26px 64px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.035);
+}
+html[data-theme="dark"] .company-modal,
+html[data-theme="dark"] .unified-create-modal,
+html[data-theme="dark"] .location-detail-modal,
+html[data-theme="dark"] .confirm-dialog{
+  box-shadow:0 32px 92px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.04);
+}

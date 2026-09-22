@@ -12,6 +12,8 @@ import {
   type OrganizationRole,
 } from "@/lib/permissions";
 
+// ── User directory contracts and role/scope presentation ───────────────────
+
 export type ManagedUser = {
   id: string;
   email: string;
@@ -90,6 +92,8 @@ function siteAccessLabel(user: ManagedUser) {
   if (siteNames.length <= 2) return siteNames.join(", ");
   return `${siteNames.slice(0, 2).join(", ")} +${siteNames.length - 2}`;
 }
+
+// ── User CRUD state, validation and tenant-safe actions ─────────────────────
 
 export default function UserManagement({
   users,
@@ -183,8 +187,8 @@ export default function UserManagement({
   }
 
   function openEdit(user: ManagedUser) {
-    if (!isPlatformOperator) return;
     if (user.platform_role === "platform_owner") return;
+    if (!isPlatformOperator && user.platform_role !== "user") return;
     if (user.platform_role === "superadmin" && !isPlatformOwner) return;
     setMode("edit");
     setEditingUser(user);
@@ -213,6 +217,8 @@ export default function UserManagement({
     setAvatarFile(null);
   }
 
+  // ── Client validation mirrors server requirements for fast feedback ───────
+
   function validate() {
     const next: FieldErrors = {};
     if (!draft.full_name.trim()) next.full_name = "Ingresa el nombre completo.";
@@ -237,6 +243,8 @@ export default function UserManagement({
     setErrors(next);
     return Object.keys(next).length === 0;
   }
+
+  // ── Mutations: server remains authoritative for RBAC and tenant scope ─────
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -354,7 +362,7 @@ export default function UserManagement({
             <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
           </div>
 
-          {isPlatformOperator && user.platform_role !== "platform_owner" && (isPlatformOwner || user.platform_role !== "superadmin") && <div className="user-card-actions">
+          {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <div className="user-card-actions">
             <button className="text-button" type="button" onClick={() => openEdit(user)}>Editar</button>
             {user.id !== currentUserId && <button className={`text-button ${user.active ? "text-danger" : ""}`} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
             {isPlatformOwner && user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}

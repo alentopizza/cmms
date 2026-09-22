@@ -63,6 +63,7 @@ export default function DashboardSidebar({
   const [order, setOrder] = useState(() => normalizeOrder(items, initialOrder));
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [organizing, setOrganizing] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -92,6 +93,7 @@ export default function DashboardSidebar({
 
   useEffect(() => {
     setMobileOpen(false);
+    setMobileMoreOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -118,8 +120,13 @@ export default function DashboardSidebar({
     return priority.map(id => byId.get(id)).filter((item): item is ReorderableNavItem => Boolean(item));
   }, [orderedItems]);
 
+  const mobileSecondaryItems = useMemo(() => {
+    const primaryIds = new Set(mobileFieldItems.map(item => item.id));
+    return orderedItems.filter(item => !primaryIds.has(item.id));
+  }, [orderedItems, mobileFieldItems]);
+
   const mobileFieldHasOtherActive = mobileNavigationMode === "field" &&
-    !mobileFieldItems.some(item => isActive(pathname,item.href));
+    mobileSecondaryItems.some(item => isActive(pathname,item.href));
 
   function persist(nextOrder = order, nextCollapsed = collapsed) {
     if (!persistentUser) {
@@ -226,12 +233,13 @@ export default function DashboardSidebar({
         })}
         <button
           type="button"
-          className={"field-mobile-nav-item field-mobile-nav-more" + (mobileFieldHasOtherActive || mobileOpen ? " active" : "")}
-          onClick={()=>setMobileOpen(true)}
-          aria-expanded={mobileOpen}
-          aria-label="Ver todos los módulos"
+          className={"field-mobile-nav-item field-mobile-nav-more" + (mobileFieldHasOtherActive || mobileMoreOpen ? " active" : "")}
+          onClick={()=>setMobileMoreOpen(true)}
+          aria-expanded={mobileMoreOpen}
+          aria-controls="field-mobile-more-sheet"
+          aria-label="Abrir opciones y módulos secundarios"
         >
-          <span className="field-mobile-nav-icon">☰</span>
+          <span className="field-mobile-nav-icon">•••</span>
           <small>Más</small>
         </button>
       </div>

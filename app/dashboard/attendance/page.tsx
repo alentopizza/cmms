@@ -310,7 +310,14 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
               />
             </section>
             {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
-              sites={sites.rows.map(site=>({id:site.id,name:site.name,city:site.city}))}
+              sites={sites.rows.map(site=>({
+        id:site.id,
+        name:site.name,
+        city:site.city,
+        latitude:site.latitude,
+        longitude:site.longitude,
+        geofenceRadius:site.geofence_radius_m,
+      }))}
               openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
               initialRequest={selfContingency.rows[0]||null}
             />}

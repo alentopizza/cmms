@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SidebarAccountMenu } from "@/components/DashboardChrome";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
 
@@ -65,6 +66,7 @@ export default function DashboardSidebar({
   const [organizing, setOrganizing] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [mobileMenuHost, setMobileMenuHost] = useState<HTMLElement | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -85,12 +87,24 @@ export default function DashboardSidebar({
   }, [items]);
 
   useEffect(() => {
+    setMobileMenuHost(document.getElementById("context-header-mobile-nav"));
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     if (!mobileOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileOpen(false);
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.body.classList.add("dashboard-drawer-open");
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("dashboard-drawer-open");
+    };
   }, [mobileOpen]);
 
   const orderedItems = useMemo(() => {
@@ -144,6 +158,14 @@ export default function DashboardSidebar({
     persist(order, next);
   }
 
+  function handleSidebarControl() {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches && mobileOpen) {
+      setMobileOpen(false);
+      return;
+    }
+    changeCollapsed();
+  }
+
   function moveItem(id: string, direction: -1 | 1) {
     const from = order.indexOf(id);
     const to = from + direction;
@@ -171,14 +193,21 @@ export default function DashboardSidebar({
   }
 
   return <>
-    <button
-      className={"dashboard-mobile-menu" + (mobileNavigationMode === "field" ? " field-hidden" : "")}
-      type="button"
-      onClick={() => setMobileOpen(true)}
-      aria-label="Abrir navegación"
-    >
-      <span>☰</span>
-    </button>
+    {mobileMenuHost && createPortal(
+      <button
+        className={"dashboard-mobile-menu" + (mobileNavigationMode === "field" ? " field-hidden" : "")}
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir navegación"
+        aria-expanded={mobileOpen}
+        aria-controls="dashboard-navigation-drawer"
+      >
+        <span className="dashboard-mobile-menu-lines" aria-hidden="true">
+          <i /><i /><i />
+        </span>
+      </button>,
+      mobileMenuHost,
+    )}
 
     {mobileNavigationMode === "field" && <nav className="field-mobile-nav" aria-label="Navegación móvil del técnico">
       <div className="field-mobile-nav-shell">
@@ -215,14 +244,23 @@ export default function DashboardSidebar({
       onClick={() => setMobileOpen(false)}
     />}
 
-    <aside className={"sidebar smart-sidebar" + (collapsed ? " collapsed" : "") + (mobileOpen ? " mobile-open" : "")}>
+    <aside
+      id="dashboard-navigation-drawer"
+      className={"sidebar smart-sidebar" + (collapsed ? " collapsed" : "") + (mobileOpen ? " mobile-open" : "")}
+      aria-label="Navegación principal"
+    >
       <div className="smart-sidebar-rail" aria-hidden="true" />
       <div className="smart-sidebar-top">
         <Link href="/dashboard" className="smart-sidebar-brand" aria-label={productName}>
           <img src={sidebarLogo} alt={productName} />
         </Link>
-        <button className="smart-sidebar-collapse" type="button" onClick={changeCollapsed} aria-label={collapsed ? "Expandir menú" : "Contraer menú"}>
-          <span aria-hidden="true">{collapsed ? "›" : "‹"}</span>
+        <button
+          className="smart-sidebar-collapse"
+          type="button"
+          onClick={handleSidebarControl}
+          aria-label={mobileOpen ? "Cerrar navegación" : collapsed ? "Expandir menú" : "Contraer menú"}
+        >
+          <span aria-hidden="true">{mobileOpen ? "×" : collapsed ? "›" : "‹"}</span>
         </button>
       </div>
 

@@ -772,3 +772,16 @@ Field-role mobile navigation is a persistent safe-area-aware bottom bar with fou
 Mobile module directories must not force desktop tables into the viewport. Modules with dense columnar data should provide a compact card/list representation below 700 px while keeping the desktop table for larger widths. The Assets module is the reference implementation.
 
 The mobile workspace must reserve bottom padding equal to the navigation height plus device safe-area inset so content never hides behind the fixed navigation.
+
+
+### Attendance contingency pattern
+
+Biometric/geolocation contingency is an explicitly exceptional UI state, not a hidden bypass.
+
+- Field users with a previously supervised biometric identity may submit a contingency request for check-in or check-out when camera, GPS, geofence, connectivity or device failures prevent the normal flow.
+- The request captures site, action, reason, user explanation and whatever diagnostic/location evidence is available.
+- Pending and approved states are visually distinct.
+- Approval is temporary, single-use and displayed with its expiration time.
+- Supervisor review cards show subject, role, site, affected event, reason, diagnostic accuracy and an optional review note.
+- Reports expose contingency counts separately from ordinary attendance.
+- Contingency styling uses warning/exception semantics and must never visually imply ordinary biometric verification.

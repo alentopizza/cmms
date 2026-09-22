@@ -500,3 +500,10 @@ All authenticated modules now use a dedicated opaque contextual-header surface t
 Company and location directories now prioritize scan density. Desktop layouts target four compact cards per row. Company resource consumption is represented by icon actions that show used/assigned capacity and navigate directly to the associated module, while the main card interaction remains dedicated to opening entity detail. Principal-location cards use the same compact visual language with shortcuts to sublocations and assets.
 
 Company creation now requires a logo at both client and server level. The logo is the canonical circular identity image used by company/location cards; cover imagery is optional.
+
+
+### Company profile redesign phase 1
+
+The company quick-detail experience was rebuilt as a modern structured profile: a non-overlapping hero/identity area, quick module actions, executive summary cards and collapsible information sections. The primary-site section is explicitly prepared for the next map/geofence phase so location validation can be added without another structural redesign.
+
+User creation now requires a profile photo at client and server level. The profile photo is identity/UI data only; facial attendance uses the existing separate live-camera enrollment pipeline with liveness checks and encrypted facial templates.

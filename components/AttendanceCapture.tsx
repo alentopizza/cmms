@@ -291,7 +291,7 @@ export default function AttendanceCapture({
       : phase==="face"?"Verificando rostro en vivo…"
       : phase==="saving"?"Confirmando presencia…"
       :"Validando…"
-    : openShift?"Finalizar actividades":"Iniciar actividades";
+    : openShift?"Marcar salida / Finalizar jornada":"Iniciar actividades";
 
   return <div className="attendance-presence-workspace">
     <section className={"attendance-presence-status "+(openShift?"active":"")}>
@@ -347,8 +347,8 @@ export default function AttendanceCapture({
           </div>
           <button className="button secondary attendance-start-button" type="button" disabled>Enrolamiento requerido</button>
         </> : <>
-          <span className="eyebrow">Inicio de jornada</span>
-          <h2>{openShift?"Presencia activa":"Verifica tu presencia"}</h2>
+          <span className="eyebrow">{openShift?"Cierre de jornada":"Inicio de jornada"}</span>
+          <h2>{openShift?"Jornada abierta · debes marcar salida al terminar":"Verifica tu presencia"}</h2>
 
           {openShift
             ? <div className="attendance-open-shift"><span>Inicio validado</span><strong>{new Date(openShift.check_in_at).toLocaleString("es-CO")}</strong><small>{openShift.site_name} · disponible para recibir actividades</small></div>

@@ -286,3 +286,10 @@ The contingency use endpoint rechecks user identity enrollment, organization/sit
 ### Client attendance state synchronization
 
 Normal attendance and contingency are separate client components but share one attendance page. Successful standard check-in/check-out emits the local `attendance:shift-changed` event so the contingency component immediately switches between check-in and check-out context without requiring a page reload. Server endpoints remain authoritative; this event only keeps the same-page UI coherent.
+
+
+### User manual content architecture
+
+`lib/user-manual.ts` is the shared structured content source for both manual surfaces. It contains role metadata, process articles and user-facing recent changes. `UserManual.tsx` performs client-side role switching/search only; it does not grant access to product modules.
+
+`/dashboard/help` derives the initial manual role from the authenticated session. `/manual` starts in general scope and is intentionally public. Because both routes render the same structured content, documentation does not need to be duplicated between a public marketing manual and an authenticated help center.

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-21 — Dimensional glass UI system
+
+### Changed
+
+- Evolved the shared CMMS UI away from flat controls toward a restrained dimensional-glass visual language.
+- Updated primary and secondary buttons with depth, inner highlights and restrained luminous hover states.
+- Updated inputs, selects, search controls and date-range controls with inset surfaces and stronger focus states.
+- Added consistent depth to module headers, cards, dashboards, user cards, company cards and location cards.
+- Updated tabs, selectable cards and checkbox controls with dimensional selected states.
+- Updated modals, dropdowns and popovers with stronger layered separation and backdrop blur.
+- Preserved Desweb teal/dark identity instead of copying reference cyan/purple colors.
+- Added dark-theme equivalents, keyboard focus-visible treatment and reduced-motion behavior.
+- Kept the visual treatment responsive so future mobile/PWA work inherits the same component language.
+
+
 ## 2026-09-21 — Consolidated Dashboard exports
 
 ### Changed

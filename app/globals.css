@@ -5175,3 +5175,99 @@ summary:focus-visible,
     transition:none!important;
   }
 }
+
+
+/* Landing account icon + export overlay stacking fix */
+.marketing-account-button{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid color-mix(in srgb,#d4e0e4 78%,var(--brand-mint) 22%);
+  border-radius:var(--ui-radius-3);
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(238,246,247,.94));
+  color:#304a54;
+  box-shadow:var(--ui-shadow-base);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease,color .16s ease;
+}
+.marketing-account-button svg{
+  width:var(--ui-icon-2);
+  height:var(--ui-icon-2);
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.marketing-account-button:hover{
+  transform:translateY(-1px);
+  border-color:rgba(56,178,169,.52);
+  background:linear-gradient(145deg,#fff,#e8f7f5);
+  color:#246f69;
+  box-shadow:var(--ui-shadow-raised);
+}
+.marketing-account-button:active{
+  transform:none;
+  box-shadow:var(--ui-shadow-inset);
+}
+.marketing-account-button:focus-visible{
+  outline:none;
+  box-shadow:var(--ui-focus-ring);
+}
+@media(max-width:780px){
+  .marketing-nav-actions-floating{
+    gap:8px;
+  }
+  .marketing-account-button{
+    width:40px;
+    height:40px;
+    flex-basis:40px;
+    border-radius:var(--ui-radius-3);
+  }
+  .marketing-nav-actions-floating .marketing-nav-cta{
+    min-height:40px!important;
+  }
+}
+@media(max-width:420px){
+  .marketing-nav-floating{
+    gap:8px;
+  }
+  .marketing-header-logo-principal img{
+    width:118px;
+  }
+  .marketing-nav-actions-floating{
+    gap:6px;
+  }
+  .marketing-account-button{
+    width:38px;
+    height:38px;
+    flex-basis:38px;
+  }
+  .marketing-nav-actions-floating .marketing-nav-cta{
+    min-height:38px!important;
+    padding-inline:12px!important;
+    font-size:9.5px!important;
+  }
+}
+
+/* Export menu must rise with its parent stacking context, not only the popover. */
+.dashboard-filterbar{
+  position:relative;
+  overflow:visible!important;
+  z-index:1;
+}
+.dashboard-filterbar.export-open{
+  z-index:120;
+}
+.dashboard-export-menu{
+  position:relative;
+  z-index:2;
+}
+.dashboard-filterbar.export-open .dashboard-export-menu{
+  z-index:121;
+}
+.dashboard-export-popover{
+  z-index:122;
+}

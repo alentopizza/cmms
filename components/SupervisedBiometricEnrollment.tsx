@@ -18,6 +18,8 @@ type Site = {
   city:string|null;
 };
 
+// ── Supervised identity verification workflow ───────────────────────────────
+
 export default function SupervisedBiometricEnrollment({
   people,
   sites,
@@ -39,8 +41,12 @@ export default function SupervisedBiometricEnrollment({
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
+  const [statusByUser,setStatusByUser]=useState<Record<string,Person["biometric_status"]>>(
+    Object.fromEntries(people.map(person=>[person.id,person.biometric_status])),
+  );
 
   const selected=people.find(person=>person.id===userId)||null;
+  const selectedStatus=selected ? (statusByUser[selected.id] || selected.biometric_status) : "missing";
 
   useEffect(()=>()=>stopCamera(),[]);
 
@@ -99,6 +105,7 @@ export default function SupervisedBiometricEnrollment({
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.message||"No fue posible completar el enrolamiento.");
 
+      setStatusByUser(previous=>({...previous,[selected.id]:"verified"}));
       setMessage(`Biometría verificada para ${selected.full_name}. El usuario ya puede validar presencia en campo.`);
       setConsent(false);
       setIdentityChecked(false);
@@ -121,6 +128,7 @@ export default function SupervisedBiometricEnrollment({
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.message||"No fue posible revocar la biometría.");
+      setStatusByUser(previous=>({...previous,[selected.id]:"revoked"}));
       setMessage(`Biometría revocada para ${selected.full_name}.`);
     }catch(cause){
       setError(cause instanceof Error?cause.message:"No fue posible revocar la biometría.");
@@ -144,7 +152,7 @@ export default function SupervisedBiometricEnrollment({
           <label>Persona *</label>
           <select value={userId} onChange={event=>{setUserId(event.target.value);setMessage("");setError("");}} required>
             <option value="">Selecciona usuario</option>
-            {people.map(person=><option key={person.id} value={person.id}>{person.full_name} · {person.role}</option>)}
+            {people.map(person=><option key={person.id} value={person.id} disabled={!person.has_avatar}>{person.full_name} · {person.role}{!person.has_avatar?" · Sin foto de perfil":""}</option>)}
           </select>
         </div>
 
@@ -163,8 +171,8 @@ export default function SupervisedBiometricEnrollment({
           <div>
             <strong>{selected.full_name}</strong>
             <small>{selected.email}</small>
-            <span className={"status-badge "+(selected.biometric_status==="verified"?"status-active":"")}>
-              {selected.biometric_status==="verified"?"Biometría verificada":selected.biometric_status==="legacy"?"Requiere reenrolamiento":selected.biometric_status==="revoked"?"Revocada":"Sin biometría"}
+            <span className={"status-badge "+(selectedStatus==="verified"?"status-active":"")}>
+              {selectedStatus==="verified"?"Biometría verificada":selectedStatus==="legacy"?"Requiere reenrolamiento":selectedStatus==="revoked"?"Revocada":"Sin biometría"}
             </span>
           </div>
         </div>}

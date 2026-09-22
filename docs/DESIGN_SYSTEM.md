@@ -798,3 +798,17 @@ The help center is hybrid rather than role-exclusive.
 - Search operates over titles, summaries, keywords, steps and notes.
 - **Qué cambió** highlights user-relevant product changes.
 - Mobile uses one-column cards and full-width actions.
+
+
+### Rutinas and Inventario mobile directory pattern
+
+Rutinas and Inventario follow the same mobile directory rule used by Activos and Órdenes: desktop keeps the dense table, while screens at 700 px or less render compact cards.
+
+- Rutinas cards prioritize routine name, asset, frequency and next due date.
+- Inventario cards prioritize SKU, item, current stock, minimum, physical location and supplier.
+- Low stock receives a distinct warning badge.
+- The field workspace continues reserving bottom space for the fixed mobile navigation.
+
+### Dark-mode form/dropdown contrast
+
+Dark mode must explicitly style form controls inside modals/popovers. Native `select`, `option` and `optgroup` surfaces use a dark background and light text, and modal headers/actions remain on opaque theme surfaces. Never rely on browser-default white dropdown surfaces in dark mode.

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { can, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
+import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 type Policy={
   enabled:boolean;
@@ -57,15 +58,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       )
     : {rows:[]} as {rows:Policy[]};
 
-  const policy:Policy=policyResult.rows[0] || {
-    enabled:false,
-    enabled_roles:["technician","external","provider"],
-    require_face:true,
-    require_geolocation:true,
-    max_location_accuracy_m:120,
-    face_similarity_threshold:0.55,
-    liveness_threshold:0.60,
-  };
+  const policy:Policy=policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
 
   const sites=organizationId
     ? session.accessAllSites
@@ -198,7 +191,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     {feedback.error==="roles" && <div className="notice error section">Selecciona al menos un rol para aplicar el control de asistencia.</div>}
 
     {canSelf && organizationId && <>
-      {!policy.enabled || !session.role || !policy.enabled_roles.includes(session.role) ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Cuando la empresa lo active, aquí podrás registrar biometría, entrada y salida.</span></section> :
+      {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles) ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Un administrador puede activarlo desde la política de asistencia.</span></section> :
       <section className="section">
         <AttendanceCapture
           sites={sites.rows.map(site=>({

@@ -5271,3 +5271,166 @@ summary:focus-visible,
 .dashboard-export-popover{
   z-index:122;
 }
+
+
+/* Mobile dashboard header + robust drawer visibility */
+.context-header-mobile-nav-slot{display:none}
+
+@media(max-width:900px){
+  body.dashboard-drawer-open{overflow:hidden}
+
+  .context-header{
+    top:8px;
+    margin-top:8px;
+    min-height:64px;
+    padding:10px 12px!important;
+    align-items:center;
+    gap:10px;
+  }
+  .context-header-mobile-nav-slot{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    justify-content:center;
+  }
+  .context-header-left{
+    min-width:0;
+    flex:1 1 auto;
+  }
+
+  .dashboard-mobile-menu{
+    position:static!important;
+    left:auto!important;
+    top:auto!important;
+    z-index:auto!important;
+    width:40px;
+    height:40px;
+    min-width:40px;
+    min-height:40px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(121,202,196,.30);
+    border-radius:var(--ui-radius-3);
+    background:linear-gradient(145deg,#263b4d,#1e3141);
+    color:#eafffc;
+    box-shadow:var(--ui-shadow-base);
+    cursor:pointer;
+  }
+  .dashboard-mobile-menu:hover,
+  .dashboard-mobile-menu[aria-expanded="true"]{
+    border-color:rgba(121,202,196,.52);
+    background:linear-gradient(145deg,#315365,#244352);
+    box-shadow:var(--ui-shadow-raised);
+  }
+  .dashboard-mobile-menu:active{box-shadow:var(--ui-shadow-inset)}
+  .dashboard-mobile-menu.field-hidden{display:none!important}
+  .dashboard-mobile-menu-lines{
+    width:18px;
+    display:grid;
+    gap:4px;
+  }
+  .dashboard-mobile-menu-lines i{
+    display:block;
+    width:18px;
+    height:2px;
+    border-radius:999px;
+    background:currentColor;
+  }
+
+  /* Earlier generic .sidebar mobile rules hide every sidebar. The smart drawer
+     explicitly opts back in and becomes the highest interactive mobile layer. */
+  .smart-sidebar,
+  .smart-sidebar.collapsed{
+    display:flex!important;
+    flex-direction:column;
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    bottom:auto!important;
+    z-index:1001!important;
+    width:min(300px,88vw)!important;
+    height:100dvh!important;
+    max-height:100dvh;
+    padding:calc(14px + env(safe-area-inset-top)) 13px calc(14px + env(safe-area-inset-bottom)) 19px!important;
+    visibility:hidden;
+    opacity:0;
+    pointer-events:none;
+    transform:translate3d(-105%,0,0)!important;
+    background:
+      radial-gradient(circle at 0 0,rgba(71,223,214,.12),transparent 18rem),
+      linear-gradient(180deg,#1d2a39 0%,#223244 52%,#1b2a39 100%)!important;
+    box-shadow:18px 0 46px rgba(5,15,25,.38)!important;
+    transition:transform .22s ease,opacity .16s ease,visibility 0s linear .22s;
+    isolation:isolate;
+  }
+  .smart-sidebar.mobile-open,
+  .smart-sidebar.collapsed.mobile-open{
+    visibility:visible;
+    opacity:1;
+    pointer-events:auto;
+    transform:translate3d(0,0,0)!important;
+    transition:transform .22s ease,opacity .16s ease;
+  }
+  .smart-sidebar .smart-sidebar-top{
+    flex:0 0 auto;
+  }
+  .smart-sidebar .smart-sidebar-nav{
+    flex:1 1 auto;
+    min-height:0;
+  }
+  .smart-sidebar .smart-sidebar-collapse{
+    width:38px!important;
+    height:38px!important;
+    flex-basis:38px;
+    border-radius:var(--ui-radius-3)!important;
+  }
+  .smart-sidebar .smart-sidebar-collapse span{
+    font-size:24px;
+  }
+
+  .dashboard-sidebar-overlay{
+    position:fixed!important;
+    inset:0!important;
+    z-index:1000!important;
+    display:block!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:rgba(7,16,24,.68)!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    box-shadow:none!important;
+  }
+}
+
+@media(max-width:520px){
+  .smart-sidebar,
+  .smart-sidebar.collapsed{
+    width:min(310px,92vw)!important;
+  }
+}
+
+/* Stronger landing account affordance on compact screens */
+.marketing-account-button{
+  border-color:rgba(56,178,169,.48);
+  background:linear-gradient(145deg,#e8f8f6,#c9eeea);
+  color:#173d46;
+  box-shadow:0 7px 17px rgba(30,70,76,.16),inset 0 1px 0 rgba(255,255,255,.82);
+}
+.marketing-account-button svg{
+  width:22px;
+  height:22px;
+  stroke-width:2.35;
+}
+.marketing-account-button:hover{
+  background:linear-gradient(145deg,#dff7f4,#b6e8e3);
+  color:#12353d;
+}
+@media(max-width:780px){
+  .marketing-account-button{
+    border-color:rgba(56,178,169,.58);
+    background:linear-gradient(145deg,#dff7f4,#bdeae6);
+    color:#123942;
+  }
+}

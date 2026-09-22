@@ -7929,3 +7929,41 @@ html[data-theme="dark"] .location-create-switch button.active{
   border-color:var(--brand-teal);
   color:#e7f7f5;
 }
+
+
+/* Google Maps geofence provider */
+.geofence-map-shell.google-provider{
+  position:relative;
+  overflow:hidden;
+}
+.geofence-google-map{
+  width:100%;
+  min-height:360px;
+  height:100%;
+  border-radius:inherit;
+  background:var(--surface-soft);
+}
+.geofence-map-provider{
+  position:absolute;
+  right:10px;
+  bottom:8px;
+  z-index:4;
+  padding:4px 7px;
+  border:1px solid color-mix(in srgb,var(--border) 74%,transparent);
+  border-radius:999px;
+  background:color-mix(in srgb,var(--surface) 90%,transparent);
+  color:var(--text-soft);
+  font-size:7px;
+  font-weight:850;
+  pointer-events:none;
+}
+html[data-theme="dark"] .geofence-map-shell.google-provider{
+  background:#17232d;
+}
+html[data-theme="dark"] .geofence-map-provider{
+  background:rgba(20,32,42,.9);
+  color:#c5d2d9;
+}
+@media(max-width:620px){
+  .geofence-google-map{min-height:300px}
+}

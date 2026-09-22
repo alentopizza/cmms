@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SubLocationCreateModal } from "@/components/ContextCreateModals";
 
@@ -66,20 +67,41 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
   }
 
   return <>
-    <div className="site-visual-grid">
+    <div className="site-visual-grid site-visual-grid-compact">
       {sites.map(site=><article
-        className="site-visual-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"}
+        className="site-visual-card site-compact-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"}
         data-search={[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" ")}
       >
-        <button className="site-visual-card-button" type="button" onClick={()=>openSite(site.id)}>
+        <button className="site-visual-card-button site-card-main-action" type="button" onClick={()=>openSite(site.id)}>
           <div className={"site-visual-cover"+(site.has_image?"":" fallback")}>{site.has_image&&<img src={"/api/sites/"+site.id+"/image"} alt="" />}</div>
-          <div className="site-company-logo">{site.organization_has_logo?<img src={"/api/organizations/"+site.organization_id+"/assets/logo"} alt="" />:<span>{initials(site.organization_name)}</span>}</div>
-          <div className="site-visual-content">
+          <div className="site-company-logo">{site.organization_has_logo?<img src={"/api/organizations/"+site.organization_id+"/assets/logo"} alt={"Logo de "+site.organization_name} />:<span>{initials(site.organization_name)}</span>}</div>
+          <div className="site-visual-content site-visual-content-compact">
             <h3>{site.name}</h3>
-            <p><span>País: {countryName(site.country)}</span><span>Ciudad: {site.city||"Sin registrar"}</span><span>{site.address||"Dirección sin registrar"}</span></p>
-            <div className="site-visual-stats"><span title="Sububicaciones">⌁ <b>{site.location_count}</b></span><span title="Activos">◇ <b>{site.asset_count}</b></span></div>
+            <p><span>{site.organization_name}</span><span>{site.city||"Ciudad sin registrar"} · {countryName(site.country)}</span><span>{site.address||"Dirección sin registrar"}</span></p>
           </div>
         </button>
+        <nav className="site-resource-actions" aria-label={"Recursos de "+site.name}>
+          <Link
+            href="/dashboard/locations"
+            className="site-resource-action"
+            title="Sububicaciones"
+            data-tooltip="Sububicaciones"
+            aria-label={"Sububicaciones: "+site.location_count+". Abrir módulo."}
+          >
+            <span className="site-resource-icon" aria-hidden="true">⌁</span>
+            <strong>{site.location_count}</strong>
+          </Link>
+          <Link
+            href="/dashboard/assets"
+            className="site-resource-action"
+            title="Activos"
+            data-tooltip="Activos"
+            aria-label={"Activos: "+site.asset_count+". Abrir módulo."}
+          >
+            <span className="site-resource-icon" aria-hidden="true">◇</span>
+            <strong>{site.asset_count}</strong>
+          </Link>
+        </nav>
       </article>)}
     </div>
 

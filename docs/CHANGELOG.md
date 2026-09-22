@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-21 — Mobile header alignment refinement
+
+### Changed
+
+- Kept the mobile dashboard hamburger anchored to the left side of the contextual header.
+- Moved the current-module identity to the right side of the header.
+- Reversed the mobile identity order so the module icon sits at the far right and its eyebrow/title/context text sits immediately to the left.
+- Right-aligned the mobile module copy for a cleaner balanced header composition.
+
+
 ## 2026-09-21 — Mobile dashboard header and drawer repair
 
 ### Fixed

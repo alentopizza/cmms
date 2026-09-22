@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, roleLabel } from "@/lib/permissions";
+import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import DashboardControls from "@/components/DashboardControls";
 import {

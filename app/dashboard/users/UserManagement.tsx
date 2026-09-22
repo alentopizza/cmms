@@ -48,7 +48,7 @@ type Draft = {
   external_supplier_id: string;
 };
 
-type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
+type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "avatar" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
 
 const EMPTY_DRAFT: Draft = {
   full_name: "",
@@ -220,6 +220,7 @@ export default function UserManagement({
     else if (!/^\S+@\S+\.\S+$/.test(draft.email)) next.email = "Ingresa un correo válido.";
     if (mode === "create" && draft.password.length < 8) next.password = "Usa una contraseña de al menos 8 caracteres.";
     if (mode === "edit" && draft.password && draft.password.length < 8) next.password = "La nueva contraseña debe tener al menos 8 caracteres.";
+    if (mode === "create" && !avatarFile) next.avatar = "Adjunta una foto de perfil para crear la cuenta.";
 
     if (draft.role !== "superadmin") {
       if (!draft.organization_id) next.organization_id = "Selecciona la empresa a la que pertenecerá.";
@@ -379,11 +380,11 @@ export default function UserManagement({
           {errors.general && <div className="notice error">{errors.general}</div>}
 
           <div className="form-grid">
-            <div className="field form-span-2 user-photo-field">
-              <label>Foto de perfil</label>
+            <div className={`field form-span-2 user-photo-field ${errors.avatar ? "field-error" : ""}`}>
+              <label>Foto de perfil {mode === "create" ? "*" : ""}</label>
               <div className="user-photo-upload">
                 <div className="user-photo-preview">{avatarFile ? <img src={URL.createObjectURL(avatarFile)} alt="Vista previa" /> : editingUser?.has_avatar ? <img src={`/api/users/${editingUser.id}/avatar`} alt="" /> : <span>{initials(draft.full_name||"Usuario")}</span>}</div>
-                <div><input type="file" accept="image/png,image/jpeg,image/webp" onChange={event=>setAvatarFile(event.target.files?.[0]||null)} /><small>JPG, PNG o WEBP · máximo 5 MB. Esta foto identificará al usuario en sus tarjetas.</small></div>
+                <div><input type="file" accept="image/png,image/jpeg,image/webp" required={mode === "create"} onChange={event=>{setAvatarFile(event.target.files?.[0]||null);setErrors(previous=>({...previous,avatar:undefined,general:undefined}));}} /><small>JPG, PNG o WEBP · máximo 5 MB. La foto identifica visualmente al usuario; la biometría facial se enrola por cámara con prueba de vida.</small>{errors.avatar && <small className="field-error-message">{errors.avatar}</small>}</div>
               </div>
             </div>
             <div className={`field ${errors.full_name ? "field-error" : ""}`}>

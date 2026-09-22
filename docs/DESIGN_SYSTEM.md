@@ -699,3 +699,22 @@ Company and principal-location directories use a compact card pattern optimized 
 ### Company logo creation rule
 
 A company logo is mandatory when a company is created. The requirement is enforced both by the browser form and the server endpoint. The logo is the default identity image shown inside the circular company mark throughout company and location directory cards. A company cover/reference image is optional and must never replace the logo as the circular identity asset.
+
+
+### Company profile detail pattern
+
+The company quick-detail modal uses a structured profile layout instead of a tall free-form form.
+
+- A shallow hero/cover is separated from the identity block so the company name never overlaps or disappears over imagery.
+- Logo, status, plan, legal identity and primary-site context form one clear identity region.
+- Quick actions provide direct access to Locations, Assets, Users and the full company record.
+- Executive summary cards expose profile completion, locations, assets and documentation state.
+- Long-form content is organized into accessible native `details/summary` accordions: General information, Primary site and coverage, Resources and consumption, Documentation/compliance and Visual identity.
+- The primary-site coverage accordion is the insertion point for interactive map/geofence controls in the next phase.
+- Mobile reduces the hero height, stacks actions and accordions, and keeps the entity name readable above all secondary metadata.
+
+### User photo versus biometric enrollment
+
+A profile photo is mandatory when a user account is created and is used for human-readable identity in directories/cards. It is **not** the biometric reference used for attendance verification.
+
+Biometric enrollment remains a separate live-camera flow with liveness/anti-spoof checks. Attendance-controlled users must enroll a live facial template before field biometric verification can succeed. The encrypted facial template is distinct from the stored profile photo.

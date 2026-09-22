@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-21 — Compact company and location cards
+
+### Changed
+
+- Redesigned company cards into a narrower, denser directory layout targeting four cards per desktop row.
+- Replaced tall resource progress sections with compact icon shortcuts showing used/assigned capacity.
+- Added hover/focus tooltips for resource icons and direct navigation to Locations, Assets, Inventory and Users as appropriate.
+- Split company-card interaction into a main detail action plus independent resource links to avoid nested interactive elements.
+- Applied the same compact card language to principal-location cards, with direct sublocation and asset shortcuts.
+- Reduced cover/logo/card-body height while retaining responsive one/two/three-column fallbacks.
+- Made company logo mandatory in both the creation form and server endpoint.
+- Made company cover/reference imagery optional; the company logo remains the default circular identity image.
+
+
 ## 2026-09-21 — Distinct sticky module headers
 
 ### Changed

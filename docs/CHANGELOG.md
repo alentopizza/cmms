@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-21 — Documentation state alignment
+
+### Changed
+
+- Audited repository documentation against the current implementation after the dashboard, mobile navigation, attendance and export work.
+- Updated the roadmap so responsive role-aware mobile navigation, Dashboard Excel/CSV/PDF exports, personalized sidebar ordering and biometric/geofenced attendance are marked as implemented foundations rather than future capabilities.
+- Expanded the architecture source of truth with the shared dashboard shell, preference persistence, export pipeline and field-attendance architecture.
+- No runtime behavior changed in this documentation-only alignment.
+
+
 ## 2026-09-21 — Dimensional glass UI system
 
 ### Changed

@@ -5434,3 +5434,31 @@ summary:focus-visible,
     color:#123942;
   }
 }
+
+
+/* Mobile context header alignment: menu left, module identity right */
+@media(max-width:900px){
+  .context-header{
+    justify-content:space-between;
+  }
+  .context-header-mobile-nav-slot{
+    margin-right:auto;
+  }
+  .context-header-left{
+    margin-left:auto;
+    flex:0 1 auto;
+    flex-direction:row-reverse;
+    justify-content:flex-start;
+    text-align:right;
+  }
+  .context-header-copy{
+    justify-items:end;
+    text-align:right;
+  }
+  .context-header-copy>small{
+    max-width:min(52vw,220px);
+  }
+  .context-header-tools-slot{
+    flex-basis:100%;
+  }
+}

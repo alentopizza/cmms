@@ -224,6 +224,18 @@ Before a principal site can participate in geofenced attendance, its physical po
 
 New principal sites and the initial site created during company onboarding require this configuration. Legacy sites without coordinates may still be viewed, but must be completed on their next edit. The browser map is an administrative configuration aid; attendance acceptance is always recalculated server-side from the device GPS coordinates and stored site geofence.
 
+### Presence before assignment
+
+A field user does **not** need an assigned maintenance activity in order to register presence. A valid attendance start means:
+
+- the authenticated user is allowed to use self-attendance;
+- the organization policy applies to the user's role;
+- the selected/derived site is authorized and has a configured geofence when location is required;
+- device GPS is available with acceptable accuracy and lies inside the permitted radius;
+- live facial verification succeeds when facial verification is required.
+
+After these checks the user is considered **in site / available**. Activities may be assigned later. Any subsequent execution events can reference the open attendance shift and record whether the work occurred during a validated presence session.
+
 ### Attendance shift
 
 A field shift contains:

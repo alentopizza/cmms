@@ -224,6 +224,22 @@ Before a principal site can participate in geofenced attendance, its physical po
 
 New principal sites and the initial site created during company onboarding require this configuration. Legacy sites without coordinates may still be viewed, but must be completed on their next edit. The browser map is an administrative configuration aid; attendance acceptance is always recalculated server-side from the device GPS coordinates and stored site geofence.
 
+
+### Supervised biometric enrollment
+
+Before facial attendance can be used for an account:
+
+1. the user record exists and has a profile photo for human identity checking;
+2. an authorized attendance manager selects the user and an authorized site;
+3. the subject is physically present;
+4. the supervisor confirms that the present person matches the selected account;
+5. the subject gives biometric consent;
+6. the camera captures multiple live samples and passes liveness/anti-spoof checks;
+7. the server stores an encrypted template and supervisor/site/method/time metadata;
+8. the user becomes eligible for 1:1 attendance verification.
+
+Self-enrollment and self-revocation are not valid identity-establishment paths. Legacy self-enrolled templates require supervised reenrollment.
+
 ### Presence before assignment
 
 A field user does **not** need an assigned maintenance activity in order to register presence. A valid attendance start means:

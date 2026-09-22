@@ -51,16 +51,12 @@ function Panel({eyebrow,title,children,action}:{eyebrow:string;title:string;chil
 function Empty({children}:{children:React.ReactNode}){return <div className="dashboard-empty">{children}</div>}
 function Status({value}:{value:string}){return <span className={"dashboard-status dashboard-status-"+value}>{value.replaceAll("_"," ")}</span>}
 function Frame({
-  role,title,subtitle,cards,children,filters,mode,companyStatusOptions,activityStatusOptions,
+  cards,children,mode,companyStatusOptions,activityStatusOptions,
 }:{
-  role:string;title:string;subtitle:string;cards:Card[];children:React.ReactNode;filters:DashboardFilters;
+  cards:Card[];children:React.ReactNode;
   mode:"platform"|"operation"|"field"|"requester";companyStatusOptions?:Option[];activityStatusOptions?:Option[];
 }) {
   return <div className="role-dashboard">
-    <section className="dashboard-intro">
-      <div><span className="eyebrow">{role}</span><h1>{title}</h1><p>{subtitle}</p></div>
-      <div className="dashboard-period"><span>Periodo</span><strong>{filters.label}</strong></div>
-    </section>
     <DashboardControls mode={mode} companyStatusOptions={companyStatusOptions} activityStatusOptions={activityStatusOptions}/>
     <section className="dashboard-kpi-grid">{cards.map(x=><Kpi key={x.label} x={x}/>)}</section>
     {children}
@@ -122,9 +118,6 @@ async function platform(session:NonNullable<Awaited<ReturnType<typeof getSession
   ];
 
   return <Frame
-    role={owner?"Propietario Desweb":"Superadministrador"}
-    title={owner?"Control de negocio y plataforma":"Operación global de la plataforma"}
-    subtitle={owner?"Ventas, suscripciones, crecimiento y salud de Desweb CMMS.":"Clientes, suscripciones y operación que requieren seguimiento administrativo."}
     cards={cards}
     filters={filters}
     mode="platform"
@@ -183,9 +176,6 @@ async function operation(session:NonNullable<Awaited<ReturnType<typeof getSessio
   const rows=statuses.rows.map((r:{status:string;count:string})=>({key:r.status,label:names[r.status]||r.status,count:n(r.count)}));
 
   return <Frame
-    role={roleLabel(session)}
-    title={role==="admin"?"Salud operativa de la empresa":role==="manager"?"Control de mantenimiento":"Indicadores operativos"}
-    subtitle={"Información de "+(session.organizationName||"tu organización")+" dentro de tu alcance autorizado."}
     cards={cards}
     filters={filters}
     mode="operation"
@@ -238,9 +228,6 @@ async function field(session:NonNullable<Awaited<ReturnType<typeof getSession>>>
   ];
 
   return <Frame
-    role={roleLabel(session)}
-    title={provider?"Ejecución del proveedor":"Mi productividad"}
-    subtitle={provider?"Trabajo asignado al proveedor y avance de ejecución.":"Actividades, asistencia y rendimiento del periodo seleccionado."}
     cards={cards}
     filters={filters}
     mode="field"
@@ -274,9 +261,6 @@ async function requester(session:NonNullable<Awaited<ReturnType<typeof getSessio
   ]);
   const total=n(open.rows[0]?.count)+n(done.rows[0]?.count);
   return <Frame
-    role="Solicitante"
-    title="Mis solicitudes"
-    subtitle="Seguimiento de mantenimiento y tiempos de resolución."
     cards={[
       {label:"Abiertas",value:open.rows[0]?.count||"0",hint:"Dentro del periodo",icon:"○",tone:n(open.rows[0]?.count)>0?"warning":"default",href:"/dashboard/work-orders"},
       {label:"Cerradas",value:done.rows[0]?.count||"0",hint:"Completadas en el periodo",icon:"✓",tone:"success"},

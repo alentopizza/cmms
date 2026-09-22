@@ -473,3 +473,8 @@ The responsive dashboard shell now uses role-aware navigation.
 - Technician and External collaborator roles use a persistent bottom navigation for Dashboard, Orders, Attendance and Assets, plus **More** to expose every other authorized module in the drawer.
 
 The same permission-filtered navigation list is reused across desktop, drawer and bottom navigation. This is the intended foundation for a future mobile/PWA application; new module UI should therefore be designed responsively in the same implementation rather than postponed to a separate mobile rewrite.
+
+
+### Landing account access and export overlay behavior
+
+The landing header now always exposes a compact user-icon account action on desktop and mobile. Its route resolves to Login without a session and Dashboard when already authenticated. Dashboard export menus raise their containing filter bar while open so Excel/CSV/PDF choices render above subsequent panels instead of being visually clipped.

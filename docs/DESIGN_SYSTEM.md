@@ -735,3 +735,17 @@ Principal sites use an interactive map/geofence component wherever their physica
 - Mobile keeps the map touch-safe, stacks coordinates/radius vertically and preserves the same validation semantics.
 
 The map is not decorative: the saved latitude, longitude and radius are the same site values consumed by attendance verification.
+
+
+### Field presence start workflow
+
+The mobile attendance experience is modeled as **presence in site**, not as an assigned-task prerequisite.
+
+- A field user may start a biometric shift even when zero work activities are assigned.
+- The UI communicates this as **En sitio y disponible** rather than implying that a task is already in progress.
+- Geolocation is validated before opening the camera, avoiding unnecessary facial capture when GPS permission, accuracy or geofence conditions fail.
+- When multiple authorized sites exist, the nearest configured site inside its geofence may be selected automatically from the current GPS fix; the server remains authoritative.
+- The presence workflow presents GPS, geofence and facial verification as explicit sequential steps.
+- The main mobile action is **Iniciar actividades** / **Finalizar actividades**; these actions open/close the attendance shift, not a work-order task.
+- A compact map can show the configured site point, radius and current-device marker during presence validation.
+- Camera UI is only surfaced during live enrollment or verification.

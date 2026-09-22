@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-21 — Consolidated Dashboard exports
+
+### Changed
+
+- Replaced separate PDF and Power BI buttons with one **Exportar** dropdown.
+- Added native Excel (.xlsx) dashboard export.
+- Kept CSV as the interoperable Power BI / Power Query export.
+- Preserved PDF as the executive graphical report.
+- Reworked Desweb PDF stationery to follow the supplied A4 landscape letterhead composition: centered brand identity, pale body watermark, footer slogan and page number.
+- Pro white-label organizations continue to substitute their own report branding while retaining the same report hierarchy.
+- Excel export includes Resumen, Datos and Metadatos sheets with branded styling and the same dashboard filters/permissions.
+
+
 ## 2026-09-21 — Dashboard single-header cleanup
 
 ### Changed

@@ -253,3 +253,16 @@ Navigation rules below 900px:
 Never duplicate authorization rules inside mobile navigation. Desktop, drawer and bottom-nav visibility must originate from the same server-side permission-filtered item set.
 
 Design new cards, forms, popups and tables so they can collapse to mobile without requiring a separate future implementation. Preserve safe-area spacing and avoid fixed mobile controls covering primary actions.
+
+
+## Dashboard export-format invariant
+
+Dashboard export UI must expose one **Exportar** menu with Excel, CSV and PDF rather than parallel primary buttons.
+
+All three formats must use the same authorized, filtered dashboard dataset.
+
+- Excel is a real XLSX workbook, not CSV renamed as XLSX.
+- CSV remains the interoperable Power BI / Power Query dataset.
+- PDF is the executive visual report and may include charts and branded stationery.
+
+For Desweb/non-Pro reports, preserve the approved landscape letterhead composition. Pro white-label reports must substitute tenant branding while keeping the same report hierarchy. Do not let stationery or branding alter authorization scope or filtered data.

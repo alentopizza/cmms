@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-22 — Personal settings and clearer attendance exit
+
+### Changed
+
+- Personal settings are now available to every authenticated role through `/dashboard/preferences`.
+- Field-mobile **Más** and the account menu expose **Mi configuración** without granting administrative company settings.
+- New browsers default to the **Claro** theme; Oscuro and Sistema remain optional preferences.
+- Attendance now labels the open-shift action explicitly as **Marcar salida / Finalizar jornada**.
+- The user manual was updated to reflect personal settings and the clearer exit flow.
+
 ## 2026-09-22 — Hybrid user manual and help center
 
 ### Added

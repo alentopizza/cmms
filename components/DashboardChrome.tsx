@@ -30,10 +30,10 @@ function currentSection(pathname: string) {
   return sections.find(item => item.match(pathname))?.section || { label: "Desweb CMMS", eyebrow: "Plataforma", icon: "D" };
 }
 
-export function CurrentSectionHeader({ organizationName }: { organizationName: string | null }) {
+export function CurrentSectionHeader({ contextName }: { contextName: string | null }) {
   const pathname = usePathname();
   const section = currentSection(pathname);
-  const contextualEyebrow = pathname.startsWith("/dashboard/settings") && organizationName ? "Empresa" : section.eyebrow;
+  const contextualEyebrow = pathname.startsWith("/dashboard/settings") && contextName ? "Empresa" : section.eyebrow;
 
   return <header className="context-header">
     <div className="context-header-left">
@@ -41,7 +41,7 @@ export function CurrentSectionHeader({ organizationName }: { organizationName: s
       <div className="context-header-copy">
         <span>{contextualEyebrow}</span>
         <strong>{section.label}</strong>
-        {organizationName && <small>{organizationName}</small>}
+        {contextName && <small>{contextName}</small>}
       </div>
     </div>
     <div id="context-header-tools" className="context-header-tools-slot" />

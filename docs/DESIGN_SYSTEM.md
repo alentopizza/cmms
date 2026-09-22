@@ -432,3 +432,23 @@ The bottom navigation:
 - must remain compatible with light/dark and organization white-label colors.
 
 This pattern is intentionally reusable for a future PWA/native shell so module screens require minimal visual restructuring.
+
+
+## Dashboard single-header rule
+
+The root Dashboard follows the same module-shell pattern as the rest of the authenticated application.
+
+Do not render a second introductory hero/header below the global context header.
+
+The first context header is the single source for:
+- module name;
+- module category/eyebrow;
+- current company when available, otherwise authenticated role context.
+
+Dashboard-specific controls belong below that header:
+- date range;
+- state filters;
+- export actions;
+- KPI cards.
+
+Avoid repeating role, title, explanatory copy or period in a second large panel when those elements are already represented by the shared shell and filter controls.

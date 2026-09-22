@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
+import ExcelJS from "exceljs";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { roleLabel } from "@/lib/permissions";
@@ -32,6 +33,161 @@ function csv(rows:ExportRow[]){
     ...rows.map(row=>[row.type,row.date,row.reference,row.subject,row.status,row.detail,row.value].map(csvCell).join(",")),
   ].join("\r\n");
 }
+async function excelReport(
+  role:string,
+  period:string,
+  filters:string,
+  rows:ExportRow[],
+  branding:ReportBranding,
+){
+  const workbook=new ExcelJS.Workbook();
+  workbook.creator="Desweb CMMS";
+  workbook.created=new Date();
+  workbook.modified=new Date();
+
+  const primary=branding.primary.replace("#","");
+  const secondary=branding.secondary.replace("#","");
+  const mint="BAE3E0";
+  const light="F7FAFA";
+  const border="D8E2E6";
+  const white="FFFFFF";
+
+  const statusRows=distribution(rows);
+  const typeRows=typeDistribution(rows);
+  const completed=rows.filter(row=>["completed","closed","active"].includes(row.status)).length;
+  const alerts=rows.filter(row=>["past_due","suspended","cancelled","canceled","paused"].includes(row.status)).length;
+
+  const summary=workbook.addWorksheet("Resumen",{views:[{state:"frozen",ySplit:5}]});
+  summary.properties.defaultRowHeight=20;
+  summary.columns=[
+    {width:22},{width:20},{width:20},{width:20},{width:20},{width:20},{width:20},
+  ];
+
+  summary.mergeCells("A1:G2");
+  summary.getCell("A1").value="REPORTE DE DASHBOARD";
+  summary.getCell("A1").font={bold:true,size:22,color:{argb:secondary}};
+  summary.getCell("A1").alignment={vertical:"middle"};
+  summary.mergeCells("A3:G3");
+  summary.getCell("A3").value=branding.reportOwner+" · "+role;
+  summary.getCell("A3").font={bold:true,size:11,color:{argb:primary}};
+  summary.mergeCells("A4:G4");
+  summary.getCell("A4").value="Periodo: "+period+" · "+filters;
+  summary.getCell("A4").font={size:9,color:{argb:"66727A"}};
+
+  const kpis=[
+    ["Registros",rows.length,"Elementos del periodo"],
+    ["Cumplidos",completed,rows.length?Math.round(completed/rows.length*100)+"% del total":"Sin registros"],
+    ["Alertas",alerts,"Estados que requieren revisión"],
+    ["Estados",statusRows.length,"Categorías presentes"],
+  ];
+  let row=6;
+  for(const [label,value,hint] of kpis){
+    summary.mergeCells(row,1,row,2);
+    summary.getCell(row,1).value=label;
+    summary.getCell(row,1).font={bold:true,size:9,color:{argb:"66727A"}};
+    summary.mergeCells(row+1,1,row+2,2);
+    summary.getCell(row+1,1).value=value as string|number;
+    summary.getCell(row+1,1).font={bold:true,size:20,color:{argb:secondary}};
+    summary.mergeCells(row+3,1,row+3,2);
+    summary.getCell(row+3,1).value=hint as string;
+    summary.getCell(row+3,1).font={size:8,color:{argb:"66727A"}};
+    for(let rr=row;rr<=row+3;rr++){
+      for(let cc=1;cc<=2;cc++){
+        summary.getCell(rr,cc).fill={type:"pattern",pattern:"solid",fgColor:{argb:light}};
+        summary.getCell(rr,cc).border={
+          top:{style:"thin",color:{argb:border}},
+          bottom:{style:"thin",color:{argb:border}},
+          left:{style:"thin",color:{argb:border}},
+          right:{style:"thin",color:{argb:border}},
+        };
+      }
+    }
+    row+=5;
+  }
+
+  summary.getCell("D6").value="Distribución por estado";
+  summary.getCell("D6").font={bold:true,size:12,color:{argb:secondary}};
+  summary.getCell("D7").value="Estado";
+  summary.getCell("E7").value="Cantidad";
+  summary.getCell("F7").value="%";
+  [summary.getCell("D7"),summary.getCell("E7"),summary.getCell("F7")].forEach(cell=>{
+    cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:secondary}};
+    cell.font={bold:true,color:{argb:white}};
+  });
+  statusRows.forEach((item,index)=>{
+    const rr=8+index;
+    summary.getCell(rr,4).value=item.label;
+    summary.getCell(rr,5).value=item.count;
+    summary.getCell(rr,6).value=rows.length?item.count/rows.length:0;
+    summary.getCell(rr,6).numFmt="0.0%";
+  });
+
+  const typeStart=Math.max(16,9+statusRows.length);
+  summary.getCell(typeStart,4).value="Distribución por tipo";
+  summary.getCell(typeStart,4).font={bold:true,size:12,color:{argb:secondary}};
+  summary.getCell(typeStart+1,4).value="Tipo";
+  summary.getCell(typeStart+1,5).value="Cantidad";
+  [summary.getCell(typeStart+1,4),summary.getCell(typeStart+1,5)].forEach(cell=>{
+    cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:primary}};
+    cell.font={bold:true,color:{argb:white}};
+  });
+  typeRows.forEach((item,index)=>{
+    summary.getCell(typeStart+2+index,4).value=item.label;
+    summary.getCell(typeStart+2+index,5).value=item.count;
+  });
+
+  const data=workbook.addWorksheet("Datos",{views:[{state:"frozen",ySplit:1}]});
+  data.columns=[
+    {header:"Tipo",key:"type",width:20},
+    {header:"Fecha",key:"date",width:16},
+    {header:"Referencia",key:"reference",width:20},
+    {header:"Entidad / asunto",key:"subject",width:34},
+    {header:"Estado",key:"status",width:18},
+    {header:"Detalle",key:"detail",width:48},
+    {header:"Valor",key:"value",width:20},
+  ];
+  data.getRow(1).height=26;
+  data.getRow(1).eachCell(cell=>{
+    cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:secondary}};
+    cell.font={bold:true,color:{argb:white}};
+    cell.alignment={vertical:"middle"};
+  });
+  for(const item of rows){
+    data.addRow({
+      type:item.type,date:item.date,reference:item.reference,subject:item.subject,
+      status:statusLabel(item.status),detail:item.detail,value:item.value,
+    });
+  }
+  data.autoFilter={from:"A1",to:"G"+String(Math.max(1,data.rowCount))};
+  data.eachRow((excelRow,rowNumber)=>{
+    if(rowNumber===1)return;
+    excelRow.alignment={vertical:"top",wrapText:true};
+    if(rowNumber%2===0){
+      excelRow.eachCell(cell=>cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:light}});
+    }
+  });
+  data.getColumn("E").eachCell((cell,rowNumber)=>{
+    if(rowNumber===1)return;
+    cell.font={bold:true,color:{argb:primary}};
+  });
+
+  const meta=workbook.addWorksheet("Metadatos");
+  meta.columns=[{width:25},{width:70}];
+  meta.addRows([
+    ["Reporte","Dashboard CMMS"],
+    ["Organización / marca",branding.reportOwner],
+    ["Rol",role],
+    ["Periodo",period],
+    ["Filtros",filters],
+    ["Generado",new Date().toLocaleString("es-CO")],
+    ["Registros",rows.length],
+  ]);
+  meta.getColumn(1).font={bold:true,color:{argb:secondary}};
+  meta.getColumn(2).alignment={wrapText:true};
+
+  return Buffer.from(await workbook.xlsx.writeBuffer());
+}
+
 function safeDate(value:string|null|undefined){
   if(!value) return "";
   const date=new Date(value);
@@ -194,126 +350,143 @@ async function pdfReport(
   const soft=rgb(0.42,0.48,0.52);
   const border=rgb(0.86,0.89,0.90);
   const pale=rgb(0.96,0.98,0.98);
+  const watermark=rgb(0.90,0.91,0.92);
   const white=rgb(1,1,1);
   const logo=await embedReportLogo(doc,branding);
-  const pageSize:[number,number]=[841.89,595.28];
+  const pageSize:[number,number]=[842,596];
   const statusRows=distribution(rows);
   const typeRows=typeDistribution(rows);
   const complete=rows.filter(row=>["completed","closed","active"].includes(row.status)).length;
   const alerts=rows.filter(row=>["past_due","suspended","cancelled","canceled","paused"].includes(row.status)).length;
   let page=doc.addPage(pageSize);
-  let y=pageSize[1]-36;
+  let y=pageSize[1]-112;
 
-  function drawLogo(target:any,x:number,top:number,maxW:number,maxH:number){
-    if(!logo)return;
-    const scale=Math.min(maxW/logo.width,maxH/logo.height,1);
-    const w=logo.width*scale,h=logo.height*scale;
-    target.drawImage(logo,{x,y:top-h,width:w,height:h});
+  function drawLogoCentered(target:any,top:number,maxW:number,maxH:number){
+    if(logo){
+      const scale=Math.min(maxW/logo.width,maxH/logo.height,1);
+      const w=logo.width*scale,h=logo.height*scale;
+      target.drawImage(logo,{x:(pageSize[0]-w)/2,y:top-h,width:w,height:h});
+      return;
+    }
+    const label=cleanText(branding.brandName);
+    const size=22;
+    const w=bold.widthOfTextAtSize(label,size);
+    target.drawText(label,{x:(pageSize[0]-w)/2,y:top-size,size,font:bold,color:secondary});
+  }
+  function drawWatermark(target:any){
+    const letter=branding.whiteLabel ? (cleanText(branding.brandName)[0]||"D").toUpperCase() : "D";
+    const size=250;
+    const width=bold.widthOfTextAtSize(letter,size);
+    target.drawText(letter,{x:(pageSize[0]-width)/2,y:154,size,font:bold,color:watermark,opacity:.32});
+    if(!branding.whiteLabel){
+      target.drawRectangle({x:pageSize[0]/2-92,y:205,width:80,height:94,color:rgb(.76,.97,.96),opacity:.45});
+      target.drawRectangle({x:pageSize[0]/2-92,y:205,width:80,height:30,color:primary,opacity:.16});
+    }
   }
   function letterhead(){
-    page.drawRectangle({x:0,y:pageSize[1]-88,width:pageSize[0],height:88,color:secondary});
-    page.drawRectangle({x:0,y:pageSize[1]-88,width:pageSize[0],height:5,color:primary});
-    if(logo)drawLogo(page,40,pageSize[1]-20,155,48);
-    else page.drawText(branding.brandName,{x:42,y:pageSize[1]-54,size:22,font:bold,color:white});
-    page.drawText("REPORTE EJECUTIVO",{x:pageSize[0]-210,y:pageSize[1]-42,size:10,font:bold,color:white});
-    page.drawText(cleanText(role),{x:pageSize[0]-210,y:pageSize[1]-58,size:8,font:regular,color:rgb(.83,.9,.91)});
+    page.drawRectangle({x:0,y:0,width:pageSize[0],height:pageSize[1],color:white});
+    drawLogoCentered(page,pageSize[1]-48,180,48);
+    drawWatermark(page);
   }
   function footer(){
     const pages=doc.getPages();
     for(const [index,p] of pages.entries()){
-      p.drawLine({start:{x:40,y:28},end:{x:802,y:28},thickness:.5,color:border});
-      p.drawText(cleanText(branding.reportOwner),{x:40,y:14,size:7,font:bold,color:secondary});
-      const powered=branding.whiteLabel&&!branding.showDeswebBranding?"":branding.whiteLabel?" · Tecnología Desweb CMMS":" · Desweb CMMS";
-      p.drawText(powered,{x:180,y:14,size:7,font:regular,color:soft});
-      p.drawText(String(index+1)+" / "+String(pages.length),{x:770,y:14,size:7,font:regular,color:soft});
+      const isDesweb=!branding.whiteLabel||branding.showDeswebBranding;
+      const slogan=isDesweb
+        ?"Donde la tecnología se encuentra con la visión, creamos el futuro juntos."
+        :cleanText(branding.reportOwner);
+      const sw=bold.widthOfTextAtSize(slogan,6.8);
+      p.drawText(slogan,{x:Math.max(38,(pageSize[0]-sw)/2),y:23,size:6.8,font:bold,color:dark});
+      p.drawText(String(index+1),{x:pageSize[0]-48,y:14,size:8,font:regular,color:dark});
     }
   }
   function newPage(){
     page=doc.addPage(pageSize);
     letterhead();
-    y=pageSize[1]-118;
+    y=pageSize[1]-112;
   }
   function card(x:number,top:number,w:number,label:string,value:string,hint:string){
-    page.drawRectangle({x,y:top-72,width:w,height:72,color:white,borderColor:border,borderWidth:.7});
-    page.drawRectangle({x,y:top-72,width:4,height:72,color:primary});
-    page.drawText(label.toUpperCase(),{x:x+14,y:top-20,size:7,font:bold,color:soft});
-    page.drawText(value,{x:x+14,y:top-45,size:18,font:bold,color:secondary});
-    page.drawText(hint,{x:x+14,y:top-61,size:7,font:regular,color:soft});
+    page.drawRectangle({x,y:top-66,width:w,height:66,color:white,borderColor:border,borderWidth:.7,opacity:.97});
+    page.drawRectangle({x,y:top-66,width:4,height:66,color:primary});
+    page.drawText(label.toUpperCase(),{x:x+14,y:top-18,size:7,font:bold,color:soft});
+    page.drawText(value,{x:x+14,y:top-42,size:17,font:bold,color:secondary});
+    page.drawText(hint,{x:x+14,y:top-57,size:6.8,font:regular,color:soft});
   }
-  function barChart(x:number,top:number,w:number,h:number,title:string,data:{label:string;count:number}[]){
-    page.drawText(title,{x,y:top,size:10,font:bold,color:secondary});
+  function barChart(x:number,top:number,w:number,title:string,data:{label:string;count:number}[]){
+    page.drawRectangle({x,y:top-156,width:w,height:164,color:white,borderColor:border,borderWidth:.6,opacity:.97});
+    page.drawText(title,{x:x+12,y:top-16,size:10,font:bold,color:secondary});
     const list=data.slice(0,6);
     const max=Math.max(...list.map(row=>row.count),1);
-    let cy=top-22;
+    let cy=top-39;
     for(const item of list){
-      page.drawText(cleanText(item.label).slice(0,26),{x,y:cy,size:7.5,font:regular,color:dark});
-      const bx=x+120,bw=w-150;
-      page.drawRectangle({x:bx,y:cy-2,width:bw,height:8,color:pale});
-      page.drawRectangle({x:bx,y:cy-2,width:bw*(item.count/max),height:8,color:primary});
-      page.drawText(String(item.count),{x:x+w-24,y:cy,size:7.5,font:bold,color:secondary});
-      cy-=24;
+      page.drawText(cleanText(item.label).slice(0,23),{x:x+12,y:cy,size:7,font:regular,color:dark});
+      const bx=x+116,bw=w-154;
+      page.drawRectangle({x:bx,y:cy-1,width:bw,height:7,color:pale});
+      page.drawRectangle({x:bx,y:cy-1,width:bw*(item.count/max),height:7,color:primary});
+      page.drawText(String(item.count),{x:x+w-25,y:cy,size:7,font:bold,color:secondary});
+      cy-=20;
     }
-    if(!list.length)page.drawText("Sin datos para graficar.",{x,y:top-28,size:8,font:regular,color:soft});
-    return Math.max(h,Math.max(list.length,1)*24+28);
+    if(!list.length)page.drawText("Sin datos para graficar.",{x:x+12,y:top-42,size:8,font:regular,color:soft});
   }
 
-  // Cover / executive summary
   letterhead();
-  y=pageSize[1]-122;
-  page.drawText("Informe de Dashboard",{x:42,y,size:24,font:bold,color:secondary});
-  page.drawText(cleanText(branding.reportOwner),{x:42,y:y-22,size:11,font:bold,color:primary});
-  page.drawText("Periodo: "+cleanText(period),{x:42,y:y-42,size:9,font:regular,color:dark});
-  page.drawText(cleanText(filters),{x:42,y:y-57,size:8,font:regular,color:soft});
-  page.drawText("Generado: "+new Date().toLocaleString("es-CO"),{x:600,y:y-42,size:7.5,font:regular,color:soft});
-  y-=86;
+  page.drawText("INFORME EJECUTIVO DE DASHBOARD",{x:42,y:y,size:18,font:bold,color:secondary});
+  page.drawText(cleanText(branding.reportOwner)+" · "+cleanText(role),{x:42,y:y-20,size:9.5,font:bold,color:primary});
+  page.drawText("Periodo: "+cleanText(period),{x:42,y:y-38,size:8,font:regular,color:dark});
+  page.drawText(cleanText(filters),{x:42,y:y-53,size:7.5,font:regular,color:soft});
+  page.drawText("Generado: "+new Date().toLocaleString("es-CO"),{x:620,y:y-38,size:7,font:regular,color:soft});
+  y-=76;
 
-  card(42,y,175,"Registros",String(rows.length),"Elementos del periodo");
-  card(229,y,175,"Cumplidos",String(complete),rows.length?String(Math.round(complete/rows.length*100))+"% del total":"Sin registros");
-  card(416,y,175,"Alertas",String(alerts),"Estados que requieren revisión");
-  card(603,y,197,"Estados",String(statusRows.length),"Categorías presentes");
-  y-=102;
+  card(42,y,176,"Registros",String(rows.length),"Elementos del periodo");
+  card(230,y,176,"Cumplidos",String(complete),rows.length?String(Math.round(complete/rows.length*100))+"% del total":"Sin registros");
+  card(418,y,176,"Alertas",String(alerts),"Estados que requieren revisión");
+  card(606,y,194,"Estados",String(statusRows.length),"Categorías presentes");
+  y-=88;
 
-  const chartHeight=barChart(42,y,360,150,"Distribución por estado",statusRows);
-  barChart(438,y,360,150,"Distribución por tipo",typeRows);
-  y-=chartHeight+20;
+  barChart(42,y,365,"Distribución por estado",statusRows);
+  barChart(435,y,365,"Distribución por tipo",typeRows);
+  y-=178;
 
-  page.drawRectangle({x:42,y:y-54,width:756,height:54,color:pale,borderColor:border,borderWidth:.6});
-  page.drawText("LECTURA EJECUTIVA",{x:56,y:y-18,size:7,font:bold,color:primary});
+  page.drawRectangle({x:42,y:y-46,width:758,height:46,color:white,borderColor:border,borderWidth:.6,opacity:.97});
+  page.drawText("LECTURA EJECUTIVA",{x:55,y:y-16,size:7,font:bold,color:primary});
   const insight=rows.length
-    ? "El reporte consolida los registros visibles para el rol y filtros seleccionados. Revise los estados con mayor volumen y las alertas para priorizar acciones."
-    : "No se encontraron registros para el periodo y filtros seleccionados.";
-  wrap(insight,regular,8,720).slice(0,3).forEach((line,index)=>page.drawText(line,{x:56,y:y-34-index*10,size:8,font:regular,color:dark}));
+    ?"El reporte consolida los registros visibles para el rol y filtros seleccionados. Revise los estados con mayor volumen y las alertas para priorizar acciones."
+    :"No se encontraron registros para el periodo y filtros seleccionados.";
+  wrap(insight,regular,7.5,720).slice(0,2).forEach((line,index)=>page.drawText(line,{x:55,y:y-30-index*9,size:7.5,font:regular,color:dark}));
 
-  // Detailed records
   newPage();
-  page.drawText("Detalle de registros",{x:42,y,size:15,font:bold,color:secondary});
-  page.drawText("Trazabilidad del periodo seleccionado",{x:42,y:y-16,size:8,font:regular,color:soft});
-  y-=36;
+  page.drawText("DETALLE DE REGISTROS",{x:42,y,size:14,font:bold,color:secondary});
+  page.drawText("Trazabilidad del periodo seleccionado",{x:42,y:y-15,size:7.5,font:regular,color:soft});
+  y-=34;
   const columnX=[42,112,180,280,465,535];
   const columnW=[64,62,94,179,64,260];
   const headers=["Tipo","Fecha","Referencia","Entidad / asunto","Estado","Detalle / valor"];
-  headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:8,font:bold,color:secondary}));
-  y-=14;
-  page.drawLine({start:{x:42,y},end:{x:800,y},thickness:.7,color:border});
-  y-=10;
+  const drawTableHeader=()=>{
+    page.drawRectangle({x:38,y:y-5,width:766,height:18,color:rgb(.96,.98,.98),opacity:.96});
+    headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:7.5,font:bold,color:secondary}));
+    y-=20;
+  };
+  drawTableHeader();
 
   for(const row of rows.slice(0,350)){
     const cells=[row.type,row.date,row.reference,row.subject,statusLabel(row.status),row.detail+(row.value?" | "+row.value:"")];
-    const wrapped=cells.map((cell,i)=>wrap(cell,regular,7.5,columnW[i]));
+    const wrapped=cells.map((cell,i)=>wrap(cell,regular,7,columnW[i]));
     const lineCount=Math.max(...wrapped.map(lines=>lines.length));
-    const rowHeight=Math.max(22,lineCount*10+8);
-    if(y-rowHeight<45){
+    const rowHeight=Math.max(21,lineCount*9+7);
+    if(y-rowHeight<48){
       newPage();
-      headers.forEach((h,i)=>page.drawText(h,{x:columnX[i],y,size:8,font:bold,color:secondary}));
-      y-=22;
+      page.drawText("DETALLE DE REGISTROS (continuación)",{x:42,y,size:12,font:bold,color:secondary});
+      y-=24;
+      drawTableHeader();
     }
+    page.drawRectangle({x:38,y:y-rowHeight+5,width:766,height:rowHeight,color:white,opacity:.93});
     wrapped.forEach((lines,i)=>{
-      lines.slice(0,5).forEach((line,j)=>page.drawText(line,{x:columnX[i],y:y-j*10,size:7.5,font:regular,color:dark}));
+      lines.slice(0,5).forEach((line,j)=>page.drawText(line,{x:columnX[i],y:y-j*9,size:7,font:regular,color:dark}));
     });
     y-=rowHeight;
-    page.drawLine({start:{x:42,y:y+4},end:{x:800,y:y+4},thickness:.35,color:border});
+    page.drawLine({start:{x:42,y:y+4},end:{x:800,y:y+4},thickness:.3,color:border});
   }
-  if(!rows.length)page.drawText("No hay registros para los filtros seleccionados.",{x:42,y,size:10,font:regular,color:soft});
+  if(!rows.length)page.drawText("No hay registros para los filtros seleccionados.",{x:42,y,size:9,font:regular,color:soft});
 
   footer();
   return doc.save();
@@ -401,7 +574,8 @@ export async function GET(request:Request){
   const session=await getSession();
   if(!session) return new NextResponse("Unauthorized",{status:401});
   const url=new URL(request.url);
-  const format=url.searchParams.get("format")==="pdf"?"pdf":"powerbi";
+  const requestedFormat=url.searchParams.get("format");
+  const format=requestedFormat==="pdf"||requestedFormat==="xlsx"||requestedFormat==="csv" ? requestedFormat : "csv";
   const input:DashboardFilterInput={
     month:url.searchParams.get("month")||undefined,
     from:url.searchParams.get("from")||undefined,
@@ -418,12 +592,12 @@ export async function GET(request:Request){
   else rows=await operationRows(session,filters);
 
   const stamp=new Date().toISOString().slice(0,10);
-  if(format==="powerbi"){
+  if(format==="csv"){
     const body=csv(rows);
     return new NextResponse(body,{
       headers:{
         "Content-Type":"text/csv; charset=utf-8",
-        "Content-Disposition":'attachment; filename="desweb-dashboard-powerbi-'+stamp+'.csv"',
+        "Content-Disposition":'attachment; filename="dashboard-'+stamp+'.csv"',
         "Cache-Control":"no-store",
       },
     });
@@ -434,6 +608,17 @@ export async function GET(request:Request){
     filters.activityStatus!=="all"?"Estado: "+filters.activityStatus:"",
   ].filter(Boolean).join(" · ")||"Sin filtros de estado";
   const branding=await getReportBranding(session);
+  if(format==="xlsx"){
+    const bytes=await excelReport(roleLabel(session),filters.label,filterDescription,rows,branding);
+    return new NextResponse(bytes,{
+      headers:{
+        "Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition":'attachment; filename="dashboard-'+stamp+'.xlsx"',
+        "Cache-Control":"no-store",
+      },
+    });
+  }
+
   const bytes=await pdfReport(roleLabel(session),filters.label,filterDescription,rows,branding);
   return new NextResponse(Buffer.from(bytes),{
     headers:{

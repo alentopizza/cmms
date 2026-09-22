@@ -488,3 +488,8 @@ The responsive dashboard now integrates the drawer trigger directly into the con
 ### Opaque popup readability
 
 Emergent reading/decision surfaces now use opaque theme-aware backgrounds. Dashboard date-range and export popovers, account menus, action panels, confirmation dialogs and application modals no longer allow underlying page text to show through their bodies. The dimensional visual language is preserved through borders, solid tonal gradients and elevation shadows instead of transparency.
+
+
+### Persistent module-header distinction
+
+All authenticated modules now use a dedicated opaque contextual-header surface that is visually distinct from the cards and panels scrolling underneath it. The shared header uses theme-aware module-header tokens, stronger lower elevation and a restrained teal lower accent so its sticky position remains obvious during navigation and long-directory scrolling.

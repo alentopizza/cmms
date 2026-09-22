@@ -493,3 +493,10 @@ Emergent reading/decision surfaces now use opaque theme-aware backgrounds. Dashb
 ### Persistent module-header distinction
 
 All authenticated modules now use a dedicated opaque contextual-header surface that is visually distinct from the cards and panels scrolling underneath it. The shared header uses theme-aware module-header tokens, stronger lower elevation and a restrained teal lower accent so its sticky position remains obvious during navigation and long-directory scrolling.
+
+
+### Compact company and location directories
+
+Company and location directories now prioritize scan density. Desktop layouts target four compact cards per row. Company resource consumption is represented by icon actions that show used/assigned capacity and navigate directly to the associated module, while the main card interaction remains dedicated to opening entity detail. Principal-location cards use the same compact visual language with shortcuts to sublocations and assets.
+
+Company creation now requires a logo at both client and server level. The logo is the canonical circular identity image used by company/location cards; cover imagery is optional.

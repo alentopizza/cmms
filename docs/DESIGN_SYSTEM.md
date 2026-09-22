@@ -452,3 +452,32 @@ Dashboard-specific controls belong below that header:
 - KPI cards.
 
 Avoid repeating role, title, explanatory copy or period in a second large panel when those elements are already represented by the shared shell and filter controls.
+
+
+## Dashboard export menu
+
+Dashboard exports are consolidated under one **Exportar** control instead of separate format buttons.
+
+The menu exposes:
+- **Excel (.xlsx)**: styled workbook with executive summary, status/type distributions, detailed data and metadata;
+- **CSV (.csv)**: flat UTF-8 dataset suitable for Power BI / Power Query and general interoperability;
+- **PDF (.pdf)**: executive report with KPI cards, charts, detailed records and corporate letterhead styling.
+
+### PDF letterhead
+
+Desweb platform/non-Pro PDF reports follow the supplied A4 landscape letterhead language:
+- centered Desweb identity at the top;
+- large pale brand watermark in the document body;
+- clean white business-report canvas;
+- Desweb slogan centered near the footer;
+- page number at the lower-right corner.
+
+The report data overlays this stationery while preserving sufficient white space and legibility.
+
+Pro white-label tenants retain the same report composition but substitute their own:
+- name/logo;
+- primary and secondary colors;
+- watermark initial/brand treatment;
+- Desweb attribution according to `show_desweb_branding`.
+
+A future portrait/vertical stationery variant should plug into the same report renderer without changing export permissions, filtering or dataset semantics.

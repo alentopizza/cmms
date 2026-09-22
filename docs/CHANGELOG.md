@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-21 — Mobile account access and export overlay fix
+
+### Changed
+
+- Replaced the landing header text account action with a compact user-icon button.
+- The account icon routes to Login when signed out and directly to Dashboard when a session already exists.
+- Kept the account control visible in the mobile landing header alongside the 15-day trial CTA.
+- Styled the account control with the approved shared button geometry, icon sizing, elevation, hover, press and focus states.
+- Fixed the Dashboard **Exportar** menu stacking by elevating the full filter-bar stacking context while the popover is open and preserving visible overflow.
+- No export permissions, formats or report data semantics changed.
+
+
 ## 2026-09-21 — Reference-grid sitewide component system
 
 ### Changed

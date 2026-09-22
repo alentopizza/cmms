@@ -125,7 +125,7 @@ export default function DashboardSidebar({
 
   const mobileSecondaryItems = useMemo(() => {
     const primaryIds = new Set(mobileFieldItems.map(item => item.id));
-    return orderedItems.filter(item => !primaryIds.has(item.id) && item.id !== "help");
+    return orderedItems.filter(item => !primaryIds.has(item.id) && item.id !== "help" && item.id !== "preferences");
   }, [orderedItems, mobileFieldItems]);
 
   const mobileFieldHasOtherActive = mobileNavigationMode === "field" &&

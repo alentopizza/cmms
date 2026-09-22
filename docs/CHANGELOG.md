@@ -9,6 +9,7 @@
 - Added shared structured manual content for navigation, company/site setup, geofence, users, supervised biometrics, field presence, contingency, assets, work orders and settings.
 - Added role selector, full-platform overview mode, search and **Qué cambió** feed.
 - Added Manual/Ayuda to dashboard navigation, account menu and field-mobile **Más** sheet.
+- Added public landing navigation to `/manual`.
 - Added repository invariant requiring user-facing workflow changes to review/update the manual in the same implementation.
 
 ## 2026-09-21 — Attendance contingency phase 4B

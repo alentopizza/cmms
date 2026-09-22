@@ -5544,3 +5544,53 @@ html[data-theme="dark"] .location-detail-modal,
 html[data-theme="dark"] .confirm-dialog{
   box-shadow:0 32px 92px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.04);
 }
+
+
+/* Distinct sticky module header surface
+   The contextual module header must read as a persistent navigation layer,
+   not as another content card when the workspace scrolls beneath it. */
+:root{
+  --module-header-surface:#e9f4f4;
+  --module-header-surface-strong:#deeeee;
+  --module-header-border:#b9d8d7;
+  --module-header-shadow:0 12px 28px rgba(37,72,78,.14),0 3px 8px rgba(37,72,78,.07),inset 0 1px 0 rgba(255,255,255,.76);
+}
+html[data-theme="dark"]{
+  --module-header-surface:#1b2b37;
+  --module-header-surface-strong:#203744;
+  --module-header-border:#3d5964;
+  --module-header-shadow:0 14px 32px rgba(0,0,0,.38),0 4px 10px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+.context-header{
+  background:
+    linear-gradient(135deg,var(--module-header-surface-strong),var(--module-header-surface))!important;
+  border-color:var(--module-header-border)!important;
+  box-shadow:var(--module-header-shadow)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.context-header:after{
+  content:"";
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:-1px;
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,var(--brand-teal),transparent);
+  opacity:.46;
+  pointer-events:none;
+}
+html[data-theme="dark"] .context-header{
+  background:
+    linear-gradient(135deg,var(--module-header-surface-strong),var(--module-header-surface))!important;
+  border-color:var(--module-header-border)!important;
+  box-shadow:var(--module-header-shadow)!important;
+}
+@media(max-width:900px){
+  .context-header:after{
+    left:12px;
+    right:12px;
+  }
+}

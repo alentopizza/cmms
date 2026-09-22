@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -36,6 +37,9 @@ export type CompanyDirectoryItem = {
   city: string | null;
   country: string | null;
   address: string | null;
+  site_latitude: number | null;
+  site_longitude: number | null;
+  site_geofence_radius_m: number | null;
   has_logo: boolean;
   has_cover: boolean;
 };
@@ -296,16 +300,11 @@ export default function CompanyDirectory({
               <div className="form-grid">
                 <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
-                <div className="field form-span-2"><label htmlFor="detail-address">Dirección</label><input id="detail-address" name="address" defaultValue={selected.address || ""} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
               </div>
 
-              <div className="company-geofence-prep">
-                <span className="company-geofence-prep-icon" aria-hidden="true">⌖</span>
-                <div><strong>Geocerca de asistencia</strong><p>Esta sede será el punto de validación para mapa, coordenadas y radio permitido. La configuración interactiva se incorpora en la siguiente fase.</p></div>
-                <span className="status-badge">Preparada</span>
-              </div>
+              <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.site_latitude} initialLongitude={selected.site_longitude} initialRadius={selected.site_geofence_radius_m || 250} cityHint={selected.city} countryHint={selected.country} readOnly={!editing} addressRequired coordinateRequired />
             </div>
           </details>
 

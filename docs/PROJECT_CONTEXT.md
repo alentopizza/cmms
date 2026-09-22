@@ -521,3 +521,8 @@ Existing sites without coordinates remain readable but are marked pending; editi
 Field attendance now distinguishes site presence from assigned maintenance work. Technicians/external field users may open a biometric attendance shift with no assigned activities; the shift records that the authenticated person is physically present and available at an authorized site. Later task execution events can correlate against the already-open shift.
 
 The client validates GPS/geofence first, then activates live facial verification. The mobile workspace shows site map/radius, current-device location, GPS accuracy, range state, biometric enrollment and the primary **Iniciar actividades** action. The server-side attendance clock continues to repeat authorization, GPS accuracy, distance and facial checks before persistence.
+
+
+### Attendance default availability
+
+Attendance is operational by default for organizations that have never configured a policy. The default self-service role set is Admin, Manager, Technician, Provider and External collaborator, matching roles that have `attendance.self`. Explicitly disabled policies remain disabled. Existing organizations without a policy are backfilled by migration `017_attendance_policy_defaults.sql`; new organizations receive the policy during onboarding.

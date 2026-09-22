@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-21 — Attendance availability fix
+
+### Fixed
+
+- Fixed the Attendance module showing “not enabled” for organizations that had never created an attendance policy.
+- Centralized an enabled-by-default attendance policy for self-service roles: Admin, Manager, Technician, Provider and External collaborator.
+- Preserved explicitly disabled organization policies.
+- Added migration 017 to create missing attendance-policy rows for existing organizations and update database defaults.
+- New organizations now receive an attendance policy during creation.
+- Platform operators with organization context may validate the module without being rejected only because their session has no tenant role.
+
 ## 2026-09-21 — Field presence workflow phase 3
 
 ### Changed

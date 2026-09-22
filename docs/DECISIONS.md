@@ -260,3 +260,24 @@ Therefore:
 - forced updates/deletes are recorded in `audit_log`.
 
 Before commercial release, destructive owner behavior must be hardened with the previously approved reauthentication/MFA/approval/retention controls.
+
+
+## ADR-029 — Supervised facial enrollment establishes biometric identity
+
+Status: accepted.
+
+A live facial template proves continuity with a previously enrolled face, but self-enrollment alone cannot prove that the first enrolled face belongs to the account holder. Therefore Desweb CMMS uses supervised initial enrollment.
+
+Rules:
+- an authorized company Admin or Manager selects the user and enrollment site;
+- the person must be physically present;
+- the supervisor uses the profile photo/account record only as a human identity aid;
+- the supervisor explicitly confirms identity and consent;
+- the browser captures a live face with liveness/anti-spoof checks;
+- only the numeric embedding is persisted, encrypted at rest;
+- the server records supervisor, site, method and timestamp;
+- existing legacy self-enrolled templates are not trusted for attendance until supervised reenrollment;
+- users cannot self-replace or self-revoke their biometric template;
+- revocation removes the usable encrypted template while preserving non-biometric audit metadata.
+
+This remains 1:1 verification of an authenticated account. It is not face search or company-wide biometric identification.

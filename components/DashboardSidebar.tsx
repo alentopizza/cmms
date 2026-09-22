@@ -125,11 +125,11 @@ export default function DashboardSidebar({
 
   const mobileSecondaryItems = useMemo(() => {
     const primaryIds = new Set(mobileFieldItems.map(item => item.id));
-    return orderedItems.filter(item => !primaryIds.has(item.id));
+    return orderedItems.filter(item => !primaryIds.has(item.id) && item.id !== "help");
   }, [orderedItems, mobileFieldItems]);
 
   const mobileFieldHasOtherActive = mobileNavigationMode === "field" &&
-    mobileSecondaryItems.some(item => isActive(pathname,item.href));
+    (mobileSecondaryItems.some(item => isActive(pathname,item.href)) || pathname.startsWith("/dashboard/help"));
 
   function persist(nextOrder = order, nextCollapsed = collapsed) {
     if (!persistentUser) {

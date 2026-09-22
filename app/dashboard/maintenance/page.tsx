@@ -10,6 +10,8 @@ import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
 
+// ── Responsive maintenance directory: desktop table + mobile cards ─────────
+
 export default async function MaintenancePage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -76,7 +78,35 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       action={creationGate.action || "Continuar"}
     />}
     {creationGate.ready && <section className="card section"><p>Desde el módulo puedes escoger el activo. Si creas la rutina entrando al activo, esa relación queda preseleccionada automáticamente.</p></section>}
-    <section className="section"><table className="table"><thead><tr><th>Plan</th><th>Empresa</th><th>Equipo</th><th>Frecuencia</th><th>Próximo vencimiento</th>{owner&&<th>Acciones</th>}</tr></thead>
+    <section className="section maintenance-directory-section">
+      <div className="maintenance-mobile-list">
+        {plans.rows.map(p=><article key={p.id} className="maintenance-mobile-card" data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.frequency_unit].filter(Boolean).join(" ")}>
+          <div className="maintenance-mobile-main">
+            <div className="maintenance-mobile-icon" aria-hidden="true">↻</div>
+            <div className="maintenance-mobile-copy">
+              <span>{p.active?"Rutina activa":"Rutina inactiva"}</span>
+              <strong>{p.name}</strong>
+              <small>{p.asset}</small>
+            </div>
+            <span className={"status "+(p.active?"status-active":"status-inactive")}>{p.active?"Activa":"Inactiva"}</span>
+          </div>
+          <div className="maintenance-mobile-meta">
+            <div><span>Empresa</span><strong>{p.company}</strong></div>
+            <div><span>Frecuencia</span><strong>Cada {p.frequency_value} {p.frequency_unit}</strong></div>
+            <div className="maintenance-mobile-meta-wide"><span>Próximo vencimiento</span><strong>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</strong></div>
+          </div>
+          {owner&&<div className="maintenance-mobile-footer"><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+            {name:"name",label:"Nombre",value:p.name},
+            {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
+            {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[
+              {value:"day",label:"Día"},{value:"week",label:"Semana"},{value:"month",label:"Mes"},{value:"year",label:"Año"},{value:"meter",label:"Medidor"}
+            ]},
+            {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date"},
+            {name:"active",label:"Estado",value:p.active,type:"checkbox"},
+          ]}/></div>}
+        </article>)}
+      </div>
+      <table className="table maintenance-directory-table"><thead><tr><th>Plan</th><th>Empresa</th><th>Equipo</th><th>Frecuencia</th><th>Próximo vencimiento</th>{owner&&<th>Acciones</th>}</tr></thead>
       <tbody>{plans.rows.map(p=><tr key={p.id} data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.frequency_unit].filter(Boolean).join(" ")}><td><strong>{p.name}</strong></td><td>{p.company}</td><td>{p.asset}</td><td>Cada {p.frequency_value} {p.frequency_unit}</td><td>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</td>{owner&&<td><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
         {name:"name",label:"Nombre",value:p.name},
         {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},

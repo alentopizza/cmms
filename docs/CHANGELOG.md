@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-22 — Google Maps production geolocation stack
+
+### Changed
+
+- Google Maps JavaScript API is now the preferred interactive geofence map provider when configured.
+- Google Geocoding API is now the preferred server-side address validation provider.
+- Added environment configuration for browser Maps key, optional Map ID and server-only Geocoding key.
+- Kept device GPS and server geofence validation independent from cartography.
+- Kept supervised 1:1 facial recognition independent from Google Maps; attendance continues to combine location and identity as separate controls.
+- Retained OSM/Nominatim as a temporary operational fallback while Google credentials are unavailable.
+
 ## 2026-09-22 — Personal settings navigation cleanup
 
 ### Changed

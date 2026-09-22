@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
-
-declare global {
-  interface Window {
-    Human?: any;
-  }
-}
+import { captureLiveFace, loadBiometricEngine, type FaceCapture } from "@/lib/client-biometric";
 
 type Site = {
   id:string;
@@ -29,12 +24,6 @@ type Props = {
   livenessThreshold: number;
 };
 
-type Capture = {
-  embedding:number[];
-  live:number;
-  real:number;
-};
-
 type GpsFix = {
   latitude:number;
   longitude:number;
@@ -43,16 +32,6 @@ type GpsFix = {
 };
 
 type Phase = "idle"|"gps"|"face"|"saving";
-
-function average(vectors:number[][]) {
-  const length=vectors[0]?.length || 0;
-  const result=new Array<number>(length).fill(0);
-  for(const vector of vectors){
-    for(let i=0;i<length;i+=1) result[i]+=vector[i]/vectors.length;
-  }
-  const norm=Math.sqrt(result.reduce((sum,value)=>sum+value*value,0)) || 1;
-  return result.map(value=>value/norm);
-}
 
 function haversineMeters(lat1:number,lon1:number,lat2:number,lon2:number) {
   const r=6371000;
@@ -152,76 +131,22 @@ export default function AttendanceCapture({
   async function ensureHuman() {
     if(humanRef.current)return humanRef.current;
     setMessage("Cargando verificación facial…");
-    if(!window.Human){
-      await new Promise<void>((resolve,reject)=>{
-        const existing=document.querySelector<HTMLScriptElement>('script[data-biometric-human="true"]');
-        if(existing){
-          if(window.Human){resolve();return;}
-          existing.addEventListener("load",()=>resolve(),{once:true});
-          existing.addEventListener("error",()=>reject(new Error("No fue posible cargar el motor biométrico.")),{once:true});
-          return;
-        }
-        const script=document.createElement("script");
-        script.src="/biometric-human.js";
-        script.async=true;
-        script.dataset.biometricHuman="true";
-        script.onload=()=>resolve();
-        script.onerror=()=>reject(new Error("No fue posible cargar el motor biométrico."));
-        document.head.appendChild(script);
-      });
-    }
-    const namespace=window.Human;
-    const HumanCtor=namespace?.Human||namespace?.default||namespace;
-    if(typeof HumanCtor!=="function")throw new Error("El motor biométrico no está disponible.");
-    const human=new HumanCtor({
-      backend:"webgl",
-      modelBasePath:"/biometric-models/",
-      face:{
-        enabled:true,
-        detector:{enabled:true,maxDetected:1,minConfidence:0.65},
-        mesh:{enabled:true},
-        description:{enabled:true},
-        antispoof:{enabled:true},
-        liveness:{enabled:true},
-        emotion:{enabled:false},
-        iris:{enabled:false},
-      },
-      body:{enabled:false},
-      hand:{enabled:false},
-      object:{enabled:false},
-      segmentation:{enabled:false},
-      gesture:{enabled:false},
-      cacheSensitivity:0,
-    });
-    await human.load();
+    const human=await loadBiometricEngine();
     humanRef.current=human;
     setModelReady(true);
     return human;
   }
 
-  async function captureFace(samples=2):Promise<Capture>{
+  async function captureFace(samples=2):Promise<FaceCapture>{
     await ensureCamera();
     const human=await ensureHuman();
     if(!videoRef.current)throw new Error("No se pudo iniciar la cámara.");
-
-    const embeddings:number[][]=[];
-    let minLive=1;
-    let minReal=1;
-    for(let attempt=0;attempt<samples;attempt+=1){
-      if(attempt)await new Promise(resolve=>setTimeout(resolve,550));
-      const result=await human.detect(videoRef.current);
-      if(result.face.length!==1)throw new Error(result.face.length>1?"Debe aparecer una sola persona frente a la cámara.":"No se detectó un rostro. Mira de frente a la cámara.");
-      const face=result.face[0];
-      if(!face.embedding?.length)throw new Error("No fue posible generar la plantilla facial.");
-      const live=Number(face.live);
-      const real=Number(face.real);
-      if(!Number.isFinite(live)||!Number.isFinite(real))throw new Error("No fue posible comprobar presencia real.");
-      if(live<livenessThreshold||real<livenessThreshold)throw new Error("La prueba de presencia no fue suficiente. Evita fotos o pantallas y mejora la iluminación.");
-      embeddings.push(face.embedding.map(Number));
-      minLive=Math.min(minLive,live);
-      minReal=Math.min(minReal,real);
-    }
-    return{embedding:average(embeddings),live:minLive,real:minReal};
+    return captureLiveFace({
+      human,
+      video:videoRef.current,
+      livenessThreshold,
+      samples,
+    });
   }
 
   function chooseNearestSite(fix:GpsFix,preferredId:string){

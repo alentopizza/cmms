@@ -483,3 +483,8 @@ The landing header now always exposes a compact user-icon account action on desk
 ### Mobile dashboard drawer stabilization
 
 The responsive dashboard now integrates the drawer trigger directly into the contextual header. The mobile drawer explicitly renders above a non-blurred overlay and overrides legacy generic sidebar hiding rules, resolving the previous state where the page dimmed/blurred but authorized navigation modules were not visible. Landing account access also uses increased icon contrast for compact screens.
+
+
+### Opaque popup readability
+
+Emergent reading/decision surfaces now use opaque theme-aware backgrounds. Dashboard date-range and export popovers, account menus, action panels, confirmation dialogs and application modals no longer allow underlying page text to show through their bodies. The dimensional visual language is preserved through borders, solid tonal gradients and elevation shadows instead of transparency.

@@ -147,6 +147,12 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const siteLatitudeRaw = String(form.get("latitude") || "").trim();
+  const siteLongitudeRaw = String(form.get("longitude") || "").trim();
+  const siteRadiusRaw = String(form.get("geofence_radius_m") || "250").trim();
+  const siteLatitude = siteLatitudeRaw ? Number(siteLatitudeRaw) : null;
+  const siteLongitude = siteLongitudeRaw ? Number(siteLongitudeRaw) : null;
+  const siteRadius = Number.parseInt(siteRadiusRaw, 10);
   const canManageResources = can(session, "company_resources.manage");
   const resourceLimits = canManageResources ? {
     max_sites: positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
@@ -196,11 +202,17 @@ export async function POST(
       }
 
       if (primarySiteId && UUID_PATTERN.test(primarySiteId)) {
+        if (!address || !city || !country || siteLatitude === null || siteLongitude === null ||
+            !Number.isFinite(siteLatitude) || siteLatitude < -90 || siteLatitude > 90 ||
+            !Number.isFinite(siteLongitude) || siteLongitude < -180 || siteLongitude > 180 ||
+            !Number.isFinite(siteRadius) || siteRadius < 20 || siteRadius > 5000) {
+          throw new Error("SITE_GEOFENCE_REQUIRED");
+        }
         await client.query(
           `UPDATE sites
-           SET name=$1,code=$2,address=$3,city=$4,country=$5
-           WHERE id=$6 AND organization_id=$7`,
-          [siteName || "Sede principal", siteCode || null, address || null, city || null, country || "CO", primarySiteId, id],
+           SET name=$1,code=$2,address=$3,city=$4,country=$5,latitude=$6,longitude=$7,geofence_radius_m=$8
+           WHERE id=$9 AND organization_id=$10`,
+          [siteName || "Sede principal", siteCode || null, address, city, country || "CO", siteLatitude, siteLongitude, siteRadius, primarySiteId, id],
         );
       }
 
@@ -254,6 +266,7 @@ export async function POST(
   } catch (error) {
     const errorCode = error instanceof ImageUploadError
       ? error.code
+      : error instanceof Error && error.message === "SITE_GEOFENCE_REQUIRED" ? "site-geofence"
       : (error as { code?: string }).code === "23505" ? "duplicate" : "save";
     const target = returnToDirectory
       ? directoryUrl(request.url, `?error=${errorCode}`)

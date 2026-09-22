@@ -15,6 +15,8 @@ type Policy = {
   liveness_threshold:number;
 };
 
+// ── Server-authoritative presence verification ──────────────────────────────
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session || !session.userId || !session.organizationId) {
@@ -118,12 +120,16 @@ export async function POST(request: Request) {
 
       const profileResult = await client.query<{ encrypted_embedding:Buffer }>(
         `SELECT encrypted_embedding FROM user_biometric_profiles
-         WHERE user_id=$1 AND organization_id=$2 AND revoked_at IS NULL`,
+         WHERE user_id=$1 AND organization_id=$2
+           AND revoked_at IS NULL
+           AND encrypted_embedding IS NOT NULL
+           AND enrollment_method='supervised_camera'
+           AND identity_verified_at IS NOT NULL`,
         [session.userId, session.organizationId],
       );
       if (!profileResult.rowCount) {
         await client.query("ROLLBACK");
-        return NextResponse.json({ message: "Primero debes registrar tu biometría facial." }, { status: 409 });
+        return NextResponse.json({ message: "Tu biometría debe ser enrolada y verificada presencialmente por un Administrador o Manager." }, { status: 409 });
       }
 
       const enrolled = decryptEmbedding(profileResult.rows[0].encrypted_embedding);

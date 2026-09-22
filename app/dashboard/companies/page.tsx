@@ -56,7 +56,7 @@ export default async function CompaniesPage({
         COALESCE(ol.max_assets,500)::text max_assets,
         COALESCE(ol.max_inventory_items,1000)::text max_inventory_items,
         COALESCE(ol.max_technicians,50)::text max_technicians,
-        s.id site_id,s.name site_name,s.code site_code,s.city,s.country,s.address,
+        s.id site_id,s.name site_name,s.code site_code,s.city,s.country,s.address,s.latitude site_latitude,s.longitude site_longitude,s.geofence_radius_m site_geofence_radius_m,
         (o.logo_data IS NOT NULL) has_logo,
         (o.cover_data IS NOT NULL) has_cover
        FROM organizations o
@@ -64,7 +64,7 @@ export default async function CompaniesPage({
        LEFT JOIN organization_subscriptions os ON os.organization_id=o.id
        LEFT JOIN billing_plans bp ON bp.id=os.plan_id
        LEFT JOIN LATERAL (
-         SELECT id,name,code,city,country,address
+         SELECT id,name,code,city,country,address,latitude,longitude,geofence_radius_m
          FROM sites
          WHERE organization_id=o.id
          ORDER BY active DESC,created_at ASC

@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-21 — Attendance contingency phase 4B
+
+### Added
+
+- Added audited attendance contingency requests for camera, GPS, precision, geofence, connectivity, device and other operational failures.
+- Added supervisor review with approve/reject decision and optional note.
+- Approved requests create a 30-minute, single-use attendance authorization.
+- Added one-time contingency check-in/check-out endpoint that preserves available GPS evidence while explicitly recording verification mode as `contingency`.
+- Added contingency request/review UI inside Attendance.
+- Added contingency counts to 30-day attendance reports.
+- Added migration `019_attendance_contingency.sql`.
+
+### Security / behavior
+
+- Contingency requires an existing active supervised biometric identity and cannot be used for initial enrollment.
+- Requests and approvals remain organization/site scoped and are revalidated server-side.
+- Normal biometric/geofence verification and exceptional contingency records remain distinguishable in persistence and reporting.
+
 ## 2026-09-21 — Mobile field optimization phase 4A
 
 ### Changed

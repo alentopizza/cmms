@@ -44,6 +44,21 @@ function initials(name: string) {
   return name.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 }
 
+type ResourceKind = "sites" | "sublocations" | "assets" | "inventory" | "technicians";
+
+function ResourceIcon({ kind }: { kind: ResourceKind }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    "aria-hidden": true,
+  } as const;
+
+  if (kind === "sites") return <svg {...common}><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M9.5 20v-6h5v6"/></svg>;
+  if (kind === "sublocations") return <svg {...common}><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/><path d="M10 7h4a3 3 0 0 1 3 3v4"/></svg>;
+  if (kind === "assets") return <svg {...common}><path d="M5 9.5 12 5l7 4.5-7 4.5-7-4.5Z"/><path d="m5 9.5 7 4.5 7-4.5"/><path d="M5 14.5 12 19l7-4.5"/></svg>;
+  if (kind === "inventory") return <svg {...common}><path d="M4 7.5 12 4l8 3.5-8 3.5-8-3.5Z"/><path d="M4 7.5V17l8 3 8-3V7.5"/><path d="M12 11v9"/></svg>;
+  return <svg {...common}><circle cx="12" cy="8" r="3.5"/><path d="M5.5 19c.8-3.3 3-5.2 6.5-5.2s5.7 1.9 6.5 5.2"/></svg>;
+}
+
 export default function CompanyDirectory({
   companies,
   canManageResources,
@@ -101,73 +116,76 @@ export default function CompanyDirectory({
   }
 
   return <>
-    <div className="company-card-grid">
-      {companies.map(company => <article
-        className="company-visual-card company-visual-card-v2"
-        key={company.id}
-        data-module-record
-        data-status={company.active ? "active" : "inactive"}
-        data-search={[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" ")}
-      >
-        <button className="company-card-button" type="button" onClick={() => {
-          setSelected(company);
-          setEditing(false);
-        }} aria-label={`Ver detalle de ${company.name}`}>
-          <div className={`company-card-cover ${company.has_cover ? "" : "company-card-cover-fallback"}`}>
-            {company.has_cover && <img src={`/api/organizations/${company.id}/assets/cover`} alt={`Punto de referencia de ${company.name}`} />}
-            <span className={`status-badge company-card-status ${company.active ? "status-active" : "status-inactive"}`}>
-              <span aria-hidden="true" />{company.active ? "Activa" : "Inactiva"}
-            </span>
+    <div className="company-card-grid company-card-grid-compact">
+      {companies.map(company => {
+        const resources: Array<{
+          kind: ResourceKind;
+          label: string;
+          current: number;
+          max: number;
+          href: string;
+        }> = [
+          { kind: "sites", label: "Ubicaciones", current: Number(company.site_count) || 0, max: Number(company.max_sites) || 0, href: "/dashboard/locations" },
+          { kind: "sublocations", label: "Sububicaciones", current: Number(company.sublocation_count) || 0, max: Number(company.max_sublocations) || 0, href: "/dashboard/locations" },
+          { kind: "assets", label: "Activos", current: Number(company.asset_count) || 0, max: Number(company.max_assets) || 0, href: "/dashboard/assets" },
+          { kind: "inventory", label: "Inventario", current: Number(company.inventory_item_count) || 0, max: Number(company.max_inventory_items) || 0, href: "/dashboard/inventory" },
+          { kind: "technicians", label: "Técnicos", current: Number(company.technician_count) || 0, max: Number(company.max_technicians) || 0, href: "/dashboard/users" },
+        ];
+
+        return <article
+          className="company-visual-card company-visual-card-v2 company-compact-card"
+          key={company.id}
+          data-module-record
+          data-status={company.active ? "active" : "inactive"}
+          data-search={[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" ")}
+        >
+          <button className="company-card-button company-card-main-action" type="button" onClick={() => {
+            setSelected(company);
+            setEditing(false);
+          }} aria-label={`Ver detalle de ${company.name}`}>
+            <div className={`company-card-cover ${company.has_cover ? "" : "company-card-cover-fallback"}`}>
+              {company.has_cover && <img src={`/api/organizations/${company.id}/assets/cover`} alt={`Punto de referencia de ${company.name}`} />}
+            </div>
+
+            <div className="company-card-logo">
+              {company.has_logo
+                ? <img src={`/api/organizations/${company.id}/assets/logo`} alt={`Logo de ${company.name}`} />
+                : <span>{initials(company.name)}</span>}
+            </div>
+
+            <div className="company-card-content company-card-content-compact">
+              <div className="company-card-heading-row company-card-heading-centered">
+                <h3>{company.name}</h3>
+                <span className="company-plan-pill company-plan-pill-card">{company.plan_name || "Sin plan"}</span>
+              </div>
+              <div className="company-card-primary-status">
+                <span className={company.active ? "company-state-dot active" : "company-state-dot"} aria-hidden="true">✓</span>
+                <span>{company.active ? "Activa" : "Inactiva"}</span>
+              </div>
+              <small className="company-card-location-compact">{company.city || "Ciudad sin registrar"}{company.country ? ` · ${company.country}` : ""}</small>
+            </div>
+          </button>
+
+          <nav className="company-resource-actions" aria-label={`Recursos de ${company.name}`}>
+            {resources.map(resource => <Link
+              key={resource.kind}
+              href={resource.href}
+              className="company-resource-action"
+              title={resource.label}
+              data-tooltip={resource.label}
+              aria-label={`${resource.label}: ${resource.current} usados de ${resource.max} asignados. Abrir módulo.`}
+            >
+              <span className="company-resource-action-icon"><ResourceIcon kind={resource.kind} /></span>
+              <strong>{resource.current}/{resource.max}</strong>
+            </Link>)}
+          </nav>
+
+          <div className="company-card-footer-meta company-card-footer-compact">
+            <span>{company.profile_completion}% perfil</span>
+            <span>{company.pending_document_count} pendientes</span>
           </div>
-
-          <div className="company-card-logo">
-            {company.has_logo
-              ? <img src={`/api/organizations/${company.id}/assets/logo`} alt={`Logo de ${company.name}`} />
-              : <span>{initials(company.name)}</span>}
-          </div>
-
-          <div className="company-card-content">
-            <div className="company-card-heading-row company-card-heading-centered">
-              <h3>{company.name}</h3>
-              <span className="company-plan-pill company-plan-pill-card">{company.plan_name || "Sin plan"}</span>
-            </div>
-            <div className="company-card-primary-status">
-              <span className={company.active ? "company-state-dot active" : "company-state-dot"} aria-hidden="true">✓</span>
-              <span>{company.active ? "Activa" : "Inactiva"}</span>
-            </div>
-
-            <div className="company-resource-list">
-              {[
-                {label:"Proveedores",current:Number(company.supplier_count),max:null},
-                {label:"Ubicaciones",current:Number(company.site_count),max:Number(company.max_sites)},
-                {label:"Sub Ubicaciones",current:Number(company.sublocation_count),max:Number(company.max_sublocations)},
-                {label:"Activos",current:Number(company.asset_count),max:Number(company.max_assets)},
-              ].map(resource => {
-                const currentValue=Number(resource.current)||0;
-                const hasLimit=typeof resource.max==="number" && resource.max>0;
-                const maxValue=hasLimit ? Number(resource.max) : 0;
-                const percent=hasLimit ? Math.min(100,Math.round((currentValue/maxValue)*100)) : 0;
-                return <div className="company-resource-row" key={resource.label}>
-                  <div>
-                    <strong>{resource.label}</strong>
-                    <span>{hasLimit ? `${currentValue} / ${maxValue}` : `${currentValue} registrados`}</span>
-                    <b>{hasLimit ? currentValue : "Sin límite"}</b>
-                  </div>
-                  <div className={hasLimit ? "company-resource-track" : "company-resource-track company-resource-track-unlimited"}>
-                    {hasLimit && <span style={{width:percent+"%"}} />}
-                  </div>
-                </div>;
-              })}
-            </div>
-
-            <div className="company-card-footer-meta">
-              <span>{company.city || "Ciudad sin registrar"}</span>
-              <span>{company.profile_completion}% perfil</span>
-              <span>{company.pending_document_count} pendientes</span>
-            </div>
-          </div>
-        </button>
-      </article>)}
+        </article>;
+      })}
     </div>
 
     <ConfirmDialog

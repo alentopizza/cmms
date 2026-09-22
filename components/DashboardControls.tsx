@@ -64,7 +64,7 @@ export default function DashboardControls({
   const suffix=exportQuery?"&"+exportQuery:"";
   const href=(format:"xlsx"|"csv"|"pdf")=>base+"?format="+format+suffix;
 
-  return <section className="dashboard-filterbar">
+  return <section className={`dashboard-filterbar${exportOpen ? " export-open" : ""}`}>
     <div className="dashboard-filter-group">
       <DashboardDateRangePicker
         initialFrom={from}

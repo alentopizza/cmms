@@ -264,6 +264,7 @@ Browser responsibilities:
 
 Server responsibilities:
 - `/api/attendance/enrollment-supervised` rechecks attendance-management permission, tenant membership, controlled role, supervisor site access and liveness threshold before storing a template;
+- Supervised enrollment also requires the supervisor device to provide a precise GPS fix inside the selected site's configured geofence;
 - `/api/attendance/clock` accepts only active `supervised_camera` profiles with `identity_verified_at`;
 - the legacy self-enrollment route rejects mutations.
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { encryptEmbedding, validateEmbedding } from "@/lib/biometric";
 import { pool } from "@/lib/db";
@@ -27,11 +27,14 @@ export async function POST(request:Request){
 
   const body=await request.json().catch(()=>null) as {
     userId?:unknown; siteId?:unknown; embedding?:unknown; consent?:unknown; identityChecked?:unknown;
+    live?:unknown; real?:unknown;
   }|null;
 
   const userId=typeof body?.userId==="string"?body.userId:"";
   const siteId=typeof body?.siteId==="string"?body.siteId:"";
   const embedding=validateEmbedding(body?.embedding);
+  const live=Number(body?.live);
+  const real=Number(body?.real);
 
   if(!UUID.test(userId)||!UUID.test(siteId)||!embedding||body?.consent!==true||body?.identityChecked!==true){
     return NextResponse.json({message:"El enrolamiento supervisado está incompleto."},{status:422});
@@ -41,14 +44,40 @@ export async function POST(request:Request){
   try{
     await client.query("BEGIN");
 
+    const policy=await client.query<{enabled:boolean;enabled_roles:string[];liveness_threshold:number}>(
+      `SELECT enabled,enabled_roles,liveness_threshold
+       FROM organization_attendance_policies
+       WHERE organization_id=$1`,
+      [session.organizationId],
+    );
+    const attendancePolicy=policy.rows[0];
+    if(!attendancePolicy?.enabled){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"El control de asistencia está deshabilitado para esta empresa."},{status:409});
+    }
+    if(!Number.isFinite(live)||!Number.isFinite(real)||
+       live<attendancePolicy.liveness_threshold||real<attendancePolicy.liveness_threshold){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"La prueba de presencia real no alcanzó el nivel requerido."},{status:422});
+    }
+
     const person=await targetUser(client,session.organizationId,userId);
     if(!person.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"El usuario no pertenece a esta empresa."},{status:404});
     }
+    if(!attendancePolicy.enabled_roles.includes(person.rows[0].role)){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"El rol de este usuario no está habilitado para control biométrico."},{status:422});
+    }
     if(!person.rows[0].has_avatar){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"El usuario debe tener foto de perfil antes del enrolamiento supervisado."},{status:422});
+    }
+
+    if(!canAccessSite(session,siteId)){
+      await client.query("ROLLBACK");
+      return new NextResponse("Forbidden",{status:403});
     }
 
     const site=await client.query("SELECT 1 FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",[siteId,session.organizationId]);

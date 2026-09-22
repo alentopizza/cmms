@@ -261,10 +261,13 @@ export default function AttendanceCapture({
 
       if(action==="check_in"){
         setSiteId(targetSiteId);
-        setOpenShift({id:data.shiftId,site_id:targetSiteId,site_name:data.site,check_in_at:data.at});
+        const nextShift={id:data.shiftId,site_id:targetSiteId,site_name:data.site,check_in_at:data.at};
+        setOpenShift(nextShift);
+        window.dispatchEvent(new CustomEvent("attendance:shift-changed",{detail:{action:"check_in",shift:nextShift}}));
         setMessage("Actividades iniciadas. Tu presencia en sitio quedó validada; puedes permanecer disponible aunque aún no tengas tareas asignadas.");
       }else{
         setOpenShift(null);
+        window.dispatchEvent(new CustomEvent("attendance:shift-changed",{detail:{action:"check_out",shift:null}}));
         setMessage("Actividades finalizadas y salida validada correctamente.");
       }
     }catch(cause){

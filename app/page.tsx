@@ -58,9 +58,17 @@ export default async function Home() {
         </div>
 
         <div className="marketing-nav-actions marketing-nav-actions-floating">
-          {session
-            ? <Link className="marketing-login-link" href="/dashboard">Ir al panel</Link>
-            : <Link className="marketing-login-link" href="/login">Iniciar sesión</Link>}
+          <Link
+            className="marketing-account-button"
+            href={session ? "/dashboard" : "/login"}
+            aria-label={session ? "Ir al panel" : "Iniciar sesión"}
+            title={session ? "Ir al panel" : "Iniciar sesión"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5.5 19c.7-3.2 3.1-5.2 6.5-5.2s5.8 2 6.5 5.2" />
+            </svg>
+          </Link>
           <Link className="button marketing-nav-cta" href="/checkout?plan=trial">Probar 15 días</Link>
         </div>
       </nav>

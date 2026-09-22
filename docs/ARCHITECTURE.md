@@ -294,3 +294,22 @@ Normal attendance and contingency are separate client components but share one a
 `lib/user-manual.ts` is the shared structured content source for both manual surfaces. It contains role metadata, process articles and user-facing recent changes. `UserManual.tsx` performs client-side role switching/search only; it does not grant access to product modules.
 
 `/dashboard/help` derives the initial manual role from the authenticated session. `/manual` starts in general scope and is intentionally public. Because both routes render the same structured content, documentation does not need to be duplicated between a public marketing manual and an authenticated help center.
+
+
+### Maps, GPS and facial identity separation
+
+The production location stack is intentionally separated into independent trust layers:
+
+1. **Google Maps Platform** provides current cartography and address geocoding.
+2. **Browser/device Geolocation API** provides the actual GPS position and reported accuracy of the field device.
+3. **Server Haversine/geofence validation** decides whether that GPS position is inside the configured site radius.
+4. **Human facial verification** performs 1:1 identity verification against the encrypted supervised template.
+
+Google Maps is not used as proof of user location by itself, and the facial engine is not used to infer location. Attendance succeeds only when the configured policy's independent controls pass.
+
+Environment:
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: browser key restricted by allowed HTTP referrers, Maps JavaScript API only.
+- `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`: optional cloud-styled map identifier.
+- `GOOGLE_MAPS_SERVER_API_KEY`: server-only key restricted to Geocoding API.
+
+The map component falls back temporarily to OSM/Nominatim if Google is not configured or an operational request fails, so migration does not block site management.

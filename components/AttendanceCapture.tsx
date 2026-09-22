@@ -77,6 +77,8 @@ function rawPosition() {
   });
 }
 
+// ── Field presence state machine: GPS → live face → shift persistence ───────
+
 export default function AttendanceCapture({
   sites,
   enrolled:initialEnrolled,
@@ -95,7 +97,6 @@ export default function AttendanceCapture({
   const [phase,setPhase]=useState<Phase>("idle");
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
-  const [consent,setConsent]=useState(false);
   const [enrolled,setEnrolled]=useState(initialEnrolled);
   const [openShift,setOpenShift]=useState(initialOpenShift);
   const [siteId,setSiteId]=useState(initialOpenShift?.site_id || sites[0]?.id || "");
@@ -287,51 +288,6 @@ export default function AttendanceCapture({
     }
   }
 
-  async function enroll(){
-    if(!consent){
-      setError("Debes aceptar el consentimiento antes de registrar la biometría.");
-      return;
-    }
-    setBusy(true);setPhase("face");setError("");setMessage("");
-    try{
-      const face=await captureFace(3);
-      setPhase("saving");
-      const response=await fetch("/api/attendance/enroll",{
-        method:"POST",
-        headers:{"content-type":"application/json"},
-        body:JSON.stringify({embedding:face.embedding,consent:true}),
-      });
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.message||"No fue posible registrar la biometría.");
-      setEnrolled(true);
-      setMessage("Enrolamiento presencial completado. No se guardó una fotografía; la plantilla facial quedó cifrada.");
-    }catch(cause){
-      setError(cause instanceof Error?cause.message:"No fue posible registrar la biometría.");
-    }finally{
-      stopCamera();
-      setPhase("idle");setBusy(false);
-    }
-  }
-
-  async function revokeBiometric(){
-    if(openShift){
-      setError("Finaliza tus actividades antes de revocar tu biometría.");
-      return;
-    }
-    setBusy(true);setError("");setMessage("");
-    try{
-      const response=await fetch("/api/attendance/enroll",{method:"DELETE"});
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.message||"No fue posible revocar la biometría.");
-      setEnrolled(false);setConsent(false);
-      setMessage("Plantilla biométrica eliminada. El siguiente enrolamiento deberá hacerse nuevamente con la cámara.");
-    }catch(cause){
-      setError(cause instanceof Error?cause.message:"No fue posible revocar la biometría.");
-    }finally{
-      setBusy(false);
-    }
-  }
-
   async function clock(action:"check_in"|"check_out"){
     if(!siteId&&!requireGeolocation){setError("Selecciona una sede.");return;}
     if(requireFace&&!enrolled){setError("Completa primero tu enrolamiento facial presencial.");return;}
@@ -454,14 +410,14 @@ export default function AttendanceCapture({
 
       <section className="attendance-action-card attendance-presence-action">
         {!enrolled&&requireFace ? <>
-          <span className="eyebrow">Enrolamiento presencial</span>
-          <h2>Registrar rostro con la cámara</h2>
-          <p>Este registro debe hacerse con la persona frente al dispositivo. No se acepta una foto cargada como referencia biométrica.</p>
-          <label className="attendance-consent">
-            <input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} />
-            <span><strong>Autorizo el uso de mi plantilla facial para validar presencia y asistencia.</strong><small>La captura se procesa para generar una plantilla numérica cifrada; no se conserva la fotografía de enrolamiento.</small></span>
-          </label>
-          <button className="button attendance-start-button" type="button" disabled={busy} onClick={enroll}>{busy?activityLabel:"Activar cámara y enrolar"}</button>
+          <span className="eyebrow">Biometría pendiente</span>
+          <h2>Requiere enrolamiento supervisado</h2>
+          <p>Tu identidad facial todavía no está verificada. Un Administrador o Manager debe enrolarte presencialmente desde este módulo antes de que puedas iniciar actividades.</p>
+          <div className="attendance-no-assignment-note">
+            <span aria-hidden="true">i</span>
+            <p><strong>La foto de perfil no sustituye este paso.</strong><small>El supervisor confirma tu identidad y la cámara genera una plantilla facial cifrada con prueba de vida.</small></p>
+          </div>
+          <button className="button secondary attendance-start-button" type="button" disabled>Enrolamiento requerido</button>
         </> : <>
           <span className="eyebrow">Inicio de jornada</span>
           <h2>{openShift?"Presencia activa":"Verifica tu presencia"}</h2>
@@ -487,7 +443,7 @@ export default function AttendanceCapture({
           {requireGeolocation&&!openShift&&<button className="button secondary attendance-location-check" type="button" disabled={busy} onClick={verifyLocation}>⌖ Verificar ubicación</button>}
           <button className={"button attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} type="button" disabled={busy||(!siteId&&configuredSites.length===0)} onClick={()=>clock(openShift?"check_out":"check_in")}>{activityLabel}</button>
 
-          {requireFace&&enrolled&&!openShift&&<button className="text-button attendance-revoke" type="button" disabled={busy} onClick={revokeBiometric}>Eliminar mi plantilla biométrica</button>}
+          {requireFace&&enrolled&&!openShift&&<small className="attendance-biometric-note">Tu biometría fue verificada por un supervisor. La revocación o reenrolamiento también requiere supervisión.</small>}
         </>}
 
         {message&&<div className="notice success">{message}</div>}
@@ -495,7 +451,7 @@ export default function AttendanceCapture({
       </section>
     </div>
 
-    <section className={"attendance-camera-card attendance-presence-camera "+(cameraReady||phase==="face"||(!enrolled&&requireFace)?"visible":"")}>
+    <section className={"attendance-camera-card attendance-presence-camera "+(cameraReady||phase==="face"?"visible":"")}>
       <div className="attendance-camera-stage">
         <video ref={videoRef} playsInline muted className={cameraReady?"ready":""} />
         <div className="attendance-face-guide" aria-hidden="true" />

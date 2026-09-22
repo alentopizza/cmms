@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-22 — Hybrid user manual and help center
+
+### Added
+
+- Added public `/manual` user-manual landing.
+- Added authenticated `/dashboard/help` manual prioritized for the signed-in user's role.
+- Added shared structured manual content for navigation, company/site setup, geofence, users, supervised biometrics, field presence, contingency, assets, work orders and settings.
+- Added role selector, full-platform overview mode, search and **Qué cambió** feed.
+- Added Manual/Ayuda to dashboard navigation, account menu and field-mobile **Más** sheet.
+- Added repository invariant requiring user-facing workflow changes to review/update the manual in the same implementation.
+
 ## 2026-09-21 — Attendance contingency phase 4B
 
 ### Added

@@ -13,7 +13,7 @@ const themeScript = `
 (function () {
   try {
     var saved = localStorage.getItem("desweb-theme");
-    var preference = saved === "dark" || saved === "light" || saved === "system" ? saved : "system";
+    var preference = saved === "dark" || saved === "light" || saved === "system" ? saved : "light";
     var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     var theme = preference === "system" ? (systemDark ? "dark" : "light") : preference;
     document.documentElement.dataset.theme = theme;

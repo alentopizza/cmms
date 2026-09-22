@@ -124,6 +124,14 @@ export async function POST(request: Request) {
       );
 
       await client.query(
+        `INSERT INTO organization_attendance_policies(
+           organization_id,enabled,enabled_roles,require_face,require_geolocation,
+           max_location_accuracy_m,face_similarity_threshold,liveness_threshold,updated_at
+         ) VALUES($1,true,ARRAY['admin','manager','technician','provider','external']::text[],true,true,120,0.55,0.60,now())`,
+        [organizationId],
+      );
+
+      await client.query(
         `INSERT INTO subscription_events(organization_id,event_type,source,metadata)
          VALUES($1,$2,'manual',$3::jsonb)`,
         [organizationId, isTrial ? "trial_started" : "subscription_activated", JSON.stringify({ plan: plan.code })],

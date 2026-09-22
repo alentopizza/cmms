@@ -230,3 +230,19 @@ Corporate documents are not stored in the generic operational attachment relatio
 No new location table was introduced: migration `013_biometric_attendance_geolocation.sql` already defines `sites.latitude`, `sites.longitude` and `sites.geofence_radius_m`. Site/company mutation routes now enforce coordinate bounds and the 20–5000 m database radius constraint before persistence.
 
 The attendance clock endpoint remains the server authority for field validation: it checks site authorization, GPS accuracy, Haversine distance against the stored site point/radius, live facial verification and the enrolled encrypted template. Client-side map circles are configuration/feedback only and never substitute server validation.
+
+
+### Field presence state machine
+
+`AttendanceCapture.tsx` treats an open `attendance_shifts` row as a **presence/availability session** at a site. It does not require a work-order task to exist before check-in.
+
+Client sequence for check-in/out is:
+
+1. obtain a fresh high-accuracy GPS fix;
+2. assess configured authorized sites and provide nearest-site guidance;
+3. reject locally when accuracy/range clearly fail;
+4. activate the front camera and run facial embedding + liveness/anti-spoof checks;
+5. submit GPS and biometric evidence to `/api/attendance/clock`;
+6. let the server independently repeat authorization, accuracy, Haversine/geofence and facial-threshold validation before opening/closing the shift.
+
+This sequencing reduces unnecessary camera use while preserving server authority. Task assignment is deliberately absent from the check-in preconditions. Later `activity_execution_events` correlate work against the open shift when tasks are started/completed.

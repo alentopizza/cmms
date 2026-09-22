@@ -16,6 +16,7 @@ Before making changes, read:
 10. `docs/INSTALLATION.md`
 11. `docs/IP_AND_DISTRIBUTION.md`
 12. `docs/ROLE_MODEL.md`
+13. `docs/CODE_GUIDE.md`
 
 ## Working rules
 
@@ -97,6 +98,10 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 ## Biometric attendance invariants
 
 - Facial attendance is 1:1 verification of the authenticated account, never company-wide biometric identification.
+- Initial facial enrollment must be supervised by an authorized Admin/Manager with the person physically present. Self-enrollment is prohibited.
+- Uploaded profile photos are human identity aids only and must never become the biometric reference template.
+- Legacy self-enrolled templates are not considered verified and require supervised reenrollment before attendance use.
+- Biometric revocation must preserve audit metadata while making the encrypted template unusable.
 - Do not persist enrollment/check-in photographs unless a future explicitly approved privacy design requires it.
 - Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
@@ -282,3 +287,16 @@ When creating or revising UI:
 - keep mobile controls touch-friendly and visually simpler than desktop.
 
 Do not introduce cyan/purple styling merely because a reference image contains it. References define interaction depth and material behavior; Desweb brand variables define color identity unless a Pro white-label tenant overrides them.
+
+
+## Code readability / section-comment invariant
+
+Complex or security-sensitive files must be divided into meaningful responsibility sections using concise comments such as:
+
+`// ── Authorization and tenant scope ──`
+
+Comments should explain responsibility, trust boundaries, invariants and non-obvious decisions. Do not narrate obvious syntax line by line.
+
+When creating a complex file, add these section notes from the start. When materially editing a large existing file, improve its section readability opportunistically. Follow `docs/CODE_GUIDE.md`.
+
+For authentication, RBAC, biometrics, geolocation, subscriptions, tenant isolation and destructive actions, explicitly identify the server-authoritative validation section and never rely on client UI state as authorization.

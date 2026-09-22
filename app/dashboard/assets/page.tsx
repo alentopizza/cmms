@@ -14,6 +14,8 @@ type Site={id:string;organization_id:string;label:string};
 type Location={id:string;organization_id:string;site_id:string;label:string};
 type Supplier={id:string;organization_id:string;name:string};
 
+// ── Responsive asset directory: desktop table + mobile cards ────────────────
+
 export default async function AssetsPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
@@ -95,7 +97,39 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
       action={creationGate.action || "Continuar"}
     />}
 
-    <section className="section"><table className="table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
+    <section className="section asset-directory-section">
+      <div className="asset-mobile-list">
+        {assets.rows.map(a=><article key={a.id} className="asset-mobile-card" data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}>
+          <Link className="asset-mobile-card-main" href={"/dashboard/assets/"+a.id}>
+            <div className="asset-mobile-card-icon" aria-hidden="true">◇</div>
+            <div className="asset-mobile-card-copy">
+              <span>{a.code}</span>
+              <strong>{a.name}</strong>
+              <small>{a.company}</small>
+            </div>
+            <span className="asset-mobile-card-chevron" aria-hidden="true">›</span>
+          </Link>
+          <div className="asset-mobile-card-meta">
+            <div><span>Ubicación</span><strong>{a.site}{a.location?" · "+a.location:""}</strong></div>
+            <div><span>Proveedor</span><strong>{a.supplier||"Sin proveedor"}</strong></div>
+          </div>
+          <div className="asset-mobile-card-footer">
+            <span className="status">{a.status}</span>
+            <span className="asset-criticality">{a.criticality}</span>
+            {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+              {name:"code",label:"Código",value:a.code},
+              {name:"name",label:"Nombre",value:a.name},
+              {name:"status",label:"Estado",value:a.status,type:"select",options:[
+                {value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Detenido"},{value:"retired",label:"Retirado"}
+              ]},
+              {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[
+                {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}
+              ]},
+            ]}/>}
+          </div>
+        </article>)}
+      </div>
+      <table className="table asset-directory-table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
       {assets.rows.map(a=><tr key={a.id} data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
         {name:"code",label:"Código",value:a.code},
         {name:"name",label:"Nombre",value:a.name},

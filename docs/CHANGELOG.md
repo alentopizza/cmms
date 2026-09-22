@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-09-21 — Geofence configuration phase 2
+
+### Added
+
+- Added a reusable interactive geofence map control for principal sites.
+- Added authenticated address validation/geocoding with candidate selection.
+- Added map-point adjustment, current-device location capture, visible radius overlay, coordinate display and 20–5000 m radius control.
+- Added geofence configuration to company onboarding, contextual principal-site creation, company primary-site editing and location-detail editing.
+- Added read-only map/geofence visualization to principal-location detail and the company profile.
+
+### Changed
+
+- New principal sites now require address, city, country, latitude, longitude and a valid geofence radius at server level.
+- New companies require the same validated geofence for their initial principal site.
+- Existing sites without coordinates remain visible but must complete geofence configuration when edited.
+- Company and Locations modules now show specific validation feedback when map/geofence data is incomplete.
+- The saved site geofence continues to feed the existing attendance endpoint, which rejects biometric check-in/out outside the configured radius or with insufficient GPS accuracy.
+
+
 ## 2026-09-21 — Company profile redesign phase 1
 
 ### Changed

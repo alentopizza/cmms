@@ -5594,3 +5594,235 @@ html[data-theme="dark"] .context-header{
     right:12px;
   }
 }
+
+
+/* Compact company and location directories */
+.company-card-grid-compact,
+.site-visual-grid-compact{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+.company-compact-card,
+.site-compact-card{
+  min-width:0;
+  min-height:0!important;
+  overflow:hidden;
+  border-radius:var(--ui-radius-4);
+}
+.company-card-main-action,
+.site-card-main-action{
+  display:block!important;
+  width:100%;
+  height:auto!important;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  text-align:inherit;
+  cursor:pointer;
+}
+.company-compact-card .company-card-cover,
+.site-compact-card .site-visual-cover{
+  height:96px;
+  min-height:96px;
+}
+.company-compact-card .company-card-logo{
+  position:relative;
+  top:auto;
+  left:auto;
+  transform:none;
+  width:68px;
+  height:68px;
+  margin:-34px auto 0;
+  padding:4px;
+  border:4px solid var(--surface);
+}
+.company-card-content-compact{
+  min-height:0;
+  padding:10px 14px 8px!important;
+  gap:6px!important;
+}
+.company-card-content-compact .company-card-heading-centered{
+  gap:5px;
+}
+.company-card-content-compact .company-card-heading-centered h3{
+  font-size:16px;
+  line-height:1.2;
+}
+.company-card-content-compact .company-plan-pill-card{
+  font-size:7px;
+  padding:4px 7px;
+}
+.company-card-content-compact .company-card-primary-status{
+  font-size:9px;
+}
+.company-card-location-compact{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--text-soft);
+  font-size:8px;
+  text-align:center;
+}
+.company-resource-actions{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:6px;
+  padding:8px 10px 10px;
+  border-top:1px solid var(--border);
+}
+.company-resource-action,
+.site-resource-action{
+  position:relative;
+  min-width:0;
+  min-height:48px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:3px;
+  padding:5px 3px;
+  border:1px solid var(--border);
+  border-radius:var(--ui-radius-2);
+  background:var(--surface-soft);
+  color:var(--text);
+  text-decoration:none;
+  box-shadow:var(--ui-shadow-base);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.company-resource-action:hover,
+.site-resource-action:hover{
+  transform:translateY(-1px);
+  border-color:var(--brand-teal);
+  background:var(--brand-mint-light);
+  box-shadow:var(--ui-shadow-raised);
+}
+.company-resource-action-icon{
+  width:19px;
+  height:19px;
+  color:var(--brand-teal);
+}
+.company-resource-action-icon svg{
+  width:100%;
+  height:100%;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.company-resource-action strong,
+.site-resource-action strong{
+  font-size:9px;
+  line-height:1;
+}
+.company-resource-action:after,
+.site-resource-action:after{
+  content:attr(data-tooltip);
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 7px);
+  z-index:20;
+  transform:translate(-50%,4px);
+  padding:5px 7px;
+  border-radius:7px;
+  background:var(--brand-dark);
+  color:#fff;
+  font-size:8px;
+  font-weight:800;
+  white-space:nowrap;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .14s ease,transform .14s ease,visibility .14s ease;
+}
+.company-resource-action:hover:after,
+.company-resource-action:focus-visible:after,
+.site-resource-action:hover:after,
+.site-resource-action:focus-visible:after{
+  opacity:1;
+  visibility:visible;
+  transform:translate(-50%,0);
+}
+.company-card-footer-compact{
+  padding:7px 12px 9px;
+  border-top:1px solid var(--border);
+  font-size:7px;
+}
+
+.site-compact-card{
+  position:relative;
+}
+.site-compact-card .site-company-logo{
+  top:62px;
+  width:64px;
+  height:64px;
+  border-width:4px;
+}
+.site-visual-content-compact{
+  gap:5px;
+  padding:36px 12px 10px;
+}
+.site-visual-content-compact h3{
+  font-size:15px;
+  line-height:1.22;
+}
+.site-visual-content-compact p{
+  gap:1px;
+  font-size:8px;
+  line-height:1.35;
+}
+.site-visual-content-compact p span{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.site-resource-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  padding:0 10px 10px;
+}
+.site-resource-action{
+  min-height:40px;
+  grid-template-columns:auto auto;
+  place-content:center;
+  gap:6px;
+}
+.site-resource-icon{
+  color:var(--brand-teal);
+  font-size:14px;
+  font-weight:900;
+}
+
+html[data-theme="dark"] .company-resource-action,
+html[data-theme="dark"] .site-resource-action{
+  background:var(--surface-soft);
+}
+html[data-theme="dark"] .company-resource-action:hover,
+html[data-theme="dark"] .site-resource-action:hover{
+  background:#29454c;
+}
+
+@media(max-width:1380px){
+  .company-card-grid-compact,
+  .site-visual-grid-compact{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:1040px){
+  .company-card-grid-compact,
+  .site-visual-grid-compact{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:680px){
+  .company-card-grid-compact,
+  .site-visual-grid-compact{
+    grid-template-columns:1fr;
+  }
+}

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-22 — Personal settings navigation cleanup
+
+### Changed
+
+- Removed duplicated **Mi configuración** from the main module navigation.
+- Kept personal settings in the profile/account menu and field-mobile account/system sheet.
+- The route `/dashboard/preferences` remains available; only the redundant module entry was removed.
+
 ## 2026-09-22 — Rutinas, Inventario mobile and dark dropdown contrast
 
 ### Changed

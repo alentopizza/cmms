@@ -812,3 +812,15 @@ Rutinas and Inventario follow the same mobile directory rule used by Activos and
 ### Dark-mode form/dropdown contrast
 
 Dark mode must explicitly style form controls inside modals/popovers. Native `select`, `option` and `optgroup` surfaces use a dark background and light text, and modal headers/actions remain on opaque theme surfaces. Never rely on browser-default white dropdown surfaces in dark mode.
+
+
+### Google Maps geofence provider
+
+Google Maps Platform is the preferred production cartography/geocoding provider.
+
+- Google Maps JavaScript API renders the interactive map and geofence.
+- The server Geocoding API validates/searches addresses.
+- Browser/device GPS remains the source of the user's physical position.
+- The server remains authoritative for geofence distance checks.
+- OpenStreetMap remains a temporary operational fallback when Google credentials are missing or unavailable.
+- A Google Map ID may be supplied for cloud-based light/dark styling without changing geofence logic.

@@ -58,13 +58,25 @@ export function AttendanceContingencySelf({
   initialRequest:ContingencyRequestView|null;
 }){
   const [active,setActive]=useState(initialRequest);
+  const [effectiveOpenShift,setEffectiveOpenShift]=useState(openShift);
   const [siteId,setSiteId]=useState(openShift?.site_id||sites[0]?.id||"");
   const [reason,setReason]=useState("camera_failure");
   const [details,setDetails]=useState("");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
-  const action:"check_in"|"check_out"=openShift?"check_out":"check_in";
+  const action:"check_in"|"check_out"=effectiveOpenShift?"check_out":"check_in";
+
+  useEffect(()=>{
+    function onShiftChanged(event:Event){
+      const detail=(event as CustomEvent<{action:"check_in"|"check_out";shift:{site_id:string;site_name:string}|null}>).detail;
+      if(!detail)return;
+      setEffectiveOpenShift(detail.shift);
+      if(detail.shift)setSiteId(detail.shift.site_id);
+    }
+    window.addEventListener("attendance:shift-changed",onShiftChanged);
+    return()=>window.removeEventListener("attendance:shift-changed",onShiftChanged);
+  },[]);
 
   useEffect(()=>{
     if(!active||active.status!=="pending")return;
@@ -200,7 +212,7 @@ export function AttendanceContingencySelf({
       </div>
       <div className="field">
         <label>Sede *</label>
-        <select value={siteId} onChange={event=>setSiteId(event.target.value)} disabled={Boolean(openShift)}>
+        <select value={siteId} onChange={event=>setSiteId(event.target.value)} disabled={Boolean(effectiveOpenShift)}>
           <option value="">Selecciona sede</option>
           {sites.map(site=><option key={site.id} value={site.id}>{site.name}{site.city?" · "+site.city:""}</option>)}
         </select>

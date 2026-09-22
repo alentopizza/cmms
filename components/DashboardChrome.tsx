@@ -24,6 +24,7 @@ const sections: Array<{ match: (pathname: string) => boolean; section: Section }
   { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "↻" } },
   { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "▤" } },
   { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "⚙" } },
+  { match: pathname => pathname.startsWith("/dashboard/help"), section: { label: "Manual / Ayuda", eyebrow: "Centro de ayuda", icon: "?" } },
 ];
 
 function currentSection(pathname: string) {
@@ -86,6 +87,10 @@ export function SidebarAccountMenu({
         <span>{fullName}</span>
         <small>{role}</small>
       </div>
+      <Link role="menuitem" href="/dashboard/help" onClick={() => setOpen(false)}>
+        <span className="account-menu-icon">?</span>
+        <span><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></span>
+      </Link>
       {canConfigure && <Link role="menuitem" href="/dashboard/settings" onClick={() => setOpen(false)}>
         <span className="account-menu-icon">⚙</span>
         <span><strong>Configuración</strong><small>Cuenta, empresa y plataforma</small></span>

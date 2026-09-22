@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
-import { isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
+import { can, isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
@@ -16,6 +16,8 @@ type FieldErrors = Record<string, string>;
 function json(status: number, payload: { message?: string; fields?: FieldErrors }) {
   return NextResponse.json(payload, { status });
 }
+
+// ── Historical-traceability checks ──────────────────────────────────────────
 
 async function hasActivity(client: import("pg").PoolClient, userId: string) {
   const result = await client.query<{ has_activity: boolean }>(
@@ -34,13 +36,15 @@ async function hasActivity(client: import("pg").PoolClient, userId: string) {
   return result.rows[0]?.has_activity ?? false;
 }
 
+// ── User mutation entry point: edit, status and owner-only deletion ─────────
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
-  if (session.platformRole === "user") return new NextResponse("Forbidden", { status: 403 });
+  if (!can(session, "users.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   const { id } = await params;
   if (!UUID.test(id)) return json(400, { message: "Usuario inválido." });
@@ -76,6 +80,17 @@ export async function POST(
     }
 
     const target = existing.rows[0];
+
+    // ── Tenant administrator scope boundary ─────────────────────────────────
+    // Tenant admins may manage only ordinary users in their own organization.
+    // Platform identities remain governed by platform-role rules below.
+    if (session.platformRole === "user") {
+      if (target.platform_role !== "user" || target.organization_id !== session.organizationId) {
+        await client.query("ROLLBACK");
+        return json(403, { message: "Solo puedes administrar usuarios de tu propia empresa." });
+      }
+    }
+
     if (target.platform_role === "platform_owner") {
       await client.query("ROLLBACK");
       return json(403, { message: "La cuenta Propietario Desweb está protegida y no se modifica desde el directorio de usuarios." });
@@ -126,6 +141,10 @@ export async function POST(
     let siteIds = [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
     const makingSuperadmin = requestedRole === "superadmin";
     const fields: FieldErrors = {};
+
+    if (session.platformRole === "user" && organizationId !== session.organizationId) {
+      fields.organization_id = "No puedes mover usuarios fuera de tu empresa.";
+    }
     let avatar=null;
     try { avatar=await readImageUpload(form,"avatar"); }
     catch(error) { fields.general=imageUploadMessage(error); }

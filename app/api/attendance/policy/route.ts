@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 
-const ROLE_SET = new Set(["technician","external","provider","manager","admin"]);
+const ROLE_SET = new Set(["admin","manager","technician","provider","external"]);
 
 export async function POST(request: Request) {
   const session = await getSession();

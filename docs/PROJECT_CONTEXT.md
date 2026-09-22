@@ -536,3 +536,8 @@ Biometric identity now has a supervised chain of trust. Initial/renewed enrollme
 ### Mobile field shell phase 4A
 
 Field mobile navigation now reserves four primary operational destinations (Dashboard, Orders, Attendance and Assets). **Más** is a bottom sheet for secondary authorized modules and account/system actions instead of reopening the full duplicate navigation drawer. The shell reserves safe-area-aware bottom space, and the Assets directory switches from the wide desktop table to compact mobile cards.
+
+
+### Attendance contingency phase 4B
+
+Attendance now includes an audited exceptional path for operational failures after supervised biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without active supervised biometric enrollment.

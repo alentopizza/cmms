@@ -33,6 +33,12 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const latitudeRaw = String(form.get("latitude") || "").trim();
+  const longitudeRaw = String(form.get("longitude") || "").trim();
+  const radiusRaw = String(form.get("geofence_radius_m") || "250").trim();
+  const latitude = latitudeRaw ? Number(latitudeRaw) : null;
+  const longitude = longitudeRaw ? Number(longitudeRaw) : null;
+  const geofenceRadius = Number.parseInt(radiusRaw, 10);
   const contactName = String(form.get("contact_name") || "").trim();
   const contactPhone = String(form.get("contact_phone") || "").trim();
   const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
@@ -44,8 +50,14 @@ export async function POST(
     return NextResponse.redirect(targetUrl(id,request.url,returnTo,"?error="+(message.includes("5 MB")?"site-image-size":"site-image-type")),303);
   }
 
-  if (!name) {
+  if (!name || !address || !city || !country) {
     return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-required"), 303);
+  }
+  if (latitude === null || longitude === null ||
+      !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+      !Number.isFinite(geofenceRadius) || geofenceRadius < 20 || geofenceRadius > 5000) {
+    return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-geofence"), 303);
   }
 
   const organization = await query("SELECT 1 FROM organizations WHERE id=$1", [id]);
@@ -57,12 +69,12 @@ export async function POST(
   try {
     await query(
       `INSERT INTO sites(
-         organization_id,name,code,address,city,country,
+         organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
          contact_name,contact_phone,contact_email,image_data,image_mime_type
        )
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
       [
-        id,name,code||null,address||null,city||null,country||"CO",
+        id,name,code||null,address,city,country||"CO",latitude,longitude,geofenceRadius,
         contactName||null,contactPhone||null,contactEmail||null,
         image?.data||null,image?.mime||null,
       ],

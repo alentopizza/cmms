@@ -14,6 +14,7 @@
 
 ### Security / behavior
 
+- Kept contingency action state synchronized with normal check-in/check-out changes in the same mobile session.
 - Contingency requires an existing active supervised biometric identity and cannot be used for initial enrollment.
 - Requests and approvals remain organization/site scoped and are revalidated server-side.
 - Normal biometric/geofence verification and exceptional contingency records remain distinguishable in persistence and reporting.

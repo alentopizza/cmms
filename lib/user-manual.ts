@@ -112,6 +112,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
       "Al seleccionar la tarjeta de una sede el módulo cambia a su perfil en la misma pantalla; no se abre un popup. Las migas de pan permiten volver al directorio o, en una sububicación, regresar a la sede padre.",
       "La identidad y estadísticas permanecen a la izquierda, mientras Información, Estadísticas, Sububicaciones, Servicios y Hoja de vida cambian dentro del panel derecho.",
+      "La ficha general también muestra Zona/Localidad, cargo del responsable y notas adicionales cuando estén registradas.",
+      "La pestaña Técnicos es informativa: muestra técnicos asignados mediante actividades de órdenes de trabajo, ya sea directamente o por una cuadrilla. La asignación se realiza desde Actividades, no desde la ficha de ubicación.",
       "Desde el perfil puedes exportar la Hoja de vida de la sede en PDF, Excel o Word compatible.",
     ],
     notes:["Google Places aporta el autocompletado de dirección y Google Maps el contexto visual; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],

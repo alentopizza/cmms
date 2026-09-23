@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { SubLocationCreateModal } from "@/components/ContextCreateModals";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import FileDropzone from "@/components/FileDropzone";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -133,7 +134,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           <input type="hidden" name="organization_id" value={selected.organization_id}/><input type="hidden" name="return_to" value="/dashboard/locations"/>
           <div className="form-grid">
             <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
-            <div className="field"><label>Código</label><input name="code" defaultValue={selected.code||""}/></div>
+            <div className="field"><label>Código interno</label><input name="code" defaultValue={selected.code||""}/><small>Opcional. Identifica la sede en OT, reportes e integraciones.</small></div>
             <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
             <div className="field"><label>País *</label><input name="country" defaultValue={selected.country} required/></div>
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
@@ -146,7 +147,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
               title="Horario de atención de la sede"
               description="Reacción usa este horario para el filtro Abiertos ahora."
             />
-            <div className="field form-span-2"><label>Nueva foto de sede</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"/></div>
+            <div className="form-span-2"><FileDropzone name="image" label="Actualizar foto de sede" description="Selecciona una nueva imagen solo si quieres reemplazar la actual." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_image ? "Foto de sede actual" : null} /></div>
           </div>
           <GeofenceMapPicker
             initialAddress={selected.address}
@@ -221,7 +222,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field"><label>Código</label><input name="code" defaultValue={selectedSub.code||""}/></div>
             <div className="field"><label>Tipo</label><select name="type" defaultValue={selectedSub.type}><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
             <div className="field"><label>Descripción</label><input name="description" defaultValue={selectedSub.description||""}/></div>
-            <div className="field form-span-2"><label>Actualizar foto</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"/></div>
+            <div className="field form-span-2"><label>Actualizar foto</label><FileDropzone name="image" label="Foto de la sede" description="Imagen de referencia de esta ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
             <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar sububicación</button></div>
           </form>
         </div>}

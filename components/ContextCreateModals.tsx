@@ -10,7 +10,7 @@ import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { CountryCityFields, CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 
 type NamedOption = { id: string; name: string };
-type OrganizationOption = NamedOption;
+type OrganizationOption = NamedOption & { country?:string };
 type SiteOption = { id: string; organization_id: string; name: string; organization_name?: string };
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label?: string };
 type SupplierOption = { id: string; organization_id: string; name: string };
@@ -101,6 +101,8 @@ export function SiteCreateModal({
   const initial = fixedOrganizationId || (organizations.length === 1 ? organizations[0].id : "");
   const [open,setOpen]=useState(false);
   const [organizationId,setOrganizationId]=useState(initial);
+  const selectedOrganization=organizations.find(org=>org.id===organizationId);
+  const siteDefaultCountry=selectedOrganization?.country||"CO";
 
   useEffect(() => {
     if (open) setOrganizationId(initial);
@@ -122,14 +124,13 @@ export function SiteCreateModal({
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
-          <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
+          <CountryCityFields key={"site-country-"+organizationId} countryId="new-site-country" countryName="country" cityId="new-site-city" cityName="city" defaultCountry={siteDefaultCountry} defaultCity="" required />
           <div className="field"><label>Zona / Localidad</label><input name="locality" placeholder="Ej. Kennedy" /></div>
-          <div className="field"><label>País *</label><input id="new-site-country" name="country" defaultValue="CO" maxLength={2} required /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como imagen de referencia de la ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Responsable / contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>Cargo del responsable</label><input name="contact_title" placeholder="Ej. Gerente de sede" /></div>
-          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="new-site-country" />
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={siteDefaultCountry} countryInputId="new-site-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
           <div className="field form-span-2"><label>Notas adicionales</label><textarea name="notes" rows={3} placeholder="Accesos, parqueadero, restricciones u observaciones de la sede." /></div>
           <BusinessHoursFields title="Horario de atención de la sede" description="Este horario alimenta el filtro operativo de Reacción." />
@@ -409,6 +410,8 @@ export function LocationCreateModal({
   const visibleSites=sites.filter(site=>!organizationId || site.organization_id===organizationId);
   const resolvedSiteId=visibleSites.some(site=>site.id===siteId) ? siteId : (visibleSites.length===1 ? visibleSites[0].id : "");
   const visibleLocations=locations.filter(location=>location.site_id===resolvedSiteId);
+  const selectedOrganization=organizations.find(org=>org.id===organizationId);
+  const locationDefaultCountry=selectedOrganization?.country||"CO";
 
   return <>
     <TriggerButton label="Agregar" icon="location" onClick={()=>setOpen(true)} />
@@ -425,13 +428,13 @@ export function LocationCreateModal({
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
-          <CountryCityFields countryId="location-create-country" countryName="country" cityId="location-create-city" cityName="city" defaultCountry="CO" defaultCity="Bogotá" required />
+          <CountryCityFields key={"location-country-"+organizationId} countryId="location-create-country" countryName="country" cityId="location-create-city" cityName="city" defaultCountry={locationDefaultCountry} defaultCity="" required />
           <div className="field"><label>Zona / Localidad</label><input name="locality" placeholder="Ej. Kennedy" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Responsable / contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>Cargo del responsable</label><input name="contact_title" placeholder="Ej. Gerente de sede" /></div>
-          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="location-create-country" />
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={locationDefaultCountry} countryInputId="location-create-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
           <div className="field form-span-2"><label>Notas adicionales</label><textarea name="notes" rows={3} placeholder="Accesos, parqueadero, restricciones u observaciones de la sede." /></div>
         </div>

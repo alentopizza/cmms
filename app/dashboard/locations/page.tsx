@@ -8,7 +8,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import LocationDirectory, { type LocationDirectoryService, type LocationDirectorySite, type LocationDirectorySub, type LocationDirectoryTechnician } from "@/components/LocationDirectory";
 
-type OrganizationRow = { id: string; name: string };
+type OrganizationRow = { id: string; name: string; country: string };
 type SiteRow = LocationDirectorySite;
 
 export default async function LocationsIndexPage({
@@ -80,8 +80,8 @@ export default async function LocationsIndexPage({
 
   const [organizations, sublocations, services] = await Promise.all([
     superadmin
-      ? query<OrganizationRow>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
-      : query<OrganizationRow>("SELECT id,name FROM organizations WHERE id=$1", [session.organizationId]),
+      ? query<OrganizationRow>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
+      : query<OrganizationRow>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1", [session.organizationId]),
     superadmin
       ? query<LocationDirectorySub>(
           `SELECT l.id,l.organization_id,l.site_id,l.parent_id,l.name,l.code,l.type,l.description,l.active,

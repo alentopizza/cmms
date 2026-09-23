@@ -413,6 +413,10 @@ When the owner deletes a record, the backend can remove dependent development hi
 Superadministrators and tenant users retain their existing hierarchy, creation flows and traceability restrictions. The Platform Owner identity itself remains protected from deletion.
 
 
+### Upload acknowledgement after persistence
+
+The shared upload UX distinguishes local selection from server persistence. A selected file shows its filename, size and **100% · listo para guardar** state. Server-backed flows should only show **guardado correctamente** / success confirmation after the mutation returns successfully. Company quick edit keeps the modal open after a successful save, switches back to protected/read-only mode, refreshes server data without a hard page reload and cache-busts newly uploaded logo/cover previews.
+
 ### Unified upload and internal-code UX
 
 File selection is standardized through `components/FileDropzone.tsx` across all current photo/document upload flows. It keeps native multipart form semantics while presenting drag-and-drop, file metadata, image preview and UI-side type/size feedback. Backend validation remains authoritative and displayed limits must mirror each route's actual contract.

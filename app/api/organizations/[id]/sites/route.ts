@@ -33,6 +33,7 @@ export async function POST(
   const code = String(form.get("code") || "").trim().toUpperCase();
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
+  const locality = String(form.get("locality") || "").trim();
   const country = String(form.get("country") || "CO").trim().toUpperCase();
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
@@ -41,8 +42,10 @@ export async function POST(
   const longitude = longitudeRaw ? Number(longitudeRaw) : null;
   const geofenceRadius = Number.parseInt(radiusRaw, 10);
   const contactName = String(form.get("contact_name") || "").trim();
+  const contactTitle = String(form.get("contact_title") || "").trim();
   const contactPhone = String(form.get("contact_phone") || "").trim();
   const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
+  const notes = String(form.get("notes") || "").trim();
   const returnTo = String(form.get("return_to") || "");
   let businessHours;
   try {
@@ -79,15 +82,15 @@ export async function POST(
   try {
     await query(
       `INSERT INTO sites(
-         organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
-         contact_name,contact_phone,contact_email,
+         organization_id,name,code,address,city,locality,country,latitude,longitude,geofence_radius_m,
+         contact_name,contact_title,contact_phone,contact_email,notes,
          business_days,business_open_time,business_close_time,business_schedule,
          image_data,image_mime_type
        )
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17,$18)`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21)`,
       [
-        id,name,code||null,address,city,country||"CO",latitude,longitude,geofenceRadius,
-        contactName||null,contactPhone||null,contactEmail||null,
+        id,name,code||null,address,city,locality||null,country||"CO",latitude,longitude,geofenceRadius,
+        contactName||null,contactTitle||null,contactPhone||null,contactEmail||null,notes||null,
         businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),
         image?.data||null,image?.mime||null,
       ],

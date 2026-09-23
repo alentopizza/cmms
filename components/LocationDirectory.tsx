@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SubLocationCreateModal } from "@/components/ContextCreateModals";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
   address:string|null; city:string|null; country:string; active:boolean; location_count:number; asset_count:number;
   latitude:number|null; longitude:number|null; geofence_radius_m:number;
   has_image:boolean; organization_has_logo:boolean; contact_name:string|null; contact_phone:string|null; contact_email:string|null;
+  business_days:number[]; business_open_time:string; business_close_time:string;
 };
 export type LocationDirectorySub={
   id:string; organization_id:string; site_id:string; parent_id:string|null; name:string; code:string|null; type:string;
@@ -123,6 +125,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <button type="button" onClick={()=>copy(selected.contact_name||"","Nombre")}><span>Nombre</span><strong>{selected.contact_name||"Sin registrar"}</strong></button>
             <button type="button" onClick={()=>copy(selected.contact_phone||"","Teléfono")}><span>Teléfono</span><strong>{selected.contact_phone||"Sin registrar"}</strong></button>
             <button type="button" onClick={()=>copy(selected.contact_email||"","Correo")}><span>Correo</span><strong>{selected.contact_email||"Sin registrar"}</strong></button>
+            <div className="location-business-hours"><span>Horario</span><strong>{selected.business_open_time.slice(0,5)} – {selected.business_close_time.slice(0,5)}</strong></div>
             {selected.contact_phone&&<a className="location-whatsapp-button" href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer">WhatsApp ↗</a>}
             {copied&&<small className="location-copy-toast">{copied} copiado</small>}
           </div>
@@ -136,6 +139,13 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
             <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" defaultValue={selected.contact_phone||""}/></div>
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
+            <BusinessHoursFields
+              days={selected.business_days}
+              openTime={selected.business_open_time}
+              closeTime={selected.business_close_time}
+              title="Horario de atención de la sede"
+              description="Reacción usa este horario para el filtro Abiertos ahora."
+            />
             <div className="field form-span-2"><label>Nueva foto de sede</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"/></div>
           </div>
           <GeofenceMapPicker

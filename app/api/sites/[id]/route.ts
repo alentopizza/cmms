@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -36,8 +37,11 @@ export async function POST(
   const site = await query<{
     active:boolean; latitude:number|null; longitude:number|null; geofence_radius_m:number;
     contact_name:string|null; contact_phone:string|null; contact_email:string|null;
+    business_days:number[]; business_open_time:string; business_close_time:string;
   }>(
-    "SELECT active,latitude,longitude,geofence_radius_m,contact_name,contact_phone,contact_email FROM sites WHERE id=$1 AND organization_id=$2",
+    `SELECT active,latitude,longitude,geofence_radius_m,contact_name,contact_phone,contact_email,
+            business_days,business_open_time::text,business_close_time::text
+     FROM sites WHERE id=$1 AND organization_id=$2`,
     [id, organizationId],
   );
   if (!site.rowCount) return new NextResponse("Sede no encontrada", { status: 404 });
@@ -61,6 +65,8 @@ export async function POST(
   const contactName = form.has("contact_name") ? String(form.get("contact_name") || "").trim() : (site.rows[0].contact_name||"");
   const contactPhone = form.has("contact_phone") ? String(form.get("contact_phone") || "").trim() : (site.rows[0].contact_phone||"");
   const contactEmail = form.has("contact_email") ? String(form.get("contact_email") || "").trim().toLowerCase() : (site.rows[0].contact_email||"");
+  const currentHours = normalizeBusinessHoursRow(site.rows[0]);
+  const businessHours = readBusinessHours(form, "business_", currentHours);
   let image=null;
   try { image=await readImageUpload(form,"image"); }
   catch(error) {
@@ -86,13 +92,15 @@ export async function POST(
        SET name=$1,code=$2,address=$3,city=$4,country=$5,
            latitude=$6,longitude=$7,geofence_radius_m=$8,
            contact_name=$9,contact_phone=$10,contact_email=$11,
-           image_data=COALESCE($12,image_data),
-           image_mime_type=CASE WHEN $12 IS NULL THEN image_mime_type ELSE $13 END
-       WHERE id=$14 AND organization_id=$15`,
+           business_days=$12,business_open_time=$13,business_close_time=$14,
+           image_data=COALESCE($15,image_data),
+           image_mime_type=CASE WHEN $15 IS NULL THEN image_mime_type ELSE $16 END
+       WHERE id=$17 AND organization_id=$18`,
       [
         name,code||null,address||null,city||null,country||"CO",
         latitude,longitude,geofenceRadius,
         contactName||null,contactPhone||null,contactEmail||null,
+        businessHours.days,businessHours.openTime,businessHours.closeTime,
         image?.data||null,image?.mime||null,id,organizationId,
       ],
     );

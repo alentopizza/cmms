@@ -336,6 +336,12 @@ The server Geocoding key is not included in this endpoint and remains runtime-on
 Interactive address entry uses the current Maps JavaScript `PlaceAutocompleteElement` from Places API (New). The browser Maps key must therefore allow both **Maps JavaScript API** and **Places API (New)**. Selection fetches only the fields required by the CMMS (formatted address, location, viewport, address components and display name), then updates the existing geofence state. Server Geocoding remains as a fallback validation path.
 
 
+### Business-hours model
+
+Migration `022_business_hours.sql` adds independent service schedules to `organizations` and `sites`: active weekdays plus opening/closing times. Organization schedules represent the company's general attention window; each Site can override it with its own operating hours. Reaction computes **open now** using the organization's IANA timezone, so schedule filtering remains consistent across tenants in different countries.
+
+Business hours are operational metadata only. They do not automatically disable work orders, attendance, tracking or emergency dispatch; they are currently used for map state/filtering and user context.
+
 ### Reaction connected tracking
 
 The **Reaction** module introduces operational technician tracking independent from Attendance.

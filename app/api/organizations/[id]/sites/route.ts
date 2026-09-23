@@ -6,6 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { readBusinessHours } from "@/lib/business-hours";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -43,6 +44,7 @@ export async function POST(
   const contactPhone = String(form.get("contact_phone") || "").trim();
   const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
   const returnTo = String(form.get("return_to") || "");
+  const businessHours = readBusinessHours(form, "business_");
   let image=null;
   try { image=await readImageUpload(form,"image"); }
   catch(error) {
@@ -70,12 +72,15 @@ export async function POST(
     await query(
       `INSERT INTO sites(
          organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
-         contact_name,contact_phone,contact_email,image_data,image_mime_type
+         contact_name,contact_phone,contact_email,
+         business_days,business_open_time,business_close_time,
+         image_data,image_mime_type
        )
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
       [
         id,name,code||null,address,city,country||"CO",latitude,longitude,geofenceRadius,
         contactName||null,contactPhone||null,contactEmail||null,
+        businessHours.days,businessHours.openTime,businessHours.closeTime,
         image?.data||null,image?.mime||null,
       ],
     );

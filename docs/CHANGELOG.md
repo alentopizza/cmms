@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-23 — Reaction filters and business hours
+
+### Added
+
+- Added editable business hours to Companies and principal Sites: service days, opening time and closing time.
+- Existing records receive an editable Monday–Friday 08:00–18:00 default through migration `022_business_hours.sql`.
+- Company creation captures both the company's general hours and the primary site's own hours.
+- Site creation/edit flows capture and update independent site hours.
+- Reaction now exposes separate map layers for **Technicians**, **Companies** and **Sites**.
+- Added operational-hours filter with **All**, **Open now** and **Closed now** states.
+- Reaction evaluates open/closed state with the organization's configured timezone and each entity's stored schedule.
+
 ## 2026-09-23 — Reaction startup migration repair
 
 ### Fixed

@@ -5,6 +5,7 @@ import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { getPlanByCode } from "@/lib/billing";
+import { readBusinessHours } from "@/lib/business-hours";
 
 function slugify(value: string) {
   return value
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
     const legalName = String(form.get("legal_name") || "").trim();
     const taxId = String(form.get("tax_id") || "").trim();
     const timezone = String(form.get("timezone") || "America/Bogota").trim();
+    const organizationHours = readBusinessHours(form, "business_");
+    const siteHours = readBusinessHours(form, "site_business_");
     const siteName = String(form.get("site_name") || "").trim();
     const siteCode = String(form.get("site_code") || "MAIN").trim().toUpperCase();
     const address = String(form.get("address") || "").trim();
@@ -84,12 +87,14 @@ export async function POST(request: Request) {
       const organization = await client.query<{ id: string }>(
         `INSERT INTO organizations(
           name,slug,legal_name,tax_id,timezone,
+          business_days,business_open_time,business_close_time,
           logo_data,logo_mime_type,logo_file_name,
           cover_data,cover_mime_type,cover_file_name
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING id`,
         [
           name, slug, legalName || null, taxId || null, timezone,
+          organizationHours.days, organizationHours.openTime, organizationHours.closeTime,
           logo.bytes, logo.mime, logo.name,
           cover?.bytes || null, cover?.mime || null, cover?.name || null,
         ],
@@ -118,9 +123,14 @@ export async function POST(request: Request) {
       );
 
       await client.query(
-        `INSERT INTO sites(organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [organizationId, siteName, siteCode || null, address, city, country, latitude, longitude, geofenceRadius],
+        `INSERT INTO sites(
+           organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
+           business_days,business_open_time,business_close_time
+         ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [
+          organizationId, siteName, siteCode || null, address, city, country, latitude, longitude, geofenceRadius,
+          siteHours.days, siteHours.openTime, siteHours.closeTime,
+        ],
       );
 
       await client.query(

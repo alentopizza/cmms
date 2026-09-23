@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
@@ -104,6 +105,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
                   <option value="UTC">UTC</option>
                 </select>
               </div>
+              <BusinessHoursFields title="Horario general de atención" description="Se usa en Reacción para identificar si la empresa está abierta en este momento." />
             </div>
           </div>
 
@@ -126,6 +128,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
               <div className="field"><label htmlFor="new-company-city">Ciudad *</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-country">País *</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
               <div className="form-span-2"><GeofenceMapPicker cityHint="Bogotá" countryHint="CO" /></div>
+              <BusinessHoursFields prefix="site_business_" title="Horario de la sede principal" description="Puede ser diferente del horario general de la empresa." />
             </div>
           </div>
 

@@ -8229,6 +8229,70 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
 }
 
 
+/* Shared business-hours editor */
+.business-hours-fields{
+  margin:0;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-soft);
+}
+.business-hours-fields legend{
+  padding:0 6px;
+  color:var(--text);
+  font-size:10px;
+  font-weight:900;
+}
+.business-hours-fields>p{
+  margin:0 0 10px;
+  color:var(--text-soft);
+  font-size:8px;
+  line-height:1.45;
+}
+.business-hours-days{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:6px;
+}
+.business-hours-days label{
+  display:block;
+  cursor:pointer;
+}
+.business-hours-days input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.business-hours-days span{
+  min-height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text-soft);
+  font-size:8px;
+  font-weight:850;
+}
+.business-hours-days input:checked+span{
+  border-color:color-mix(in srgb,var(--brand-teal) 42%,var(--border));
+  background:var(--brand-mint-light);
+  color:var(--brand-dark);
+}
+.business-hours-time-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:9px;
+}
+.location-business-hours{
+  display:grid;
+  gap:2px;
+  padding:8px 0;
+}
+.location-business-hours span{font-size:8px;color:var(--text-soft)}
+.location-business-hours strong{font-size:10px;color:var(--text)}
+
 /* Reaction operations workspace */
 .reaction-workspace{
   display:grid;
@@ -8250,9 +8314,76 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
   min-height:680px;
   height:100%;
 }
-.reaction-map-status{
+.reaction-map-toolbar{
   position:absolute;
   top:14px;
+  left:14px;
+  right:14px;
+  z-index:9;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  pointer-events:none;
+}
+.reaction-layer-filters,
+.reaction-hours-filter{
+  pointer-events:auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px;
+  border:1px solid color-mix(in srgb,var(--border) 76%,transparent);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  box-shadow:var(--ui-shadow-base);
+  backdrop-filter:blur(10px);
+}
+.reaction-layer-filters label{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 9px;
+  border:1px solid transparent;
+  border-radius:9px;
+  color:var(--text-soft);
+  font-size:8px;
+  font-weight:850;
+  cursor:pointer;
+}
+.reaction-layer-filters label.active{
+  border-color:var(--border);
+  background:var(--surface-soft);
+  color:var(--text);
+}
+.reaction-layer-filters input{accent-color:var(--brand-teal)}
+.reaction-layer-filters b{
+  min-width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  padding:0 4px;
+  border-radius:999px;
+  background:var(--surface);
+  font-size:7px;
+}
+.reaction-hours-filter span{
+  color:var(--text-soft);
+  font-size:8px;
+  font-weight:850;
+}
+.reaction-hours-filter select{
+  min-height:34px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:8px;
+}
+.reaction-map-status{
+  position:absolute;
+  top:66px;
   left:50%;
   z-index:8;
   display:flex;
@@ -8361,6 +8492,23 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
   border-bottom:3px solid #fff;
   background:var(--brand-dark);
 }
+.reaction-marker-company{
+  transform:scale(1.02);
+}
+.reaction-marker-company .reaction-marker-bubble{
+  border-radius:15px;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-teal) 32%,transparent);
+}
+.reaction-marker-company>i{background:var(--brand-dark)}
+.reaction-marker-site.is-open .reaction-marker-bubble,
+.reaction-marker-company.is-open .reaction-marker-bubble{
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 45%,transparent);
+}
+.reaction-marker-site.is-closed,
+.reaction-marker-company.is-closed{
+  opacity:.68;
+  filter:grayscale(.22) drop-shadow(0 6px 10px rgba(15,23,42,.20));
+}
 .reaction-marker-technician .reaction-marker-bubble{
   box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-teal) 48%,transparent);
 }
@@ -8457,8 +8605,13 @@ html[data-theme="dark"] .reaction-map-status{
   .reaction-side-panel{min-height:220px}
 }
 @media(max-width:620px){
+  .business-hours-days{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .business-hours-time-grid{grid-template-columns:1fr}
   .reaction-workspace{gap:10px}
+  .reaction-map-toolbar{left:10px;right:10px;flex-direction:column;align-items:stretch}
+  .reaction-layer-filters{overflow-x:auto}
+  .reaction-hours-filter{justify-content:space-between}
   .reaction-map-stage,.reaction-google-map{min-height:calc(100vh - 230px)}
-  .reaction-map-status{top:10px}
+  .reaction-map-status{top:122px}
   .reaction-map-status small{display:none}
 }

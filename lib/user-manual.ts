@@ -211,7 +211,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:[
       "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia.",
-      "Puedes activar o desactivar las capas Técnicos, Empresas y Sedes y filtrar por empresa, sede y horario desde una sola barra.",
+      "Reacción mantiene Empresas y Sedes visibles y permite filtrar por Empresa, Sede, Técnico y Horario desde una sola barra.",
       "Puedes buscar técnicos, empresas y sedes por nombre y por información relacionada como correo, teléfono, dirección, ciudad o identificación disponible. El botón Borrar filtros restablece el mapa y el panel a su vista operativa inicial.",
       "El selector Empresa limita el mapa y las sedes disponibles. Al hacer clic en una empresa, sede o técnico se abre su ficha encima de Reacción sin abandonar la pantalla.",
       "Las fichas de empresa, sede y técnico muestran todas sus actividades pendientes. El panel derecho mantiene aparte su filtro por fecha.",

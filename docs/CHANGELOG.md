@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-22 — Google Maps async loader correction
+
+### Fixed
+
+- Google Maps loader now uses the documented async callback instead of relying on the script `load` event.
+- Marker library is requested explicitly for Advanced Markers.
+- Added `gm_authFailure` handling so key/referrer/API authorization errors are shown in the geofence UI before falling back to OSM.
+
 ## 2026-09-22 — Google Maps runtime configuration fix
 
 ### Fixed

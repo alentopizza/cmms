@@ -711,7 +711,7 @@ export default function ReactionMap(){
           title={detailCompany.name}
           badge={detailCompany.openNow?"Abierta":"Cerrada"}
           badgeTone={detailCompany.openNow?"success":"danger"}
-          phone={detailCompany.phone}
+          phone={detailCompany.phone||detailCompany.primaryContactPhone}
           facts={[
             ["Razón social",detailCompany.legalName||"Sin registrar"],
             ["NIT / ID fiscal",detailCompany.taxId||"Sin registrar"],

@@ -188,17 +188,15 @@ export default function ReactionMap(){
   const drawRef=useRef<(data:Snapshot,fit:boolean)=>void>(()=>{});
   const snapshotRef=useRef<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
   const filterRef=useRef({
-    companies:true,sites:true,technicians:true,hours:"all" as HoursFilter,
-    companyId:"",siteId:"",search:"",
+    hours:"all" as HoursFilter,
+    companyId:"",siteId:"",technicianId:"",search:"",
   });
   const [snapshot,setSnapshot]=useState<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
   const [status,setStatus]=useState("Cargando mapa operativo…");
-  const [showCompanies,setShowCompanies]=useState(true);
-  const [showSites,setShowSites]=useState(true);
-  const [showTechnicians,setShowTechnicians]=useState(true);
   const [hoursFilter,setHoursFilter]=useState<HoursFilter>("all");
   const [companyId,setCompanyId]=useState("");
   const [siteId,setSiteId]=useState("");
+  const [technicianId,setTechnicianId]=useState("");
   const [dateFilter,setDateFilter]=useState<DateFilter>("today_overdue");
   const [customDate,setCustomDate]=useState(localDateKey(new Date()));
   const [search,setSearch]=useState("");
@@ -207,16 +205,14 @@ export default function ReactionMap(){
 
   useEffect(()=>{
     filterRef.current={
-      companies:showCompanies,
-      sites:showSites,
-      technicians:showTechnicians,
       hours:hoursFilter,
       companyId,
       siteId,
+      technicianId,
       search:normalizeSearch(search),
     };
     drawRef.current(snapshotRef.current,false);
-  },[showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId,search]);
+  },[hoursFilter,companyId,siteId,technicianId,search]);
 
   useEffect(()=>{
     if(siteId){
@@ -309,8 +305,7 @@ export default function ReactionMap(){
       const companyMatches=(organizationId:string)=>!filters.companyId||organizationId===filters.companyId;
       const siteMatches=(id:string,organizationId:string)=>companyMatches(organizationId)&&(!filters.siteId||id===filters.siteId);
 
-      if(filters.companies){
-        for(const company of data.companies.filter(item=>
+      for(const company of data.companies.filter(item=>
           hoursMatch(item.openNow,filters.hours)
           &&(!filters.companyId||item.id===filters.companyId)
           &&!filters.siteId
@@ -326,11 +321,9 @@ export default function ReactionMap(){
           marker.addListener("click",()=>setDetail({kind:"company",id:company.id}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:company.lat,lng:company.lng});
-        }
       }
 
-      if(filters.sites){
-        for(const site of data.sites.filter(item=>
+      for(const site of data.sites.filter(item=>
           hoursMatch(item.openNow,filters.hours)
           &&siteMatches(item.id,item.organizationId)
           &&includesSearch(filters.search,[item.name,item.code,item.organizationName,item.address,item.city,item.country,item.contactName,item.contactPhone,item.contactEmail])
@@ -345,14 +338,13 @@ export default function ReactionMap(){
           marker.addListener("click",()=>setDetail({kind:"site",id:site.id}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:site.lat,lng:site.lng});
-        }
       }
 
-      if(filters.technicians){
-        for(const tech of data.technicians.filter(item=>
-          companyMatches(item.organizationId)
-          &&includesSearch(filters.search,[item.fullName,item.email,item.phone,item.organizationName,item.role])
-        )){
+      for(const tech of data.technicians.filter(item=>
+        companyMatches(item.organizationId)
+        &&(!filters.technicianId||item.userId===filters.technicianId)
+        &&includesSearch(filters.search,[item.fullName,item.email,item.phone,item.organizationName,item.role])
+      )){
           if(tech.route.length>1){
             const route=new google.maps.Polyline({
               map,
@@ -374,7 +366,6 @@ export default function ReactionMap(){
           marker.addListener("click",()=>setDetail({kind:"technician",id:tech.userId}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:tech.lat,lng:tech.lng});
-        }
       }
 
       if(fit&&!bounds.isEmpty()){
@@ -401,6 +392,11 @@ export default function ReactionMap(){
     [snapshot.sites,companyId],
   );
 
+  const filteredTechnicians=useMemo(
+    ()=>snapshot.technicians.filter(tech=>!companyId||tech.organizationId===companyId),
+    [snapshot.technicians,companyId],
+  );
+
   const filteredActivities=useMemo(()=>{
     const today=localDateKey(new Date());
     const tomorrow=tomorrowKey();
@@ -409,6 +405,13 @@ export default function ReactionMap(){
     return snapshot.activities.filter(activity=>{
       if(companyId&&activity.organizationId!==companyId)return false;
       if(siteId&&activity.siteId!==siteId)return false;
+      if(technicianId){
+        const tech=snapshot.technicians.find(item=>item.userId===technicianId);
+        if(!tech)return false;
+        const assignedDirectly=activity.assignedToUserId===technicianId;
+        const assignedByCrew=Boolean(activity.crewId&&tech.crewIds.includes(activity.crewId));
+        if(!assignedDirectly&&!assignedByCrew)return false;
+      }
 
       if(dateFilter==="today_overdue") return activity.operationalDate<=today;
       if(dateFilter==="today") return activity.operationalDate===today;
@@ -417,7 +420,7 @@ export default function ReactionMap(){
       if(dateFilter==="week") return activity.operationalDate>=today&&activity.operationalDate<=weekEnd;
       return activity.operationalDate===customDate;
     });
-  },[snapshot.activities,companyId,siteId,dateFilter,customDate]);
+  },[snapshot.activities,snapshot.technicians,companyId,siteId,technicianId,dateFilter,customDate]);
 
   const searchResults=useMemo<SearchResult[]>(()=>{
     const query=normalizeSearch(search);
@@ -454,35 +457,37 @@ export default function ReactionMap(){
     const query=normalizeSearch(search);
     const matches=(openNow:boolean)=>hoursFilter==="all"||(hoursFilter==="open"?openNow:!openNow);
     return {
-      companies:showCompanies?snapshot.companies.filter(item=>
+      companies:snapshot.companies.filter(item=>
         matches(item.openNow)&&(!companyId||item.id===companyId)&&!siteId
         &&includesSearch(query,[item.name,item.legalName,item.taxId,item.phone,item.adminEmail,item.website,item.primaryContactName,item.primaryContactPhone,item.primaryContactEmail])
-      ).length:0,
-      sites:showSites?snapshot.sites.filter(item=>
+      ).length,
+      sites:snapshot.sites.filter(item=>
         matches(item.openNow)&&(!companyId||item.organizationId===companyId)&&(!siteId||item.id===siteId)
         &&includesSearch(query,[item.name,item.code,item.organizationName,item.address,item.city,item.country,item.contactName,item.contactPhone,item.contactEmail])
-      ).length:0,
-      technicians:showTechnicians?snapshot.technicians.filter(item=>
+      ).length,
+      technicians:snapshot.technicians.filter(item=>
         (!companyId||item.organizationId===companyId)
+        &&(!technicianId||item.userId===technicianId)
         &&includesSearch(query,[item.fullName,item.email,item.phone,item.organizationName,item.role])
-      ).length:0,
+      ).length,
     };
-  },[snapshot,showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId,search]);
+  },[snapshot,hoursFilter,companyId,siteId,technicianId,search]);
 
   const selectedCompany=snapshot.companies.find(company=>company.id===companyId);
   const selectedSite=snapshot.sites.find(site=>site.id===siteId);
-  const scopeLabel=selectedSite
-    ? `${selectedSite.organizationName} · ${selectedSite.name}`
-    : selectedCompany?.name||"Todas las empresas y sedes";
+  const selectedTechnician=snapshot.technicians.find(tech=>tech.userId===technicianId);
+  const scopeLabel=selectedTechnician
+    ? `${selectedTechnician.organizationName} · ${selectedTechnician.fullName}`
+    : selectedSite
+      ? `${selectedSite.organizationName} · ${selectedSite.name}`
+      : selectedCompany?.name||"Todas las empresas y sedes";
 
   function resetFilters(){
     setSearch("");
     setSearchFocused(false);
-    setShowTechnicians(true);
-    setShowCompanies(true);
-    setShowSites(true);
     setCompanyId("");
     setSiteId("");
+    setTechnicianId("");
     setHoursFilter("all");
     setDateFilter("today_overdue");
     setCustomDate(localDateKey(new Date()));
@@ -502,6 +507,7 @@ export default function ReactionMap(){
     }else{
       setCompanyId(result.organizationId);
       setSiteId("");
+      setTechnicianId(result.id);
       setDetail({kind:"technician",id:result.id});
     }
   }
@@ -548,12 +554,6 @@ export default function ReactionMap(){
           </div>}
         </div>
 
-        <div className="reaction-filter-layers">
-          <label className={showTechnicians?"active":""}><input type="checkbox" checked={showTechnicians} onChange={event=>setShowTechnicians(event.target.checked)}/><span>Técnicos</span><b>{snapshot.technicians.length}</b></label>
-          <label className={showCompanies?"active":""}><input type="checkbox" checked={showCompanies} onChange={event=>setShowCompanies(event.target.checked)}/><span>Empresas</span><b>{snapshot.companies.length}</b></label>
-          <label className={showSites?"active":""}><input type="checkbox" checked={showSites} onChange={event=>setShowSites(event.target.checked)}/><span>Sedes</span><b>{snapshot.sites.length}</b></label>
-        </div>
-
         <label className="reaction-filter-select">
           <span>Empresa</span>
           <select value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");}}>
@@ -571,6 +571,14 @@ export default function ReactionMap(){
         </label>
 
         <label className="reaction-filter-select">
+          <span>Técnico</span>
+          <select value={technicianId} onChange={event=>setTechnicianId(event.target.value)}>
+            <option value="">Todos</option>
+            {filteredTechnicians.map(tech=><option key={tech.userId} value={tech.userId}>{tech.fullName}</option>)}
+          </select>
+        </label>
+
+        <label className="reaction-filter-select">
           <span>Horario</span>
           <select value={hoursFilter} onChange={event=>setHoursFilter(event.target.value as HoursFilter)}>
             <option value="all">Todos</option>
@@ -582,7 +590,7 @@ export default function ReactionMap(){
           className="reaction-filter-reset"
           type="button"
           onClick={resetFilters}
-          title="Restablecer buscador, capas, empresa, sede, horario y fecha"
+          title="Restablecer buscador, empresa, sede, técnico, horario y fecha"
         >
           <span>↺</span>
           <strong>Borrar filtros</strong>
@@ -626,10 +634,10 @@ export default function ReactionMap(){
         </label>}
       </div>
 
-      {(companyId||siteId)&&<div className="reaction-scope-alert">
+      {(companyId||siteId||technicianId)&&<div className="reaction-scope-alert">
         <span>Filtro activo</span>
         <strong>{scopeLabel}</strong>
-        <button type="button" onClick={()=>{setCompanyId("");setSiteId("");}}>Ver todo</button>
+        <button type="button" onClick={()=>{setCompanyId("");setSiteId("");setTechnicianId("");}}>Ver todo</button>
       </div>}
 
       <div className="reaction-alert-list">

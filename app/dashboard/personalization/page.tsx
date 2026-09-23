@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
+import FileDropzone from "@/components/FileDropzone";
 
 function formatSize(bytes: number) {
   if (!bytes) return "Predeterminado";
@@ -55,10 +56,7 @@ export default async function PersonalizationPage({
           <span>{customization.logoOnLightName || "Logo predeterminado"}</span>
           <span>{formatSize(customization.logoOnLightSize)}</span>
         </div>
-        <div className="field">
-          <label htmlFor="logo_on_light">Reemplazar logo</label>
-          <input id="logo_on_light" name="logo_on_light" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
-        </div>
+        <FileDropzone id="logo_on_light" name="logo_on_light" label="Reemplazar logo" description="Versión para fondos claros. Recomendado: transparente." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnLightName} compact />
         {customization.hasLogoOnLight &&
           <button className="button secondary" type="submit" name="reset" value="logo-on-light">Restablecer logo</button>}
       </article>
@@ -76,10 +74,7 @@ export default async function PersonalizationPage({
           <span>{customization.logoOnDarkName || "Aún no personalizado"}</span>
           <span>{formatSize(customization.logoOnDarkSize)}</span>
         </div>
-        <div className="field">
-          <label htmlFor="logo_on_dark">Reemplazar logo</label>
-          <input id="logo_on_dark" name="logo_on_dark" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
-        </div>
+        <FileDropzone id="logo_on_dark" name="logo_on_dark" label="Reemplazar logo" description="Versión clara/negativa para fondos oscuros." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnDarkName} compact />
         {customization.hasLogoOnDark &&
           <button className="button secondary" type="submit" name="reset" value="logo-on-dark">Restablecer logo</button>}
       </article>
@@ -97,10 +92,7 @@ export default async function PersonalizationPage({
           <span>{customization.faviconName || "Favicon Desweb predeterminado"}</span>
           <span>{formatSize(customization.faviconSize)}</span>
         </div>
-        <div className="field">
-          <label htmlFor="favicon">Reemplazar favicon</label>
-          <input id="favicon" name="favicon" type="file" accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" />
-        </div>
+        <FileDropzone id="favicon" name="favicon" label="Reemplazar favicon" description="Cuadrado · 64×64 o 128×128 px recomendado." accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" maxSizeMb={2} kind="image" existingFileName={customization.faviconName} compact />
         {customization.hasFavicon &&
           <button className="button secondary" type="submit" name="reset" value="favicon">Restablecer favicon</button>}
       </article>

@@ -135,6 +135,10 @@ Internal application port: `3000`
 
 Health check: `/api/health`
 
+## Migration ordering invariant
+
+Application startup runs all pending SQL migrations before starting Next.js. Migration filenames therefore define a strict dependency order. A migration must never alter or reference a table that is introduced only by a later or missing migration. Reaction currently depends on `020_technician_location_samples.sql` running before `021_reaction_tracking_sessions.sql`.
+
 ## Startup resilience
 
 Easypanel redeploys can create a short window where PostgreSQL is not immediately reachable.

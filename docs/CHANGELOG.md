@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-23 — Reaction startup migration repair
+
+### Fixed
+
+- Restored the missing `020_technician_location_samples.sql` migration required by Reaction tracking.
+- The restored base migration creates `technician_location_samples` before `021_reaction_tracking_sessions.sql` alters it to add Reaction session linkage and optional Attendance linkage.
+- This resolves a production startup failure where `scripts/migrate.mjs` exited before `server.js` could start, causing Easypanel to report **Service is not reachable**.
+
 ## 2026-09-23 — Edit persistence hardening
 
 ### Fixed

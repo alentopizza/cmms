@@ -3,11 +3,15 @@ import { redirect } from "next/navigation";
 import { getPlanByCode } from "@/lib/billing";
 import { getSession } from "@/lib/auth";
 import CheckoutForm from "./CheckoutForm";
+import { getCustomizationSummary } from "@/lib/customization";
 
 export default async function CheckoutPage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
   const params = await searchParams;
   const session = await getSession();
-  const planResult = await getPlanByCode(params.plan || "trial");
+  const [planResult,customization] = await Promise.all([
+    getPlanByCode(params.plan || "trial"),
+    getCustomizationSummary(),
+  ]);
   if (!planResult.rowCount) redirect("/#planes");
   const plan = planResult.rows[0];
 
@@ -39,6 +43,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
           name: session.organizationName || "Empresa",
           email: session.email,
         } : null}
+        defaultCountry={customization.defaultCountry}
+        defaultLocale={customization.defaultLocale}
       />
     </section>
   </main>;

@@ -4,6 +4,7 @@ import { getPlanByCode } from "@/lib/billing";
 import { hashPassword } from "@/lib/passwords";
 import { COOKIE_NAME, userSessionToken } from "@/lib/auth";
 import { publicUrl } from "@/lib/urls";
+import { isSupportedCountry, isSupportedLocale, timezonesForCountry } from "@/lib/international-catalog";
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 
@@ -31,7 +32,9 @@ export async function POST(request: Request) {
   const fullName = String(form.get("full_name") || "").trim();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const password = String(form.get("password") || "");
+  const country = String(form.get("country") || "CO").trim().toUpperCase();
   const city = String(form.get("city") || "").trim();
+  const preferredLocale = String(form.get("preferred_locale") || "es-CO").trim();
   const siteName = String(form.get("site_name") || "").trim();
 
   const fields: Record<string,string> = {};
@@ -40,7 +43,9 @@ export async function POST(request: Request) {
   if (!email) fields.email = "Ingresa el correo electrónico.";
   else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
   if (password.length < 8) fields.password = "La contraseña debe tener al menos 8 caracteres.";
-  if (!city) fields.city = "Ingresa la ciudad.";
+  if (!isSupportedCountry(country)) fields.country = "Selecciona un país válido.";
+  if (!city) fields.city = "Selecciona la ciudad.";
+  if (!isSupportedLocale(preferredLocale)) fields.general = "El idioma predeterminado no es válido.";
   if (!siteName) fields.site_name = "Ingresa el nombre de la sede principal.";
 
   const planResult = await getPlanByCode(planCode);
@@ -69,11 +74,12 @@ export async function POST(request: Request) {
     const slugExists = await client.query("SELECT 1 FROM organizations WHERE slug=$1", [slug]);
     if (slugExists.rowCount) slug = `${slug}-${Date.now().toString().slice(-6)}`;
 
+    const timezone=timezonesForCountry(country)[0] || "UTC";
     const org = await client.query<{ id: string }>(
-      `INSERT INTO organizations(name,slug,timezone)
-       VALUES($1,$2,'America/Bogota')
+      `INSERT INTO organizations(name,slug,timezone,legal_city,legal_country,default_country,preferred_locale)
+       VALUES($1,$2,$3,$4,$5,$5,$6)
        RETURNING id`,
-      [companyName, slug],
+      [companyName, slug, timezone, city, country, preferredLocale],
     );
     const organizationId = org.rows[0].id;
 
@@ -100,16 +106,16 @@ export async function POST(request: Request) {
 
     await client.query(
       `INSERT INTO sites(organization_id,name,code,city,country)
-       VALUES($1,$2,'MAIN',$3,'CO')`,
-      [organizationId, siteName, city],
+       VALUES($1,$2,'MAIN',$3,$4)`,
+      [organizationId, siteName, city, country],
     );
 
     const { salt, hash } = hashPassword(password);
     const user = await client.query<{ id: string }>(
-      `INSERT INTO users(email,full_name,password_hash,password_salt,platform_role)
-       VALUES($1,$2,$3,$4,'user')
+      `INSERT INTO users(email,full_name,country_code,preferred_locale,password_hash,password_salt,platform_role)
+       VALUES($1,$2,$3,$4,$5,$6,'user')
        RETURNING id`,
-      [email, fullName, hash, salt],
+      [email, fullName, country, preferredLocale, hash, salt],
     );
     userId = user.rows[0].id;
 

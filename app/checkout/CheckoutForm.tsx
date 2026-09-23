@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CountryCityFields } from "@/components/InternationalFields";
 
 type Plan = {
   code: "trial" | "basic" | "medium" | "pro";
@@ -12,7 +13,7 @@ type Plan = {
   max_sites: number;
 };
 
-type FieldName = "company_name" | "full_name" | "email" | "password" | "city" | "site_name" | "general";
+type FieldName = "company_name" | "full_name" | "email" | "password" | "country" | "city" | "site_name" | "general";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 type Draft = {
@@ -20,6 +21,7 @@ type Draft = {
   full_name: string;
   email: string;
   password: string;
+  country: string;
   city: string;
   site_name: string;
 };
@@ -29,6 +31,7 @@ const INITIAL_DRAFT: Draft = {
   full_name: "",
   email: "",
   password: "",
+  country: "CO",
   city: "",
   site_name: "",
 };
@@ -36,11 +39,15 @@ const INITIAL_DRAFT: Draft = {
 export default function CheckoutForm({
   plan,
   existingCompany,
+  defaultCountry="CO",
+  defaultLocale="es-CO",
 }: {
   plan: Plan;
   existingCompany?: { name: string; email: string } | null;
+  defaultCountry?: string;
+  defaultLocale?: string;
 }) {
-  const [draft, setDraft] = useState<Draft>(INITIAL_DRAFT);
+  const [draft, setDraft] = useState<Draft>({...INITIAL_DRAFT,country:defaultCountry});
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
 
@@ -56,7 +63,8 @@ export default function CheckoutForm({
     if (!draft.email.trim()) next.email = "Ingresa un correo electrónico.";
     else if (!/^\S+@\S+\.\S+$/.test(draft.email.trim())) next.email = "Ingresa un correo válido.";
     if (draft.password.length < 8) next.password = "La contraseña debe tener al menos 8 caracteres.";
-    if (!draft.city.trim()) next.city = "Ingresa la ciudad.";
+    if (!draft.country.trim()) next.country = "Selecciona el país.";
+    if (!draft.city.trim()) next.city = "Selecciona la ciudad.";
     if (!draft.site_name.trim()) next.site_name = "Ingresa el nombre de la sede principal.";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -71,6 +79,7 @@ export default function CheckoutForm({
     try {
       const body = new FormData();
       body.set("plan_code", plan.code);
+      body.set("preferred_locale", defaultLocale);
       Object.entries(draft).forEach(([key, value]) => body.set(key, value));
 
       const response = await fetch("/api/public/test-checkout", {
@@ -171,9 +180,21 @@ export default function CheckoutForm({
       {errors.password && <small className="field-error-message">{errors.password}</small>}
     </div>
 
-    <div className={`field ${errors.city ? "field-error" : ""}`}>
-      <label htmlFor="checkout-city">Ciudad</label>
-      <input id="checkout-city" value={draft.city} onChange={event => update("city", event.target.value)} placeholder="Ej. Bogotá" />
+    <div className="checkout-country-city">
+      <CountryCityFields
+        countryId="checkout-country"
+        countryName="country"
+        cityId="checkout-city"
+        cityName="city"
+        countryLabel="País"
+        cityLabel="Ciudad"
+        countryValue={draft.country}
+        cityValue={draft.city}
+        onCountryChange={value=>update("country",value)}
+        onCityChange={value=>update("city",value)}
+        required
+      />
+      {errors.country && <small className="field-error-message">{errors.country}</small>}
       {errors.city && <small className="field-error-message">{errors.city}</small>}
     </div>
 

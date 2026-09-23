@@ -662,3 +662,12 @@ Phone capture is country-aware. When a Company or Site country is known, the UI 
 Current calling-code helpers cover the principal Latin American countries already represented by the product plus common North American/European codes. Unknown countries keep a safe international-entry fallback.
 
 WhatsApp and telephone actions are convenience links only; they do not grant permissions or send messages from the CMMS. Reaction entity details use normalized Company, Site and Technician numbers for these shortcuts.
+
+
+### Multi-country and language foundation
+
+Desweb CMMS is being prepared for distribution across multiple countries. Country-dependent form data is no longer treated as unrelated text.
+
+The current foundation centralizes Country, curated City options, calling codes, tax identifiers, personal document types and time zones in `lib/international-catalog.ts`. Companies, Sites and Users/Technicians consume shared selectors, and phones derive the international prefix from the selected Country. Platform and tenant Settings now persist a default Country and preferred Locale.
+
+This is a locale-ready foundation, not a claim that the full UI has already been translated. Existing Spanish screens remain valid until translation dictionaries are introduced progressively. The Country/City catalog is intentionally extensible; the initial city sets cover common operating cities and can be expanded without changing each form independently.

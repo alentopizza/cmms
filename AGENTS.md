@@ -351,3 +351,17 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - `default_country` / preferred Locale are defaults, not restrictions: a specific record may select another supported Country.
 - Existing locale settings are a foundation for staged i18n. Do not claim a screen is translated unless its visible strings actually use translation dictionaries.
 - Curated City lists are not exhaustive. Extend the shared catalog or a future geographic service instead of adding a writable City fallback to one form without an explicit product decision.
+
+
+## Supplier/requisition invariants
+
+- Supplier detail uses the shared in-page profile workspace. Do not reintroduce a Supplier detail modal.
+- New Supplier creation requires a logo unless the product requirement is explicitly changed.
+- Service Supplier work is authoritative in `work_order_tasks.service_supplier_id`; do not create a second Supplier↔Activity assignment table.
+- Material Supplier association is authoritative in `inventory_items.supplier_id`; do not create a second Supplier↔Inventory assignment table.
+- Inventory items must reference an active Supplier whose type is `materials` or `both`.
+- Every requisition belongs to exactly one Supplier. If a user selects items from multiple Suppliers, split them server-side into independent requisitions.
+- Supplier profile and Inventory must use the same requisition generation endpoint so grouping, tenant checks and quantity validation cannot diverge.
+- Requisition state transitions must not alter Inventory quantity. Stock changes belong to receipt/issue/adjustment/return inventory transactions.
+- Deleting a Supplier with Inventory, Activity or requisition history is blocked to preserve traceability; use inactive state instead.
+- Requisition exports are document outputs (PDF/XLSX/Word) and must reflect the supplier-scoped item snapshots stored on the requisition.

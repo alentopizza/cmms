@@ -6,10 +6,11 @@ import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import { AssetCreateModal, SubLocationCreateModal } from "@/components/ContextCreateModals";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; latitude:number|null; longitude:number|null; geofence_radius_m:number; };
+type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; latitude:number|null; longitude:number|null; geofence_radius_m:number; business_days:number[]; business_open_time:string; business_close_time:string; };
 type Location = { id: string; parent_id: string | null; name: string; code: string | null; type: string; description: string | null; active: boolean; asset_count: number; child_count: number; };
 type Supplier = { id: string; organization_id: string; name: string };
 
@@ -25,6 +26,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
     query<Site>(
       `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
               s.latitude,s.longitude,s.geofence_radius_m,
+              s.business_days,s.business_open_time::text,s.business_close_time::text,
               COALESCE(ol.max_sublocations,100)::int max_sublocations
        FROM sites s JOIN organizations o ON o.id=s.organization_id
        LEFT JOIN organization_limits ol ON ol.organization_id=o.id WHERE s.id=$1`, [id]),
@@ -145,6 +147,13 @@ export default async function LocationPage({ params, searchParams }: { params: P
         <div className="field"><label>Longitud</label><input name="longitude" type="number" step="0.000001" min="-180" max="180" defaultValue={site.longitude??""} placeholder="-74.072100"/></div>
         <div className="field"><label>Radio permitido (metros)</label><input name="geofence_radius_m" type="number" min="20" max="5000" defaultValue={site.geofence_radius_m||250}/><small>Recomendado en campo: 100–300 m según precisión GPS y tamaño de la sede.</small></div>
         <div className="field"><label>Estado</label><div className="geofence-status-copy">{site.latitude!==null && site.longitude!==null ? `Punto: ${site.latitude.toFixed(6)}, ${site.longitude.toFixed(6)}` : "Aún sin coordenadas"}</div></div>
+        <BusinessHoursFields
+          days={site.business_days}
+          openTime={site.business_open_time}
+          closeTime={site.business_close_time}
+          title="Horario de atención de la sede"
+          description="Se usa en Reacción para saber si esta sede está abierta."
+        />
         <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar geocerca</button></div>
       </form>
     </section>

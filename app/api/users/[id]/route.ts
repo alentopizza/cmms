@@ -48,7 +48,7 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID.test(id)) return json(400, { message: "Usuario inválido." });
-  if (session.userId && session.userId === id) return json(409, { message: "No puedes modificar o eliminar tu propia cuenta desde esta pantalla." });
+  const editingSelf = Boolean(session.userId && session.userId === id);
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
@@ -101,12 +101,20 @@ export async function POST(
     }
 
     if (intent === "activate" || intent === "deactivate") {
+      if (editingSelf) {
+        await client.query("ROLLBACK");
+        return json(409, { message: "No puedes activar o desactivar tu propia cuenta desde esta pantalla." });
+      }
       await client.query("UPDATE users SET active=$1,updated_at=now() WHERE id=$2", [intent === "activate", id]);
       await client.query("COMMIT");
       return json(200, { message: intent === "activate" ? "Usuario reactivado." : "Usuario desactivado." });
     }
 
     if (intent === "delete") {
+      if (editingSelf) {
+        await client.query("ROLLBACK");
+        return json(409, { message: "No puedes eliminar tu propia cuenta." });
+      }
       if (!isPlatformOwner(session)) {
         await client.query("ROLLBACK");
         return json(403, { message: "Solo el Propietario Desweb puede eliminar usuarios definitivamente." });
@@ -195,6 +203,22 @@ export async function POST(
           role: "Puedes modificar su rol dentro de la empresa actual, pero no cambiar su alcance histórico.",
         },
       });
+    }
+
+    if (editingSelf) {
+      const requestedPlatformRole = makingSuperadmin ? "superadmin" : "user";
+      const roleChanged = requestedPlatformRole !== current.platform_role
+        || (!makingSuperadmin && requestedRole !== current.role);
+      const organizationChanged = !makingSuperadmin && organizationId !== current.organization_id;
+      if (roleChanged || organizationChanged) {
+        await client.query("ROLLBACK");
+        return json(409, {
+          fields: {
+            role: "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol.",
+            organization_id: "No puedes trasladar tu propia cuenta a otra empresa.",
+          },
+        });
+      }
     }
 
     if (!makingSuperadmin) {

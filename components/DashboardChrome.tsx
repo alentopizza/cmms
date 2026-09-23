@@ -38,11 +38,13 @@ export function CurrentSectionHeader({
   fullName,
   role,
   canConfigure,
+  avatarSrc,
 }: {
   contextName: string | null;
   fullName: string;
   role: string;
   canConfigure: boolean;
+  avatarSrc?: string | null;
 }) {
   const pathname = usePathname();
   const section = currentSection(pathname);
@@ -58,12 +60,12 @@ export function CurrentSectionHeader({
         {contextName && <small>{contextName}</small>}
       </div>
     </div>
+    <div id="context-header-tools" className="context-header-tools-slot" />
     <div className="context-header-account-zone">
       <Link className="context-header-utility" href="/dashboard/help" title="Manual / Ayuda" aria-label="Manual / Ayuda">?</Link>
       {canConfigure && <Link className="context-header-utility" href="/dashboard/settings" title="Configuración" aria-label="Configuración">⚙</Link>}
-      <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} placement="header" />
+      <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} placement="header" avatarSrc={avatarSrc} />
     </div>
-    <div id="context-header-tools" className="context-header-tools-slot" />
   </header>;
 }
 
@@ -73,12 +75,14 @@ export function SidebarAccountMenu({
   canConfigure,
   collapsed = false,
   placement = "sidebar",
+  avatarSrc = null,
 }: {
   fullName: string;
   role: string;
   canConfigure: boolean;
   collapsed?: boolean;
   placement?: "sidebar" | "header";
+  avatarSrc?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -135,7 +139,7 @@ export function SidebarAccountMenu({
       aria-haspopup="menu"
       title={collapsed ? fullName + " · " + role : undefined}
     >
-      <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}>{initials}</span>
+      <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}>{avatarSrc ? <img src={avatarSrc} alt="" /> : initials}</span>
       {!collapsed && <span className={placement === "header" ? "header-account-copy" : "sidebar-account-copy"}>
         <strong>{fullName}</strong>
         <small>{role}</small>

@@ -49,15 +49,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({ id, icon, label, href }));
   const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
 
-  const preferenceResult = session.userId
-    ? await query<{ sidebar_order: string[] | null; sidebar_collapsed: boolean | null }>(
-        "SELECT sidebar_order,sidebar_collapsed FROM user_dashboard_preferences WHERE user_id=$1",
-        [session.userId],
-      )
-    : { rows: [] as Array<{ sidebar_order: string[] | null; sidebar_collapsed: boolean | null }> };
+  const [preferenceResult, identityResult] = await Promise.all([
+    session.userId
+      ? query<{ sidebar_order: string[] | null; sidebar_collapsed: boolean | null }>(
+          "SELECT sidebar_order,sidebar_collapsed FROM user_dashboard_preferences WHERE user_id=$1",
+          [session.userId],
+        )
+      : Promise.resolve({ rows: [] as Array<{ sidebar_order: string[] | null; sidebar_collapsed: boolean | null }> }),
+    session.userId
+      ? query<{ has_avatar: boolean }>("SELECT (avatar_data IS NOT NULL) has_avatar FROM users WHERE id=$1", [session.userId])
+      : Promise.resolve({ rows: [] as Array<{ has_avatar: boolean }> }),
+  ]);
 
   const initialSidebarOrder = preferenceResult.rows[0]?.sidebar_order || [];
   const initialSidebarCollapsed = Boolean(preferenceResult.rows[0]?.sidebar_collapsed);
+  const accountAvatarSrc = session.userId && identityResult.rows[0]?.has_avatar
+    ? `/api/users/${session.userId}/avatar`
+    : null;
 
   const shellStyle = organizationBranding ? {
     ...(organizationBranding.primaryColor ? { "--brand-teal": organizationBranding.primaryColor } : {}),
@@ -93,6 +101,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         fullName={session.fullName}
         role={roleLabel(session)}
         canConfigure={canConfigure}
+        avatarSrc={accountAvatarSrc}
       />
       <div className="workspace-content">{children}</div>
     </main>

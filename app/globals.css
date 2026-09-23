@@ -10284,3 +10284,8 @@ html[data-theme="dark"] .header-account-copy strong,html[data-theme="dark"] .hea
 .entity-profile-quick-actions .profile-export-menu{width:100%}.entity-profile-quick-actions .profile-export-menu>summary{width:100%;min-height:37px!important}.entity-profile-quick-actions .profile-export-options{left:0;right:auto;bottom:calc(100% + 7px);top:auto}
 .site-resource-actions button.site-resource-action{border:0;font-family:inherit;cursor:pointer}
 @media(max-width:760px){.entity-profile-modal,.user-profile-modal,.sublocation-profile-modal{width:100vw;max-height:100vh;border:0;border-radius:0;overflow:auto}.sublocation-profile-modal{width:100vw}}
+
+/* Final top-right account alignment */
+.context-header-account-zone{margin-left:8px;flex:0 0 auto}
+.header-account-avatar{overflow:hidden}.header-account-avatar img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+@media(max-width:1080px){.context-header-account-zone{margin-left:auto}}

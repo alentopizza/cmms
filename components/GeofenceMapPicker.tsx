@@ -668,9 +668,10 @@ export default function GeofenceMapPicker({
             step="any"
             min="-90"
             max="90"
-            value={latitude ?? ""}
+            key={"latitude-"+(latitude ?? "empty")}
+            defaultValue={latitude ?? ""}
             required={coordinateRequired}
-            onChange={event=>setManualCoordinate("latitude",event.target.value)}
+            onBlur={event=>setManualCoordinate("latitude",event.target.value)}
             placeholder="Ej. 4.6110"
           />
         </div>
@@ -683,9 +684,10 @@ export default function GeofenceMapPicker({
             step="any"
             min="-180"
             max="180"
-            value={longitude ?? ""}
+            key={"longitude-"+(longitude ?? "empty")}
+            defaultValue={longitude ?? ""}
             required={coordinateRequired}
-            onChange={event=>setManualCoordinate("longitude",event.target.value)}
+            onBlur={event=>setManualCoordinate("longitude",event.target.value)}
             placeholder="Ej. -74.1454"
           />
         </div>

@@ -206,6 +206,8 @@ Company, Site, Sub-location and User/Technician directory drill-downs use `Entit
 
 Site and Sub-location profiles are fed only with already-authorized directory data. User/Technician profile aggregates are computed by server-scoped User queries. Company profiles preserve protected edit confirmation, geofence/site context, resource entitlements and full-record navigation while adopting the same visual shell.
 
+Location/Sub-location Technician lists are not persisted as a separate relation. The Locations server page projects them from `work_order_tasks`: direct `assigned_to` users and members of an assigned Crew are normalized into distinct Activity/User assignments, then filtered by the authenticated organization/Site scope. This keeps Work Order Activities authoritative and allows Location profiles to update automatically as assignments change.
+
 `/api/profile-export` is a separate report boundary from Dashboard exports. It accepts only allow-listed entity types and formats, validates UUID identifiers, re-checks module permission and organization/Site scope on the server, and then generates one-record Hoja de vida output. PDF uses `pdf-lib`, Excel uses a real `exceljs` XLSX workbook, and the Word option currently emits a Word-compatible `.doc` HTML document.
 
 Dashboard reporting keeps one authorization/filter scope across interactive metrics and exports.

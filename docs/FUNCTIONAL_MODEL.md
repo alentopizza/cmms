@@ -31,10 +31,24 @@ Permissions are enforced both in navigation and server-side routes. Tenant users
 
 User lifecycle rules:
 - creation is available to authorized account administrators;
-- editing, activation/deactivation and permanent deletion are reserved to the platform superadministrator in the current hierarchy;
+- authorized Company administrators can create, edit and activate/deactivate ordinary users inside their own organization; platform identities remain governed by platform-role rules, and permanent deletion is reserved to the Platform Owner under the current destructive-action model;
 - users with operational history are never permanently deleted; they must be deactivated so work-order, meter, comment and audit traceability remains intact;
 - changing the organization/global scope of an account with recorded activity is blocked, while role changes inside the same organization remain possible;
 - organization users can be granted **all-site access** or **specific-site access**; specific assignments are stored independently and applied to operational reads/writes for locations, assets, work orders, preventive maintenance and site-scoped inventory.
+
+## Reaction emergency-response tracking
+
+**Reacción** is an operational location layer for emergency response and technician dispatch; it is intentionally independent from attendance shifts.
+
+Current behavior:
+
+- Technician users with `reaction.track` must grant device location while using the authenticated operational workspace.
+- A connected tracking session stores periodic GPS samples and recent route history while the web application remains active.
+- Admin, Manager and platform operators with `reaction.view` can see configured sites and live technicians within their authorized organization scope.
+- Site markers use organization branding; technician markers use the user's profile photo when available.
+- Explicit logout closes the tracking session and stale sessions are excluded from the live map.
+- The right-side Reaction panel is reserved for the next dispatch/contingency workflow.
+- Browser/PWA tracking cannot guarantee continuous GPS after the OS suspends the app in background; transport-app-grade background tracking requires a native/mobile-container phase.
 
 ## Resource entitlements
 

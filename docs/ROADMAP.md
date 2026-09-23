@@ -43,6 +43,7 @@ This roadmap is directional and should be updated as priorities change.
 - role-aware mobile navigation foundation: drawer for broad roles and bottom navigation for field roles
 - role-aware dashboard filters and executive exports in Excel (.xlsx), CSV and branded PDF
 - optional field attendance with 1:1 facial verification, geofencing and execution correlation
+- Reaction emergency-response map with connected Technician GPS sessions, recent route visualization and supervisory live view
 
 ## Implemented operational dependency foundation
 
@@ -53,6 +54,14 @@ This roadmap is directional and should be updated as priorities change.
 - supplier + sublocation relationship on new assets and inventory items;
 - activity assignment to a person, crew or service supplier;
 - external/provider work visibility restricted to assigned execution scope.
+
+## Immediate verification queue
+
+These items are reported from current product validation and must be reproduced against `main` before being marked resolved:
+
+- **Companies:** verify that edits made from the company profile/directory persist after **Guardar cambios**, including base fields and principal-site/geofence data. Check API response/redirect, database persistence and refreshed directory state.
+- **Users:** verify that edits made from the Users module persist after **Guardar cambios** for both platform operators and Company administrators within their allowed scope. Check validation responses, database persistence and `router.refresh()` state.
+- Do not close either item only because the mutation route appears correct in static review; confirm the full UI → API → PostgreSQL → refreshed UI path.
 
 ## Next functional priorities
 

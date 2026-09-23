@@ -37,7 +37,7 @@ export default function PhoneField({
 
   useEffect(()=>{
     if(!countryInputId)return;
-    const input=document.getElementById(countryInputId) as HTMLInputElement|null;
+    const input=document.getElementById(countryInputId) as HTMLInputElement|HTMLSelectElement|null;
     if(!input)return;
     const sync=()=>setCountry(String(input.value||"").trim().toUpperCase());
     sync();

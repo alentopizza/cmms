@@ -477,6 +477,15 @@ export default function ReactionMap(){
     };
   },[snapshot,hoursFilter,companyId,siteId,technicianId,search]);
 
+  const hasActiveFilters=Boolean(
+    search.trim()
+    || companyId
+    || siteId
+    || technicianId
+    || hoursFilter!=="all"
+    || dateFilter!=="today_overdue"
+  );
+
   const selectedCompany=snapshot.companies.find(company=>company.id===companyId);
   const selectedSite=snapshot.sites.find(site=>site.id===siteId);
   const selectedTechnician=snapshot.technicians.find(tech=>tech.userId===technicianId);
@@ -593,10 +602,14 @@ export default function ReactionMap(){
           </select>
         </label>
         <button
-          className="reaction-filter-reset"
+          className={`reaction-filter-reset ${hasActiveFilters?"has-filters":""}`}
           type="button"
           onClick={resetFilters}
-          title="Restablecer buscador, empresa, sede, técnico, horario y fecha"
+          disabled={!hasActiveFilters}
+          aria-disabled={!hasActiveFilters}
+          title={hasActiveFilters
+            ? "Borrar todos los filtros activos"
+            : "No hay filtros activos para borrar"}
         >
           <span>↺</span>
           <strong>Borrar filtros</strong>

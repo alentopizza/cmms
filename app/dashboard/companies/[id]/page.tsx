@@ -98,6 +98,8 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (error === "document-size") return <div className="notice error">El documento supera el máximo permitido de 10 MB.</div>;
   if (error === "document-not-applicable") return <div className="notice error">Un documento marcado como “No aplica” no debe tener archivo adjunto.</div>;
   if (error === "document-fields") return <div className="notice error">Revisa la categoría, el nombre y el nivel de requisito del documento.</div>;
+  if (error === "business-hours") return <div className="notice error">La hora de cierre debe ser posterior a la hora de apertura.</div>;
+  if (error === "business-days") return <div className="notice error">Selecciona al menos un día de atención.</div>;
   if (error) return <div className="notice error">Revisa los campos obligatorios e inténtalo nuevamente.</div>;
   if (created === "company") return <div className="notice success">La empresa y su sede principal fueron creadas correctamente.</div>;
   if (created === "site") return <div className="notice success">La nueva sede fue creada correctamente.</div>;

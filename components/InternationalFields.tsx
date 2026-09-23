@@ -87,9 +87,13 @@ export function TaxIdentificationTypeSelect({
   const options=taxIdTypesForCountry(country);
   const [selected,setSelected]=useState(String(defaultValue||""));
   useEffect(()=>{
+    if(!selected){
+      if(required)setSelected(options[0]?.value||"");
+      return;
+    }
     if(options.some(option=>option.value===selected))return;
-    setSelected(options[0]?.value||"");
-  },[country]);
+    setSelected(required ? (options[0]?.value||"") : "");
+  },[country,required]);
   const legacy=Boolean(selected&&!options.some(option=>option.value===selected));
   return <div className="field international-select-field">
     <label htmlFor={id}>{label}{required?" *":""}</label>

@@ -15,7 +15,7 @@ type SitePoint={
   lat:number;lng:number;radius:number;businessHours:BusinessHours;openNow:boolean;logoUrl:string|null;
 };
 type TechnicianPoint={
-  trackingSessionId:string;userId:string;fullName:string;email:string;phone:string|null;role:string;
+  trackingSessionId:string;userId:string;fullName:string;email:string;phone:string|null;country:string;role:string;
   organizationId:string;organizationName:string;crewIds:string[];
   lat:number;lng:number;accuracy:number|null;lastSeenAt:string;telemetryState:"live"|"paused";avatarUrl:string|null;
   route:Array<{lat:number;lng:number;at:string}>;
@@ -711,6 +711,7 @@ export default function ReactionMap(){
           title={detailCompany.name}
           badge={detailCompany.openNow?"Abierta":"Cerrada"}
           badgeTone={detailCompany.openNow?"success":"danger"}
+          phone={detailCompany.phone}
           facts={[
             ["Razón social",detailCompany.legalName||"Sin registrar"],
             ["NIT / ID fiscal",detailCompany.taxId||"Sin registrar"],
@@ -730,6 +731,7 @@ export default function ReactionMap(){
           subtitle={detailSite.organizationName}
           badge={detailSite.openNow?"Abierta":"Cerrada"}
           badgeTone={detailSite.openNow?"success":"danger"}
+          phone={detailSite.contactPhone}
           facts={[
             ["Código",detailSite.code||"Sin registrar"],
             ["Dirección",detailSite.address||"Sin registrar"],
@@ -751,6 +753,7 @@ export default function ReactionMap(){
           badge={detailTechnician.telemetryState==="live"?"GPS en vivo":"GPS pausado"}
           badgeTone={detailTechnician.telemetryState==="live"?"success":"warning"}
           imageMode="portrait"
+          phone={detailTechnician.phone}
           facts={[
             ["Correo",detailTechnician.email],
             ["Teléfono",detailTechnician.phone||"Sin registrar"],
@@ -773,10 +776,11 @@ export default function ReactionMap(){
 }
 
 function EntityDetail({
-  imageUrl,title,subtitle,badge,badgeTone,facts,activities,onActivity,imageMode="logo",
+  imageUrl,title,subtitle,badge,badgeTone,facts,activities,onActivity,imageMode="logo",phone,
 }:{
   imageUrl:string|null;title:string;subtitle?:string;badge:string;badgeTone:"success"|"danger"|"warning";
   facts:Array<[string,string]>;activities:ActivityAlert[];onActivity:(id:string)=>void;imageMode?:"logo"|"portrait";
+  phone?:string|null;
 }){
   return <div className="reaction-detail-body">
     <div className="reaction-entity-summary">
@@ -793,6 +797,11 @@ function EntityDetail({
     <div className="reaction-detail-facts">
       {facts.map(([label,value])=><div key={label}><span>{label}</span><strong>{value}</strong></div>)}
     </div>
+
+    {phone&&<div className="reaction-contact-actions">
+      <a href={"https://wa.me/"+phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir conversación en WhatsApp" data-tooltip="WhatsApp"><i>W</i><span>WhatsApp</span></a>
+      <a href={"tel:"+phone} title="Iniciar llamada telefónica" data-tooltip="Llamar"><i>☎</i><span>Llamar</span></a>
+    </div>}
 
     <PendingActivitiesSection activities={activities} onActivity={onActivity}/>
   </div>;

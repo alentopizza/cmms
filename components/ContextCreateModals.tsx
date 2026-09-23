@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -124,6 +125,7 @@ export function SiteCreateModal({
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
+          <BusinessHoursFields title="Horario de atención de la sede" description="Este horario alimenta el filtro operativo de Reacción." />
         </div>
         <footer className="modal-actions">
           <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancelar</button>

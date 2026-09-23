@@ -7,7 +7,7 @@ import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import PhoneField from "@/components/PhoneField";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
-import { CountryCityFields } from "@/components/InternationalFields";
+import { CountryCityFields, CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -328,10 +328,14 @@ export function ContextUserCreateModal({
 }) {
   const [open,setOpen]=useState(false);
   const [role,setRole]=useState("viewer");
+  const [userCountry,setUserCountry]=useState(countryCode);
 
   useEffect(() => {
-    if (open) setRole("viewer");
-  }, [open]);
+    if (open) {
+      setRole("viewer");
+      setUserCountry(countryCode);
+    }
+  }, [open,countryCode]);
 
   return <>
     <TriggerButton label={triggerLabel} icon="user-plus" secondary onClick={() => setOpen(true)} />
@@ -344,7 +348,10 @@ export function ContextUserCreateModal({
           <div className="form-span-2"><FileDropzone name="avatar" label="Foto de perfil" description="Identidad visual del usuario. La biometría facial se enrola por separado con cámara y prueba de vida." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Nombre completo *</label><input name="full_name" required autoFocus placeholder="Ej. Laura Gómez" /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="laura@empresa.com" /></div>
-          <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={countryCode} />
+          <CountrySelect id="context-user-country" name="country_code" label="País *" value={userCountry} onChange={setUserCountry} required />
+          <PersonalDocumentTypeSelect id="context-user-document-type" name="identity_document_type" countryCode={userCountry} />
+          <div className="field"><label>Número de documento</label><input name="identity_document_number" placeholder="Número del documento seleccionado" /></div>
+          <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={userCountry} />
           <div className="field"><label>Contraseña temporal *</label><input name="password" type="password" minLength={8} required autoComplete="new-password" placeholder="Mínimo 8 caracteres" /></div>
           <div className="field"><label>Rol *</label><select name="role" value={role} onChange={event=>setRole(event.target.value)}><option value="admin">Administrador de empresa</option><option value="manager">Manager / Supervisor</option><option value="technician">Técnico</option><option value="requester">Solicitante</option><option value="viewer">Consulta</option><option value="provider">Proveedor de servicios</option><option value="external">Colaborador externo</option></select></div>
           {(role==="provider" || role==="external") && <div className="field"><label>Proveedor de servicios {role==="provider"?"*":"(opcional)"}</label><select name="external_supplier_id" required={role==="provider"}><option value="">Selecciona proveedor</option>{serviceSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>}

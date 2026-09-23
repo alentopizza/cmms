@@ -9,6 +9,7 @@ import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
+import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import CompanyDocumentWorkspace, { type CompanyDocumentItem } from "@/components/CompanyDocumentWorkspace";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -325,11 +326,10 @@ export default async function CompanyDetailPage({
           <input type="hidden" name="profile_v2" value="1" />
           <div className="field"><label>Nombre comercial</label><input name="name" defaultValue={organization.name} required /></div>
           <div className="field"><label>Razón social</label><input name="legal_name" defaultValue={organization.legal_name || ""} /></div>
-          <div className="field"><label>Tipo de identificación</label><input name="tax_id_type" defaultValue={organization.tax_id_type || ""} placeholder="NIT, RFC, RUC..." /></div>
-          <div className="field"><label>Identificación fiscal</label><input name="tax_id" defaultValue={organization.tax_id || ""} /></div>
+          <TaxIdentificationTypeSelect id="organization-tax-type" name="tax_id_type" countryInputId="organization-legal-country" countryCode={organization.legal_country||"CO"} defaultValue={organization.tax_id_type||""} required />
+          <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={organization.tax_id || ""} /></div>
           <div className="field form-span-2"><label>Dirección administrativa / fiscal</label><input name="legal_address" defaultValue={organization.legal_address || ""} /></div>
-          <div className="field"><label>Ciudad administrativa</label><input name="legal_city" defaultValue={organization.legal_city || ""} /></div>
-          <div className="field"><label>País</label><input id="organization-legal-country" name="legal_country" maxLength={2} defaultValue={organization.legal_country || "CO"} placeholder="CO" /></div>
+          <CountryCityFields countryId="organization-legal-country" countryName="legal_country" cityId="organization-legal-city" cityName="legal_city" countryLabel="País" cityLabel="Ciudad administrativa" defaultCountry={organization.legal_country||"CO"} defaultCity={organization.legal_city||""} required />
           <PhoneField
             name="phone"
             label="Teléfono principal"
@@ -354,15 +354,7 @@ export default async function CompanyDetailPage({
           <div className="field"><label>Correo</label><input name="primary_contact_email" type="email" defaultValue={organization.primary_contact_email || ""} /></div>
 
           <div className="field"><label>Identificador interno</label><input name="slug" defaultValue={organization.slug} required /></div>
-          <div className="field"><label>Zona horaria</label>
-            <select name="timezone" defaultValue={organization.timezone}>
-              <option value="America/Bogota">Colombia · America/Bogota</option>
-              <option value="America/Lima">Perú · America/Lima</option>
-              <option value="America/Mexico_City">México · America/Mexico_City</option>
-              <option value="America/New_York">Estados Unidos · America/New_York</option>
-              <option value="UTC">UTC</option>
-            </select>
-          </div>
+          <CountryTimezoneSelect id="organization-timezone" name="timezone" countryInputId="organization-legal-country" countryCode={organization.legal_country||"CO"} defaultValue={organization.timezone} />
           <BusinessHoursFields
             days={organization.business_days}
             openTime={organization.business_open_time}
@@ -488,8 +480,7 @@ export default async function CompanyDetailPage({
             <div className="field"><label>Nombre</label><input name="name" defaultValue={site.name} required /></div>
             <div className="field"><label>Código interno</label><input name="code" defaultValue={site.code || ""} /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
             <div className="field form-span-2"><label>Dirección</label><input name="address" defaultValue={site.address || ""} /></div>
-            <div className="field"><label>Ciudad</label><input name="city" defaultValue={site.city || ""} /></div>
-            <div className="field"><label>País</label><input name="country" defaultValue={site.country} maxLength={2} /></div>
+            <CountryCityFields countryId={"site-country-"+site.id} countryName="country" cityId={"site-city-"+site.id} cityName="city" defaultCountry={site.country||"CO"} defaultCity={site.city||""} required />
             <div className="form-span-2 form-actions"><button className="button secondary" type="submit">Guardar sede</button></div>
           </form>
           <form className="site-status-form" method="post" action={`/api/sites/${site.id}`}>

@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
+import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
@@ -90,16 +92,11 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-name">Nombre comercial</label><input id="new-company-name" name="name" required placeholder="Ej. The Shop Colombia" /></div>
               <div className="field"><label htmlFor="new-company-legal">Razón social</label><input id="new-company-legal" name="legal_name" placeholder="Ej. The Shop Colombia S.A.S." /></div>
-              <div className="field"><label htmlFor="new-company-tax">NIT / Identificación</label><input id="new-company-tax" name="tax_id" placeholder="Ej. 901.234.567-8" /></div>
-              <div className="field"><label htmlFor="new-company-timezone">Zona horaria</label>
-                <select id="new-company-timezone" name="timezone" defaultValue="America/Bogota">
-                  <option value="America/Bogota">Colombia · America/Bogota</option>
-                  <option value="America/Lima">Perú · America/Lima</option>
-                  <option value="America/Mexico_City">México · America/Mexico_City</option>
-                  <option value="America/New_York">Estados Unidos · America/New_York</option>
-                  <option value="UTC">UTC</option>
-                </select>
-              </div>
+              <CountryCityFields countryId="new-company-legal-country" countryName="legal_country" cityId="new-company-legal-city" cityName="legal_city" countryLabel="País administrativo / fiscal" cityLabel="Ciudad administrativa" defaultCountry="CO" defaultCity="" required />
+              <TaxIdentificationTypeSelect id="new-company-tax-type" countryInputId="new-company-legal-country" countryCode="CO" name="tax_id_type" required />
+              <div className="field"><label htmlFor="new-company-tax">Número de identificación</label><input id="new-company-tax" name="tax_id" placeholder="Número fiscal / tributario" /></div>
+              <PhoneField name="phone" label="Teléfono principal" countryCode="CO" countryInputId="new-company-legal-country" />
+              <CountryTimezoneSelect id="new-company-timezone" countryInputId="new-company-legal-country" countryCode="CO" defaultValue="America/Bogota" />
               <BusinessHoursFields title="Horario general de atención" description="Se usa en Reacción para identificar si la empresa está abierta en este momento." />
             </div>
           </div>
@@ -120,8 +117,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Ej. Sede Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-code">Código interno de sede</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="Ej. MAIN o BOG-01" /><small>Opcional. Es una referencia corta para identificar la sede en OT, reportes e integraciones; no es la dirección.</small></div>
-              <div className="field"><label htmlFor="new-company-city">Ciudad *</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
-              <div className="field"><label htmlFor="new-company-country">País *</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
+              <CountryCityFields countryId="new-company-country" countryName="country" cityId="new-company-city" cityName="city" defaultCountry="CO" defaultCity="Bogotá" required />
               <div className="form-span-2"><GeofenceMapPicker cityHint="Bogotá" countryHint="CO" /></div>
               <BusinessHoursFields prefix="site_business_" title="Horario de la sede principal" description="Puede ser diferente del horario general de la empresa." />
             </div>

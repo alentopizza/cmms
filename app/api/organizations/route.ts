@@ -6,6 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { getPlanByCode } from "@/lib/billing";
 import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
+import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 
 function slugify(value: string) {
   return value
@@ -32,6 +33,10 @@ export async function POST(request: Request) {
     const name = String(form.get("name") || "").trim();
     const legalName = String(form.get("legal_name") || "").trim();
     const taxId = String(form.get("tax_id") || "").trim();
+    const legalCountry = String(form.get("legal_country") || "CO").trim().toUpperCase();
+    const legalCity = String(form.get("legal_city") || "").trim();
+    const taxIdType = String(form.get("tax_id_type") || "").trim();
+    const phone = String(form.get("phone") || "").trim();
     const timezone = String(form.get("timezone") || "America/Bogota").trim();
     const organizationHours = readBusinessHours(form, "business_");
     const siteHours = readBusinessHours(form, "site_business_");
@@ -58,7 +63,10 @@ export async function POST(request: Request) {
       max_technicians: plan.max_technicians,
     };
 
-    if (!name || !siteName || !address || !city || !country) {
+    if (!name || !siteName || !address || !city || !country || !legalCountry || !legalCity || !taxIdType) {
+      return creationError(request.url, "required");
+    }
+    if (!isSupportedCountry(country) || !isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType)) {
       return creationError(request.url, "required");
     }
     if (latitude === null || longitude === null ||
@@ -86,14 +94,15 @@ export async function POST(request: Request) {
 
       const organization = await client.query<{ id: string }>(
         `INSERT INTO organizations(
-          name,slug,legal_name,tax_id,timezone,
+          name,slug,legal_name,tax_id,tax_id_type,legal_city,legal_country,phone,timezone,preferred_locale,default_country,
           business_days,business_open_time,business_close_time,business_schedule,
           logo_data,logo_mime_type,logo_file_name,
           cover_data,cover_mime_type,cover_file_name
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15)
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16,$17,$18,$19,$20,$21)
         RETURNING id`,
         [
-          name, slug, legalName || null, taxId || null, timezone,
+          name, slug, legalName || null, taxId || null, taxIdType, legalCity, legalCountry, phone || null, timezone,
+          legalCountry==="BR"?"pt-BR":legalCountry==="US"?"en-US":"es-CO", legalCountry,
           organizationHours.days, organizationHours.openTime, organizationHours.closeTime, JSON.stringify(organizationHours.schedule),
           logo.bytes, logo.mime, logo.name,
           cover?.bytes || null, cover?.mime || null, cover?.name || null,

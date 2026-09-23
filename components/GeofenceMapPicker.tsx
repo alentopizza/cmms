@@ -4,10 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type GeocodeResult = {
   display_name: string;
+  primary_label?: string;
+  secondary_label?: string;
   lat: number;
   lon: number;
   place_id?: string;
   provider?: "google" | "osm";
+  partial_match?: boolean;
 };
 
 type GeofenceMapPickerProps = {
@@ -357,21 +360,34 @@ export default function GeofenceMapPicker({
   // ── Address validation / device-position acquisition ──────────────────────
 
   async function searchAddress() {
-    const query = [address.trim(), cityHint?.trim(), countryHint?.trim()].filter(Boolean).join(", ");
-    if (query.length < 4) {
+    const form=googleHostRef.current?.closest("form") || document.querySelector("form");
+    const liveCity=(form?.querySelector<HTMLInputElement>('[name="city"]')?.value || cityHint || "").trim();
+    const liveCountry=(form?.querySelector<HTMLInputElement>('[name="country"]')?.value || countryHint || "").trim().toUpperCase();
+
+    if (address.trim().length < 4) {
       setMessage("Escribe una dirección suficientemente completa para validarla.");
       return;
     }
+    if (!liveCity) {
+      setMessage("Completa primero la ciudad. La usamos para evitar coincidencias ambiguas.");
+      return;
+    }
+
     setSearching(true);
     setMessage("");
     setResults([]);
     try {
-      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { headers: { Accept: "application/json" } });
+      const params=new URLSearchParams({
+        q:address.trim(),
+        city:liveCity,
+        country:liveCountry || "CO",
+      });
+      const response = await fetch(`/api/geocode?${params.toString()}`, { headers: { Accept: "application/json" } });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.message || "No fue posible validar la dirección.");
       const items = Array.isArray(data?.results) ? data.results : [];
       setResults(items);
-      if (!items.length) setMessage("No encontramos coincidencias. Ajusta la dirección o selecciona el punto manualmente.");
+      if (!items.length) setMessage("No encontramos una coincidencia clara en esa ciudad. Revisa número, barrio o usa tu GPS si estás en el sitio.");
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : "No fue posible validar la dirección.");
     } finally {
@@ -450,7 +466,12 @@ export default function GeofenceMapPicker({
 
     {results.length > 0 && <div className="geofence-search-results" role="listbox" aria-label="Coincidencias de dirección">
       {results.map((result, index) => <button type="button" key={`${result.place_id || ""}-${result.lat}-${result.lon}-${index}`} onClick={() => chooseResult(result)}>
-        <span aria-hidden="true">⌖</span><strong>{result.display_name}</strong>
+        <span className="geocode-result-icon" aria-hidden="true">⌖</span>
+        <span className="geocode-result-copy">
+          <strong>{result.primary_label || result.display_name}</strong>
+          {result.secondary_label && <small>{result.secondary_label}</small>}
+          {result.partial_match && <em>Coincidencia parcial · verifica el punto en el mapa</em>}
+        </span>
       </button>)}
     </div>}
 

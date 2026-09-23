@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-23 — Reaction search and in-place operational details
+
+### Added
+
+- Added a global Reaction search across Companies, Sites and connected Technicians using names and related contact/location information.
+- Search results identify the entity type and can focus/open the matching operational detail without leaving Reaction.
+- Company filtering remains available as an explicit selector, with Site options scoped to the selected Company.
+- Clicking Company, Site or Technician markers now opens an in-place operational popup instead of navigating away.
+- Company and Site popups show contact/location/hours data plus **all** related pending/in-progress activities, independent of the side-panel date filter.
+- Technician popups show contact/GPS state and all pending activities assigned directly or through one of the technician's crews.
+- Clicking an activity alert now opens an in-place activity popup with Work Order, location, asset, commitment date, assignment type, responsible party, notes and connected assigned technicians where available.
+- Work Order navigation remains available only as an explicit **Abrir OT completa** action from the activity popup.
+
 ## 2026-09-23 — Reaction operational alert panel
 
 ### Added

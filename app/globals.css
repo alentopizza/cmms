@@ -10455,3 +10455,56 @@ html[data-theme="dark"] .entity-profile-toolbar-actions .contextual-create-trigg
   .entity-profile-toolbar-actions .contextual-create-trigger{min-width:146px}
   .entity-profile-toolbar-actions .profile-export-trigger{min-width:134px}
 }
+
+
+/* 2026-09-23 approved rich general-information composition */
+.entity-approved-general-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(310px,.85fr);gap:12px}
+.entity-approved-data-panel,.entity-approved-map-panel{min-height:300px}
+.entity-approved-map-panel{display:flex;flex-direction:column}
+.entity-panel h3 .entity-section-icon{width:32px;height:32px;display:inline-grid;place-items:center;flex:0 0 32px;border-radius:9px;background:#e8f7f5;color:#149f98}
+.entity-section-icon .ui-icon{width:17px;height:17px}
+.entity-approved-secondary-grid{grid-template-columns:1fr 1fr}
+.entity-approved-notes{display:grid;grid-template-columns:auto 1fr;align-items:start;gap:12px}
+.entity-approved-notes h3{margin:0;white-space:nowrap}
+.entity-approved-notes p{margin:0;padding:10px 12px;border-radius:8px;background:#f7f9fa;color:#667d8e;font-size:9.5px;line-height:1.55}
+.entity-person-value{display:flex;align-items:center;gap:8px;width:100%}
+.entity-person-value>i{width:32px;height:32px;display:grid;place-items:center;flex:0 0 32px;border-radius:50%;background:linear-gradient(145deg,#30bbb2,#25a49d);color:#fff;font-style:normal;font-size:9px;font-weight:900}
+.entity-person-value>b{display:grid;gap:1px;font-weight:700}
+.entity-person-value>b>span{font-size:9.5px;color:#29465e}
+.entity-person-value small{font-size:7.5px;color:#7b8f9c;font-weight:500}
+.entity-inline-contact{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.entity-inline-contact a{display:inline-flex;align-items:center;gap:5px;color:#315772}
+.entity-inline-contact a:last-child{color:#148b61}
+.entity-geofence-state{display:inline-flex;align-items:center;gap:7px}
+.entity-geofence-state>i{width:8px;height:8px;border-radius:50%;background:#e5a832}
+.entity-geofence-state.active>i{background:#2fbd62}
+.location-technician-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.location-technician-card{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:11px;padding:12px;border:1px solid #dce6ea;border-radius:11px;background:#fff}
+.location-technician-avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;background:#e8f7f5}
+.location-technician-avatar img,.location-technician-avatar span{width:100%;height:100%;display:grid;place-items:center;object-fit:cover;color:#176d68;font-size:11px;font-weight:900}
+.location-technician-copy{display:grid;gap:3px;min-width:0}
+.location-technician-copy strong{color:#173a55;font-size:11px}
+.location-technician-copy span{color:#617a8b;font-size:8.5px}
+.location-technician-copy small{color:#8495a0;font-size:7.5px}
+.location-technician-actions{display:flex;align-items:center;gap:5px}
+.location-technician-actions a{width:31px;height:31px;display:grid;place-items:center;border:1px solid #d8e5e9;border-radius:8px;background:#fff;color:#179f98;font-size:9px;font-weight:900}
+.technician-assignment-note{background:#fbfdfd}
+.technician-assignment-empty{min-height:170px;display:grid;place-items:center;align-content:center;gap:7px;text-align:center}
+.technician-assignment-empty .ui-icon{color:#62bdb7}
+.technician-assignment-empty strong{color:#29465e}
+.technician-assignment-empty span{max-width:520px;color:#7a8f9c;font-size:9px}
+html[data-theme="dark"] .entity-approved-notes p,
+html[data-theme="dark"] .location-technician-card,
+html[data-theme="dark"] .location-technician-actions a{background:var(--surface)}
+@media(max-width:1050px){
+  .entity-approved-general-grid{grid-template-columns:1fr}
+  .entity-approved-data-panel,.entity-approved-map-panel{min-height:0}
+  .location-technician-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .entity-approved-secondary-grid{grid-template-columns:1fr}
+  .entity-approved-notes{grid-template-columns:1fr}
+  .location-technician-card{grid-template-columns:42px minmax(0,1fr)}
+  .location-technician-avatar{width:42px;height:42px}
+  .location-technician-actions{grid-column:1/3;justify-content:flex-end}
+}

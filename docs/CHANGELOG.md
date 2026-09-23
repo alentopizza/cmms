@@ -1,6 +1,33 @@
 # Changelog
 
 
+## 2026-09-23 — Supplier profile workspace and supplier-scoped requisitions
+
+### Added
+
+- Rebuilt **Proveedores** with the approved in-page entity profile pattern used by Companies and Locations: breadcrumbs, left identity/statistics rail, right tab workspace, quick actions and Hoja de vida export.
+- Supplier creation now requires a logo and captures richer commercial identity: legal name, Country/City, address, website, contact title and notes.
+- Added Supplier tabs for **Información general, Estadísticas, Documentos, Actividades, Inventarios / suministros, Requisiciones and Hoja de vida**. Service/material tabs appear according to supplier type.
+- Added Supplier document upload/archive/restore/download flow.
+- Added dedicated **Requisiciones** module, requisition detail sheet, lifecycle states and PDF/Excel/Word export.
+- Added reusable requisition builder in Supplier profiles and Inventory.
+- Added migrations and schema for supplier profile assets/documents plus supplier requisitions and requisition items.
+
+### Requisition rules
+
+- Every requisition belongs to exactly one Supplier.
+- Selecting Inventory items from multiple Suppliers creates multiple requisitions automatically, one per Supplier.
+- Supplier-profile requisitions can only select Inventory items already related to that Supplier.
+- Inventory items can only be created against active **materials** or **both** Suppliers.
+- A requisition does **not** increase Inventory stock. Receiving/stock-entry remains a separate inventory transaction so requested quantity and received quantity are not conflated.
+
+### Supplier operational projections
+
+- Supplier **Actividades** is derived from Work Order Activities whose `service_supplier_id` points to that Supplier.
+- Supplier **Inventarios / suministros** is derived from `inventory_items.supplier_id`.
+- These projections do not introduce duplicate assignment tables.
+
+
 ## 2026-09-23 — International catalog, dependent selectors and locale foundation
 
 ### Added

@@ -130,6 +130,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/users",
     steps:[
       "Crea el usuario con nombre, correo, rol y foto de perfil obligatoria.",
+      "Selecciona el país de la persona y, si registras su documento, escoge el tipo disponible para ese país; el tipo de documento no se escribe manualmente.",
+      "El indicativo del teléfono se toma automáticamente del país seleccionado. Escribe solo el número nacional restante.",
       "Asigna acceso a todas las sedes o limita el usuario a sedes concretas.",
       "La tarjeta de usuario muestra el estado biométrico: Verificada, Pendiente, Reenrolar o Revocada.",
       "Selecciona la tarjeta para cambiar a su perfil en la misma pantalla; no se abre un popup. La miga Usuarios devuelve al directorio.",
@@ -280,6 +282,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Abre Mi configuración desde el menú de cuenta o desde Más en móvil para cambiar tu apariencia personal.",
       "El tema Claro es el valor inicial. Oscuro y Sistema quedan como opciones voluntarias.",
       "Si tu rol tiene permisos administrativos, también verás Configuración de empresa/plataforma.",
+      "En Idioma y región selecciona el idioma preferido y el país predeterminado. El país se usa como punto de partida para nuevos formularios, pero cada registro puede elegir otro país soportado.",
+      "La preferencia de idioma ya se guarda como base de internacionalización; las pantallas que todavía no tengan diccionario de traducción continúan mostrándose en español.",
       "Los cambios globales de identidad visual deben realizarse desde Personalización, no desde pantallas individuales.",
     ],
     keywords:["configuración","personalización","branding","tema"],
@@ -289,6 +293,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-23",
+    title:"País, ciudad, documentos e idioma relacionados",
+    summary:"Empresa, Ubicaciones y Usuarios usan catálogos relacionados; el país define ciudades, tipos de identificación e indicativo telefónico, y Configuración guarda Idioma/Región.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-22",
     title:"Contingencia de asistencia",

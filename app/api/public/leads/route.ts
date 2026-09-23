@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const companyName=String(form.get("company_name")||"").trim();
   const email=String(form.get("email")||"").trim().toLowerCase();
   const phone=String(form.get("phone")||"").trim();
-  const countryCode=String(form.get("country_code")||"CO").trim().toUpperCase();
+  const countryCode=String(form.get("country_code")||"").trim().toUpperCase();
   const interest=String(form.get("interest")||"").trim();
   const message=String(form.get("message")||"").trim();
 

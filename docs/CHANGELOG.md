@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-22 — Clearer Google address validation
+
+### Changed
+
+- Address validation now uses the live City and Country values from the current form instead of static hints.
+- Google Geocoding requests include city/country context and country restriction.
+- Search results now separate primary street/address from neighborhood, city, region and postal code.
+- Partial Google matches are explicitly labeled so users know to verify the point before saving.
+- Reduced ambiguous address results to four clearer options.
+
 ## 2026-09-22 — Google Maps async loader correction
 
 ### Fixed

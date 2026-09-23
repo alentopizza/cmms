@@ -322,3 +322,24 @@ This avoids both modal detail overlays and the previous pattern where every info
 Desktop account/system actions are anchored at the far-right contextual header rather than a persistent lower-left account card. Mobile field roles keep the existing **Más** bottom sheet because it is better suited to touch/safe-area constraints.
 
 Record-level **Hoja de vida** export is part of the profile action model for Company, Site, Sub-location and User/Technician. It is not a client-side dump: `/api/profile-export` independently revalidates authentication, module permission, organization ownership and Site scope before generating PDF, native XLSX or Word-compatible DOC output. Future entity types may join this endpoint only after defining their authorization and read model.
+
+
+## ADR-033 — International form geography and identity use one central catalog
+
+Status: accepted and implemented as foundation.
+
+Desweb CMMS is intended for multi-country distribution. Country, City, telephone prefix, tax-identification type, personal identity-document type and Country-related time zone must therefore be modeled as related controlled data rather than independent free-text strings.
+
+Rules:
+
+- normal user-facing Company/Site/User forms select Country from the shared catalog;
+- City choices are dependent on Country;
+- legal/tax identification types and personal document types are Country dependent;
+- telephone calling codes are derived from the selected Country and phones are persisted internationally;
+- mutation routes validate catalog membership server-side;
+- platform and tenant configuration may define a default Country/Locale that initializes new records but does not hard-lock a tenant to one Country;
+- module code must not maintain private Country lists or reintroduce editable Country codes.
+
+The initial City lists are curated product data rather than an exhaustive global municipality authority. Expanding geographic coverage belongs in the shared catalog (or a future authoritative geographic-data service), not in individual forms.
+
+Locale preference persistence is approved separately from full translation coverage: the platform can store a preferred locale before every UI string has been migrated to translation dictionaries.

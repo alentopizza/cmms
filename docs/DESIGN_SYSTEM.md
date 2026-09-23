@@ -391,7 +391,9 @@ Desktop composition:
 - **Exportar** is the primary teal gradient action and carries Download + dropdown-chevron icons;
 - action icons and labels are horizontally centered with consistent gap; avoid icon-only header actions when space allows;
 - the title/subtitle block must visually align with the center of the circular entity icon, matching the approved reference;
-- the **Información general** tab should use the approved rich composition: primary data card + contextual map where meaningful, followed by secondary Contact/Status-or-Geofence cards and a full-width Notes row;
+- the **Información general** tab uses two independent vertical columns on desktop: the data/contact/notes stack and the map/status-or-geofence stack. Do not force both sides into equal-height rows when that creates dead space;
+- embedded profile maps must be width-bounded by their panel (`min-width:0; max-width:100%; overflow:hidden`) and must not leak geofence controls outside the card;
+- read-only profile maps omit duplicated address/coordinate/radius editor controls when those values already appear in surrounding profile cards;
 - section headings use compact mint icon tiles and must describe the information group, not repeat the entity title;
 - data values remain read-only field surfaces until Edit is explicitly activated;
 - Location responsible-person fields may show initials/photo-style identity, name and responsibility/title inside one value surface;

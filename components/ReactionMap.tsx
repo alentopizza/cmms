@@ -5,22 +5,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type BusinessHours={days:number[];openTime:string;closeTime:string};
 type CompanyPoint={
-  id:string;name:string;lat:number;lng:number;timezone:string;businessHours:BusinessHours;openNow:boolean;logoUrl:string|null;
+  id:string;name:string;legalName:string|null;taxId:string|null;phone:string|null;adminEmail:string|null;
+  website:string|null;primaryContactName:string|null;primaryContactPhone:string|null;primaryContactEmail:string|null;
+  lat:number;lng:number;timezone:string;businessHours:BusinessHours;openNow:boolean;logoUrl:string|null;
 };
 type SitePoint={
-  id:string;organizationId:string;organizationName:string;name:string;
+  id:string;organizationId:string;organizationName:string;name:string;code:string|null;
+  address:string|null;city:string|null;country:string;contactName:string|null;contactPhone:string|null;contactEmail:string|null;
   lat:number;lng:number;radius:number;businessHours:BusinessHours;openNow:boolean;logoUrl:string|null;
 };
 type TechnicianPoint={
-  trackingSessionId:string;userId:string;fullName:string;organizationId:string;organizationName:string;
+  trackingSessionId:string;userId:string;fullName:string;email:string;phone:string|null;role:string;
+  organizationId:string;organizationName:string;crewIds:string[];
   lat:number;lng:number;accuracy:number|null;lastSeenAt:string;telemetryState:"live"|"paused";avatarUrl:string|null;
   route:Array<{lat:number;lng:number;at:string}>;
 };
 type ActivityAlert={
-  id:string;workOrderId:string;workOrderNumber:string;workOrderTitle:string;description:string;
-  status:string;priority:string;organizationId:string;organizationName:string;siteId:string;siteName:string;
-  assetName:string|null;responsible:string;operationalAt:string;operationalDate:string;dueAt:string|null;
-  dateState:"overdue"|"today"|"future";
+  id:string;workOrderId:string;workOrderNumber:string;workOrderTitle:string;workOrderType:string;workOrderStatus:string;
+  description:string;notes:string|null;status:string;priority:string;organizationId:string;organizationName:string;
+  siteId:string;siteName:string;assetName:string|null;
+  assignedToUserId:string|null;assignedUserName:string|null;crewId:string|null;crewName:string|null;
+  serviceSupplierId:string|null;supplierName:string|null;responsible:string;
+  operationalAt:string;operationalDate:string;dueAt:string|null;dateState:"overdue"|"today"|"future";
 };
 type Snapshot={
   companies:CompanyPoint[];
@@ -31,6 +37,20 @@ type Snapshot={
 };
 type HoursFilter="all"|"open"|"closed";
 type DateFilter="today_overdue"|"today"|"overdue"|"tomorrow"|"week"|"custom";
+type DetailSelection=
+  | {kind:"company";id:string}
+  | {kind:"site";id:string}
+  | {kind:"technician";id:string}
+  | {kind:"activity";id:string}
+  | null;
+type SearchResult={
+  kind:"company"|"site"|"technician";
+  id:string;
+  title:string;
+  subtitle:string;
+  organizationId:string;
+  siteId?:string;
+};
 
 declare global{
   interface Window{
@@ -142,6 +162,24 @@ function statusLabel(value:string){
   return value==="in_progress"?"En progreso":"Pendiente";
 }
 
+function normalizeSearch(value:string){
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase()
+    .trim();
+}
+
+function includesSearch(query:string,values:Array<string|null|undefined>){
+  if(!query)return true;
+  return normalizeSearch(values.filter(Boolean).join(" ")).includes(query);
+}
+
+function formatDate(value:string){
+  if(!value)return "Sin fecha";
+  return new Date(value+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"});
+}
+
 export default function ReactionMap(){
   const hostRef=useRef<HTMLDivElement>(null);
   const mapRef=useRef<any>(null);
@@ -151,7 +189,7 @@ export default function ReactionMap(){
   const snapshotRef=useRef<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
   const filterRef=useRef({
     companies:true,sites:true,technicians:true,hours:"all" as HoursFilter,
-    companyId:"",siteId:"",
+    companyId:"",siteId:"",search:"",
   });
   const [snapshot,setSnapshot]=useState<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
   const [status,setStatus]=useState("Cargando mapa operativo…");
@@ -163,6 +201,9 @@ export default function ReactionMap(){
   const [siteId,setSiteId]=useState("");
   const [dateFilter,setDateFilter]=useState<DateFilter>("today_overdue");
   const [customDate,setCustomDate]=useState(localDateKey(new Date()));
+  const [search,setSearch]=useState("");
+  const [searchFocused,setSearchFocused]=useState(false);
+  const [detail,setDetail]=useState<DetailSelection>(null);
 
   useEffect(()=>{
     filterRef.current={
@@ -172,9 +213,10 @@ export default function ReactionMap(){
       hours:hoursFilter,
       companyId,
       siteId,
+      search:normalizeSearch(search),
     };
     drawRef.current(snapshotRef.current,false);
-  },[showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId]);
+  },[showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId,search]);
 
   useEffect(()=>{
     if(siteId){
@@ -189,6 +231,13 @@ export default function ReactionMap(){
       if(site&&site.organizationId!==companyId)setSiteId("");
     }
   },[companyId,siteId,snapshot.sites]);
+
+  useEffect(()=>{
+    if(!detail)return;
+    const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")setDetail(null);};
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey);
+  },[detail]);
 
   useEffect(()=>{
     let cancelled=false;
@@ -262,7 +311,10 @@ export default function ReactionMap(){
 
       if(filters.companies){
         for(const company of data.companies.filter(item=>
-          hoursMatch(item.openNow,filters.hours)&&(!filters.companyId||item.id===filters.companyId)&&!filters.siteId
+          hoursMatch(item.openNow,filters.hours)
+          &&(!filters.companyId||item.id===filters.companyId)
+          &&!filters.siteId
+          &&includesSearch(filters.search,[item.name,item.legalName,item.taxId,item.phone,item.adminEmail,item.website,item.primaryContactName,item.primaryContactPhone,item.primaryContactEmail])
         )){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
@@ -271,17 +323,18 @@ export default function ReactionMap(){
             content:markerContent("company",company.logoUrl,company.name,company.openNow),
             zIndex:30,
           });
-          marker.addListener("click",()=>{
-            setCompanyId(company.id);
-            setSiteId("");
-          });
+          marker.addListener("click",()=>setDetail({kind:"company",id:company.id}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:company.lat,lng:company.lng});
         }
       }
 
       if(filters.sites){
-        for(const site of data.sites.filter(item=>hoursMatch(item.openNow,filters.hours)&&siteMatches(item.id,item.organizationId))){
+        for(const site of data.sites.filter(item=>
+          hoursMatch(item.openNow,filters.hours)
+          &&siteMatches(item.id,item.organizationId)
+          &&includesSearch(filters.search,[item.name,item.code,item.organizationName,item.address,item.city,item.country,item.contactName,item.contactPhone,item.contactEmail])
+        )){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
             position:{lat:site.lat,lng:site.lng},
@@ -289,17 +342,17 @@ export default function ReactionMap(){
             content:markerContent("site",site.logoUrl,site.organizationName,site.openNow),
             zIndex:20,
           });
-          marker.addListener("click",()=>{
-            setCompanyId(site.organizationId);
-            setSiteId(site.id);
-          });
+          marker.addListener("click",()=>setDetail({kind:"site",id:site.id}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:site.lat,lng:site.lng});
         }
       }
 
       if(filters.technicians){
-        for(const tech of data.technicians.filter(item=>companyMatches(item.organizationId))){
+        for(const tech of data.technicians.filter(item=>
+          companyMatches(item.organizationId)
+          &&includesSearch(filters.search,[item.fullName,item.email,item.phone,item.organizationName,item.role])
+        )){
           if(tech.route.length>1){
             const route=new google.maps.Polyline({
               map,
@@ -318,6 +371,7 @@ export default function ReactionMap(){
             content:markerContent("technician",tech.avatarUrl,tech.fullName,undefined,tech.telemetryState),
             zIndex:40,
           });
+          marker.addListener("click",()=>setDetail({kind:"technician",id:tech.userId}));
           overlaysRef.current.push(marker);
           bounds.extend({lat:tech.lat,lng:tech.lng});
         }
@@ -365,14 +419,55 @@ export default function ReactionMap(){
     });
   },[snapshot.activities,companyId,siteId,dateFilter,customDate]);
 
+  const searchResults=useMemo<SearchResult[]>(()=>{
+    const query=normalizeSearch(search);
+    if(!query)return [];
+
+    const companies=snapshot.companies
+      .filter(company=>includesSearch(query,[company.name,company.legalName,company.taxId,company.phone,company.adminEmail,company.website,company.primaryContactName,company.primaryContactPhone,company.primaryContactEmail]))
+      .map(company=>({
+        kind:"company" as const,id:company.id,title:company.name,
+        subtitle:[company.legalName,company.taxId,company.phone].filter(Boolean).join(" · ")||"Empresa",
+        organizationId:company.id,
+      }));
+
+    const sites=snapshot.sites
+      .filter(site=>includesSearch(query,[site.name,site.code,site.organizationName,site.address,site.city,site.country,site.contactName,site.contactPhone,site.contactEmail]))
+      .map(site=>({
+        kind:"site" as const,id:site.id,title:site.name,
+        subtitle:`${site.organizationName} · ${[site.city,site.address].filter(Boolean).join(" · ")}`,
+        organizationId:site.organizationId,siteId:site.id,
+      }));
+
+    const technicians=snapshot.technicians
+      .filter(tech=>includesSearch(query,[tech.fullName,tech.email,tech.phone,tech.organizationName,tech.role]))
+      .map(tech=>({
+        kind:"technician" as const,id:tech.userId,title:tech.fullName,
+        subtitle:`${tech.organizationName} · ${tech.email}`,
+        organizationId:tech.organizationId,
+      }));
+
+    return [...companies,...sites,...technicians].slice(0,12);
+  },[search,snapshot]);
+
   const visibleCounts=useMemo(()=>{
+    const query=normalizeSearch(search);
     const matches=(openNow:boolean)=>hoursFilter==="all"||(hoursFilter==="open"?openNow:!openNow);
     return {
-      companies:showCompanies?snapshot.companies.filter(item=>matches(item.openNow)&&(!companyId||item.id===companyId)&&!siteId).length:0,
-      sites:showSites?snapshot.sites.filter(item=>matches(item.openNow)&&(!companyId||item.organizationId===companyId)&&(!siteId||item.id===siteId)).length:0,
-      technicians:showTechnicians?snapshot.technicians.filter(item=>!companyId||item.organizationId===companyId).length:0,
+      companies:showCompanies?snapshot.companies.filter(item=>
+        matches(item.openNow)&&(!companyId||item.id===companyId)&&!siteId
+        &&includesSearch(query,[item.name,item.legalName,item.taxId,item.phone,item.adminEmail,item.website,item.primaryContactName,item.primaryContactPhone,item.primaryContactEmail])
+      ).length:0,
+      sites:showSites?snapshot.sites.filter(item=>
+        matches(item.openNow)&&(!companyId||item.organizationId===companyId)&&(!siteId||item.id===siteId)
+        &&includesSearch(query,[item.name,item.code,item.organizationName,item.address,item.city,item.country,item.contactName,item.contactPhone,item.contactEmail])
+      ).length:0,
+      technicians:showTechnicians?snapshot.technicians.filter(item=>
+        (!companyId||item.organizationId===companyId)
+        &&includesSearch(query,[item.fullName,item.email,item.phone,item.organizationName,item.role])
+      ).length:0,
     };
-  },[snapshot,showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId]);
+  },[snapshot,showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId,search]);
 
   const selectedCompany=snapshot.companies.find(company=>company.id===companyId);
   const selectedSite=snapshot.sites.find(site=>site.id===siteId);
@@ -380,9 +475,66 @@ export default function ReactionMap(){
     ? `${selectedSite.organizationName} · ${selectedSite.name}`
     : selectedCompany?.name||"Todas las empresas y sedes";
 
+  function chooseSearchResult(result:SearchResult){
+    setSearch(result.title);
+    setSearchFocused(false);
+    if(result.kind==="company"){
+      setCompanyId(result.organizationId);
+      setSiteId("");
+      setDetail({kind:"company",id:result.id});
+    }else if(result.kind==="site"){
+      setCompanyId(result.organizationId);
+      setSiteId(result.siteId||"");
+      setDetail({kind:"site",id:result.id});
+    }else{
+      setCompanyId(result.organizationId);
+      setSiteId("");
+      setDetail({kind:"technician",id:result.id});
+    }
+  }
+
+  function pendingForCompany(id:string){
+    return snapshot.activities.filter(activity=>activity.organizationId===id);
+  }
+  function pendingForSite(id:string){
+    return snapshot.activities.filter(activity=>activity.siteId===id);
+  }
+  function pendingForTechnician(tech:TechnicianPoint){
+    return snapshot.activities.filter(activity=>
+      activity.assignedToUserId===tech.userId
+      || Boolean(activity.crewId&&tech.crewIds.includes(activity.crewId))
+    );
+  }
+
+  const detailCompany=detail?.kind==="company"?snapshot.companies.find(item=>item.id===detail.id):undefined;
+  const detailSite=detail?.kind==="site"?snapshot.sites.find(item=>item.id===detail.id):undefined;
+  const detailTechnician=detail?.kind==="technician"?snapshot.technicians.find(item=>item.userId===detail.id):undefined;
+  const detailActivity=detail?.kind==="activity"?snapshot.activities.find(item=>item.id===detail.id):undefined;
+
   return <>
     <div className="reaction-map-stage">
       <div className="reaction-filter-bar" aria-label="Filtros del mapa de Reacción">
+        <div className="reaction-global-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            value={search}
+            placeholder="Buscar técnico, empresa, sede, correo, teléfono, dirección…"
+            onChange={event=>setSearch(event.target.value)}
+            onFocus={()=>setSearchFocused(true)}
+            onBlur={()=>window.setTimeout(()=>setSearchFocused(false),150)}
+          />
+          {search&&<button type="button" onClick={()=>setSearch("")} aria-label="Limpiar búsqueda">×</button>}
+          {searchFocused&&search&&<div className="reaction-search-results">
+            {searchResults.map(result=><button key={result.kind+result.id} type="button" onMouseDown={event=>event.preventDefault()} onClick={()=>chooseSearchResult(result)}>
+              <span>{result.kind==="company"?"Empresa":result.kind==="site"?"Sede":"Técnico"}</span>
+              <strong>{result.title}</strong>
+              <small>{result.subtitle}</small>
+            </button>)}
+            {!searchResults.length&&<div className="reaction-search-empty">Sin coincidencias</div>}
+          </div>}
+        </div>
+
         <div className="reaction-filter-layers">
           <label className={showTechnicians?"active":""}><input type="checkbox" checked={showTechnicians} onChange={event=>setShowTechnicians(event.target.checked)}/><span>Técnicos</span><b>{snapshot.technicians.length}</b></label>
           <label className={showCompanies?"active":""}><input type="checkbox" checked={showCompanies} onChange={event=>setShowCompanies(event.target.checked)}/><span>Empresas</span><b>{snapshot.companies.length}</b></label>
@@ -459,10 +611,11 @@ export default function ReactionMap(){
       </div>}
 
       <div className="reaction-alert-list">
-        {filteredActivities.map(activity=><Link
+        {filteredActivities.map(activity=><button
           key={activity.id}
-          href={`/dashboard/work-orders/${activity.workOrderId}`}
+          type="button"
           className={`reaction-alert-card state-${activity.dateState} priority-${activity.priority}`}
+          onClick={()=>setDetail({kind:"activity",id:activity.id})}
         >
           <div className="reaction-alert-card-top">
             <span>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</span>
@@ -476,10 +629,10 @@ export default function ReactionMap(){
           </div>
           <div className="reaction-alert-meta">
             <span>{activity.responsible}</span>
-            <span>{activity.operationalDate}</span>
+            <span>{formatDate(activity.operationalDate)}</span>
             <span>{statusLabel(activity.status)}</span>
           </div>
-        </Link>)}
+        </button>)}
 
         {!filteredActivities.length&&<div className="reaction-alert-empty">
           <span>✓</span>
@@ -488,5 +641,190 @@ export default function ReactionMap(){
         </div>}
       </div>
     </aside>
+
+    {detail&&<div className="reaction-detail-backdrop" role="presentation" onMouseDown={event=>{if(event.currentTarget===event.target)setDetail(null);}}>
+      <section className="reaction-detail-modal" role="dialog" aria-modal="true" aria-label="Detalle operativo">
+        <header className="reaction-detail-head">
+          <div>
+            <span className="eyebrow">Reacción · detalle operativo</span>
+            <strong>
+              {detailCompany?.name||detailSite?.name||detailTechnician?.fullName||detailActivity?.description||"Detalle"}
+            </strong>
+          </div>
+          <button type="button" onClick={()=>setDetail(null)} aria-label="Cerrar">×</button>
+        </header>
+
+        {detailCompany&&<EntityDetail
+          imageUrl={detailCompany.logoUrl}
+          title={detailCompany.name}
+          badge={detailCompany.openNow?"Abierta":"Cerrada"}
+          badgeTone={detailCompany.openNow?"success":"danger"}
+          facts={[
+            ["Razón social",detailCompany.legalName||"Sin registrar"],
+            ["NIT / ID fiscal",detailCompany.taxId||"Sin registrar"],
+            ["Teléfono",detailCompany.phone||detailCompany.primaryContactPhone||"Sin registrar"],
+            ["Correo",detailCompany.adminEmail||detailCompany.primaryContactEmail||"Sin registrar"],
+            ["Contacto",detailCompany.primaryContactName||"Sin registrar"],
+            ["Horario",scheduleLabel(detailCompany.businessHours)],
+            ["Zona horaria",detailCompany.timezone],
+          ]}
+          activities={pendingForCompany(detailCompany.id)}
+          onActivity={id=>setDetail({kind:"activity",id})}
+        />}
+
+        {detailSite&&<EntityDetail
+          imageUrl={detailSite.logoUrl}
+          title={detailSite.name}
+          subtitle={detailSite.organizationName}
+          badge={detailSite.openNow?"Abierta":"Cerrada"}
+          badgeTone={detailSite.openNow?"success":"danger"}
+          facts={[
+            ["Código",detailSite.code||"Sin registrar"],
+            ["Dirección",detailSite.address||"Sin registrar"],
+            ["Ciudad",detailSite.city||"Sin registrar"],
+            ["Contacto",detailSite.contactName||"Sin registrar"],
+            ["Teléfono",detailSite.contactPhone||"Sin registrar"],
+            ["Correo",detailSite.contactEmail||"Sin registrar"],
+            ["Horario",scheduleLabel(detailSite.businessHours)],
+            ["Geocerca",`${detailSite.radius} m`],
+          ]}
+          activities={pendingForSite(detailSite.id)}
+          onActivity={id=>setDetail({kind:"activity",id})}
+        />}
+
+        {detailTechnician&&<EntityDetail
+          imageUrl={detailTechnician.avatarUrl}
+          title={detailTechnician.fullName}
+          subtitle={detailTechnician.organizationName}
+          badge={detailTechnician.telemetryState==="live"?"GPS en vivo":"GPS pausado"}
+          badgeTone={detailTechnician.telemetryState==="live"?"success":"warning"}
+          imageMode="portrait"
+          facts={[
+            ["Correo",detailTechnician.email],
+            ["Teléfono",detailTechnician.phone||"Sin registrar"],
+            ["Precisión GPS",detailTechnician.accuracy===null?"Sin dato":`${Math.round(detailTechnician.accuracy)} m`],
+            ["Último GPS",new Date(detailTechnician.lastSeenAt).toLocaleString("es-CO")],
+            ["Ruta reciente",`${detailTechnician.route.length} puntos`],
+          ]}
+          activities={pendingForTechnician(detailTechnician)}
+          onActivity={id=>setDetail({kind:"activity",id})}
+        />}
+
+        {detailActivity&&<ActivityDetail
+          activity={detailActivity}
+          technicians={snapshot.technicians}
+          onEntity={(kind,id)=>setDetail({kind,id} as DetailSelection)}
+        />}
+      </section>
+    </div>}
   </>;
+}
+
+function EntityDetail({
+  imageUrl,title,subtitle,badge,badgeTone,facts,activities,onActivity,imageMode="logo",
+}:{
+  imageUrl:string|null;title:string;subtitle?:string;badge:string;badgeTone:"success"|"danger"|"warning";
+  facts:Array<[string,string]>;activities:ActivityAlert[];onActivity:(id:string)=>void;imageMode?:"logo"|"portrait";
+}){
+  return <div className="reaction-detail-body">
+    <div className="reaction-entity-summary">
+      <div className={`reaction-entity-image ${imageMode==="portrait"?"portrait":""}`}>
+        {imageUrl?<img src={imageUrl} alt=""/>:<span>{initials(title)}</span>}
+      </div>
+      <div>
+        <strong>{title}</strong>
+        {subtitle&&<small>{subtitle}</small>}
+        <span className={`reaction-detail-badge tone-${badgeTone}`}>{badge}</span>
+      </div>
+    </div>
+
+    <div className="reaction-detail-facts">
+      {facts.map(([label,value])=><div key={label}><span>{label}</span><strong>{value}</strong></div>)}
+    </div>
+
+    <PendingActivitiesSection activities={activities} onActivity={onActivity}/>
+  </div>;
+}
+
+function PendingActivitiesSection({activities,onActivity}:{activities:ActivityAlert[];onActivity:(id:string)=>void}){
+  return <section className="reaction-detail-pending">
+    <div className="reaction-detail-section-title">
+      <div><span className="eyebrow">Pendientes</span><strong>Todas las actividades pendientes</strong></div>
+      <b>{activities.length}</b>
+    </div>
+    <div className="reaction-detail-activity-list">
+      {activities.map(activity=><button key={activity.id} type="button" onClick={()=>onActivity(activity.id)}>
+        <span className={`reaction-detail-activity-state state-${activity.dateState}`}>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</span>
+        <strong>{activity.description}</strong>
+        <small>OT #{activity.workOrderNumber} · {activity.siteName}</small>
+        <div><span>{activity.responsible}</span><span>{formatDate(activity.operationalDate)}</span><span>{priorityLabel(activity.priority)}</span></div>
+      </button>)}
+      {!activities.length&&<div className="reaction-detail-empty">No hay actividades pendientes relacionadas.</div>}
+    </div>
+  </section>;
+}
+
+function ActivityDetail({
+  activity,technicians,onEntity,
+}:{
+  activity:ActivityAlert;technicians:TechnicianPoint[];
+  onEntity:(kind:"company"|"site"|"technician",id:string)=>void;
+}){
+  const directTechnician=activity.assignedToUserId
+    ? technicians.find(tech=>tech.userId===activity.assignedToUserId)
+    : undefined;
+  const crewTechnicians=activity.crewId
+    ? technicians.filter(tech=>tech.crewIds.includes(activity.crewId!))
+    : [];
+  const relatedTechnicians=directTechnician?[directTechnician]:crewTechnicians;
+
+  return <div className="reaction-detail-body">
+    <div className="reaction-activity-detail-hero">
+      <div>
+        <span className={`reaction-detail-activity-state state-${activity.dateState}`}>
+          {activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}
+        </span>
+        <h3>{activity.description}</h3>
+        <p>OT #{activity.workOrderNumber} · {activity.workOrderTitle}</p>
+      </div>
+      <span className={`reaction-priority priority-${activity.priority}`}>{priorityLabel(activity.priority)}</span>
+    </div>
+
+    <div className="reaction-detail-facts">
+      <button type="button" onClick={()=>onEntity("company",activity.organizationId)}><span>Empresa</span><strong>{activity.organizationName}</strong></button>
+      <button type="button" onClick={()=>onEntity("site",activity.siteId)}><span>Sede</span><strong>{activity.siteName}</strong></button>
+      <div><span>Activo</span><strong>{activity.assetName||"Sin activo"}</strong></div>
+      <div><span>Fecha compromiso</span><strong>{formatDate(activity.operationalDate)}</strong></div>
+      <div><span>Estado</span><strong>{statusLabel(activity.status)}</strong></div>
+      <div><span>Tipo OT</span><strong>{activity.workOrderType}</strong></div>
+      <div><span>Responsable</span><strong>{activity.responsible}</strong></div>
+      <div><span>Asignación</span><strong>{activity.assignedUserName?"Técnico":activity.crewName?"Cuadrilla":activity.supplierName?"Proveedor":"Sin asignar"}</strong></div>
+    </div>
+
+    {activity.notes&&<div className="reaction-detail-notes"><span>Notas</span><p>{activity.notes}</p></div>}
+
+    <section className="reaction-detail-pending">
+      <div className="reaction-detail-section-title">
+        <div><span className="eyebrow">Personal relacionado</span><strong>Técnicos conectados asignados</strong></div>
+        <b>{relatedTechnicians.length}</b>
+      </div>
+      <div className="reaction-related-technicians">
+        {relatedTechnicians.map(tech=><button key={tech.userId} type="button" onClick={()=>onEntity("technician",tech.userId)}>
+          <div className="reaction-mini-avatar">{tech.avatarUrl?<img src={tech.avatarUrl} alt=""/>:<span>{initials(tech.fullName)}</span>}</div>
+          <div><strong>{tech.fullName}</strong><small>{tech.telemetryState==="live"?"GPS en vivo":"GPS pausado"} · {tech.organizationName}</small></div>
+        </button>)}
+        {!relatedTechnicians.length&&<div className="reaction-detail-empty">
+          {activity.crewName
+            ? `La actividad está asignada a la cuadrilla ${activity.crewName}, pero no hay integrantes conectados en Reacción.`
+            : activity.supplierName
+              ? `Asignada al proveedor ${activity.supplierName}.`
+              : "No hay técnico conectado relacionado con esta actividad."}
+        </div>}
+      </div>
+    </section>
+
+    <div className="reaction-detail-actions">
+      <Link className="button" href={`/dashboard/work-orders/${activity.workOrderId}`}>Abrir OT completa</Link>
+    </div>
+  </div>;
 }

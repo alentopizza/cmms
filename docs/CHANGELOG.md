@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Reaction GPS session resilience
+
+### Fixed
+
+- The mandatory-location gate now checks geolocation permission/state before blocking the dashboard; normal refreshes with usable GPS no longer show the full-screen warning.
+- React cleanup no longer closes the Reaction tracking session during refresh, navigation or browser/app suspension. Explicit logout remains the authoritative close event.
+- Returning to the app requests a fresh position and resumes the existing tracking session.
+- Reaction keeps a technician visible for up to 30 minutes when browser background suspension pauses GPS, marking the telemetry as **paused** instead of immediately disconnecting the technician.
+- The tracker automatically retries temporary GPS timeout/unavailable errors while the page is visible.
+
 ## 2026-09-23 — Business-hours save error handling
 
 ### Fixed

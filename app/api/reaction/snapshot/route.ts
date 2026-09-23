@@ -8,13 +8,13 @@ type CompanyRow={
   id:string;name:string;legal_name:string|null;tax_id:string|null;phone:string|null;admin_email:string|null;
   website:string|null;primary_contact_name:string|null;primary_contact_phone:string|null;primary_contact_email:string|null;
   timezone:string;latitude:number;longitude:number;
-  business_days:number[];business_open_time:string;business_close_time:string;has_logo:boolean;
+  business_days:number[];business_open_time:string;business_close_time:string;business_schedule:unknown;has_logo:boolean;
 };
 type SiteRow={
   id:string;organization_id:string;organization_name:string;organization_timezone:string;name:string;code:string|null;
   address:string|null;city:string|null;country:string;contact_name:string|null;contact_phone:string|null;contact_email:string|null;
   latitude:number;longitude:number;geofence_radius_m:number;organization_has_logo:boolean;
-  business_days:number[];business_open_time:string;business_close_time:string;
+  business_days:number[];business_open_time:string;business_close_time:string;business_schedule:unknown;
 };
 type TechRow={
   tracking_session_id:string;user_id:string;full_name:string;email:string;phone:string|null;role:string;
@@ -45,7 +45,7 @@ export async function GET(){
     global
       ? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,o.admin_email,o.website,
                 o.primary_contact_name,o.primary_contact_phone,o.primary_contact_email,
-                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,
+                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
                 (o.logo_data IS NOT NULL) has_logo,
                 representative.latitude,representative.longitude
          FROM organizations o
@@ -61,7 +61,7 @@ export async function GET(){
          ORDER BY o.name`
       : `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,o.admin_email,o.website,
                 o.primary_contact_name,o.primary_contact_phone,o.primary_contact_email,
-                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,
+                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
                 (o.logo_data IS NOT NULL) has_logo,
                 representative.latitude,representative.longitude
          FROM organizations o
@@ -85,7 +85,7 @@ export async function GET(){
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
                 s.latitude,s.longitude,s.geofence_radius_m,
                 (o.logo_data IS NOT NULL) organization_has_logo,
-                s.business_days,s.business_open_time::text,s.business_close_time::text
+                s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule
          FROM sites s
          JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND o.active=true
@@ -95,7 +95,7 @@ export async function GET(){
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
                 s.latitude,s.longitude,s.geofence_radius_m,
                 (o.logo_data IS NOT NULL) organization_has_logo,
-                s.business_days,s.business_open_time::text,s.business_close_time::text
+                s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule
          FROM sites s
          JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND o.active=true AND s.organization_id=$1

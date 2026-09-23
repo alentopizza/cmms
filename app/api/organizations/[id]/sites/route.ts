@@ -6,7 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
-import { readBusinessHours } from "@/lib/business-hours";
+import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -44,7 +44,15 @@ export async function POST(
   const contactPhone = String(form.get("contact_phone") || "").trim();
   const contactEmail = String(form.get("contact_email") || "").trim().toLowerCase();
   const returnTo = String(form.get("return_to") || "");
-  const businessHours = readBusinessHours(form, "business_");
+  let businessHours;
+  try {
+    businessHours = readBusinessHours(form, "business_");
+  } catch (error) {
+    if (error instanceof BusinessHoursValidationError) {
+      return NextResponse.redirect(targetUrl(id, request.url, returnTo, `?error=${error.code}`), 303);
+    }
+    throw error;
+  }
   let image=null;
   try { image=await readImageUpload(form,"image"); }
   catch(error) {

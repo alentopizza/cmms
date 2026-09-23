@@ -391,6 +391,11 @@ Desktop composition:
 - **Exportar** is the primary teal gradient action and carries Download + dropdown-chevron icons;
 - action icons and labels are horizontally centered with consistent gap; avoid icon-only header actions when space allows;
 - the title/subtitle block must visually align with the center of the circular entity icon, matching the approved reference;
+- the **Información general** tab should use the approved rich composition: primary data card + contextual map where meaningful, followed by secondary Contact/Status-or-Geofence cards and a full-width Notes row;
+- section headings use compact mint icon tiles and must describe the information group, not repeat the entity title;
+- data values remain read-only field surfaces until Edit is explicitly activated;
+- Location responsible-person fields may show initials/photo-style identity, name and responsibility/title inside one value surface;
+- Technician lists under Locations/Sub-locations use compact identity cards with avatar, active/historical Activity counts, next due date and communication shortcuts; the list is informational, not an assignment editor;
 - **left identity rail:** cover/reference image where applicable, circular Company logo or User photo, name, contextual subtitle, status, four compact statistics and a two-column quick-action area;
 - **right content surface:** one independent horizontal tab bar plus one scrollable content body;
 - **top action row:** contextual Edit/View/Create/communication actions followed by **Exportar** when Hoja de vida is available;

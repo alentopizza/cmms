@@ -93,7 +93,11 @@ Every profile starts with visible breadcrumbs. Company/Site/User directory selec
 
 For **Empresa**, the identity column uses Company cover/logo and shows Locations, Assets, Technicians and Documents. The right panel exposes general identity, resource statistics, principal-location/map context, documentation, technicians and Hoja de vida.
 
-For **Ubicación principal**, the identity column uses the Site image/Company logo and shows Sub-locations, Assets, active Work Orders and authorized Technician count. The right panel exposes general/contact/map/geofence data, statistics, Sub-locations, maintenance services and Hoja de vida export.
+For **Ubicación principal**, the identity column uses the Site image/Company logo and shows Sub-locations, Assets, active Work Orders and Technician count. The approved general-information panel includes name/code, Company, address, Zone/Locality, city/country, flexible operating hours, responsible person/title, map, contact, geofence and additional notes.
+
+The **Técnicos** tab is a read-only projection of real Activity assignments. A Technician appears when a Work Order activity in that Site/Sub-location is assigned directly to that Technician or to a Crew that contains the Technician. No separate operational Site↔Technician assignment is created. This keeps Activity execution as the source of truth and prevents duplicated/stale assignments.
+
+The right panel exposes general/contact/map/geofence data, statistics, Sub-locations, maintenance services, Technicians and Hoja de vida export.
 
 For **Sububicación**, the same profile geometry uses the Sub-location reference image plus Company identity. Statistics focus on child spaces, Assets and directly related Work Orders. Editing and contextual child creation remain inside the authorized Site hierarchy.
 

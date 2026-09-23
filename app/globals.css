@@ -6115,6 +6115,26 @@ html[data-theme="dark"] .site-resource-action:hover{
   font-weight:850;
 }
 .company-profile-contact-strip strong{font-size:10px;color:var(--text)}
+.company-profile-contact-strip.editing>div{
+  display:block;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.company-profile-contact-strip .company-profile-contact-edit{
+  display:grid;
+  gap:5px;
+}
+.company-profile-contact-strip .company-profile-contact-edit label{
+  color:var(--text);
+  font-size:8px;
+  font-weight:850;
+  text-transform:none;
+  letter-spacing:0;
+}
+.company-profile-contact-strip .company-profile-contact-edit input{
+  min-height:40px;
+}
 .company-geofence-prep{
   display:grid;
   grid-template-columns:auto minmax(0,1fr) auto;

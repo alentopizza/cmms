@@ -60,7 +60,7 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const locality = form.has("locality") ? String(form.get("locality") || "").trim() : (site.rows[0].locality||"");
-  const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const country = String(form.get("country") || "").trim().toUpperCase();
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
   const radiusRaw = String(form.get("geofence_radius_m") || "").trim();
@@ -112,7 +112,7 @@ export async function POST(
            image_mime_type=CASE WHEN $19 IS NULL THEN image_mime_type ELSE $20 END
        WHERE id=$21 AND organization_id=$22`,
       [
-        name,code||null,address||null,city||null,locality||null,country||"CO",
+        name,code||null,address||null,city||null,locality||null,country,
         latitude,longitude,geofenceRadius,
         contactName||null,contactTitle||null,contactPhone||null,contactEmail||null,notes||null,
         businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),

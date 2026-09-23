@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import ModuleHeader from "@/components/ModuleHeader";
 import ReactionMap from "@/components/ReactionMap";
 
 export const dynamic="force-dynamic";
@@ -12,11 +11,6 @@ export default async function ReactionPage(){
   if(!can(session,"reaction.view"))redirect("/dashboard");
 
   return <>
-    <ModuleHeader
-      eyebrow="Coordinación de contingencias"
-      title="Reacción"
-      description="Vista operativa de sedes, personal conectado y trayectos recientes."
-    />
     <section className="reaction-workspace section">
       <ReactionMap />
       <aside className="reaction-side-panel" aria-label="Panel de Reacción reservado">

@@ -824,3 +824,12 @@ Google Maps Platform is the preferred production cartography/geocoding provider.
 - The server remains authoritative for geofence distance checks.
 - OpenStreetMap remains a temporary operational fallback when Google credentials are missing or unavailable.
 - A Google Map ID may be supplied for cloud-based light/dark styling without changing geofence logic.
+
+
+### Branded geofence marker
+
+Configured company/site maps use a branded center marker inspired by navigation apps: a circular company logo with white separation ring, subtle shadow and location tail. The geofence circle remains independent and visible around that marker. If no logo exists, the map falls back to initials/default pin.
+
+In location edit mode only one interactive map is rendered. The previous read-only duplicate is replaced with a compact geofence summary; read-only/detail mode may still render the map for reference.
+
+Google Places autocomplete must visually inherit the product theme: light surface by default and dark surface only when the user explicitly selected dark mode.

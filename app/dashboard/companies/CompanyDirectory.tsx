@@ -18,6 +18,7 @@ export type CompanyDirectoryItem = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   active: boolean;
   admin_email: string | null;
   primary_contact_name: string | null;
@@ -49,6 +50,7 @@ export type CompanyDirectoryItem = {
   site_business_days: number[] | null;
   site_business_open_time: string | null;
   site_business_close_time: string | null;
+  site_business_schedule: import("@/lib/business-hours").BusinessDaySchedule[] | null;
   has_logo: boolean;
   has_cover: boolean;
 };

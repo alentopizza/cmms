@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-22 — Branded geofence map and location edit cleanup
+
+### Changed
+
+- Location edit mode now renders one interactive geofence map instead of duplicating the same map twice.
+- The secondary edit block is now a compact address/coordinates/radius summary.
+- Company logos are rendered as branded center markers on Google Maps geofences, with initials/default marker fallback.
+- Company primary-site map also uses the company logo marker.
+- Google Places autocomplete is aligned with the Desweb light/dark visual system.
+
 ## 2026-09-22 — Google Places autocomplete address flow
 
 ### Changed

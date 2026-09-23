@@ -176,7 +176,7 @@ export async function POST(
   const siteCode = String(form.get("site_code") || "").trim().toUpperCase();
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
-  const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const country = String(form.get("country") || "").trim().toUpperCase();
   const siteLatitudeRaw = String(form.get("latitude") || "").trim();
   const siteLongitudeRaw = String(form.get("longitude") || "").trim();
   const siteRadiusRaw = String(form.get("geofence_radius_m") || "250").trim();
@@ -220,7 +220,7 @@ export async function POST(
     const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
     return respond(422, { message: "Completa nombre, identificador y zona horaria.", code: "required" }, target);
   }
-  if (profileV2 && (!isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType))) {
+  if (profileV2 && (!legalCity || !isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType))) {
     const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
     return respond(422, { message: "Selecciona un país y un tipo de identificación válidos del catálogo.", code: "required" }, target);
   }
@@ -304,7 +304,7 @@ export async function POST(
                business_days=$9,business_open_time=$10,business_close_time=$11,business_schedule=$12::jsonb
            WHERE id=$13 AND organization_id=$14`,
           [
-            siteName || "Sede principal", siteCode || null, address, city, country || "CO",
+            siteName || "Sede principal", siteCode || null, address, city, country,
             siteLatitude, siteLongitude, siteRadius,
             siteHours.days,siteHours.openTime,siteHours.closeTime,JSON.stringify(siteHours.schedule),
             primarySiteId, id,

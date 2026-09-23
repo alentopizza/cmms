@@ -315,10 +315,10 @@ This distinction must be preserved in future document bulk actions, exports and 
 
 Status: accepted and implemented.
 
-Principal Sites, Sub-locations and User/Technician records use one shared profile-workspace geometry. Identity context must remain visible while the operator changes information categories: the left rail contains the record image/logo/photo, entity state, compact operational statistics and quick actions; the right side contains independent tabs whose content changes in place.
+Companies, principal Sites, Sub-locations and User/Technician records use one shared profile-workspace geometry **inside the current module page**. Directory selection replaces the directory body instead of opening a modal. Breadcrumbs are mandatory and carry Home/module/parent/current context. Identity context remains visible while the operator changes information categories: the left rail contains the record image/logo/photo, entity state, compact operational statistics and quick actions; the right side contains independent tabs whose content changes in place.
 
-This avoids the previous pattern where every information category extended one long detail surface and makes the same information hierarchy reusable for future entity profiles.
+This avoids both modal detail overlays and the previous pattern where every information category extended one long detail surface, while keeping the information hierarchy reusable for future entity profiles.
 
 Desktop account/system actions are anchored at the far-right contextual header rather than a persistent lower-left account card. Mobile field roles keep the existing **Más** bottom sheet because it is better suited to touch/safe-area constraints.
 
-Record-level **Hoja de vida** export is part of the profile action model. It is not a client-side dump: `/api/profile-export` independently revalidates authentication, module permission, organization ownership and Site scope before generating PDF, native XLSX or Word-compatible DOC output. Future entity types may join this endpoint only after defining their authorization and read model.
+Record-level **Hoja de vida** export is part of the profile action model for Company, Site, Sub-location and User/Technician. It is not a client-side dump: `/api/profile-export` independently revalidates authentication, module permission, organization ownership and Site scope before generating PDF, native XLSX or Word-compatible DOC output. Future entity types may join this endpoint only after defining their authorization and read model.

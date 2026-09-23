@@ -6092,49 +6092,6 @@ html[data-theme="dark"] .site-resource-action:hover{
 .company-site-info-fields input{
   min-height:38px;
 }
-.company-profile-contact-strip{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:9px;
-}
-.company-profile-contact-strip>div,
-.company-doc-summary>div{
-  display:grid;
-  gap:3px;
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:var(--ui-radius-2);
-  background:var(--overlay-surface);
-}
-.company-profile-contact-strip span,
-.company-doc-summary span{
-  color:var(--text-soft);
-  font-size:7px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  font-weight:850;
-}
-.company-profile-contact-strip strong{font-size:10px;color:var(--text)}
-.company-profile-contact-strip.editing>div{
-  display:block;
-  padding:0;
-  border:0;
-  background:transparent;
-}
-.company-profile-contact-strip .company-profile-contact-edit{
-  display:grid;
-  gap:5px;
-}
-.company-profile-contact-strip .company-profile-contact-edit label{
-  color:var(--text);
-  font-size:8px;
-  font-weight:850;
-  text-transform:none;
-  letter-spacing:0;
-}
-.company-profile-contact-strip .company-profile-contact-edit input{
-  min-height:40px;
-}
 .company-geofence-prep{
   display:grid;
   grid-template-columns:auto minmax(0,1fr) auto;
@@ -6278,7 +6235,6 @@ html[data-theme="dark"] .company-doc-summary strong{
     gap:7px;
   }
   .company-profile-form{padding:0 14px 14px}
-  .company-profile-contact-strip,
   .company-doc-summary,
   .company-profile-assets{
     grid-template-columns:1fr;

@@ -99,7 +99,19 @@ export default async function CompaniesPage({
             ? "La hora de cierre debe ser posterior a la hora de apertura."
             : params.error === "business-days"
               ? "Selecciona al menos un día de atención."
-              : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."
+              : params.error === "invalid-email"
+                ? "El correo administrativo no tiene un formato válido."
+                : params.error === "value-too-long"
+                  ? "Uno de los campos supera la longitud permitida."
+                  : params.error === "invalid-data"
+                    ? "Uno de los valores tiene un formato inválido."
+                    : params.error === "missing-data"
+                      ? "Falta un dato obligatorio para completar la actualización."
+                      : params.error === "related-data"
+                        ? "Hay una referencia relacionada que ya no es válida."
+                        : params.error === "save"
+                          ? "Ocurrió un error interno al guardar. Revisa el registro del servicio con la referencia ORG-SAVE."
+                          : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."
       }</div>}
     </div>}
 

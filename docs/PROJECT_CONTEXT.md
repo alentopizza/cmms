@@ -563,6 +563,12 @@ The product now has one shared user-manual content source rendered in two contex
 Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.
 
 
+### Company quick-edit contact persistence
+
+The Company-directory quick-edit persists primary contact and administrative email with a fixed parameterized PostgreSQL UPDATE; do not dynamically construct positional placeholders for these fields. Administrative email is optional, but when present must pass email-format validation. User-facing save failures should return an actionable reason where possible; unknown database failures use the safe reference `ORG-SAVE` while the server log records the underlying database/error code and message.
+
+Contacto principal and Correo administrativo belong to the standard Company information form grid, not to a separate summary-strip layout.
+
 ### Protected Company quick edit
 
 Opening a Company card remains read-only by default. The **Editar empresa** action must first show an explicit confirmation dialog; only after confirmation are protected fields unlocked. The Company quick-edit contact summary transforms into editable primary-contact and administrative-email fields in edit mode. Cancelling edit resets unsaved DOM form values, and successful quick-edit mutations persist only the fields intentionally submitted by that flow.

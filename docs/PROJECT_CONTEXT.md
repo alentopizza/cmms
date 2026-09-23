@@ -566,6 +566,12 @@ Schedule validation is part of the mutation boundary. Invalid opening/closing co
 
 Companies and principal Sites now store editable attention schedules (weekdays, opening and closing time). New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.
 
+### Reaction activity alerts
+
+The Reaction workspace now combines live map telemetry with maintenance alerts. A unified top filter bar controls map layers and Company/Site scope. Clicking a Company or Site marker also sets that scope. The right-side panel lists pending/in-progress work-order activities, defaults to **Today and overdue**, and can filter by date. New activities receive their own commitment date through `work_order_tasks.due_date`; older activity records fall back to Work Order `due_at` and then request date so legacy data remains visible.
+
+Company/Site operating-state markers use high-contrast green for open and red for closed while preserving the original logo image without opacity/grayscale degradation.
+
 ### Reaction operations
 
 A provisional **Reacción** module now provides emergency-response map infrastructure.

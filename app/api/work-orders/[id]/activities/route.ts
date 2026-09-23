@@ -37,8 +37,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       const crewId=String(form.get("crew_id")||"");
       const supplierId=String(form.get("service_supplier_id")||"");
       const notes=String(form.get("notes")||"").trim();
+      const dueDate=String(form.get("due_date")||"").trim();
       const selected=[assignedTo,crewId,supplierId].filter(Boolean);
-      if(!description || selected.length!==1){await client.query("ROLLBACK");return NextResponse.redirect(target("?error=executor"),303);}
+      if(!description || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || selected.length!==1){await client.query("ROLLBACK");return NextResponse.redirect(target("?error=executor"),303);}
 
       if(assignedTo){
         const user=await client.query("SELECT 1 FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND u.id=$2 AND u.active=true AND om.role IN ('technician','external')",[organizationId,assignedTo]);
@@ -55,9 +56,11 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
 
       const sort=await client.query<{next:number}>("SELECT COALESCE(max(sort_order),-1)+1 AS next FROM work_order_tasks WHERE work_order_id=$1",[workOrderId]);
       await client.query(
-        `INSERT INTO work_order_tasks(organization_id,work_order_id,description,sort_order,assigned_to,crew_id,service_supplier_id,status,notes)
-         VALUES($1,$2,$3,$4,$5,$6,$7,'pending',$8)`,
-        [organizationId,workOrderId,description,sort.rows[0].next,assignedTo||null,crewId||null,supplierId||null,notes||null],
+        `INSERT INTO work_order_tasks(
+           organization_id,work_order_id,description,sort_order,assigned_to,crew_id,service_supplier_id,status,notes,due_date
+         )
+         VALUES($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9::date)`,
+        [organizationId,workOrderId,description,sort.rows[0].next,assignedTo||null,crewId||null,supplierId||null,notes||null,dueDate],
       );
       await client.query("COMMIT");
       return NextResponse.redirect(target("?created=1"),303);

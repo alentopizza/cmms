@@ -19,6 +19,12 @@ type TechRow={
   live:boolean;
 };
 type SampleRow={tracking_session_id:string;latitude:number;longitude:number;recorded_at:string};
+type ActivityRow={
+  id:string;work_order_id:string;work_order_number:string;work_order_title:string;description:string;
+  status:string;priority:string;organization_id:string;organization_name:string;site_id:string;site_name:string;
+  asset_name:string|null;responsible:string;operational_at:string;operational_date:string;due_at:string|null;
+  date_state:"overdue"|"today"|"future";
+};
 
 export async function GET(){
   const session=await getSession();
@@ -119,6 +125,87 @@ export async function GET(){
     global?[]:[organizationId],
   );
 
+  const activities=await query<ActivityRow>(
+    global
+      ? `SELECT t.id,w.id work_order_id,w.number::text work_order_number,w.title work_order_title,
+                t.description,t.status,w.priority,w.organization_id,o.name organization_name,
+                w.site_id,s.name site_name,a.name asset_name,
+                COALESCE(u.full_name,c.name,sp.name,'Sin asignar') responsible,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_at,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_date,
+                w.due_at::text due_at,
+                CASE
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                       < (now() AT TIME ZONE o.timezone)::date THEN 'overdue'
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                       = (now() AT TIME ZONE o.timezone)::date THEN 'today'
+                  ELSE 'future'
+                END date_state
+         FROM work_order_tasks t
+         JOIN work_orders w ON w.id=t.work_order_id
+         JOIN organizations o ON o.id=w.organization_id
+         JOIN sites s ON s.id=w.site_id
+         LEFT JOIN assets a ON a.id=w.asset_id
+         LEFT JOIN users u ON u.id=t.assigned_to
+         LEFT JOIN crews c ON c.id=t.crew_id
+         LEFT JOIN suppliers sp ON sp.id=t.service_supplier_id
+         WHERE t.status IN ('pending','in_progress')
+           AND COALESCE(t.completed,false)=false
+           AND w.status NOT IN ('completed','cancelled')
+         ORDER BY
+           CASE
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  < (now() AT TIME ZONE o.timezone)::date THEN 0
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  = (now() AT TIME ZONE o.timezone)::date THEN 1
+             ELSE 2
+           END,
+           COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date) ASC,
+           CASE w.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+           w.number
+         LIMIT 500`
+      : `SELECT t.id,w.id work_order_id,w.number::text work_order_number,w.title work_order_title,
+                t.description,t.status,w.priority,w.organization_id,o.name organization_name,
+                w.site_id,s.name site_name,a.name asset_name,
+                COALESCE(u.full_name,c.name,sp.name,'Sin asignar') responsible,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_at,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_date,
+                w.due_at::text due_at,
+                CASE
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                       < (now() AT TIME ZONE o.timezone)::date THEN 'overdue'
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                       = (now() AT TIME ZONE o.timezone)::date THEN 'today'
+                  ELSE 'future'
+                END date_state
+         FROM work_order_tasks t
+         JOIN work_orders w ON w.id=t.work_order_id
+         JOIN organizations o ON o.id=w.organization_id
+         JOIN sites s ON s.id=w.site_id
+         LEFT JOIN assets a ON a.id=w.asset_id
+         LEFT JOIN users u ON u.id=t.assigned_to
+         LEFT JOIN crews c ON c.id=t.crew_id
+         LEFT JOIN suppliers sp ON sp.id=t.service_supplier_id
+         WHERE t.status IN ('pending','in_progress')
+           AND COALESCE(t.completed,false)=false
+           AND w.status NOT IN ('completed','cancelled')
+           AND w.organization_id=$1
+           AND ($2::boolean OR w.site_id=ANY($3::uuid[]))
+         ORDER BY
+           CASE
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  < (now() AT TIME ZONE o.timezone)::date THEN 0
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  = (now() AT TIME ZONE o.timezone)::date THEN 1
+             ELSE 2
+           END,
+           COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date) ASC,
+           CASE w.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+           w.number
+         LIMIT 500`,
+    global?[]:[organizationId,session.accessAllSites,session.siteIds],
+  );
+
   const ids=technicians.rows.map(row=>row.tracking_session_id);
   let samples:{rows:SampleRow[]}={rows:[]};
   if(ids.length){
@@ -183,6 +270,25 @@ export async function GET(){
       telemetryState:tech.live?"live":"paused",
       avatarUrl:tech.has_avatar?`/api/users/${tech.user_id}/avatar`:null,
       route:routes[tech.tracking_session_id]||[],
+    })),
+    activities:activities.rows.map(activity=>({
+      id:activity.id,
+      workOrderId:activity.work_order_id,
+      workOrderNumber:activity.work_order_number,
+      workOrderTitle:activity.work_order_title,
+      description:activity.description,
+      status:activity.status,
+      priority:activity.priority,
+      organizationId:activity.organization_id,
+      organizationName:activity.organization_name,
+      siteId:activity.site_id,
+      siteName:activity.site_name,
+      assetName:activity.asset_name,
+      responsible:activity.responsible,
+      operationalAt:activity.operational_at,
+      operationalDate:activity.operational_date,
+      dueAt:activity.due_at,
+      dateState:activity.date_state,
     })),
   },{headers:{"Cache-Control":"private, no-store, max-age=0"}});
 }

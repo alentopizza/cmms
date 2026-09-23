@@ -261,26 +261,23 @@ export async function POST(
           ],
         );
       } else if (returnToDirectory) {
-        const quickEditFields: string[] = [];
-        const quickEditValues: Array<string | null> = [];
-        let parameterIndex = 1;
+        const hasPrimaryContactName = form.has("primary_contact_name");
+        const hasAdminEmail = form.has("admin_email");
 
-        if (form.has("primary_contact_name")) {
-          quickEditFields.push(`primary_contact_name=${parameterIndex++}`);
-          quickEditValues.push(primaryContactName || null);
-        }
-        if (form.has("admin_email")) {
-          quickEditFields.push(`admin_email=${parameterIndex++}`);
-          quickEditValues.push(adminEmail || null);
-        }
-
-        if (quickEditFields.length) {
-          quickEditValues.push(id);
+        if (hasPrimaryContactName || hasAdminEmail) {
           await client.query(
             `UPDATE organizations
-             SET ${quickEditFields.join(",")},updated_at=now()
-             WHERE id=${parameterIndex}`,
-            quickEditValues,
+             SET primary_contact_name=CASE WHEN $1::boolean THEN $2 ELSE primary_contact_name END,
+                 admin_email=CASE WHEN $3::boolean THEN $4 ELSE admin_email END,
+                 updated_at=now()
+             WHERE id=$5`,
+            [
+              hasPrimaryContactName,
+              primaryContactName || null,
+              hasAdminEmail,
+              adminEmail || null,
+              id,
+            ],
           );
         }
       }

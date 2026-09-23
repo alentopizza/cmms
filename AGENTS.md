@@ -104,9 +104,20 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 - Biometric revocation must preserve audit metadata while making the encrypted template unusable.
 - Do not persist enrollment/check-in photographs unless a future explicitly approved privacy design requires it.
 - Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
-- Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
+- Attendance geolocation is collected at explicit check-in/check-out events. Separately, Technician users may be continuously tracked by **Reacción** while their authenticated operational session is connected; do not conflate Reaction telemetry with attendance evidence.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
+
+
+## Reaction operational-tracking invariants
+
+- **Reacción** is emergency-response / dispatch telemetry, independent from attendance shifts.
+- Technician location permission is mandatory while the authenticated operational workspace is connected and the UI must show that tracking is active.
+- Supervisory visibility of technician positions/routes requires `reaction.view`; technician sampling requires `reaction.track`.
+- Explicit logout closes the active tracking session; stale sessions must not remain represented as live technicians.
+- Sites use organization identity markers and technicians use profile-photo identity where available.
+- Browser/PWA tracking is a foreground-capable first phase. Do not claim transport-app-grade background tracking until a native/mobile-container implementation has OS background-location permissions.
+- Any future retention, dispatch, alerting or analytics expansion must preserve tenant isolation, role authorization and explicit privacy boundaries.
 
 
 ## Company enterprise-profile invariants

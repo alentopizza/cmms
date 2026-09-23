@@ -250,3 +250,25 @@ Canonical target behavior: `docs/ROLE_MODEL.md`.
 - definitive user/company deletion reserved to Platform Owner.
 
 Before production hardening, reinforce this development workflow with the approved reauthentication, MFA, retention, backup and final-approval process.
+
+
+## Recently completed Supplier/requisition slice
+
+- Supplier directory redesigned around logo-led profile cards and approved in-page entity detail navigation;
+- Supplier profile with general data, statistics, documents, Activities, Inventory/supplies, requisitions and Hoja de vida;
+- Supplier logo required for new Supplier creation;
+- service Activity projection from Work Order tasks and supply projection from Inventory;
+- Supplier document upload, archive, restore and download;
+- Supplier-scoped requisition schema and lifecycle;
+- requisition generation from Supplier profile and Inventory;
+- automatic split into one requisition per Supplier when Inventory selections span several Suppliers;
+- requisition PDF, Excel and Word-compatible export;
+- dedicated Requisitions module and navigation;
+- Inventory supplier validation restricted to material/mixed Suppliers.
+
+### Next procurement/inventory work
+
+- receiving workflow that records delivered quantities as Inventory receipts while referencing the originating requisition;
+- partial receipt reconciliation against `quantity_received`;
+- optional approval policy and approval audit trail by Company;
+- Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists.

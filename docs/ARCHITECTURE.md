@@ -54,6 +54,9 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/api/customization/` — branding upload and asset delivery routes.
 - `components/ThemePreferences.tsx` — persisted light/dark/system appearance preferences.
 - `components/DashboardNavigation.tsx` — permission-filtered active sidebar/header navigation.
+- `components/EntityProfileWorkspace.tsx` — reusable two-column identity/statistics + tabbed-content profile surface used by Sites, Sub-locations and Users/Technicians.
+- `components/ProfileExportMenu.tsx` — entity Hoja de vida format selector.
+- `app/api/profile-export/route.ts` — authenticated/scoped Site, Sub-location and User/Technician Hoja de vida generation in PDF, XLSX and Word-compatible DOC.
 - `lib/customization.ts` — customization lookup and logo selection helpers.
 - `lib/db.ts` — shared PostgreSQL pool/query helper.
 - `lib/auth.ts` — signed identity-aware sessions for bootstrap and database users.
@@ -196,6 +199,12 @@ The authenticated dashboard shell is shared across desktop and mobile and is per
 - `components/DashboardSidebar.tsx` implements the retractable desktop sidebar, per-user module ordering, drag-and-drop plus accessible reorder controls, persisted collapsed state, the responsive drawer, and the field-role mobile navigation mode.
 - Database-backed users persist sidebar preferences through `user_dashboard_preferences` created by migration `012_user_dashboard_preferences.sql`; the bootstrap developer identity uses browser-local fallback preferences because it has no database user row.
 - Technician and External collaborator mobile layouts prioritize Dashboard, Orders, Attendance and Assets while preserving access to every authorized module through the full drawer.
+- Desktop account controls are anchored in the contextual header's top-right area. The authenticated user's photo is resolved only when a stored avatar exists; Help, permitted Settings and the account dropdown no longer occupy the bottom of the sidebar.
+- The module tool/search portal remains between the contextual module identity and the account controls so the account identity is the final right-edge control.
+
+Entity profile drill-downs use `EntityProfileWorkspace` rather than separate stacked pages for every information category. The left column is stable identity context (photo/logo, entity status, statistics and quick actions); the right column switches independent tabs in place. Site and Sub-location profiles are fed only with already-authorized directory data. User/Technician profile aggregates are computed by server-scoped User queries.
+
+`/api/profile-export` is a separate report boundary from Dashboard exports. It accepts only allow-listed entity types and formats, validates UUID identifiers, re-checks module permission and organization/Site scope on the server, and then generates one-record Hoja de vida output. PDF uses `pdf-lib`, Excel uses a real `exceljs` XLSX workbook, and the Word option currently emits a Word-compatible `.doc` HTML document.
 
 Dashboard reporting keeps one authorization/filter scope across interactive metrics and exports.
 

@@ -1,6 +1,31 @@
 # Changelog
 
 
+## 2026-09-23 — Entity profile workspaces, top-right account controls and Hoja de vida exports
+
+### Added
+
+- Added a reusable entity-profile workspace for **Ubicaciones, Sububicaciones and Técnicos/Usuarios** with a dedicated identity column, photo/logo, status, operational statistics and quick actions.
+- Added independent in-workspace tabs so Information, Statistics, Sub-locations/Services or Technician operational context changes inside the right panel without pushing the profile layout downward.
+- Location profiles now expose contact, operating schedule, geofence/map context, sub-location browsing, maintenance-service browsing and contextual Technician creation from the selected Site.
+- Technician profiles now consolidate role/scope, active Work Orders, pending/completed activities, Attendance hours, biometric state and Reaction live state.
+- Added authorized per-record **Hoja de vida** exports for Sites, Sub-locations and Users/Technicians in PDF, native XLSX and Word-compatible DOC formats through `/api/profile-export`.
+- Added a contextual **Exportar** menu to the entity workspace with explicit Hoja de vida formats.
+
+### Changed
+
+- Moved the desktop account/configuration/help/logout controls from the lower-left sidebar into the **top-right contextual header**.
+- The top-right account trigger now uses the authenticated user's profile photo when one exists and falls back to initials otherwise.
+- The lower-left sidebar is reserved for navigation organization/state and optional Desweb attribution rather than account actions.
+- Location and User directory cards remain scan-oriented; selecting the main card body opens the richer profile workspace while edit/destructive controls keep their existing authorization rules.
+- Contextual **Agregar técnico** from a Site opens the Users create flow with Company, Site and Technician role preselected; server-side tenant/site/role validation remains authoritative.
+
+### Security / scope
+
+- Hoja de vida export routes independently re-check authentication, module permission, organization ownership and Site scope; the export menu never broadens the records a user can read.
+- Technician productivity/attendance values displayed in the profile remain descriptive operational indicators and are not employment rankings or automated personnel decisions.
+
+
 ## 2026-09-23 — Flexible schedules, governed document archive and phone actions
 
 ### Added

@@ -82,6 +82,24 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 - Image inputs state accepted formats, maximum size and recommended pixels.
 - Motion is short and functional: hover lift, pressed button state, modal transition and clear success/error feedback.
 - Sound is optional, subtle, disabled by default and must respect reduced-motion/accessibility preferences where relevant.
+- Site, Sub-location and User/Technician detail uses one profile-workspace pattern: stable identity/statistics/actions on the left and an independent tabbed information panel on the right.
+- Changing profile tabs replaces the right-panel content in place; it must not create a new long vertical stack for every information category.
+- Hoja de vida export is a record-level action and must be generated only from data the authenticated actor may already read.
+
+## Entity profile and Hoja de vida flow
+
+For **Ubicación principal**, the identity column uses the Site image/Company logo and shows Sub-locations, Assets, active Work Orders and authorized Technician count. The right panel exposes general/contact/map/geofence data, statistics, Sub-locations, maintenance services and Hoja de vida export.
+
+For **Sububicación**, the same profile geometry uses the Sub-location reference image plus Company identity. Statistics focus on child spaces, Assets and directly related Work Orders. Editing and contextual child creation remain inside the authorized Site hierarchy.
+
+For **Técnico/Usuario**, the identity column uses the profile photo and Company/role scope. The right panel may show identity/access information, descriptive execution statistics, Attendance/biometric state and Reaction connection context. These statistics are operational evidence only and must not become automatic worker ranking or employment decisions.
+
+The record export menu currently offers:
+- PDF — executive/printable Hoja de vida;
+- Excel — native XLSX structured record;
+- Word — editable Word-compatible DOC.
+
+The export endpoint repeats authorization independently of the browser UI.
 
 ## Implementation order
 

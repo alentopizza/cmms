@@ -367,6 +367,51 @@ Company cards use:
 The layout should remain readable in two columns on wide screens and one column on narrow screens.
 
 
+## Entity profile workspace pattern
+
+Locations, Sub-locations and Users/Technicians use a common profile drill-down instead of long stacked detail forms.
+
+Desktop composition:
+
+- **left identity rail:** cover/reference image where applicable, circular Company logo or User photo, name, contextual subtitle, status, four compact statistics and a two-column quick-action area;
+- **right content surface:** one independent horizontal tab bar plus one scrollable content body;
+- **top action row:** contextual Edit/View/Create/communication actions followed by **Exportar** when Hoja de vida is available;
+- changing a tab replaces only the right content body and must not append sections below the profile;
+- the identity rail stays visually stable while operators inspect Information, Statistics, Sub-locations/Services/Activity, Attendance or Hoja de vida.
+
+Identity image rules:
+
+- Site: Site reference cover/photo plus Company logo as the circular identity mark;
+- Sub-location: Sub-location reference image plus Company logo/initial fallback;
+- User/Technician: profile photograph, falling back to initials only when a legacy record has no photo;
+- profile photos remain human-readable identity assets and are not biometric templates.
+
+Quick actions must be entity-specific and permission-aware. Examples include map, edit, contextual Sub-location creation, contextual Technician creation, assets/Work Orders, telephone and WhatsApp. Icon-only or compact actions require visible labels or hover/focus titles.
+
+### Hoja de vida export pattern
+
+The entity profile exposes one **Exportar** dropdown instead of parallel primary export buttons.
+
+Current formats:
+- **Hoja de vida PDF** — executive printable record;
+- **Hoja de vida Excel** — native XLSX;
+- **Hoja de vida Word** — Word-compatible editable DOC.
+
+Exports are generated server-side and must use the same authorization/tenant/Site scope as the profile. Export styling must preserve Desweb readability and identity without inventing fields or metrics that are not present in the source record.
+
+### Top-right account pattern
+
+On desktop, account/system controls belong at the far right of the sticky contextual header, after the module search/filter/action tools.
+
+- show User photo when available, otherwise initials;
+- keep name and role visible when horizontal space permits;
+- the account dropdown contains **Mi configuración**, **Manual / Ayuda**, permitted **Configuración**, and **Cerrar sesión**;
+- the left sidebar bottom must not duplicate this desktop account panel;
+- mobile field roles keep their existing **Más** bottom sheet for touch-friendly account/system access.
+
+This placement is a navigation convention, not an authorization source.
+
+
 ## Creation hierarchy blocker pattern
 
 When a module cannot create its entity because a prerequisite is missing, do not leave a disabled form or a vague error.

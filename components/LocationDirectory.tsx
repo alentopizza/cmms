@@ -6,6 +6,7 @@ import { SubLocationCreateModal } from "@/components/ContextCreateModals";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -139,7 +140,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
             <div className="field"><label>País *</label><input name="country" defaultValue={selected.country} required/></div>
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
-            <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" defaultValue={selected.contact_phone||""}/></div>
+            <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={selected.country} countryInputId="location-country" defaultValue={selected.contact_phone} />
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
             <BusinessHoursFields
               days={selected.business_days}

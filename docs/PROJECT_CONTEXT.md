@@ -558,6 +558,10 @@ Site/geofence UI now prefers Google Maps Platform for cartography and address va
 Mutation-driven edit flows must not report success before PostgreSQL confirms the update. Company-directory and Users edits use explicit API responses, keep validation failures visible, and reload authoritative server data after a successful mutation. Platform Owner contextual record editors likewise reload after confirmed persistence. Company profile updates only modify resource entitlements when the corresponding limit fields are actually present in the submitted form.
 
 
+### Company and site business hours
+
+Companies and principal Sites now store editable attention schedules (weekdays, opening and closing time). New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.
+
 ### Reaction operations
 
 A provisional **Reacción** module now provides emergency-response map infrastructure.

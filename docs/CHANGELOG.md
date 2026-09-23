@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-22 — Google Maps runtime configuration fix
+
+### Fixed
+
+- Maps browser configuration is now loaded at runtime from the authenticated server instead of relying on Docker build-time injection.
+- Easypanel only needs the three Google Maps variables in the service Environment section; a rebuild no longer depends on custom Docker build arguments for the public Maps values.
+- The server Geocoding key remains private and is never returned by the runtime configuration endpoint.
+
 ## 2026-09-22 — Google Maps build-time environment fix
 
 ### Fixed

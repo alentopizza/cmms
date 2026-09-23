@@ -6,6 +6,7 @@ import { query } from "@/lib/db";
 import { ContextUserCreateModal, SiteCreateModal } from "@/components/ContextCreateModals";
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -17,6 +18,9 @@ type Organization = {
   tax_id: string | null;
   tax_id_type: string | null;
   timezone: string;
+  business_days: number[];
+  business_open_time: string;
+  business_close_time: string;
   legal_address: string | null;
   legal_city: string | null;
   legal_country: string | null;
@@ -76,6 +80,9 @@ type Site = {
   city: string | null;
   country: string;
   active: boolean;
+  business_days: number[];
+  business_open_time: string;
+  business_close_time: string;
   asset_count: string;
   work_order_count: string;
 };
@@ -175,6 +182,7 @@ export default async function CompanyDetailPage({
     ),
     query<Site>(
       `SELECT s.id,s.name,s.code,s.address,s.city,s.country,s.active,
+              s.business_days,s.business_open_time::text,s.business_close_time::text,
         count(DISTINCT a.id)::text asset_count,
         count(DISTINCT w.id)::text work_order_count
        FROM sites s
@@ -341,6 +349,13 @@ export default async function CompanyDetailPage({
               <option value="UTC">UTC</option>
             </select>
           </div>
+          <BusinessHoursFields
+            days={organization.business_days}
+            openTime={organization.business_open_time}
+            closeTime={organization.business_close_time}
+            title="Horario general de atención"
+            description="Este horario define el estado operativo general de la empresa en Reacción."
+          />
           <div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={4} defaultValue={organization.internal_notes || ""} placeholder="Información interna relevante para administración, soporte o relación comercial." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar ficha empresarial</button></div>
         </form>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
 import {
@@ -36,7 +37,7 @@ export type ManagedUser = {
   biometric_status: "verified" | "legacy" | "revoked" | "missing";
 };
 
-type Organization = { id: string; name: string };
+type Organization = { id: string; name: string; country: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
@@ -156,6 +157,10 @@ export default function UserManagement({
     if (!draft.organization_id) return [];
     return serviceSuppliers.filter(supplier => supplier.organization_id === draft.organization_id);
   }, [draft.organization_id, serviceSuppliers]);
+  const selectedOrganizationCountry = useMemo(() => {
+    return organizations.find(org => org.id === draft.organization_id)?.country || "CO";
+  }, [organizations, draft.organization_id]);
+
 
   function updateDraft<K extends keyof Draft>(field: K, value: Draft[K]) {
     setDraft(previous => ({ ...previous, [field]: value }));
@@ -427,10 +432,13 @@ export default function UserManagement({
               <input id="managed-user-email" type="email" placeholder="laura@empresa.com" value={draft.email} onChange={event => updateDraft("email", event.target.value)} />
               {errors.email && <small className="field-error-message">{errors.email}</small>}
             </div>
-            <div className="field">
-              <label htmlFor="managed-user-phone">Teléfono</label>
-              <input id="managed-user-phone" placeholder="+57 300 123 4567" value={draft.phone} onChange={event => updateDraft("phone", event.target.value)} />
-            </div>
+            <PhoneField
+              id="managed-user-phone"
+              label="Teléfono / WhatsApp"
+              countryCode={selectedOrganizationCountry}
+              value={draft.phone}
+              onValueChange={value => updateDraft("phone", value)}
+            />
             <div className={`field ${errors.password ? "field-error" : ""}`}>
               <label htmlFor="managed-user-password">{mode === "create" ? "Contraseña temporal *" : "Nueva contraseña (opcional)"}</label>
               <input id="managed-user-password" type="password" placeholder="Mínimo 8 caracteres" value={draft.password} onChange={event => updateDraft("password", event.target.value)} autoComplete="new-password" />

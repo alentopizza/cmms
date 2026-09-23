@@ -6,6 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { isSupportedCountry } from "@/lib/international-catalog";
 import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -63,7 +64,7 @@ export async function POST(
     return NextResponse.redirect(targetUrl(id,request.url,returnTo,"?error="+(message.includes("5 MB")?"site-image-size":"site-image-type")),303);
   }
 
-  if (!name || !address || !city || !country) {
+  if (!name || !address || !city || !country || !isSupportedCountry(country)) {
     return NextResponse.redirect(targetUrl(id, request.url, returnTo, "?error=site-required"), 303);
   }
   if (latitude === null || longitude === null ||

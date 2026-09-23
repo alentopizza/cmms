@@ -10,6 +10,7 @@ import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
+import { CountryCityFields } from "@/components/InternationalFields";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -198,9 +199,8 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               <div className="form-grid">
                 <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
                 <div className="field"><label>Código interno</label><input name="code" defaultValue={selected.code||""}/><small>Opcional. Identifica la sede en OT, reportes e integraciones.</small></div>
-                <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
+                <CountryCityFields countryId="location-country" countryName="country" cityId="location-city" cityName="city" defaultCountry={selected.country||"CO"} defaultCity={selected.city||""} required />
                 <div className="field"><label>Zona / Localidad</label><input name="locality" defaultValue={selected.locality||""}/></div>
-                <div className="field"><label>País *</label><input id="location-country" name="country" defaultValue={selected.country} required/></div>
                 <div className="field"><label>Responsable / contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
                 <div className="field"><label>Cargo del responsable</label><input name="contact_title" defaultValue={selected.contact_title||""}/></div>
                 <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={selected.country} countryInputId="location-country" defaultValue={selected.contact_phone} />

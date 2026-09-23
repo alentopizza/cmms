@@ -7,6 +7,7 @@ import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import PhoneField from "@/components/PhoneField";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { CountryCityFields } from "@/components/InternationalFields";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -417,9 +418,8 @@ export function LocationCreateModal({
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
-          <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
+          <CountryCityFields countryId="location-create-country" countryName="country" cityId="location-create-city" cityName="city" defaultCountry="CO" defaultCity="Bogotá" required />
           <div className="field"><label>Zona / Localidad</label><input name="locality" placeholder="Ej. Kennedy" /></div>
-          <div className="field"><label>País *</label><input id="location-create-country" name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Responsable / contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>

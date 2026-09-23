@@ -252,14 +252,14 @@ export default function SupplierDirectory({
           <div><strong>{activity.description}</strong><span>OT #{activity.order_number} · {activity.order_title}</span><small>{activity.site_name}{activity.location_name?" · "+activity.location_name:""}{activity.due_date?" · compromiso "+new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):""}</small></div>
           <Link href={"/dashboard/work-orders/"+activity.work_order_id}>Ver OT</Link>
         </article>):<div className="location-detail-empty">No hay actividades asignadas a este proveedor de servicios.</div>}
-      </div>}:never]),
+      </div>}:[]),
       ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:<div className="entity-section-stack">
         <div className="supplier-supply-grid">{selectedItems.length?selectedItems.map(item=><article className="supplier-supply-card" key={item.id}>
           <div><small>{item.sku}</small><strong>{item.name}</strong><span>{item.site_name||"Sin sede"}{item.location_name?" · "+item.location_name:""}</span></div>
           <div><span>Existencia</span><strong>{item.quantity} {item.unit}</strong></div>
           <div><span>Costo ref.</span><strong>{item.unit_cost}</strong></div>
         </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor.</div>}</div>
-      </div>}:never]),
+      </div>}:[]),
       {id:"requisitions",label:"Requisiciones",content:<div className="entity-section-stack">
         {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title="Nueva requisición al proveedor" description="Selecciona los insumos y cantidades que deseas solicitar a este proveedor."/></div>}
         <div className="entity-panel"><h3>Historial de requisiciones</h3>{selectedReqs.length?<div className="supplier-requisition-list">{selectedReqs.map(req=><Link key={req.id} href={"/dashboard/requisitions/"+req.id}>

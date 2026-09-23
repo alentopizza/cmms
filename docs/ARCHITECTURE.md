@@ -37,7 +37,7 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/` — Next.js routes, pages and API handlers.
 - `app/login/` — login UI and illustrative CMMS preview.
 - `app/dashboard/` — authenticated operational UI.
-- `app/dashboard/companies/CompanyDirectory.tsx` — protected directory detail popup, edit mode and destructive-action confirmation.
+- `app/dashboard/companies/CompanyDirectory.tsx` — Company directory plus approved in-page profile workspace, protected edit mode and destructive-action confirmation.
 - `app/dashboard/companies/[id]/` — full company and site administration.
 - `app/dashboard/locations/[id]/` — recursive physical hierarchy below a principal site.
 - `app/api/organizations/[id]/` — company updates, status changes, visual assets and site creation.
@@ -56,7 +56,7 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `components/DashboardNavigation.tsx` — permission-filtered active sidebar/header navigation.
 - `components/EntityProfileWorkspace.tsx` — reusable two-column identity/statistics + tabbed-content profile surface used by Sites, Sub-locations and Users/Technicians.
 - `components/ProfileExportMenu.tsx` — entity Hoja de vida format selector.
-- `app/api/profile-export/route.ts` — authenticated/scoped Site, Sub-location and User/Technician Hoja de vida generation in PDF, XLSX and Word-compatible DOC.
+- `app/api/profile-export/route.ts` — authenticated/scoped Company, Site, Sub-location and User/Technician Hoja de vida generation in PDF, XLSX and Word-compatible DOC.
 - `lib/customization.ts` — customization lookup and logo selection helpers.
 - `lib/db.ts` — shared PostgreSQL pool/query helper.
 - `lib/auth.ts` — signed identity-aware sessions for bootstrap and database users.
@@ -202,7 +202,9 @@ The authenticated dashboard shell is shared across desktop and mobile and is per
 - Desktop account controls are anchored in the contextual header's top-right area. The authenticated user's photo is resolved only when a stored avatar exists; Help, permitted Settings and the account dropdown no longer occupy the bottom of the sidebar.
 - The module tool/search portal remains between the contextual module identity and the account controls so the account identity is the final right-edge control.
 
-Entity profile drill-downs use `EntityProfileWorkspace` rather than separate stacked pages for every information category. The left column is stable identity context (photo/logo, entity status, statistics and quick actions); the right column switches independent tabs in place. Site and Sub-location profiles are fed only with already-authorized directory data. User/Technician profile aggregates are computed by server-scoped User queries.
+Company, Site, Sub-location and User/Technician directory drill-downs use `EntityProfileWorkspace` as an **in-page module view**, not as a modal. Selecting a record hides the directory body and renders the profile in the same authenticated workspace below the persistent module header. Breadcrumbs are part of the profile contract and expose Home/module/parent/current hierarchy. The left column is stable identity context (photo/logo, entity status, statistics and quick actions); the right column switches independent tabs in place. Returning through a breadcrumb restores the parent directory or parent Site profile without dismissing an overlay.
+
+Site and Sub-location profiles are fed only with already-authorized directory data. User/Technician profile aggregates are computed by server-scoped User queries. Company profiles preserve protected edit confirmation, geofence/site context, resource entitlements and full-record navigation while adopting the same visual shell.
 
 `/api/profile-export` is a separate report boundary from Dashboard exports. It accepts only allow-listed entity types and formats, validates UUID identifiers, re-checks module permission and organization/Site scope on the server, and then generates one-record Hoja de vida output. PDF uses `pdf-lib`, Excel uses a real `exceljs` XLSX workbook, and the Word option currently emits a Word-compatible `.doc` HTML document.
 

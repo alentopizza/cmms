@@ -8,6 +8,7 @@ import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -333,8 +334,14 @@ export default async function CompanyDetailPage({
           <div className="field"><label>Identificación fiscal</label><input name="tax_id" defaultValue={organization.tax_id || ""} /></div>
           <div className="field form-span-2"><label>Dirección administrativa / fiscal</label><input name="legal_address" defaultValue={organization.legal_address || ""} /></div>
           <div className="field"><label>Ciudad administrativa</label><input name="legal_city" defaultValue={organization.legal_city || ""} /></div>
-          <div className="field"><label>País</label><input name="legal_country" maxLength={2} defaultValue={organization.legal_country || "CO"} placeholder="CO" /></div>
-          <div className="field"><label>Teléfono principal</label><input name="phone" defaultValue={organization.phone || ""} /></div>
+          <div className="field"><label>País</label><input id="organization-legal-country" name="legal_country" maxLength={2} defaultValue={organization.legal_country || "CO"} placeholder="CO" /></div>
+          <PhoneField
+            name="phone"
+            label="Teléfono principal"
+            countryCode={organization.legal_country || "CO"}
+            countryInputId="organization-legal-country"
+            defaultValue={organization.phone}
+          />
           <div className="field"><label>Sitio web</label><input name="website" type="url" defaultValue={organization.website || ""} placeholder="https://..." /></div>
           <div className="field"><label>Correo administrativo</label><input name="admin_email" type="email" defaultValue={organization.admin_email || ""} /></div>
           <div className="field"><label>Correo de facturación</label><input name="billing_email" type="email" defaultValue={organization.billing_email || ""} /></div>
@@ -342,7 +349,13 @@ export default async function CompanyDetailPage({
           <div className="form-divider form-span-2"><span>Contacto principal</span></div>
           <div className="field"><label>Nombre</label><input name="primary_contact_name" defaultValue={organization.primary_contact_name || ""} /></div>
           <div className="field"><label>Cargo</label><input name="primary_contact_title" defaultValue={organization.primary_contact_title || ""} /></div>
-          <div className="field"><label>Teléfono</label><input name="primary_contact_phone" defaultValue={organization.primary_contact_phone || ""} /></div>
+          <PhoneField
+            name="primary_contact_phone"
+            label="Teléfono del contacto"
+            countryCode={organization.legal_country || "CO"}
+            countryInputId="organization-legal-country"
+            defaultValue={organization.primary_contact_phone}
+          />
           <div className="field"><label>Correo</label><input name="primary_contact_email" type="email" defaultValue={organization.primary_contact_email || ""} /></div>
 
           <div className="field"><label>Identificador interno</label><input name="slug" defaultValue={organization.slug} required /></div>

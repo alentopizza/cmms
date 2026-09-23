@@ -384,6 +384,13 @@ Navigation contract:
 Desktop composition:
 
 - **page heading:** contextual entity icon, **Type / Name**, secondary Company/context line and right-aligned action toolbar;
+- the heading icon is a real SVG line icon inside a pale mint circular container; do not use Unicode glyphs as entity icons;
+- breadcrumb Home uses a Home SVG followed by label text, then lightweight chevrons between levels;
+- breadcrumb labels are secondary blue-gray, while the current record is darker and heavier;
+- header secondary actions use white bordered buttons with teal SVG icons, consistent 44 px control height and compact rounded corners;
+- **Exportar** is the primary teal gradient action and carries Download + dropdown-chevron icons;
+- action icons and labels are horizontally centered with consistent gap; avoid icon-only header actions when space allows;
+- the title/subtitle block must visually align with the center of the circular entity icon, matching the approved reference;
 - **left identity rail:** cover/reference image where applicable, circular Company logo or User photo, name, contextual subtitle, status, four compact statistics and a two-column quick-action area;
 - **right content surface:** one independent horizontal tab bar plus one scrollable content body;
 - **top action row:** contextual Edit/View/Create/communication actions followed by **Exportar** when Hoja de vida is available;

@@ -102,6 +102,7 @@ export default function ReactionMap(){
   const mapRef=useRef<any>(null);
   const overlaysRef=useRef<any[]>([]);
   const firstFit=useRef(true);
+  const drawRef=useRef<(data:Snapshot,fit:boolean)=>void>(()=>{});
   const snapshotRef=useRef<Snapshot>({companies:[],sites:[],technicians:[],generatedAt:""});
   const filterRef=useRef({companies:true,sites:true,technicians:true,hours:"all" as HoursFilter});
   const [snapshot,setSnapshot]=useState<Snapshot>({companies:[],sites:[],technicians:[],generatedAt:""});
@@ -113,7 +114,7 @@ export default function ReactionMap(){
 
   useEffect(()=>{
     filterRef.current={companies:showCompanies,sites:showSites,technicians:showTechnicians,hours:hoursFilter};
-    draw(snapshotRef.current,false);
+    drawRef.current(snapshotRef.current,false);
   },[showCompanies,showSites,showTechnicians,hoursFilter]);
 
   useEffect(()=>{
@@ -241,6 +242,7 @@ export default function ReactionMap(){
       }
     }
 
+    drawRef.current=draw;
     void boot();
     return()=>{
       cancelled=true;

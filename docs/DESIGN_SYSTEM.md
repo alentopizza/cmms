@@ -967,3 +967,23 @@ Country-related identity inputs use controlled select components rather than fre
 - Do not place a writable two-letter Country-code field in normal user-facing forms.
 - When changing Country invalidates the current City, time zone or identification type, reset to a valid choice rather than leaving an inconsistent hidden value.
 - Legacy data outside the current catalog may be shown as a clearly marked compatibility option so an existing record can still be opened and migrated intentionally.
+
+
+## Supplier profile and requisition UX
+
+Supplier uses the same approved **in-page entity detail** language as Company, Site, Sub-location and Technician.
+
+- The Supplier directory uses identity cards with Supplier logo as the primary visual, commercial/contact summary, compact operational counters and quick actions.
+- Opening or editing a Supplier changes the current module workspace; the Supplier detail must not be implemented as a read-only detail modal.
+- The Supplier detail retains breadcrumbs, entity heading actions, left identity/statistics rail and right tab workspace.
+- Supplier tabs are capability-aware: **Actividades** is shown for service/mixed Suppliers and **Inventarios / suministros** for material/mixed Suppliers. **Requisiciones**, **Documentos**, **Estadísticas**, **Información general** and **Hoja de vida** remain profile-level concerns.
+- Supplier deletion uses an explicit destructive action and confirmation. Historical dependencies block destructive deletion; deactivate the Supplier instead.
+- Supplier documents follow the same visual archive convention as governed Company documents: active and archived records remain visibly distinct, archived content can be restored, and permanent deletion requires confirmation.
+
+### Requisition visual pattern
+
+- A requisition builder presents selectable Inventory items, requested quantity and stock context in one card.
+- When selected items belong to more than one Supplier, show a visible preview of the Supplier groups and the number of requisitions that will be generated.
+- A requisition detail is displayed as a document/sheet, not as an Inventory transaction form.
+- Export remains a primary action and offers PDF, Excel and Word-compatible outputs.
+- Requisition status badges use descriptive lifecycle styling; never imply that an approved or fulfilled requisition has already modified stock.

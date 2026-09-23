@@ -18,6 +18,7 @@ export default async function CompaniesPage({
   const [companies, params] = await Promise.all([
     query<CompanyDirectoryItem>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.timezone,o.active,o.admin_email,o.primary_contact_name,
+        o.business_days,o.business_open_time::text,o.business_close_time::text,
         bp.name plan_name,
         round(100.0 * (
           (o.name IS NOT NULL AND o.name <> '')::int +
@@ -57,6 +58,7 @@ export default async function CompaniesPage({
         COALESCE(ol.max_inventory_items,1000)::text max_inventory_items,
         COALESCE(ol.max_technicians,50)::text max_technicians,
         s.id site_id,s.name site_name,s.code site_code,s.city,s.country,s.address,s.latitude site_latitude,s.longitude site_longitude,s.geofence_radius_m site_geofence_radius_m,
+        s.business_days site_business_days,s.business_open_time::text site_business_open_time,s.business_close_time::text site_business_close_time,
         (o.logo_data IS NOT NULL) has_logo,
         (o.cover_data IS NOT NULL) has_cover
        FROM organizations o
@@ -64,7 +66,8 @@ export default async function CompaniesPage({
        LEFT JOIN organization_subscriptions os ON os.organization_id=o.id
        LEFT JOIN billing_plans bp ON bp.id=os.plan_id
        LEFT JOIN LATERAL (
-         SELECT id,name,code,city,country,address,latitude,longitude,geofence_radius_m
+         SELECT id,name,code,city,country,address,latitude,longitude,geofence_radius_m,
+                business_days,business_open_time,business_close_time
          FROM sites
          WHERE organization_id=o.id
          ORDER BY active DESC,created_at ASC

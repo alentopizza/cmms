@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Documentation consistency audit
+
+### Changed
+
+- Aligned contributor rules so Attendance point-in-time geolocation and Reaction connected-session tracking are explicitly distinguished.
+- Corrected the functional user-lifecycle description to reflect tenant-safe Company Administrator user management and Platform Owner destructive controls.
+- Marked the Reaction live-tracking foundation as implemented in the roadmap and README.
+- Added a verification queue for the reported Companies and Users edit-persistence regression; these items remain open until the full UI → API → PostgreSQL → refreshed UI path is reproduced and confirmed.
+- No runtime behavior changed in this documentation-only alignment.
+
 ## 2026-09-22 — Reaction live technician tracking
 
 ### Added

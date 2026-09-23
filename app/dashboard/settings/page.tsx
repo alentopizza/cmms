@@ -6,6 +6,7 @@ import { query } from "@/lib/db";
 import { subscriptionLabel } from "@/lib/billing";
 import ThemePreferences from "@/components/ThemePreferences";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
+import FileDropzone from "@/components/FileDropzone";
 
 type CompanySettingsRow = {
   id: string;
@@ -185,8 +186,8 @@ function CompanySettings({
           <div className="field form-span-2"><label>Nombre de la plataforma</label><input name="app_name" defaultValue={company.branding_app_name || `${company.name} CMMS`} required /></div>
           <div className="field"><label>Color principal</label><input name="primary_color" type="color" defaultValue={company.branding_primary_color || "#38B2A9"} required /></div>
           <div className="field"><label>Color secundario</label><input name="secondary_color" type="color" defaultValue={company.branding_secondary_color || "#79CAC4"} required /></div>
-          <div className="field"><label>Logo para fondo claro</label><input name="logo_on_light" type="file" accept="image/png,image/jpeg,image/webp" /><small>{company.branding_logo_light ? "Logo personalizado cargado." : "PNG, JPG o WebP · máximo 2 MB."}</small></div>
-          <div className="field"><label>Logo para fondo oscuro</label><input name="logo_on_dark" type="file" accept="image/png,image/jpeg,image/webp" /><small>{company.branding_logo_dark ? "Logo personalizado cargado." : "PNG, JPG o WebP · máximo 2 MB."}</small></div>
+          <FileDropzone name="logo_on_light" label="Logo para fondo claro" description="Versión principal para superficies claras." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={company.branding_logo_light ? "Logo personalizado actual" : null} compact />
+          <FileDropzone name="logo_on_dark" label="Logo para fondo oscuro" description="Versión clara/negativa para superficies oscuras." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={company.branding_logo_dark ? "Logo personalizado actual" : null} compact />
           <label className="white-label-checkbox form-span-2"><input name="show_desweb_branding" type="checkbox" defaultChecked={company.show_desweb_branding} /><span>Mostrar “Desweb · Desarrollo de Soluciones” en el pie del panel.</span></label>
         </div>
         <div className="form-actions"><button className="button" type="submit">Guardar identidad visual</button></div>
@@ -296,10 +297,7 @@ export default async function SettingsPage({
                     <li>Recomendado: fondo transparente, 1200×320 px aprox.</li>
                   </ul>
                 </div>
-                <div className="field">
-                  <label htmlFor="settings-logo-light">Reemplazar archivo</label>
-                  <input id="settings-logo-light" name="logo_on_light" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
-                </div>
+                <FileDropzone id="settings-logo-light" name="logo_on_light" label="Reemplazar archivo" description="Fondo transparente recomendado · 1200×320 px aprox." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnLightName} compact />
               </article>
 
               <article className="platform-brand-asset">
@@ -316,10 +314,7 @@ export default async function SettingsPage({
                     <li>Recomendado: fondo transparente, 1200×320 px aprox.</li>
                   </ul>
                 </div>
-                <div className="field">
-                  <label htmlFor="settings-logo-dark">Reemplazar archivo</label>
-                  <input id="settings-logo-dark" name="logo_on_dark" type="file" accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" />
-                </div>
+                <FileDropzone id="settings-logo-dark" name="logo_on_dark" label="Reemplazar archivo" description="Versión blanca/negativa · 1200×320 px aprox." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnDarkName} compact />
               </article>
 
               <article className="platform-brand-asset">
@@ -336,10 +331,7 @@ export default async function SettingsPage({
                     <li>Recomendado: cuadrado, 64×64 o 128×128 px</li>
                   </ul>
                 </div>
-                <div className="field">
-                  <label htmlFor="settings-favicon">Reemplazar archivo</label>
-                  <input id="settings-favicon" name="favicon" type="file" accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" />
-                </div>
+                <FileDropzone id="settings-favicon" name="favicon" label="Reemplazar favicon" description="Cuadrado · 64×64 o 128×128 px recomendado." accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" maxSizeMb={2} kind="image" existingFileName={customization.faviconName} compact />
               </article>
             </div>
 

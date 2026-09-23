@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
@@ -81,10 +81,11 @@ export default function CompanyDirectory({
 }) {
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
-  const [confirmation, setConfirmation] = useState<"save" | "delete" | null>(null);
+  const [confirmation, setConfirmation] = useState<"edit" | "save" | "delete" | null>(null);
   const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const editFormRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -119,6 +120,23 @@ export default function CompanyDirectory({
     setPendingForm(null);
   }
 
+  function requestEditConfirmation() {
+    setSaveError("");
+    setConfirmation("edit");
+  }
+
+  function confirmEditing() {
+    setConfirmation(null);
+    setSaveError("");
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    editFormRef.current?.reset();
+    setSaveError("");
+    setEditing(false);
+  }
+
   async function submitConfirmedForm() {
     const form = pendingForm;
     setConfirmation(null);
@@ -146,6 +164,8 @@ export default function CompanyDirectory({
         legal_name: String(formData.get("legal_name") || "") || null,
         tax_id: String(formData.get("tax_id") || "") || null,
         timezone: String(formData.get("timezone") || current.timezone),
+        primary_contact_name: String(formData.get("primary_contact_name") || "") || null,
+        admin_email: String(formData.get("admin_email") || "") || null,
         site_name: String(formData.get("site_name") || "") || null,
         site_code: String(formData.get("site_code") || "") || null,
         city: String(formData.get("city") || "") || null,
@@ -241,6 +261,15 @@ export default function CompanyDirectory({
     </div>
 
     <ConfirmDialog
+      open={confirmation === "edit"}
+      title="Editar empresa"
+      message="¿Seguro que quieres habilitar la edición de esta empresa? Los campos permanecerán protegidos hasta que confirmes."
+      confirmLabel="Sí, editar empresa"
+      onCancel={cancelConfirmation}
+      onConfirm={confirmEditing}
+    />
+
+    <ConfirmDialog
       open={confirmation === "save"}
       title="Guardar cambios"
       message="¿Deseas guardar los cambios realizados en esta empresa y su sede principal?"
@@ -304,7 +333,7 @@ export default function CompanyDirectory({
           <div><span>Documentos</span><strong>{selected.document_count}</strong><small>{selected.pending_document_count} pendientes</small></div>
         </div>
 
-        <form className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
+        <form ref={editFormRef} className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
           {saveError && <div className="notice error">{saveError}</div>}
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
@@ -317,9 +346,20 @@ export default function CompanyDirectory({
               <i aria-hidden="true">⌄</i>
             </summary>
             <div className="company-detail-accordion-body">
-              <div className="company-profile-contact-strip">
-                <div><span>Contacto principal</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
-                <div><span>Correo administrativo</span><strong>{selected.admin_email || "Sin registrar"}</strong></div>
+              <div className={`company-profile-contact-strip ${editing ? "editing" : ""}`}>
+                {editing ? <>
+                  <div className="field company-profile-contact-edit">
+                    <label htmlFor="detail-primary-contact">Contacto principal</label>
+                    <input id="detail-primary-contact" name="primary_contact_name" defaultValue={selected.primary_contact_name || ""} placeholder="Nombre del contacto principal" />
+                  </div>
+                  <div className="field company-profile-contact-edit">
+                    <label htmlFor="detail-admin-email">Correo administrativo</label>
+                    <input id="detail-admin-email" name="admin_email" type="email" defaultValue={selected.admin_email || ""} placeholder="correo@empresa.com" />
+                  </div>
+                </> : <>
+                  <div><span>Contacto principal</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
+                  <div><span>Correo administrativo</span><strong>{selected.admin_email || "Sin registrar"}</strong></div>
+                </>}
               </div>
               <div className="form-grid">
                 <div className="field"><label htmlFor="detail-name">Nombre comercial</label><input id="detail-name" name="name" defaultValue={selected.name} readOnly={!editing} /></div>
@@ -464,7 +504,7 @@ export default function CompanyDirectory({
           </details>
 
           {editing && <footer className="modal-actions detail-edit-actions company-profile-edit-actions">
-            <button className="button secondary" type="button" disabled={saving} onClick={() => setEditing(false)}>Cancelar edición</button>
+            <button className="button secondary" type="button" disabled={saving} onClick={cancelEditing}>Cancelar edición</button>
             <button className="button" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar cambios"}</button>
           </footer>}
         </form>
@@ -478,7 +518,7 @@ export default function CompanyDirectory({
           </div>
           <div>
             <Link className="button secondary" href={`/dashboard/companies/${selected.id}`}>Ficha completa</Link>
-            <button className="button" type="button" onClick={() => setEditing(true)}>Editar empresa</button>
+            <button className="button" type="button" onClick={requestEditConfirmation}>Editar empresa</button>
           </div>
         </footer>}
       </section>

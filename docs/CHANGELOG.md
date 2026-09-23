@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Upload acknowledgement and Company edit-state reset
+
+### Fixed
+
+- FileDropzone now recognizes selected files with filename, size, a 100% ready state and a visual check indicator.
+- Existing images can be rendered inside the uploader when a preview URL is available.
+- Company quick edit now shows a server-confirmed success panel after saving and lists any logo/cover filenames accepted in that save.
+- Removed the immediate full-page reload after Company quick-edit saves; the modal now exits edit mode immediately, returns to protected/read-only mode and restores the **Editar empresa** action.
+- Company logo/cover previews are cache-busted after a successful upload so the newly saved image is visible without closing the modal.
+
 ## 2026-09-23 — Unified file upload experience
 
 ### Changed

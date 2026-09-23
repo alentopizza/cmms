@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const fullName = String(form.get("full_name") || "").trim();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const password = String(form.get("password") || "");
-  const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const country = String(form.get("country") || "").trim().toUpperCase();
   const city = String(form.get("city") || "").trim();
   const preferredLocale = String(form.get("preferred_locale") || "es-CO").trim();
   const siteName = String(form.get("site_name") || "").trim();

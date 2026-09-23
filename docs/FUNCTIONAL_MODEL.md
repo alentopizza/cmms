@@ -74,8 +74,9 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 ## Interaction rules
 
 - Directory information uses modern cards with search and filters.
-- Creation and detail actions normally open modal dialogs.
-- Detail dialogs start read-only to prevent accidental changes.
+- Creation actions normally open modal dialogs when they would otherwise consume permanent directory space.
+- **Company, Site, Sub-location and User/Technician detail does not open a modal**: selecting a record changes the current module body to the approved in-page profile workspace with breadcrumbs.
+- Detail profiles start read-only to prevent accidental changes.
 - Edit mode must be explicitly enabled.
 - Saving and deleting require contextual confirmation.
 - Destructive operations explain impact before confirmation.
@@ -87,6 +88,10 @@ Creating a record at the limit must fail on the server with a clear message. Dea
 - Hoja de vida export is a record-level action and must be generated only from data the authenticated actor may already read.
 
 ## Entity profile and Hoja de vida flow
+
+Every profile starts with visible breadcrumbs. Company/Site/User directory selection changes the current module view instead of layering a popup. A Sub-location selected from a Site profile adds the Site as the parent breadcrumb so the operator can return one level without losing module context.
+
+For **Empresa**, the identity column uses Company cover/logo and shows Locations, Assets, Technicians and Documents. The right panel exposes general identity, resource statistics, principal-location/map context, documentation, technicians and Hoja de vida.
 
 For **Ubicación principal**, the identity column uses the Site image/Company logo and shows Sub-locations, Assets, active Work Orders and authorized Technician count. The right panel exposes general/contact/map/geofence data, statistics, Sub-locations, maintenance services and Hoja de vida export.
 

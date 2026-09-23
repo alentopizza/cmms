@@ -29,6 +29,8 @@ type GeofenceMapPickerProps = {
 declare global {
   interface Window {
     google?: any;
+    gm_authFailure?: () => void;
+    __deswebGoogleMapsReady?: () => void;
   }
 }
 
@@ -39,24 +41,55 @@ let googleMapsPromise: Promise<any> | null = null;
 
 function loadGoogleMaps(apiKey:string) {
   if (!apiKey) return Promise.reject(new Error("Google Maps no está configurado."));
-  if (window.google?.maps?.importLibrary) return Promise.resolve(window.google);
+  if (window.google?.maps?.Map && window.google?.maps?.marker?.AdvancedMarkerElement) {
+    return Promise.resolve(window.google);
+  }
   if (googleMapsPromise) return googleMapsPromise;
 
   googleMapsPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-desweb-google-maps="true"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve(window.google), { once: true });
-      existing.addEventListener("error", () => reject(new Error("No fue posible cargar Google Maps.")), { once: true });
+    let settled=false;
+    const finishReject=(message:string)=>{
+      if(settled)return;
+      settled=true;
+      googleMapsPromise=null;
+      reject(new Error(message));
+    };
+    const finishResolve=()=>{
+      if(settled)return;
+      if(!window.google?.maps?.Map || !window.google?.maps?.marker?.AdvancedMarkerElement){
+        finishReject("Google Maps cargó sin las librerías necesarias.");
+        return;
+      }
+      settled=true;
+      resolve(window.google);
+    };
+
+    window.gm_authFailure=()=>{
+      finishReject("Google Maps rechazó la clave. Revisa dominio permitido, Maps JavaScript API y facturación.");
+    };
+    window.__deswebGoogleMapsReady=finishResolve;
+
+    const existing=document.querySelector<HTMLScriptElement>('script[data-desweb-google-maps="true"]');
+    if(existing){
+      if(window.google?.maps?.Map && window.google?.maps?.marker?.AdvancedMarkerElement){
+        finishResolve();
+      }
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.deswebGoogleMaps = "true";
-    script.onload = () => window.google ? resolve(window.google) : reject(new Error("Google Maps no respondió."));
-    script.onerror = () => reject(new Error("No fue posible cargar Google Maps."));
+    const script=document.createElement("script");
+    const params=new URLSearchParams({
+      key:apiKey,
+      v:"weekly",
+      loading:"async",
+      libraries:"marker",
+      callback:"__deswebGoogleMapsReady",
+    });
+    script.src=`https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+    script.async=true;
+    script.defer=true;
+    script.dataset.deswebGoogleMaps="true";
+    script.onerror=()=>finishReject("No fue posible descargar Google Maps desde maps.googleapis.com.");
     document.head.appendChild(script);
   });
 
@@ -158,11 +191,11 @@ export default function GeofenceMapPicker({
     let disposed = false;
     const listeners: any[] = [];
 
-    loadGoogleMaps(googleConfig?.apiKey || "").then(async google => {
+    loadGoogleMaps(googleConfig?.apiKey || "").then(google => {
       if (disposed || !googleHostRef.current) return;
-      const { Map } = await google.maps.importLibrary("maps");
-      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-      if (disposed || !googleHostRef.current) return;
+      const Map=google.maps.Map;
+      const AdvancedMarkerElement=google.maps.marker.AdvancedMarkerElement;
+      const PinElement=google.maps.marker.PinElement;
 
       const map = new Map(googleHostRef.current, {
         center: { lat: center.lat, lng: center.lon },
@@ -234,11 +267,12 @@ export default function GeofenceMapPicker({
       }
 
       setGoogleReady(true);
-    }).catch(() => {
+    }).catch((cause:unknown) => {
       if (!disposed) {
+        const detail=cause instanceof Error?cause.message:"Google Maps no respondió correctamente.";
         setGoogleFailed(true);
         setGoogleReady(false);
-        setMessage("Google Maps no está disponible. Se activó el mapa de respaldo temporal.");
+        setMessage(`${detail} Se activó el mapa de respaldo temporal.`);
       }
     });
 

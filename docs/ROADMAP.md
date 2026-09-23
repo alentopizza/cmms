@@ -1,5 +1,23 @@
 # Roadmap
 
+
+## Recently completed internationalization foundation
+
+- shared Country catalog with calling codes, time zones, Company tax-identification types and personal document types;
+- dependent Country → City selectors in Company and Site creation/editing;
+- Country-aware User/Technician document identity and phone prefix;
+- server-side supported-value validation for migrated Country/identification flows;
+- platform and tenant **Idioma y región** settings with persisted Locale/default Country;
+- regional defaults applied to new Company and Location forms;
+- migration 026 for locale/region and User identity persistence.
+
+### Next internationalization work
+
+- expand Country/City coverage according to commercial rollout markets;
+- migrate remaining peripheral contact forms, such as leads/suppliers, to the same Country-aware phone pattern when their data model includes region;
+- introduce translation dictionaries and progressively replace hard-coded interface strings;
+- localize dates, numeric formats, currencies and generated report labels using the effective Locale.
+
 This roadmap is directional and should be updated as priorities change.
 
 ## Foundation — implemented

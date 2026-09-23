@@ -246,9 +246,30 @@ export default function GeofenceMapPicker({
       siteMarkerRef.current = new AdvancedMarkerElement({
         map: configured ? map : null,
         position: { lat: center.lat, lng: center.lon },
-        title: markerLabel ? `Ubicación de ${markerLabel}` : "Centro de geocerca",
+        title: readOnly
+          ? (markerLabel ? `Ubicación de ${markerLabel}` : "Centro de geocerca")
+          : "Arrastra este marcador para ajustar la ubicación",
         content: siteMarkerContent,
+        gmpDraggable: !readOnly,
+        gmpClickable: !readOnly,
       });
+
+      if(!readOnly){
+        const onMarkerDragEnd=()=>{
+          const position=siteMarkerRef.current?.position;
+          const nextLat=typeof position?.lat==="function"?position.lat():Number(position?.lat);
+          const nextLng=typeof position?.lng==="function"?position.lng():Number(position?.lng);
+          if(!Number.isFinite(nextLat)||!Number.isFinite(nextLng))return;
+          setLatitude(nextLat);
+          setLongitude(nextLng);
+          setValidatedLabel(address.trim() || "Punto ajustado manualmente en el mapa");
+          setResults([]);
+          setMessage("Punto ajustado arrastrando el marcador. Verifica el radio antes de guardar.");
+          map.setCenter({lat:nextLat,lng:nextLng});
+        };
+        siteMarkerRef.current.addEventListener("gmp-dragend",onMarkerDragEnd);
+        listeners.push({remove:()=>siteMarkerRef.current?.removeEventListener("gmp-dragend",onMarkerDragEnd)});
+      }
 
       const currentPin = new PinElement({ background: "#2563eb", borderColor: "#dbeafe", glyphColor: "#ffffff", scale: 0.82 });
       currentMarkerRef.current = new AdvancedMarkerElement({
@@ -570,7 +591,7 @@ export default function GeofenceMapPicker({
 
       {!readOnly && <div className="geofence-picker-tools">
         <button type="button" className="button secondary" onClick={useCurrentLocation}>Usar mi GPS</button>
-        <span className={configured ? "geofence-state valid" : "geofence-state"}>{configured ? "Punto configurado" : "Falta validar el punto"}</span>
+        <span className={configured ? "geofence-state valid" : "geofence-state"}>{configured ? "Punto configurado" : "Falta definir el punto"}</span>
       </div>}
     </div>
 
@@ -591,6 +612,7 @@ export default function GeofenceMapPicker({
       {!googleConfigLoaded ? <div className="geofence-map-empty">Cargando proveedor de mapas…</div> : useGoogle ? <>
         <div ref={googleHostRef} className="geofence-google-map" aria-label="Google Maps de la geocerca configurada" />
         {!googleReady && <div className="geofence-map-empty">Cargando Google Maps…</div>}
+        {googleReady && !readOnly && <div className="geofence-drag-hint">Arrastra el marcador para ajustar la ubicación manualmente</div>}
       </> : <button type="button" className="geofence-map-canvas" onClick={selectFallbackPoint} aria-label={readOnly ? "Mapa de respaldo de la geocerca configurada" : "Mapa de respaldo. Toca para ajustar el punto central."}>
         <span className="geofence-map-tiles" aria-hidden="true">
           {tiles.map(tile => <img key={tile.key} src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`} alt="" style={{ left: tile.left, top: tile.top }} />)}

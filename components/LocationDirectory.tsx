@@ -138,7 +138,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
             <div className="field"><label>Código interno</label><input name="code" defaultValue={selected.code||""}/><small>Opcional. Identifica la sede en OT, reportes e integraciones.</small></div>
             <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
-            <div className="field"><label>País *</label><input name="country" defaultValue={selected.country} required/></div>
+            <div className="field"><label>País *</label><input id="location-country" name="country" defaultValue={selected.country} required/></div>
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
             <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={selected.country} countryInputId="location-country" defaultValue={selected.contact_phone} />
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
@@ -146,6 +146,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
               days={selected.business_days}
               openTime={selected.business_open_time}
               closeTime={selected.business_close_time}
+              schedule={selected.business_schedule}
               title="Horario de atención de la sede"
               description="Reacción usa este horario para el filtro Abiertos ahora."
             />

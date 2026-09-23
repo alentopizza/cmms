@@ -10,6 +10,8 @@
 - Added migration `026_international_catalog_preferences.sql` for organization/platform locale and default-country preferences plus country/document identity fields on Users.
 - Added **Configuración → Idioma y región** for both platform administration and tenant Company settings.
 - User/Technician identity can now persist country, document type and document number; Hoja de vida export includes those fields.
+- Supplier identity now stores Country and Country-aware tax-identification type; Supplier phone uses the same derived international prefix.
+- Public and manual Lead forms now capture Country and derive the telephone prefix from it; migration `027_supplier_lead_country.sql` persists this context.
 
 ### Changed
 

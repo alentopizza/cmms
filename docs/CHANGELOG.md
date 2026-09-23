@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-22 — Reaction live technician tracking
+
+### Added
+
+- Added provisional **Reacción** module for emergency-response operations.
+- Added mandatory connected-session GPS tracking for Technician users.
+- Added live technician tracking sessions and timestamped GPS route samples.
+- Added supervisory Reaction map for Admin/Manager/platform operators.
+- Configured site markers with company logos and technician markers with profile photos.
+- Added recent technician route visualization and five-second map refresh.
+- Explicit logout now closes the technician tracking session.
+- Reserved a right-side Reaction panel for the upcoming dispatch/contingency workflow.
+
+### Architecture
+
+- Reaction tracking is independent from Attendance but location samples can reference an open attendance shift when present.
+- Browser/PWA tracking is foreground-capable; native background location remains a future mobile phase.
+
 ## 2026-09-22 — Three-way geofence location selection
 
 ### Changed

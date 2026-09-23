@@ -30,10 +30,11 @@ The active access model now includes:
 Permissions are enforced both in navigation and server-side routes. Tenant users derive their `organization_id` from the signed-in session; browser-supplied identifiers are never sufficient authorization.
 
 User lifecycle rules:
-- creation is available to authorized account administrators;
-- editing, activation/deactivation and permanent deletion are reserved to the platform superadministrator in the current hierarchy;
-- users with operational history are never permanently deleted; they must be deactivated so work-order, meter, comment and audit traceability remains intact;
-- changing the organization/global scope of an account with recorded activity is blocked, while role changes inside the same organization remain possible;
+- creation is available to authorized account administrators within their permitted scope;
+- a Company Administrator with `users.manage` may create, edit, activate and deactivate ordinary users in the same organization, but cannot manage Platform Owner/Superadministrator authority or move accounts across organizations;
+- Platform Owner retains the exceptional protected permanent-delete capability; routine tenant/user lifecycle should prefer deactivation where traceability matters;
+- users with operational history should remain deactivated rather than being destructively removed so work-order, meter, comment and audit traceability is preserved unless the governed Platform Owner purge path is explicitly used;
+- changing the organization/global scope of an account with recorded activity is blocked, while permitted role changes inside the same organization remain possible;
 - organization users can be granted **all-site access** or **specific-site access**; specific assignments are stored independently and applied to operational reads/writes for locations, assets, work orders, preventive maintenance and site-scoped inventory.
 
 ## Resource entitlements

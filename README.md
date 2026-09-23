@@ -45,7 +45,12 @@ Incluye:
 - Proveedores.
 - Usuarios, membresías y roles en el modelo de datos.
 - Adjuntos y bitácora de auditoría.
-- Dashboard operativo.
+- Dashboard operativo y navegación responsive por rol.
+- Asistencia de campo con verificación facial 1:1 y geocerca.
+- Reacción: mapa operativo con técnicos conectados, rutas recientes, búsqueda, filtros y alertas de actividades pendientes.
+- Horarios flexibles por día para empresas y sedes, consumidos por Reacción para estado abierto/cerrado.
+- Expediente empresarial con vista previa, archivo reversible y restauración de documentos.
+- Teléfonos con prefijo de país derivado y accesos directos de llamada/WhatsApp.
 - Autenticación administrativa inicial.
 - Migraciones automáticas de PostgreSQL.
 - Health check en `/api/health`.

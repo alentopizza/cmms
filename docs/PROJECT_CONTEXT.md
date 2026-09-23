@@ -588,7 +588,7 @@ The Company directory quick-edit uses one visible business-hours editor. Saving 
 
 ### Company and site business hours
 
-Companies and principal Sites now store editable attention schedules (weekdays, opening and closing time). New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.
+Companies and principal Sites now store editable seven-day attention schedules with an independent enabled/closed state and opening/closing range for each day. New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately, including weekend or other non-habitual ranges. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.
 
 ### Reaction in-place entity exploration
 
@@ -611,7 +611,7 @@ A provisional **Reacción** module now provides emergency-response map infrastru
 - Technician location permission is mandatory while using the authenticated operational panel; an on-screen indicator confirms that tracking is active.
 - Explicit logout closes the tracking session. Refresh/navigation/background suspension do not close it.
 - GPS telemetry is considered live for two minutes; a background-paused technician remains visible at the last known position for up to 30 minutes and is marked as paused rather than disconnected.
-- The right-side Reaction panel is intentionally reserved for the next dispatch/contingency workflow.
+- The right-side Reaction panel currently lists pending/in-progress maintenance activities with date scoping; Company/Site/Technician exploration stays in-place through popups so the map remains the persistent control surface.
 - Current web/PWA implementation cannot guarantee transport-app-grade GPS while the OS suspends the browser in background; the data model is prepared for a later native mobile tracker.
 
 

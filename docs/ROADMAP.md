@@ -43,6 +43,10 @@ This roadmap is directional and should be updated as priorities change.
 - role-aware mobile navigation foundation: drawer for broad roles and bottom navigation for field roles
 - role-aware dashboard filters and executive exports in Excel (.xlsx), CSV and branded PDF
 - optional field attendance with 1:1 facial verification, geofencing and execution correlation
+- Reaction live-operations foundation with connected-technician tracking, recent routes, Company/Site markers, search, scoped filters and pending-activity alerts
+- flexible seven-day Company/Site operating schedules consumed by Reaction open/closed state
+- country-aware Company/Site/User phone capture with call and WhatsApp shortcuts
+- reversible Company-document archive/restore with authenticated inline PDF/image preview
 
 ## Implemented operational dependency foundation
 
@@ -157,8 +161,22 @@ This roadmap is directional and should be updated as priorities change.
 - enterprise company profile with legal/admin/contact information;
 - explicit separation between enterprise address and operational sites;
 - corporate document dossier with requirement level and expiry metadata;
-- authenticated document upload/download/archive flow;
+- authenticated document upload/download, inline preview, reversible archive and restore flow;
+- country-aware Company/Site contact numbers and call/WhatsApp convenience actions;
+- flexible per-day Company/Site attention schedules, including distinct weekend/closed-day behavior;
 - profile-completeness and document-health indicators in the company workspace and directory.
+
+
+## Recently completed Reaction slice
+
+- supervisor map for configured Companies/Sites and connected Technicians;
+- technician profile-photo markers, recent-route samples and paused/live telemetry states;
+- global search plus Company, Site, Technician and date scoping without leaving the Reaction workspace;
+- pending/in-progress activity alerts with commitment-date fallback for legacy records;
+- in-place Company/Site/Technician/activity detail popups;
+- Company/Site open/closed state driven by the flexible operating schedule;
+- country-normalized contact actions for call and WhatsApp;
+- current web/PWA limitation documented: mobile OS background suspension cannot guarantee transport-app-grade continuous GPS.
 
 
 ## Planned platform governance and distribution roles

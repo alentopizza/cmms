@@ -130,6 +130,7 @@ export default function UserManagement({
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<{ kind: "delete" | "status"; user: ManagedUser } | null>(null);
   const [actionError, setActionError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
   const [avatarFile,setAvatarFile]=useState<File|null>(null);
 
   useEffect(() => {
@@ -191,6 +192,7 @@ export default function UserManagement({
     });
     setErrors({});
     setActionError("");
+    setSaveSuccess("");
     setAvatarFile(null);
   }
 
@@ -213,6 +215,7 @@ export default function UserManagement({
     });
     setErrors({});
     setActionError("");
+    setSaveSuccess("");
     setAvatarFile(null);
   }
 
@@ -260,6 +263,7 @@ export default function UserManagement({
 
     setSaving(true);
     setErrors({});
+    setSaveSuccess("");
     try {
       const url = mode === "edit" && editingUser ? `/api/users/${editingUser.id}` : "/api/users";
       const body = new FormData();
@@ -288,11 +292,12 @@ export default function UserManagement({
         return;
       }
 
+      setSaveSuccess(payload?.message || (mode === "edit" ? "Usuario actualizado correctamente." : "Usuario creado correctamente."));
       setMode(null);
       setEditingUser(null);
       setDraft(EMPTY_DRAFT);
       setErrors({});
-      router.refresh();
+      window.location.reload();
     } finally {
       setSaving(false);
     }
@@ -336,6 +341,7 @@ export default function UserManagement({
     />
 
     {actionError && <div className="notice error section">{actionError}</div>}
+    {saveSuccess && <div className="notice success section">{saveSuccess}</div>}
 
     {users.length === 0 ? <section className="card user-empty-state section">
       <div className="user-empty-icon" aria-hidden="true">◎</div>

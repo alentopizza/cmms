@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 
@@ -75,7 +75,9 @@ export default function CompanyDirectory({
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmation, setConfirmation] = useState<"save" | "delete" | null>(null);
-  const pendingForm = useRef<HTMLFormElement | null>(null);
+  const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (!selected) return;
@@ -92,27 +94,66 @@ export default function CompanyDirectory({
 
   function close() {
     setConfirmation(null);
-    pendingForm.current = null;
+    setPendingForm(null);
+    setSaveError("");
     setEditing(false);
     setSelected(null);
   }
 
   function requestConfirmation(kind: "save" | "delete", event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    pendingForm.current = event.currentTarget;
+    setPendingForm(event.currentTarget);
+    setSaveError("");
     setConfirmation(kind);
   }
 
   function cancelConfirmation() {
     setConfirmation(null);
-    pendingForm.current = null;
+    setPendingForm(null);
   }
 
-  function submitConfirmedForm() {
-    const form = pendingForm.current;
+  async function submitConfirmedForm() {
+    const form = pendingForm;
     setConfirmation(null);
-    pendingForm.current = null;
-    form?.submit();
+    if (!form || saving) return;
+
+    setSaving(true);
+    setSaveError("");
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { Accept: "application/json" },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setSaveError(payload?.message || "No fue posible guardar los cambios.");
+        return;
+      }
+
+      const formData = new FormData(form);
+      const selectedId = selected?.id || "";
+      setSelected(current => current && current.id === selectedId ? {
+        ...current,
+        name: String(formData.get("name") || current.name),
+        legal_name: String(formData.get("legal_name") || "") || null,
+        tax_id: String(formData.get("tax_id") || "") || null,
+        timezone: String(formData.get("timezone") || current.timezone),
+        site_name: String(formData.get("site_name") || "") || null,
+        site_code: String(formData.get("site_code") || "") || null,
+        city: String(formData.get("city") || "") || null,
+        country: String(formData.get("country") || "") || null,
+        address: String(formData.get("address") || "") || null,
+        site_latitude: Number(formData.get("latitude") || current.site_latitude),
+        site_longitude: Number(formData.get("longitude") || current.site_longitude),
+        site_geofence_radius_m: Number(formData.get("geofence_radius_m") || current.site_geofence_radius_m || 250),
+      } : current);
+      setEditing(false);
+      window.location.reload();
+    } finally {
+      setSaving(false);
+      setPendingForm(null);
+    }
   }
 
   if (companies.length === 0) {
@@ -257,6 +298,7 @@ export default function CompanyDirectory({
         </div>
 
         <form className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
+          {saveError && <div className="notice error">{saveError}</div>}
           <input type="hidden" name="intent" value="update" />
           <input type="hidden" name="return_to" value="directory" />
           <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
@@ -393,8 +435,8 @@ export default function CompanyDirectory({
           </details>
 
           {editing && <footer className="modal-actions detail-edit-actions company-profile-edit-actions">
-            <button className="button secondary" type="button" onClick={() => setEditing(false)}>Cancelar edición</button>
-            <button className="button" type="submit">Guardar cambios</button>
+            <button className="button secondary" type="button" disabled={saving} onClick={() => setEditing(false)}>Cancelar edición</button>
+            <button className="button" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar cambios"}</button>
           </footer>}
         </form>
 

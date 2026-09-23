@@ -48,7 +48,7 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID.test(id)) return json(400, { message: "Usuario inválido." });
-  if (session.userId && session.userId === id) return json(409, { message: "No puedes modificar o eliminar tu propia cuenta desde esta pantalla." });
+  const editingSelf = Boolean(session.userId && session.userId === id);
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
@@ -63,10 +63,17 @@ export async function POST(
       organization_id: string | null;
       role: OrganizationRole | null;
       site_id: string | null;
+      access_all_sites: boolean | null;
+      site_ids: string[];
       active: boolean;
       external_supplier_id: string | null;
     }>(
-      `SELECT u.id,u.platform_role,om.organization_id,om.role,om.site_id,u.active,om.external_supplier_id
+      `SELECT u.id,u.platform_role,om.organization_id,om.role,om.site_id,om.access_all_sites,u.active,om.external_supplier_id,
+              COALESCE((
+                SELECT array_agg(oms.site_id::text ORDER BY oms.site_id::text)
+                FROM organization_member_sites oms
+                WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+              ), ARRAY[]::text[]) site_ids
        FROM users u
        LEFT JOIN organization_members om ON om.user_id=u.id
        WHERE u.id=$1
@@ -101,12 +108,20 @@ export async function POST(
     }
 
     if (intent === "activate" || intent === "deactivate") {
+      if (editingSelf) {
+        await client.query("ROLLBACK");
+        return json(409, { message: "No puedes activar o desactivar tu propia cuenta desde esta pantalla." });
+      }
       await client.query("UPDATE users SET active=$1,updated_at=now() WHERE id=$2", [intent === "activate", id]);
       await client.query("COMMIT");
       return json(200, { message: intent === "activate" ? "Usuario reactivado." : "Usuario desactivado." });
     }
 
     if (intent === "delete") {
+      if (editingSelf) {
+        await client.query("ROLLBACK");
+        return json(409, { message: "No puedes eliminar tu propia cuenta." });
+      }
       if (!isPlatformOwner(session)) {
         await client.query("ROLLBACK");
         return json(403, { message: "Solo el Propietario Desweb puede eliminar usuarios definitivamente." });
@@ -195,6 +210,28 @@ export async function POST(
           role: "Puedes modificar su rol dentro de la empresa actual, pero no cambiar su alcance histórico.",
         },
       });
+    }
+
+    if (editingSelf) {
+      const requestedPlatformRole = makingSuperadmin ? "superadmin" : "user";
+      const roleChanged = requestedPlatformRole !== current.platform_role
+        || (!makingSuperadmin && requestedRole !== current.role);
+      const organizationChanged = !makingSuperadmin && organizationId !== current.organization_id;
+      const supplierChanged = (externalSupplierId || null) !== (current.external_supplier_id || null);
+      const currentSiteIds = [...(current.site_ids || [])].sort();
+      const requestedSiteIds = [...siteIds].sort();
+      const siteScopeChanged = accessAllSites !== (current.access_all_sites !== false)
+        || currentSiteIds.length !== requestedSiteIds.length
+        || currentSiteIds.some((siteId, index) => siteId !== requestedSiteIds[index]);
+      if (roleChanged || organizationChanged || supplierChanged || siteScopeChanged) {
+        const selfFields: FieldErrors = {};
+        if (roleChanged) selfFields.role = "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol.";
+        if (organizationChanged) selfFields.organization_id = "No puedes trasladar tu propia cuenta a otra empresa.";
+        if (supplierChanged) selfFields.external_supplier_id = "No puedes cambiar tu propia relación con un proveedor.";
+        if (siteScopeChanged) selfFields.site_ids = "No puedes ampliar o reducir tu propio alcance de sedes.";
+        await client.query("ROLLBACK");
+        return json(409, { fields: selfFields });
+      }
     }
 
     if (!makingSuperadmin) {

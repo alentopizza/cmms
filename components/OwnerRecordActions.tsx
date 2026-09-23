@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 
 export type OwnerEditField = {
@@ -25,7 +24,6 @@ export default function OwnerRecordActions({
   fields?: OwnerEditField[];
   deleteRedirectTo?: string;
 }) {
-  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -50,7 +48,7 @@ export default function OwnerRecordActions({
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.message || "No fue posible guardar los cambios.");
       setEditing(false);
-      router.refresh();
+      window.location.reload();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible guardar los cambios.");
     } finally {

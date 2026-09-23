@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-23 — Edit persistence hardening
+
+### Fixed
+
+- Company directory edits now wait for an explicit JSON success response before closing/reloading, and server validation errors remain visible inside the edit flow.
+- Company profile updates no longer recalculate/reset organization resource limits unless limit fields were actually submitted.
+- Company mutations now re-check tenant ownership for organization-level users.
+- Users may safely edit their own personal identity/contact/photo/password data from the Users module while self role/company changes, self deactivation and self deletion remain blocked.
+- User-directory saves now reload from PostgreSQL after a successful mutation instead of relying only on a client router refresh.
+- Platform Owner contextual editors for Suppliers, Crews, Assets, Work Orders, Maintenance Routines and Inventory now reload from the server after confirmed persistence.
+
+### Reviewed
+
+- Principal-location and sublocation edit flows were reviewed and already submit directly to their authorized mutation routes with PostgreSQL updates and full redirects.
+- The generic Platform Owner mutation endpoint was reviewed; updates and audit records execute in one transaction and errors are returned to the editor rather than reported as success.
+
 ## 2026-09-23 — Reaction production build header fix
 
 ### Fixed

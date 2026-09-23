@@ -36,9 +36,15 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) return new NextResponse("Empresa inválida", { status: 400 });
+  if (session.platformRole === "user" && session.organizationId !== id) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
+  const wantsJson = request.headers.get("accept")?.includes("application/json") ?? false;
+  const respond = (status: number, payload: { message: string; code?: string }, redirectUrl: URL) =>
+    wantsJson ? NextResponse.json(payload, { status }) : NextResponse.redirect(redirectUrl, 303);
 
   if (intent === "delete") {
     if (!isPlatformOwner(session)) return new NextResponse("Forbidden", { status: 403 });
@@ -53,7 +59,7 @@ export async function POST(
     } finally {
       client.release();
     }
-    return NextResponse.redirect(directoryUrl(request.url, "?deleted=1"), 303);
+    return respond(200, { message: "Empresa eliminada correctamente." }, directoryUrl(request.url, "?deleted=1"));
   }
 
   if (intent === "toggle") {
@@ -154,7 +160,9 @@ export async function POST(
   const siteLongitude = siteLongitudeRaw ? Number(siteLongitudeRaw) : null;
   const siteRadius = Number.parseInt(siteRadiusRaw, 10);
   const canManageResources = can(session, "company_resources.manage");
-  const resourceLimits = canManageResources ? {
+  const hasResourceLimitFields = ["max_sites","max_sublocations","max_assets","max_inventory_items","max_technicians"]
+    .some(field => form.has(field));
+  const resourceLimits = canManageResources && hasResourceLimitFields ? {
     max_sites: positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
     max_sublocations: positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
     max_assets: positiveLimit(form.get("max_assets"), DEFAULT_LIMITS.max_assets),
@@ -164,7 +172,7 @@ export async function POST(
 
   if (!name || !slug || !timezone) {
     const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
-    return NextResponse.redirect(target, 303);
+    return respond(422, { message: "Completa nombre, identificador y zona horaria.", code: "required" }, target);
   }
 
   try {
@@ -179,7 +187,8 @@ export async function POST(
       const updated = await client.query(
         `UPDATE organizations
          SET name=$1,slug=$2,legal_name=$3,tax_id=$4,timezone=$5,updated_at=now()
-         WHERE id=$6`,
+         WHERE id=$6
+         RETURNING id`,
         [name, slug, legalName || null, taxId || null, timezone, id],
       );
       if (!updated.rowCount) throw new Error("Empresa no encontrada");
@@ -271,11 +280,18 @@ export async function POST(
     const target = returnToDirectory
       ? directoryUrl(request.url, `?error=${errorCode}`)
       : companyUrl(id, request.url, `?error=${errorCode === "duplicate" ? "slug" : errorCode}`);
-    return NextResponse.redirect(target, 303);
+    const message = errorCode === "site-geofence"
+      ? "Valida la dirección, coordenadas y radio de la sede principal antes de guardar."
+      : errorCode === "duplicate"
+        ? "El identificador de empresa ya está siendo usado."
+        : error instanceof ImageUploadError
+          ? error.message
+          : "No fue posible guardar la empresa. Revisa la información e inténtalo nuevamente.";
+    return respond(errorCode === "duplicate" ? 409 : 422, { message, code: errorCode }, target);
   }
 
   const target = returnToDirectory
     ? directoryUrl(request.url, "?saved=company")
     : companyUrl(id, request.url, "?saved=company");
-  return NextResponse.redirect(target, 303);
+  return respond(200, { message: "Los cambios de la empresa se guardaron correctamente." }, target);
 }

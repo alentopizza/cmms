@@ -325,3 +325,8 @@ Next.js replaces `NEXT_PUBLIC_*` references during the production build. Therefo
 Container platforms do not always forward service environment variables as Docker build arguments. To avoid coupling Maps availability to a platform-specific build configuration, the authenticated `/api/maps-config` endpoint reads the browser Maps key and Map ID at request time and returns only those public browser values. `GeofenceMapPicker` loads Google Maps after fetching that runtime configuration.
 
 The server Geocoding key is not included in this endpoint and remains runtime-only.
+
+
+### Google Places autocomplete
+
+Interactive address entry uses the current Maps JavaScript `PlaceAutocompleteElement` from Places API (New). The browser Maps key must therefore allow both **Maps JavaScript API** and **Places API (New)**. Selection fetches only the fields required by the CMMS (formatted address, location, viewport, address components and display name), then updates the existing geofence state. Server Geocoding remains as a fallback validation path.

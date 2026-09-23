@@ -8311,6 +8311,204 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
 }
 
 
+/* Unified file upload / dropzone */
+.file-dropzone-field{
+  min-width:0;
+  display:grid;
+  gap:6px;
+}
+.file-dropzone{
+  position:relative;
+  min-height:138px;
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border:1.5px dashed color-mix(in srgb,var(--brand-teal) 58%,var(--border));
+  border-radius:14px;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--brand-mint-light) 22%,var(--surface)),var(--surface));
+  box-shadow:
+    0 7px 18px rgba(15,45,36,.07),
+    inset 0 1px 0 rgba(255,255,255,.72);
+  cursor:pointer;
+  transition:border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+.file-dropzone:hover,
+.file-dropzone.is-dragging{
+  border-color:var(--brand-teal);
+  background:color-mix(in srgb,var(--brand-mint-light) 48%,var(--surface));
+  box-shadow:
+    0 10px 24px rgba(15,45,36,.12),
+    0 0 0 3px color-mix(in srgb,var(--brand-teal) 12%,transparent);
+}
+.file-dropzone.is-dragging{
+  transform:translateY(-1px);
+}
+.file-dropzone.has-file{
+  border-style:solid;
+  border-color:color-mix(in srgb,var(--success) 52%,var(--border));
+}
+.file-dropzone.is-disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.file-dropzone-native{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.file-dropzone-visual{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--brand-teal) 28%,var(--border));
+  border-radius:13px;
+  background:color-mix(in srgb,var(--brand-mint-light) 58%,var(--surface));
+  color:var(--brand-teal);
+}
+.file-dropzone-visual svg{
+  width:30px;
+  height:30px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.file-dropzone-visual.has-preview{
+  background:#fff;
+}
+.file-dropzone-visual img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+.file-dropzone-copy{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.file-dropzone-kicker{
+  color:var(--brand-teal);
+  font-size:7px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.file-dropzone-copy>strong{
+  color:var(--text);
+  font-size:10px;
+}
+.file-dropzone-copy>p{
+  margin:0;
+  color:var(--text-soft);
+  font-size:8px;
+  line-height:1.45;
+}
+.file-dropzone-copy>small{
+  color:var(--text-soft);
+  font-size:7px;
+  line-height:1.4;
+}
+.file-dropzone-meta{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.file-dropzone-meta span{
+  max-width:100%;
+  overflow:hidden;
+  padding:3px 6px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:var(--text-soft);
+  font-size:7px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.file-dropzone-actions{
+  display:grid;
+  justify-items:end;
+  gap:6px;
+}
+.file-dropzone-button{
+  min-height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border:1px solid color-mix(in srgb,var(--brand-teal) 48%,var(--border));
+  border-radius:9px;
+  background:var(--brand-dark);
+  color:#fff;
+  font-size:8px;
+  font-weight:900;
+  box-shadow:0 4px 0 color-mix(in srgb,var(--brand-dark) 72%,#000);
+}
+.file-dropzone-actions button{
+  border:0;
+  background:transparent;
+  color:var(--text-soft);
+  font-size:7px;
+  font-weight:850;
+  cursor:pointer;
+}
+.file-dropzone-error{
+  color:var(--danger);
+  font-size:8px;
+  font-weight:800;
+}
+.file-dropzone-field.has-error .file-dropzone{
+  border-color:var(--danger);
+}
+.file-dropzone-field.compact .file-dropzone{
+  min-height:104px;
+  grid-template-columns:44px minmax(0,1fr) auto;
+  gap:9px;
+  padding:10px;
+  border-radius:11px;
+}
+.file-dropzone-field.compact .file-dropzone-visual{
+  width:44px;
+  height:44px;
+  border-radius:10px;
+}
+.file-dropzone-field.compact .file-dropzone-visual svg{
+  width:24px;
+  height:24px;
+}
+.file-dropzone-field.compact .file-dropzone-copy>p{
+  display:none;
+}
+@media(max-width:620px){
+  .file-dropzone{
+    grid-template-columns:46px minmax(0,1fr);
+    min-height:120px;
+    padding:11px;
+  }
+  .file-dropzone-visual{
+    width:46px;
+    height:46px;
+  }
+  .file-dropzone-actions{
+    grid-column:1 / -1;
+    width:100%;
+    grid-template-columns:1fr auto;
+    align-items:center;
+  }
+  .file-dropzone-button{
+    width:100%;
+  }
+}
+
 /* Shared business-hours editor */
 .business-hours-fields{
   margin:0;

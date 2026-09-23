@@ -9,6 +9,7 @@ import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function slugify(value: string) {
   return value
@@ -219,6 +220,11 @@ export async function POST(
     return respond(422, { message: "Completa nombre, identificador y zona horaria.", code: "required" }, target);
   }
 
+  if (adminEmail && !EMAIL_PATTERN.test(adminEmail)) {
+    const target = returnToDirectory ? directoryUrl(request.url, "?error=invalid-email") : companyUrl(id, request.url, "?error=invalid-email");
+    return respond(422, { message: "El correo administrativo no tiene un formato válido. Ejemplo: contacto@empresa.com.", code: "invalid-email" }, target);
+  }
+
   try {
     const [logo, cover] = await Promise.all([
       readImageUpload(form.get("logo"), { maxBytes: 2 * 1024 * 1024, label: "el logo" }),
@@ -348,11 +354,25 @@ export async function POST(
       client.release();
     }
   } catch (error) {
+    const databaseCode = (error as { code?: string }).code;
     const errorCode = error instanceof ImageUploadError
       ? error.code
       : error instanceof Error && error.message === "SITE_GEOFENCE_REQUIRED" ? "site-geofence"
-      : (error as { code?: string }).code === "23505" ? "duplicate"
-      : (error as { code?: string }).code === "23514" ? "business-hours" : "save";
+      : databaseCode === "23505" ? "duplicate"
+      : databaseCode === "23514" ? "business-hours"
+      : databaseCode === "23502" ? "missing-data"
+      : databaseCode === "22001" ? "value-too-long"
+      : databaseCode === "22P02" ? "invalid-data"
+      : databaseCode === "23503" ? "related-data"
+      : "save";
+
+    console.error("[organizations:update] save failed", {
+      organizationId: id,
+      returnToDirectory,
+      code: databaseCode || errorCode,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+
     const target = returnToDirectory
       ? directoryUrl(request.url, `?error=${errorCode}`)
       : companyUrl(id, request.url, `?error=${errorCode === "duplicate" ? "slug" : errorCode}`);
@@ -362,10 +382,19 @@ export async function POST(
         ? "Revisa el horario: selecciona días de atención y asegúrate de que el cierre sea posterior a la apertura."
       : errorCode === "duplicate"
         ? "El identificador de empresa ya está siendo usado."
+      : errorCode === "missing-data"
+        ? "Falta un dato obligatorio para guardar la empresa. Revisa los campos marcados y vuelve a intentarlo."
+      : errorCode === "value-too-long"
+        ? "Uno de los campos supera la longitud permitida. Reduce el texto e inténtalo nuevamente."
+      : errorCode === "invalid-data"
+        ? "Uno de los valores tiene un formato inválido. Revisa identificadores, coordenadas y campos numéricos."
+      : errorCode === "related-data"
+        ? "Hay una referencia relacionada que ya no es válida. Actualiza la empresa y vuelve a intentarlo."
         : error instanceof ImageUploadError
           ? error.message
-          : "No fue posible guardar la empresa. Revisa la información e inténtalo nuevamente.";
-    return respond(errorCode === "duplicate" ? 409 : 422, { message, code: errorCode }, target);
+          : "Ocurrió un error interno al guardar la empresa. Código de referencia: ORG-SAVE.";
+    const status = errorCode === "duplicate" ? 409 : errorCode === "save" ? 500 : 422;
+    return respond(status, { message, code: errorCode }, target);
   }
 
   const target = returnToDirectory

@@ -380,7 +380,7 @@ export default function UserManagement({
     {actionError && <div className="notice error section">{actionError}</div>}
     {saveSuccess && <div className="notice success section">{saveSuccess}</div>}
 
-    {users.length === 0 ? <section className="card user-empty-state section">
+    {!selectedUser && (users.length === 0 ? <section className="card user-empty-state section">
       <div className="user-empty-icon" aria-hidden="true">◎</div>
       <span className="eyebrow">Control de acceso</span>
       <h2>{organizations.length ? "Aún no tienes usuarios creados" : "Primero debes crear una empresa"}</h2>
@@ -423,12 +423,18 @@ export default function UserManagement({
           </div>}
         </article>)}
       </div>
-    </section>}
+    </section>)}
 
-    {selectedUser&&<div className="modal-backdrop user-profile-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedUserId(null);}}>
-      <section className="location-detail-modal entity-profile-modal user-profile-modal" role="dialog" aria-modal="true" aria-label={"Perfil de "+selectedUser.full_name}>
+    {selectedUser&&<section className="section entity-page-detail">
         <EntityProfileWorkspace
-          eyebrow={selectedUser.role==="technician"?"Técnico":"Usuario"}
+          eyebrow="Control de acceso"
+          headingLabel={selectedUser.role==="technician"?"Técnico":"Usuario"}
+          headingIcon="◎"
+          breadcrumbs={[
+            {label:"Inicio",href:"/dashboard"},
+            {label:"Usuarios",onClick:()=>setSelectedUserId(null)},
+            {label:selectedUser.full_name},
+          ]}
           title={selectedUser.full_name}
           subtitle={selectedUser.organization_name||"Desweb CMMS"}
           meta={[roleName(roleKey(selectedUser)),siteAccessLabel(selectedUser)]}
@@ -491,10 +497,8 @@ export default function UserManagement({
             </div>},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida del técnico</h3><p className="entity-panel-copy">Consolida identidad, rol, alcance, indicadores de ejecución, asistencia y estado operativo con los permisos actuales.</p></div><ProfileExportMenu entity="user" id={selectedUser.id} label="Exportar hoja de vida"/></div>},
           ]}
-          onClose={()=>setSelectedUserId(null)}
         />
-      </section>
-    </div>}
+    </section>}
 
     {mode && <div className="modal-backdrop user-modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget && !saving) closeModal();

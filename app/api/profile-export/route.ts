@@ -26,6 +26,47 @@ function filename(value:string){return value.normalize("NFD").replace(/[\u0300-\
 function roleName(role:string|null){return role ? (ROLE_LABELS[role as keyof typeof ROLE_LABELS]||role) : "Acceso de plataforma";}
 function dateText(value:string|null){if(!value)return "—";const d=new Date(value);return Number.isNaN(d.getTime())?value:d.toLocaleString("es-CO");}
 
+
+async function loadOrganization(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
+  if(!can(session,"companies.manage")) return null;
+  const result=await query<{
+    id:string;name:string;legal_name:string|null;tax_id:string|null;legal_address:string|null;legal_city:string|null;legal_country:string|null;
+    phone:string|null;admin_email:string|null;primary_contact_name:string|null;active:boolean;timezone:string;logo_data:Buffer|null;logo_mime_type:string|null;
+    site_count:number;sublocation_count:number;asset_count:number;technician_count:number;document_count:number;pending_document_count:number;plan_name:string|null;
+  }>(`SELECT o.id,o.name,o.legal_name,o.tax_id,o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.primary_contact_name,
+            o.active,o.timezone,o.logo_data,o.logo_mime_type,bp.name plan_name,
+            (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id) site_count,
+            (SELECT count(*)::int FROM locations l WHERE l.organization_id=o.id) sublocation_count,
+            (SELECT count(*)::int FROM assets a WHERE a.organization_id=o.id) asset_count,
+            (SELECT count(*)::int FROM organization_members om WHERE om.organization_id=o.id AND om.role='technician') technician_count,
+            (SELECT count(*)::int FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL) document_count,
+            (SELECT count(*)::int FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL
+              AND od.requirement_level='required' AND (od.file_data IS NULL OR (od.expires_at IS NOT NULL AND od.expires_at<current_date))) pending_document_count
+     FROM organizations o
+     LEFT JOIN organization_subscriptions os ON os.organization_id=o.id
+     LEFT JOIN billing_plans bp ON bp.id=os.plan_id
+     WHERE o.id=$1`,[id]);
+  if(!result.rowCount)return null;
+  const row=result.rows[0];
+  if(session.platformRole==="user"&&session.organizationId!==row.id)return null;
+  return {
+    entityLabel:"Empresa",title:row.name,subtitle:row.legal_name||row.name,status:row.active?"Activa":"Inactiva",
+    fields:[
+      {label:"Razón social",value:safe(row.legal_name,"Sin registrar")},{label:"NIT / Identificación",value:safe(row.tax_id,"Sin registrar")},
+      {label:"Dirección administrativa",value:safe(row.legal_address,"Sin registrar")},{label:"Ciudad",value:safe(row.legal_city,"Sin registrar")},
+      {label:"País",value:safe(row.legal_country,"Sin registrar")},{label:"Teléfono",value:safe(row.phone,"Sin registrar")},
+      {label:"Correo administrativo",value:safe(row.admin_email,"Sin registrar")},{label:"Contacto principal",value:safe(row.primary_contact_name,"Sin registrar")},
+      {label:"Zona horaria",value:safe(row.timezone)},{label:"Plan",value:safe(row.plan_name,"Sin plan")},
+    ],
+    stats:[
+      {label:"Ubicaciones",value:String(row.site_count)},{label:"Sububicaciones",value:String(row.sublocation_count)},
+      {label:"Activos",value:String(row.asset_count)},{label:"Técnicos",value:String(row.technician_count)},
+      {label:"Documentos vigentes",value:String(row.document_count)},{label:"Documentos pendientes",value:String(row.pending_document_count)},
+    ],
+    sections:[],image:row.logo_data,imageMime:row.logo_mime_type,
+  };
+}
+
 async function loadSite(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
   if(!can(session,"locations.manage")) return null;
   const result=await query<{
@@ -153,6 +194,7 @@ async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof 
 }
 
 async function profile(entity:string,id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>){
+  if(entity==="organization")return loadOrganization(id,session);
   if(entity==="site")return loadSite(id,session);
   if(entity==="location")return loadLocation(id,session);
   if(entity==="user")return loadUser(id,session);
@@ -246,7 +288,7 @@ function escapeHtml(value:string){return value.replace(/[&<>"']/g,char=>({"&":"&
 export async function GET(request:Request){
   const session=await getSession();if(!session)return new NextResponse("No autorizado",{status:401});
   const url=new URL(request.url);const entity=url.searchParams.get("entity")||"";const id=url.searchParams.get("id")||"";const format=url.searchParams.get("format")||"pdf";
-  if(!UUID.test(id)||!["site","location","user"].includes(entity)||!["pdf","xlsx","word"].includes(format))return new NextResponse("Solicitud inválida",{status:400});
+  if(!UUID.test(id)||!["organization","site","location","user"].includes(entity)||!["pdf","xlsx","word"].includes(format))return new NextResponse("Solicitud inválida",{status:400});
   const data=await profile(entity,id,session);if(!data)return new NextResponse("Registro no encontrado o sin permiso",{status:404});
   const base="hoja-de-vida-"+filename(data.title);
   if(format==="xlsx"){

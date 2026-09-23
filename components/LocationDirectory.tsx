@@ -106,7 +106,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
   }
 
   return <>
-    <div className="site-visual-grid site-visual-grid-compact">
+    {!selected&&<div className="site-visual-grid site-visual-grid-compact">
       {sites.map(site=><article
         className="site-visual-card site-compact-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"}
         data-search={[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" ")}
@@ -128,12 +128,18 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           </Link>
         </nav>
       </article>)}
-    </div>
+    </div>}
 
-    {selected&&<div className="modal-backdrop location-detail-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedSiteId(null);}}>
-      <section className="location-detail-modal entity-profile-modal" role="dialog" aria-modal="true" aria-label={"Información de "+selected.name}>
+    {selected&&!selectedSub&&<section className="section entity-page-detail">
         <EntityProfileWorkspace
-          eyebrow="Ubicación principal"
+          eyebrow="Estructura física"
+          headingLabel="Ubicación"
+          headingIcon="⌖"
+          breadcrumbs={[
+            {label:"Inicio",href:"/dashboard"},
+            {label:"Ubicaciones",onClick:()=>setSelectedSiteId(null)},
+            {label:selected.name},
+          ]}
           title={selected.name}
           subtitle={selected.organization_name}
           meta={[(selected.city||"Ciudad sin registrar")+" · "+countryName(selected.country),selected.address||"Dirección sin registrar"]}
@@ -236,15 +242,20 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
               <ProfileExportMenu entity="site" id={selected.id} label="Exportar hoja de vida"/>
             </div>},
           ]}
-          onClose={()=>setSelectedSiteId(null)}
         />
-      </section>
-    </div>}
+    </section>}
 
-    {selected&&selectedSub&&<div className="modal-backdrop sublocation-profile-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedSubId(null);}}>
-      <section className="location-detail-modal entity-profile-modal sublocation-profile-modal" role="dialog" aria-modal="true" aria-label={"Información de "+selectedSub.name}>
+    {selected&&selectedSub&&<section className="section entity-page-detail">
         <EntityProfileWorkspace
-          eyebrow="Sububicación"
+          eyebrow="Estructura física"
+          headingLabel="Sububicación"
+          headingIcon="⌁"
+          breadcrumbs={[
+            {label:"Inicio",href:"/dashboard"},
+            {label:"Ubicaciones",onClick:()=>{setSelectedSiteId(null);setSelectedSubId(null);}},
+            {label:selected.name,onClick:()=>setSelectedSubId(null)},
+            {label:selectedSub.name},
+          ]}
           title={selectedSub.name}
           subtitle={selected.name+" · "+selected.organization_name}
           meta={[typeLabel(selectedSub.type),selectedSub.code||"Sin código"]}
@@ -296,9 +307,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             {id:"services",label:"Servicios",content:serviceList(selectedSubServices,"No hay servicios asociados directamente a esta sububicación.")},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida de sububicación</h3><p className="entity-panel-copy">Consolida identificación, jerarquía, descripción, activos y órdenes asociadas directamente al espacio.</p></div><ProfileExportMenu entity="location" id={selectedSub.id} label="Exportar hoja de vida"/></div>},
           ]}
-          onClose={()=>setSelectedSubId(null)}
         />
-      </section>
-    </div>}
+    </section>}
   </>;
 }

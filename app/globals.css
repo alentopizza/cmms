@@ -10289,3 +10289,37 @@ html[data-theme="dark"] .header-account-copy strong,html[data-theme="dark"] .hea
 .context-header-account-zone{margin-left:8px;flex:0 0 auto}
 .header-account-avatar{overflow:hidden}.header-account-avatar img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
 @media(max-width:1080px){.context-header-account-zone{margin-left:auto}}
+
+
+/* Approved in-page entity detail pattern: breadcrumbs + stable profile workspace */
+.entity-page-detail{padding-top:0}
+.entity-profile-workspace{width:100%;max-width:var(--workspace-max);margin:0 auto;background:transparent}
+.entity-breadcrumbs{min-height:34px;display:flex;align-items:center;gap:8px;padding:0 2px 8px;color:#6f8290;font-size:10px;font-weight:650}
+.entity-breadcrumbs a,.entity-breadcrumbs button{padding:2px 0;border:0;background:transparent;color:#6f8290;font:inherit;cursor:pointer}
+.entity-breadcrumbs a:hover,.entity-breadcrumbs button:hover{color:var(--brand-teal)}
+.entity-breadcrumbs .current{color:var(--brand-dark);font-weight:850}.entity-breadcrumb-separator{color:#afbcc4;font-size:15px}
+.entity-profile-page-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:4px 0 16px}
+.entity-profile-page-identity{display:flex;align-items:center;gap:13px;min-width:0}.entity-profile-page-icon{width:52px;height:52px;flex:0 0 52px;display:grid;place-items:center;border:1px solid #cfe6e4;border-radius:50%;background:linear-gradient(145deg,#f2fbfa,#e5f7f5);color:var(--brand-teal);font-size:23px;box-shadow:0 8px 20px rgba(56,178,169,.10)}
+.entity-profile-page-identity>div{min-width:0}.entity-profile-page-identity .eyebrow{display:none}.entity-profile-page-identity h1{margin:0;color:#102a43;font-size:24px;line-height:1.12;letter-spacing:-.025em}.entity-profile-page-identity p{margin:4px 0 0;color:#647b8d;font-size:12px}
+.entity-profile-page-head .entity-profile-toolbar-actions{margin-left:auto}
+.entity-profile-toolbar-actions .button,.entity-profile-toolbar-actions .contextual-create-trigger,.entity-profile-toolbar-actions>a{min-height:42px;padding:0 17px;border-radius:10px;border:1px solid #d6e3e8;background:#fff;color:#173451;font-size:9.5px;font-weight:850;box-shadow:0 5px 15px rgba(41,54,68,.05)}
+.entity-profile-toolbar-actions .button:hover,.entity-profile-toolbar-actions .contextual-create-trigger:hover,.entity-profile-toolbar-actions>a:hover{border-color:#9fd8d3;background:#f4fbfa;color:#0c766f;transform:translateY(-1px)}
+.entity-profile-toolbar-actions .profile-export-trigger{border-color:#2eaaa3;background:linear-gradient(180deg,#36bdb4,#289e98);color:#fff;box-shadow:0 8px 18px rgba(56,178,169,.22)}
+.entity-profile-toolbar-actions .profile-export-trigger:hover{background:linear-gradient(180deg,#40c8bf,#2aa9a1);color:#fff}
+.entity-profile-grid{grid-template-columns:350px minmax(0,1fr);gap:12px;padding:0;min-height:610px}
+.entity-profile-identity-card,.entity-profile-content-card{border-color:#d9e5e9;border-radius:14px;box-shadow:0 7px 20px rgba(41,54,68,.045)}
+.entity-profile-cover{height:112px}.entity-profile-avatar{width:108px;height:108px;margin-top:-54px;border:6px solid var(--surface)}
+.entity-profile-identity-copy{padding:10px 20px 14px}.entity-profile-identity-copy h3{font-size:20px}.entity-profile-identity-copy>strong{font-size:10px;color:#445d70}.entity-profile-identity-copy>span{font-size:9px;color:#7b8f9c}
+.entity-profile-name-row{flex-direction:column;gap:6px}.entity-profile-name-row .status-badge{order:2}
+.entity-profile-stats{gap:8px;padding:0 16px 14px}.entity-profile-stat{grid-template-columns:auto minmax(0,1fr) auto;padding:10px 11px;background:#fff}.entity-profile-stat-icon{width:35px;height:35px;border-radius:9px}.entity-profile-stat>div{grid-template-columns:1fr auto}.entity-profile-stat-arrow{color:#78909c;font-size:18px}.entity-profile-stat strong{font-size:16px}
+.entity-profile-quick-actions{padding:14px 16px 16px;background:#fff}.entity-profile-quick-actions>span{margin-bottom:10px;font-size:9px}.entity-profile-quick-actions>div{gap:9px}.entity-profile-quick-actions .button,.entity-profile-quick-actions a,.entity-profile-quick-actions button{min-height:43px;border-color:#d7e3e8;border-radius:9px;background:#fff;color:#1b3b55;font-size:8.5px;box-shadow:0 3px 10px rgba(41,54,68,.03)}
+.entity-profile-content-card{max-height:none;min-height:610px;background:#fff}
+.entity-profile-tabs{gap:0;padding:0 10px;background:#fff}.entity-profile-tabs button{min-height:54px;padding:0 17px;color:#637b91;font-size:10px}.entity-profile-tabs button.active{color:#0a7d76}.entity-profile-tabs button:after{left:10px;right:10px;height:3px;background:transparent}.entity-profile-tabs button.active:after{background:var(--brand-teal)}
+.entity-profile-tab-body{padding:16px 14px 18px;overflow:visible}
+.entity-panel{border-color:#dce6ea;border-radius:11px;box-shadow:none}.entity-panel h3{display:flex;align-items:center;gap:7px;color:#16364f;font-size:11px}.entity-info-field span{color:#6d8190}.entity-info-field strong{min-height:40px;border-color:#dce6ea;border-radius:8px;background:#fbfcfd;color:#29465e;font-size:9px}
+.entity-stat-card{border-color:#dce6ea;background:#fbfcfd}
+.profile-export-options{top:calc(100% + 6px);border-radius:10px}
+html[data-theme="dark"] .entity-profile-page-identity h1,html[data-theme="dark"] .entity-breadcrumbs .current{color:var(--text)}
+html[data-theme="dark"] .entity-profile-toolbar-actions .button,html[data-theme="dark"] .entity-profile-toolbar-actions>a,html[data-theme="dark"] .entity-profile-stats .entity-profile-stat,html[data-theme="dark"] .entity-profile-quick-actions,html[data-theme="dark"] .entity-profile-quick-actions a,html[data-theme="dark"] .entity-profile-quick-actions button,html[data-theme="dark"] .entity-profile-content-card,html[data-theme="dark"] .entity-profile-tabs{background:var(--surface);color:var(--text)}
+@media(max-width:1100px){.entity-profile-page-head{align-items:flex-start;flex-direction:column}.entity-profile-page-head .entity-profile-toolbar-actions{margin-left:0;width:100%;justify-content:flex-start}.entity-profile-grid{grid-template-columns:300px minmax(0,1fr)}}
+@media(max-width:820px){.entity-profile-grid{grid-template-columns:1fr}.entity-profile-content-card{min-height:0}.entity-profile-page-identity h1{font-size:21px}.entity-profile-page-icon{width:46px;height:46px;flex-basis:46px}.entity-profile-toolbar-actions{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}.entity-profile-toolbar-actions>*{flex:0 0 auto}.entity-breadcrumbs{overflow-x:auto;white-space:nowrap}.entity-profile-tabs{overflow-x:auto}}

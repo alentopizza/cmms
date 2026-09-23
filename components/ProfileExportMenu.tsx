@@ -1,6 +1,6 @@
 "use client";
 
-export type ProfileExportEntity = "site" | "location" | "user";
+export type ProfileExportEntity = "organization" | "site" | "location" | "user";
 
 export default function ProfileExportMenu({
   entity,

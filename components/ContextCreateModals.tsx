@@ -122,12 +122,15 @@ export function SiteCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
+          <div className="field"><label>Zona / Localidad</label><input name="locality" placeholder="Ej. Kennedy" /></div>
           <div className="field"><label>País *</label><input id="new-site-country" name="country" defaultValue="CO" maxLength={2} required /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como imagen de referencia de la ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
-          <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
+          <div className="field"><label>Responsable / contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
+          <div className="field"><label>Cargo del responsable</label><input name="contact_title" placeholder="Ej. Gerente de sede" /></div>
           <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="new-site-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
+          <div className="field form-span-2"><label>Notas adicionales</label><textarea name="notes" rows={3} placeholder="Accesos, parqueadero, restricciones u observaciones de la sede." /></div>
           <BusinessHoursFields title="Horario de atención de la sede" description="Este horario alimenta el filtro operativo de Reacción." />
         </div>
         <footer className="modal-actions">
@@ -415,12 +418,15 @@ export function LocationCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
+          <div className="field"><label>Zona / Localidad</label><input name="locality" placeholder="Ej. Kennedy" /></div>
           <div className="field"><label>País *</label><input id="location-create-country" name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
-          <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
+          <div className="field"><label>Responsable / contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
+          <div className="field"><label>Cargo del responsable</label><input name="contact_title" placeholder="Ej. Gerente de sede" /></div>
           <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="location-create-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
+          <div className="field form-span-2"><label>Notas adicionales</label><textarea name="notes" rows={3} placeholder="Accesos, parqueadero, restricciones u observaciones de la sede." /></div>
         </div>
         {fixedOrganizationName && <div className="modal-context-note">Empresa seleccionada: <strong>{fixedOrganizationName}</strong></div>}
         <footer className="modal-actions"><button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="button" type="submit" disabled={!organizationId}>Crear ubicación</button></footer>

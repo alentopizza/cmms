@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-22 — Three-way geofence location selection
+
+### Changed
+
+- Site geofences can now be positioned using Google Places autocomplete, current device GPS or a draggable map marker.
+- The branded company-logo marker is draggable in create/edit mode and fixed in read-only mode.
+- Dropping the marker updates coordinates, recenters the map and keeps the existing geofence radius.
+
 ## 2026-09-22 — Branded geofence map and location edit cleanup
 
 ### Changed

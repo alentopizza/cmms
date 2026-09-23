@@ -133,6 +133,10 @@ export default function SupplierDirectory({
             <button type="button" onClick={()=>open(s.id,"general",true)}><UiIcon name="edit" size={14}/> Editar</button>
             {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button type="button" onClick={()=>open(s.id,"requisitions")}><UiIcon name="plus" size={14}/> Requisición</button>}
             {s.phone&&<a href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp" size={14}/> WhatsApp</a>}
+            <form method="post" action={"/api/suppliers/"+s.id} onSubmit={event=>{if(!window.confirm("¿Eliminar definitivamente este proveedor? Solo será posible si no tiene historial relacionado."))event.preventDefault();}}>
+              <input type="hidden" name="intent" value="delete"/>
+              <button type="submit" className="danger-text"><UiIcon name="trash" size={14}/> Eliminar</button>
+            </form>
           </div>
         </article>;
       })}</div>:<div className="card empty-state"><strong>Aún no hay proveedores.</strong><span>Registra el primero para asociar servicios, suministros y requisiciones.</span></div>}

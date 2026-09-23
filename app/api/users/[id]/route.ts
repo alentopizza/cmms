@@ -224,15 +224,13 @@ export async function POST(
         || currentSiteIds.length !== requestedSiteIds.length
         || currentSiteIds.some((siteId, index) => siteId !== requestedSiteIds[index]);
       if (roleChanged || organizationChanged || supplierChanged || siteScopeChanged) {
+        const selfFields: FieldErrors = {};
+        if (roleChanged) selfFields.role = "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol.";
+        if (organizationChanged) selfFields.organization_id = "No puedes trasladar tu propia cuenta a otra empresa.";
+        if (supplierChanged) selfFields.external_supplier_id = "No puedes cambiar tu propia relación con un proveedor.";
+        if (siteScopeChanged) selfFields.site_ids = "No puedes ampliar o reducir tu propio alcance de sedes.";
         await client.query("ROLLBACK");
-        return json(409, {
-          fields: {
-            role: roleChanged ? "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol." : undefined,
-            organization_id: organizationChanged ? "No puedes trasladar tu propia cuenta a otra empresa." : undefined,
-            external_supplier_id: supplierChanged ? "No puedes cambiar tu propia relación con un proveedor." : undefined,
-            site_ids: siteScopeChanged ? "No puedes ampliar o reducir tu propio alcance de sedes." : undefined,
-          },
-        });
+        return json(409, { fields: selfFields });
       }
     }
 

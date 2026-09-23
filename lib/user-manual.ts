@@ -169,7 +169,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Al finalizar tu presencia pulsa Marcar salida / Finalizar jornada y repite las validaciones requeridas.",
     ],
     notes:["Asistencia sigue validando entrada/salida de forma explícita. Si el usuario es Técnico, el módulo Reacción mantiene además seguimiento GPS operativo mientras la sesión del panel permanezca conectada."],
-    keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
+
+      "En Reacción puedes activar o desactivar las capas Técnicos, Empresas y Sedes. El filtro Horario permite ver todos, solo Abiertos ahora o solo Cerrados ahora. Los horarios se configuran desde la empresa y desde cada sede.",    keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
   },
   {
     id:"attendance-contingency",

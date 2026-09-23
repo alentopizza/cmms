@@ -4,6 +4,16 @@ export type BusinessHours = {
   closeTime: string;
 };
 
+export class BusinessHoursValidationError extends Error {
+  code: "business-days" | "business-hours";
+
+  constructor(code: "business-days" | "business-hours", message: string) {
+    super(message);
+    this.name = "BusinessHoursValidationError";
+    this.code = code;
+  }
+}
+
 export const DEFAULT_BUSINESS_HOURS: BusinessHours = {
   days: [1, 2, 3, 4, 5],
   openTime: "08:00",
@@ -42,8 +52,12 @@ export function readBusinessHours(
   const openTime = normalizeTime(form.get(`${prefix}open_time`), fallback.openTime);
   const closeTime = normalizeTime(form.get(`${prefix}close_time`), fallback.closeTime);
 
-  if (!normalizedDays.length) throw new Error("BUSINESS_DAYS_REQUIRED");
-  if (minutes(openTime) >= minutes(closeTime)) throw new Error("BUSINESS_HOURS_INVALID");
+  if (!normalizedDays.length) {
+    throw new BusinessHoursValidationError("business-days", "Selecciona al menos un día de atención.");
+  }
+  if (minutes(openTime) >= minutes(closeTime)) {
+    throw new BusinessHoursValidationError("business-hours", "La hora de cierre debe ser posterior a la hora de apertura.");
+  }
 
   return { days: normalizedDays, openTime, closeTime };
 }

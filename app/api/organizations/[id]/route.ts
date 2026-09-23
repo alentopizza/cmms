@@ -254,6 +254,29 @@ export async function POST(
             internalNotes || null, id,
           ],
         );
+      } else if (returnToDirectory) {
+        const quickEditFields: string[] = [];
+        const quickEditValues: Array<string | null> = [];
+        let parameterIndex = 1;
+
+        if (form.has("primary_contact_name")) {
+          quickEditFields.push(`primary_contact_name=${parameterIndex++}`);
+          quickEditValues.push(primaryContactName || null);
+        }
+        if (form.has("admin_email")) {
+          quickEditFields.push(`admin_email=${parameterIndex++}`);
+          quickEditValues.push(adminEmail || null);
+        }
+
+        if (quickEditFields.length) {
+          quickEditValues.push(id);
+          await client.query(
+            `UPDATE organizations
+             SET ${quickEditFields.join(",")},updated_at=now()
+             WHERE id=${parameterIndex}`,
+            quickEditValues,
+          );
+        }
       }
 
       if (primarySiteId && UUID_PATTERN.test(primarySiteId)) {

@@ -42,25 +42,48 @@ export async function POST(request:Request){
       return NextResponse.json({message:"Ubicación inválida."},{status:422});
     }
 
-    let active=await client.query<{id:string}>(
-      "SELECT id FROM technician_tracking_sessions WHERE user_id=$1 AND status='active' FOR UPDATE",
+    let active=await client.query<{id:string;last_seen_at:string}>(
+      `SELECT id,last_seen_at::text
+       FROM technician_tracking_sessions
+       WHERE user_id=$1 AND status='active'
+       FOR UPDATE`,
       [session.userId],
     );
 
-    if(!active.rowCount){
-      active=await client.query<{id:string}>(
+    const stale=active.rows[0]
+      ? Date.now()-new Date(active.rows[0].last_seen_at).getTime()>120000
+      : false;
+
+    if(action==="connect" || stale){
+      if(active.rowCount){
+        await client.query(
+          `UPDATE technician_tracking_sessions
+           SET status='closed',disconnected_at=now(),last_seen_at=now()
+           WHERE id=$1`,
+          [active.rows[0].id],
+        );
+      }
+      active=await client.query<{id:string;last_seen_at:string}>(
         `INSERT INTO technician_tracking_sessions(
            organization_id,user_id,status,last_latitude,last_longitude,last_accuracy_m,last_seen_at
          ) VALUES($1,$2,'active',$3,$4,$5,now())
-         RETURNING id`,
+         RETURNING id,last_seen_at::text`,
         [session.organizationId,session.userId,latitude,longitude,accuracy],
       );
-    }else{
+    }else if(active.rowCount){
       await client.query(
         `UPDATE technician_tracking_sessions
          SET last_latitude=$1,last_longitude=$2,last_accuracy_m=$3,last_seen_at=now()
          WHERE id=$4`,
         [latitude,longitude,accuracy,active.rows[0].id],
+      );
+    }else{
+      active=await client.query<{id:string;last_seen_at:string}>(
+        `INSERT INTO technician_tracking_sessions(
+           organization_id,user_id,status,last_latitude,last_longitude,last_accuracy_m,last_seen_at
+         ) VALUES($1,$2,'active',$3,$4,$5,now())
+         RETURNING id,last_seen_at::text`,
+        [session.organizationId,session.userId,latitude,longitude,accuracy],
       );
     }
 

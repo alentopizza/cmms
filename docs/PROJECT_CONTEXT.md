@@ -566,6 +566,10 @@ Schedule validation is part of the mutation boundary. Invalid opening/closing co
 
 Companies and principal Sites now store editable attention schedules (weekdays, opening and closing time). New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.
 
+### Reaction in-place entity exploration
+
+Reaction is designed to remain the operator's persistent control surface. Global search covers Company, Site and connected-Technician identity/contact/location fields. Company selection scopes both the map and Site selector. Clicking a Company, Site, Technician or pending-activity card opens a modal over Reaction rather than navigating away. Entity modals list all currently pending/in-progress activities related to that entity, while the right-side alert panel keeps its independent date filter. Activity detail identifies direct technician, crew or service-provider assignment and can correlate connected technicians through crew membership. Navigation to the full Work Order is an explicit secondary action.
+
 ### Reaction activity alerts
 
 The Reaction workspace now combines live map telemetry with maintenance alerts. A unified top filter bar controls map layers and Company/Site scope. Clicking a Company or Site marker also sets that scope. The right-side panel lists pending/in-progress work-order activities, defaults to **Today and overdue**, and can filter by date. New activities receive their own commitment date through `work_order_tasks.due_date`; older activity records fall back to Work Order `due_at` and then request date so legacy data remains visible.

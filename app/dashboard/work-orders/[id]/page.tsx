@@ -8,11 +8,11 @@ import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 
 type Order={
   id:string;organization_id:string;site_id:string;number:string;title:string;description:string|null;
-  status:string;priority:string;type:string;asset_name:string;asset_code:string;company_name:string;site_name:string;
+  status:string;priority:string;type:string;asset_name:string;asset_code:string;company_name:string;site_name:string;timezone:string;
 };
 type Activity={
   id:string;description:string;status:string;completed:boolean;assigned_name:string|null;crew_name:string|null;
-  supplier_name:string|null;started_at:string|null;completed_at:string|null;notes:string|null;
+  supplier_name:string|null;started_at:string|null;completed_at:string|null;notes:string|null;due_date:string|null;
 };
 type Worker={id:string;full_name:string;role:string;supplier_name:string|null};
 type Crew={id:string;name:string};
@@ -28,7 +28,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
 
   const orderResult=await query<Order>(
     `SELECT w.id,w.organization_id,w.site_id,w.number::text,w.title,w.description,w.status,w.priority,w.type,
-            a.name asset_name,a.code asset_code,o.name company_name,s.name site_name
+            a.name asset_name,a.code asset_code,o.name company_name,s.name site_name,o.timezone
      FROM work_orders w
      JOIN organizations o ON o.id=w.organization_id
      JOIN sites s ON s.id=w.site_id
@@ -69,7 +69,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
     session.role === "provider"
       ? query<Activity>(
           `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
-                  t.started_at::text,t.completed_at::text,t.notes
+                  t.started_at::text,t.completed_at::text,t.notes,t.due_date::text
            FROM work_order_tasks t
            LEFT JOIN users u ON u.id=t.assigned_to
            LEFT JOIN crews c ON c.id=t.crew_id
@@ -81,7 +81,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
       : session.role === "external"
         ? query<Activity>(
             `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
-                    t.started_at::text,t.completed_at::text,t.notes
+                    t.started_at::text,t.completed_at::text,t.notes,t.due_date::text
              FROM work_order_tasks t
              LEFT JOIN users u ON u.id=t.assigned_to
              LEFT JOIN crews c ON c.id=t.crew_id
@@ -94,7 +94,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
           )
         : query<Activity>(
             `SELECT t.id,t.description,t.status,t.completed,u.full_name assigned_name,c.name crew_name,s.name supplier_name,
-                    t.started_at::text,t.completed_at::text,t.notes
+                    t.started_at::text,t.completed_at::text,t.notes,t.due_date::text
              FROM work_order_tasks t
              LEFT JOIN users u ON u.id=t.assigned_to
              LEFT JOIN crews c ON c.id=t.crew_id
@@ -152,6 +152,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
         <div className="field"><label>Persona responsable</label><select name="assigned_to"><option value="">Sin asignar</option>{workers.rows.map(w=><option key={w.id} value={w.id}>{w.full_name} · {w.role==="external"?"Externo · "+(w.supplier_name||"Proveedor"):"Técnico"}</option>)}</select></div>
         <div className="field"><label>Cuadrilla</label><select name="crew_id"><option value="">Sin cuadrilla</option>{crews.rows.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
         <div className="field"><label>Proveedor de servicios</label><select name="service_supplier_id"><option value="">Sin proveedor</option>{suppliers.rows.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+        <div className="field"><label>Fecha compromiso *</label><input type="date" name="due_date" required defaultValue={new Intl.DateTimeFormat("en-CA",{timeZone:order.timezone,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}/></div>
         <div className="field"><label>Notas iniciales</label><input name="notes" placeholder="Indicaciones, alcance o condición de seguridad"/></div>
         <div className="form-span-2 form-actions"><button className="button" type="submit">Crear actividad</button></div>
       </form>
@@ -162,7 +163,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
       {activities.rowCount ? <div className="activity-grid">{activities.rows.map((activity,index)=><article className="card activity-card" key={activity.id}>
         <div className="activity-card-head"><span className="activity-number">{String(index+1).padStart(2,"0")}</span><div><strong>{activity.description}</strong><span>{activity.assigned_name || activity.crew_name || activity.supplier_name || "Sin responsable"}</span></div><span className={"activity-status activity-status-"+activity.status}>{activity.status}</span></div>
         {activity.notes && <p>{activity.notes}</p>}
-        <div className="activity-meta"><span>Inicio: {activity.started_at?new Date(activity.started_at).toLocaleString("es-CO"):"Pendiente"}</span><span>Fin: {activity.completed_at?new Date(activity.completed_at).toLocaleString("es-CO"):"Pendiente"}</span></div>
+        <div className="activity-meta"><span>Compromiso: {activity.due_date?new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}</span><span>Inicio: {activity.started_at?new Date(activity.started_at).toLocaleString("es-CO"):"Pendiente"}</span><span>Fin: {activity.completed_at?new Date(activity.completed_at).toLocaleString("es-CO"):"Pendiente"}</span></div>
         {canExecute && <form className="activity-update-form" method="post" action={"/api/work-orders/"+order.id+"/activities"}>
           <input type="hidden" name="intent" value="update"/><input type="hidden" name="activity_id" value={activity.id}/>
           <select name="status" defaultValue={activity.status}><option value="pending">Pendiente</option><option value="in_progress">En ejecución</option><option value="completed">Completada</option><option value="cancelled">Cancelada</option></select>

@@ -313,3 +313,8 @@ Environment:
 - `GOOGLE_MAPS_SERVER_API_KEY`: server-only key restricted to Geocoding API.
 
 The map component falls back temporarily to OSM/Nominatim if Google is not configured or an operational request fails, so migration does not block site management.
+
+
+### Docker build-time Maps variables
+
+Next.js replaces `NEXT_PUBLIC_*` references during the production build. Therefore the Docker `builder` stage explicitly declares and exports `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` as build arguments. `GOOGLE_MAPS_SERVER_API_KEY` is intentionally excluded from the browser build and remains a runtime server secret.

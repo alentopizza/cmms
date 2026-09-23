@@ -1,6 +1,18 @@
 # Changelog
 
 
+## 2026-09-23 — Entity header visual fidelity pass
+
+### Changed
+
+- Refined the shared Company/Site/Sub-location/User detail header to match the approved reference more closely.
+- Replaced Unicode/symbol-based entity and action marks with one reusable SVG icon system so Company, Location, Map, Edit, Create, Technician, Asset, Work Order, Download and destructive actions share the same line weight and geometry.
+- Breadcrumbs now use a real Home icon, lightweight chevrons, stronger current-record emphasis and tighter vertical placement.
+- Increased the entity icon circle, title/subtitle hierarchy and action-button height/padding to reproduce the approved balance between identity and actions.
+- Secondary actions now use white bordered buttons with teal line icons; **Exportar** remains the visually dominant teal action with a download icon and rotating dropdown chevron.
+- The same visual treatment is inherited by Companies, Locations, Sub-locations and Technician/User profiles.
+
+
 ## 2026-09-23 — Approved in-page profiles and breadcrumbs
 
 ### Changed

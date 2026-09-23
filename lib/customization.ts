@@ -10,6 +10,8 @@ type CustomizationRow = {
   logo_on_light_size: number;
   logo_on_dark_size: number;
   favicon_size: number;
+  default_locale: string;
+  default_country: string;
   updated_at: string;
 };
 
@@ -23,6 +25,8 @@ export type CustomizationSummary = {
   logoOnLightSize: number;
   logoOnDarkSize: number;
   faviconSize: number;
+  defaultLocale: string;
+  defaultCountry: string;
   updatedAt: string | null;
 };
 
@@ -39,6 +43,8 @@ export async function getCustomizationSummary(): Promise<CustomizationSummary> {
         COALESCE(octet_length(logo_on_light), 0)::int AS logo_on_light_size,
         COALESCE(octet_length(logo_on_dark), 0)::int AS logo_on_dark_size,
         COALESCE(octet_length(favicon), 0)::int AS favicon_size,
+        COALESCE(default_locale,'es-CO') default_locale,
+        COALESCE(default_country,'CO') default_country,
         updated_at::text
       FROM app_customization
       WHERE id = 1
@@ -57,6 +63,8 @@ export async function getCustomizationSummary(): Promise<CustomizationSummary> {
       logoOnLightSize: row.logo_on_light_size,
       logoOnDarkSize: row.logo_on_dark_size,
       faviconSize: row.favicon_size,
+      defaultLocale: row.default_locale || "es-CO",
+      defaultCountry: row.default_country || "CO",
       updatedAt: row.updated_at,
     };
   } catch {
@@ -70,6 +78,8 @@ export async function getCustomizationSummary(): Promise<CustomizationSummary> {
       logoOnLightSize: 0,
       logoOnDarkSize: 0,
       faviconSize: 0,
+      defaultLocale: "es-CO",
+      defaultCountry: "CO",
       updatedAt: null,
     };
   }

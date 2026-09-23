@@ -85,12 +85,17 @@ export function TaxIdentificationTypeSelect({
 }){
   const country=useObservedCountry(countryInputId,String(countryCode||"CO"));
   const options=taxIdTypesForCountry(country);
-  const legacy=Boolean(defaultValue&&!options.some(option=>option.value===defaultValue));
+  const [selected,setSelected]=useState(String(defaultValue||""));
+  useEffect(()=>{
+    if(options.some(option=>option.value===selected))return;
+    setSelected(options[0]?.value||"");
+  },[country]);
+  const legacy=Boolean(selected&&!options.some(option=>option.value===selected));
   return <div className="field international-select-field">
     <label htmlFor={id}>{label}{required?" *":""}</label>
-    <select id={id} name={name} defaultValue={String(defaultValue||"")} required={required}>
+    <select id={id} name={name} value={selected} onChange={event=>setSelected(event.target.value)} required={required}>
       <option value="">Selecciona un tipo</option>
-      {legacy&&<option value={String(defaultValue)}>{defaultValue} · registrado previamente</option>}
+      {legacy&&<option value={selected}>{selected} · registrado previamente</option>}
       {options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
     </select>
   </div>;
@@ -102,7 +107,7 @@ export function PersonalDocumentTypeSelect({
   id?:string;name?:string;countryInputId?:string;countryCode?:string|null;defaultValue?:string|null;value?:string;onChange?:(value:string)=>void;required?:boolean;label?:string;
 }){
   const observed=useObservedCountry(countryInputId,String(countryCode||"CO"));
-  const country=String(countryCode||observed||"CO").toUpperCase();
+  const country=countryInputId ? observed : String(countryCode||observed||"CO").toUpperCase();
   const options=personalDocumentTypesForCountry(country);
   const current=value!==undefined?value:String(defaultValue||"");
   const legacy=Boolean(current&&!options.some(option=>option.value===current));
@@ -123,12 +128,16 @@ export function CountryTimezoneSelect({
 }){
   const country=useObservedCountry(countryInputId,String(countryCode||"CO"));
   const zones=timezonesForCountry(country);
-  const current=String(defaultValue||"");
-  const legacy=Boolean(current&&!zones.includes(current));
+  const [selected,setSelected]=useState(String(defaultValue||""));
+  useEffect(()=>{
+    if(zones.includes(selected))return;
+    setSelected(zones[0]||selected||"UTC");
+  },[country]);
+  const legacy=Boolean(selected&&!zones.includes(selected));
   return <div className="field international-select-field">
     <label htmlFor={id}>{label}{required?" *":""}</label>
-    <select id={id} name={name} defaultValue={current} required={required}>
-      {legacy&&<option value={current}>{current}</option>}
+    <select id={id} name={name} value={selected} onChange={event=>setSelected(event.target.value)} required={required}>
+      {legacy&&<option value={selected}>{selected}</option>}
       {zones.map(zone=><option key={zone} value={zone}>{zone}</option>)}
     </select>
   </div>;

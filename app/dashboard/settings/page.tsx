@@ -7,6 +7,7 @@ import { subscriptionLabel } from "@/lib/billing";
 import ThemePreferences from "@/components/ThemePreferences";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 import FileDropzone from "@/components/FileDropzone";
+import { CountrySelect, LocaleSelect } from "@/components/InternationalFields";
 
 type CompanySettingsRow = {
   id: string;
@@ -14,6 +15,8 @@ type CompanySettingsRow = {
   legal_name: string | null;
   tax_id: string | null;
   timezone: string;
+  preferred_locale: string;
+  default_country: string;
   active: boolean;
   site_count: number;
   active_site_count: number;
@@ -67,12 +70,14 @@ function CompanySettings({
   brandingError,
   planUpdated,
   welcome,
+  localeSaved,
 }: {
   company: CompanySettingsRow;
   brandingSaved?: boolean;
   brandingError?: boolean;
   planUpdated?: boolean;
   welcome?: boolean;
+  localeSaved?: boolean;
 }) {
   const resources: ResourceCard[] = [
     { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "⌂" },
@@ -94,6 +99,7 @@ function CompanySettings({
 
     {welcome && <div className="notice success section">Tu empresa fue creada correctamente. Ya puedes revisar el plan, sus fechas y los recursos disponibles.</div>}
     {planUpdated && <div className="notice success section">Tu plan fue actualizado correctamente y los nuevos recursos ya están disponibles.</div>}
+    {localeSaved && <div className="notice success section">Idioma y región predeterminados actualizados correctamente.</div>}
 
     <section className="company-settings-hero section">
       <article className="card company-plan-banner">
@@ -194,6 +200,23 @@ function CompanySettings({
       </form>
     </section>}
 
+    <section className="card section settings-panel settings-panel-wide international-settings-panel">
+      <div className="settings-panel-head">
+        <div>
+          <span className="settings-kicker">Internacionalización</span>
+          <h2>Idioma y región</h2>
+          <p>Define el idioma base de la empresa y el país que se propondrá inicialmente en nuevos formularios.</p>
+        </div>
+        <span className="settings-panel-icon" aria-hidden="true">文</span>
+      </div>
+      <form className="form-grid international-settings-form" method="post" action="/api/preferences/locale">
+        <input type="hidden" name="scope" value="organization"/>
+        <LocaleSelect id="company-preferred-locale" name="locale" defaultValue={company.preferred_locale}/>
+        <CountrySelect id="company-default-country" name="country" label="País predeterminado" defaultValue={company.default_country||"CO"} required/>
+        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar idioma y región</button></div>
+      </form>
+    </section>
+
     <section className="settings-grid section company-settings-actions">
       <article className="card settings-panel">
         <div className="settings-panel-head">
@@ -231,7 +254,7 @@ function CompanySettings({
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ branding_saved?: string; branding_error?: string; plan_updated?: string; welcome?: string }>;
+  searchParams: Promise<{ branding_saved?: string; branding_error?: string; plan_updated?: string; welcome?: string; locale_saved?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -256,8 +279,25 @@ export default async function SettingsPage({
 
       {params.branding_saved === "1" && <div className="notice success section">La identidad visual global se actualizó correctamente.</div>}
       {params.branding_error && <div className="notice error section">{params.branding_error}</div>}
+      {params.locale_saved === "1" && <div className="notice success section">Idioma y región globales actualizados correctamente.</div>}
 
       <section className="settings-grid section">
+        <article className="card settings-panel settings-panel-wide international-settings-panel">
+          <div className="settings-panel-head">
+            <div>
+              <span className="settings-kicker">Internacionalización</span>
+              <h2>Idioma y región predeterminados</h2>
+              <p>Configura la base regional de Desweb CMMS. Los nuevos clientes pueden usar otra región sin modificar el catálogo global.</p>
+            </div>
+            <span className="settings-panel-icon" aria-hidden="true">文</span>
+          </div>
+          <form className="form-grid international-settings-form" method="post" action="/api/preferences/locale">
+            <input type="hidden" name="scope" value="platform"/>
+            <LocaleSelect id="platform-default-locale" name="locale" defaultValue={customization.defaultLocale}/>
+            <CountrySelect id="platform-default-country" name="country" label="País predeterminado" defaultValue={customization.defaultCountry} required/>
+            <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar idioma y región</button></div>
+          </form>
+        </article>
         <article className="card settings-panel settings-panel-wide">
           <div className="settings-panel-head">
             <div>
@@ -366,7 +406,7 @@ export default async function SettingsPage({
   if (!session.organizationId) redirect("/dashboard");
 
   const company = await query<CompanySettingsRow>(
-    `SELECT o.id,o.name,o.legal_name,o.tax_id,o.timezone,o.active,
+    `SELECT o.id,o.name,o.legal_name,o.tax_id,o.timezone,o.preferred_locale,o.default_country,o.active,
             (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id) site_count,
             (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id AND s.active=true) active_site_count,
             (SELECT count(*)::int FROM locations l WHERE l.organization_id=o.id) sublocation_count,
@@ -405,5 +445,6 @@ export default async function SettingsPage({
     brandingError={Boolean(params.branding_error)}
     planUpdated={params.plan_updated === "1"}
     welcome={params.welcome === "1"}
+    localeSaved={params.locale_saved === "1"}
   />;
 }

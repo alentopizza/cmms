@@ -51,6 +51,9 @@ Incluye:
 - Horarios flexibles por día para empresas y sedes, consumidos por Reacción para estado abierto/cerrado.
 - Expediente empresarial con vista previa, archivo reversible y restauración de documentos.
 - Teléfonos con prefijo de país derivado y accesos directos de llamada/WhatsApp.
+- Perfiles operativos reutilizables para Ubicaciones, Sububicaciones y Técnicos con estadísticas, acciones rápidas y tabs independientes.
+- Hoja de vida exportable por registro en PDF, Excel y Word compatible.
+- Cuenta, ayuda y configuración del usuario ubicadas en el extremo superior derecho del panel de escritorio.
 - Autenticación administrativa inicial.
 - Migraciones automáticas de PostgreSQL.
 - Health check en `/api/health`.

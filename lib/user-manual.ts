@@ -55,7 +55,7 @@ export const MANUAL_ROLES:Array<{id:ManualRole;label:string;summary:string}> = [
   {id:"external",label:"Colaborador externo",summary:"Trabajo de campo asignado directamente o mediante cuadrilla."},
 ];
 
-export const MANUAL_LAST_REVIEW = "2026-09-22";
+export const MANUAL_LAST_REVIEW = "2026-09-23";
 
 // ── User-facing articles ────────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "En escritorio utiliza el menú lateral; puede contraerse y el orden de módulos se guarda por usuario.",
       "En celular, Técnicos y Colaboradores externos tienen navegación inferior con Dashboard, Órdenes, Asistencia y Activos.",
       "El botón Más abre módulos secundarios y acciones de cuenta; no repite los accesos principales.",
-      "Mi configuración está disponible para todos los roles y permite cambiar la apariencia personal. La Configuración de empresa/plataforma aparece solo cuando tu rol tiene permiso administrativo.",
+      "En escritorio, tu foto/nombre y las acciones Mi configuración, Manual/Ayuda, Configuración autorizada y Cerrar sesión están en el extremo superior derecho; ya no ocupan un panel permanente al pie del menú lateral.",
     ],
     notes:["Los módulos que no aparecen no deben interpretarse como un error: la navegación respeta los permisos de tu rol."],
     keywords:["menu","móvil","navegación","cerrar sesión","más"],
@@ -108,6 +108,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Ajusta el punto sobre el mapa si es necesario. El logo de la empresa identifica visualmente el centro de la geocerca.",
       "Define el radio permitido entre 20 y 5000 metros. En edición se muestra un solo mapa interactivo; el resumen inferior evita duplicar la misma información.",
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
+      "Al abrir la tarjeta de una sede verás su perfil: identidad y estadísticas permanecen a la izquierda, mientras Información, Estadísticas, Sububicaciones, Servicios y Hoja de vida cambian dentro del panel derecho.",
+      "Desde el perfil puedes exportar la Hoja de vida de la sede en PDF, Excel o Word compatible.",
     ],
     notes:["Google Places aporta el autocompletado de dirección y Google Maps el contexto visual; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],
     keywords:["gps","geocerca","radio","dirección","mapa"],
@@ -124,6 +126,9 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Crea el usuario con nombre, correo, rol y foto de perfil obligatoria.",
       "Asigna acceso a todas las sedes o limita el usuario a sedes concretas.",
       "La tarjeta de usuario muestra el estado biométrico: Verificada, Pendiente, Reenrolar o Revocada.",
+      "Selecciona la tarjeta para abrir el perfil. La foto, rol, alcance y estadísticas quedan visibles a la izquierda y las pestañas de Información, Estadísticas, Actividad, Asistencia y Hoja de vida cambian el contenido del panel derecho.",
+      "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
+      "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],

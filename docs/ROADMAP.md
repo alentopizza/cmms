@@ -47,6 +47,9 @@ This roadmap is directional and should be updated as priorities change.
 - flexible seven-day Company/Site operating schedules consumed by Reaction open/closed state
 - country-aware Company/Site/User phone capture with call and WhatsApp shortcuts
 - reversible Company-document archive/restore with authenticated inline PDF/image preview
+- reusable Site/Sub-location/User-Technician profile workspace with stable identity rail, statistics, quick actions and independent content tabs
+- record-level Hoja de vida exports for Sites, Sub-locations and Users/Technicians in PDF, XLSX and Word-compatible DOC
+- top-right authenticated account/configuration/help controls with stored User avatar support
 
 ## Implemented operational dependency foundation
 
@@ -165,6 +168,17 @@ This roadmap is directional and should be updated as priorities change.
 - country-aware Company/Site contact numbers and call/WhatsApp convenience actions;
 - flexible per-day Company/Site attention schedules, including distinct weekend/closed-day behavior;
 - profile-completeness and document-health indicators in the company workspace and directory.
+
+
+## Recently completed profile-workspace slice
+
+- standardized profile drill-down for principal Sites, Sub-locations and Users/Technicians;
+- persistent left identity/statistics/quick-action rail with independently switching right-side tabs;
+- Site profile map/geofence, contact, schedule, Sub-location and service context;
+- Technician descriptive execution, Attendance, biometric and Reaction connection context;
+- contextual Technician creation from a selected Site;
+- authorized Hoja de vida export in PDF, native XLSX and Word-compatible DOC;
+- desktop account/configuration/help/logout moved from the lower-left sidebar to the far-right contextual header.
 
 
 ## Recently completed Reaction slice

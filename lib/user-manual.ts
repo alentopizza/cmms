@@ -87,6 +87,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/companies",
     steps:[
       "Crea o abre la empresa y completa su identidad legal y visual.",
+      "Selecciona el país antes de la ciudad. La lista de ciudades, el tipo de identificación fiscal, el indicativo telefónico y las zonas horarias se ajustan al país elegido.",
+      "El checkout de prueba aplica la misma regla País → Ciudad y toma como punto de partida el País/Idioma configurado en la plataforma.",
       "Configura la sede principal con dirección, ciudad, país y geocerca validada en el mapa.",
       "Crea sedes adicionales cuando corresponda y después sus sububicaciones.",
       "Selecciona la tarjeta de empresa para cambiar el módulo a su perfil en la misma pantalla. Las migas de pan permiten volver al directorio sin cerrar un popup.",
@@ -108,6 +110,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Puedes definir la ubicación de tres maneras: escribe y selecciona una sugerencia de Google Places, pulsa Usar mi GPS si estás físicamente en el sitio, o arrastra el marcador con el logo directamente sobre el mapa.",
       "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
       "Ajusta el punto sobre el mapa si es necesario. El logo de la empresa identifica visualmente el centro de la geocerca.",
+      "Al cambiar el país del formulario, las sugerencias de Google Places también cambian de región para evitar direcciones de otro país.",
       "Define el radio permitido entre 20 y 5000 metros. En edición se muestra un solo mapa interactivo; el resumen inferior evita duplicar la misma información.",
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
       "Al seleccionar la tarjeta de una sede el módulo cambia a su perfil en la misma pantalla; no se abre un popup. Las migas de pan permiten volver al directorio o, en una sububicación, regresar a la sede padre.",

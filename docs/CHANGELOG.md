@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-23 — Reaction operational alert panel
+
+### Added
+
+- Replaced the reserved Reaction side panel with live pending-activity alerts from work-order activities.
+- Added one unified elevated dark-green filter bar for Technicians, Companies, Sites, Company scope, Site scope and business-hours state.
+- Company/Site marker clicks now activate the corresponding operational scope and update the alert panel.
+- Added date filtering with **Today and overdue** as the default, plus Today, Overdue, Tomorrow, This week and a specific date.
+- Added activity-level commitment date through migration `023_work_order_task_due_date.sql`; existing activities fall back to Work Order due/request date for Reaction filtering.
+- Alert cards expose Work Order, company, site, responsible party, priority, state and operational date, and link directly to the Work Order.
+- Open Company/Site markers now use a stronger green status ring; closed markers use red. Logos are no longer dimmed/grayscaled for closed state.
+- Removed fractional marker scaling and switched Company/Site logos to `object-fit: contain` to improve map-marker sharpness.
+
 ## 2026-09-23 — Reaction GPS session resilience
 
 ### Fixed

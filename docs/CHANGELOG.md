@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-23 — Reaction production build header fix
+
+### Fixed
+
+- Removed the directory-style `ModuleHeader` from the Reacción map page because the map does not expose directory records for search/filter/count controls.
+- Registered **Reacción** in the shared contextual dashboard header with its contingency-coordination identity.
+- Fixed the production TypeScript build failure caused by missing required `count` and `countLabel` props on the Reacción page.
+
 ## 2026-09-22 — Reaction live technician tracking
 
 ### Added

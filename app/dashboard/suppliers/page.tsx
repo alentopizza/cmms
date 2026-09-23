@@ -61,8 +61,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       ? query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
       : query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1",[session.organizationId]),
     platform
-      ? query<SupplierActivity>(activitySql+" ORDER BY wt.created_at DESC LIMIT 600")
-      : query<SupplierActivity>(activitySql+" AND w.organization_id=$1 ORDER BY wt.created_at DESC LIMIT 600",[session.organizationId]),
+      ? query<SupplierActivity>(activitySql+" ORDER BY w.requested_at DESC,wt.sort_order LIMIT 600")
+      : query<SupplierActivity>(activitySql+" AND w.organization_id=$1 ORDER BY w.requested_at DESC,wt.sort_order LIMIT 600",[session.organizationId]),
     platform
       ? query<RequisitionSelectableItem>(itemSql+" ORDER BY p.name,i.name LIMIT 800")
       : query<RequisitionSelectableItem>(itemSql+" AND i.organization_id=$1 ORDER BY p.name,i.name LIMIT 800",[session.organizationId]),

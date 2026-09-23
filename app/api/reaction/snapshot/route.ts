@@ -278,7 +278,9 @@ export async function GET(){
         adminEmail:company.admin_email,
         website:company.website,
         primaryContactName:company.primary_contact_name,
-        primaryContactPhone:company.primary_contact_phone,
+        primaryContactPhone:company.primary_contact_phone
+          ? e164Phone(company.contact_country,nationalPhonePart(company.primary_contact_phone,company.contact_country))
+          : null,
         primaryContactEmail:company.primary_contact_email,
         lat:Number(company.latitude),
         lng:Number(company.longitude),

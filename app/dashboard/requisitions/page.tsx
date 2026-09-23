@@ -15,7 +15,7 @@ function statusLabel(status:string){
   return ({draft:"Borrador",sent:"Enviada",approved:"Aprobada",rejected:"Rechazada",partial:"Parcialmente atendida",fulfilled:"Atendida",closed:"Cerrada",cancelled:"Cancelada"} as Record<string,string>)[status]||status;
 }
 
-export default async function RequisitionsPage({searchParams}:{searchParams:Promise<{created?:string;updated?:string;error?:string}>}){
+export default async function RequisitionsPage({searchParams}:{searchParams:Promise<{created?:string;updated?:string;error?:string;requisition_created?:string}>}){
   const session=await getSession();
   if(!session)redirect("/login");
   if(!can(session,"requisitions.read"))redirect("/dashboard");
@@ -62,7 +62,7 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
       action={can(session,"requisitions.write")?<Link className="button" href="/dashboard/inventory#crear-requisicion"><UiIcon name="plus" size={16}/> Crear desde inventario</Link>:undefined}
     />
 
-    {params.created&&<div className="notice success section">{params.created} requisición{params.created==="1"?"":"es"} creada{params.created==="1"?"":"s"} correctamente.</div>}
+    {(params.requisition_created||params.created)&&<div className="notice success section">{params.requisition_created||params.created} requisición{(params.requisition_created||params.created)==="1"?"":"es"} creada{(params.requisition_created||params.created)==="1"?"":"s"} correctamente.</div>}
     {params.error&&<div className="notice error section">No fue posible generar la requisición. Revisa los ítems y cantidades seleccionadas.</div>}
 
     <section className="section">

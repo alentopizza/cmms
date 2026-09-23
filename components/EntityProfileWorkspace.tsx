@@ -3,11 +3,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 
 export type EntityProfileStat = {
   label: string;
   value: ReactNode;
-  icon?: string;
+  icon?: UiIconName;
   hint?: string;
 };
 
@@ -26,7 +27,7 @@ export type EntityProfileBreadcrumb = {
 export default function EntityProfileWorkspace({
   eyebrow,
   headingLabel,
-  headingIcon = "◇",
+  headingIcon = "activity",
   title,
   subtitle,
   meta = [],
@@ -44,7 +45,7 @@ export default function EntityProfileWorkspace({
 }: {
   eyebrow: string;
   headingLabel?: string;
-  headingIcon?: string;
+  headingIcon?: UiIconName;
   title: string;
   subtitle?: string | null;
   meta?: string[];
@@ -75,18 +76,18 @@ export default function EntityProfileWorkspace({
   return <section className="entity-profile-workspace">
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
       {breadcrumbs.map((crumb, index) => <Fragment key={crumb.label + index}>
-        {index > 0 && <span className="entity-breadcrumb-separator" aria-hidden="true">›</span>}
+        {index > 0 && <span className="entity-breadcrumb-separator" aria-hidden="true"><UiIcon name="chevron-right" size={13}/></span>}
         {crumb.href
-          ? <Link href={crumb.href}>{crumb.label}</Link>
+          ? <Link href={crumb.href}>{index===0&&<UiIcon name="home" size={13}/>}<span>{crumb.label}</span></Link>
           : crumb.onClick
-            ? <button type="button" onClick={crumb.onClick}>{crumb.label}</button>
+            ? <button type="button" onClick={crumb.onClick}>{index===0&&<UiIcon name="home" size={13}/>}<span>{crumb.label}</span></button>
             : <span className="current" aria-current="page">{crumb.label}</span>}
       </Fragment>)}
     </nav>
 
     <header className="entity-profile-page-head">
       <div className="entity-profile-page-identity">
-        <span className="entity-profile-page-icon" aria-hidden="true">{headingIcon}</span>
+        <span className="entity-profile-page-icon" aria-hidden="true"><UiIcon name={headingIcon} size={27}/></span>
         <div>
           <span className="eyebrow">{eyebrow}</span>
           <h1>{headingLabel ? headingLabel + " / " : ""}{title}</h1>
@@ -115,7 +116,7 @@ export default function EntityProfileWorkspace({
 
         <div className="entity-profile-stats">
           {stats.map(stat => <div className="entity-profile-stat" key={stat.label}>
-            <span className="entity-profile-stat-icon" aria-hidden="true">{stat.icon || "•"}</span>
+            <span className="entity-profile-stat-icon" aria-hidden="true"><UiIcon name={stat.icon || "activity"} size={17}/></span>
             <div><small>{stat.label}</small><strong>{stat.value}</strong>{stat.hint && <em>{stat.hint}</em>}</div>
             <span className="entity-profile-stat-arrow" aria-hidden="true">›</span>
           </div>)}

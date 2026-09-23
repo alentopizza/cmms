@@ -6,6 +6,7 @@ import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import PhoneField from "@/components/PhoneField";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -67,19 +68,19 @@ function ModalShell({
 
 function TriggerButton({
   label,
-  icon = "+",
+  icon = "plus",
   secondary = false,
   disabled = false,
   onClick,
 }: {
   label: string;
-  icon?: string;
+  icon?: UiIconName;
   secondary?: boolean;
   disabled?: boolean;
   onClick: () => void;
 }) {
   return <button className={"button contextual-create-trigger"+(secondary ? " secondary" : "")} type="button" disabled={disabled} onClick={onClick}>
-    <span aria-hidden="true">{icon}</span>{label}
+    <span className="contextual-create-icon" aria-hidden="true"><UiIcon name={icon} size={17}/></span><span>{label}</span>
   </button>;
 }
 
@@ -105,7 +106,7 @@ export function SiteCreateModal({
   }, [open, initial]);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="⌂" onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="location" onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Estructura física" title="Crear ubicación principal" description={fixedOrganizationName ? `Se creará directamente dentro de ${fixedOrganizationName}.` : "Selecciona la empresa y registra su nueva sede."}>
       <form className="company-modal-form" method="post" encType="multipart/form-data" action={organizationId ? `/api/organizations/${organizationId}/sites` : undefined}>
         <input type="hidden" name="return_to" value={returnTo} />
@@ -171,7 +172,7 @@ export function SubLocationCreateModal({
   const visibleLocations=useMemo(() => locations.filter(location => location.site_id===siteId),[locations,siteId]);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="⌁" secondary={secondary} disabled={sites.length===0 && !fixedSiteId} onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="plus" secondary={secondary} disabled={sites.length===0 && !fixedSiteId} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Jerarquía física" title="Crear sububicación" description={fixedSiteName ? `La sede ${fixedSiteName} ya está seleccionada.` : "Selecciona la sede; el sistema conservará esa relación al crear el espacio."}>
       <form className="company-modal-form" method="post" encType="multipart/form-data" action={siteId ? `/api/sites/${siteId}/locations` : undefined}>
         <input type="hidden" name="return_to" value={returnTo} />
@@ -233,7 +234,7 @@ export function AssetCreateModal({
   const visibleSuppliers=suppliers.filter(supplier=>supplier.organization_id===organizationId);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="◇" secondary={secondary} disabled={(sites.length===0 && !fixedSiteId) || suppliers.length===0} onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="asset" secondary={secondary} disabled={(sites.length===0 && !fixedSiteId) || suppliers.length===0} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Registro técnico" title="Crear activo" description={fixedLocationName ? `Quedará asociado directamente a ${fixedLocationName}.` : fixedSiteName ? `La sede ${fixedSiteName} ya está resuelta; solo selecciona la sububicación.` : "Selecciona el contexto físico del activo."}>
       <form className="company-modal-form" method="post" action="/api/assets">
         <input type="hidden" name="return_to" value={returnTo} />
@@ -283,7 +284,7 @@ export function RoutineCreateModal({
   }, [open, initial]);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="↻" secondary={secondary} disabled={assets.length===0 && !fixedAssetId} onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="activity" secondary={secondary} disabled={assets.length===0 && !fixedAssetId} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Mantenimiento preventivo" title="Crear rutina" description={fixedAssetName ? `El activo ${fixedAssetName} ya está seleccionado.` : "Selecciona el activo y define su frecuencia preventiva."}>
       <form className="company-modal-form" method="post" action="/api/maintenance-plans">
         <input type="hidden" name="return_to" value={returnTo} />
@@ -329,7 +330,7 @@ export function ContextUserCreateModal({
   }, [open]);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="◎" secondary onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="user-plus" secondary onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Control de acceso" title="Crear usuario" description={`La cuenta quedará vinculada directamente a ${organizationName}; no tendrás que seleccionar la empresa nuevamente.`}>
       <form className="company-modal-form" method="post" encType="multipart/form-data" action="/api/users">
         <input type="hidden" name="organization_id" value={organizationId} />
@@ -399,7 +400,7 @@ export function LocationCreateModal({
   const visibleLocations=locations.filter(location=>location.site_id===resolvedSiteId);
 
   return <>
-    <TriggerButton label="Agregar" icon="⌂" onClick={()=>setOpen(true)} />
+    <TriggerButton label="Agregar" icon="location" onClick={()=>setOpen(true)} />
     <ModalShell open={open} onClose={()=>setOpen(false)} eyebrow="Estructura física" title="Agregar ubicación" description="Crea una sede principal o una sububicación manteniendo la relación correcta con la empresa.">
       <div className="location-create-switch" role="tablist" aria-label="Tipo de ubicación">
         <button type="button" className={kind==="site"?"active":""} onClick={()=>setKind("site")}><strong>Ubicación principal</strong><span>Sede, planta o punto operativo</span></button>

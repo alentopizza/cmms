@@ -10332,3 +10332,111 @@ html[data-theme="dark"] .entity-profile-toolbar-actions .button,html[data-theme=
 .company-entity-page .entity-profile-avatar img{object-fit:contain;background:#fff}
 .company-entity-page .entity-profile-stats .entity-profile-stat{cursor:default}
 @media(max-width:760px){.company-inline-save-actions{position:static}.entity-tab-cta{width:100%}}
+
+
+/* 2026-09-23 approved header fidelity pass */
+.ui-icon{display:block;flex:0 0 auto}
+.entity-page-detail{margin-top:7px!important;padding-top:0}
+.entity-profile-workspace{max-width:var(--workspace-max)}
+.entity-breadcrumbs{min-height:29px;gap:7px;padding:0 3px 7px;color:#678095;font-size:10.5px;font-weight:650}
+.entity-breadcrumbs a,.entity-breadcrumbs button{display:inline-flex;align-items:center;gap:7px;padding:2px 0;color:#678095;line-height:1.2;text-decoration:none}
+.entity-breadcrumbs a:first-child,.entity-breadcrumbs button:first-child{color:#607b8e}
+.entity-breadcrumbs a:first-child .ui-icon,.entity-breadcrumbs button:first-child .ui-icon{color:#36afa8}
+.entity-breadcrumbs .current{color:#16334e;font-weight:800}
+.entity-breadcrumb-separator{width:14px;height:14px;display:grid;place-items:center;color:#a8bac5}
+.entity-breadcrumb-separator .ui-icon{width:12px;height:12px;stroke-width:1.7}
+
+.entity-profile-page-head{min-height:63px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 0 14px}
+.entity-profile-page-identity{gap:12px}
+.entity-profile-page-icon{width:56px;height:56px;flex:0 0 56px;border:1px solid #cae6e3;border-radius:50%;background:#eef9f8;color:#189c96;box-shadow:0 5px 16px rgba(39,166,158,.08)}
+.entity-profile-page-icon .ui-icon{width:27px;height:27px;stroke-width:1.9}
+.entity-profile-page-identity h1{margin:0;color:#102c47;font-size:25px;font-weight:820;line-height:1.08;letter-spacing:-.025em}
+.entity-profile-page-identity p{margin:4px 0 0;color:#59758c;font-size:12.5px;font-weight:500;line-height:1.2}
+.entity-profile-page-head .entity-profile-toolbar-actions{margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:11px;flex-wrap:nowrap}
+.entity-profile-toolbar-actions form{display:flex;margin:0}
+.entity-profile-toolbar-actions .button,
+.entity-profile-toolbar-actions .contextual-create-trigger,
+.entity-profile-toolbar-actions>a{
+  min-height:44px;
+  height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:0 18px;
+  border:1px solid #d4e2e8;
+  border-radius:9px;
+  background:#fff;
+  color:#153550;
+  font-size:10px;
+  font-weight:780;
+  line-height:1;
+  white-space:nowrap;
+  box-shadow:0 5px 14px rgba(34,61,78,.05);
+  transition:border-color .16s ease,background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease
+}
+.entity-profile-toolbar-actions .entity-action-button .ui-icon,
+.entity-profile-toolbar-actions .contextual-create-trigger .ui-icon{width:18px;height:18px;color:#17a59e;stroke-width:2}
+.entity-profile-toolbar-actions .button:hover,
+.entity-profile-toolbar-actions .contextual-create-trigger:hover,
+.entity-profile-toolbar-actions>a:hover{border-color:#a9dcd8;background:#fbfefe;color:#0b746e;box-shadow:0 7px 18px rgba(34,61,78,.08);transform:translateY(-1px)}
+.entity-profile-toolbar-actions .profile-export-menu{flex:0 0 auto}
+.entity-profile-toolbar-actions .profile-export-trigger{
+  min-width:132px;
+  padding:0 18px;
+  border-color:#2caaa3;
+  background:linear-gradient(180deg,#32b9b1 0%,#28a49d 100%);
+  color:#fff;
+  font-size:11px;
+  font-weight:850;
+  box-shadow:0 8px 18px rgba(34,165,157,.24)
+}
+.entity-profile-toolbar-actions .profile-export-trigger .ui-icon{color:#fff}
+.entity-profile-toolbar-actions .profile-export-trigger:hover{border-color:#249891;background:linear-gradient(180deg,#39c2ba,#2aa7a0);color:#fff}
+.profile-export-chevron{margin-left:2px;transform:rotate(90deg);transition:transform .15s ease}
+.profile-export-menu[open] .profile-export-chevron{transform:rotate(-90deg)}
+.entity-profile-toolbar-actions .danger-secondary{color:#9d3340;background:#fff;border-color:#ecd4d7}
+.entity-profile-toolbar-actions .danger-secondary .ui-icon{color:#bd4050}
+.entity-profile-toolbar-actions .danger-secondary:hover{background:#fff7f8;border-color:#e7bec4;color:#a52e3e}
+
+.contextual-create-trigger{font-family:inherit}
+.contextual-create-icon{display:grid;place-items:center;color:inherit}
+.contextual-create-trigger>span:last-child{font-size:inherit;font-weight:inherit}
+
+.entity-profile-grid{padding:0;gap:12px}
+.entity-profile-identity-card,.entity-profile-content-card{border-radius:13px}
+.entity-profile-tabs button{font-size:10.5px;font-weight:700}
+.entity-profile-tabs button.active{font-weight:830}
+
+html[data-theme="dark"] .entity-profile-page-icon{background:#203c3d;border-color:#31595b;color:#bde5e1}
+html[data-theme="dark"] .entity-breadcrumbs a:first-child,
+html[data-theme="dark"] .entity-breadcrumbs button:first-child{color:#b3c4ce}
+html[data-theme="dark"] .entity-profile-toolbar-actions .button,
+html[data-theme="dark"] .entity-profile-toolbar-actions .contextual-create-trigger,
+html[data-theme="dark"] .entity-profile-toolbar-actions>a{background:var(--surface);border-color:#41535f;color:var(--text)}
+html[data-theme="dark"] .entity-profile-toolbar-actions .entity-action-button .ui-icon,
+html[data-theme="dark"] .entity-profile-toolbar-actions .contextual-create-trigger .ui-icon{color:#7cd3cd}
+
+@media(max-width:1380px){
+  .entity-profile-page-head{align-items:flex-start}
+  .entity-profile-toolbar-actions{gap:8px}
+  .entity-profile-toolbar-actions .button,
+  .entity-profile-toolbar-actions .contextual-create-trigger,
+  .entity-profile-toolbar-actions>a{padding:0 13px}
+}
+@media(max-width:1160px){
+  .entity-profile-page-head{flex-direction:column}
+  .entity-profile-page-head .entity-profile-toolbar-actions{margin-left:0;width:100%;justify-content:flex-start;overflow-x:auto;padding-bottom:3px}
+  .entity-profile-toolbar-actions>*{flex:0 0 auto}
+}
+@media(max-width:820px){
+  .entity-page-detail{margin-top:5px!important}
+  .entity-breadcrumbs{padding-bottom:9px;font-size:10px}
+  .entity-profile-page-head{gap:12px;padding-bottom:12px}
+  .entity-profile-page-icon{width:50px;height:50px;flex-basis:50px}
+  .entity-profile-page-identity h1{font-size:22px}
+  .entity-profile-page-identity p{font-size:11.5px}
+  .entity-profile-toolbar-actions .button,
+  .entity-profile-toolbar-actions .contextual-create-trigger,
+  .entity-profile-toolbar-actions>a{height:42px;min-height:42px}
+}

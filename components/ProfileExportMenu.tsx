@@ -1,5 +1,7 @@
 "use client";
 
+import UiIcon from "@/components/UiIcon";
+
 export type ProfileExportEntity = "organization" | "site" | "location" | "user";
 
 export default function ProfileExportMenu({
@@ -15,9 +17,9 @@ export default function ProfileExportMenu({
 
   return <details className="profile-export-menu">
     <summary className="button profile-export-trigger">
-      <span aria-hidden="true">⇩</span>
+      <UiIcon name="download" size={17}/>
       <span>{label}</span>
-      <b aria-hidden="true">⌄</b>
+      <UiIcon name="chevron-right" size={13} className="profile-export-chevron"/>
     </summary>
     <div className="profile-export-options">
       <a href={base + "pdf"}><span className="export-format pdf">PDF</span><span><strong>Hoja de vida PDF</strong><small>Formato ejecutivo para imprimir o compartir</small></span></a>

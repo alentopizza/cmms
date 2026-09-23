@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
+import UiIcon from "@/components/UiIcon";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -429,7 +430,7 @@ export default function UserManagement({
         <EntityProfileWorkspace
           eyebrow="Control de acceso"
           headingLabel={selectedUser.role==="technician"?"Técnico":"Usuario"}
-          headingIcon="◎"
+          headingIcon="user"
           breadcrumbs={[
             {label:"Inicio",href:"/dashboard"},
             {label:"Usuarios",onClick:()=>setSelectedUserId(null)},
@@ -442,21 +443,21 @@ export default function UserManagement({
           fallback={initials(selectedUser.full_name)}
           status={<span className={"status-badge "+(selectedUser.active?"status-active":"status-inactive")}><i />{selectedUser.active?"Activo":"Inactivo"}</span>}
           stats={[
-            {label:"OT asignadas",value:selectedUser.assigned_work_orders,icon:"✓"},
-            {label:"Actividades pendientes",value:selectedUser.pending_activities,icon:"▤"},
-            {label:"Completadas · 30 días",value:selectedUser.completed_activities_30d,icon:"◉"},
-            {label:"Horas campo · 30 días",value:selectedUser.attendance_hours_30d,icon:"◌"},
+            {label:"OT asignadas",value:selectedUser.assigned_work_orders,icon:"work-order"},
+            {label:"Actividades pendientes",value:selectedUser.pending_activities,icon:"activity"},
+            {label:"Completadas · 30 días",value:selectedUser.completed_activities_30d,icon:"check"},
+            {label:"Horas campo · 30 días",value:selectedUser.attendance_hours_30d,icon:"clock"},
           ]}
           toolbarActions={<>
-            {selectedUser.platform_role!=="platform_owner"&&(isPlatformOperator?(isPlatformOwner||selectedUser.platform_role!=="superadmin"):selectedUser.platform_role==="user")&&<button className="button secondary" type="button" onClick={()=>openEdit(selectedUser)}>✎ Editar</button>}
-            {selectedUser.role==="technician"&&<Link className="button secondary" href="/dashboard/reaction">⌖ Ver en Reacción</Link>}
-            {selectedUser.phone&&<a className="button secondary" href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer">◉ WhatsApp</a>}
+            {selectedUser.platform_role!=="platform_owner"&&(isPlatformOperator?(isPlatformOwner||selectedUser.platform_role!=="superadmin"):selectedUser.platform_role==="user")&&<button className="button secondary entity-action-button" type="button" onClick={()=>openEdit(selectedUser)}><UiIcon name="edit"/><span>Editar</span></button>}
+            {selectedUser.role==="technician"&&<Link className="button secondary entity-action-button" href="/dashboard/reaction"><UiIcon name="map"/><span>Ver en Reacción</span></Link>}
+            {selectedUser.phone&&<a className="button secondary entity-action-button" href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp"/><span>WhatsApp</span></a>}
             <ProfileExportMenu entity="user" id={selectedUser.id}/>
           </>}
           quickActions={<>
-            {selectedUser.phone&&<a href={"tel:"+selectedUser.phone.replace(/[^+\d]/g,"")}>☎ Llamar</a>}
-            {selectedUser.phone&&<a href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer">◉ WhatsApp</a>}
-            {selectedUser.role==="technician"&&<Link href="/dashboard/reaction">⌖ Reacción</Link>}
+            {selectedUser.phone&&<a href={"tel:"+selectedUser.phone.replace(/[^+\d]/g,"")}><UiIcon name="phone"/> Llamar</a>}
+            {selectedUser.phone&&<a href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp"/> WhatsApp</a>}
+            {selectedUser.role==="technician"&&<Link href="/dashboard/reaction"><UiIcon name="map"/> Reacción</Link>}
             <ProfileExportMenu entity="user" id={selectedUser.id} label="Hoja de vida"/>
           </>}
           tabs={[

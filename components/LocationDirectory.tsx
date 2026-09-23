@@ -9,6 +9,7 @@ import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
+import UiIcon from "@/components/UiIcon";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -134,7 +135,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
         <EntityProfileWorkspace
           eyebrow="Estructura física"
           headingLabel="Ubicación"
-          headingIcon="⌖"
+          headingIcon="location"
           breadcrumbs={[
             {label:"Inicio",href:"/dashboard"},
             {label:"Ubicaciones",onClick:()=>setSelectedSiteId(null)},
@@ -149,27 +150,27 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           fallback={initials(selected.organization_name)}
           status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i />{selected.active?"Activa":"Inactiva"}</span>}
           stats={[
-            {label:"Sububicaciones",value:selected.location_count,icon:"⌁"},
-            {label:"Activos",value:selected.asset_count,icon:"◇"},
-            {label:"OT activas",value:siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"✓"},
-            {label:"Técnicos",value:selected.technician_count,icon:"◎"},
+            {label:"Sububicaciones",value:selected.location_count,icon:"sublocation"},
+            {label:"Activos",value:selected.asset_count,icon:"asset"},
+            {label:"OT activas",value:siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"work-order"},
+            {label:"Técnicos",value:selected.technician_count,icon:"user"},
           ]}
           toolbarActions={<>
-            <button className="button secondary" type="button" onClick={()=>setEditingSite(value=>!value)}>✎ {editingSite?"Cancelar edición":"Editar"}</button>
-            {selected.latitude!==null&&selected.longitude!==null&&<a className="button secondary" href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer">⌖ Ver mapa</a>}
+            <button className="button secondary entity-action-button" type="button" onClick={()=>setEditingSite(value=>!value)}><UiIcon name="edit"/><span>{editingSite?"Cancelar edición":"Editar"}</span></button>
+            {selected.latitude!==null&&selected.longitude!==null&&<a className="button secondary entity-action-button" href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer"><UiIcon name="map"/><span>Ver mapa</span></a>}
             <SubLocationCreateModal
               sites={[{id:selected.id,organization_id:selected.organization_id,name:selected.name,organization_name:selected.organization_name}]}
               locations={siteSubs.map(item=>({id:item.id,organization_id:item.organization_id,site_id:item.site_id,name:item.name,label:item.name}))}
               fixedSiteId={selected.id} fixedSiteName={selected.name} returnTo="/dashboard/locations" triggerLabel="Crear sububicación" secondary
             />
-            <Link className="button secondary" href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}>◎ Agregar técnico</Link>
+            <Link className="button secondary entity-action-button" href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}><UiIcon name="user-plus"/><span>Agregar técnico</span></Link>
             <ProfileExportMenu entity="site" id={selected.id}/>
           </>}
           quickActions={<>
-            {selected.latitude!==null&&selected.longitude!==null&&<a href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer">⌖ Ver mapa</a>}
-            <button type="button" onClick={()=>setEditingSite(true)}>✎ Editar</button>
-            <Link href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}>◎ Agregar técnico</Link>
-            {selected.contact_phone&&<a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer">◉ WhatsApp</a>}
+            {selected.latitude!==null&&selected.longitude!==null&&<a href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer"><UiIcon name="map"/> Ver mapa</a>}
+            <button type="button" onClick={()=>setEditingSite(true)}><UiIcon name="edit"/> Editar</button>
+            <Link href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}><UiIcon name="user-plus"/> Agregar técnico</Link>
+            {selected.contact_phone&&<a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer"><UiIcon name="whatsapp"/> WhatsApp</a>}
           </>}
           tabs={[
             {id:"general",label:"Información general",content:editingSite?<form className="location-detail-edit-form entity-section-stack" method="post" encType="multipart/form-data" action={"/api/sites/"+selected.id}>
@@ -249,7 +250,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
         <EntityProfileWorkspace
           eyebrow="Estructura física"
           headingLabel="Sububicación"
-          headingIcon="⌁"
+          headingIcon="sublocation"
           breadcrumbs={[
             {label:"Inicio",href:"/dashboard"},
             {label:"Ubicaciones",onClick:()=>{setSelectedSiteId(null);setSelectedSubId(null);}},
@@ -264,25 +265,25 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           fallback={initials(selected.organization_name)}
           status={<span className={"status-badge "+(selectedSub.active?"status-active":"status-inactive")}><i />{selectedSub.active?"Activa":"Inactiva"}</span>}
           stats={[
-            {label:"Sububicaciones",value:selectedSub.child_count,icon:"⌁"},
-            {label:"Activos",value:selectedSub.asset_count,icon:"◇"},
-            {label:"OT activas",value:selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"✓"},
-            {label:"Estado",value:selectedSub.active?"Activa":"Inactiva",icon:"◉"},
+            {label:"Sububicaciones",value:selectedSub.child_count,icon:"sublocation"},
+            {label:"Activos",value:selectedSub.asset_count,icon:"asset"},
+            {label:"OT activas",value:selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"work-order"},
+            {label:"Estado",value:selectedSub.active?"Activa":"Inactiva",icon:"check"},
           ]}
           toolbarActions={<>
-            <button className="button secondary" type="button" onClick={()=>setEditingSub(value=>!value)}>✎ {editingSub?"Cancelar edición":"Editar"}</button>
+            <button className="button secondary entity-action-button" type="button" onClick={()=>setEditingSub(value=>!value)}><UiIcon name="edit"/><span>{editingSub?"Cancelar edición":"Editar"}</span></button>
             <SubLocationCreateModal
               sites={[{id:selected.id,organization_id:selected.organization_id,name:selected.name,organization_name:selected.organization_name}]}
               locations={siteSubs.map(item=>({id:item.id,organization_id:item.organization_id,site_id:item.site_id,name:item.name,label:item.name}))}
               fixedSiteId={selected.id} fixedSiteName={selected.name} fixedParentId={selectedSub.id} returnTo="/dashboard/locations" triggerLabel="Crear dentro" secondary
             />
-            <Link className="button secondary" href="/dashboard/assets">◇ Ver activos</Link>
+            <Link className="button secondary entity-action-button" href="/dashboard/assets"><UiIcon name="asset"/><span>Ver activos</span></Link>
             <ProfileExportMenu entity="location" id={selectedSub.id}/>
           </>}
           quickActions={<>
-            <button type="button" onClick={()=>setEditingSub(true)}>✎ Editar</button>
-            <Link href="/dashboard/assets">◇ Activos</Link>
-            <Link href="/dashboard/work-orders">✓ Órdenes</Link>
+            <button type="button" onClick={()=>setEditingSub(true)}><UiIcon name="edit"/> Editar</button>
+            <Link href="/dashboard/assets"><UiIcon name="asset"/> Activos</Link>
+            <Link href="/dashboard/work-orders"><UiIcon name="work-order"/> Órdenes</Link>
             <ProfileExportMenu entity="location" id={selectedSub.id} label="Hoja de vida"/>
           </>}
           tabs={[

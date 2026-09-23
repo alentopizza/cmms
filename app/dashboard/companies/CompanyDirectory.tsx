@@ -10,6 +10,7 @@ import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
+import UiIcon from "@/components/UiIcon";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -342,7 +343,7 @@ export default function CompanyDirectory({
       <EntityProfileWorkspace
         eyebrow="Administración"
         headingLabel="Empresa"
-        headingIcon="◫"
+        headingIcon="company"
         breadcrumbs={[
           {label:"Inicio",href:"/dashboard"},
           {label:"Empresas",onClick:close},
@@ -360,26 +361,26 @@ export default function CompanyDirectory({
         fallback={initials(selected.name)}
         status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i />{selected.active?"Activa":"Inactiva"}</span>}
         stats={[
-          {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,icon:"⌂"},
-          {label:"Activos",value:selected.asset_count+"/"+selected.max_assets,icon:"◇"},
-          {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,icon:"◎"},
-          {label:"Documentos",value:selected.document_count,icon:"▤",hint:selected.pending_document_count+" pendientes"},
+          {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,icon:"location"},
+          {label:"Activos",value:selected.asset_count+"/"+selected.max_assets,icon:"asset"},
+          {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,icon:"user"},
+          {label:"Documentos",value:selected.document_count,icon:"file",hint:selected.pending_document_count+" pendientes"},
         ]}
         toolbarActions={<>
-          {!editing&&<button className="button secondary" type="button" onClick={requestEditConfirmation}>✎ Editar</button>}
-          {editing&&<button className="button secondary" type="button" onClick={cancelEditing}>Cancelar edición</button>}
-          <Link className="button secondary" href={"/dashboard/companies/"+selected.id}>▤ Ficha completa</Link>
+          {!editing&&<button className="button secondary entity-action-button" type="button" onClick={requestEditConfirmation}><UiIcon name="edit"/> <span>Editar</span></button>}
+          {editing&&<button className="button secondary entity-action-button" type="button" onClick={cancelEditing}><UiIcon name="edit"/> <span>Cancelar edición</span></button>}
+          <Link className="button secondary entity-action-button" href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> <span>Ficha completa</span></Link>
           <ProfileExportMenu entity="organization" id={selected.id}/>
           {canDelete&&!editing&&<form method="post" action={"/api/organizations/"+selected.id} onSubmit={event=>requestConfirmation("delete",event)}>
             <input type="hidden" name="intent" value="delete"/>
-            <button className="button danger-secondary" type="submit">Eliminar</button>
+            <button className="button danger-secondary entity-action-button" type="submit"><UiIcon name="trash"/> <span>Eliminar</span></button>
           </form>}
         </>}
         quickActions={<>
-          <Link href="/dashboard/locations">⌂ Ubicaciones</Link>
-          <Link href="/dashboard/assets">◇ Activos</Link>
-          <Link href="/dashboard/users">◎ Usuarios</Link>
-          <Link href={"/dashboard/companies/"+selected.id}>▤ Ficha completa</Link>
+          <Link href="/dashboard/locations"><UiIcon name="location"/> Ubicaciones</Link>
+          <Link href="/dashboard/assets"><UiIcon name="asset"/> Activos</Link>
+          <Link href="/dashboard/users"><UiIcon name="user"/> Usuarios</Link>
+          <Link href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> Ficha completa</Link>
         </>}
         tabs={[
           {id:"general",label:"Información general",content:editing?<form

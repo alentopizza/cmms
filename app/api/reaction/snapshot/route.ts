@@ -131,13 +131,13 @@ export async function GET(){
                 t.description,t.status,w.priority,w.organization_id,o.name organization_name,
                 w.site_id,s.name site_name,a.name asset_name,
                 COALESCE(u.full_name,c.name,sp.name,'Sin asignar') responsible,
-                COALESCE(w.due_at,w.requested_at)::text operational_at,
-                (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date::text operational_date,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_at,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_date,
                 w.due_at::text due_at,
                 CASE
-                  WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
                        < (now() AT TIME ZONE o.timezone)::date THEN 'overdue'
-                  WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
                        = (now() AT TIME ZONE o.timezone)::date THEN 'today'
                   ELSE 'future'
                 END date_state
@@ -154,11 +154,13 @@ export async function GET(){
            AND w.status NOT IN ('completed','cancelled')
          ORDER BY
            CASE
-             WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date < (now() AT TIME ZONE o.timezone)::date THEN 0
-             WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date = (now() AT TIME ZONE o.timezone)::date THEN 1
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  < (now() AT TIME ZONE o.timezone)::date THEN 0
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  = (now() AT TIME ZONE o.timezone)::date THEN 1
              ELSE 2
            END,
-           COALESCE(w.due_at,w.requested_at) ASC,
+           COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date) ASC,
            CASE w.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
            w.number
          LIMIT 500`
@@ -166,13 +168,13 @@ export async function GET(){
                 t.description,t.status,w.priority,w.organization_id,o.name organization_name,
                 w.site_id,s.name site_name,a.name asset_name,
                 COALESCE(u.full_name,c.name,sp.name,'Sin asignar') responsible,
-                COALESCE(w.due_at,w.requested_at)::text operational_at,
-                (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date::text operational_date,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_at,
+                COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)::text operational_date,
                 w.due_at::text due_at,
                 CASE
-                  WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
                        < (now() AT TIME ZONE o.timezone)::date THEN 'overdue'
-                  WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date
+                  WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
                        = (now() AT TIME ZONE o.timezone)::date THEN 'today'
                   ELSE 'future'
                 END date_state
@@ -191,11 +193,13 @@ export async function GET(){
            AND ($2::boolean OR w.site_id=ANY($3::uuid[]))
          ORDER BY
            CASE
-             WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date < (now() AT TIME ZONE o.timezone)::date THEN 0
-             WHEN (COALESCE(w.due_at,w.requested_at) AT TIME ZONE o.timezone)::date = (now() AT TIME ZONE o.timezone)::date THEN 1
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  < (now() AT TIME ZONE o.timezone)::date THEN 0
+             WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
+                  = (now() AT TIME ZONE o.timezone)::date THEN 1
              ELSE 2
            END,
-           COALESCE(w.due_at,w.requested_at) ASC,
+           COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date) ASC,
            CASE w.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
            w.number
          LIMIT 500`,

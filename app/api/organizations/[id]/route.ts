@@ -7,6 +7,7 @@ import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { BusinessHoursValidationError, businessHoursSubmitted, normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
 import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
+import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -219,6 +220,14 @@ export async function POST(
     const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
     return respond(422, { message: "Completa nombre, identificador y zona horaria.", code: "required" }, target);
   }
+  if (profileV2 && (!isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType))) {
+    const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
+    return respond(422, { message: "Selecciona un país y un tipo de identificación válidos del catálogo.", code: "required" }, target);
+  }
+  if (country && !isSupportedCountry(country)) {
+    const target = returnToDirectory ? directoryUrl(request.url, "?error=required") : companyUrl(id, request.url, "?error=required");
+    return respond(422, { message: "Selecciona un país válido para la sede principal.", code: "required" }, target);
+  }
 
   if (adminEmail && !EMAIL_PATTERN.test(adminEmail)) {
     const target = returnToDirectory ? directoryUrl(request.url, "?error=invalid-email") : companyUrl(id, request.url, "?error=invalid-email");
@@ -251,7 +260,7 @@ export async function POST(
             tax_id_type=$1,legal_address=$2,legal_city=$3,legal_country=$4,phone=$5,
             admin_email=$6,billing_email=$7,website=$8,primary_contact_name=$9,
             primary_contact_title=$10,primary_contact_phone=$11,primary_contact_email=$12,
-            internal_notes=$13,updated_at=now()
+            internal_notes=$13,default_country=$4,updated_at=now()
            WHERE id=$14`,
           [
             taxIdType || null, legalAddress || null, legalCity || null, legalCountry || null, phone || null,

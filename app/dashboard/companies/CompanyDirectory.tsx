@@ -12,6 +12,7 @@ import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
+import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -431,11 +432,10 @@ export default function CompanyDirectory({
               <div className="form-grid">
                 <div className="field"><label>Nombre comercial</label><input name="name" defaultValue={selected.name} required/></div>
                 <div className="field"><label>Razón social</label><input name="legal_name" defaultValue={selected.legal_name||""}/></div>
-                <div className="field"><label>Tipo de identificación</label><input name="tax_id_type" defaultValue={selected.tax_id_type||""} placeholder="NIT, RUC, RFC..."/></div>
-                <div className="field"><label>NIT / Identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
+                <TaxIdentificationTypeSelect id="directory-company-tax-type" name="tax_id_type" countryInputId="directory-company-country" countryCode={selected.legal_country||"CO"} defaultValue={selected.tax_id_type||""} required />
+                <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
                 <div className="field form-span-2"><label>Dirección administrativa / fiscal</label><input name="legal_address" defaultValue={selected.legal_address||""}/></div>
-                <div className="field"><label>Ciudad administrativa</label><input name="legal_city" defaultValue={selected.legal_city||""}/></div>
-                <div className="field"><label>País</label><input id="directory-company-country" name="legal_country" maxLength={2} defaultValue={selected.legal_country||"CO"}/></div>
+                <CountryCityFields countryId="directory-company-country" countryName="legal_country" cityId="directory-company-city" cityName="legal_city" countryLabel="País" cityLabel="Ciudad administrativa" defaultCountry={selected.legal_country||"CO"} defaultCity={selected.legal_city||""} required />
                 <PhoneField name="phone" label="Teléfono principal" countryCode={selected.legal_country||"CO"} countryInputId="directory-company-country" defaultValue={selected.phone}/>
                 <div className="field"><label>Sitio web</label><input type="url" name="website" defaultValue={selected.website||""} placeholder="https://..."/></div>
                 <div className="field"><label>Correo administrativo</label><input type="email" name="admin_email" defaultValue={selected.admin_email||""}/></div>
@@ -446,12 +446,7 @@ export default function CompanyDirectory({
                 <PhoneField name="primary_contact_phone" label="Teléfono del contacto" countryCode={selected.legal_country||"CO"} countryInputId="directory-company-country" defaultValue={selected.primary_contact_phone}/>
                 <div className="field"><label>Correo del contacto</label><input type="email" name="primary_contact_email" defaultValue={selected.primary_contact_email||""}/></div>
                 <div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>
-                <div className="field"><label>Zona horaria</label><select name="timezone" defaultValue={selected.timezone}>
-                  <option value="America/Bogota">Colombia · America/Bogota</option>
-                  <option value="America/Lima">Perú · America/Lima</option>
-                  <option value="America/Mexico_City">México · America/Mexico_City</option>
-                  <option value="America/New_York">Estados Unidos · America/New_York</option>
-                </select></div>
+                <CountryTimezoneSelect id="directory-company-timezone" name="timezone" countryInputId="directory-company-country" countryCode={selected.legal_country||"CO"} defaultValue={selected.timezone} />
                 <div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={3} defaultValue={selected.internal_notes||""} placeholder="Información administrativa o comercial relevante."/></div>
                 <BusinessHoursFields
                   days={selected.business_days}
@@ -469,8 +464,7 @@ export default function CompanyDirectory({
               <div className="form-grid">
                 <div className="field"><label>Nombre de sede</label><input name="site_name" defaultValue={selected.site_name||""}/></div>
                 <div className="field"><label>Código interno</label><input name="site_code" defaultValue={selected.site_code||""}/></div>
-                <div className="field"><label>Ciudad</label><input name="city" defaultValue={selected.city||""}/></div>
-                <div className="field"><label>País</label><input name="country" defaultValue={selected.country||"CO"} maxLength={2}/></div>
+                <CountryCityFields countryId="directory-site-country" countryName="country" cityId="directory-site-city" cityName="city" defaultCountry={selected.country||selected.legal_country||"CO"} defaultCity={selected.city||""} required />
               </div>
               <GeofenceMapPicker
                 initialAddress={selected.address}

@@ -330,3 +330,19 @@ The server Geocoding key is not included in this endpoint and remains runtime-on
 ### Google Places autocomplete
 
 Interactive address entry uses the current Maps JavaScript `PlaceAutocompleteElement` from Places API (New). The browser Maps key must therefore allow both **Maps JavaScript API** and **Places API (New)**. Selection fetches only the fields required by the CMMS (formatted address, location, viewport, address components and display name), then updates the existing geofence state. Server Geocoding remains as a fallback validation path.
+
+
+### Reaction connected tracking
+
+The **Reaction** module introduces operational technician tracking independent from Attendance.
+
+- A user with `reaction.track` (currently Technician) must grant location access before using the authenticated operational workspace.
+- The browser starts a `technician_tracking_sessions` record when the first valid GPS fix is obtained.
+- High-accuracy browser geolocation is observed continuously while the web application remains active. Samples are persisted approximately every 10 seconds or after meaningful movement.
+- Explicit logout closes the active tracking session.
+- Supervisors with `reaction.view` (Admin/Manager and platform operators) can see configured sites, connected technicians and the recent route of each technician.
+- Site markers use the organization logo; technician markers use the user profile photo.
+- A technician is considered live on the Reaction map only when its tracking session has a fresh heartbeat/position.
+- Attendance shifts remain independent but may be linked to location samples for later reporting.
+
+**Mobile background limitation:** a browser/PWA may be suspended by iOS/Android after the screen locks or the app moves to the background. A future native/mobile-container phase is required for transportation-app-grade continuous background GPS.

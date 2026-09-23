@@ -414,11 +414,11 @@ export function LocationCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
-          <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
+          <div className="field"><label>País *</label><input id="location-create-country" name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
-          <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="location-create-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
         </div>
         {fixedOrganizationName && <div className="modal-context-note">Empresa seleccionada: <strong>{fixedOrganizationName}</strong></div>}

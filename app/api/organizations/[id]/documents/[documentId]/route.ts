@@ -23,7 +23,7 @@ function dateValue(value: FormDataEntryValue | null) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; documentId: string }> },
 ) {
   const session = await getSession();
@@ -37,7 +37,7 @@ export async function GET(
 
   const result = await query<{ file_data: Buffer | null; file_mime_type: string | null; file_name: string | null }>(
     "SELECT file_data,file_mime_type,file_name FROM organization_documents " +
-    "WHERE id=$1 AND organization_id=$2 AND archived_at IS NULL",
+    "WHERE id=$1 AND organization_id=$2",
     [documentId, id],
   );
   const document = result.rows[0];
@@ -46,11 +46,12 @@ export async function GET(
   }
 
   const safeName = document.file_name.replace(/[\r\n"]/g, "_");
+  const inline = new URL(request.url).searchParams.get("inline") === "1";
   return new NextResponse(new Uint8Array(document.file_data), {
     headers: {
       "Content-Type": document.file_mime_type,
       "Content-Length": String(document.file_data.length),
-      "Content-Disposition": "attachment; filename=\"" + safeName + "\"; filename*=UTF-8''" + encodeURIComponent(safeName),
+      "Content-Disposition": (inline ? "inline" : "attachment") + "; filename=\"" + safeName + "\"; filename*=UTF-8''" + encodeURIComponent(safeName),
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },
@@ -70,8 +71,8 @@ export async function POST(
     return new NextResponse("Documento inválido", { status: 400 });
   }
 
-  const current = await query(
-    "SELECT 1 FROM organization_documents WHERE id=$1 AND organization_id=$2 AND archived_at IS NULL",
+  const current = await query<{ archived_at:string|null }>(
+    "SELECT archived_at::text FROM organization_documents WHERE id=$1 AND organization_id=$2",
     [documentId, id],
   );
   if (!current.rowCount) return new NextResponse("Documento no encontrado", { status: 404 });
@@ -80,11 +81,26 @@ export async function POST(
   const intent = String(form.get("intent") || "update");
 
   if (intent === "archive") {
+    if (current.rows[0].archived_at) {
+      return redirectToCompany(id, request.url, "saved=document-archived");
+    }
     await query(
-      "UPDATE organization_documents SET archived_at=now(),updated_at=now() WHERE id=$1 AND organization_id=$2",
-      [documentId, id],
+      "UPDATE organization_documents SET archived_at=now(),archived_by=$1,updated_at=now() WHERE id=$2 AND organization_id=$3",
+      [session.userId || null, documentId, id],
     );
     return redirectToCompany(id, request.url, "saved=document-archived");
+  }
+
+  if (intent === "restore") {
+    await query(
+      "UPDATE organization_documents SET archived_at=NULL,archived_by=NULL,updated_at=now() WHERE id=$1 AND organization_id=$2",
+      [documentId, id],
+    );
+    return redirectToCompany(id, request.url, "saved=document-restored");
+  }
+
+  if (current.rows[0].archived_at) {
+    return redirectToCompany(id, request.url, "error=document-archived");
   }
 
   try {

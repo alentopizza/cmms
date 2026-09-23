@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-23 — Business-hours save error handling
+
+### Fixed
+
+- Invalid Company/Site schedules no longer escape the mutation handler as unhandled exceptions and produce HTTP 500.
+- Opening/closing validation now returns controlled business-hours error codes and user-facing messages.
+- PostgreSQL check-constraint failures for schedules are translated into form feedback instead of a generic server error.
+- The same validation behavior is applied consistently to Company creation, Company editing, Site creation and Site editing.
+
 ## 2026-09-23 — Reaction filters and business hours
 
 ### Added

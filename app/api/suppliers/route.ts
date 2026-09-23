@@ -21,7 +21,7 @@ export async function POST(request:Request) {
   const supplierType=String(form.get("supplier_type")||"materials");
   const taxId=String(form.get("tax_id")||"").trim();
   const taxIdType=String(form.get("tax_id_type")||"").trim();
-  const countryCode=String(form.get("country_code")||"CO").trim().toUpperCase();
+  const countryCode=String(form.get("country_code")||"").trim().toUpperCase();
   const serviceCategory=String(form.get("service_category")||"").trim();
   const contactName=String(form.get("contact_name")||"").trim();
   const email=String(form.get("email")||"").trim().toLowerCase();

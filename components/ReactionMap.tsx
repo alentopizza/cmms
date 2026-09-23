@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type BusinessHours={days:number[];openTime:string;closeTime:string};
@@ -15,8 +16,21 @@ type TechnicianPoint={
   lat:number;lng:number;accuracy:number|null;lastSeenAt:string;telemetryState:"live"|"paused";avatarUrl:string|null;
   route:Array<{lat:number;lng:number;at:string}>;
 };
-type Snapshot={companies:CompanyPoint[];sites:SitePoint[];technicians:TechnicianPoint[];generatedAt:string};
+type ActivityAlert={
+  id:string;workOrderId:string;workOrderNumber:string;workOrderTitle:string;description:string;
+  status:string;priority:string;organizationId:string;organizationName:string;siteId:string;siteName:string;
+  assetName:string|null;responsible:string;operationalAt:string;operationalDate:string;dueAt:string|null;
+  dateState:"overdue"|"today"|"future";
+};
+type Snapshot={
+  companies:CompanyPoint[];
+  sites:SitePoint[];
+  technicians:TechnicianPoint[];
+  activities:ActivityAlert[];
+  generatedAt:string;
+};
 type HoursFilter="all"|"open"|"closed";
+type DateFilter="today_overdue"|"today"|"overdue"|"tomorrow"|"week"|"custom";
 
 declare global{
   interface Window{
@@ -100,25 +114,81 @@ function scheduleLabel(hours:BusinessHours){
   return `${hours.openTime}–${hours.closeTime}`;
 }
 
+function localDateKey(date:Date){
+  const year=date.getFullYear();
+  const month=String(date.getMonth()+1).padStart(2,"0");
+  const day=String(date.getDate()).padStart(2,"0");
+  return `${year}-${month}-${day}`;
+}
+
+function tomorrowKey(){
+  const date=new Date();
+  date.setDate(date.getDate()+1);
+  return localDateKey(date);
+}
+
+function endOfWeekKey(){
+  const date=new Date();
+  const day=date.getDay()||7;
+  date.setDate(date.getDate()+(7-day));
+  return localDateKey(date);
+}
+
+function priorityLabel(value:string){
+  return value==="urgent"?"Urgente":value==="high"?"Alta":value==="medium"?"Media":"Baja";
+}
+
+function statusLabel(value:string){
+  return value==="in_progress"?"En progreso":"Pendiente";
+}
+
 export default function ReactionMap(){
   const hostRef=useRef<HTMLDivElement>(null);
   const mapRef=useRef<any>(null);
   const overlaysRef=useRef<any[]>([]);
   const firstFit=useRef(true);
   const drawRef=useRef<(data:Snapshot,fit:boolean)=>void>(()=>{});
-  const snapshotRef=useRef<Snapshot>({companies:[],sites:[],technicians:[],generatedAt:""});
-  const filterRef=useRef({companies:true,sites:true,technicians:true,hours:"all" as HoursFilter});
-  const [snapshot,setSnapshot]=useState<Snapshot>({companies:[],sites:[],technicians:[],generatedAt:""});
+  const snapshotRef=useRef<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
+  const filterRef=useRef({
+    companies:true,sites:true,technicians:true,hours:"all" as HoursFilter,
+    companyId:"",siteId:"",
+  });
+  const [snapshot,setSnapshot]=useState<Snapshot>({companies:[],sites:[],technicians:[],activities:[],generatedAt:""});
   const [status,setStatus]=useState("Cargando mapa operativo…");
   const [showCompanies,setShowCompanies]=useState(true);
   const [showSites,setShowSites]=useState(true);
   const [showTechnicians,setShowTechnicians]=useState(true);
   const [hoursFilter,setHoursFilter]=useState<HoursFilter>("all");
+  const [companyId,setCompanyId]=useState("");
+  const [siteId,setSiteId]=useState("");
+  const [dateFilter,setDateFilter]=useState<DateFilter>("today_overdue");
+  const [customDate,setCustomDate]=useState(localDateKey(new Date()));
 
   useEffect(()=>{
-    filterRef.current={companies:showCompanies,sites:showSites,technicians:showTechnicians,hours:hoursFilter};
+    filterRef.current={
+      companies:showCompanies,
+      sites:showSites,
+      technicians:showTechnicians,
+      hours:hoursFilter,
+      companyId,
+      siteId,
+    };
     drawRef.current(snapshotRef.current,false);
-  },[showCompanies,showSites,showTechnicians,hoursFilter]);
+  },[showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId]);
+
+  useEffect(()=>{
+    if(siteId){
+      const site=snapshot.sites.find(item=>item.id===siteId);
+      if(site&&site.organizationId!==companyId)setCompanyId(site.organizationId);
+    }
+  },[siteId,snapshot.sites,companyId]);
+
+  useEffect(()=>{
+    if(companyId&&siteId){
+      const site=snapshot.sites.find(item=>item.id===siteId);
+      if(site&&site.organizationId!==companyId)setSiteId("");
+    }
+  },[companyId,siteId,snapshot.sites]);
 
   useEffect(()=>{
     let cancelled=false;
@@ -187,9 +257,13 @@ export default function ReactionMap(){
 
       const bounds=new google.maps.LatLngBounds();
       const filters=filterRef.current;
+      const companyMatches=(organizationId:string)=>!filters.companyId||organizationId===filters.companyId;
+      const siteMatches=(id:string,organizationId:string)=>companyMatches(organizationId)&&(!filters.siteId||id===filters.siteId);
 
       if(filters.companies){
-        for(const company of data.companies.filter(item=>hoursMatch(item.openNow,filters.hours))){
+        for(const company of data.companies.filter(item=>
+          hoursMatch(item.openNow,filters.hours)&&(!filters.companyId||item.id===filters.companyId)&&!filters.siteId
+        )){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
             position:{lat:company.lat,lng:company.lng},
@@ -197,13 +271,17 @@ export default function ReactionMap(){
             content:markerContent("company",company.logoUrl,company.name,company.openNow),
             zIndex:30,
           });
+          marker.addListener("click",()=>{
+            setCompanyId(company.id);
+            setSiteId("");
+          });
           overlaysRef.current.push(marker);
           bounds.extend({lat:company.lat,lng:company.lng});
         }
       }
 
       if(filters.sites){
-        for(const site of data.sites.filter(item=>hoursMatch(item.openNow,filters.hours))){
+        for(const site of data.sites.filter(item=>hoursMatch(item.openNow,filters.hours)&&siteMatches(item.id,item.organizationId))){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
             position:{lat:site.lat,lng:site.lng},
@@ -211,13 +289,17 @@ export default function ReactionMap(){
             content:markerContent("site",site.logoUrl,site.organizationName,site.openNow),
             zIndex:20,
           });
+          marker.addListener("click",()=>{
+            setCompanyId(site.organizationId);
+            setSiteId(site.id);
+          });
           overlaysRef.current.push(marker);
           bounds.extend({lat:site.lat,lng:site.lng});
         }
       }
 
       if(filters.technicians){
-        for(const tech of data.technicians){
+        for(const tech of data.technicians.filter(item=>companyMatches(item.organizationId))){
           if(tech.route.length>1){
             const route=new google.maps.Polyline({
               map,
@@ -260,38 +342,151 @@ export default function ReactionMap(){
     };
   },[]);
 
+  const filteredSites=useMemo(
+    ()=>snapshot.sites.filter(site=>!companyId||site.organizationId===companyId),
+    [snapshot.sites,companyId],
+  );
+
+  const filteredActivities=useMemo(()=>{
+    const today=localDateKey(new Date());
+    const tomorrow=tomorrowKey();
+    const weekEnd=endOfWeekKey();
+
+    return snapshot.activities.filter(activity=>{
+      if(companyId&&activity.organizationId!==companyId)return false;
+      if(siteId&&activity.siteId!==siteId)return false;
+
+      if(dateFilter==="today_overdue") return activity.operationalDate<=today;
+      if(dateFilter==="today") return activity.operationalDate===today;
+      if(dateFilter==="overdue") return activity.operationalDate<today;
+      if(dateFilter==="tomorrow") return activity.operationalDate===tomorrow;
+      if(dateFilter==="week") return activity.operationalDate>=today&&activity.operationalDate<=weekEnd;
+      return activity.operationalDate===customDate;
+    });
+  },[snapshot.activities,companyId,siteId,dateFilter,customDate]);
+
   const visibleCounts=useMemo(()=>{
     const matches=(openNow:boolean)=>hoursFilter==="all"||(hoursFilter==="open"?openNow:!openNow);
     return {
-      companies:showCompanies?snapshot.companies.filter(item=>matches(item.openNow)).length:0,
-      sites:showSites?snapshot.sites.filter(item=>matches(item.openNow)).length:0,
-      technicians:showTechnicians?snapshot.technicians.length:0,
+      companies:showCompanies?snapshot.companies.filter(item=>matches(item.openNow)&&(!companyId||item.id===companyId)&&!siteId).length:0,
+      sites:showSites?snapshot.sites.filter(item=>matches(item.openNow)&&(!companyId||item.organizationId===companyId)&&(!siteId||item.id===siteId)).length:0,
+      technicians:showTechnicians?snapshot.technicians.filter(item=>!companyId||item.organizationId===companyId).length:0,
     };
-  },[snapshot,showCompanies,showSites,showTechnicians,hoursFilter]);
+  },[snapshot,showCompanies,showSites,showTechnicians,hoursFilter,companyId,siteId]);
 
-  return <div className="reaction-map-stage">
-    <div className="reaction-map-toolbar" aria-label="Filtros del mapa de Reacción">
-      <div className="reaction-layer-filters">
-        <label className={showTechnicians?"active":""}><input type="checkbox" checked={showTechnicians} onChange={event=>setShowTechnicians(event.target.checked)}/><span>Técnicos</span><b>{snapshot.technicians.length}</b></label>
-        <label className={showCompanies?"active":""}><input type="checkbox" checked={showCompanies} onChange={event=>setShowCompanies(event.target.checked)}/><span>Empresas</span><b>{snapshot.companies.length}</b></label>
-        <label className={showSites?"active":""}><input type="checkbox" checked={showSites} onChange={event=>setShowSites(event.target.checked)}/><span>Sedes</span><b>{snapshot.sites.length}</b></label>
+  const selectedCompany=snapshot.companies.find(company=>company.id===companyId);
+  const selectedSite=snapshot.sites.find(site=>site.id===siteId);
+  const scopeLabel=selectedSite
+    ? `${selectedSite.organizationName} · ${selectedSite.name}`
+    : selectedCompany?.name||"Todas las empresas y sedes";
+
+  return <>
+    <div className="reaction-map-stage">
+      <div className="reaction-filter-bar" aria-label="Filtros del mapa de Reacción">
+        <div className="reaction-filter-layers">
+          <label className={showTechnicians?"active":""}><input type="checkbox" checked={showTechnicians} onChange={event=>setShowTechnicians(event.target.checked)}/><span>Técnicos</span><b>{snapshot.technicians.length}</b></label>
+          <label className={showCompanies?"active":""}><input type="checkbox" checked={showCompanies} onChange={event=>setShowCompanies(event.target.checked)}/><span>Empresas</span><b>{snapshot.companies.length}</b></label>
+          <label className={showSites?"active":""}><input type="checkbox" checked={showSites} onChange={event=>setShowSites(event.target.checked)}/><span>Sedes</span><b>{snapshot.sites.length}</b></label>
+        </div>
+
+        <label className="reaction-filter-select">
+          <span>Empresa</span>
+          <select value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");}}>
+            <option value="">Todas</option>
+            {snapshot.companies.map(company=><option key={company.id} value={company.id}>{company.name}</option>)}
+          </select>
+        </label>
+
+        <label className="reaction-filter-select">
+          <span>Sede</span>
+          <select value={siteId} onChange={event=>setSiteId(event.target.value)}>
+            <option value="">Todas</option>
+            {filteredSites.map(site=><option key={site.id} value={site.id}>{site.name}</option>)}
+          </select>
+        </label>
+
+        <label className="reaction-filter-select">
+          <span>Horario</span>
+          <select value={hoursFilter} onChange={event=>setHoursFilter(event.target.value as HoursFilter)}>
+            <option value="all">Todos</option>
+            <option value="open">Abiertos</option>
+            <option value="closed">Cerrados</option>
+          </select>
+        </label>
       </div>
-      <label className="reaction-hours-filter">
-        <span>Horario</span>
-        <select value={hoursFilter} onChange={event=>setHoursFilter(event.target.value as HoursFilter)}>
-          <option value="all">Todos</option>
-          <option value="open">Abiertos ahora</option>
-          <option value="closed">Cerrados ahora</option>
-        </select>
-      </label>
+
+      <div className="reaction-map-status">
+        <span className={snapshot.technicians.length?"live":""}/>
+        <strong>{status}</strong>
+        <small>Mostrando {visibleCounts.technicians} técnicos · {visibleCounts.companies} empresas · {visibleCounts.sites} sedes</small>
+        {snapshot.generatedAt&&<small>Actualizado {new Date(snapshot.generatedAt).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</small>}
+      </div>
+      <div ref={hostRef} className="reaction-google-map" aria-label="Mapa operativo de Reacción" />
     </div>
 
-    <div className="reaction-map-status">
-      <span className={snapshot.technicians.length?"live":""}/>
-      <strong>{status}</strong>
-      <small>Mostrando {visibleCounts.technicians} técnicos · {visibleCounts.companies} empresas · {visibleCounts.sites} sedes</small>
-      {snapshot.generatedAt&&<small>Actualizado {new Date(snapshot.generatedAt).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</small>}
-    </div>
-    <div ref={hostRef} className="reaction-google-map" aria-label="Mapa operativo de Reacción" />
-  </div>;
+    <aside className="reaction-side-panel" aria-label="Actividades pendientes de Reacción">
+      <header className="reaction-alert-panel-head">
+        <div>
+          <span className="eyebrow">Alertas operativas</span>
+          <strong>Actividades pendientes</strong>
+          <small>{scopeLabel}</small>
+        </div>
+        <b>{filteredActivities.length}</b>
+      </header>
+
+      <div className="reaction-alert-filters">
+        <label>
+          <span>Fecha</span>
+          <select value={dateFilter} onChange={event=>setDateFilter(event.target.value as DateFilter)}>
+            <option value="today_overdue">Hoy y retrasadas</option>
+            <option value="today">Solo hoy</option>
+            <option value="overdue">Solo retrasadas</option>
+            <option value="tomorrow">Mañana</option>
+            <option value="week">Esta semana</option>
+            <option value="custom">Fecha específica</option>
+          </select>
+        </label>
+        {dateFilter==="custom"&&<label>
+          <span>Día</span>
+          <input type="date" value={customDate} onChange={event=>setCustomDate(event.target.value)} />
+        </label>}
+      </div>
+
+      {(companyId||siteId)&&<div className="reaction-scope-alert">
+        <span>Filtro activo</span>
+        <strong>{scopeLabel}</strong>
+        <button type="button" onClick={()=>{setCompanyId("");setSiteId("");}}>Ver todo</button>
+      </div>}
+
+      <div className="reaction-alert-list">
+        {filteredActivities.map(activity=><Link
+          key={activity.id}
+          href={`/dashboard/work-orders/${activity.workOrderId}`}
+          className={`reaction-alert-card state-${activity.dateState} priority-${activity.priority}`}
+        >
+          <div className="reaction-alert-card-top">
+            <span>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</span>
+            <b>{priorityLabel(activity.priority)}</b>
+          </div>
+          <strong>{activity.description}</strong>
+          <small>OT #{activity.workOrderNumber} · {activity.workOrderTitle}</small>
+          <div className="reaction-alert-location">
+            <span>{activity.organizationName}</span>
+            <span>{activity.siteName}</span>
+          </div>
+          <div className="reaction-alert-meta">
+            <span>{activity.responsible}</span>
+            <span>{activity.operationalDate}</span>
+            <span>{statusLabel(activity.status)}</span>
+          </div>
+        </Link>)}
+
+        {!filteredActivities.length&&<div className="reaction-alert-empty">
+          <span>✓</span>
+          <strong>Sin alertas para este filtro</strong>
+          <p>No hay actividades pendientes que coincidan con empresa, sede y fecha seleccionadas.</p>
+        </div>}
+      </div>
+    </aside>
+  </>;
 }

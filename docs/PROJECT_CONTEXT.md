@@ -562,6 +562,10 @@ Mutation-driven edit flows must not report success before PostgreSQL confirms th
 
 Schedule validation is part of the mutation boundary. Invalid opening/closing combinations must return controlled form feedback and must never bubble out as an HTTP 500. PostgreSQL schedule constraint failures are also translated into the same user-facing validation path.
 
+### Company quick-edit schedule and geofence layout
+
+The Company directory quick-edit uses one visible business-hours editor. Saving that Company-level schedule from the directory also synchronizes the primary Site schedule, avoiding duplicate schedule controls in the same modal. Site-specific schedule exceptions remain available from the Site/Locations workflow. The primary-Site coverage editor is map-first: full-width geofence map, then compact geofence metrics and Site identity/location subcontainers below it.
+
 ### Company and site business hours
 
 Companies and principal Sites now store editable attention schedules (weekdays, opening and closing time). New companies capture both a general corporate schedule and a separate schedule for the initial Site. Existing data is backfilled with Monday–Friday 08:00–18:00 and can be updated immediately. Reaction uses these schedules to distinguish open/closed Companies and Sites without changing attendance or work-order authorization.

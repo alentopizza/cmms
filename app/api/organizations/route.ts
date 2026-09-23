@@ -6,7 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { getPlanByCode } from "@/lib/billing";
 import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
-import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
+import { isSupportedCountry, isSupportedLocale, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 
 function slugify(value: string) {
   return value
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     const legalCity = String(form.get("legal_city") || "").trim();
     const taxIdType = String(form.get("tax_id_type") || "").trim();
     const phone = String(form.get("phone") || "").trim();
+    const preferredLocale = String(form.get("preferred_locale") || "es-CO").trim();
     const timezone = String(form.get("timezone") || "America/Bogota").trim();
     const organizationHours = readBusinessHours(form, "business_");
     const siteHours = readBusinessHours(form, "site_business_");
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     if (!name || !siteName || !address || !city || !country || !legalCountry || !legalCity || !taxIdType) {
       return creationError(request.url, "required");
     }
-    if (!isSupportedCountry(country) || !isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType)) {
+    if (!isSupportedCountry(country) || !isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType) || !isSupportedLocale(preferredLocale)) {
       return creationError(request.url, "required");
     }
     if (latitude === null || longitude === null ||
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
         RETURNING id`,
         [
           name, slug, legalName || null, taxId || null, taxIdType, legalCity, legalCountry, phone || null, timezone,
-          legalCountry==="BR"?"pt-BR":legalCountry==="US"?"en-US":"es-CO", legalCountry,
+          preferredLocale, legalCountry,
           organizationHours.days, organizationHours.openTime, organizationHours.closeTime, JSON.stringify(organizationHours.schedule),
           logo.bytes, logo.mime, logo.name,
           cover?.bytes || null, cover?.mime || null, cover?.name || null,

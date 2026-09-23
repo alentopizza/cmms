@@ -8,7 +8,7 @@ import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
-export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
+export default function NewCompanyModal({ error, autoOpen = false, defaultCountry = "CO", defaultLocale = "es-CO" }: { error?: string; autoOpen?: boolean; defaultCountry?: string; defaultLocale?: string }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
   const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
 
@@ -64,6 +64,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
         {errorMessage && <div className="notice error modal-error">{errorMessage}</div>}
 
         <form className="company-modal-form" method="post" action="/api/organizations" encType="multipart/form-data">
+          <input type="hidden" name="preferred_locale" value={defaultLocale} />
           <div className="modal-section">
             <div className="modal-section-title"><strong>Identidad visual</strong><span>Logo obligatorio · portada opcional</span></div>
             <div className="company-upload-grid">
@@ -92,11 +93,11 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-name">Nombre comercial</label><input id="new-company-name" name="name" required placeholder="Ej. The Shop Colombia" /></div>
               <div className="field"><label htmlFor="new-company-legal">Razón social</label><input id="new-company-legal" name="legal_name" placeholder="Ej. The Shop Colombia S.A.S." /></div>
-              <CountryCityFields countryId="new-company-legal-country" countryName="legal_country" cityId="new-company-legal-city" cityName="legal_city" countryLabel="País administrativo / fiscal" cityLabel="Ciudad administrativa" defaultCountry="CO" defaultCity="" required />
-              <TaxIdentificationTypeSelect id="new-company-tax-type" countryInputId="new-company-legal-country" countryCode="CO" name="tax_id_type" required />
+              <CountryCityFields countryId="new-company-legal-country" countryName="legal_country" cityId="new-company-legal-city" cityName="legal_city" countryLabel="País administrativo / fiscal" cityLabel="Ciudad administrativa" defaultCountry={defaultCountry} defaultCity="" required />
+              <TaxIdentificationTypeSelect id="new-company-tax-type" countryInputId="new-company-legal-country" countryCode={defaultCountry} name="tax_id_type" required />
               <div className="field"><label htmlFor="new-company-tax">Número de identificación</label><input id="new-company-tax" name="tax_id" placeholder="Número fiscal / tributario" /></div>
-              <PhoneField name="phone" label="Teléfono principal" countryCode="CO" countryInputId="new-company-legal-country" />
-              <CountryTimezoneSelect id="new-company-timezone" countryInputId="new-company-legal-country" countryCode="CO" defaultValue="America/Bogota" />
+              <PhoneField name="phone" label="Teléfono principal" countryCode={defaultCountry} countryInputId="new-company-legal-country" />
+              <CountryTimezoneSelect id="new-company-timezone" countryInputId="new-company-legal-country" countryCode={defaultCountry} defaultValue="" />
               <BusinessHoursFields title="Horario general de atención" description="Se usa en Reacción para identificar si la empresa está abierta en este momento." />
             </div>
           </div>
@@ -117,7 +118,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Ej. Sede Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-code">Código interno de sede</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="Ej. MAIN o BOG-01" /><small>Opcional. Es una referencia corta para identificar la sede en OT, reportes e integraciones; no es la dirección.</small></div>
-              <CountryCityFields countryId="new-company-country" countryName="country" cityId="new-company-city" cityName="city" defaultCountry="CO" defaultCity="Bogotá" required />
+              <CountryCityFields countryId="new-company-country" countryName="country" cityId="new-company-city" cityName="city" defaultCountry={defaultCountry} defaultCity="" required />
               <div className="form-span-2"><GeofenceMapPicker cityHint="Bogotá" countryHint="CO" /></div>
               <BusinessHoursFields prefix="site_business_" title="Horario de la sede principal" description="Puede ser diferente del horario general de la empresa." />
             </div>

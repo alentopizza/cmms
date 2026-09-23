@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import ModuleHeader from "@/components/ModuleHeader";
 import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
+import { getCustomizationSummary } from "@/lib/customization";
 
 export default async function CompaniesPage({
   searchParams,
@@ -15,7 +16,7 @@ export default async function CompaniesPage({
   if (!session) redirect("/login");
   if (!can(session, "companies.manage")) redirect("/dashboard");
 
-  const [companies, params] = await Promise.all([
+  const [companies, params, customization] = await Promise.all([
     query<CompanyDirectoryItem>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.tax_id_type,o.timezone,o.active,
         o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
@@ -78,6 +79,7 @@ export default async function CompaniesPage({
        ORDER BY o.active DESC,o.name`,
     ),
     searchParams,
+    getCustomizationSummary(),
   ]);
 
   return <>
@@ -88,7 +90,7 @@ export default async function CompaniesPage({
       count={companies.rowCount || 0}
       countLabel="compañías"
       searchPlaceholder="Buscar compañía, ciudad, NIT o plan"
-      action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} />}
+      action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} defaultCountry={customization.defaultCountry} defaultLocale={customization.defaultLocale} />}
     />
 
     {(params.saved || params.deleted || params.error) && <div className="section">

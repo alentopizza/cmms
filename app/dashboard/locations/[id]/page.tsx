@@ -10,7 +10,7 @@ import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; latitude:number|null; longitude:number|null; geofence_radius_m:number; business_days:number[]; business_open_time:string; business_close_time:string; };
+type Site = { id: string; organization_id: string; organization_name: string; name: string; code: string | null; address: string | null; city: string | null; country: string; active: boolean; max_sublocations: number; latitude:number|null; longitude:number|null; geofence_radius_m:number; business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:import("@/lib/business-hours").BusinessDaySchedule[]; };
 type Location = { id: string; parent_id: string | null; name: string; code: string | null; type: string; description: string | null; active: boolean; asset_count: number; child_count: number; };
 type Supplier = { id: string; organization_id: string; name: string };
 
@@ -26,7 +26,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
     query<Site>(
       `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
               s.latitude,s.longitude,s.geofence_radius_m,
-              s.business_days,s.business_open_time::text,s.business_close_time::text,
+              s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
               COALESCE(ol.max_sublocations,100)::int max_sublocations
        FROM sites s JOIN organizations o ON o.id=s.organization_id
        LEFT JOIN organization_limits ol ON ol.organization_id=o.id WHERE s.id=$1`, [id]),
@@ -151,6 +151,7 @@ export default async function LocationPage({ params, searchParams }: { params: P
           days={site.business_days}
           openTime={site.business_open_time}
           closeTime={site.business_close_time}
+          schedule={site.business_schedule}
           title="Horario de atención de la sede"
           description="Se usa en Reacción para saber si esta sede está abierta."
         />

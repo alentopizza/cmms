@@ -7,6 +7,7 @@ import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { isPersonalDocumentTypeForCountry, isSupportedCountry } from "@/lib/international-catalog";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -35,6 +36,9 @@ export async function POST(request: Request) {
   const fullName = String(form.get("full_name") || "").trim();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const phone = String(form.get("phone") || "").trim();
+  const countryCode = String(form.get("country_code") || "CO").trim().toUpperCase();
+  const identityDocumentType = String(form.get("identity_document_type") || "").trim();
+  const identityDocumentNumber = String(form.get("identity_document_number") || "").trim();
   const password = String(form.get("password") || "");
   const requestedRole = String(form.get("role") || "");
   const externalSupplierId = String(form.get("external_supplier_id") || "");
@@ -55,6 +59,11 @@ export async function POST(request: Request) {
   else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
   if (password.length < 8) fields.password = "Usa una contraseña de al menos 8 caracteres.";
   if (!avatar) fields.avatar = "Adjunta una foto de perfil para crear la cuenta.";
+  if (!isSupportedCountry(countryCode)) fields.country_code = "Selecciona un país válido.";
+  if (identityDocumentType || identityDocumentNumber) {
+    if (!identityDocumentType || !isPersonalDocumentTypeForCountry(countryCode,identityDocumentType)) fields.identity_document_type = "Selecciona un tipo de documento válido para el país.";
+    if (!identityDocumentNumber) fields.identity_document_number = "Ingresa el número de documento.";
+  }
 
   if (session.platformRole === "user") {
     organizationId = session.organizationId || "";
@@ -159,12 +168,12 @@ export async function POST(request: Request) {
     const { salt, hash } = hashPassword(password);
     const user = await client.query<{ id: string }>(
       `INSERT INTO users(
-         email,full_name,phone,password_hash,password_salt,platform_role,avatar_data,avatar_mime_type
+         email,full_name,phone,country_code,identity_document_type,identity_document_number,password_hash,password_salt,platform_role,avatar_data,avatar_mime_type
        )
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING id`,
       [
-        email,fullName,phone||null,hash,salt,creatingSuperadmin?"superadmin":"user",
+        email,fullName,phone||null,countryCode,identityDocumentType||null,identityDocumentNumber||null,hash,salt,creatingSuperadmin?"superadmin":"user",
         avatar?.data||null,avatar?.mime||null,
       ],
     );

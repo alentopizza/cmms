@@ -6,6 +6,7 @@ import { can, isPlatformOwner, type OrganizationRole, type PlatformRole } from "
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { isPersonalDocumentTypeForCountry, isSupportedCountry } from "@/lib/international-catalog";
 
 const ROLES = new Set<OrganizationRole>(["admin","manager","technician","requester","viewer","provider","external"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -148,6 +149,9 @@ export async function POST(
     const fullName = String(form.get("full_name") || "").trim();
     const email = String(form.get("email") || "").trim().toLowerCase();
     const phone = String(form.get("phone") || "").trim();
+    const countryCode = String(form.get("country_code") || "CO").trim().toUpperCase();
+    const identityDocumentType = String(form.get("identity_document_type") || "").trim();
+    const identityDocumentNumber = String(form.get("identity_document_number") || "").trim();
     const password = String(form.get("password") || "");
     const requestedRole = String(form.get("role") || "");
     const externalSupplierId = String(form.get("external_supplier_id") || "");
@@ -172,6 +176,11 @@ export async function POST(
     if (!email) fields.email = "Ingresa el correo electrónico.";
     else if (!EMAIL.test(email)) fields.email = "Ingresa un correo válido.";
     if (password && password.length < 8) fields.password = "La nueva contraseña debe tener al menos 8 caracteres.";
+    if (!isSupportedCountry(countryCode)) fields.country_code = "Selecciona un país válido.";
+    if (identityDocumentType || identityDocumentNumber) {
+      if (!identityDocumentType || !isPersonalDocumentTypeForCountry(countryCode,identityDocumentType)) fields.identity_document_type = "Selecciona un tipo de documento válido para el país.";
+      if (!identityDocumentNumber) fields.identity_document_number = "Ingresa el número de documento.";
+    }
 
     if (!makingSuperadmin) {
       if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
@@ -286,12 +295,12 @@ export async function POST(
 
     await client.query(
       `UPDATE users
-       SET full_name=$1,email=$2,phone=$3,platform_role=$4,
-           avatar_data=COALESCE($5,avatar_data),
-           avatar_mime_type=CASE WHEN $5 IS NULL THEN avatar_mime_type ELSE $6 END,
+       SET full_name=$1,email=$2,phone=$3,country_code=$4,identity_document_type=$5,identity_document_number=$6,platform_role=$7,
+           avatar_data=COALESCE($8,avatar_data),
+           avatar_mime_type=CASE WHEN $8 IS NULL THEN avatar_mime_type ELSE $9 END,
            updated_at=now()
-       WHERE id=$7`,
-      [fullName,email,phone||null,makingSuperadmin?"superadmin":"user",avatar?.data||null,avatar?.mime||null,id],
+       WHERE id=$10`,
+      [fullName,email,phone||null,countryCode,identityDocumentType||null,identityDocumentNumber||null,makingSuperadmin?"superadmin":"user",avatar?.data||null,avatar?.mime||null,id],
     );
 
     if (password) {

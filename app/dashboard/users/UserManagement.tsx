@@ -10,6 +10,7 @@ import ModuleHeader from "@/components/ModuleHeader";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
+import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -25,6 +26,10 @@ export type ManagedUser = {
   email: string;
   full_name: string;
   phone: string | null;
+  country_code: string | null;
+  identity_document_type: string | null;
+  identity_document_number: string | null;
+  preferred_locale: string | null;
   active: boolean;
   platform_role: "platform_owner" | "superadmin" | "user";
   organization_id: string | null;
@@ -55,6 +60,9 @@ type Draft = {
   full_name: string;
   email: string;
   phone: string;
+  country_code: string;
+  identity_document_type: string;
+  identity_document_number: string;
   password: string;
   organization_id: string;
   role: string;
@@ -63,12 +71,15 @@ type Draft = {
   external_supplier_id: string;
 };
 
-type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "avatar" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
+type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "avatar" | "country_code" | "identity_document_type" | "identity_document_number" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
 
 const EMPTY_DRAFT: Draft = {
   full_name: "",
   email: "",
   phone: "",
+  country_code: "CO",
+  identity_document_type: "",
+  identity_document_number: "",
   password: "",
   organization_id: "",
   role: "viewer",
@@ -199,9 +210,12 @@ export default function UserManagement({
   }
 
   function changeOrganization(organizationId: string) {
+    const organizationCountry=organizations.find(org=>org.id===organizationId)?.country || "CO";
     setDraft(previous => ({
       ...previous,
       organization_id: organizationId,
+      country_code: organizationCountry,
+      identity_document_type: "",
       access_all_sites: true,
       site_ids: [],
       external_supplier_id: "",
@@ -225,6 +239,7 @@ export default function UserManagement({
     setDraft({
       ...EMPTY_DRAFT,
       organization_id: fixedOrganizationId || "",
+      country_code: organizations.find(org=>org.id===(fixedOrganizationId||""))?.country || "CO",
       role: "viewer",
     });
     setErrors({});
@@ -244,6 +259,9 @@ export default function UserManagement({
       full_name: user.full_name,
       email: user.email,
       phone: user.phone || "",
+      country_code: user.country_code || organizations.find(org=>org.id===user.organization_id)?.country || "CO",
+      identity_document_type: user.identity_document_type || "",
+      identity_document_number: user.identity_document_number || "",
       password: "",
       organization_id: user.organization_id || "",
       role: user.platform_role !== "user" ? user.platform_role : user.role || "viewer",
@@ -276,6 +294,9 @@ export default function UserManagement({
     if (mode === "create" && draft.password.length < 8) next.password = "Usa una contraseña de al menos 8 caracteres.";
     if (mode === "edit" && draft.password && draft.password.length < 8) next.password = "La nueva contraseña debe tener al menos 8 caracteres.";
     if (mode === "create" && !avatarFile) next.avatar = "Adjunta una foto de perfil para crear la cuenta.";
+    if (!draft.country_code) next.country_code = "Selecciona el país de la persona.";
+    if (draft.identity_document_number.trim() && !draft.identity_document_type) next.identity_document_type = "Selecciona el tipo de documento.";
+    if (draft.identity_document_type && !draft.identity_document_number.trim()) next.identity_document_number = "Ingresa el número de documento.";
 
     if (draft.role !== "superadmin") {
       if (!draft.organization_id) next.organization_id = "Selecciona la empresa a la que pertenecerá.";
@@ -308,6 +329,9 @@ export default function UserManagement({
       body.set("full_name", draft.full_name);
       body.set("email", draft.email);
       body.set("phone", draft.phone);
+      body.set("country_code", draft.country_code);
+      body.set("identity_document_type", draft.identity_document_type);
+      body.set("identity_document_number", draft.identity_document_number);
       body.set("password", draft.password);
       body.set("organization_id", draft.organization_id);
       body.set("role", draft.role);
@@ -467,6 +491,9 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>Rol</span><strong>{roleName(roleKey(selectedUser))}</strong></div>
                 <div className="entity-info-field"><span>Correo</span><strong>{selectedUser.email}</strong></div>
                 <div className="entity-info-field"><span>Teléfono / WhatsApp</span><strong>{selectedUser.phone||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>País</span><strong>{selectedUser.country_code||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Tipo de documento</span><strong>{selectedUser.identity_document_type||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Número de documento</span><strong>{selectedUser.identity_document_number||"Sin registrar"}</strong></div>
                 <div className="entity-info-field"><span>Empresa</span><strong>{selectedUser.organization_name||"Acceso global"}</strong></div>
                 <div className="entity-info-field"><span>Alcance de sedes</span><strong>{siteAccessLabel(selectedUser)}</strong></div>
                 <div className="entity-info-field"><span>Último acceso</span><strong>{selectedUser.last_login_at?new Date(selectedUser.last_login_at).toLocaleString("es-CO"):"Aún no ingresa"}</strong></div>
@@ -541,10 +568,30 @@ export default function UserManagement({
               <input id="managed-user-email" type="email" placeholder="laura@empresa.com" value={draft.email} onChange={event => updateDraft("email", event.target.value)} />
               {errors.email && <small className="field-error-message">{errors.email}</small>}
             </div>
+            <CountrySelect
+              id="managed-user-country"
+              name="country_code"
+              label="País *"
+              value={draft.country_code}
+              onChange={value=>{updateDraft("country_code",value);updateDraft("identity_document_type","");}}
+              required
+            />
+            <PersonalDocumentTypeSelect
+              id="managed-user-document-type"
+              countryCode={draft.country_code}
+              value={draft.identity_document_type}
+              onChange={value=>updateDraft("identity_document_type",value)}
+              required={Boolean(draft.identity_document_number)}
+            />
+            <div className={`field ${errors.identity_document_number ? "field-error" : ""}`}>
+              <label htmlFor="managed-user-document-number">Número de documento</label>
+              <input id="managed-user-document-number" value={draft.identity_document_number} onChange={event=>updateDraft("identity_document_number",event.target.value)} placeholder="Número del documento seleccionado" />
+              {errors.identity_document_number&&<small className="field-error-message">{errors.identity_document_number}</small>}
+            </div>
             <PhoneField
               id="managed-user-phone"
               label="Teléfono / WhatsApp"
-              countryCode={selectedOrganizationCountry}
+              countryCode={draft.country_code||selectedOrganizationCountry}
               value={draft.phone}
               onValueChange={value => updateDraft("phone", value)}
             />

@@ -952,3 +952,18 @@ Required behavior:
 Recommended sizes and aspect ratios are guidance only unless a backend rule explicitly validates them. Server-side MIME/type/size validation remains authoritative.
 
 Site/location code fields should be labelled as an optional **internal code/reference** where shown to end users. Explain that examples such as `MAIN`, `BOG-01` or `BODEGA-02` are short identifiers used in work orders, reporting and integrations; they are not postal addresses.
+
+
+## International controlled-field pattern
+
+Country-related identity inputs use controlled select components rather than free-text textboxes.
+
+- Use `CountrySelect` for Country.
+- Use `CountryCityFields` whenever Country and City are captured together. Country appears first and City depends on it.
+- Use `TaxIdentificationTypeSelect` for Company/legal identification types.
+- Use `PersonalDocumentTypeSelect` for human identity-document types.
+- Use `CountryTimezoneSelect` for Country-related time-zone selection.
+- Use `PhoneField` with the same Country source; show the calling code as a non-editable prefix and ask for the national number only.
+- Do not place a writable two-letter Country-code field in normal user-facing forms.
+- When changing Country invalidates the current City, time zone or identification type, reset to a valid choice rather than leaving an inconsistent hidden value.
+- Legacy data outside the current catalog may be shown as a clearly marked compatibility option so an existing record can still be opened and migrated intentionally.

@@ -82,7 +82,7 @@ The module is designed to expand later with color, typography and other visual s
 
 Company directory cards use a horizontal point-of-reference cover, a centered circular logo, location metadata and compact operational metrics. Missing legacy images use branded fallbacks.
 
-Card details open in a modal with read-only fields by default. Editing must be explicitly enabled, saving requires confirmation, and destructive deletion requires a separate irreversible-action confirmation.
+Creation/edit decision flows may use modals, but **Company, Site, Sub-location and User/Technician card details use the approved in-page profile workspace**. These detail views are read-only by default; editing must be explicitly enabled, saving requires confirmation where governed, and destructive deletion requires a separate irreversible-action confirmation.
 
 ### User administration
 - user creation and editing use an in-app modal instead of a permanently visible form;
@@ -309,7 +309,7 @@ Document states must use both text and color:
 - Sin archivo;
 - No aplica.
 
-The directory company card may show plan, profile completion and documentation health, but it should stay scan-friendly. The existing modal remains a quick-view/quick-edit surface; the full enterprise page is the canonical detailed workspace.
+The directory company card may show plan, profile completion and documentation health, but it should stay scan-friendly. Selecting the card switches the Companies module to the shared in-page profile workspace. The full enterprise page remains available for deeper dossier/document administration, but the directory detail itself is no longer a modal.
 
 
 ## Unified module directory pattern
@@ -369,10 +369,21 @@ The layout should remain readable in two columns on wide screens and one column 
 
 ## Entity profile workspace pattern
 
-Locations, Sub-locations and Users/Technicians use a common profile drill-down instead of long stacked detail forms.
+Companies, Locations, Sub-locations and Users/Technicians use a common **same-screen** profile drill-down instead of modal detail overlays or long stacked detail forms.
+
+Navigation contract:
+
+- selecting a directory card replaces the directory body inside the same module;
+- the sticky/global module header remains visible;
+- breadcrumbs are mandatory and appear above the entity title;
+- minimum breadcrumb chain is **Inicio → Módulo → Registro**;
+- nested Sub-locations add their parent Site before the current record;
+- clicking a module/parent breadcrumb changes the current view in place rather than “closing” a dialog;
+- do not render an X/close affordance as the primary way to leave these profile views.
 
 Desktop composition:
 
+- **page heading:** contextual entity icon, **Type / Name**, secondary Company/context line and right-aligned action toolbar;
 - **left identity rail:** cover/reference image where applicable, circular Company logo or User photo, name, contextual subtitle, status, four compact statistics and a two-column quick-action area;
 - **right content surface:** one independent horizontal tab bar plus one scrollable content body;
 - **top action row:** contextual Edit/View/Create/communication actions followed by **Exportar** when Hoja de vida is available;
@@ -392,7 +403,7 @@ Quick actions must be entity-specific and permission-aware. Examples include map
 
 The entity profile exposes one **Exportar** dropdown instead of parallel primary export buttons.
 
-Current formats:
+Current formats for Company, Site, Sub-location and User/Technician:
 - **Hoja de vida PDF** — executive printable record;
 - **Hoja de vida Excel** — native XLSX;
 - **Hoja de vida Word** — Word-compatible editable DOC.
@@ -765,7 +776,7 @@ A company logo is mandatory when a company is created. The requirement is enforc
 
 ### Company profile detail pattern
 
-The company quick-detail modal uses a structured profile layout instead of a tall free-form form.
+The Company quick-detail uses the shared in-page profile layout instead of a modal or tall free-form form.
 
 - A shallow hero/cover is separated from the identity block so the company name never overlaps or disappears over imagery.
 - The logo is fully below the cover/hero boundary; neither the logo nor company name should be mounted over the cover image.

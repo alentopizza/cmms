@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
@@ -80,12 +81,15 @@ export default function CompanyDirectory({
   canManageResources: boolean;
   canDelete: boolean;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmation, setConfirmation] = useState<"edit" | "save" | "delete" | null>(null);
   const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState<{ message: string; files: string[] } | null>(null);
+  const [assetVersion, setAssetVersion] = useState(0);
   const editFormRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
@@ -105,6 +109,7 @@ export default function CompanyDirectory({
     setConfirmation(null);
     setPendingForm(null);
     setSaveError("");
+    setSaveSuccess(null);
     setEditing(false);
     setSelected(null);
   }
@@ -123,6 +128,7 @@ export default function CompanyDirectory({
 
   function requestEditConfirmation() {
     setSaveError("");
+    setSaveSuccess(null);
     setConfirmation("edit");
   }
 
@@ -159,6 +165,10 @@ export default function CompanyDirectory({
 
       const formData = new FormData(form);
       const selectedId = selected?.id || "";
+      const uploadedFiles = ["logo", "cover"]
+        .map(key => formData.get(key))
+        .filter((value): value is File => value instanceof File && value.size > 0)
+        .map(file => file.name);
       setSelected(current => current && current.id === selectedId ? {
         ...current,
         name: String(formData.get("name") || current.name),
@@ -175,9 +185,23 @@ export default function CompanyDirectory({
         site_latitude: Number(formData.get("latitude") || current.site_latitude),
         site_longitude: Number(formData.get("longitude") || current.site_longitude),
         site_geofence_radius_m: Number(formData.get("geofence_radius_m") || current.site_geofence_radius_m || 250),
+        has_logo: current.has_logo || (() => {
+          const value = formData.get("logo");
+          return value instanceof File && value.size > 0;
+        })(),
+        has_cover: current.has_cover || (() => {
+          const value = formData.get("cover");
+          return value instanceof File && value.size > 0;
+        })(),
       } : current);
+      setAssetVersion(Date.now());
+      setSaveSuccess({
+        message: payload?.message || "Los cambios se guardaron correctamente.",
+        files: uploadedFiles,
+      });
       setEditing(false);
-      window.location.reload();
+      form.reset();
+      router.refresh();
     } finally {
       setSaving(false);
       setPendingForm(null);
@@ -295,7 +319,7 @@ export default function CompanyDirectory({
       <section className="company-modal company-detail-modal company-profile-modal" role="dialog" aria-modal="true" aria-labelledby="company-detail-title">
         <header className="company-profile-hero">
           <div className={`company-detail-cover ${selected.has_cover ? "" : "company-card-cover-fallback"}`}>
-            {selected.has_cover && <img src={`/api/organizations/${selected.id}/assets/cover`} alt={`Portada de ${selected.name}`} />}
+            {selected.has_cover && <img src={`/api/organizations/${selected.id}/assets/cover?v=${assetVersion}`} alt={`Portada de ${selected.name}`} />}
           </div>
           <div className="company-profile-hero-shade" aria-hidden="true" />
           <button className="modal-close company-detail-close" type="button" aria-label="Cerrar" onClick={close}>×</button>
@@ -304,7 +328,7 @@ export default function CompanyDirectory({
         <section className="company-profile-identity">
           <div className="company-profile-logo">
             {selected.has_logo
-              ? <img src={`/api/organizations/${selected.id}/assets/logo`} alt={`Logo de ${selected.name}`} />
+              ? <img src={`/api/organizations/${selected.id}/assets/logo?v=${assetVersion}`} alt={`Logo de ${selected.name}`} />
               : <span>{initials(selected.name)}</span>}
           </div>
 
@@ -333,6 +357,18 @@ export default function CompanyDirectory({
           <div><span>Activos</span><strong>{selected.asset_count}/{selected.max_assets}</strong><small>usados / asignados</small></div>
           <div><span>Documentos</span><strong>{selected.document_count}</strong><small>{selected.pending_document_count} pendientes</small></div>
         </div>
+
+        {saveSuccess && <div className="company-save-success" role="status" aria-live="polite">
+          <span className="company-save-success-icon" aria-hidden="true">✓</span>
+          <div>
+            <strong>Cambios guardados correctamente</strong>
+            <p>{saveSuccess.message}</p>
+            {saveSuccess.files.length > 0 && <div className="company-save-success-files">
+              {saveSuccess.files.map(file => <span key={file}>✓ {file}</span>)}
+            </div>}
+          </div>
+          <button type="button" aria-label="Cerrar confirmación" onClick={() => setSaveSuccess(null)}>×</button>
+        </div>}
 
         <form ref={editFormRef} className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
           {saveError && <div className="notice error">{saveError}</div>}
@@ -494,12 +530,12 @@ export default function CompanyDirectory({
             </summary>
             <div className="company-detail-accordion-body">
               <div className="company-profile-assets">
-                <div><span>Logo</span><div className="company-profile-asset-preview logo">{selected.has_logo ? <img src={`/api/organizations/${selected.id}/assets/logo`} alt="" /> : <b>{initials(selected.name)}</b>}</div></div>
-                <div><span>Portada</span><div className="company-profile-asset-preview cover">{selected.has_cover ? <img src={`/api/organizations/${selected.id}/assets/cover`} alt="" /> : <b>Sin portada</b>}</div></div>
+                <div><span>Logo</span><div className="company-profile-asset-preview logo">{selected.has_logo ? <img src={`/api/organizations/${selected.id}/assets/logo?v=${assetVersion}`} alt="" /> : <b>{initials(selected.name)}</b>}</div></div>
+                <div><span>Portada</span><div className="company-profile-asset-preview cover">{selected.has_cover ? <img src={`/api/organizations/${selected.id}/assets/cover?v=${assetVersion}`} alt="" /> : <b>Sin portada</b>}</div></div>
               </div>
               {editing && <div className="form-grid">
-                <FileDropzone name="logo" label="Actualizar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={selected.has_logo ? "Logo actual" : null} compact />
-                <FileDropzone name="cover" label="Actualizar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_cover ? "Portada actual" : null} compact />
+                <FileDropzone name="logo" label="Actualizar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={selected.has_logo ? "Logo actual" : null} existingPreviewUrl={selected.has_logo ? `/api/organizations/${selected.id}/assets/logo?v=${assetVersion}` : null} compact />
+                <FileDropzone name="cover" label="Actualizar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_cover ? "Portada actual" : null} existingPreviewUrl={selected.has_cover ? `/api/organizations/${selected.id}/assets/cover?v=${assetVersion}` : null} compact />
               </div>}
             </div>
           </details>

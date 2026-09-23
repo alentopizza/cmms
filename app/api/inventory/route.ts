@@ -36,7 +36,7 @@ export async function POST(request:Request) {
   const [site,location,supplier]=await Promise.all([
     query("SELECT 1 FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",[siteId,organizationId]),
     query("SELECT 1 FROM locations WHERE id=$1 AND organization_id=$2 AND site_id=$3 AND active=true",[locationId,organizationId,siteId]),
-    query("SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true",[supplierId,organizationId]),
+    query("SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('materials','both')",[supplierId,organizationId]),
   ]);
   if(!site.rowCount||!location.rowCount||!supplier.rowCount) return NextResponse.redirect(target("?error=relation"),303);
 

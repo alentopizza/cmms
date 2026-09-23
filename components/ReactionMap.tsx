@@ -475,6 +475,19 @@ export default function ReactionMap(){
     ? `${selectedSite.organizationName} · ${selectedSite.name}`
     : selectedCompany?.name||"Todas las empresas y sedes";
 
+  function resetFilters(){
+    setSearch("");
+    setSearchFocused(false);
+    setShowTechnicians(true);
+    setShowCompanies(true);
+    setShowSites(true);
+    setCompanyId("");
+    setSiteId("");
+    setHoursFilter("all");
+    setDateFilter("today_overdue");
+    setCustomDate(localDateKey(new Date()));
+  }
+
   function chooseSearchResult(result:SearchResult){
     setSearch(result.title);
     setSearchFocused(false);
@@ -565,6 +578,15 @@ export default function ReactionMap(){
             <option value="closed">Cerrados</option>
           </select>
         </label>
+        <button
+          className="reaction-filter-reset"
+          type="button"
+          onClick={resetFilters}
+          title="Restablecer buscador, capas, empresa, sede, horario y fecha"
+        >
+          <span>↺</span>
+          <strong>Borrar filtros</strong>
+        </button>
       </div>
 
       <div className="reaction-map-status">

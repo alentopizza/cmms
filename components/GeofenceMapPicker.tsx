@@ -528,6 +528,27 @@ export default function GeofenceMapPicker({
     setMessage(`Dirección validada con ${result.provider === "google" ? "Google Maps" : "el proveedor de respaldo"}. Puedes ajustar el punto en el mapa.`);
   }
 
+  function setManualCoordinate(kind:"latitude"|"longitude",raw:string) {
+    if (raw.trim()==="") {
+      if(kind==="latitude") setLatitude(null);
+      else setLongitude(null);
+      setValidatedLabel("");
+      setMessage("Completa ambas coordenadas para definir el punto manualmente.");
+      return;
+    }
+    const value=Number(raw);
+    const valid=Number.isFinite(value) && (kind==="latitude" ? value>=-90&&value<=90 : value>=-180&&value<=180);
+    if(!valid){
+      setMessage(kind==="latitude" ? "La latitud debe estar entre -90 y 90." : "La longitud debe estar entre -180 y 180.");
+      return;
+    }
+    if(kind==="latitude") setLatitude(value);
+    else setLongitude(value);
+    setResults([]);
+    setValidatedLabel(address.trim() || "Punto definido por coordenadas");
+    setMessage("Coordenadas actualizadas manualmente. El mapa se centrará en el punto indicado.");
+  }
+
   function useCurrentLocation() {
     if (!navigator.geolocation) {
       setMessage("Este navegador no permite obtener la ubicación del dispositivo.");
@@ -634,10 +655,42 @@ export default function GeofenceMapPicker({
     </div>
 
     <div className="geofence-config-row">
-      <div className="geofence-coordinate-summary">
+      {readOnly ? <div className="geofence-coordinate-summary">
         <div><span>Latitud</span><strong>{formatCoordinate(latitude)}</strong></div>
         <div><span>Longitud</span><strong>{formatCoordinate(longitude)}</strong></div>
-      </div>
+      </div> : <div className="geofence-coordinate-editor" aria-label="Coordenadas manuales">
+        <div className="field">
+          <label>Latitud *</label>
+          <input
+            name="latitude"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="-90"
+            max="90"
+            value={latitude ?? ""}
+            required={coordinateRequired}
+            onChange={event=>setManualCoordinate("latitude",event.target.value)}
+            placeholder="Ej. 4.6110"
+          />
+        </div>
+        <div className="field">
+          <label>Longitud *</label>
+          <input
+            name="longitude"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="-180"
+            max="180"
+            value={longitude ?? ""}
+            required={coordinateRequired}
+            onChange={event=>setManualCoordinate("longitude",event.target.value)}
+            placeholder="Ej. -74.1454"
+          />
+        </div>
+        <small>Úsalas cuando la sede esté en una zona remota, una vía sin nomenclatura o un punto que el buscador no encuentre.</small>
+      </div>}
       <div className="field geofence-radius-field">
         <label>Radio permitido</label>
         <div className="geofence-radius-control">
@@ -650,8 +703,10 @@ export default function GeofenceMapPicker({
 
     {validatedLabel && <div className="geofence-validated-label"><span aria-hidden="true">✓</span><div><strong>Punto validado</strong><small>{validatedLabel}</small></div></div>}
 
-    <input type="hidden" name="latitude" value={latitude ?? ""} required={coordinateRequired} />
-    <input type="hidden" name="longitude" value={longitude ?? ""} required={coordinateRequired} />
-    {readOnly && <input type="hidden" name="geofence_radius_m" value={radius} />}
+    {readOnly && <>
+      <input type="hidden" name="latitude" value={latitude ?? ""} required={coordinateRequired} />
+      <input type="hidden" name="longitude" value={longitude ?? ""} required={coordinateRequired} />
+      <input type="hidden" name="geofence_radius_m" value={radius} />
+    </>}
   </div>;
 }

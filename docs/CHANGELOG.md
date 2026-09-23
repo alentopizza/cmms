@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Company quick-edit contact save fix
+
+### Fixed
+
+- Fixed malformed PostgreSQL placeholders in the Company-directory quick-edit contact update that caused Contacto principal / Correo administrativo saves to fail with a generic error.
+- Replaced dynamic SQL placeholder construction with a fixed parameterized UPDATE that safely preserves omitted fields.
+- Added backend validation for administrative-email format.
+- Added actionable save-error mapping for missing data, overlong values, invalid data and broken related references, while unknown failures receive the reference code `ORG-SAVE` and are logged server-side.
+- Contacto principal and Correo administrativo now use the same two-column form grid, input sizing and read-only/edit behavior as Nombre comercial and Razón social.
+
 ## 2026-09-23 — Upload acknowledgement and Company edit-state reset
 
 ### Fixed

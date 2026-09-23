@@ -105,8 +105,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "En Dirección, empieza a escribir como lo harías en Google Maps. Aparecerán sugerencias automáticas de Google Places; selecciona la correcta para centrar el mapa y cargar sus coordenadas.",
       "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
-      "Ajusta el punto sobre el mapa si es necesario.",
-      "Define el radio permitido entre 20 y 5000 metros.",
+      "Ajusta el punto sobre el mapa si es necesario. El logo de la empresa identifica visualmente el centro de la geocerca.",
+      "Define el radio permitido entre 20 y 5000 metros. En edición se muestra un solo mapa interactivo; el resumen inferior evita duplicar la misma información.",
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
     ],
     notes:["Google Places aporta el autocompletado de dirección y Google Maps el contexto visual; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],

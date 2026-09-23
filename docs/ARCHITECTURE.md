@@ -318,3 +318,10 @@ The map component falls back temporarily to OSM/Nominatim if Google is not confi
 ### Docker build-time Maps variables
 
 Next.js replaces `NEXT_PUBLIC_*` references during the production build. Therefore the Docker `builder` stage explicitly declares and exports `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` as build arguments. `GOOGLE_MAPS_SERVER_API_KEY` is intentionally excluded from the browser build and remains a runtime server secret.
+
+
+### Runtime Maps configuration
+
+Container platforms do not always forward service environment variables as Docker build arguments. To avoid coupling Maps availability to a platform-specific build configuration, the authenticated `/api/maps-config` endpoint reads the browser Maps key and Map ID at request time and returns only those public browser values. `GeofenceMapPicker` loads Google Maps after fetching that runtime configuration.
+
+The server Geocoding key is not included in this endpoint and remains runtime-only.

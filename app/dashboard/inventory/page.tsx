@@ -7,11 +7,14 @@ import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
+import RequisitionBuilder from "@/components/RequisitionBuilder";
+import Link from "next/link";
+import UiIcon from "@/components/UiIcon";
 
-type Item={id:string;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
+type Item={id:string;organization_id:string;supplier_id:string|null;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
 type Site={id:string;label:string};
 type Location={id:string;label:string};
-type Supplier={id:string;name:string};
+type Supplier={id:string;name:string;supplier_type:string};
 
 // ── Responsive inventory directory: desktop table + mobile cards ──────────
 
@@ -27,16 +30,16 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const [items,sites,locations,suppliers]=await Promise.all([
     superadmin
-      ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+      ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                      LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                      WHERE i.active=true ORDER BY i.name LIMIT 300`)
       : session.accessAllSites
-        ? query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 ORDER BY i.name LIMIT 300`,[orgId])
-        : query<Item>(`SELECT i.id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        : query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))
@@ -52,7 +55,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         : query<Location>(`SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name`,[orgId,session.siteIds])
       : Promise.resolve({rows:[]} as {rows:Location[]}),
     canWrite && orgId
-      ? query<Supplier>("SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+      ? query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[orgId])
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
   ]);
   const creationGate=await getCreationGateForScope("inventory",session.organizationId,superadmin);
@@ -69,7 +72,9 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       countLabel="artículos"
       searchPlaceholder="Buscar SKU, artículo, ubicación o proveedor"
       filters={[{value:"all",label:"Todos"}]}
-      action={canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el repuesto o material, su proveedor y su ubicación física." triggerLabel="Agregar" icon="▤">
+      action={<div className="module-header-action-group">
+        {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
+        {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el repuesto o material, su proveedor y su ubicación física." triggerLabel="Agregar" icon="▤">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory">
           <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
           <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
@@ -83,7 +88,8 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           <div className="field form-span-2"><label>Ubicación de almacenamiento</label><input name="storage_location" placeholder="Ej. Almacén técnico · Estante A-03"/></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear artículo</button></div>
         </form>
-      </CreateRecordModal> : undefined}
+      </CreateRecordModal> : null}
+      </div>}
     />
     {params.created && <div className="notice success section">Artículo de inventario creado correctamente.</div>}
     {error && <div className="notice error section">{error}</div>}
@@ -96,6 +102,27 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       href={creationGate.href || "/dashboard/locations"}
       action={creationGate.action || "Continuar"}
     />}
+
+    {can(session,"requisitions.write")&&<section className="card section" id="crear-requisicion">
+      <RequisitionBuilder
+        items={items.rows.filter(item=>Boolean(item.supplier_id)).map(item=>({
+          id:item.id,
+          supplier_id:item.supplier_id||"",
+          supplier_name:item.supplier||"Proveedor",
+          sku:item.sku,
+          name:item.name,
+          unit:item.unit,
+          unit_cost:item.unit_cost,
+          quantity:item.quantity,
+          min_quantity:item.min_quantity,
+          site_name:item.site,
+          location_name:item.location,
+        }))}
+        returnTo="/dashboard/inventory#crear-requisicion"
+        title="Generar requisiciones desde inventario"
+        description="Selecciona insumos y cantidades. Si pertenecen a proveedores distintos, Desweb CMMS crea una requisición independiente para cada proveedor."
+      />
+    </section>}
 
     <section className="section inventory-directory-section">
       <div className="inventory-mobile-list">

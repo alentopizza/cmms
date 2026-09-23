@@ -212,32 +212,34 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name}/>
               <div className="form-actions"><button className="button secondary" type="button" onClick={()=>setEditingSite(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
             </form>:<div className="entity-section-stack">
-              <div className="entity-approved-general-grid">
-                <div className="entity-panel entity-approved-data-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la ubicación</h3><div className="entity-info-grid">
-                  <InfoField label="Nombre de la ubicación" value={selected.name}/><InfoField label="Código / Identificador" value={selected.code||"Sin código"}/>
-                  <InfoField label="Empresa" value={selected.organization_name}/><InfoField label="Tipo de ubicación" value="Sede"/>
-                  <InfoField label="Dirección" value={selected.address||"Sin registrar"}/><InfoField label="Zona / Localidad" value={selected.locality||"Sin registrar"}/>
-                  <InfoField label="Ciudad" value={selected.city||"Sin registrar"}/><InfoField label="Horario de operación" value={scheduleLabel(selected)}/>
-                  <InfoField label="País" value={countryName(selected.country)}/>
-                  <InfoField label="Responsable" value={selected.contact_name?<span className="entity-person-value"><i>{initials(selected.contact_name)}</i><b><span>{selected.contact_name}</span><small>{selected.contact_title||"Responsable de sede"}</small></b></span>:"Sin registrar"}/>
-                </div></div>
-                <div className="entity-panel entity-approved-map-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Ubicación en el mapa</h3><GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name+" · "+selected.name}/></div>
+              <div className="entity-approved-columns">
+                <div className="entity-approved-column">
+                  <div className="entity-panel entity-approved-data-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la ubicación</h3><div className="entity-info-grid">
+                    <InfoField label="Nombre de la ubicación" value={selected.name}/><InfoField label="Código / Identificador" value={selected.code||"Sin código"}/>
+                    <InfoField label="Empresa" value={selected.organization_name}/><InfoField label="Tipo de ubicación" value="Sede"/>
+                    <InfoField label="Dirección" value={selected.address||"Sin registrar"}/><InfoField label="Zona / Localidad" value={selected.locality||"Sin registrar"}/>
+                    <InfoField label="Ciudad" value={selected.city||"Sin registrar"}/><InfoField label="Horario de operación" value={scheduleLabel(selected)}/>
+                    <InfoField label="País" value={countryName(selected.country)}/>
+                    <InfoField label="Responsable" value={selected.contact_name?<span className="entity-person-value"><i>{initials(selected.contact_name)}</i><b><span>{selected.contact_name}</span><small>{selected.contact_title||"Responsable de sede"}</small></b></span>:"Sin registrar"}/>
+                  </div></div>
+                  <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3><div className="entity-info-grid">
+                    <InfoField label="Teléfono principal" value={selected.contact_phone?<span className="entity-inline-contact"><a href={telLink(selected.contact_phone)}><UiIcon name="phone" size={14}/>{selected.contact_phone}</a><a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer"><UiIcon name="whatsapp" size={14}/>WhatsApp</a></span>:"Sin registrar"}/>
+                    <InfoField label="Correo electrónico" value={selected.contact_email?<a href={"mailto:"+selected.contact_email}>{selected.contact_email}</a>:"Sin registrar"}/>
+                    <InfoField label="Contacto local" value={selected.contact_name||"Sin registrar"}/>
+                    <InfoField label="Dirección" value={<button className="text-button" type="button" onClick={()=>copy(selected.address||"","Dirección")}>{copied==="Dirección"?"Dirección copiada":"Copiar dirección"}</button>}/>
+                  </div></div>
+                  <div className="entity-panel entity-approved-notes"><h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3><p>{selected.notes||"Sin notas adicionales registradas para esta ubicación."}</p></div>
+                </div>
+                <div className="entity-approved-column entity-approved-map-column">
+                  <div className="entity-panel entity-approved-map-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Ubicación en el mapa</h3><GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name+" · "+selected.name} className="entity-profile-geofence"/></div>
+                  <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Geocerca</h3><div className="entity-info-grid">
+                    <InfoField label="Radio de geocerca" value={selected.geofence_radius_m+" metros"}/>
+                    <InfoField label="Coordenadas (lat, lng)" value={selected.latitude!==null&&selected.longitude!==null?Number(selected.latitude).toFixed(4)+", "+Number(selected.longitude).toFixed(4):"Pendientes"}/>
+                    <InfoField label="Estado" value={<span className={"entity-geofence-state "+(selected.latitude!==null&&selected.longitude!==null?"active":"pending")}><i/>{selected.latitude!==null&&selected.longitude!==null?"Activa":"Pendiente"}</span>}/>
+                    <InfoField label="Uso" value="Asistencia y contexto operativo"/>
+                  </div></div>
+                </div>
               </div>
-              <div className="entity-panel-grid entity-approved-secondary-grid">
-                <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3><div className="entity-info-grid">
-                  <InfoField label="Teléfono principal" value={selected.contact_phone?<span className="entity-inline-contact"><a href={telLink(selected.contact_phone)}><UiIcon name="phone" size={14}/>{selected.contact_phone}</a><a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer"><UiIcon name="whatsapp" size={14}/>WhatsApp</a></span>:"Sin registrar"}/>
-                  <InfoField label="Correo electrónico" value={selected.contact_email?<a href={"mailto:"+selected.contact_email}>{selected.contact_email}</a>:"Sin registrar"}/>
-                  <InfoField label="Contacto local" value={selected.contact_name||"Sin registrar"}/>
-                  <InfoField label="Dirección" value={<button className="text-button" type="button" onClick={()=>copy(selected.address||"","Dirección")}>{copied==="Dirección"?"Dirección copiada":"Copiar dirección"}</button>}/>
-                </div></div>
-                <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Geocerca</h3><div className="entity-info-grid">
-                  <InfoField label="Radio de geocerca" value={selected.geofence_radius_m+" metros"}/>
-                  <InfoField label="Coordenadas (lat, lng)" value={selected.latitude!==null&&selected.longitude!==null?Number(selected.latitude).toFixed(4)+", "+Number(selected.longitude).toFixed(4):"Pendientes"}/>
-                  <InfoField label="Estado" value={<span className={"entity-geofence-state "+(selected.latitude!==null&&selected.longitude!==null?"active":"pending")}><i/>{selected.latitude!==null&&selected.longitude!==null?"Activa":"Pendiente"}</span>}/>
-                  <InfoField label="Uso" value="Asistencia y contexto operativo"/>
-                </div></div>
-              </div>
-              <div className="entity-panel entity-approved-notes"><h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3><p>{selected.notes||"Sin notas adicionales registradas para esta ubicación."}</p></div>
             </div>},
             {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
               <div className="entity-stat-grid">

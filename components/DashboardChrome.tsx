@@ -19,6 +19,7 @@ const sections: Array<{ match: (pathname: string) => boolean; section: Section }
   { match: pathname => pathname.startsWith("/dashboard/users"), section: { label: "Usuarios y roles", eyebrow: "Control de acceso", icon: "◎" } },
   { match: pathname => pathname.startsWith("/dashboard/crews"), section: { label: "Cuadrillas", eyebrow: "Ejecución operativa", icon: "◉" } },
   { match: pathname => pathname.startsWith("/dashboard/attendance"), section: { label: "Asistencia", eyebrow: "Operación en campo", icon: "◌" } },
+  { match: pathname => pathname.startsWith("/dashboard/reaction"), section: { label: "Reacción", eyebrow: "Coordinación de contingencias", icon: "⌖" } },
   { match: pathname => pathname.startsWith("/dashboard/assets"), section: { label: "Activos y equipos", eyebrow: "Gestión de activos", icon: "◇" } },
   { match: pathname => pathname.startsWith("/dashboard/work-orders"), section: { label: "Órdenes de trabajo", eyebrow: "Operación", icon: "✓" } },
   { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "↻" } },

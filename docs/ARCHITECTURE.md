@@ -43,6 +43,11 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/api/organizations/[id]/` — company updates, status changes, visual assets and site creation.
 - `app/api/organizations/[id]/assets/[asset]/` — authenticated company logo and cover delivery.
 - `lib/organization-assets.ts` — company image validation and conversion.
+- `components/BusinessHoursFields.tsx` — reusable seven-day Company/Site operating-schedule editor.
+- `lib/business-hours.ts` — rich schedule normalization, legacy compatibility and open/closed evaluation.
+- `components/CompanyDocumentWorkspace.tsx` — current/archived company-document workspace, preview and lifecycle actions.
+- `components/PhoneField.tsx` — country-aware national-number capture with visible calling prefix.
+- `lib/country-calling-codes.ts` — calling-code lookup plus normalized E.164-like composition/parsing.
 - `app/api/sites/[id]/` — site updates and status changes.
 - `app/dashboard/settings/` — role-aware settings: global platform settings for superadministrators and read-only organization capacity/information for company administrators.
 - `app/dashboard/personalization/` — global visual branding resources, linked from settings.
@@ -220,9 +225,11 @@ Migration `014_company_profile_documents.sql` extends `organizations` with legal
 - notes;
 - optional PDF/image file bytes and MIME metadata;
 - uploader and timestamps;
-- archival timestamp.
+- archival timestamp and archiving-user attribution.
 
-Active company documents are retrieved only within their organization and downloads pass through authenticated application routes with `no-store` and `nosniff` response controls. Current accepted files are PDF, PNG, JPEG and WebP up to 10 MB.
+Company-document reads remain organization scoped and pass through authenticated application routes with `no-store` and `nosniff` response controls. The workspace separates **Vigentes** from **Archivados**. PDF/image files may be served inline for in-place preview, while the same authorized endpoint can still return a normal attachment download. Current accepted files are PDF, PNG, JPEG and WebP up to 10 MB.
+
+Archiving is a reversible lifecycle state: it preserves file bytes, metadata and audit attribution. Restoring clears archive metadata and returns the record to the current dossier. Permanent deletion is intentionally separate and remains limited to the protected Platform Owner destructive flow.
 
 Corporate documents are not stored in the generic operational attachment relationship because their lifecycle, requirement state and expiry semantics belong to the enterprise profile rather than to work orders/assets.
 
@@ -338,9 +345,17 @@ Interactive address entry uses the current Maps JavaScript `PlaceAutocompleteEle
 
 ### Business-hours model
 
-Migration `022_business_hours.sql` adds independent service schedules to `organizations` and `sites`: active weekdays plus opening/closing times. Organization schedules represent the company's general attention window; each Site can override it with its own operating hours. Reaction computes **open now** using the organization's IANA timezone, so schedule filtering remains consistent across tenants in different countries.
+Migration `022_business_hours.sql` introduced the original active-weekdays plus shared opening/closing-time model. Migration `024_flexible_business_schedule_document_archive.sql` adds `business_schedule` as the canonical rich seven-day JSON schedule on both `organizations` and `sites`. Each weekday can be independently enabled/closed and can carry its own opening and closing times, so weekends and exceptional weekly patterns do not have to inherit the habitual weekday range.
+
+The legacy `business_days`, `business_open_time` and `business_close_time` columns remain populated for backward compatibility. `lib/business-hours.ts` normalizes the rich schedule and falls back to the legacy representation for older rows. Organization schedules represent the company's general attention window; each Site can carry its own operating schedule. Reaction computes **open now** using the organization's IANA timezone and exposes variable schedules as **Horario variable** when active days do not share one range.
 
 Business hours are operational metadata only. They do not automatically disable work orders, attendance, tracking or emergency dispatch; they are currently used for map state/filtering and user context.
+
+### Country-aware phone model
+
+When the Company or Site country is known, the UI derives the international calling prefix instead of asking the operator to type it manually. `components/PhoneField.tsx` presents the prefix separately and captures only the national-number portion; `lib/country-calling-codes.ts` composes/parses the persisted normalized E.164-like value. The pattern is reused for Company, Site and User contact capture and for Reaction contact projections.
+
+WhatsApp and telephone shortcuts are convenience links over an already-authorized phone value. They do not send messages on behalf of the CMMS and do not broaden access. Icon actions must keep accessible labels/tooltips so their purpose is clear on hover, focus and assistive technology.
 
 ### Reaction client-session lifecycle
 

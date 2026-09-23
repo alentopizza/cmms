@@ -114,7 +114,10 @@ The dashboard sidebar is retractable and user-orderable. Persist presentation pr
 - Organization legal/administrative addresses and operational site addresses are separate concepts; never auto-copy or synchronize them.
 - Corporate documents belong to the organization dossier, not to generic maintenance attachments or visual logo/cover storage.
 - Corporate-document requirement level is tenant-specific: required, optional or not applicable.
-- Document files must remain organization scoped and downloads must be authenticated.
+- Document files must remain organization scoped and downloads/previews must be authenticated.
+- Document archive is reversible lifecycle state, not deletion: archived records retain file bytes, metadata and audit attribution and may be restored. Permanent deletion remains a distinct Platform Owner protected action.
+- Company/Site `business_schedule` is the canonical rich seven-day schedule; when it changes, keep the legacy business-day/open/close compatibility columns synchronized rather than flattening variable hours.
+- When a Company/Site country is known, derive the calling prefix and capture the national number separately; preserve normalized storage and accessible WhatsApp/call shortcuts instead of asking users to retype the prefix.
 - Company profile/document mutations currently remain behind platform-level `companies.manage`; do not broaden this privilege implicitly when adding tenant features.
 
 

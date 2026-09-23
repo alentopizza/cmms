@@ -317,7 +317,17 @@ The platform does not assume that Colombia-specific records such as RUT or chamb
 
 Document metadata may include issue date, expiry date, external reference and notes. Expired required documents are treated as pending for the company profile. Documents approaching expiry within 30 days receive an early visual warning.
 
-Archiving removes a document from the current dossier without rewriting historical migrations or conflating it with operational attachments.
+Archiving removes a document from the current dossier without conflating it with permanent deletion. The Company workspace separates **Vigentes** and **Archivados**; authorized users can preview/download archived PDF/image files and restore them to the current dossier. Archive keeps file bytes, metadata and audit attribution. Permanent deletion remains a separate protected Platform Owner action and must retain the existing confirmation safeguards.
+
+### Company/Site operating schedules
+
+Companies and principal Sites use a seven-day operating schedule. Each day can be independently enabled or closed and every active day may use its own opening/closing range, so Saturday/Sunday or other non-habitual schedules are represented directly instead of forcing one shared weekly range.
+
+The rich schedule is the functional source of truth for Reaction open/closed state. Legacy shared-day/shared-time fields remain compatibility data and must not be treated as a reason to flatten a variable schedule back to one range.
+
+### Country-aware contact numbers
+
+When a Company/Site country is known, phone forms show the international prefix derived from that country and ask the user only for the remaining national number. The persisted value is normalized for consistent display and actions. Company, Site and Technician contact surfaces may expose telephone and WhatsApp shortcuts with explanatory hover/focus tooltips; these links are convenience actions and do not send messages from the CMMS or bypass authorization.
 
 
 ## Platform role hierarchy — Platform Owner implemented

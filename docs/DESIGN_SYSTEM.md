@@ -297,7 +297,8 @@ Visual hierarchy:
 - sticky local navigation links to Summary, Information, Documents, Sites and Resources;
 - legal/administrative information uses calm card surfaces and clear field groups;
 - operational sites remain visually and semantically separate from the enterprise address;
-- corporate documents use compact dossier cards with visible status, dates, file metadata and actions.
+- corporate documents use compact dossier cards with visible status, dates, file metadata and actions;
+- the company logo sits fully below the cover/hero with clear separation; it must not overlap the cover image.
 
 Document states must use both text and color:
 
@@ -357,7 +358,7 @@ Directory records expose searchable text and a normalized status. Search/filteri
 Company cards use:
 
 - wide cover image;
-- circular logo overlapping the cover;
+- circular logo positioned fully below the cover inside the identity region; it must not overlap or sit on top of the cover image;
 - centered company identity and status;
 - plan indicator;
 - operational resource rows and quota progress only where a real enforced quota exists;
@@ -698,7 +699,23 @@ Company and principal-location directories use a compact card pattern optimized 
 
 ### Company logo creation rule
 
-A company logo is mandatory when a company is created. The requirement is enforced both by the browser form and the server endpoint. The logo is the default identity image shown inside the circular company mark throughout company and location directory cards. A company cover/reference image is optional and must never replace the logo as the circular identity asset.
+A company logo is mandatory when a company is created. The requirement is enforced both by the browser form and the server endpoint. The logo is the default identity image shown inside the circular company mark throughout company and location directory cards. A company cover/reference image is optional and must never replace the logo as the circular identity asset. In Company profile/detail surfaces the logo must be placed fully below the cover rather than floating across the cover boundary.
+
+### Company document workspace pattern
+
+- Use separate **Vigentes** and **Archivados** states/tabs so archiving never makes a record appear lost.
+- Selecting a document keeps the list/context visible and opens a side preview/details card rather than forcing immediate navigation away.
+- PDF and supported image files should preview in place when possible; download remains a distinct action.
+- Current-document actions may include edit, archive, download and the protected permanent-delete action when the role allows it.
+- Archived-document actions emphasize preview/download and **Restaurar**; archived records are not editable until restored.
+- Permanent delete remains visually distinct from archive and must keep the branded security-confirmation dialog.
+
+### Country-aware phone action pattern
+
+- When country is already known from Company/Site context, show the international calling prefix as a fixed contextual element and ask only for the national-number remainder.
+- Do not require users to duplicate the country prefix inside the editable number field.
+- Telephone and WhatsApp icon buttons use the normalized number and provide an explicit tooltip/title on hover and focus (for example, **Llamar** and **Abrir en WhatsApp**).
+- Icon-only actions require accessible labels; their function must not depend on icon recognition alone.
 
 
 ### Company profile detail pattern
@@ -706,6 +723,7 @@ A company logo is mandatory when a company is created. The requirement is enforc
 The company quick-detail modal uses a structured profile layout instead of a tall free-form form.
 
 - A shallow hero/cover is separated from the identity block so the company name never overlaps or disappears over imagery.
+- The logo is fully below the cover/hero boundary; neither the logo nor company name should be mounted over the cover image.
 - Logo, status, plan, legal identity and primary-site context form one clear identity region.
 - Quick actions provide direct access to Locations, Assets, Users and the full company record.
 - Executive summary cards expose profile completion, locations, assets and documentation state.

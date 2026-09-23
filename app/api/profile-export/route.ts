@@ -218,11 +218,63 @@ async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof 
   };
 }
 
+async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
+  if(!can(session,"suppliers.manage"))return null;
+  const result=await query<{
+    id:string;organization_id:string;organization_name:string;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
+    country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:string;service_category:string|null;
+    contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;active:boolean;
+    activity_count:number;active_activity_count:number;inventory_count:number;requisition_count:number;open_requisition_count:number;document_count:number;
+    logo_data:Buffer|null;logo_mime_type:string|null;
+  }>(`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,s.city,s.address,s.website,
+            s.supplier_type,s.service_category,s.contact_name,s.contact_title,s.email,s.phone,s.notes,s.active,
+            (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.service_supplier_id=s.id) activity_count,
+            (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.service_supplier_id=s.id AND wt.status IN ('pending','in_progress')) active_activity_count,
+            (SELECT count(*)::int FROM inventory_items i WHERE i.supplier_id=s.id AND i.active=true) inventory_count,
+            (SELECT count(*)::int FROM supplier_requisitions r WHERE r.supplier_id=s.id) requisition_count,
+            (SELECT count(*)::int FROM supplier_requisitions r WHERE r.supplier_id=s.id AND r.status NOT IN ('fulfilled','closed','cancelled')) open_requisition_count,
+            (SELECT count(*)::int FROM supplier_documents d WHERE d.supplier_id=s.id AND d.archived_at IS NULL) document_count,
+            s.logo_data,s.logo_mime_type
+     FROM suppliers s JOIN organizations o ON o.id=s.organization_id WHERE s.id=$1`,[id]);
+  if(!result.rowCount)return null;
+  const row=result.rows[0];
+  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
+  const type=row.supplier_type==="services"?"Servicios":row.supplier_type==="both"?"Materiales + servicios":"Materiales / suministros";
+  return {
+    entityLabel:"Proveedor",title:row.name,subtitle:row.organization_name,status:row.active?"Activo":"Inactivo",
+    fields:[
+      {label:"Razón social",value:safe(row.legal_name,"Sin registrar")},
+      {label:"Tipo",value:type},
+      {label:"Identificación",value:row.tax_id?safe(row.tax_id_type,"ID")+" "+row.tax_id:"Sin registrar"},
+      {label:"País",value:safe(row.country_code,"Sin registrar")},
+      {label:"Ciudad",value:safe(row.city,"Sin registrar")},
+      {label:"Dirección",value:safe(row.address,"Sin registrar")},
+      {label:"Especialidad / categoría",value:safe(row.service_category,"Sin registrar")},
+      {label:"Contacto principal",value:safe(row.contact_name,"Sin registrar")},
+      {label:"Cargo",value:safe(row.contact_title,"Sin registrar")},
+      {label:"Correo",value:safe(row.email,"Sin registrar")},
+      {label:"Teléfono / WhatsApp",value:safe(row.phone,"Sin registrar")},
+      {label:"Sitio web",value:safe(row.website,"Sin registrar")},
+    ],
+    stats:[
+      {label:"Actividades",value:String(row.activity_count)},
+      {label:"Actividades abiertas",value:String(row.active_activity_count)},
+      {label:"Suministros",value:String(row.inventory_count)},
+      {label:"Requisiciones",value:String(row.requisition_count)},
+      {label:"Requisiciones abiertas",value:String(row.open_requisition_count)},
+      {label:"Documentos vigentes",value:String(row.document_count)},
+    ],
+    sections:row.notes?[{title:"Notas adicionales",fields:[{label:"Notas",value:row.notes}]}]:[],
+    image:row.logo_data,imageMime:row.logo_mime_type,
+  };
+}
+
 async function profile(entity:string,id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>){
   if(entity==="organization")return loadOrganization(id,session);
   if(entity==="site")return loadSite(id,session);
   if(entity==="location")return loadLocation(id,session);
   if(entity==="user")return loadUser(id,session);
+  if(entity==="supplier")return loadSupplier(id,session);
   return null;
 }
 
@@ -313,7 +365,7 @@ function escapeHtml(value:string){return value.replace(/[&<>"']/g,char=>({"&":"&
 export async function GET(request:Request){
   const session=await getSession();if(!session)return new NextResponse("No autorizado",{status:401});
   const url=new URL(request.url);const entity=url.searchParams.get("entity")||"";const id=url.searchParams.get("id")||"";const format=url.searchParams.get("format")||"pdf";
-  if(!UUID.test(id)||!["organization","site","location","user"].includes(entity)||!["pdf","xlsx","word"].includes(format))return new NextResponse("Solicitud inválida",{status:400});
+  if(!UUID.test(id)||!["organization","site","location","user","supplier"].includes(entity)||!["pdf","xlsx","word"].includes(format))return new NextResponse("Solicitud inválida",{status:400});
   const data=await profile(entity,id,session);if(!data)return new NextResponse("Registro no encontrado o sin permiso",{status:404});
   const base="hoja-de-vida-"+filename(data.title);
   if(format==="xlsx"){

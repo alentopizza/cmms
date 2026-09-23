@@ -8,6 +8,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
@@ -18,6 +19,17 @@ export type CompanyDirectoryItem = {
   slug: string;
   legal_name: string | null;
   tax_id: string | null;
+  tax_id_type: string | null;
+  legal_address: string | null;
+  legal_city: string | null;
+  legal_country: string | null;
+  phone: string | null;
+  billing_email: string | null;
+  website: string | null;
+  primary_contact_title: string | null;
+  primary_contact_phone: string | null;
+  primary_contact_email: string | null;
+  internal_notes: string | null;
   timezone: string;
   business_days: number[];
   business_open_time: string;
@@ -69,6 +81,19 @@ function DetailField({ label, value }: { label: string; value: ReactNode }) {
 
 function CompanyMetric({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return <div className="entity-stat-card"><small>{label}</small><strong>{value}</strong>{hint && <span>{hint}</span>}</div>;
+}
+
+function companyScheduleLabel(company: CompanyDirectoryItem) {
+  const rows=(company.business_schedule||[]).filter(row=>row.enabled);
+  if(!rows.length) return "Sin horario activo";
+  const ranges=Array.from(new Set(rows.map(row=>row.openTime.slice(0,5)+"–"+row.closeTime.slice(0,5))));
+  return ranges.length===1 ? ranges[0]+" · "+rows.length+" días/semana" : "Horario variable · "+rows.length+" días/semana";
+}
+
+function countryLabel(code:string|null){
+  if(!code) return "Sin registrar";
+  const map:Record<string,string>={CO:"Colombia",PE:"Perú",EC:"Ecuador",MX:"México",CL:"Chile",AR:"Argentina",US:"Estados Unidos",PA:"Panamá",CR:"Costa Rica"};
+  return map[code.toUpperCase()]||code;
 }
 
 type ResourceKind = "sites" | "sublocations" | "assets" | "inventory" | "technicians";
@@ -399,22 +424,35 @@ export default function CompanyDirectory({
             </div>}
             <input type="hidden" name="intent" value="update"/>
             <input type="hidden" name="return_to" value="directory"/>
+            <input type="hidden" name="profile_v2" value="1"/>
             <input type="hidden" name="primary_site_id" value={selected.site_id||""}/>
             <div className="entity-panel">
               <h3>Datos de la empresa</h3>
               <div className="form-grid">
                 <div className="field"><label>Nombre comercial</label><input name="name" defaultValue={selected.name} required/></div>
                 <div className="field"><label>Razón social</label><input name="legal_name" defaultValue={selected.legal_name||""}/></div>
+                <div className="field"><label>Tipo de identificación</label><input name="tax_id_type" defaultValue={selected.tax_id_type||""} placeholder="NIT, RUC, RFC..."/></div>
                 <div className="field"><label>NIT / Identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
-                <div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>
-                <div className="field"><label>Contacto principal</label><input name="primary_contact_name" defaultValue={selected.primary_contact_name||""}/></div>
+                <div className="field form-span-2"><label>Dirección administrativa / fiscal</label><input name="legal_address" defaultValue={selected.legal_address||""}/></div>
+                <div className="field"><label>Ciudad administrativa</label><input name="legal_city" defaultValue={selected.legal_city||""}/></div>
+                <div className="field"><label>País</label><input id="directory-company-country" name="legal_country" maxLength={2} defaultValue={selected.legal_country||"CO"}/></div>
+                <PhoneField name="phone" label="Teléfono principal" countryCode={selected.legal_country||"CO"} countryInputId="directory-company-country" defaultValue={selected.phone}/>
+                <div className="field"><label>Sitio web</label><input type="url" name="website" defaultValue={selected.website||""} placeholder="https://..."/></div>
                 <div className="field"><label>Correo administrativo</label><input type="email" name="admin_email" defaultValue={selected.admin_email||""}/></div>
-                <div className="field form-span-2"><label>Zona horaria</label><select name="timezone" defaultValue={selected.timezone}>
+                <div className="field"><label>Correo de facturación</label><input type="email" name="billing_email" defaultValue={selected.billing_email||""}/></div>
+                <div className="form-divider form-span-2"><span>Contacto principal</span></div>
+                <div className="field"><label>Nombre</label><input name="primary_contact_name" defaultValue={selected.primary_contact_name||""}/></div>
+                <div className="field"><label>Cargo</label><input name="primary_contact_title" defaultValue={selected.primary_contact_title||""}/></div>
+                <PhoneField name="primary_contact_phone" label="Teléfono del contacto" countryCode={selected.legal_country||"CO"} countryInputId="directory-company-country" defaultValue={selected.primary_contact_phone}/>
+                <div className="field"><label>Correo del contacto</label><input type="email" name="primary_contact_email" defaultValue={selected.primary_contact_email||""}/></div>
+                <div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>
+                <div className="field"><label>Zona horaria</label><select name="timezone" defaultValue={selected.timezone}>
                   <option value="America/Bogota">Colombia · America/Bogota</option>
                   <option value="America/Lima">Perú · America/Lima</option>
                   <option value="America/Mexico_City">México · America/Mexico_City</option>
                   <option value="America/New_York">Estados Unidos · America/New_York</option>
                 </select></div>
+                <div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={3} defaultValue={selected.internal_notes||""} placeholder="Información administrativa o comercial relevante."/></div>
                 <BusinessHoursFields
                   days={selected.business_days}
                   openTime={selected.business_open_time}
@@ -475,22 +513,56 @@ export default function CompanyDirectory({
               <div><strong>Cambios guardados correctamente</strong><p>{saveSuccess.message}</p>{saveSuccess.files.length>0&&<div className="company-save-success-files">{saveSuccess.files.map(file=><span key={file}>✓ {file}</span>)}</div>}</div>
               <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}>×</button>
             </div>}
-            <div className="entity-panel"><h3>Datos de la empresa</h3><div className="entity-info-grid">
-              <DetailField label="Nombre comercial" value={selected.name}/>
-              <DetailField label="Razón social" value={selected.legal_name||"Sin registrar"}/>
-              <DetailField label="NIT / Identificación" value={selected.tax_id||"Sin registrar"}/>
-              <DetailField label="Identificador" value={selected.slug}/>
-              <DetailField label="Plan" value={selected.plan_name||"Sin plan"}/>
-              <DetailField label="Zona horaria" value={selected.timezone}/>
-              <DetailField label="Contacto principal" value={selected.primary_contact_name||"Sin registrar"}/>
-              <DetailField label="Correo administrativo" value={selected.admin_email||"Sin registrar"}/>
-            </div></div>
-            <div className="entity-panel"><h3>Estado del perfil</h3><div className="entity-info-grid">
-              <DetailField label="Completitud" value={selected.profile_completion+"%"}/>
-              <DetailField label="Estado" value={selected.active?"Empresa activa":"Empresa inactiva"}/>
-              <DetailField label="Documentos registrados" value={selected.document_count}/>
-              <DetailField label="Pendientes documentales" value={selected.pending_document_count}/>
-            </div></div>
+            <div className="entity-approved-general-grid">
+              <div className="entity-panel entity-approved-data-panel">
+                <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la empresa</h3>
+                <div className="entity-info-grid">
+                  <DetailField label="Nombre comercial" value={selected.name}/>
+                  <DetailField label="Razón social" value={selected.legal_name||"Sin registrar"}/>
+                  <DetailField label={(selected.tax_id_type||"NIT")+" / Identificación"} value={selected.tax_id||"Sin registrar"}/>
+                  <DetailField label="Plan" value={selected.plan_name||"Sin plan"}/>
+                  <DetailField label="Dirección administrativa / fiscal" value={selected.legal_address||"Sin registrar"}/>
+                  <DetailField label="Ciudad administrativa" value={selected.legal_city||"Sin registrar"}/>
+                  <DetailField label="País" value={countryLabel(selected.legal_country)}/>
+                  <DetailField label="Horario general" value={companyScheduleLabel(selected)}/>
+                  <DetailField label="Zona horaria" value={selected.timezone}/>
+                  <DetailField label="Sitio web" value={selected.website?<a href={selected.website} target="_blank" rel="noreferrer">{selected.website}</a>:"Sin registrar"}/>
+                </div>
+              </div>
+              <div className="entity-panel entity-approved-map-panel">
+                <h3><span className="entity-section-icon"><UiIcon name="location"/></span>Sede principal en el mapa</h3>
+                {selected.site_id?<GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.site_latitude} initialLongitude={selected.site_longitude} initialRadius={selected.site_geofence_radius_m||250} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null} markerLabel={selected.name}/>:<div className="location-detail-empty">Aún no hay una sede principal configurada.</div>}
+              </div>
+            </div>
+            <div className="entity-panel-grid entity-approved-secondary-grid">
+              <div className="entity-panel">
+                <h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3>
+                <div className="entity-info-grid">
+                  <DetailField label="Teléfono principal" value={selected.phone||"Sin registrar"}/>
+                  <DetailField label="Correo administrativo" value={selected.admin_email||"Sin registrar"}/>
+                  <DetailField label="Correo de facturación" value={selected.billing_email||"Sin registrar"}/>
+                  <DetailField label="Contacto principal" value={selected.primary_contact_name||"Sin registrar"}/>
+                  <DetailField label="Cargo" value={selected.primary_contact_title||"Sin registrar"}/>
+                  <DetailField label="Teléfono del contacto" value={selected.primary_contact_phone||"Sin registrar"}/>
+                  <div className="form-span-2"><DetailField label="Correo del contacto" value={selected.primary_contact_email||"Sin registrar"}/></div>
+                </div>
+              </div>
+              <div className="entity-panel">
+                <h3><span className="entity-section-icon"><UiIcon name="check"/></span>Estado del perfil</h3>
+                <div className="entity-info-grid">
+                  <DetailField label="Completitud" value={selected.profile_completion+"%"}/>
+                  <DetailField label="Estado" value={selected.active?"Empresa activa":"Empresa inactiva"}/>
+                  <DetailField label="Documentos registrados" value={selected.document_count}/>
+                  <DetailField label="Pendientes documentales" value={selected.pending_document_count}/>
+                  <DetailField label="Sede principal" value={selected.site_name||"Sin registrar"}/>
+                  <DetailField label="Geocerca" value={selected.site_latitude!==null&&selected.site_longitude!==null?"Configurada":"Pendiente"}/>
+                </div>
+              </div>
+            </div>
+            <div className="entity-panel entity-approved-notes">
+              <h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3>
+              <p>{selected.internal_notes||"Sin notas internas registradas."}</p>
+            </div>
           </div>},
           {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
             <div className="entity-stat-grid">
@@ -539,7 +611,7 @@ export default function CompanyDirectory({
             <div className="entity-panel"><h3>Expediente empresarial</h3><p className="entity-panel-copy">La gestión completa de documentos, archivo, restauración, vista previa y eliminación protegida permanece en la ficha empresarial.</p><Link className="button secondary entity-tab-cta" href={"/dashboard/companies/"+selected.id}>Abrir expediente documental</Link></div>
           </div>},
           {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack">
-            <div className="entity-stat-grid"><CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="asignados / cupo"/></div>
+            <div className="entity-stat-grid"><CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="registrados / cupo"/></div>
             <div className="entity-panel"><h3>Personal de la empresa</h3><p className="entity-panel-copy">Consulta o administra los usuarios y técnicos vinculados a esta empresa desde el directorio de acceso.</p><Link className="button secondary entity-tab-cta" href="/dashboard/users">Abrir usuarios y técnicos</Link></div>
           </div>},
           {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">

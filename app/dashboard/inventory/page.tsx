@@ -11,14 +11,14 @@ import RequisitionBuilder from "@/components/RequisitionBuilder";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
 
-type Item={id:string;organization_id:string;supplier_id:string|null;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
+type Item={id:string;organization_id:string;supplier_id:string|null;supplier_type:string|null;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
 type Site={id:string;label:string};
 type Location={id:string;label:string};
 type Supplier={id:string;name:string;supplier_type:string};
 
 // ── Responsive inventory directory: desktop table + mobile cards ──────────
 
-export default async function InventoryPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
+export default async function InventoryPage({searchParams}:{searchParams:Promise<{created?:string;error?:string;requisition_created?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"inventory.read")) redirect("/dashboard");
@@ -30,16 +30,16 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const [items,sites,locations,suppliers]=await Promise.all([
     superadmin
-      ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+      ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                      LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                      WHERE i.active=true ORDER BY i.name LIMIT 300`)
       : session.accessAllSites
-        ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 ORDER BY i.name LIMIT 300`,[orgId])
-        : query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        : query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))
@@ -92,6 +92,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       </div>}
     />
     {params.created && <div className="notice success section">Artículo de inventario creado correctamente.</div>}
+    {params.requisition_created && <div className="notice success section">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} correctamente y separada{params.requisition_created==="1"?"":"s"} por proveedor.</div>}
     {error && <div className="notice error section">{error}</div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
@@ -105,7 +106,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
     {can(session,"requisitions.write")&&<section className="card section" id="crear-requisicion">
       <RequisitionBuilder
-        items={items.rows.filter(item=>Boolean(item.supplier_id)).map(item=>({
+        items={items.rows.filter(item=>Boolean(item.supplier_id)&&["materials","both"].includes(item.supplier_type||"")).map(item=>({
           id:item.id,
           supplier_id:item.supplier_id||"",
           supplier_name:item.supplier||"Proveedor",
@@ -118,7 +119,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           site_name:item.site,
           location_name:item.location,
         }))}
-        returnTo="/dashboard/inventory#crear-requisicion"
+        returnTo="/dashboard/inventory"
         title="Generar requisiciones desde inventario"
         description="Selecciona insumos y cantidades. Si pertenecen a proveedores distintos, Desweb CMMS crea una requisición independiente para cada proveedor."
       />

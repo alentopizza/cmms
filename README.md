@@ -46,6 +46,9 @@ Incluye:
 - Usuarios, membresías y roles en el modelo de datos.
 - Adjuntos y bitácora de auditoría.
 - Dashboard operativo.
+- Asistencia de campo con verificación facial 1:1 y geocercas.
+- Reacción para seguimiento operativo de Técnicos conectados y respuesta a contingencias.
+- Manual de usuario público y ayuda autenticada por rol.
 - Autenticación administrativa inicial.
 - Migraciones automáticas de PostgreSQL.
 - Health check en `/api/health`.

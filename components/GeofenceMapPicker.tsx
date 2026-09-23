@@ -85,7 +85,7 @@ function loadGoogleMaps(apiKey:string) {
       key:apiKey,
       v:"weekly",
       loading:"async",
-      libraries:"marker",
+      libraries:"marker,places",
       callback:"__deswebGoogleMapsReady",
     });
     script.src=`https://maps.googleapis.com/maps/api/js?${params.toString()}`;
@@ -153,8 +153,11 @@ export default function GeofenceMapPicker({
   const [googleFailed, setGoogleFailed] = useState(false);
   const [googleConfig,setGoogleConfig]=useState<{apiKey:string;mapId:string}|null>(null);
   const [googleConfigLoaded,setGoogleConfigLoaded]=useState(false);
+  const [placesReady,setPlacesReady]=useState(false);
 
   const googleHostRef = useRef<HTMLDivElement>(null);
+  const autocompleteHostRef = useRef<HTMLDivElement>(null);
+  const autocompleteRef = useRef<any>(null);
   const mapRef = useRef<any>(null);
   const siteMarkerRef = useRef<any>(null);
   const currentMarkerRef = useRef<any>(null);
@@ -289,6 +292,77 @@ export default function GeofenceMapPicker({
       mapRef.current = null;
     };
   }, [useGoogle, readOnly, googleConfig?.apiKey, googleConfig?.mapId]);
+
+  // ── Google Places autocomplete (Maps-like address entry) ─────────────────
+
+  useEffect(()=>{
+    if(!googleReady || readOnly || !useGoogle || !autocompleteHostRef.current)return;
+    let cancelled=false;
+    let cleanup:()=>void=()=>{};
+
+    (async()=>{
+      try{
+        const google=window.google;
+        if(!google?.maps?.importLibrary)throw new Error("Places no está disponible.");
+        const {PlaceAutocompleteElement}=await google.maps.importLibrary("places");
+        if(cancelled||!autocompleteHostRef.current)return;
+
+        const element=new PlaceAutocompleteElement();
+        element.placeholder="Busca una dirección o lugar";
+        const country=(countryHint||"CO").trim().toLowerCase();
+        if(country)element.includedRegionCodes=[country];
+
+        autocompleteHostRef.current.innerHTML="";
+        autocompleteHostRef.current.appendChild(element);
+        autocompleteRef.current=element;
+        setPlacesReady(true);
+
+        const onSelect=async(event:any)=>{
+          try{
+            const prediction=event?.placePrediction || event?.detail?.placePrediction;
+            if(!prediction)return;
+            const place=prediction.toPlace();
+            await place.fetchFields({fields:["formattedAddress","location","viewport","addressComponents","displayName"]});
+            const lat=place.location?.lat?.();
+            const lng=place.location?.lng?.();
+            if(!Number.isFinite(lat)||!Number.isFinite(lng))throw new Error("Google no devolvió coordenadas para esta dirección.");
+
+            const formatted=String(place.formattedAddress || place.displayName || "").trim();
+            setAddress(formatted);
+            setLatitude(lat);
+            setLongitude(lng);
+            setValidatedLabel(formatted || "Dirección seleccionada en Google");
+            setResults([]);
+            setMessage("Dirección seleccionada con Google Places. Verifica el punto y el radio antes de guardar.");
+
+            if(mapRef.current){
+              if(place.viewport)mapRef.current.fitBounds(place.viewport);
+              else{
+                mapRef.current.setCenter({lat,lng});
+                mapRef.current.setZoom(18);
+              }
+            }
+          }catch(cause){
+            setMessage(cause instanceof Error?cause.message:"No fue posible usar la dirección seleccionada.");
+          }
+        };
+
+        const onError=()=>setMessage("Google Places no pudo cargar sugerencias. Puedes usar Validar como respaldo.");
+        element.addEventListener("gmp-select",onSelect);
+        element.addEventListener("gmp-error",onError);
+        cleanup=()=>{
+          element.removeEventListener("gmp-select",onSelect);
+          element.removeEventListener("gmp-error",onError);
+          if(element.parentNode)element.parentNode.removeChild(element);
+          if(autocompleteRef.current===element)autocompleteRef.current=null;
+        };
+      }catch{
+        if(!cancelled)setPlacesReady(false);
+      }
+    })();
+
+    return()=>{cancelled=true;cleanup();setPlacesReady(false);};
+  },[googleReady,readOnly,useGoogle,countryHint]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -444,17 +518,24 @@ export default function GeofenceMapPicker({
       <div className="field geofence-address-field">
         <label>Dirección {addressRequired ? "*" : ""}</label>
         <div className="geofence-address-control">
-          <input
+          {readOnly ? <input
             name="address"
             value={address}
             required={addressRequired}
-            readOnly={readOnly}
-            onChange={event => { setAddress(event.target.value); setValidatedLabel(""); setMessage(""); }}
-            placeholder="Ej. Carrera 15 # 93-47, Bogotá"
-          />
-          {!readOnly && <button className="button secondary" type="button" onClick={searchAddress} disabled={searching}>
-            {searching ? "Validando…" : "Validar"}
-          </button>}
+            readOnly
+          /> : <>
+            <div className="google-place-autocomplete-host" ref={autocompleteHostRef} aria-label="Buscar dirección con Google Places" />
+            {!placesReady && <input
+              value={address}
+              onChange={event => { setAddress(event.target.value); setValidatedLabel(""); setMessage(""); }}
+              placeholder="Ej. Carrera 15 # 93-47, Bogotá"
+              aria-label="Dirección"
+            />}
+            <button className="button secondary geofence-fallback-validate" type="button" onClick={searchAddress} disabled={searching}>
+              {searching ? "Validando…" : "Validar"}
+            </button>
+          </>}
+          <input type="hidden" name="address" value={address} required={addressRequired} />
         </div>
       </div>
 

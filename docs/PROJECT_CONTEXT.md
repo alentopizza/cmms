@@ -668,6 +668,6 @@ WhatsApp and telephone actions are convenience links only; they do not grant per
 
 Desweb CMMS is being prepared for distribution across multiple countries. Country-dependent form data is no longer treated as unrelated text.
 
-The current foundation centralizes Country, curated City options, calling codes, tax identifiers, personal document types and time zones in `lib/international-catalog.ts`. Companies, Sites and Users/Technicians consume shared selectors, and phones derive the international prefix from the selected Country. Platform and tenant Settings now persist a default Country and preferred Locale.
+The current foundation centralizes Country, curated City options, calling codes, tax identifiers, personal document types and time zones in `lib/international-catalog.ts`. Companies, Sites, Suppliers, Leads and Users/Technicians consume the shared Country-aware form rules where regional data is captured. Phones derive the international prefix from the selected Country; Supplier tax identity and User personal document identity also depend on Country. Platform and tenant Settings persist a default Country and preferred Locale.
 
 This is a locale-ready foundation, not a claim that the full UI has already been translated. Existing Spanish screens remain valid until translation dictionaries are introduced progressively. The Country/City catalog is intentionally extensible; the initial city sets cover common operating cities and can be expanded without changing each form independently.

@@ -170,6 +170,15 @@ This roadmap is directional and should be updated as priorities change.
 - profile-completeness and document-health indicators in the company workspace and directory.
 
 
+## Recently completed rich information slice
+
+- approved rich Información general composition for Companies and principal Locations;
+- Site Zone/Locality, responsible title and additional notes persisted through migration 025;
+- Location/Sub-location Technician tabs derived from Activity assignments instead of a parallel assignment relation;
+- Technician projection includes direct Activity assignees and members of assigned Crews;
+- Hoja de vida exports include the richer profile fields and derived Technician counts.
+
+
 ## Recently completed profile-workspace slice
 
 - standardized same-screen profile drill-down for Companies, principal Sites, Sub-locations and Users/Technicians;

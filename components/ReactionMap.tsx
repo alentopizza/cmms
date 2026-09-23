@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type BusinessHours={days:number[];openTime:string;closeTime:string};
+type BusinessHours={days:number[];openTime:string;closeTime:string;schedule:Array<{day:number;enabled:boolean;openTime:string;closeTime:string}>};
 type CompanyPoint={
   id:string;name:string;legalName:string|null;taxId:string|null;phone:string|null;adminEmail:string|null;
   website:string|null;primaryContactName:string|null;primaryContactPhone:string|null;primaryContactEmail:string|null;
@@ -131,7 +131,10 @@ function markerContent(kind:"company"|"site"|"technician",imageUrl:string|null,l
 }
 
 function scheduleLabel(hours:BusinessHours){
-  return `${hours.openTime}–${hours.closeTime}`;
+  const active=hours.schedule?.filter(item=>item.enabled)||[];
+  if(!active.length)return "Sin atención";
+  const ranges=[...new Set(active.map(item=>`${item.openTime}–${item.closeTime}`))];
+  return ranges.length===1?ranges[0]:"Horario variable";
 }
 
 function localDateKey(date:Date){

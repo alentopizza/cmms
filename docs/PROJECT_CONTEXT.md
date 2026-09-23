@@ -575,6 +575,7 @@ A provisional **Reacción** module now provides emergency-response map infrastru
 - Connected Technicians are shown using their profile photo.
 - Technician route samples are retained during the connected tracking session and rendered as a recent path.
 - Technician location permission is mandatory while using the authenticated operational panel; an on-screen indicator confirms that tracking is active.
-- Explicit logout closes the tracking session; stale clients disappear from the live map after two minutes.
+- Explicit logout closes the tracking session. Refresh/navigation/background suspension do not close it.
+- GPS telemetry is considered live for two minutes; a background-paused technician remains visible at the last known position for up to 30 minutes and is marked as paused rather than disconnected.
 - The right-side Reaction panel is intentionally reserved for the next dispatch/contingency workflow.
 - Current web/PWA implementation cannot guarantee transport-app-grade GPS while the OS suspends the browser in background; the data model is prepared for a later native mobile tracker.

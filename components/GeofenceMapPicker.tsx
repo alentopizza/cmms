@@ -33,14 +33,12 @@ declare global {
 }
 
 const TILE_SIZE = 256;
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "";
 let googleMapsPromise: Promise<any> | null = null;
 
 // ── Google Maps loader / provider boundary ──────────────────────────────────
 
-function loadGoogleMaps() {
-  if (!GOOGLE_MAPS_API_KEY) return Promise.reject(new Error("Google Maps no está configurado."));
+function loadGoogleMaps(apiKey:string) {
+  if (!apiKey) return Promise.reject(new Error("Google Maps no está configurado."));
   if (window.google?.maps?.importLibrary) return Promise.resolve(window.google);
   if (googleMapsPromise) return googleMapsPromise;
 
@@ -53,7 +51,7 @@ function loadGoogleMaps() {
     }
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&v=weekly&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&loading=async`;
     script.async = true;
     script.defer = true;
     script.dataset.deswebGoogleMaps = "true";
@@ -117,6 +115,8 @@ export default function GeofenceMapPicker({
   const [validatedLabel, setValidatedLabel] = useState(initialLatitude !== null && initialLongitude !== null ? initialAddress || "Punto configurado" : "");
   const [googleReady, setGoogleReady] = useState(false);
   const [googleFailed, setGoogleFailed] = useState(false);
+  const [googleConfig,setGoogleConfig]=useState<{apiKey:string;mapId:string}|null>(null);
+  const [googleConfigLoaded,setGoogleConfigLoaded]=useState(false);
 
   const googleHostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -127,7 +127,29 @@ export default function GeofenceMapPicker({
 
   const configured = latitude !== null && longitude !== null;
   const center = configured ? { lat: latitude as number, lon: longitude as number } : { lat: 4.711, lon: -74.0721 };
-  const useGoogle = Boolean(GOOGLE_MAPS_API_KEY) && !googleFailed;
+  const useGoogle = Boolean(googleConfig?.apiKey) && !googleFailed;
+
+  // ── Runtime Maps configuration ────────────────────────────────────────────
+
+  useEffect(()=>{
+    let cancelled=false;
+    fetch("/api/maps-config",{headers:{Accept:"application/json"},cache:"no-store"})
+      .then(async response=>{
+        if(!response.ok)throw new Error("Maps config unavailable");
+        return response.json();
+      })
+      .then(data=>{
+        if(cancelled)return;
+        if(data?.enabled&&typeof data.apiKey==="string"){
+          setGoogleConfig({apiKey:data.apiKey,mapId:typeof data.mapId==="string"?data.mapId:""});
+        }else{
+          setGoogleConfig(null);
+        }
+      })
+      .catch(()=>{ if(!cancelled)setGoogleConfig(null); })
+      .finally(()=>{ if(!cancelled)setGoogleConfigLoaded(true); });
+    return()=>{cancelled=true;};
+  },[]);
 
   // ── Current Google map initialization ─────────────────────────────────────
 
@@ -136,7 +158,7 @@ export default function GeofenceMapPicker({
     let disposed = false;
     const listeners: any[] = [];
 
-    loadGoogleMaps().then(async google => {
+    loadGoogleMaps(googleConfig?.apiKey || "").then(async google => {
       if (disposed || !googleHostRef.current) return;
       const { Map } = await google.maps.importLibrary("maps");
       const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
@@ -145,7 +167,7 @@ export default function GeofenceMapPicker({
       const map = new Map(googleHostRef.current, {
         center: { lat: center.lat, lng: center.lon },
         zoom,
-        mapId: GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID",
+        mapId: googleConfig?.mapId || "DEMO_MAP_ID",
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
@@ -229,7 +251,7 @@ export default function GeofenceMapPicker({
       accuracyCircleRef.current?.setMap?.(null);
       mapRef.current = null;
     };
-  }, [useGoogle, readOnly]);
+  }, [useGoogle, readOnly, googleConfig?.apiKey, googleConfig?.mapId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -401,7 +423,7 @@ export default function GeofenceMapPicker({
     {message && <div className="geofence-message" role="status">{message}</div>}
 
     <div className={"geofence-map-shell "+(useGoogle ? "google-provider" : "osm-provider")}>
-      {useGoogle ? <>
+      {!googleConfigLoaded ? <div className="geofence-map-empty">Cargando proveedor de mapas…</div> : useGoogle ? <>
         <div ref={googleHostRef} className="geofence-google-map" aria-label="Google Maps de la geocerca configurada" />
         {!googleReady && <div className="geofence-map-empty">Cargando Google Maps…</div>}
       </> : <button type="button" className="geofence-map-canvas" onClick={selectFallbackPoint} aria-label={readOnly ? "Mapa de respaldo de la geocerca configurada" : "Mapa de respaldo. Toca para ajustar el punto central."}>

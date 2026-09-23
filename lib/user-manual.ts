@@ -274,6 +274,52 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["orden","ot","actividad","prioridad","trabajo"],
   },
   {
+    id:"suppliers",
+    title:"Proveedores",
+    summary:"Ficha comercial y operativa del proveedor, con servicios, suministros, documentos y requisiciones.",
+    icon:"▣",
+    module:"Proveedores",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+    href:"/dashboard/suppliers",
+    steps:[
+      "Crea el proveedor con logo, tipo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y Hoja de vida.",
+      "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
+      "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
+      "Si es proveedor de Materiales/Suministros o Mixto, consulta Inventarios / suministros para ver los artículos que nos provee.",
+      "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
+      "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente.",
+      "Exporta la Hoja de vida del proveedor en PDF, Excel o Word compatible.",
+    ],
+    notes:[
+      "Eliminar un proveedor con historial de inventario, actividades o requisiciones está bloqueado para conservar trazabilidad. Desactívalo cuando deba conservarse el historial.",
+      "Actividades e Inventarios son proyecciones de sus módulos de origen; no se asignan de nuevo dentro de la ficha del proveedor.",
+    ],
+    keywords:["proveedor","servicios","suministros","documentos","logo","hoja de vida"],
+  },
+  {
+    id:"requisitions",
+    title:"Requisiciones por proveedor",
+    summary:"Solicita insumos desde un proveedor o desde Inventario, manteniendo una requisición separada por proveedor.",
+    icon:"▧",
+    module:"Requisiciones",
+    roles:["all","platform_owner","superadmin","admin","manager","requester","viewer"],
+    href:"/dashboard/requisitions",
+    steps:[
+      "Puedes iniciar una requisición desde la ficha del proveedor o desde Inventario.",
+      "Desde Proveedores solo se muestran insumos relacionados con ese proveedor.",
+      "Desde Inventario puedes seleccionar insumos de varios proveedores y escribir la cantidad requerida para cada uno.",
+      "Si la selección incluye varios proveedores, el sistema divide automáticamente la solicitud y crea una requisición independiente por proveedor.",
+      "Consulta cada requisición para revisar proveedor, solicitante, destino, cantidades, costos estimados, fecha requerida y observaciones.",
+      "Actualiza el estado entre Borrador, Enviada, Aprobada, Rechazada, Parcialmente atendida, Atendida, Cerrada o Cancelada según el flujo real.",
+      "Exporta la requisición en PDF, Excel o Word compatible para compartirla o tramitarla fuera del sistema.",
+    ],
+    notes:[
+      "Crear o aprobar una requisición no aumenta existencias. La recepción del material debe registrarse como una operación de Inventario independiente.",
+      "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
+    ],
+    keywords:["requisición","compras","proveedor","inventario","insumos","cantidades","abastecimiento"],
+  },
+  {
     id:"settings",
     title:"Mi configuración y configuración administrativa",
     summary:"Apariencia personal para todos y ajustes de empresa/plataforma según permisos.",
@@ -296,6 +342,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-23",
+    title:"Proveedores y requisiciones por proveedor",
+    summary:"Proveedores adopta ficha visual con logo, actividades, suministros y documentos; las requisiciones pueden nacer desde Proveedor o Inventario y siempre se separan por proveedor.",
+    roles:["all","platform_owner","superadmin","admin","manager","requester","viewer"],
+  },
   {
     date:"2026-09-23",
     title:"País, ciudad, documentos e idioma relacionados",

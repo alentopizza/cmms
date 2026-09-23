@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-22 — Google Maps build-time environment fix
+
+### Fixed
+
+- Google Maps public variables are now injected into the Docker builder stage so Next.js can compile `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` into the browser bundle.
+- The server Geocoding key remains runtime-only and is not exposed to the browser build.
+
 ## 2026-09-22 — Google Maps production geolocation stack
 
 ### Changed

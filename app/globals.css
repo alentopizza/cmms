@@ -8436,12 +8436,6 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
   text-align:center;
 }
 
-.reaction-filter-layers{
-  display:flex;
-  align-items:stretch;
-  flex:0 0 auto;
-}
-.reaction-filter-layers label,
 .reaction-filter-select{
   min-height:30px;
   display:flex;
@@ -8453,27 +8447,6 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
   color:var(--text-soft);
   font-size:8px;
   font-weight:850;
-}
-.reaction-filter-layers label{
-  cursor:pointer;
-}
-.reaction-filter-layers label.active{
-  background:transparent;
-  color:#123f32;
-  box-shadow:inset 0 -2px 0 #16835f;
-}
-.reaction-filter-layers input{accent-color:#16835f}
-.reaction-filter-layers b{
-  min-width:18px;
-  height:18px;
-  display:grid;
-  place-items:center;
-  padding:0 5px;
-  border:1px solid color-mix(in srgb,#174d3d 18%,var(--border));
-  border-radius:999px;
-  background:var(--surface);
-  color:var(--text);
-  font-size:7px;
 }
 .reaction-filter-select{
   flex:0 0 auto;
@@ -9362,7 +9335,7 @@ html[data-theme="dark"] .reaction-map-status{
   .business-hours-time-grid{grid-template-columns:1fr}
   .reaction-workspace{gap:10px}
   .reaction-filter-bar{left:8px;right:8px;top:8px;overflow-x:auto}
-  .reaction-filter-layers,.reaction-filter-select{flex:0 0 auto}
+  .reaction-filter-select{flex:0 0 auto}
   .reaction-map-stage,.reaction-google-map{min-height:calc(100vh - 230px)}
   .reaction-map-status{top:54px}
   .reaction-map-status small{display:none}

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Reaction technician selector
+
+### Changed
+
+- Removed the Técnicos / Empresas / Sedes layer checkbox group from the Reaction filter bar.
+- Companies and Sites remain visible by default; Technician visibility is now controlled through a dedicated **Técnico** selector beside Empresa, Sede and Horario.
+- Selecting a Technician narrows the map to that technician and filters the pending-activity panel to work assigned directly or through one of the technician's crews.
+- Company changes automatically clear an incompatible Technician selection.
+- **Borrar filtros** now also clears the Technician selector.
+
 ## 2026-09-23 — Reaction filter-bar visual refinement
 
 ### Changed

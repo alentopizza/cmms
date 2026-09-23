@@ -1,6 +1,23 @@
 # Changelog
 
 
+## 2026-09-23 — Approved in-page profiles and breadcrumbs
+
+### Changed
+
+- Replaced the Company, Site, Sub-location and User/Technician **detail modals** with the approved same-screen detail workspace. Selecting a directory card now replaces the directory body inside the current module instead of opening an overlay.
+- Added visible breadcrumbs to every shared profile workspace so operators can move back through **Inicio → módulo → parent → current record** without closing a popup.
+- Applied the same approved profile workspace to **Companies** with identity/logo, statistics, quick actions and independent right-side tabs.
+- Standardized the detail header to match the approved reference: entity icon + contextual **Type / Name** title on the left, compact Edit/View/Create actions and the primary **Exportar** dropdown on the right.
+- Company, Site, Sub-location and User/Technician profile tabs replace content in place; they do not append another long vertical section under the current tab.
+- Company Hoja de vida export is now included in the same authenticated PDF/XLSX/Word-compatible export endpoint.
+
+### Design rule
+
+- Detail navigation for **Companies, Sites, Sub-locations and Users/Technicians is in-page, not modal**.
+- Creation forms, destructive confirmations and other decision flows may continue using modals where appropriate.
+
+
 ## 2026-09-23 — Entity profile workspaces, top-right account controls and Hoja de vida exports
 
 ### Added

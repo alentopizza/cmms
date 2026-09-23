@@ -13,13 +13,6 @@ export default async function ReactionPage(){
   return <>
     <section className="reaction-workspace section">
       <ReactionMap />
-      <aside className="reaction-side-panel" aria-label="Panel de Reacción reservado">
-        <div className="reaction-side-panel-placeholder">
-          <span>REACCIÓN</span>
-          <strong>Panel operativo reservado</strong>
-          <p>Este espacio queda disponible para definir despacho, contingencias, prioridades y asignación del grupo de emergencia.</p>
-        </div>
-      </aside>
     </section>
   </>;
 }

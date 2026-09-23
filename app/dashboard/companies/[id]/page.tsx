@@ -157,6 +157,7 @@ export default async function CompanyDetailPage({
   const [organizationResult, sitesResult, serviceSuppliersResult, documentsResult] = await Promise.all([
     query<Organization>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.tax_id_type,o.timezone,o.active,o.updated_at::text,
+        o.business_days,o.business_open_time::text,o.business_close_time::text,
         o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
         o.primary_contact_name,o.primary_contact_title,o.primary_contact_phone,o.primary_contact_email,o.internal_notes,
         (o.logo_data IS NOT NULL) has_logo,

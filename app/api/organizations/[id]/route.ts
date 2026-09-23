@@ -191,6 +191,8 @@ export async function POST(
   try {
     if (businessHoursSubmitted(form, "site_business_")) {
       siteHours = readBusinessHours(form, "site_business_", siteHours);
+    } else if (returnToDirectory && businessHoursSubmitted(form, "business_")) {
+      siteHours = organizationHours;
     }
   } catch (error) {
     if (error instanceof BusinessHoursValidationError) {

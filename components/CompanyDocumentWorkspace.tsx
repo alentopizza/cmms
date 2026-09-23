@@ -163,7 +163,7 @@ export default function CompanyDocumentWorkspace({
             {!selected.archived_at
               ? <form method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id}>
                   <input type="hidden" name="intent" value="archive"/>
-                  <ConfirmSubmitButton className="document-action-pill archive" confirmation={"¿Seguro que quieres archivar “"+selected.display_name+"”? Podrás restaurarlo después."}>
+                  <ConfirmSubmitButton className="document-action-pill archive" title="Archivar el documento sin eliminarlo" data-tooltip="Archivar" confirmation={"¿Seguro que quieres archivar “"+selected.display_name+"”? Podrás restaurarlo después."}>
                     <i>↧</i><span>Archivar</span>
                   </ConfirmSubmitButton>
                 </form>
@@ -176,6 +176,8 @@ export default function CompanyDocumentWorkspace({
               id={selected.id}
               label={selected.display_name}
               className="document-action-pill delete"
+              tooltip="Eliminar definitivamente el documento"
+              icon="×"
             />}
           </div>
 

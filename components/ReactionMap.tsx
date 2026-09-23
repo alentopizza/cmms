@@ -226,7 +226,11 @@ export default function ReactionMap(){
       const site=snapshot.sites.find(item=>item.id===siteId);
       if(site&&site.organizationId!==companyId)setSiteId("");
     }
-  },[companyId,siteId,snapshot.sites]);
+    if(companyId&&technicianId){
+      const technician=snapshot.technicians.find(item=>item.userId===technicianId);
+      if(technician&&technician.organizationId!==companyId)setTechnicianId("");
+    }
+  },[companyId,siteId,technicianId,snapshot.sites,snapshot.technicians]);
 
   useEffect(()=>{
     if(!detail)return;
@@ -499,10 +503,12 @@ export default function ReactionMap(){
     if(result.kind==="company"){
       setCompanyId(result.organizationId);
       setSiteId("");
+      setTechnicianId("");
       setDetail({kind:"company",id:result.id});
     }else if(result.kind==="site"){
       setCompanyId(result.organizationId);
       setSiteId(result.siteId||"");
+      setTechnicianId("");
       setDetail({kind:"site",id:result.id});
     }else{
       setCompanyId(result.organizationId);
@@ -556,7 +562,7 @@ export default function ReactionMap(){
 
         <label className="reaction-filter-select">
           <span>Empresa</span>
-          <select value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");}}>
+          <select value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");setTechnicianId("");}}>
             <option value="">Todas</option>
             {snapshot.companies.map(company=><option key={company.id} value={company.id}>{company.name}</option>)}
           </select>

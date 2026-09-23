@@ -281,3 +281,14 @@ Rules:
 - revocation removes the usable encrypted template while preserving non-biometric audit metadata.
 
 This remains 1:1 verification of an authenticated account. It is not face search or company-wide biometric identification.
+
+
+## Reaction tracking boundary
+
+**Decision:** Reaction location tracking is tied to the Technician's connected operational session, not to the Attendance shift.
+
+**Why:** emergency-response coordination needs to know where available technicians are before an OT or attendance event is necessarily opened. Attendance remains proof-of-presence/working-time evidence; Reaction is dispatch/location telemetry.
+
+**Privacy/operational boundary:** location permission is explicit and mandatory for the Technician role, the UI displays an active-tracking indicator, the session ends on logout, stale sessions disappear from the live view, and only supervisory Reaction roles can view other technicians.
+
+**Mobile constraint:** browser/PWA tracking is acceptable for the first phase, but continuous background tracking comparable to transport apps requires a native/mobile-container implementation with OS background-location permissions.

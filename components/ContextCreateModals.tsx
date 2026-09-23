@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import PhoneField from "@/components/PhoneField";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -120,11 +121,11 @@ export function SiteCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
-          <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required /></div>
+          <div className="field"><label>País *</label><input id="new-site-country" name="country" defaultValue="CO" maxLength={2} required /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como imagen de referencia de la ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
-          <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="new-site-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
           <BusinessHoursFields title="Horario de atención de la sede" description="Este horario alimenta el filtro operativo de Reacción." />
         </div>

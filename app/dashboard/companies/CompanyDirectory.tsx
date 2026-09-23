@@ -353,36 +353,41 @@ export default function CompanyDirectory({
               <span><strong>Sede principal y cobertura</strong><small>Dirección operativa y base para mapa, geocerca y asistencia biométrica.</small></span>
               <i aria-hidden="true">⌄</i>
             </summary>
-            <div className="company-detail-accordion-body">
-              <div className="form-grid">
-                <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
+            <div className="company-detail-accordion-body company-site-coverage-body">
+              <div className="company-site-map-block">
+                <GeofenceMapPicker
+                  initialAddress={selected.address}
+                  initialLatitude={selected.site_latitude}
+                  initialLongitude={selected.site_longitude}
+                  initialRadius={selected.site_geofence_radius_m || 250}
+                  cityHint={selected.city}
+                  countryHint={selected.country}
+                  readOnly={!editing}
+                  addressRequired
+                  coordinateRequired
+                  markerImageUrl={selected.has_logo?`/api/organizations/${selected.id}/assets/logo`:null}
+                  markerLabel={selected.name}
+                  className="company-site-geofence"
+                />
               </div>
 
-              <GeofenceMapPicker
-                initialAddress={selected.address}
-                initialLatitude={selected.site_latitude}
-                initialLongitude={selected.site_longitude}
-                initialRadius={selected.site_geofence_radius_m || 250}
-                cityHint={selected.city}
-                countryHint={selected.country}
-                readOnly={!editing}
-                addressRequired
-                coordinateRequired
-                markerImageUrl={selected.has_logo?`/api/organizations/${selected.id}/assets/logo`:null}
-                markerLabel={selected.name}
-              />
-              <BusinessHoursFields
-                prefix="site_business_"
-                days={selected.site_business_days}
-                openTime={selected.site_business_open_time}
-                closeTime={selected.site_business_close_time}
-                disabled={!editing}
-                title="Horario de la sede principal"
-                description="La sede puede manejar una franja distinta a la empresa."
-              />
+              <div className="company-site-info-grid">
+                <div className="company-site-info-card">
+                  <span>Identidad de sede</span>
+                  <div className="company-site-info-fields">
+                    <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
+                    <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
+                  </div>
+                </div>
+
+                <div className="company-site-info-card">
+                  <span>Ubicación administrativa</span>
+                  <div className="company-site-info-fields">
+                    <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
+                    <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </details>
 

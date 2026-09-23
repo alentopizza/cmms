@@ -7,11 +7,11 @@ import { CountrySelect } from "@/components/InternationalFields";
 type Fields = "full_name" | "company_name" | "email" | "phone" | "country_code" | "interest" | "message" | "general";
 type Errors = Partial<Record<Fields,string>>;
 
-export default function MarketingLeadForm() {
+export default function MarketingLeadForm({defaultCountry="CO"}:{defaultCountry?:string}) {
   const [errors,setErrors]=useState<Errors>({});
   const [sending,setSending]=useState(false);
   const [sent,setSent]=useState(false);
-  const [country,setCountry]=useState("CO");
+  const [country,setCountry]=useState(defaultCountry);
   const [phone,setPhone]=useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -37,7 +37,7 @@ export default function MarketingLeadForm() {
       }
 
       form.reset();
-      setCountry("CO");
+      setCountry(defaultCountry);
       setPhone("");
       setSent(true);
     } catch {

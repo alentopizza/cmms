@@ -168,7 +168,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "No necesitas tener una OT o actividad asignada en ese momento; las actividades posteriores pueden relacionarse con la jornada abierta.",
       "Al finalizar tu presencia pulsa Marcar salida / Finalizar jornada y repite las validaciones requeridas.",
     ],
-    notes:["La geolocalización se captura en eventos explícitos de entrada/salida; no se rastrea continuamente en segundo plano."],
+    notes:["Asistencia sigue validando entrada/salida de forma explícita. Si el usuario es Técnico, el módulo Reacción mantiene además seguimiento GPS operativo mientras la sesión del panel permanezca conectada."],
     keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
   },
   {
@@ -192,6 +192,27 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Una contingencia aprobada es una excepción auditada, no una validación biométrica normal.",
     ],
     keywords:["contingencia","falla","gps","cámara","aprobación"],
+  },
+  {
+    id:"reaction-tracking",
+    title:"Reacción y seguimiento operativo",
+    summary:"Cómo funciona la ubicación obligatoria del técnico y el mapa de supervisión.",
+    icon:"⌖",
+    module:"Reacción",
+    roles:["all","platform_owner","superadmin","admin","manager","technician"],
+    href:"/dashboard/reaction",
+    steps:[
+      "Para un Técnico, entrar al panel requiere conceder permiso de ubicación al navegador.",
+      "Al obtener el primer GPS válido, el sistema lo considera conectado e inicia una sesión de seguimiento operativo.",
+      "Mientras la app permanezca conectada se envían posiciones periódicas; el mapa de Reacción muestra su foto y el trayecto reciente.",
+      "Administradores y Managers pueden ver las sedes con logo de empresa y los técnicos conectados de su organización.",
+      "Cerrar sesión detiene y cierra la sesión de seguimiento.",
+    ],
+    notes:[
+      "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia.",
+      "En una web/PWA, el sistema operativo puede suspender el GPS con la pantalla bloqueada o la app en segundo plano. Para funcionamiento idéntico a una app de transporte se requerirá una fase móvil nativa.",
+    ],
+    keywords:["reacción","gps","seguimiento","trayecto","técnico","contingencia"],
   },
   {
     id:"assets-mobile",

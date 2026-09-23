@@ -596,3 +596,19 @@ Site and sub-location image uploads accept PNG/JPG/WEBP up to 5 MB.
 ## User visual identity
 
 Users can store a profile photograph. User directory cards display the image when available and fall back to initials otherwise.
+
+
+## International Country, City and identity selection
+
+Country, City, telephone calling code and identification types are one related form domain.
+
+- **Country is selected, never typed** in the migrated Company/Site/User identity flows.
+- **City is selected from the chosen Country**. Changing Country clears an incompatible City and presents the new Country's available catalog.
+- **Company identification type** comes from the chosen legal Country (for example NIT, RUC, RFC, RUT, CNPJ or EIN according to the configured catalog).
+- **Personal document type** comes from the User/Technician's chosen Country.
+- **Telephone calling prefix** comes from the same Country selection; the operator enters the remaining national number and the system serializes an international E.164 value.
+- Country-driven time-zone options are used in Company profile creation/editing.
+- Platform and Company settings persist **Idioma / Locale** and a **País predeterminado**. These defaults initialize future forms but do not prevent selecting another supported Country for a specific record.
+- Translation rollout is progressive: a stored locale is the preference source, but existing screens remain Spanish until their string dictionaries are implemented.
+
+The catalog is centrally extensible. Adding another Country must update the shared catalog and its validation rather than introducing a one-off free-text exception in a module.

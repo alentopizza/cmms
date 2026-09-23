@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { publicUrl } from "@/lib/urls";
 import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const TYPES=new Set(["materials","services","both"]);
 
@@ -18,18 +19,26 @@ export async function POST(request:Request) {
   if(session.platformRole==="user") organizationId=session.organizationId || "";
 
   const name=String(form.get("name")||"").trim();
+  const legalName=String(form.get("legal_name")||"").trim();
   const supplierType=String(form.get("supplier_type")||"materials");
   const taxId=String(form.get("tax_id")||"").trim();
   const taxIdType=String(form.get("tax_id_type")||"").trim();
   const countryCode=String(form.get("country_code")||"").trim().toUpperCase();
   const serviceCategory=String(form.get("service_category")||"").trim();
+  const city=String(form.get("city")||"").trim();
+  const address=String(form.get("address")||"").trim();
+  const website=String(form.get("website")||"").trim();
   const contactName=String(form.get("contact_name")||"").trim();
+  const contactTitle=String(form.get("contact_title")||"").trim();
   const email=String(form.get("email")||"").trim().toLowerCase();
   const phone=String(form.get("phone")||"").trim();
   const notes=String(form.get("notes")||"").trim();
 
   const target=(suffix:string)=>publicUrl(`/dashboard/suppliers${suffix}`,request.url);
-  if(!organizationId || !name || !TYPES.has(supplierType) || !isSupportedCountry(countryCode)) return NextResponse.redirect(target("?error=required"),303);
+  let logo=null;
+  try{ logo=await readImageUpload(form,"logo"); }
+  catch(error){ return NextResponse.redirect(target("?error="+encodeURIComponent(imageUploadMessage(error)||"logo")),303); }
+  if(!organizationId || !name || !legalName || !city || !address || !TYPES.has(supplierType) || !isSupportedCountry(countryCode) || !logo) return NextResponse.redirect(target("?error=required"),303);
   if((taxId||taxIdType) && (!taxId || !taxIdType || !isTaxIdTypeForCountry(countryCode,taxIdType))) return NextResponse.redirect(target("?error=required"),303);
 
   const org=await query("SELECT 1 FROM organizations WHERE id=$1 AND active=true",[organizationId]);
@@ -39,9 +48,17 @@ export async function POST(request:Request) {
   if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
 
   await query(
-    `INSERT INTO suppliers(organization_id,name,tax_id,tax_id_type,country_code,contact_name,email,phone,notes,supplier_type,service_category)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-    [organizationId,name,taxId||null,taxIdType||null,countryCode,contactName||null,email||null,phone||null,notes||null,supplierType,serviceCategory||null],
+    `INSERT INTO suppliers(
+       organization_id,name,legal_name,tax_id,tax_id_type,country_code,city,address,website,
+       contact_name,contact_title,email,phone,notes,supplier_type,service_category,
+       logo_data,logo_mime_type,logo_file_name,updated_at
+     )
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,now())`,
+    [
+      organizationId,name,legalName,taxId||null,taxIdType||null,countryCode,city,address,website||null,
+      contactName||null,contactTitle||null,email||null,phone||null,notes||null,supplierType,serviceCategory||null,
+      logo.data,logo.mime,"supplier-logo",
+    ],
   );
 
   return NextResponse.redirect(target("?created=1"),303);

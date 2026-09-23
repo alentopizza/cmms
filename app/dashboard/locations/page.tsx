@@ -30,7 +30,13 @@ export default async function LocationsIndexPage({
                 s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
                 (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
                 (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
-                (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
+                (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count,
+                (SELECT count(*)::int FROM organization_members om
+                 WHERE om.organization_id=s.organization_id AND om.role='technician'
+                   AND (om.access_all_sites=true OR EXISTS(
+                     SELECT 1 FROM organization_member_sites oms
+                     WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id AND oms.site_id=s.id
+                   ))) technician_count
          FROM sites s JOIN organizations o ON o.id=s.organization_id
          ORDER BY o.name,s.active DESC,s.name`,
       )
@@ -41,7 +47,13 @@ export default async function LocationsIndexPage({
                   s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
                   (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
                   (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
-                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
+                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count,
+                (SELECT count(*)::int FROM organization_members om
+                 WHERE om.organization_id=s.organization_id AND om.role='technician'
+                   AND (om.access_all_sites=true OR EXISTS(
+                     SELECT 1 FROM organization_member_sites oms
+                     WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id AND oms.site_id=s.id
+                   ))) technician_count
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.organization_id=$1
            ORDER BY s.active DESC,s.name`,
@@ -53,7 +65,13 @@ export default async function LocationsIndexPage({
                   s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
                   (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
                   (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
-                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
+                  (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count,
+                (SELECT count(*)::int FROM organization_members om
+                 WHERE om.organization_id=s.organization_id AND om.role='technician'
+                   AND (om.access_all_sites=true OR EXISTS(
+                     SELECT 1 FROM organization_member_sites oms
+                     WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id AND oms.site_id=s.id
+                   ))) technician_count
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.organization_id=$1 AND s.id = ANY($2::uuid[])
            ORDER BY s.active DESC,s.name`,
@@ -94,7 +112,7 @@ export default async function LocationsIndexPage({
           ),
     superadmin
       ? query<LocationDirectoryService>(
-          `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+          `SELECT w.id,w.site_id,a.location_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
                   l.name location_name
            FROM work_orders w
            LEFT JOIN assets a ON a.id=w.asset_id
@@ -103,7 +121,7 @@ export default async function LocationsIndexPage({
         )
       : session.accessAllSites
         ? query<LocationDirectoryService>(
-            `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+            `SELECT w.id,w.site_id,a.location_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
                     l.name location_name
              FROM work_orders w
              LEFT JOIN assets a ON a.id=w.asset_id
@@ -113,7 +131,7 @@ export default async function LocationsIndexPage({
             [session.organizationId],
           )
         : query<LocationDirectoryService>(
-            `SELECT w.id,w.site_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
+            `SELECT w.id,w.site_id,a.location_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
                     l.name location_name
              FROM work_orders w
              LEFT JOIN assets a ON a.id=w.asset_id

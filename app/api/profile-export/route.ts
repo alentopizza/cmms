@@ -30,10 +30,12 @@ function dateText(value:string|null){if(!value)return "—";const d=new Date(val
 async function loadOrganization(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
   if(!can(session,"companies.manage")) return null;
   const result=await query<{
-    id:string;name:string;legal_name:string|null;tax_id:string|null;legal_address:string|null;legal_city:string|null;legal_country:string|null;
-    phone:string|null;admin_email:string|null;primary_contact_name:string|null;active:boolean;timezone:string;logo_data:Buffer|null;logo_mime_type:string|null;
+    id:string;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;legal_address:string|null;legal_city:string|null;legal_country:string|null;
+    phone:string|null;admin_email:string|null;billing_email:string|null;website:string|null;primary_contact_name:string|null;primary_contact_title:string|null;
+    primary_contact_phone:string|null;primary_contact_email:string|null;internal_notes:string|null;active:boolean;timezone:string;logo_data:Buffer|null;logo_mime_type:string|null;
     site_count:number;sublocation_count:number;asset_count:number;technician_count:number;document_count:number;pending_document_count:number;plan_name:string|null;
-  }>(`SELECT o.id,o.name,o.legal_name,o.tax_id,o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.primary_contact_name,
+  }>(`SELECT o.id,o.name,o.legal_name,o.tax_id,o.tax_id_type,o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
+            o.primary_contact_name,o.primary_contact_title,o.primary_contact_phone,o.primary_contact_email,o.internal_notes,
             o.active,o.timezone,o.logo_data,o.logo_mime_type,bp.name plan_name,
             (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id) site_count,
             (SELECT count(*)::int FROM locations l WHERE l.organization_id=o.id) sublocation_count,
@@ -52,38 +54,46 @@ async function loadOrganization(id:string,session:NonNullable<Awaited<ReturnType
   return {
     entityLabel:"Empresa",title:row.name,subtitle:row.legal_name||row.name,status:row.active?"Activa":"Inactiva",
     fields:[
-      {label:"Razón social",value:safe(row.legal_name,"Sin registrar")},{label:"NIT / Identificación",value:safe(row.tax_id,"Sin registrar")},
+      {label:"Razón social",value:safe(row.legal_name,"Sin registrar")},{label:safe(row.tax_id_type,"NIT")+" / Identificación",value:safe(row.tax_id,"Sin registrar")},
       {label:"Dirección administrativa",value:safe(row.legal_address,"Sin registrar")},{label:"Ciudad",value:safe(row.legal_city,"Sin registrar")},
       {label:"País",value:safe(row.legal_country,"Sin registrar")},{label:"Teléfono",value:safe(row.phone,"Sin registrar")},
-      {label:"Correo administrativo",value:safe(row.admin_email,"Sin registrar")},{label:"Contacto principal",value:safe(row.primary_contact_name,"Sin registrar")},
-      {label:"Zona horaria",value:safe(row.timezone)},{label:"Plan",value:safe(row.plan_name,"Sin plan")},
+      {label:"Correo administrativo",value:safe(row.admin_email,"Sin registrar")},{label:"Correo de facturación",value:safe(row.billing_email,"Sin registrar")},
+      {label:"Sitio web",value:safe(row.website,"Sin registrar")},{label:"Contacto principal",value:safe(row.primary_contact_name,"Sin registrar")},
+      {label:"Cargo del contacto",value:safe(row.primary_contact_title,"Sin registrar")},{label:"Teléfono del contacto",value:safe(row.primary_contact_phone,"Sin registrar")},
+      {label:"Correo del contacto",value:safe(row.primary_contact_email,"Sin registrar")},{label:"Zona horaria",value:safe(row.timezone)},{label:"Plan",value:safe(row.plan_name,"Sin plan")},
     ],
     stats:[
       {label:"Ubicaciones",value:String(row.site_count)},{label:"Sububicaciones",value:String(row.sublocation_count)},
       {label:"Activos",value:String(row.asset_count)},{label:"Técnicos",value:String(row.technician_count)},
       {label:"Documentos vigentes",value:String(row.document_count)},{label:"Documentos pendientes",value:String(row.pending_document_count)},
     ],
-    sections:[],image:row.logo_data,imageMime:row.logo_mime_type,
+    sections:row.internal_notes?[{title:"Notas adicionales",fields:[{label:"Notas internas",value:row.internal_notes}]}]:[],image:row.logo_data,imageMime:row.logo_mime_type,
   };
 }
 
 async function loadSite(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
   if(!can(session,"locations.manage")) return null;
   const result=await query<{
-    id:string;organization_id:string;organization_name:string;name:string;code:string|null;address:string|null;city:string|null;country:string;active:boolean;
-    contact_name:string|null;contact_phone:string|null;contact_email:string|null;latitude:number|null;longitude:number|null;geofence_radius_m:number;
+    id:string;organization_id:string;organization_name:string;name:string;code:string|null;address:string|null;city:string|null;locality:string|null;country:string;active:boolean;
+    contact_name:string|null;contact_title:string|null;contact_phone:string|null;contact_email:string|null;notes:string|null;latitude:number|null;longitude:number|null;geofence_radius_m:number;
     location_count:number;asset_count:number;active_order_count:number;technician_count:number;image_data:Buffer|null;image_mime_type:string|null;
-  }>(`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
-            s.contact_name,s.contact_phone,s.contact_email,s.latitude,s.longitude,s.geofence_radius_m,
+  }>(`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.locality,s.country,s.active,
+            s.contact_name,s.contact_title,s.contact_phone,s.contact_email,s.notes,s.latitude,s.longitude,s.geofence_radius_m,
             (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
             (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count,
             (SELECT count(*)::int FROM work_orders w WHERE w.site_id=s.id AND w.status NOT IN ('completed','cancelled')) active_order_count,
-            (SELECT count(*)::int FROM organization_members om
-              WHERE om.organization_id=s.organization_id AND om.role='technician'
-                AND (om.access_all_sites=true OR EXISTS(
-                  SELECT 1 FROM organization_member_sites oms
-                  WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id AND oms.site_id=s.id
-                ))) technician_count,
+            (SELECT count(DISTINCT assigned.user_id)::int
+             FROM (
+               SELECT wt.assigned_to user_id
+               FROM work_order_tasks wt JOIN work_orders w ON w.id=wt.work_order_id
+               WHERE w.site_id=s.id AND wt.assigned_to IS NOT NULL
+               UNION
+               SELECT cm.user_id
+               FROM work_order_tasks wt JOIN work_orders w ON w.id=wt.work_order_id
+               JOIN crew_members cm ON cm.crew_id=wt.crew_id
+               WHERE w.site_id=s.id AND wt.crew_id IS NOT NULL
+             ) assigned
+             JOIN organization_members om ON om.organization_id=s.organization_id AND om.user_id=assigned.user_id AND om.role='technician') technician_count,
             s.image_data,s.image_mime_type
      FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.id=$1`,[id]);
   if(!result.rowCount)return null;
@@ -93,9 +103,9 @@ async function loadSite(id:string,session:NonNullable<Awaited<ReturnType<typeof 
     entityLabel:"Ubicación principal",title:row.name,subtitle:row.organization_name,status:row.active?"Activa":"Inactiva",
     fields:[
       {label:"Código",value:safe(row.code,"Sin código")},{label:"Dirección",value:safe(row.address,"Sin registrar")},
-      {label:"Ciudad",value:safe(row.city,"Sin registrar")},{label:"País",value:safe(row.country)},
-      {label:"Contacto",value:safe(row.contact_name,"Sin registrar")},{label:"Teléfono",value:safe(row.contact_phone,"Sin registrar")},
-      {label:"Correo",value:safe(row.contact_email,"Sin registrar")},
+      {label:"Zona / Localidad",value:safe(row.locality,"Sin registrar")},{label:"Ciudad",value:safe(row.city,"Sin registrar")},{label:"País",value:safe(row.country)},
+      {label:"Responsable",value:safe(row.contact_name,"Sin registrar")},{label:"Cargo del responsable",value:safe(row.contact_title,"Sin registrar")},
+      {label:"Teléfono",value:safe(row.contact_phone,"Sin registrar")},{label:"Correo",value:safe(row.contact_email,"Sin registrar")},
     ],
     stats:[
       {label:"Sububicaciones",value:String(row.location_count)},{label:"Activos",value:String(row.asset_count)},
@@ -107,6 +117,7 @@ async function loadSite(id:string,session:NonNullable<Awaited<ReturnType<typeof 
         {label:"Longitud",value:row.longitude===null?"—":String(row.longitude)},
         {label:"Radio",value:String(row.geofence_radius_m)+" m"},
       ]},
+      ...(row.notes?[{title:"Notas adicionales",fields:[{label:"Notas",value:row.notes}]}]:[]),
     ],
     image:row.image_data,imageMime:row.image_mime_type,
   };
@@ -116,11 +127,23 @@ async function loadLocation(id:string,session:NonNullable<Awaited<ReturnType<typ
   if(!can(session,"locations.manage")) return null;
   const result=await query<{
     id:string;organization_id:string;site_id:string;organization_name:string;site_name:string;name:string;code:string|null;type:string;description:string|null;active:boolean;
-    child_count:number;asset_count:number;active_order_count:number;image_data:Buffer|null;image_mime_type:string|null;
+    child_count:number;asset_count:number;active_order_count:number;technician_count:number;image_data:Buffer|null;image_mime_type:string|null;
   }>(`SELECT l.id,l.organization_id,l.site_id,o.name organization_name,s.name site_name,l.name,l.code,l.type,l.description,l.active,
             (SELECT count(*)::int FROM locations c WHERE c.parent_id=l.id AND c.active=true) child_count,
             (SELECT count(*)::int FROM assets a WHERE a.location_id=l.id AND a.status<>'retired') asset_count,
-            (SELECT count(*)::int FROM work_orders w JOIN assets a ON a.id=w.asset_id WHERE a.location_id=l.id AND w.status NOT IN ('completed','cancelled')) active_order_count,
+            (SELECT count(*)::int FROM work_orders w LEFT JOIN assets a ON a.id=w.asset_id WHERE COALESCE(w.location_id,a.location_id)=l.id AND w.status NOT IN ('completed','cancelled')) active_order_count,
+            (SELECT count(DISTINCT assigned.user_id)::int
+             FROM (
+               SELECT wt.assigned_to user_id
+               FROM work_order_tasks wt JOIN work_orders w ON w.id=wt.work_order_id LEFT JOIN assets a ON a.id=w.asset_id
+               WHERE COALESCE(w.location_id,a.location_id)=l.id AND wt.assigned_to IS NOT NULL
+               UNION
+               SELECT cm.user_id
+               FROM work_order_tasks wt JOIN work_orders w ON w.id=wt.work_order_id LEFT JOIN assets a ON a.id=w.asset_id
+               JOIN crew_members cm ON cm.crew_id=wt.crew_id
+               WHERE COALESCE(w.location_id,a.location_id)=l.id AND wt.crew_id IS NOT NULL
+             ) assigned
+             JOIN organization_members om ON om.organization_id=l.organization_id AND om.user_id=assigned.user_id AND om.role='technician') technician_count,
             l.image_data,l.image_mime_type
      FROM locations l JOIN sites s ON s.id=l.site_id JOIN organizations o ON o.id=l.organization_id WHERE l.id=$1`,[id]);
   if(!result.rowCount)return null;
@@ -135,7 +158,7 @@ async function loadLocation(id:string,session:NonNullable<Awaited<ReturnType<typ
     ],
     stats:[
       {label:"Sububicaciones internas",value:String(row.child_count)},{label:"Activos",value:String(row.asset_count)},
-      {label:"OT activas",value:String(row.active_order_count)},{label:"Estado",value:row.active?"Activa":"Inactiva"},
+      {label:"OT activas",value:String(row.active_order_count)},{label:"Técnicos asignados",value:String(row.technician_count)},
     ],
     sections:[],image:row.image_data,imageMime:row.image_mime_type,
   };

@@ -553,6 +553,10 @@ The product now has one shared user-manual content source rendered in two contex
 Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.
 
 
+### Protected Company quick edit
+
+Opening a Company card remains read-only by default. The **Editar empresa** action must first show an explicit confirmation dialog; only after confirmation are protected fields unlocked. The Company quick-edit contact summary transforms into editable primary-contact and administrative-email fields in edit mode. Cancelling edit resets unsaved DOM form values, and successful quick-edit mutations persist only the fields intentionally submitted by that flow.
+
 ### Edit persistence behavior
 
 Mutation-driven edit flows must not report success before PostgreSQL confirms the update. Company-directory and Users edits use explicit API responses, keep validation failures visible, and reload authoritative server data after a successful mutation. Platform Owner contextual record editors likewise reload after confirmed persistence. Company profile updates only modify resource entitlements when the corresponding limit fields are actually present in the submitted form.

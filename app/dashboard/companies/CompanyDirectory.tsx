@@ -383,22 +383,9 @@ export default function CompanyDirectory({
               <i aria-hidden="true">⌄</i>
             </summary>
             <div className="company-detail-accordion-body">
-              <div className={`company-profile-contact-strip ${editing ? "editing" : ""}`}>
-                {editing ? <>
-                  <div className="field company-profile-contact-edit">
-                    <label htmlFor="detail-primary-contact">Contacto principal</label>
-                    <input id="detail-primary-contact" name="primary_contact_name" defaultValue={selected.primary_contact_name || ""} placeholder="Nombre del contacto principal" />
-                  </div>
-                  <div className="field company-profile-contact-edit">
-                    <label htmlFor="detail-admin-email">Correo administrativo</label>
-                    <input id="detail-admin-email" name="admin_email" type="email" defaultValue={selected.admin_email || ""} placeholder="correo@empresa.com" />
-                  </div>
-                </> : <>
-                  <div><span>Contacto principal</span><strong>{selected.primary_contact_name || "Sin registrar"}</strong></div>
-                  <div><span>Correo administrativo</span><strong>{selected.admin_email || "Sin registrar"}</strong></div>
-                </>}
-              </div>
               <div className="form-grid">
+                <div className="field"><label htmlFor="detail-primary-contact">Contacto principal</label><input id="detail-primary-contact" name="primary_contact_name" defaultValue={selected.primary_contact_name || ""} placeholder={editing ? "Nombre del contacto principal" : "Sin registrar"} readOnly={!editing} /></div>
+                <div className="field"><label htmlFor="detail-admin-email">Correo administrativo</label><input id="detail-admin-email" name="admin_email" type="email" defaultValue={selected.admin_email || ""} placeholder={editing ? "correo@empresa.com" : "Sin registrar"} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-name">Nombre comercial</label><input id="detail-name" name="name" defaultValue={selected.name} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-legal">Razón social</label><input id="detail-legal" name="legal_name" defaultValue={selected.legal_name || ""} readOnly={!editing} /></div>
                 <div className="field"><label htmlFor="detail-tax">NIT / Identificación</label><input id="detail-tax" name="tax_id" defaultValue={selected.tax_id || ""} readOnly={!editing} /></div>

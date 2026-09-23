@@ -103,7 +103,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/locations",
     steps:[
-      "En Dirección, empieza a escribir como lo harías en Google Maps. Aparecerán sugerencias automáticas de Google Places; selecciona la correcta para centrar el mapa y cargar sus coordenadas.",
+      "Puedes definir la ubicación de tres maneras: escribe y selecciona una sugerencia de Google Places, pulsa Usar mi GPS si estás físicamente en el sitio, o arrastra el marcador con el logo directamente sobre el mapa.",
       "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
       "Ajusta el punto sobre el mapa si es necesario. El logo de la empresa identifica visualmente el centro de la geocerca.",
       "Define el radio permitido entre 20 y 5000 metros. En edición se muestra un solo mapa interactivo; el resumen inferior evita duplicar la misma información.",

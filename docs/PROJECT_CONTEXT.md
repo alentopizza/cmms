@@ -551,3 +551,17 @@ The product now has one shared user-manual content source rendered in two contex
 ### Current location provider
 
 Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.
+
+
+### Reaction operations
+
+A provisional **Reacción** module now provides emergency-response map infrastructure.
+
+- Admin, Manager and platform operators can open the global Reaction map.
+- Configured sites are shown using the organization logo.
+- Connected Technicians are shown using their profile photo.
+- Technician route samples are retained during the connected tracking session and rendered as a recent path.
+- Technician location permission is mandatory while using the authenticated operational panel; an on-screen indicator confirms that tracking is active.
+- Explicit logout closes the tracking session; stale clients disappear from the live map after two minutes.
+- The right-side Reaction panel is intentionally reserved for the next dispatch/contingency workflow.
+- Current web/PWA implementation cannot guarantee transport-app-grade GPS while the OS suspends the browser in background; the data model is prepared for a later native mobile tracker.

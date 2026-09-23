@@ -10323,3 +10323,12 @@ html[data-theme="dark"] .entity-profile-page-identity h1,html[data-theme="dark"]
 html[data-theme="dark"] .entity-profile-toolbar-actions .button,html[data-theme="dark"] .entity-profile-toolbar-actions>a,html[data-theme="dark"] .entity-profile-stats .entity-profile-stat,html[data-theme="dark"] .entity-profile-quick-actions,html[data-theme="dark"] .entity-profile-quick-actions a,html[data-theme="dark"] .entity-profile-quick-actions button,html[data-theme="dark"] .entity-profile-content-card,html[data-theme="dark"] .entity-profile-tabs{background:var(--surface);color:var(--text)}
 @media(max-width:1100px){.entity-profile-page-head{align-items:flex-start;flex-direction:column}.entity-profile-page-head .entity-profile-toolbar-actions{margin-left:0;width:100%;justify-content:flex-start}.entity-profile-grid{grid-template-columns:300px minmax(0,1fr)}}
 @media(max-width:820px){.entity-profile-grid{grid-template-columns:1fr}.entity-profile-content-card{min-height:0}.entity-profile-page-identity h1{font-size:21px}.entity-profile-page-icon{width:46px;height:46px;flex-basis:46px}.entity-profile-toolbar-actions{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}.entity-profile-toolbar-actions>*{flex:0 0 auto}.entity-breadcrumbs{overflow-x:auto;white-space:nowrap}.entity-profile-tabs{overflow-x:auto}}
+
+
+/* Company uses the same approved in-page entity workspace */
+.company-entity-page .entity-profile-cover.has-image img{object-fit:cover}
+.company-inline-edit-form{padding:0}.company-inline-save-actions{justify-content:flex-end;position:sticky;bottom:0;padding:12px 0;background:var(--surface)}
+.entity-tab-cta{width:max-content;max-width:100%}
+.company-entity-page .entity-profile-avatar img{object-fit:contain;background:#fff}
+.company-entity-page .entity-profile-stats .entity-profile-stat{cursor:default}
+@media(max-width:760px){.company-inline-save-actions{position:static}.entity-tab-cta{width:100%}}

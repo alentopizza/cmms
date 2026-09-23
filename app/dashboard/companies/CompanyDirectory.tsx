@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
+import ProfileExportMenu from "@/components/ProfileExportMenu";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -59,6 +62,14 @@ function initials(name: string) {
   return name.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 }
 
+function DetailField({ label, value }: { label: string; value: ReactNode }) {
+  return <div className="entity-info-field"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function CompanyMetric({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
+  return <div className="entity-stat-card"><small>{label}</small><strong>{value}</strong>{hint && <span>{hint}</span>}</div>;
+}
+
 type ResourceKind = "sites" | "sublocations" | "assets" | "inventory" | "technicians";
 
 function ResourceIcon({ kind }: { kind: ResourceKind }) {
@@ -95,16 +106,12 @@ export default function CompanyDirectory({
   const editFormRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || editing) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !editing) setSelected(null);
+      if (event.key === "Escape") setSelected(null);
     };
     document.addEventListener("keydown", onKeyDown);
-    document.body.classList.add("modal-open");
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.classList.remove("modal-open");
-    };
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [selected, editing]);
 
   function close() {
@@ -195,10 +202,10 @@ export default function CompanyDirectory({
         business_close_time: representativeSchedule?.closeTime || current.business_close_time,
         primary_contact_name: String(formData.get("primary_contact_name") || "") || null,
         admin_email: String(formData.get("admin_email") || "") || null,
-        site_name: String(formData.get("site_name") || "") || null,
-        site_code: String(formData.get("site_code") || "") || null,
-        city: String(formData.get("city") || "") || null,
-        country: String(formData.get("country") || "") || null,
+        site_name: formData.has("site_name") ? (String(formData.get("site_name") || "") || null) : current.site_name,
+        site_code: formData.has("site_code") ? (String(formData.get("site_code") || "") || null) : current.site_code,
+        city: formData.has("city") ? (String(formData.get("city") || "") || null) : current.city,
+        country: formData.has("country") ? (String(formData.get("country") || "") || null) : current.country,
         address: String(formData.get("address") || "") || null,
         site_latitude: Number(formData.get("latitude") || current.site_latitude),
         site_longitude: Number(formData.get("longitude") || current.site_longitude),
@@ -231,7 +238,7 @@ export default function CompanyDirectory({
   }
 
   return <>
-    <div className="company-card-grid company-card-grid-compact">
+    {!selected&&<div className="company-card-grid company-card-grid-compact">
       {companies.map(company => {
         const resources: Array<{
           kind: ResourceKind;
@@ -301,7 +308,7 @@ export default function CompanyDirectory({
           </div>
         </article>;
       })}
-    </div>
+    </div>}
 
     <ConfirmDialog
       open={confirmation === "edit"}
@@ -331,241 +338,216 @@ export default function CompanyDirectory({
       onConfirm={submitConfirmedForm}
     />
 
-    {selected && <div className="modal-backdrop" role="presentation" onMouseDown={event => {
-      if (event.target === event.currentTarget && !editing) close();
-    }}>
-      <section className="company-modal company-detail-modal company-profile-modal" role="dialog" aria-modal="true" aria-labelledby="company-detail-title">
-        <header className="company-profile-hero">
-          <div className={`company-detail-cover ${selected.has_cover ? "" : "company-card-cover-fallback"}`}>
-            {selected.has_cover && <img src={`/api/organizations/${selected.id}/assets/cover?v=${assetVersion}`} alt={`Portada de ${selected.name}`} />}
-          </div>
-          <div className="company-profile-hero-shade" aria-hidden="true" />
-          <button className="modal-close company-detail-close" type="button" aria-label="Cerrar" onClick={close}>×</button>
-        </header>
-
-        <section className="company-profile-identity">
-          <div className="company-profile-logo">
-            {selected.has_logo
-              ? <img src={`/api/organizations/${selected.id}/assets/logo?v=${assetVersion}`} alt={`Logo de ${selected.name}`} />
-              : <span>{initials(selected.name)}</span>}
-          </div>
-
-          <div className="company-profile-copy">
-            <div className="company-profile-badges">
-              <span className={`status-badge ${selected.active ? "status-active" : "status-inactive"}`}><span aria-hidden="true" />{selected.active ? "Empresa activa" : "Empresa inactiva"}</span>
-              <span className="company-plan-pill">{selected.plan_name || "Sin plan"}</span>
-              <span className="locked-badge"><span aria-hidden="true">{editing ? "✎" : "🔒"}</span>{editing ? "Modo edición" : "Protegida"}</span>
-            </div>
-            <h2 id="company-detail-title">{selected.name}</h2>
-            <p>{selected.legal_name || selected.name}{selected.tax_id ? ` · Identificación ${selected.tax_id}` : ""}</p>
-            <small>{selected.site_name || "Sin sede principal"} · {selected.city || "Ciudad sin registrar"}{selected.country ? ` · ${selected.country}` : ""}</small>
-          </div>
-
-          <div className="company-profile-actions" aria-label="Acciones rápidas">
-            <Link href="/dashboard/locations" className="company-profile-action"><span aria-hidden="true">⌂</span><b>Ubicaciones</b></Link>
-            <Link href="/dashboard/assets" className="company-profile-action"><span aria-hidden="true">◇</span><b>Activos</b></Link>
-            <Link href="/dashboard/users" className="company-profile-action"><span aria-hidden="true">◎</span><b>Usuarios</b></Link>
-            <Link href={`/dashboard/companies/${selected.id}`} className="company-profile-action"><span aria-hidden="true">▤</span><b>Ficha completa</b></Link>
-          </div>
-        </section>
-
-        <div className="company-profile-summary">
-          <div><span>Perfil</span><strong>{selected.profile_completion}%</strong><small>completitud</small></div>
-          <div><span>Ubicaciones</span><strong>{selected.site_count}/{selected.max_sites}</strong><small>usadas / asignadas</small></div>
-          <div><span>Activos</span><strong>{selected.asset_count}/{selected.max_assets}</strong><small>usados / asignados</small></div>
-          <div><span>Documentos</span><strong>{selected.document_count}</strong><small>{selected.pending_document_count} pendientes</small></div>
-        </div>
-
-        {saveSuccess && <div className="company-save-success" role="status" aria-live="polite">
-          <span className="company-save-success-icon" aria-hidden="true">✓</span>
-          <div>
-            <strong>Cambios guardados correctamente</strong>
-            <p>{saveSuccess.message}</p>
-            {saveSuccess.files.length > 0 && <div className="company-save-success-files">
-              {saveSuccess.files.map(file => <span key={file}>✓ {file}</span>)}
+    {selected&&<section className="section entity-page-detail company-entity-page">
+      <EntityProfileWorkspace
+        eyebrow="Administración"
+        headingLabel="Empresa"
+        headingIcon="◫"
+        breadcrumbs={[
+          {label:"Inicio",href:"/dashboard"},
+          {label:"Empresas",onClick:close},
+          {label:selected.name},
+        ]}
+        title={selected.name}
+        subtitle={selected.legal_name||selected.name}
+        meta={[
+          selected.tax_id?"Identificación "+selected.tax_id:"Identificación sin registrar",
+          (selected.city||"Ciudad sin registrar")+(selected.country?" · "+selected.country:""),
+        ]}
+        coverSrc={selected.has_cover?"/api/organizations/"+selected.id+"/assets/cover?v="+assetVersion:null}
+        imageSrc={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo?v="+assetVersion:null}
+        imageAlt={"Logo de "+selected.name}
+        fallback={initials(selected.name)}
+        status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i />{selected.active?"Activa":"Inactiva"}</span>}
+        stats={[
+          {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,icon:"⌂"},
+          {label:"Activos",value:selected.asset_count+"/"+selected.max_assets,icon:"◇"},
+          {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,icon:"◎"},
+          {label:"Documentos",value:selected.document_count,icon:"▤",hint:selected.pending_document_count+" pendientes"},
+        ]}
+        toolbarActions={<>
+          {!editing&&<button className="button secondary" type="button" onClick={requestEditConfirmation}>✎ Editar</button>}
+          {editing&&<button className="button secondary" type="button" onClick={cancelEditing}>Cancelar edición</button>}
+          <Link className="button secondary" href={"/dashboard/companies/"+selected.id}>▤ Ficha completa</Link>
+          <ProfileExportMenu entity="organization" id={selected.id}/>
+          {canDelete&&!editing&&<form method="post" action={"/api/organizations/"+selected.id} onSubmit={event=>requestConfirmation("delete",event)}>
+            <input type="hidden" name="intent" value="delete"/>
+            <button className="button danger-secondary" type="submit">Eliminar</button>
+          </form>}
+        </>}
+        quickActions={<>
+          <Link href="/dashboard/locations">⌂ Ubicaciones</Link>
+          <Link href="/dashboard/assets">◇ Activos</Link>
+          <Link href="/dashboard/users">◎ Usuarios</Link>
+          <Link href={"/dashboard/companies/"+selected.id}>▤ Ficha completa</Link>
+        </>}
+        tabs={[
+          {id:"general",label:"Información general",content:editing?<form
+            ref={editFormRef}
+            className="entity-section-stack company-inline-edit-form"
+            method="post"
+            action={"/api/organizations/"+selected.id}
+            encType="multipart/form-data"
+            onSubmit={event=>requestConfirmation("save",event)}
+          >
+            {saveError&&<div className="notice error">{saveError}</div>}
+            {saveSuccess&&<div className="company-save-success" role="status" aria-live="polite">
+              <span className="company-save-success-icon" aria-hidden="true">✓</span>
+              <div><strong>Cambios guardados correctamente</strong><p>{saveSuccess.message}</p></div>
+              <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}>×</button>
             </div>}
-          </div>
-          <button type="button" aria-label="Cerrar confirmación" onClick={() => setSaveSuccess(null)}>×</button>
-        </div>}
-
-        <form ref={editFormRef} className="company-detail-form company-profile-form" method="post" action={`/api/organizations/${selected.id}`} encType="multipart/form-data" onSubmit={event => requestConfirmation("save", event)}>
-          {saveError && <div className="notice error">{saveError}</div>}
-          <input type="hidden" name="intent" value="update" />
-          <input type="hidden" name="return_to" value="directory" />
-          <input type="hidden" name="primary_site_id" value={selected.site_id || ""} />
-
-          <details className="company-detail-accordion" open>
-            <summary>
-              <span className="company-detail-accordion-icon" aria-hidden="true">▤</span>
-              <span><strong>Información general</strong><small>Identidad legal, zona horaria y datos base de la empresa.</small></span>
-              <i aria-hidden="true">⌄</i>
-            </summary>
-            <div className="company-detail-accordion-body">
+            <input type="hidden" name="intent" value="update"/>
+            <input type="hidden" name="return_to" value="directory"/>
+            <input type="hidden" name="primary_site_id" value={selected.site_id||""}/>
+            <div className="entity-panel">
+              <h3>Datos de la empresa</h3>
               <div className="form-grid">
-                <div className="field"><label htmlFor="detail-primary-contact">Contacto principal</label><input id="detail-primary-contact" name="primary_contact_name" defaultValue={selected.primary_contact_name || ""} placeholder={editing ? "Nombre del contacto principal" : "Sin registrar"} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-admin-email">Correo administrativo</label><input id="detail-admin-email" name="admin_email" type="email" defaultValue={selected.admin_email || ""} placeholder={editing ? "correo@empresa.com" : "Sin registrar"} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-name">Nombre comercial</label><input id="detail-name" name="name" defaultValue={selected.name} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-legal">Razón social</label><input id="detail-legal" name="legal_name" defaultValue={selected.legal_name || ""} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-tax">NIT / Identificación</label><input id="detail-tax" name="tax_id" defaultValue={selected.tax_id || ""} readOnly={!editing} /></div>
-                <div className="field"><label htmlFor="detail-slug">Identificador</label><input id="detail-slug" name="slug" defaultValue={selected.slug} readOnly={!editing} /></div>
-                <div className="field form-span-2"><label htmlFor="detail-timezone">Zona horaria</label>
-                  <select id="detail-timezone" name="timezone" defaultValue={selected.timezone} disabled={!editing}>
-                    <option value="America/Bogota">Colombia · America/Bogota</option>
-                    <option value="America/Lima">Perú · America/Lima</option>
-                    <option value="America/Mexico_City">México · America/Mexico_City</option>
-                    <option value="America/New_York">Estados Unidos · America/New_York</option>
-                    <option value="UTC">UTC</option>
-                  </select>
-                </div>
+                <div className="field"><label>Nombre comercial</label><input name="name" defaultValue={selected.name} required/></div>
+                <div className="field"><label>Razón social</label><input name="legal_name" defaultValue={selected.legal_name||""}/></div>
+                <div className="field"><label>NIT / Identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
+                <div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>
+                <div className="field"><label>Contacto principal</label><input name="primary_contact_name" defaultValue={selected.primary_contact_name||""}/></div>
+                <div className="field"><label>Correo administrativo</label><input type="email" name="admin_email" defaultValue={selected.admin_email||""}/></div>
+                <div className="field form-span-2"><label>Zona horaria</label><select name="timezone" defaultValue={selected.timezone}>
+                  <option value="America/Bogota">Colombia · America/Bogota</option>
+                  <option value="America/Lima">Perú · America/Lima</option>
+                  <option value="America/Mexico_City">México · America/Mexico_City</option>
+                  <option value="America/New_York">Estados Unidos · America/New_York</option>
+                </select></div>
                 <BusinessHoursFields
-                  key={selected.id+"-"+(editing?"edit":"view")}
                   days={selected.business_days}
                   openTime={selected.business_open_time}
                   closeTime={selected.business_close_time}
                   schedule={selected.business_schedule}
-                  disabled={!editing}
                   title="Horario general de atención"
-                  description="Reacción usa este horario para el estado abierto/cerrado de la empresa."
+                  description="Este horario representa la atención general de la empresa."
                 />
               </div>
             </div>
-          </details>
 
-          <details className="company-detail-accordion" open>
-            <summary>
-              <span className="company-detail-accordion-icon" aria-hidden="true">⌖</span>
-              <span><strong>Sede principal y cobertura</strong><small>Dirección operativa y base para mapa, geocerca y asistencia biométrica.</small></span>
-              <i aria-hidden="true">⌄</i>
-            </summary>
-            <div className="company-detail-accordion-body company-site-coverage-body">
-              <div className="company-site-map-block">
-                <GeofenceMapPicker
+            {selected.site_id&&<div className="entity-panel">
+              <h3>Sede principal y geocerca</h3>
+              <div className="form-grid">
+                <div className="field"><label>Nombre de sede</label><input name="site_name" defaultValue={selected.site_name||""}/></div>
+                <div className="field"><label>Código interno</label><input name="site_code" defaultValue={selected.site_code||""}/></div>
+                <div className="field"><label>Ciudad</label><input name="city" defaultValue={selected.city||""}/></div>
+                <div className="field"><label>País</label><input name="country" defaultValue={selected.country||"CO"} maxLength={2}/></div>
+              </div>
+              <GeofenceMapPicker
+                initialAddress={selected.address}
+                initialLatitude={selected.site_latitude}
+                initialLongitude={selected.site_longitude}
+                initialRadius={selected.site_geofence_radius_m||250}
+                cityHint={selected.city}
+                countryHint={selected.country}
+                markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null}
+                markerLabel={selected.name}
+              />
+            </div>}
+
+            {canManageResources&&<div className="entity-panel">
+              <h3>Cupos asignados</h3>
+              <div className="form-grid">
+                <div className="field"><label>Ubicaciones</label><input name="max_sites" type="number" min="1" defaultValue={selected.max_sites}/></div>
+                <div className="field"><label>Sububicaciones</label><input name="max_sublocations" type="number" min="0" defaultValue={selected.max_sublocations}/></div>
+                <div className="field"><label>Activos</label><input name="max_assets" type="number" min="0" defaultValue={selected.max_assets}/></div>
+                <div className="field"><label>Inventario</label><input name="max_inventory_items" type="number" min="0" defaultValue={selected.max_inventory_items}/></div>
+                <div className="field"><label>Técnicos</label><input name="max_technicians" type="number" min="0" defaultValue={selected.max_technicians}/></div>
+              </div>
+            </div>}
+
+            <div className="entity-panel">
+              <h3>Identidad visual</h3>
+              <div className="company-upload-grid">
+                <FileDropzone name="logo" label="Actualizar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={selected.has_logo?"Logo actual":null} existingPreviewUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo?v="+assetVersion:null} compact/>
+                <FileDropzone name="cover" label="Actualizar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_cover?"Portada actual":null} existingPreviewUrl={selected.has_cover?"/api/organizations/"+selected.id+"/assets/cover?v="+assetVersion:null} compact/>
+              </div>
+            </div>
+
+            <div className="form-actions company-inline-save-actions">
+              <button className="button secondary" type="button" disabled={saving} onClick={cancelEditing}>Cancelar</button>
+              <button className="button" type="submit" disabled={saving}>{saving?"Guardando…":"Guardar cambios"}</button>
+            </div>
+          </form>:<div className="entity-section-stack">
+            {saveSuccess&&<div className="company-save-success" role="status" aria-live="polite">
+              <span className="company-save-success-icon" aria-hidden="true">✓</span>
+              <div><strong>Cambios guardados correctamente</strong><p>{saveSuccess.message}</p>{saveSuccess.files.length>0&&<div className="company-save-success-files">{saveSuccess.files.map(file=><span key={file}>✓ {file}</span>)}</div>}</div>
+              <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}>×</button>
+            </div>}
+            <div className="entity-panel"><h3>Datos de la empresa</h3><div className="entity-info-grid">
+              <DetailField label="Nombre comercial" value={selected.name}/>
+              <DetailField label="Razón social" value={selected.legal_name||"Sin registrar"}/>
+              <DetailField label="NIT / Identificación" value={selected.tax_id||"Sin registrar"}/>
+              <DetailField label="Identificador" value={selected.slug}/>
+              <DetailField label="Plan" value={selected.plan_name||"Sin plan"}/>
+              <DetailField label="Zona horaria" value={selected.timezone}/>
+              <DetailField label="Contacto principal" value={selected.primary_contact_name||"Sin registrar"}/>
+              <DetailField label="Correo administrativo" value={selected.admin_email||"Sin registrar"}/>
+            </div></div>
+            <div className="entity-panel"><h3>Estado del perfil</h3><div className="entity-info-grid">
+              <DetailField label="Completitud" value={selected.profile_completion+"%"}/>
+              <DetailField label="Estado" value={selected.active?"Empresa activa":"Empresa inactiva"}/>
+              <DetailField label="Documentos registrados" value={selected.document_count}/>
+              <DetailField label="Pendientes documentales" value={selected.pending_document_count}/>
+            </div></div>
+          </div>},
+          {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
+            <div className="entity-stat-grid">
+              <CompanyMetric label="Ubicaciones" value={selected.site_count+"/"+selected.max_sites} hint="usadas / asignadas"/>
+              <CompanyMetric label="Sububicaciones" value={selected.sublocation_count+"/"+selected.max_sublocations} hint="usadas / asignadas"/>
+              <CompanyMetric label="Activos" value={selected.asset_count+"/"+selected.max_assets} hint="usados / asignados"/>
+              <CompanyMetric label="Inventario" value={selected.inventory_item_count+"/"+selected.max_inventory_items} hint="usados / asignados"/>
+              <CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="usados / asignados"/>
+              <CompanyMetric label="Perfil" value={selected.profile_completion+"%"} hint="completitud"/>
+            </div>
+          </div>},
+          {id:"locations",label:"Ubicaciones",content:<div className="entity-section-stack">
+            <div className="entity-two-column">
+              <div className="entity-panel"><h3>Sede principal</h3><div className="entity-info-grid">
+                <DetailField label="Nombre" value={selected.site_name||"Sin sede principal"}/>
+                <DetailField label="Código" value={selected.site_code||"Sin código"}/>
+                <DetailField label="Ciudad" value={selected.city||"Sin registrar"}/>
+                <DetailField label="País" value={selected.country||"Sin registrar"}/>
+                <DetailField label="Dirección" value={selected.address||"Sin registrar"}/>
+                <DetailField label="Ubicaciones activas" value={selected.active_site_count}/>
+              </div></div>
+              <div className="entity-panel"><h3>Mapa y geocerca</h3>
+                {selected.site_id?<GeofenceMapPicker
                   initialAddress={selected.address}
                   initialLatitude={selected.site_latitude}
                   initialLongitude={selected.site_longitude}
-                  initialRadius={selected.site_geofence_radius_m || 250}
+                  initialRadius={selected.site_geofence_radius_m||250}
                   cityHint={selected.city}
                   countryHint={selected.country}
-                  readOnly={!editing}
-                  addressRequired
-                  coordinateRequired
-                  markerImageUrl={selected.has_logo?`/api/organizations/${selected.id}/assets/logo`:null}
+                  readOnly
+                  addressRequired={false}
+                  coordinateRequired={false}
+                  markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null}
                   markerLabel={selected.name}
-                  className="company-site-geofence"
-                />
-              </div>
-
-              <div className="company-site-info-grid">
-                <div className="company-site-info-card">
-                  <span>Identidad de sede</span>
-                  <div className="company-site-info-fields">
-                    <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
-                    <div className="field"><label htmlFor="detail-site-code">Código interno</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
-                  </div>
-                </div>
-
-                <div className="company-site-info-card">
-                  <span>Ubicación administrativa</span>
-                  <div className="company-site-info-fields">
-                    <div className="field"><label htmlFor="detail-city">Ciudad</label><input id="detail-city" name="city" defaultValue={selected.city || ""} readOnly={!editing} /></div>
-                    <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
-                  </div>
-                </div>
+                />:<p className="entity-panel-copy">La empresa aún no tiene una sede principal configurada.</p>}
               </div>
             </div>
-          </details>
-
-          {canManageResources && <details className="company-detail-accordion">
-            <summary>
-              <span className="company-detail-accordion-icon" aria-hidden="true">◫</span>
-              <span><strong>Recursos y consumo</strong><small>Cupos del plan y capacidad operativa utilizada.</small></span>
-              <i aria-hidden="true">⌄</i>
-            </summary>
-            <div className="company-detail-accordion-body">
-              <p className="muted resource-help">El Administrador de empresa puede consultar estos cupos; solo el Superadministrador puede modificarlos.</p>
-              <div className="company-resource-grid">
-                <div className="company-resource-item">
-                  <div className="company-resource-item-head"><span>Ubicaciones principales</span><strong>{selected.site_count} / {selected.max_sites}</strong></div>
-                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sites) > 0 ? (Number(selected.site_count) / Number(selected.max_sites)) * 100 : 0)}%` }} /></div>
-                  {editing && <div className="field"><label htmlFor="detail-max-sites">Cupo asignado</label><input id="detail-max-sites" name="max_sites" type="number" min="1" defaultValue={selected.max_sites} required /></div>}
-                </div>
-                <div className="company-resource-item">
-                  <div className="company-resource-item-head"><span>Sububicaciones</span><strong>{selected.sublocation_count} / {selected.max_sublocations}</strong></div>
-                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_sublocations) > 0 ? (Number(selected.sublocation_count) / Number(selected.max_sublocations)) * 100 : 0)}%` }} /></div>
-                  {editing && <div className="field"><label htmlFor="detail-max-sublocations">Cupo asignado</label><input id="detail-max-sublocations" name="max_sublocations" type="number" min="0" defaultValue={selected.max_sublocations} required /></div>}
-                </div>
-                <div className="company-resource-item">
-                  <div className="company-resource-item-head"><span>Activos</span><strong>{selected.asset_count} / {selected.max_assets}</strong></div>
-                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_assets) > 0 ? (Number(selected.asset_count) / Number(selected.max_assets)) * 100 : 0)}%` }} /></div>
-                  {editing && <div className="field"><label htmlFor="detail-max-assets">Cupo asignado</label><input id="detail-max-assets" name="max_assets" type="number" min="0" defaultValue={selected.max_assets} required /></div>}
-                </div>
-                <div className="company-resource-item">
-                  <div className="company-resource-item-head"><span>Inventario</span><strong>{selected.inventory_item_count} / {selected.max_inventory_items}</strong></div>
-                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_inventory_items) > 0 ? (Number(selected.inventory_item_count) / Number(selected.max_inventory_items)) * 100 : 0)}%` }} /></div>
-                  {editing && <div className="field"><label htmlFor="detail-max-inventory">Cupo asignado</label><input id="detail-max-inventory" name="max_inventory_items" type="number" min="0" defaultValue={selected.max_inventory_items} required /></div>}
-                </div>
-                <div className="company-resource-item">
-                  <div className="company-resource-item-head"><span>Técnicos</span><strong>{selected.technician_count} / {selected.max_technicians}</strong></div>
-                  <div className="company-resource-track"><span style={{ width: `${Math.min(100, Number(selected.max_technicians) > 0 ? (Number(selected.technician_count) / Number(selected.max_technicians)) * 100 : 0)}%` }} /></div>
-                  {editing && <div className="field"><label htmlFor="detail-max-technicians">Cupo asignado</label><input id="detail-max-technicians" name="max_technicians" type="number" min="0" defaultValue={selected.max_technicians} required /></div>}
-                </div>
-              </div>
+            <Link className="button secondary entity-tab-cta" href="/dashboard/locations">Abrir módulo de ubicaciones</Link>
+          </div>},
+          {id:"documents",label:"Documentos",content:<div className="entity-section-stack">
+            <div className="entity-stat-grid">
+              <CompanyMetric label="Documentos vigentes" value={selected.document_count}/>
+              <CompanyMetric label="Pendientes / vencidos" value={selected.pending_document_count}/>
+              <CompanyMetric label="Perfil" value={selected.profile_completion+"%"}/>
             </div>
-          </details>}
+            <div className="entity-panel"><h3>Expediente empresarial</h3><p className="entity-panel-copy">La gestión completa de documentos, archivo, restauración, vista previa y eliminación protegida permanece en la ficha empresarial.</p><Link className="button secondary entity-tab-cta" href={"/dashboard/companies/"+selected.id}>Abrir expediente documental</Link></div>
+          </div>},
+          {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack">
+            <div className="entity-stat-grid"><CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="asignados / cupo"/></div>
+            <div className="entity-panel"><h3>Personal de la empresa</h3><p className="entity-panel-copy">Consulta o administra los usuarios y técnicos vinculados a esta empresa desde el directorio de acceso.</p><Link className="button secondary entity-tab-cta" href="/dashboard/users">Abrir usuarios y técnicos</Link></div>
+          </div>},
+          {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">
+            <div className="entity-panel"><h3>Hoja de vida de la empresa</h3><p className="entity-panel-copy">Consolida identidad empresarial, contacto, recursos, documentos y estructura principal en un formato autorizado para compartir.</p></div>
+            <ProfileExportMenu entity="organization" id={selected.id} label="Exportar hoja de vida"/>
+          </div>},
+        ]}
+      />
+    </section>}
 
-          <details className="company-detail-accordion">
-            <summary>
-              <span className="company-detail-accordion-icon" aria-hidden="true">▧</span>
-              <span><strong>Documentación y cumplimiento</strong><small>Estado documental y pendientes de la empresa.</small></span>
-              <i aria-hidden="true">⌄</i>
-            </summary>
-            <div className="company-detail-accordion-body">
-              <div className="company-doc-summary">
-                <div><strong>{selected.document_count}</strong><span>Documentos registrados</span></div>
-                <div><strong>{selected.pending_document_count}</strong><span>Pendientes o vencidos</span></div>
-                <div><strong>{selected.profile_completion}%</strong><span>Perfil completo</span></div>
-              </div>
-              <Link className="button secondary company-profile-inline-action" href={`/dashboard/companies/${selected.id}`}>Abrir documentación completa</Link>
-            </div>
-          </details>
-
-          <details className="company-detail-accordion">
-            <summary>
-              <span className="company-detail-accordion-icon" aria-hidden="true">◉</span>
-              <span><strong>Identidad visual</strong><small>Logo corporativo y fotografía de referencia.</small></span>
-              <i aria-hidden="true">⌄</i>
-            </summary>
-            <div className="company-detail-accordion-body">
-              <div className="company-profile-assets">
-                <div><span>Logo</span><div className="company-profile-asset-preview logo">{selected.has_logo ? <img src={`/api/organizations/${selected.id}/assets/logo?v=${assetVersion}`} alt="" /> : <b>{initials(selected.name)}</b>}</div></div>
-                <div><span>Portada</span><div className="company-profile-asset-preview cover">{selected.has_cover ? <img src={`/api/organizations/${selected.id}/assets/cover?v=${assetVersion}`} alt="" /> : <b>Sin portada</b>}</div></div>
-              </div>
-              {editing && <div className="form-grid">
-                <FileDropzone name="logo" label="Actualizar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={selected.has_logo ? "Logo actual" : null} existingPreviewUrl={selected.has_logo ? `/api/organizations/${selected.id}/assets/logo?v=${assetVersion}` : null} compact />
-                <FileDropzone name="cover" label="Actualizar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_cover ? "Portada actual" : null} existingPreviewUrl={selected.has_cover ? `/api/organizations/${selected.id}/assets/cover?v=${assetVersion}` : null} compact />
-              </div>}
-            </div>
-          </details>
-
-          {editing && <footer className="modal-actions detail-edit-actions company-profile-edit-actions">
-            <button className="button secondary" type="button" disabled={saving} onClick={cancelEditing}>Cancelar edición</button>
-            <button className="button" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar cambios"}</button>
-          </footer>}
-        </form>
-
-        {!editing && <footer className="company-detail-actions company-profile-footer">
-          <div>
-            {canDelete && <form method="post" action={`/api/organizations/${selected.id}`} onSubmit={event => requestConfirmation("delete", event)}>
-              <input type="hidden" name="intent" value="delete" />
-              <button className="button danger-secondary" type="submit">Eliminar empresa</button>
-            </form>}
-          </div>
-          <div>
-            <Link className="button secondary" href={`/dashboard/companies/${selected.id}`}>Ficha completa</Link>
-            <button className="button" type="button" onClick={requestEditConfirmation}>Editar empresa</button>
-          </div>
-        </footer>}
-      </section>
-    </div>}
   </>;
 }

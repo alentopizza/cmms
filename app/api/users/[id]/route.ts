@@ -63,10 +63,17 @@ export async function POST(
       organization_id: string | null;
       role: OrganizationRole | null;
       site_id: string | null;
+      access_all_sites: boolean | null;
+      site_ids: string[];
       active: boolean;
       external_supplier_id: string | null;
     }>(
-      `SELECT u.id,u.platform_role,om.organization_id,om.role,om.site_id,u.active,om.external_supplier_id
+      `SELECT u.id,u.platform_role,om.organization_id,om.role,om.site_id,om.access_all_sites,u.active,om.external_supplier_id,
+              COALESCE((
+                SELECT array_agg(oms.site_id::text ORDER BY oms.site_id::text)
+                FROM organization_member_sites oms
+                WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+              ), ARRAY[]::text[]) site_ids
        FROM users u
        LEFT JOIN organization_members om ON om.user_id=u.id
        WHERE u.id=$1
@@ -210,12 +217,20 @@ export async function POST(
       const roleChanged = requestedPlatformRole !== current.platform_role
         || (!makingSuperadmin && requestedRole !== current.role);
       const organizationChanged = !makingSuperadmin && organizationId !== current.organization_id;
-      if (roleChanged || organizationChanged) {
+      const supplierChanged = (externalSupplierId || null) !== (current.external_supplier_id || null);
+      const currentSiteIds = [...(current.site_ids || [])].sort();
+      const requestedSiteIds = [...siteIds].sort();
+      const siteScopeChanged = accessAllSites !== (current.access_all_sites !== false)
+        || currentSiteIds.length !== requestedSiteIds.length
+        || currentSiteIds.some((siteId, index) => siteId !== requestedSiteIds[index]);
+      if (roleChanged || organizationChanged || supplierChanged || siteScopeChanged) {
         await client.query("ROLLBACK");
         return json(409, {
           fields: {
-            role: "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol.",
-            organization_id: "No puedes trasladar tu propia cuenta a otra empresa.",
+            role: roleChanged ? "Puedes actualizar tus datos personales, foto y contraseña, pero no cambiar tu propio rol." : undefined,
+            organization_id: organizationChanged ? "No puedes trasladar tu propia cuenta a otra empresa." : undefined,
+            external_supplier_id: supplierChanged ? "No puedes cambiar tu propia relación con un proveedor." : undefined,
+            site_ids: siteScopeChanged ? "No puedes ampliar o reducir tu propio alcance de sedes." : undefined,
           },
         });
       }

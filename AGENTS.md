@@ -338,3 +338,16 @@ For every meaningful user-facing product change, explicitly review whether one o
 4. role applicability of an article.
 
 A feature that changes how a user completes a task is not fully documented until the manual is reviewed in the same implementation.
+
+
+## Internationalization/catalog invariant
+
+Country-related fields are governed by `lib/international-catalog.ts`.
+
+- Do not add free-text Country or City inputs in new Company, Site or User identity flows.
+- Do not create module-local Country, calling-code, tax-ID or personal-document lists.
+- Use the shared `InternationalFields` components and `PhoneField`; Country must drive City, relevant identification types, time-zone choices and phone prefix.
+- New server mutations that persist those values must validate against the shared catalog. Client dropdowns are not a data-integrity boundary.
+- `default_country` / preferred Locale are defaults, not restrictions: a specific record may select another supported Country.
+- Existing locale settings are a foundation for staged i18n. Do not claim a screen is translated unless its visible strings actually use translation dictionaries.
+- Curated City lists are not exhaustive. Extend the shared catalog or a future geographic service instead of adding a writable City fallback to one form without an explicit product decision.

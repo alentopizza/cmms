@@ -6,6 +6,7 @@ import { SubLocationCreateModal } from "@/components/ContextCreateModals";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -13,6 +14,7 @@ export type LocationDirectorySite={
   latitude:number|null; longitude:number|null; geofence_radius_m:number;
   has_image:boolean; organization_has_logo:boolean; contact_name:string|null; contact_phone:string|null; contact_email:string|null;
   business_days:number[]; business_open_time:string; business_close_time:string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
 };
 export type LocationDirectorySub={
   id:string; organization_id:string; site_id:string; parent_id:string|null; name:string; code:string|null; type:string;
@@ -136,14 +138,15 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
             <div className="field"><label>Código interno</label><input name="code" defaultValue={selected.code||""}/><small>Opcional. Identifica la sede en OT, reportes e integraciones.</small></div>
             <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
-            <div className="field"><label>País *</label><input name="country" defaultValue={selected.country} required/></div>
+            <div className="field"><label>País *</label><input id="location-country" name="country" defaultValue={selected.country} required/></div>
             <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
-            <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" defaultValue={selected.contact_phone||""}/></div>
+            <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={selected.country} countryInputId="location-country" defaultValue={selected.contact_phone} />
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
             <BusinessHoursFields
               days={selected.business_days}
               openTime={selected.business_open_time}
               closeTime={selected.business_close_time}
+              schedule={selected.business_schedule}
               title="Horario de atención de la sede"
               description="Reacción usa este horario para el filtro Abiertos ahora."
             />

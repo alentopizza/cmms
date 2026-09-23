@@ -8,6 +8,8 @@ import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
+import PhoneField from "@/components/PhoneField";
+import CompanyDocumentWorkspace, { type CompanyDocumentItem } from "@/components/CompanyDocumentWorkspace";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,6 +24,7 @@ type Organization = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   legal_address: string | null;
   legal_city: string | null;
   legal_country: string | null;
@@ -54,21 +57,8 @@ type Organization = {
   subscription_status: string | null;
 };
 
-type OrganizationDocument = {
-  id: string;
+type OrganizationDocument = CompanyDocumentItem & {
   category: keyof typeof ORGANIZATION_DOCUMENT_CATEGORIES;
-  requirement_level: "required" | "optional" | "not_applicable";
-  display_name: string;
-  reference: string | null;
-  issue_date: string | null;
-  expires_at: string | null;
-  notes: string | null;
-  file_name: string | null;
-  file_mime_type: string | null;
-  file_size_bytes: string | null;
-  created_at: string;
-  updated_at: string;
-  uploaded_by_name: string | null;
 };
 
 type ServiceSupplier = { id: string; name: string };
@@ -84,6 +74,7 @@ type Site = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   asset_count: string;
   work_order_count: string;
 };
@@ -101,6 +92,7 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (error === "document-fields") return <div className="notice error">Revisa la categoría, el nombre y el nivel de requisito del documento.</div>;
   if (error === "business-hours") return <div className="notice error">La hora de cierre debe ser posterior a la hora de apertura.</div>;
   if (error === "business-days") return <div className="notice error">Selecciona al menos un día de atención.</div>;
+  if (error === "document-archived") return <div className="notice error">Restaura el documento antes de editarlo.</div>;
   if (error) return <div className="notice error">Revisa los campos obligatorios e inténtalo nuevamente.</div>;
   if (created === "company") return <div className="notice success">La empresa y su sede principal fueron creadas correctamente.</div>;
   if (created === "site") return <div className="notice success">La nueva sede fue creada correctamente.</div>;
@@ -111,7 +103,8 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (saved === "site") return <div className="notice success">La información de la sede fue actualizada.</div>;
   if (saved === "limits") return <div className="notice success">Los límites de recursos fueron actualizados.</div>;
   if (saved === "document") return <div className="notice success">El documento empresarial fue guardado.</div>;
-  if (saved === "document-archived") return <div className="notice success">El documento fue archivado y dejó de formar parte de la ficha vigente.</div>;
+  if (saved === "document-archived") return <div className="notice success">El documento fue archivado. Puedes encontrarlo y restaurarlo en la pestaña Archivados.</div>;
+  if (saved === "document-restored") return <div className="notice success">El documento fue restaurado a la ficha vigente.</div>;
   return null;
 }
 
@@ -160,7 +153,7 @@ export default async function CompanyDetailPage({
   const [organizationResult, sitesResult, serviceSuppliersResult, documentsResult] = await Promise.all([
     query<Organization>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.tax_id_type,o.timezone,o.active,o.updated_at::text,
-        o.business_days,o.business_open_time::text,o.business_close_time::text,
+        o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
         o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
         o.primary_contact_name,o.primary_contact_title,o.primary_contact_phone,o.primary_contact_email,o.internal_notes,
         (o.logo_data IS NOT NULL) has_logo,
@@ -186,7 +179,7 @@ export default async function CompanyDetailPage({
     ),
     query<Site>(
       `SELECT s.id,s.name,s.code,s.address,s.city,s.country,s.active,
-              s.business_days,s.business_open_time::text,s.business_close_time::text,
+              s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
         count(DISTINCT a.id)::text asset_count,
         count(DISTINCT w.id)::text work_order_count
        FROM sites s
@@ -206,11 +199,14 @@ export default async function CompanyDetailPage({
     query<OrganizationDocument>(
       `SELECT d.id,d.category,d.requirement_level,d.display_name,d.reference,
               d.issue_date::text,d.expires_at::text,d.notes,d.file_name,d.file_mime_type,
-              d.file_size_bytes::text,d.created_at::text,d.updated_at::text,u.full_name uploaded_by_name
+              d.file_size_bytes::text,d.created_at::text,d.updated_at::text,u.full_name uploaded_by_name,
+              d.archived_at::text,au.full_name archived_by_name
        FROM organization_documents d
        LEFT JOIN users u ON u.id=d.uploaded_by
-       WHERE d.organization_id=$1 AND d.archived_at IS NULL
-       ORDER BY CASE d.requirement_level WHEN 'required' THEN 0 WHEN 'optional' THEN 1 ELSE 2 END,
+       LEFT JOIN users au ON au.id=d.archived_by
+       WHERE d.organization_id=$1
+       ORDER BY (d.archived_at IS NOT NULL),d.archived_at DESC NULLS LAST,
+                CASE d.requirement_level WHEN 'required' THEN 0 WHEN 'optional' THEN 1 ELSE 2 END,
                 d.expires_at NULLS LAST,d.created_at DESC`,
       [id],
     ),
@@ -219,7 +215,9 @@ export default async function CompanyDetailPage({
   if (!organizationResult.rowCount) notFound();
   const organization = organizationResult.rows[0];
   const sites = sitesResult.rows;
-  const documents = documentsResult.rows;
+  const allDocuments = documentsResult.rows;
+  const documents = allDocuments.filter(document => !document.archived_at);
+  const archivedDocuments = allDocuments.filter(document => Boolean(document.archived_at));
   const activeSites = sites.filter(site => site.active).length;
   const canManageResources = can(session, "company_resources.manage");
 
@@ -312,7 +310,7 @@ export default async function CompanyDetailPage({
       </div>
       <div className="contextual-action-buttons">
         <SiteCreateModal organizations={[]} fixedOrganizationId={organization.id} fixedOrganizationName={organization.name} returnTo={"/dashboard/companies/" + organization.id} />
-        <ContextUserCreateModal organizationId={organization.id} organizationName={organization.name} serviceSuppliers={serviceSuppliersResult.rows} returnTo={"/dashboard/companies/" + organization.id} />
+        <ContextUserCreateModal organizationId={organization.id} organizationName={organization.name} countryCode={organization.legal_country || sites[0]?.country || "CO"} serviceSuppliers={serviceSuppliersResult.rows} returnTo={"/dashboard/companies/" + organization.id} />
       </div>
     </section>
 
@@ -331,8 +329,14 @@ export default async function CompanyDetailPage({
           <div className="field"><label>Identificación fiscal</label><input name="tax_id" defaultValue={organization.tax_id || ""} /></div>
           <div className="field form-span-2"><label>Dirección administrativa / fiscal</label><input name="legal_address" defaultValue={organization.legal_address || ""} /></div>
           <div className="field"><label>Ciudad administrativa</label><input name="legal_city" defaultValue={organization.legal_city || ""} /></div>
-          <div className="field"><label>País</label><input name="legal_country" maxLength={2} defaultValue={organization.legal_country || "CO"} placeholder="CO" /></div>
-          <div className="field"><label>Teléfono principal</label><input name="phone" defaultValue={organization.phone || ""} /></div>
+          <div className="field"><label>País</label><input id="organization-legal-country" name="legal_country" maxLength={2} defaultValue={organization.legal_country || "CO"} placeholder="CO" /></div>
+          <PhoneField
+            name="phone"
+            label="Teléfono principal"
+            countryCode={organization.legal_country || "CO"}
+            countryInputId="organization-legal-country"
+            defaultValue={organization.phone}
+          />
           <div className="field"><label>Sitio web</label><input name="website" type="url" defaultValue={organization.website || ""} placeholder="https://..." /></div>
           <div className="field"><label>Correo administrativo</label><input name="admin_email" type="email" defaultValue={organization.admin_email || ""} /></div>
           <div className="field"><label>Correo de facturación</label><input name="billing_email" type="email" defaultValue={organization.billing_email || ""} /></div>
@@ -340,7 +344,13 @@ export default async function CompanyDetailPage({
           <div className="form-divider form-span-2"><span>Contacto principal</span></div>
           <div className="field"><label>Nombre</label><input name="primary_contact_name" defaultValue={organization.primary_contact_name || ""} /></div>
           <div className="field"><label>Cargo</label><input name="primary_contact_title" defaultValue={organization.primary_contact_title || ""} /></div>
-          <div className="field"><label>Teléfono</label><input name="primary_contact_phone" defaultValue={organization.primary_contact_phone || ""} /></div>
+          <PhoneField
+            name="primary_contact_phone"
+            label="Teléfono del contacto"
+            countryCode={organization.legal_country || "CO"}
+            countryInputId="organization-legal-country"
+            defaultValue={organization.primary_contact_phone}
+          />
           <div className="field"><label>Correo</label><input name="primary_contact_email" type="email" defaultValue={organization.primary_contact_email || ""} /></div>
 
           <div className="field"><label>Identificador interno</label><input name="slug" defaultValue={organization.slug} required /></div>
@@ -357,6 +367,7 @@ export default async function CompanyDetailPage({
             days={organization.business_days}
             openTime={organization.business_open_time}
             closeTime={organization.business_close_time}
+            schedule={organization.business_schedule}
             title="Horario general de atención"
             description="Este horario define el estado operativo general de la empresa en Reacción."
           />
@@ -403,6 +414,7 @@ export default async function CompanyDetailPage({
         </div>
         <div className="company-document-summary">
           <span><strong>{documents.length}</strong> vigentes en ficha</span>
+          <span><strong>{archivedDocuments.length}</strong> archivados</span>
           <span><strong>{pendingDocuments}</strong> pendientes</span>
           <span><strong>{expiringDocuments}</strong> por vencer</span>
         </div>
@@ -433,55 +445,12 @@ export default async function CompanyDetailPage({
         </form>
       </details>
 
-      {documents.length === 0 ? <div className="company-documents-empty"><strong>No hay documentos configurados.</strong><span>Crea el primer requisito para empezar a controlar el expediente de esta empresa.</span></div> :
-      <div className="company-document-list">
-        {documents.map(document => {
-          const state = documentState(document);
-          return <article className="company-document-card" key={document.id}>
-            <div className="company-document-icon" aria-hidden="true">▤</div>
-            <div className="company-document-main">
-              <div className="company-document-title-row">
-                <div>
-                  <span>{ORGANIZATION_DOCUMENT_CATEGORIES[document.category]}</span>
-                  <h3>{document.display_name}</h3>
-                </div>
-                <span className={`company-document-state document-state-${state.key}`}>{state.label}</span>
-              </div>
-              <div className="company-document-meta">
-                <span>{document.requirement_level === "required" ? "Requerido" : document.requirement_level === "optional" ? "Opcional" : "No aplica"}</span>
-                {document.reference && <span>Ref. {document.reference}</span>}
-                {document.issue_date && <span>Emitido {formatDate(document.issue_date)}</span>}
-                {document.expires_at && <span>Vence {formatDate(document.expires_at)}</span>}
-                {document.file_name && <span>{document.file_name} · {bytesLabel(document.file_size_bytes)}</span>}
-              </div>
-              {document.notes && <p>{document.notes}</p>}
-              <small>Actualizado {formatDate(document.updated_at)}{document.uploaded_by_name ? " · por " + document.uploaded_by_name : ""}</small>
-            </div>
-            <div className="company-document-actions">
-              {document.file_name && <a className="button secondary" href={`/api/organizations/${organization.id}/documents/${document.id}`}>Descargar</a>}
-              <details>
-                <summary className="text-button">Editar</summary>
-                <form className="company-document-edit-form" method="post" action={`/api/organizations/${organization.id}/documents/${document.id}`} encType="multipart/form-data">
-                  <div className="field"><label>Categoría</label><select name="category" defaultValue={document.category}>{Object.entries(ORGANIZATION_DOCUMENT_CATEGORIES).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div>
-                  <div className="field"><label>Nivel</label><select name="requirement_level" defaultValue={document.requirement_level}><option value="required">Requerido</option><option value="optional">Opcional</option><option value="not_applicable">No aplica</option></select></div>
-                  <div className="field"><label>Nombre</label><input name="display_name" defaultValue={document.display_name} required /></div>
-                  <div className="field"><label>Referencia</label><input name="reference" defaultValue={document.reference || ""} /></div>
-                  <div className="field"><label>Emisión</label><input name="issue_date" type="date" defaultValue={document.issue_date || ""} /></div>
-                  <div className="field"><label>Vencimiento</label><input name="expires_at" type="date" defaultValue={document.expires_at || ""} /></div>
-                  <FileDropzone name="file" label="Reemplazar archivo" description="Deja vacío si quieres conservar el archivo actual." accept="application/pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} kind="document" compact existingFileName={document.file_name} />
-                  <div className="field"><label>Observaciones</label><textarea name="notes" rows={2} defaultValue={document.notes || ""} /></div>
-                  <button className="button secondary" type="submit">Guardar cambios</button>
-                </form>
-              </details>
-              <form method="post" action={`/api/organizations/${organization.id}/documents/${document.id}`}>
-                <input type="hidden" name="intent" value="archive" />
-                <button className="text-button text-danger" type="submit">Archivar</button>
-              </form>
-              {owner && <OwnerDeleteButton table="organization_documents" id={document.id} label={document.display_name} />}
-            </div>
-          </article>;
-        })}
-      </div>}
+      <CompanyDocumentWorkspace
+        organizationId={organization.id}
+        documents={allDocuments}
+        categories={ORGANIZATION_DOCUMENT_CATEGORIES}
+        owner={owner}
+      />
     </section>
 
     {canManageResources && <section id="resources" className="card section company-profile-card">

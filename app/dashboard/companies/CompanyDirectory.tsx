@@ -18,6 +18,7 @@ export type CompanyDirectoryItem = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   active: boolean;
   admin_email: string | null;
   primary_contact_name: string | null;
@@ -49,6 +50,7 @@ export type CompanyDirectoryItem = {
   site_business_days: number[] | null;
   site_business_open_time: string | null;
   site_business_close_time: string | null;
+  site_business_schedule: import("@/lib/business-hours").BusinessDaySchedule[] | null;
   has_logo: boolean;
   has_cover: boolean;
 };
@@ -165,6 +167,18 @@ export default function CompanyDirectory({
 
       const formData = new FormData(form);
       const selectedId = selected?.id || "";
+      let submittedSchedule = selected?.business_schedule || [];
+      const submittedScheduleValue = formData.get("business_schedule_json");
+      if (typeof submittedScheduleValue === "string" && submittedScheduleValue) {
+        try {
+          const parsed = JSON.parse(submittedScheduleValue);
+          if (Array.isArray(parsed)) submittedSchedule = parsed;
+        } catch {
+          // Server validation remains authoritative; keep current local value if parsing fails.
+        }
+      }
+      const activeSchedule = submittedSchedule.filter(item => item?.enabled);
+      const representativeSchedule = activeSchedule[0];
       const uploadedFiles = ["logo", "cover"]
         .map(key => formData.get(key))
         .filter((value): value is File => value instanceof File && value.size > 0)
@@ -175,6 +189,10 @@ export default function CompanyDirectory({
         legal_name: String(formData.get("legal_name") || "") || null,
         tax_id: String(formData.get("tax_id") || "") || null,
         timezone: String(formData.get("timezone") || current.timezone),
+        business_schedule: submittedSchedule,
+        business_days: activeSchedule.map(item => Number(item.day)),
+        business_open_time: representativeSchedule?.openTime || current.business_open_time,
+        business_close_time: representativeSchedule?.closeTime || current.business_close_time,
         primary_contact_name: String(formData.get("primary_contact_name") || "") || null,
         admin_email: String(formData.get("admin_email") || "") || null,
         site_name: String(formData.get("site_name") || "") || null,
@@ -400,9 +418,11 @@ export default function CompanyDirectory({
                   </select>
                 </div>
                 <BusinessHoursFields
+                  key={selected.id+"-"+(editing?"edit":"view")}
                   days={selected.business_days}
                   openTime={selected.business_open_time}
                   closeTime={selected.business_close_time}
+                  schedule={selected.business_schedule}
                   disabled={!editing}
                   title="Horario general de atención"
                   description="Reacción usa este horario para el estado abierto/cerrado de la empresa."

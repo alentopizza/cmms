@@ -150,9 +150,9 @@ export async function POST(
   const primaryContactEmail = String(form.get("primary_contact_email") || "").trim().toLowerCase();
   const internalNotes = String(form.get("internal_notes") || "").trim();
   const currentOrganizationHoursResult = await query<{
-    business_days:number[]; business_open_time:string; business_close_time:string;
+    business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:unknown;
   }>(
-    "SELECT business_days,business_open_time::text,business_close_time::text FROM organizations WHERE id=$1",
+    "SELECT business_days,business_open_time::text,business_close_time::text,business_schedule FROM organizations WHERE id=$1",
     [id],
   );
   const currentOrganizationHours = normalizeBusinessHoursRow(currentOrganizationHoursResult.rows[0] || {});
@@ -183,8 +183,8 @@ export async function POST(
   const siteLongitude = siteLongitudeRaw ? Number(siteLongitudeRaw) : null;
   const siteRadius = Number.parseInt(siteRadiusRaw, 10);
   const currentSiteHours = primarySiteId && UUID_PATTERN.test(primarySiteId)
-    ? await query<{ business_days:number[]; business_open_time:string; business_close_time:string }>(
-        "SELECT business_days,business_open_time::text,business_close_time::text FROM sites WHERE id=$1 AND organization_id=$2",
+    ? await query<{ business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:unknown }>(
+        "SELECT business_days,business_open_time::text,business_close_time::text,business_schedule FROM sites WHERE id=$1 AND organization_id=$2",
         [primarySiteId,id],
       )
     : null;
@@ -237,11 +237,11 @@ export async function POST(
       const updated = await client.query(
         `UPDATE organizations
          SET name=$1,slug=$2,legal_name=$3,tax_id=$4,timezone=$5,
-             business_days=$6,business_open_time=$7,business_close_time=$8,updated_at=now()
-         WHERE id=$9
+             business_days=$6,business_open_time=$7,business_close_time=$8,business_schedule=$9::jsonb,updated_at=now()
+         WHERE id=$10
          RETURNING id`,
         [name, slug, legalName || null, taxId || null, timezone,
-         organizationHours.days,organizationHours.openTime,organizationHours.closeTime,id],
+         organizationHours.days,organizationHours.openTime,organizationHours.closeTime,JSON.stringify(organizationHours.schedule),id],
       );
       if (!updated.rowCount) throw new Error("Empresa no encontrada");
 
@@ -292,12 +292,12 @@ export async function POST(
         await client.query(
           `UPDATE sites
            SET name=$1,code=$2,address=$3,city=$4,country=$5,latitude=$6,longitude=$7,geofence_radius_m=$8,
-               business_days=$9,business_open_time=$10,business_close_time=$11
-           WHERE id=$12 AND organization_id=$13`,
+               business_days=$9,business_open_time=$10,business_close_time=$11,business_schedule=$12::jsonb
+           WHERE id=$13 AND organization_id=$14`,
           [
             siteName || "Sede principal", siteCode || null, address, city, country || "CO",
             siteLatitude, siteLongitude, siteRadius,
-            siteHours.days,siteHours.openTime,siteHours.closeTime,
+            siteHours.days,siteHours.openTime,siteHours.closeTime,JSON.stringify(siteHours.schedule),
             primarySiteId, id,
           ],
         );

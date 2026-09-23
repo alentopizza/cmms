@@ -292,3 +292,20 @@ This remains 1:1 verification of an authenticated account. It is not face search
 **Privacy/operational boundary:** location permission is explicit and mandatory for the Technician role, the UI displays an active-tracking indicator, the session ends on logout, stale sessions disappear from the live view, and only supervisory Reaction roles can view other technicians.
 
 **Mobile constraint:** browser/PWA tracking is acceptable for the first phase, but continuous background tracking comparable to transport apps requires a native/mobile-container implementation with OS background-location permissions.
+
+
+## ADR-030 — Business hours are day-specific but preserve legacy schedule columns
+
+Status: accepted and implemented.
+
+A single opening/closing pair is insufficient for real operating schedules because weekends and individual weekdays may differ or be closed. Companies and Sites therefore store `business_schedule` as the canonical rich seven-day JSON schedule.
+
+The existing `business_days`, `business_open_time` and `business_close_time` columns remain synchronized as compatibility fields. New code that needs current open/closed state should normalize through `lib/business-hours.ts` instead of reading only the legacy pair.
+
+## ADR-031 — Archiving Company documents is reversible retention, not deletion
+
+Status: accepted and implemented.
+
+Company dossier documents may leave the active compliance view without losing historical evidence. **Archive** therefore preserves file bytes, metadata and audit attribution; **Restore** returns the record to the active dossier. Permanent deletion is intentionally separate and remains restricted to the Platform Owner protected destructive workflow.
+
+This distinction must be preserved in future document bulk actions, exports and compliance reporting.

@@ -10,12 +10,16 @@ export default function OwnerDeleteButton({
   label,
   redirectTo,
   className = "text-button text-danger",
+  tooltip,
+  icon,
 }: {
   table: string;
   id: string;
   label: string;
   redirectTo?: string;
   className?: string;
+  tooltip?: string;
+  icon?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -52,8 +56,16 @@ export default function OwnerDeleteButton({
   }
 
   return <>
-    <button className={className} type="button" disabled={deleting} onClick={() => setOpen(true)}>
-      {deleting ? "Eliminando…" : "Eliminar"}
+    <button
+      className={className}
+      type="button"
+      disabled={deleting}
+      title={tooltip}
+      data-tooltip={tooltip}
+      onClick={() => setOpen(true)}
+    >
+      {icon && <i aria-hidden="true">{icon}</i>}
+      <span>{deleting ? "Eliminando…" : "Eliminar"}</span>
     </button>
     {error && <span className="owner-inline-delete-error">{error}</span>}
     <ConfirmDialog

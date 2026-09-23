@@ -3,22 +3,23 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { isBusinessOpenNow, normalizeBusinessHoursRow } from "@/lib/business-hours";
+import { e164Phone, nationalPhonePart } from "@/lib/country-calling-codes";
 
 type CompanyRow={
-  id:string;name:string;legal_name:string|null;tax_id:string|null;phone:string|null;admin_email:string|null;
+  id:string;name:string;legal_name:string|null;tax_id:string|null;phone:string|null;contact_country:string;admin_email:string|null;
   website:string|null;primary_contact_name:string|null;primary_contact_phone:string|null;primary_contact_email:string|null;
   timezone:string;latitude:number;longitude:number;
-  business_days:number[];business_open_time:string;business_close_time:string;has_logo:boolean;
+  business_days:number[];business_open_time:string;business_close_time:string;business_schedule:unknown;has_logo:boolean;
 };
 type SiteRow={
   id:string;organization_id:string;organization_name:string;organization_timezone:string;name:string;code:string|null;
   address:string|null;city:string|null;country:string;contact_name:string|null;contact_phone:string|null;contact_email:string|null;
   latitude:number;longitude:number;geofence_radius_m:number;organization_has_logo:boolean;
-  business_days:number[];business_open_time:string;business_close_time:string;
+  business_days:number[];business_open_time:string;business_close_time:string;business_schedule:unknown;
 };
 type TechRow={
   tracking_session_id:string;user_id:string;full_name:string;email:string;phone:string|null;role:string;
-  organization_id:string;organization_name:string;latitude:number;longitude:number;accuracy_m:number|null;
+  organization_id:string;organization_name:string;organization_country:string;latitude:number;longitude:number;accuracy_m:number|null;
   last_seen_at:string;has_avatar:boolean;live:boolean;crew_ids:string[];
 };
 type SampleRow={tracking_session_id:string;latitude:number;longitude:number;recorded_at:string};
@@ -43,9 +44,11 @@ export async function GET(){
 
   const companies=await query<CompanyRow>(
     global
-      ? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,o.admin_email,o.website,
+      ? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
+                COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') contact_country,
+                o.admin_email,o.website,
                 o.primary_contact_name,o.primary_contact_phone,o.primary_contact_email,
-                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,
+                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
                 (o.logo_data IS NOT NULL) has_logo,
                 representative.latitude,representative.longitude
          FROM organizations o
@@ -59,9 +62,11 @@ export async function GET(){
          ) representative ON true
          WHERE o.active=true
          ORDER BY o.name`
-      : `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,o.admin_email,o.website,
+      : `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
+                COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') contact_country,
+                o.admin_email,o.website,
                 o.primary_contact_name,o.primary_contact_phone,o.primary_contact_email,
-                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,
+                o.timezone,o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
                 (o.logo_data IS NOT NULL) has_logo,
                 representative.latitude,representative.longitude
          FROM organizations o
@@ -85,7 +90,7 @@ export async function GET(){
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
                 s.latitude,s.longitude,s.geofence_radius_m,
                 (o.logo_data IS NOT NULL) organization_has_logo,
-                s.business_days,s.business_open_time::text,s.business_close_time::text
+                s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule
          FROM sites s
          JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND o.active=true
@@ -95,7 +100,7 @@ export async function GET(){
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
                 s.latitude,s.longitude,s.geofence_radius_m,
                 (o.logo_data IS NOT NULL) organization_has_logo,
-                s.business_days,s.business_open_time::text,s.business_close_time::text
+                s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule
          FROM sites s
          JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND o.active=true AND s.organization_id=$1
@@ -109,6 +114,7 @@ export async function GET(){
     global
       ? `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,u.email,u.phone,om.role,
                 ts.organization_id,o.name organization_name,
+                COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') organization_country,
                 ts.last_latitude latitude,ts.last_longitude longitude,
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
                 (ts.last_seen_at > now()-interval '2 minutes') live,
@@ -128,6 +134,7 @@ export async function GET(){
          ORDER BY ts.last_seen_at DESC`
       : `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,u.email,u.phone,om.role,
                 ts.organization_id,o.name organization_name,
+                COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') organization_country,
                 ts.last_latitude latitude,ts.last_longitude longitude,
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
                 (ts.last_seen_at > now()-interval '2 minutes') live,
@@ -267,11 +274,13 @@ export async function GET(){
         name:company.name,
         legalName:company.legal_name,
         taxId:company.tax_id,
-        phone:company.phone,
+        phone:company.phone?e164Phone(company.contact_country,nationalPhonePart(company.phone,company.contact_country)):null,
         adminEmail:company.admin_email,
         website:company.website,
         primaryContactName:company.primary_contact_name,
-        primaryContactPhone:company.primary_contact_phone,
+        primaryContactPhone:company.primary_contact_phone
+          ? e164Phone(company.contact_country,nationalPhonePart(company.primary_contact_phone,company.contact_country))
+          : null,
         primaryContactEmail:company.primary_contact_email,
         lat:Number(company.latitude),
         lng:Number(company.longitude),
@@ -293,7 +302,7 @@ export async function GET(){
         city:site.city,
         country:site.country,
         contactName:site.contact_name,
-        contactPhone:site.contact_phone,
+        contactPhone:site.contact_phone?e164Phone(site.country,nationalPhonePart(site.contact_phone,site.country)):null,
         contactEmail:site.contact_email,
         lat:Number(site.latitude),
         lng:Number(site.longitude),
@@ -308,7 +317,8 @@ export async function GET(){
       userId:tech.user_id,
       fullName:tech.full_name,
       email:tech.email,
-      phone:tech.phone,
+      phone:tech.phone?e164Phone(tech.organization_country,nationalPhonePart(tech.phone,tech.organization_country)):null,
+      country:tech.organization_country,
       role:tech.role,
       organizationId:tech.organization_id,
       organizationName:tech.organization_name,

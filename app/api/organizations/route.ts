@@ -87,14 +87,14 @@ export async function POST(request: Request) {
       const organization = await client.query<{ id: string }>(
         `INSERT INTO organizations(
           name,slug,legal_name,tax_id,timezone,
-          business_days,business_open_time,business_close_time,
+          business_days,business_open_time,business_close_time,business_schedule,
           logo_data,logo_mime_type,logo_file_name,
           cover_data,cover_mime_type,cover_file_name
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15)
         RETURNING id`,
         [
           name, slug, legalName || null, taxId || null, timezone,
-          organizationHours.days, organizationHours.openTime, organizationHours.closeTime,
+          organizationHours.days, organizationHours.openTime, organizationHours.closeTime, JSON.stringify(organizationHours.schedule),
           logo.bytes, logo.mime, logo.name,
           cover?.bytes || null, cover?.mime || null, cover?.name || null,
         ],
@@ -125,11 +125,11 @@ export async function POST(request: Request) {
       await client.query(
         `INSERT INTO sites(
            organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
-           business_days,business_open_time,business_close_time
-         ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+           business_days,business_open_time,business_close_time,business_schedule
+         ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb)`,
         [
           organizationId, siteName, siteCode || null, address, city, country, latitude, longitude, geofenceRadius,
-          siteHours.days, siteHours.openTime, siteHours.closeTime,
+          siteHours.days, siteHours.openTime, siteHours.closeTime, JSON.stringify(siteHours.schedule),
         ],
       );
 

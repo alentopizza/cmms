@@ -1,5 +1,26 @@
 # Changelog
 
+
+## 2026-09-23 — Flexible schedules, governed document archive and phone actions
+
+### Added
+
+- Added migration `024_flexible_business_schedule_document_archive.sql`.
+- Companies and Sites now support a seven-day schedule with independent opening/closing times per active day, while retaining the legacy day/open/close columns for backward compatibility.
+- Business-hour editors now allow closing individual days and configuring different weekend or weekday hours; Reaction consumes the richer schedule for open/closed state.
+- Company documents now have separate **Vigentes** and **Archivados** views, in-place PDF/image preview, restore flow, archive audit attribution and owner-only permanent deletion.
+- Document download endpoints now support explicit inline preview without removing archived-file access for authorized users.
+- Added country-aware phone fields that derive the international calling prefix from the Company/Site country and persist normalized E.164-like values.
+- Added WhatsApp and call shortcuts with tooltips to phone fields and Reaction entity detail views.
+- Adjusted Company profile identity layout so the logo sits fully below the cover instead of overlapping it.
+- Normalized principal-Site information-field heights to keep internal-code/help text aligned with neighboring fields.
+
+### Changed
+
+- Archiving a Company document is now reversible and distinct from permanent deletion.
+- Company, Site and User phone capture no longer requires users to type the country calling prefix when the related country is known.
+- Reaction displays variable-hour entities as **Horario variable** when active days do not share the same opening/closing range.
+
 ## 2026-09-23 — Company quick-edit contact save fix
 
 ### Fixed

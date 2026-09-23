@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import PhoneField from "@/components/PhoneField";
 
 type NamedOption = { id: string; name: string };
 type OrganizationOption = NamedOption;
@@ -120,11 +121,11 @@ export function SiteCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
-          <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required /></div>
+          <div className="field"><label>País *</label><input id="new-site-country" name="country" defaultValue="CO" maxLength={2} required /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como imagen de referencia de la ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
-          <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="new-site-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
           <BusinessHoursFields title="Horario de atención de la sede" description="Este horario alimenta el filtro operativo de Reacción." />
         </div>
@@ -311,12 +312,14 @@ export function ContextUserCreateModal({
   serviceSuppliers,
   returnTo,
   triggerLabel = "Nuevo usuario",
+  countryCode = "CO",
 }: {
   organizationId: string;
   organizationName: string;
   serviceSuppliers: NamedOption[];
   returnTo: string;
   triggerLabel?: string;
+  countryCode?: string;
 }) {
   const [open,setOpen]=useState(false);
   const [role,setRole]=useState("viewer");
@@ -336,7 +339,7 @@ export function ContextUserCreateModal({
           <div className="form-span-2"><FileDropzone name="avatar" label="Foto de perfil" description="Identidad visual del usuario. La biometría facial se enrola por separado con cámara y prueba de vida." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Nombre completo *</label><input name="full_name" required autoFocus placeholder="Ej. Laura Gómez" /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="laura@empresa.com" /></div>
-          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={countryCode} />
           <div className="field"><label>Contraseña temporal *</label><input name="password" type="password" minLength={8} required autoComplete="new-password" placeholder="Mínimo 8 caracteres" /></div>
           <div className="field"><label>Rol *</label><select name="role" value={role} onChange={event=>setRole(event.target.value)}><option value="admin">Administrador de empresa</option><option value="manager">Manager / Supervisor</option><option value="technician">Técnico</option><option value="requester">Solicitante</option><option value="viewer">Consulta</option><option value="provider">Proveedor de servicios</option><option value="external">Colaborador externo</option></select></div>
           {(role==="provider" || role==="external") && <div className="field"><label>Proveedor de servicios {role==="provider"?"*":"(opcional)"}</label><select name="external_supplier_id" required={role==="provider"}><option value="">Selecciona proveedor</option>{serviceSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>}
@@ -411,11 +414,11 @@ export function LocationCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
           <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
-          <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
+          <div className="field"><label>País *</label><input id="location-create-country" name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
-          <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode="CO" countryInputId="location-create-country" />
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
         </div>
         {fixedOrganizationName && <div className="modal-context-note">Empresa seleccionada: <strong>{fixedOrganizationName}</strong></div>}

@@ -346,6 +346,12 @@ Business hours are operational metadata only. They do not automatically disable 
 
 Reaction tracking treats explicit logout as the authoritative session-close event. Browser refresh, route remounts and OS background suspension must not emit a disconnect because those events do not mean the technician intentionally ended the operational session. The client reuses an active tracking session when GPS resumes. Live telemetry is defined as a sample within two minutes; the supervisory map may keep the last known position visible for up to 30 minutes with a paused state to absorb mobile-browser suspension. This grace period does not claim background GPS collection occurred.
 
+### Reaction search and detail projection
+
+The Reaction snapshot intentionally includes a limited operational projection of Company, Site and connected-Technician profile fields needed for search and in-place detail. The projection stays behind the existing `reaction.view` authorization and tenant/site scoping. The client performs accent-insensitive search across those already-authorized records and never broadens server scope. Activity records include assignment identifiers for direct users, crews and suppliers so the detail modal can relate pending work to connected technicians without another navigation round-trip.
+
+The right-side date-filtered alert list and entity-detail pending lists have different semantics: the side panel obeys the operator's date filter, while an entity popup deliberately shows all pending/in-progress activities for that Company/Site/Technician.
+
 ### Reaction operational alert aggregation
 
 `/api/reaction/snapshot` is the combined read model for the Reaction workspace. It returns authorized Companies, Sites, Technician telemetry and pending/in-progress work-order activities. Activity alert dates resolve in this order: activity `due_date`, Work Order `due_at`, then Work Order `requested_at`. Date-state comparison uses each organization's configured IANA timezone. Tenant/site scope is applied server-side before the client performs interactive Company/Site/date filtering.

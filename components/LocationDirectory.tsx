@@ -138,7 +138,16 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
             <div className="field form-span-2"><label>Nueva foto de sede</label><input type="file" name="image" accept="image/png,image/jpeg,image/webp"/></div>
           </div>
-          <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} />
+          <GeofenceMapPicker
+            initialAddress={selected.address}
+            initialLatitude={selected.latitude}
+            initialLongitude={selected.longitude}
+            initialRadius={selected.geofence_radius_m}
+            cityHint={selected.city}
+            countryHint={selected.country}
+            markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null}
+            markerLabel={selected.organization_name}
+          />
           <div className="form-actions"><button className="button secondary" type="button" onClick={()=>setEditingSite(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
         </form>}
 
@@ -148,8 +157,31 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           <div className="wide"><span>⌖</span><p><strong>{selected.address||"Dirección sin registrar"}</strong><small>Dirección</small></p><button type="button" onClick={()=>copy(selected.address||"","Dirección")}>Copiar</button></div>
         </div>
         <div className="location-geofence-view">
-          <div className="location-detail-section-title compact"><h2>Mapa y geocerca biométrica</h2><span className={selected.latitude!==null&&selected.longitude!==null?"status-badge status-active":"status-badge"}>{selected.latitude!==null&&selected.longitude!==null?"Configurada":"Pendiente"}</span></div>
-          <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} />
+          <div className="location-detail-section-title compact">
+            <h2>{editingSite?"Resumen de geocerca":"Mapa y geocerca biométrica"}</h2>
+            <span className={selected.latitude!==null&&selected.longitude!==null?"status-badge status-active":"status-badge"}>{selected.latitude!==null&&selected.longitude!==null?"Configurada":"Pendiente"}</span>
+          </div>
+          {editingSite
+            ? <div className="location-geofence-summary">
+                <div><span>Dirección</span><strong>{selected.address||"Sin validar"}</strong></div>
+                <div><span>Latitud</span><strong>{selected.latitude!==null?Number(selected.latitude).toFixed(6):"—"}</strong></div>
+                <div><span>Longitud</span><strong>{selected.longitude!==null?Number(selected.longitude).toFixed(6):"—"}</strong></div>
+                <div><span>Radio</span><strong>{selected.geofence_radius_m||250} m</strong></div>
+                <p>El mapa editable de arriba concentra los cambios. Al guardar, este resumen se actualiza con la nueva geocerca.</p>
+              </div>
+            : <GeofenceMapPicker
+                initialAddress={selected.address}
+                initialLatitude={selected.latitude}
+                initialLongitude={selected.longitude}
+                initialRadius={selected.geofence_radius_m}
+                cityHint={selected.city}
+                countryHint={selected.country}
+                readOnly
+                addressRequired={false}
+                coordinateRequired={false}
+                markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null}
+                markerLabel={selected.organization_name}
+              />}
         </div>
 
         <div className="location-detail-section-title">

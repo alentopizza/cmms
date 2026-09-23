@@ -9,12 +9,12 @@
 - server-side supported-value validation for migrated Country/identification flows;
 - platform and tenant **Idioma y región** settings with persisted Locale/default Country;
 - regional defaults applied to new Company and Location forms;
-- migration 026 for locale/region and User identity persistence.
+- migration 026 for locale/region and User identity persistence;
+- Supplier Country/tax identity and Lead Country-aware phone capture through migration 027.
 
 ### Next internationalization work
 
 - expand Country/City coverage according to commercial rollout markets;
-- migrate remaining peripheral contact forms, such as leads/suppliers, to the same Country-aware phone pattern when their data model includes region;
 - introduce translation dictionaries and progressively replace hard-coded interface strings;
 - localize dates, numeric formats, currencies and generated report labels using the effective Locale.
 

@@ -15,7 +15,7 @@ export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
   address:string|null; city:string|null; country:string; active:boolean; location_count:number; asset_count:number; technician_count:number;
   latitude:number|null; longitude:number|null; geofence_radius_m:number;
-  has_image:boolean; organization_has_logo:boolean; contact_name:string|null; contact_phone:string|null; contact_email:string|null;
+  has_image:boolean; organization_has_logo:boolean; locality:string|null; contact_name:string|null; contact_title:string|null; contact_phone:string|null; contact_email:string|null; notes:string|null;
   business_days:number[]; business_open_time:string; business_close_time:string;
   business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
 };
@@ -25,6 +25,10 @@ export type LocationDirectorySub={
 };
 export type LocationDirectoryService={
   id:string; site_id:string; location_id:string|null; number:string; title:string; status:string; type:string; priority:string; requested_at:string; location_name:string|null;
+};
+export type LocationDirectoryTechnician={
+  site_id:string; location_id:string|null; user_id:string; full_name:string; phone:string|null; email:string; has_avatar:boolean;
+  assignment_count:number; active_assignment_count:number; next_due_date:string|null;
 };
 
 function initials(value:string){ return value.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase(); }
@@ -56,7 +60,7 @@ function MetricCard({label,value,hint}:{label:string;value:React.ReactNode;hint?
   return <div className="entity-stat-card"><small>{label}</small><strong>{value}</strong>{hint&&<span>{hint}</span>}</div>;
 }
 
-export default function LocationDirectory({sites,sublocations,services}:{sites:LocationDirectorySite[];sublocations:LocationDirectorySub[];services:LocationDirectoryService[];}){
+export default function LocationDirectory({sites,sublocations,services,technicians}:{sites:LocationDirectorySite[];sublocations:LocationDirectorySub[];services:LocationDirectoryService[];technicians:LocationDirectoryTechnician[];}){
   const [selectedSiteId,setSelectedSiteId]=useState<string|null>(null);
   const [editingSite,setEditingSite]=useState(false);
   const [selectedSubId,setSelectedSubId]=useState<string|null>(null);
@@ -84,6 +88,8 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
   }),[siteServices,serviceSearch,serviceStatus]);
   const selectedSub=siteSubs.find(item=>item.id===selectedSubId)||null;
   const selectedSubServices=selectedSub?siteServices.filter(item=>item.location_id===selectedSub.id):[];
+  const siteTechnicians=useMemo(()=>technicians.filter(item=>item.site_id===selectedSiteId),[technicians,selectedSiteId]);
+  const selectedSubTechnicians=selectedSub?siteTechnicians.filter(item=>item.location_id===selectedSub.id):[];
 
   async function copy(value:string,label:string){
     if(!value)return;
@@ -94,6 +100,20 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
   function openSite(id:string){
     setSelectedSiteId(id);setEditingSite(false);setSelectedSubId(null);setEditingSub(false);
     setSubSearch("");setSubStatus("all");setServiceSearch("");setServiceStatus("all");
+  }
+
+  function technicianList(items:LocationDirectoryTechnician[],scope:string){
+    return <div className="entity-section-stack">
+      <div className="entity-panel technician-assignment-note">
+        <h3><span className="entity-section-icon"><UiIcon name="user"/></span>Técnicos asignados por actividades</h3>
+        <p className="entity-panel-copy">Esta vista es de solo lectura. Los técnicos aparecen automáticamente cuando una actividad de una OT de {scope} queda asignada a una persona o a una cuadrilla que la incluye.</p>
+      </div>
+      {items.length?<div className="location-technician-grid">{items.map(item=><article className="location-technician-card" key={item.user_id+"-"+(item.location_id||item.site_id)}>
+        <div className="location-technician-avatar">{item.has_avatar?<img src={"/api/users/"+item.user_id+"/avatar"} alt="" />:<span>{initials(item.full_name)}</span>}</div>
+        <div className="location-technician-copy"><strong>{item.full_name}</strong><span>{item.active_assignment_count} actividades activas · {item.assignment_count} históricas</span><small>{item.next_due_date?"Próximo compromiso: "+new Date(item.next_due_date+"T12:00:00").toLocaleDateString("es-CO"):"Sin compromiso activo"}</small></div>
+        <div className="location-technician-actions">{item.phone&&<><a href={telLink(item.phone)} title="Llamar" aria-label={"Llamar a "+item.full_name}><UiIcon name="phone"/></a><a href={waLink(item.phone)} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={"WhatsApp de "+item.full_name}><UiIcon name="whatsapp"/></a></>}<a href={"mailto:"+item.email} title="Correo" aria-label={"Correo de "+item.full_name}>@</a></div>
+      </article>)}</div>:<div className="location-detail-empty technician-assignment-empty"><UiIcon name="user" size={28}/><strong>Aún no hay técnicos asignados.</strong><span>Cuando se creen actividades y se asigne un técnico o una cuadrilla, aparecerán aquí automáticamente.</span></div>}
+    </div>;
   }
 
   function serviceList(items:LocationDirectoryService[],empty:string){
@@ -153,7 +173,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             {label:"Sububicaciones",value:selected.location_count,icon:"sublocation"},
             {label:"Activos",value:selected.asset_count,icon:"asset"},
             {label:"OT activas",value:siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"work-order"},
-            {label:"Técnicos",value:selected.technician_count,icon:"user"},
+            {label:"Técnicos",value:siteTechnicians.length,icon:"user"},
           ]}
           toolbarActions={<>
             <button className="button secondary entity-action-button" type="button" onClick={()=>setEditingSite(value=>!value)}><UiIcon name="edit"/><span>{editingSite?"Cancelar edición":"Editar"}</span></button>
@@ -179,47 +199,52 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
                 <div className="field"><label>Nombre *</label><input name="name" defaultValue={selected.name} required/></div>
                 <div className="field"><label>Código interno</label><input name="code" defaultValue={selected.code||""}/><small>Opcional. Identifica la sede en OT, reportes e integraciones.</small></div>
                 <div className="field"><label>Ciudad *</label><input name="city" defaultValue={selected.city||""} required/></div>
+                <div className="field"><label>Zona / Localidad</label><input name="locality" defaultValue={selected.locality||""}/></div>
                 <div className="field"><label>País *</label><input id="location-country" name="country" defaultValue={selected.country} required/></div>
-                <div className="field"><label>Contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
+                <div className="field"><label>Responsable / contacto</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
+                <div className="field"><label>Cargo del responsable</label><input name="contact_title" defaultValue={selected.contact_title||""}/></div>
                 <PhoneField name="contact_phone" label="WhatsApp / teléfono" countryCode={selected.country} countryInputId="location-country" defaultValue={selected.contact_phone} />
                 <div className="field form-span-2"><label>Correo</label><input type="email" name="contact_email" defaultValue={selected.contact_email||""}/></div>
+                <div className="field form-span-2"><label>Notas adicionales</label><textarea name="notes" rows={3} defaultValue={selected.notes||""}/></div>
                 <BusinessHoursFields days={selected.business_days} openTime={selected.business_open_time} closeTime={selected.business_close_time} schedule={selected.business_schedule} title="Horario de atención de la sede" description="Reacción usa este horario para el filtro Abiertos ahora."/>
                 <div className="form-span-2"><FileDropzone name="image" label="Actualizar foto de sede" description="Selecciona una nueva imagen solo si quieres reemplazar la actual." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_image?"Foto de sede actual":null}/></div>
               </div>
               <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name}/>
               <div className="form-actions"><button className="button secondary" type="button" onClick={()=>setEditingSite(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
             </form>:<div className="entity-section-stack">
-              <div className="entity-two-column">
-                <div className="entity-panel"><h3>Datos de la ubicación</h3><div className="entity-info-grid">
-                  <InfoField label="Nombre de la ubicación" value={selected.name}/><InfoField label="Código / identificador" value={selected.code||"Sin código"}/>
-                  <InfoField label="Empresa" value={selected.organization_name}/><InfoField label="Tipo de ubicación" value="Sede principal"/>
-                  <InfoField label="Dirección" value={selected.address||"Sin registrar"}/><InfoField label="Ciudad" value={selected.city||"Sin registrar"}/>
-                  <InfoField label="País" value={countryName(selected.country)}/><InfoField label="Horario de operación" value={scheduleLabel(selected)}/>
-                  <InfoField label="Responsable / contacto" value={selected.contact_name||"Sin registrar"}/><InfoField label="Estado" value={selected.active?"Activa":"Inactiva"}/>
+              <div className="entity-approved-general-grid">
+                <div className="entity-panel entity-approved-data-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la ubicación</h3><div className="entity-info-grid">
+                  <InfoField label="Nombre de la ubicación" value={selected.name}/><InfoField label="Código / Identificador" value={selected.code||"Sin código"}/>
+                  <InfoField label="Empresa" value={selected.organization_name}/><InfoField label="Tipo de ubicación" value="Sede"/>
+                  <InfoField label="Dirección" value={selected.address||"Sin registrar"}/><InfoField label="Zona / Localidad" value={selected.locality||"Sin registrar"}/>
+                  <InfoField label="Ciudad" value={selected.city||"Sin registrar"}/><InfoField label="Horario de operación" value={scheduleLabel(selected)}/>
+                  <InfoField label="País" value={countryName(selected.country)}/>
+                  <InfoField label="Responsable" value={selected.contact_name?<span className="entity-person-value"><i>{initials(selected.contact_name)}</i><b><span>{selected.contact_name}</span><small>{selected.contact_title||"Responsable de sede"}</small></b></span>:"Sin registrar"}/>
                 </div></div>
-                <div className="entity-panel"><h3>Ubicación en el mapa</h3><GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name}/></div>
+                <div className="entity-panel entity-approved-map-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Ubicación en el mapa</h3><GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.latitude} initialLongitude={selected.longitude} initialRadius={selected.geofence_radius_m} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null} markerLabel={selected.organization_name+" · "+selected.name}/></div>
               </div>
-              <div className="entity-panel-grid">
-                <div className="entity-panel"><h3>Contacto</h3><div className="entity-info-grid">
-                  <InfoField label="Teléfono principal" value={selected.contact_phone?<span><a href={telLink(selected.contact_phone)}>{selected.contact_phone}</a> · <a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer">WhatsApp</a></span>:"Sin registrar"}/>
-                  <InfoField label="Correo electrónico" value={selected.contact_email||"Sin registrar"}/>
+              <div className="entity-panel-grid entity-approved-secondary-grid">
+                <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3><div className="entity-info-grid">
+                  <InfoField label="Teléfono principal" value={selected.contact_phone?<span className="entity-inline-contact"><a href={telLink(selected.contact_phone)}><UiIcon name="phone" size={14}/>{selected.contact_phone}</a><a href={waLink(selected.contact_phone)} target="_blank" rel="noreferrer"><UiIcon name="whatsapp" size={14}/>WhatsApp</a></span>:"Sin registrar"}/>
+                  <InfoField label="Correo electrónico" value={selected.contact_email?<a href={"mailto:"+selected.contact_email}>{selected.contact_email}</a>:"Sin registrar"}/>
                   <InfoField label="Contacto local" value={selected.contact_name||"Sin registrar"}/>
-                  <InfoField label="Copiar dirección" value={<button className="text-button" type="button" onClick={()=>copy(selected.address||"","Dirección")}>{copied==="Dirección"?"Copiada":"Copiar"}</button>}/>
+                  <InfoField label="Dirección" value={<button className="text-button" type="button" onClick={()=>copy(selected.address||"","Dirección")}>{copied==="Dirección"?"Dirección copiada":"Copiar dirección"}</button>}/>
                 </div></div>
-                <div className="entity-panel"><h3>Geocerca</h3><div className="entity-info-grid">
-                  <InfoField label="Radio" value={selected.geofence_radius_m+" m"}/>
-                  <InfoField label="Coordenadas" value={selected.latitude!==null&&selected.longitude!==null?Number(selected.latitude).toFixed(6)+", "+Number(selected.longitude).toFixed(6):"Pendientes"}/>
-                  <InfoField label="Estado" value={selected.latitude!==null&&selected.longitude!==null?"Configurada":"Pendiente"}/>
+                <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="location"/></span>Geocerca</h3><div className="entity-info-grid">
+                  <InfoField label="Radio de geocerca" value={selected.geofence_radius_m+" metros"}/>
+                  <InfoField label="Coordenadas (lat, lng)" value={selected.latitude!==null&&selected.longitude!==null?Number(selected.latitude).toFixed(4)+", "+Number(selected.longitude).toFixed(4):"Pendientes"}/>
+                  <InfoField label="Estado" value={<span className={"entity-geofence-state "+(selected.latitude!==null&&selected.longitude!==null?"active":"pending")}><i/>{selected.latitude!==null&&selected.longitude!==null?"Activa":"Pendiente"}</span>}/>
                   <InfoField label="Uso" value="Asistencia y contexto operativo"/>
                 </div></div>
               </div>
+              <div className="entity-panel entity-approved-notes"><h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3><p>{selected.notes||"Sin notas adicionales registradas para esta ubicación."}</p></div>
             </div>},
             {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
               <div className="entity-stat-grid">
                 <MetricCard label="Sububicaciones" value={selected.location_count} hint="espacios activos"/>
                 <MetricCard label="Activos" value={selected.asset_count} hint="no retirados"/>
                 <MetricCard label="OT activas" value={siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length} hint="abiertas o en ejecución"/>
-                <MetricCard label="Técnicos" value={selected.technician_count} hint="con alcance en la sede"/>
+                <MetricCard label="Técnicos asignados" value={siteTechnicians.length} hint="derivados de actividades"/>
               </div>
               <div className="entity-panel"><h3>Estado de mantenimiento</h3><div className="entity-info-grid">
                 <InfoField label="Abiertas" value={siteServices.filter(item=>item.status==="open").length}/>
@@ -237,6 +262,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
               </button></article>)}</div>:<div className="location-detail-empty">Aún no hay sububicaciones. Usa la acción de crear para registrar la primera.</div>}
             </div>},
             {id:"services",label:"Servicios",content:<div><div className="location-list-toolbar"><strong>{visibleServices.length} registros</strong><div><input value={serviceSearch} onChange={event=>setServiceSearch(event.target.value)} placeholder="Buscar servicio"/><select value={serviceStatus} onChange={event=>setServiceStatus(event.target.value)}><option value="all">Todos</option><option value="open">Abiertos</option><option value="assigned">Asignados</option><option value="in_progress">En progreso</option><option value="completed">Finalizados</option></select></div></div>{serviceList(visibleServices,"No hay servicios de mantenimiento para esta sede.")}</div>},
+            {id:"technicians",label:"Técnicos",content:technicianList(siteTechnicians,"esta ubicación")},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">
               <div className="entity-panel"><h3>Hoja de vida de la ubicación</h3><p className="entity-panel-copy">Consolida identidad, contacto, geocerca e indicadores operativos de la sede. El formato se genera con el alcance autorizado actual.</p></div>
               <div className="entity-stat-grid"><MetricCard label="PDF" value="Ejecutivo" hint="impresión y archivo"/><MetricCard label="Excel" value="Datos" hint="resumen estructurado"/><MetricCard label="Word" value="Editable" hint="documento compatible"/></div>
@@ -268,7 +294,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
             {label:"Sububicaciones",value:selectedSub.child_count,icon:"sublocation"},
             {label:"Activos",value:selectedSub.asset_count,icon:"asset"},
             {label:"OT activas",value:selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length,icon:"work-order"},
-            {label:"Estado",value:selectedSub.active?"Activa":"Inactiva",icon:"check"},
+            {label:"Técnicos",value:selectedSubTechnicians.length,icon:"user"},
           ]}
           toolbarActions={<>
             <button className="button secondary entity-action-button" type="button" onClick={()=>setEditingSub(value=>!value)}><UiIcon name="edit"/><span>{editingSub?"Cancelar edición":"Editar"}</span></button>
@@ -306,6 +332,7 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
               <MetricCard label="OT activas" value={selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length}/><MetricCard label="OT finalizadas visibles" value={selectedSubServices.filter(item=>item.status==="completed").length}/>
             </div>},
             {id:"services",label:"Servicios",content:serviceList(selectedSubServices,"No hay servicios asociados directamente a esta sububicación.")},
+            {id:"technicians",label:"Técnicos",content:technicianList(selectedSubTechnicians,"esta sububicación")},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida de sububicación</h3><p className="entity-panel-copy">Consolida identificación, jerarquía, descripción, activos y órdenes asociadas directamente al espacio.</p></div><ProfileExportMenu entity="location" id={selectedSub.id} label="Exportar hoja de vida"/></div>},
           ]}
         />

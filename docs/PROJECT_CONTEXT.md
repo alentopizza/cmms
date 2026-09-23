@@ -671,3 +671,19 @@ Desweb CMMS is being prepared for distribution across multiple countries. Countr
 The current foundation centralizes Country, curated City options, calling codes, tax identifiers, personal document types and time zones in `lib/international-catalog.ts`. Companies, Sites, Suppliers, Leads and Users/Technicians consume the shared Country-aware form rules where regional data is captured. Phones derive the international prefix from the selected Country; Supplier tax identity and User personal document identity also depend on Country. Platform and tenant Settings persist a default Country and preferred Locale.
 
 This is a locale-ready foundation, not a claim that the full UI has already been translated. Existing Spanish screens remain valid until translation dictionaries are introduced progressively. The Country/City catalog is intentionally extensible; the initial city sets cover common operating cities and can be expanded without changing each form independently.
+
+
+### Supplier profiles and requisitions
+
+Supplier is now a first-class operational profile. The directory requires Supplier identity/logo and the detail uses the approved in-page profile workspace.
+
+Supplier data is intentionally projected from existing authoritative relations:
+
+- service Activities: `work_order_tasks.service_supplier_id`;
+- supplied Inventory: `inventory_items.supplier_id`;
+- requisition history: `supplier_requisitions.supplier_id`;
+- Supplier documents: `supplier_documents.supplier_id`.
+
+Requisition creation has two approved entry points: Supplier profile and Inventory. Both call the same server generator. Inventory selections spanning several Suppliers are split automatically into independent Supplier requisitions.
+
+A requisition represents demand to a Supplier, not stock receipt. Inventory quantity changes only through inventory receiving/transaction logic, keeping requested, approved and received quantities auditable as separate facts.

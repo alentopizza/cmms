@@ -37,6 +37,8 @@ export default async function LocationsIndexPage({
       ? await query<SiteRow>(
           `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
                   s.contact_name,s.contact_phone,s.contact_email,s.latitude,s.longitude,s.geofence_radius_m,
+                  s.business_days,s.business_open_time::text,s.business_close_time::text,
+                  s.business_days,s.business_open_time::text,s.business_close_time::text,
                   (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
                   (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
                   (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count
@@ -48,6 +50,7 @@ export default async function LocationsIndexPage({
       : await query<SiteRow>(
           `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
                   s.contact_name,s.contact_phone,s.contact_email,s.latitude,s.longitude,s.geofence_radius_m,
+                  s.business_days,s.business_open_time::text,s.business_close_time::text,
                   (s.image_data IS NOT NULL) has_image,(o.logo_data IS NOT NULL) organization_has_logo,
                   (SELECT count(*)::int FROM locations l WHERE l.site_id=s.id AND l.active=true) location_count,
                   (SELECT count(*)::int FROM assets a WHERE a.site_id=s.id AND a.status<>'retired') asset_count

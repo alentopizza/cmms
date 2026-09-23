@@ -7,6 +7,9 @@ import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
+import PhoneField from "@/components/PhoneField";
+import { CountrySelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
+import { countryName } from "@/lib/international-catalog";
 
 type Supplier = {
   id:string;
@@ -14,6 +17,8 @@ type Supplier = {
   organization_name:string;
   name:string;
   tax_id:string|null;
+  tax_id_type:string|null;
+  country_code:string|null;
   supplier_type:"materials"|"services"|"both";
   service_category:string|null;
   contact_name:string|null;
@@ -22,7 +27,7 @@ type Supplier = {
   active:boolean;
 };
 
-type Organization = { id:string; name:string };
+type Organization = { id:string; name:string; country:string };
 
 function typeLabel(type:Supplier["supplier_type"]) {
   if (type==="services") return "Servicios";
@@ -42,18 +47,18 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     superadmin
       ? query<Supplier>(
           `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.tax_id,s.supplier_type,
-                  s.service_category,s.contact_name,s.email,s.phone,s.active
+                  s.service_category,s.contact_name,s.email,s.phone,s.country_code,s.tax_id_type,s.active
            FROM suppliers s JOIN organizations o ON o.id=s.organization_id
            ORDER BY o.name,s.active DESC,s.name`)
       : query<Supplier>(
           `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.tax_id,s.supplier_type,
-                  s.service_category,s.contact_name,s.email,s.phone,s.active
+                  s.service_category,s.contact_name,s.email,s.phone,s.country_code,s.tax_id_type,s.active
            FROM suppliers s JOIN organizations o ON o.id=s.organization_id
            WHERE s.organization_id=$1 ORDER BY s.active DESC,s.name`,
           [session.organizationId]),
     superadmin
-      ? query<Organization>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
-      : query<Organization>("SELECT id,name FROM organizations WHERE id=$1",[session.organizationId]),
+      ? query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
+      : query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1",[session.organizationId]),
   ]);
   const creationGate=await getCreationGateForScope("supplier",session.organizationId,superadmin);
 
@@ -79,11 +84,13 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
             : <input type="hidden" name="organization_id" value={session.organizationId || ""}/>}
           <div className="field"><label>Tipo *</label><select name="supplier_type" defaultValue="materials"><option value="materials">Materiales / suministros</option><option value="services">Servicios tercerizados</option><option value="both">Materiales + servicios</option></select></div>
           <div className="field"><label>Nombre / razón social *</label><input name="name" required placeholder="Ej. Servicios Técnicos Andinos S.A.S." /></div>
-          <div className="field"><label>NIT / identificación</label><input name="tax_id" placeholder="Ej. 900123456-7" /></div>
+          <CountrySelect id="supplier-country" name="country_code" label="País del proveedor *" defaultValue={organizations.rows[0]?.country||"CO"} required />
+          <TaxIdentificationTypeSelect id="supplier-tax-type" name="tax_id_type" countryInputId="supplier-country" countryCode={organizations.rows[0]?.country||"CO"} />
+          <div className="field"><label>Número de identificación</label><input name="tax_id" placeholder="Número fiscal / tributario" /></div>
           <div className="field"><label>Categoría de servicio</label><input name="service_category" placeholder="Ej. Refrigeración, electricidad u obra civil" /></div>
           <div className="field"><label>Persona de contacto</label><input name="contact_name" placeholder="Ej. Carlos Pérez" /></div>
           <div className="field"><label>Correo</label><input name="email" type="email" placeholder="servicios@empresa.com" /></div>
-          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 000 0000" /></div>
+          <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={organizations.rows[0]?.country||"CO"} countryInputId="supplier-country" />
           <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} placeholder="Ej. Cobertura nacional, atención 24/7 y contacto de emergencias." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear proveedor</button></div>
         </form>
@@ -113,13 +120,14 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
           </div>
           <div className="supplier-meta">
             <div><span>Tipo</span><strong>{typeLabel(s.supplier_type)}</strong></div>
-            <div><span>NIT</span><strong>{s.tax_id || "Sin registrar"}</strong></div>
+            <div><span>Identificación</span><strong>{s.tax_id ? ((s.tax_id_type||"ID")+" "+s.tax_id) : "Sin registrar"}</strong></div>
+            <div><span>País</span><strong>{countryName(s.country_code)||"Sin registrar"}</strong></div>
             <div><span>Servicio</span><strong>{s.service_category || "No aplica"}</strong></div>
             <div><span>Contacto</span><strong>{s.contact_name || s.email || s.phone || "Sin registrar"}</strong></div>
           </div>
           {owner&&<OwnerRecordActions table="suppliers" id={s.id} label={s.name} fields={[
             {name:"name",label:"Nombre",value:s.name},
-            {name:"tax_id",label:"Identificación",value:s.tax_id||""},
+            {name:"tax_id",label:"Número de identificación",value:s.tax_id||""},
             {name:"supplier_type",label:"Tipo",value:s.supplier_type,type:"select",options:[
               {value:"materials",label:"Materiales"},{value:"services",label:"Servicios"},{value:"both",label:"Materiales + servicios"}
             ]},

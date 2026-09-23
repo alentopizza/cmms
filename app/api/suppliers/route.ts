@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { publicUrl } from "@/lib/urls";
+import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 
 const TYPES=new Set(["materials","services","both"]);
 
@@ -19,6 +20,8 @@ export async function POST(request:Request) {
   const name=String(form.get("name")||"").trim();
   const supplierType=String(form.get("supplier_type")||"materials");
   const taxId=String(form.get("tax_id")||"").trim();
+  const taxIdType=String(form.get("tax_id_type")||"").trim();
+  const countryCode=String(form.get("country_code")||"CO").trim().toUpperCase();
   const serviceCategory=String(form.get("service_category")||"").trim();
   const contactName=String(form.get("contact_name")||"").trim();
   const email=String(form.get("email")||"").trim().toLowerCase();
@@ -26,7 +29,8 @@ export async function POST(request:Request) {
   const notes=String(form.get("notes")||"").trim();
 
   const target=(suffix:string)=>publicUrl(`/dashboard/suppliers${suffix}`,request.url);
-  if(!organizationId || !name || !TYPES.has(supplierType)) return NextResponse.redirect(target("?error=required"),303);
+  if(!organizationId || !name || !TYPES.has(supplierType) || !isSupportedCountry(countryCode)) return NextResponse.redirect(target("?error=required"),303);
+  if((taxId||taxIdType) && (!taxId || !taxIdType || !isTaxIdTypeForCountry(countryCode,taxIdType))) return NextResponse.redirect(target("?error=required"),303);
 
   const org=await query("SELECT 1 FROM organizations WHERE id=$1 AND active=true",[organizationId]);
   if(!org.rowCount) return new NextResponse("Empresa no disponible",{status:404});
@@ -35,9 +39,9 @@ export async function POST(request:Request) {
   if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
 
   await query(
-    `INSERT INTO suppliers(organization_id,name,tax_id,contact_name,email,phone,notes,supplier_type,service_category)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [organizationId,name,taxId||null,contactName||null,email||null,phone||null,notes||null,supplierType,serviceCategory||null],
+    `INSERT INTO suppliers(organization_id,name,tax_id,tax_id_type,country_code,contact_name,email,phone,notes,supplier_type,service_category)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [organizationId,name,taxId||null,taxIdType||null,countryCode,contactName||null,email||null,phone||null,notes||null,supplierType,serviceCategory||null],
   );
 
   return NextResponse.redirect(target("?created=1"),303);

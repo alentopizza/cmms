@@ -179,6 +179,7 @@ export default function GeofenceMapPicker({
   const [googleConfig,setGoogleConfig]=useState<{apiKey:string;mapId:string}|null>(null);
   const [googleConfigLoaded,setGoogleConfigLoaded]=useState(false);
   const [placesReady,setPlacesReady]=useState(false);
+  const [liveCountryHint,setLiveCountryHint]=useState(String(countryHint||"CO").trim().toUpperCase());
 
   const googleHostRef = useRef<HTMLDivElement>(null);
   const autocompleteHostRef = useRef<HTMLDivElement>(null);
@@ -341,6 +342,25 @@ export default function GeofenceMapPicker({
     };
   }, [useGoogle, readOnly, googleConfig?.apiKey, googleConfig?.mapId, markerImageUrl, markerLabel]);
 
+  // ── Live Country context for address search/autocomplete ─────────────────
+
+  useEffect(()=>{
+    const host=googleHostRef.current || autocompleteHostRef.current;
+    const form=host?.closest("form");
+    const countryField=form?.querySelector<HTMLInputElement|HTMLSelectElement>('[name="country"]');
+    const sync=()=>{
+      const value=String(countryField?.value || countryHint || "CO").trim().toUpperCase();
+      setLiveCountryHint(value||"CO");
+    };
+    sync();
+    countryField?.addEventListener("input",sync);
+    countryField?.addEventListener("change",sync);
+    return()=>{
+      countryField?.removeEventListener("input",sync);
+      countryField?.removeEventListener("change",sync);
+    };
+  },[countryHint,readOnly]);
+
   // ── Google Places autocomplete (Maps-like address entry) ─────────────────
 
   useEffect(()=>{
@@ -359,7 +379,7 @@ export default function GeofenceMapPicker({
         element.placeholder="Busca una dirección o lugar";
         element.classList.add("desweb-place-autocomplete");
         element.style.colorScheme=document.documentElement.dataset.theme==="dark"?"dark":"light";
-        const country=(countryHint||"CO").trim().toLowerCase();
+        const country=(liveCountryHint||countryHint||"CO").trim().toLowerCase();
         if(country)element.includedRegionCodes=[country];
 
         autocompleteHostRef.current.innerHTML="";
@@ -412,7 +432,7 @@ export default function GeofenceMapPicker({
     })();
 
     return()=>{cancelled=true;cleanup();setPlacesReady(false);};
-  },[googleReady,readOnly,useGoogle,countryHint]);
+  },[googleReady,readOnly,useGoogle,countryHint,liveCountryHint]);
 
   useEffect(() => {
     const map = mapRef.current;

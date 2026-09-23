@@ -20,6 +20,9 @@
 - User/Technician personal document type is selected from the person's Country catalog instead of being typed manually.
 - `PhoneField` now derives the international calling prefix from the same Country catalog and asks only for the national number.
 - New Company and Location forms start from the configured platform/Company region instead of assuming Colombia everywhere.
+- Trial/paid test checkout now captures Country → City, applies the configured platform locale/region, derives the Company timezone from Country and persists the same Country on the first Site and administrator.
+- Google Places autocomplete now follows the Country currently selected in the surrounding form instead of remaining restricted to an old static Country hint.
+- International mutation routes no longer silently substitute Colombia when Country is omitted; they reject missing/unsupported Country values.
 - Server mutation routes validate supported countries and relevant identification types instead of trusting client-side selectors alone.
 
 ### Internationalization boundary

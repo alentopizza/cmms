@@ -92,7 +92,15 @@ export default async function CompaniesPage({
     {(params.saved || params.deleted || params.error) && <div className="section">
       {params.saved && <div className="notice success">Los cambios de la empresa se guardaron correctamente.</div>}
       {params.deleted && <div className="notice success">La empresa y su información relacionada fueron eliminadas.</div>}
-      {params.error && <div className="notice error">{params.error === "site-geofence" ? "Valida la dirección de la sede principal en el mapa y define un radio permitido entre 20 y 5000 metros." : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."}</div>}
+      {params.error && <div className="notice error">{
+        params.error === "site-geofence"
+          ? "Valida la dirección de la sede principal en el mapa y define un radio permitido entre 20 y 5000 metros."
+          : params.error === "business-hours"
+            ? "La hora de cierre debe ser posterior a la hora de apertura."
+            : params.error === "business-days"
+              ? "Selecciona al menos un día de atención."
+              : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."
+      }</div>}
     </div>}
 
     <section className="section">

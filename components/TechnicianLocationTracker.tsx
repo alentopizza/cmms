@@ -37,8 +37,8 @@ export default function TechnicianLocationTracker({userName}:{userName:string}){
         payload.latitude=position.coords.latitude;
         payload.longitude=position.coords.longitude;
         payload.accuracy=position.coords.accuracy;
-        payload.heading=Number.isFinite(position.coords.heading)?position.coords.heading:null;
-        payload.speed=Number.isFinite(position.coords.speed)?position.coords.speed:null;
+        payload.heading=typeof position.coords.heading==="number"&&Number.isFinite(position.coords.heading)?position.coords.heading:null;
+        payload.speed=typeof position.coords.speed==="number"&&Number.isFinite(position.coords.speed)?position.coords.speed:null;
       }
       await fetch("/api/reaction/track",{
         method:"POST",

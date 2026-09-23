@@ -14,8 +14,8 @@ SET business_schedule = (
     jsonb_build_object(
       'day', d.day,
       'enabled', d.day = ANY(organizations.business_days),
-      'openTime', to_char(organizations.business_open_time,'HH24:MI'),
-      'closeTime', to_char(organizations.business_close_time,'HH24:MI')
+      'openTime', left(organizations.business_open_time::text,5),
+      'closeTime', left(organizations.business_close_time::text,5)
     )
     ORDER BY d.day
   )
@@ -29,8 +29,8 @@ SET business_schedule = (
     jsonb_build_object(
       'day', d.day,
       'enabled', d.day = ANY(sites.business_days),
-      'openTime', to_char(sites.business_open_time,'HH24:MI'),
-      'closeTime', to_char(sites.business_close_time,'HH24:MI')
+      'openTime', left(sites.business_open_time::text,5),
+      'closeTime', left(sites.business_close_time::text,5)
     )
     ORDER BY d.day
   )

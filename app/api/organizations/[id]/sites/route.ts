@@ -81,14 +81,14 @@ export async function POST(
       `INSERT INTO sites(
          organization_id,name,code,address,city,country,latitude,longitude,geofence_radius_m,
          contact_name,contact_phone,contact_email,
-         business_days,business_open_time,business_close_time,
+         business_days,business_open_time,business_close_time,business_schedule,
          image_data,image_mime_type
        )
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17,$18)`,
       [
         id,name,code||null,address,city,country||"CO",latitude,longitude,geofenceRadius,
         contactName||null,contactPhone||null,contactEmail||null,
-        businessHours.days,businessHours.openTime,businessHours.closeTime,
+        businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),
         image?.data||null,image?.mime||null,
       ],
     );

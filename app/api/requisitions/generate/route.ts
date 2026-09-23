@@ -87,7 +87,7 @@ export async function POST(request:Request){
 
     await client.query("COMMIT");
     const join=safeReturn.includes("?")?"&":"?";
-    return NextResponse.redirect(publicUrl(safeReturn+join+"created="+createdIds.length,request.url),303);
+    return NextResponse.redirect(publicUrl(safeReturn+join+"requisition_created="+createdIds.length,request.url),303);
   }catch(error){
     await client.query("ROLLBACK");
     throw error;

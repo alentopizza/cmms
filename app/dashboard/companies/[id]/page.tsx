@@ -315,7 +315,7 @@ export default async function CompanyDetailPage({
       </div>
       <div className="contextual-action-buttons">
         <SiteCreateModal organizations={[]} fixedOrganizationId={organization.id} fixedOrganizationName={organization.name} returnTo={"/dashboard/companies/" + organization.id} />
-        <ContextUserCreateModal organizationId={organization.id} organizationName={organization.name} serviceSuppliers={serviceSuppliersResult.rows} returnTo={"/dashboard/companies/" + organization.id} />
+        <ContextUserCreateModal organizationId={organization.id} organizationName={organization.name} countryCode={organization.legal_country || sites[0]?.country || "CO"} serviceSuppliers={serviceSuppliersResult.rows} returnTo={"/dashboard/companies/" + organization.id} />
       </div>
     </section>
 

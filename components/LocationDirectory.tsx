@@ -157,13 +157,13 @@ export default function LocationDirectory({sites,sublocations,services}:{sites:L
           ]}
           toolbarActions={<>
             <button className="button secondary entity-action-button" type="button" onClick={()=>setEditingSite(value=>!value)}><UiIcon name="edit"/><span>{editingSite?"Cancelar edición":"Editar"}</span></button>
-            {selected.latitude!==null&&selected.longitude!==null&&<a className="button secondary entity-action-button" href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer"><UiIcon name="map"/><span>Ver mapa</span></a>}
+            {selected.latitude!==null&&selected.longitude!==null&&<a className="button secondary entity-action-button entity-action-map" href={"https://www.google.com/maps?q="+selected.latitude+","+selected.longitude} target="_blank" rel="noreferrer"><UiIcon name="map"/><span>Ver mapa</span></a>}
             <SubLocationCreateModal
               sites={[{id:selected.id,organization_id:selected.organization_id,name:selected.name,organization_name:selected.organization_name}]}
               locations={siteSubs.map(item=>({id:item.id,organization_id:item.organization_id,site_id:item.site_id,name:item.name,label:item.name}))}
               fixedSiteId={selected.id} fixedSiteName={selected.name} returnTo="/dashboard/locations" triggerLabel="Crear sububicación" secondary
             />
-            <Link className="button secondary entity-action-button" href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}><UiIcon name="user-plus"/><span>Agregar técnico</span></Link>
+            <Link className="button secondary entity-action-button entity-action-wide" href={"/dashboard/users?create=1&organization_id="+selected.organization_id+"&site_id="+selected.id+"&role=technician"}><UiIcon name="user-plus"/><span>Agregar técnico</span></Link>
             <ProfileExportMenu entity="site" id={selected.id}/>
           </>}
           quickActions={<>

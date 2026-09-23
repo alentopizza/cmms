@@ -450,7 +450,7 @@ export default function UserManagement({
           ]}
           toolbarActions={<>
             {selectedUser.platform_role!=="platform_owner"&&(isPlatformOperator?(isPlatformOwner||selectedUser.platform_role!=="superadmin"):selectedUser.platform_role==="user")&&<button className="button secondary entity-action-button" type="button" onClick={()=>openEdit(selectedUser)}><UiIcon name="edit"/><span>Editar</span></button>}
-            {selectedUser.role==="technician"&&<Link className="button secondary entity-action-button" href="/dashboard/reaction"><UiIcon name="map"/><span>Ver en Reacción</span></Link>}
+            {selectedUser.role==="technician"&&<Link className="button secondary entity-action-button entity-action-wide" href="/dashboard/reaction"><UiIcon name="map"/><span>Ver en Reacción</span></Link>}
             {selectedUser.phone&&<a className="button secondary entity-action-button" href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp"/><span>WhatsApp</span></a>}
             <ProfileExportMenu entity="user" id={selectedUser.id}/>
           </>}

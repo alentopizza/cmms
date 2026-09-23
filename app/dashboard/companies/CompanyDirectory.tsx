@@ -369,7 +369,7 @@ export default function CompanyDirectory({
         toolbarActions={<>
           {!editing&&<button className="button secondary entity-action-button" type="button" onClick={requestEditConfirmation}><UiIcon name="edit"/> <span>Editar</span></button>}
           {editing&&<button className="button secondary entity-action-button" type="button" onClick={cancelEditing}><UiIcon name="edit"/> <span>Cancelar edición</span></button>}
-          <Link className="button secondary entity-action-button" href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> <span>Ficha completa</span></Link>
+          <Link className="button secondary entity-action-button entity-action-wide" href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> <span>Ficha completa</span></Link>
           <ProfileExportMenu entity="organization" id={selected.id}/>
           {canDelete&&!editing&&<form method="post" action={"/api/organizations/"+selected.id} onSubmit={event=>requestConfirmation("delete",event)}>
             <input type="hidden" name="intent" value="delete"/>

@@ -10440,3 +10440,18 @@ html[data-theme="dark"] .entity-profile-toolbar-actions .contextual-create-trigg
   .entity-profile-toolbar-actions .contextual-create-trigger,
   .entity-profile-toolbar-actions>a{height:42px;min-height:42px}
 }
+
+
+/* Approved action proportions from the entity-header reference */
+.entity-profile-toolbar-actions .entity-action-button{min-width:104px}
+.entity-profile-toolbar-actions .entity-action-map{min-width:116px}
+.entity-profile-toolbar-actions .entity-action-wide{min-width:142px}
+.entity-profile-toolbar-actions .contextual-create-trigger{min-width:156px}
+.entity-profile-toolbar-actions .profile-export-trigger{min-width:142px}
+@media(max-width:1380px){
+  .entity-profile-toolbar-actions .entity-action-button{min-width:98px}
+  .entity-profile-toolbar-actions .entity-action-map{min-width:108px}
+  .entity-profile-toolbar-actions .entity-action-wide{min-width:132px}
+  .entity-profile-toolbar-actions .contextual-create-trigger{min-width:146px}
+  .entity-profile-toolbar-actions .profile-export-trigger{min-width:134px}
+}

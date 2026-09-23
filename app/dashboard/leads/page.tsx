@@ -5,6 +5,10 @@ import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import PhoneField from "@/components/PhoneField";
+import { CountrySelect } from "@/components/InternationalFields";
+import { countryName } from "@/lib/international-catalog";
+import { getCustomizationSummary } from "@/lib/customization";
 
 type Lead = {
   id:string;
@@ -12,6 +16,7 @@ type Lead = {
   company_name:string;
   email:string;
   phone:string|null;
+  country_code:string|null;
   interest:string;
   message:string|null;
   status:"new"|"contacted"|"qualified"|"closed"|"discarded";
@@ -35,8 +40,10 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
   const owner=isPlatformOwner(session);
   const feedback=await searchParams;
 
+  const customization=await getCustomizationSummary();
+
   const leads=await query<Lead>(
-    `SELECT id,full_name,company_name,email,phone,interest,message,status,created_at::text
+    `SELECT id,full_name,company_name,email,phone,country_code,interest,message,status,created_at::text
      FROM sales_leads
      ORDER BY created_at DESC
      LIMIT 300`
@@ -69,7 +76,8 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           <div className="field"><label>Nombre completo *</label><input name="full_name" required placeholder="Ej. Andrea Martínez" /></div>
           <div className="field"><label>Empresa *</label><input name="company_name" required placeholder="Ej. Alimentos Andinos S.A.S." /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="andrea@empresa.com" /></div>
-          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>
+          <CountrySelect id="manual-lead-country" name="country_code" label="País *" defaultValue={customization.defaultCountry} required />
+          <PhoneField name="phone" label="Teléfono" countryCode={customization.defaultCountry} countryInputId="manual-lead-country" />
           <div className="field form-span-2"><label>Interés *</label><select name="interest" defaultValue="demo"><option value="demo">Demostración</option><option value="trial">Prueba 15 días</option><option value="basic">Plan Básico</option><option value="medium">Plan Medio</option><option value="pro">Plan Pro / marca blanca</option><option value="self_hosted">Self-hosted</option><option value="other">Otro</option></select></div>
           <div className="field form-span-2"><label>Notas iniciales</label><textarea name="message" rows={4} placeholder="Ej. Busca controlar mantenimiento de 3 sedes y aproximadamente 120 activos." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear lead</button></div>
@@ -96,6 +104,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           <div className="lead-card-info">
             <div><span>Interés</span><strong>{INTEREST_LABELS[lead.interest] || lead.interest}</strong></div>
             <div><span>Correo</span><a href={`mailto:${lead.email}`}>{lead.email}</a></div>
+            <div><span>País</span><strong>{countryName(lead.country_code)||"Sin registrar"}</strong></div>
             <div><span>Teléfono</span><strong>{lead.phone || "No registrado"}</strong></div>
             <div><span>Fecha</span><strong>{new Date(lead.created_at).toLocaleString("es-CO")}</strong></div>
           </div>

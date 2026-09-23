@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { isSupportedCountry } from "@/lib/international-catalog";
 
 const EMAIL=/^\S+@\S+\.\S+$/;
 const INTERESTS=new Set(["demo","trial","basic","medium","pro","self_hosted","other"]);
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
   const companyName=String(form.get("company_name")||"").trim();
   const email=String(form.get("email")||"").trim().toLowerCase();
   const phone=String(form.get("phone")||"").trim();
+  const countryCode=String(form.get("country_code")||"CO").trim().toUpperCase();
   const interest=String(form.get("interest")||"").trim();
   const message=String(form.get("message")||"").trim();
 
@@ -19,6 +21,7 @@ export async function POST(request: Request) {
   if(!email) fields.email="Ingresa un correo.";
   else if(!EMAIL.test(email)) fields.email="Ingresa un correo válido.";
   if(!INTERESTS.has(interest)) fields.interest="Selecciona el tipo de interés.";
+  if(!isSupportedCountry(countryCode)) fields.country_code="Selecciona un país válido.";
   if(phone.length>60) fields.phone="El teléfono es demasiado largo.";
   if(message.length>2000) fields.message="El mensaje no puede superar 2000 caracteres.";
 
@@ -27,9 +30,9 @@ export async function POST(request: Request) {
   }
 
   await query(
-    `INSERT INTO sales_leads(full_name,company_name,email,phone,interest,message,source)
-     VALUES($1,$2,$3,$4,$5,$6,'landing')`,
-    [fullName,companyName,email,phone||null,interest,message||null],
+    `INSERT INTO sales_leads(full_name,company_name,email,phone,country_code,interest,message,source)
+     VALUES($1,$2,$3,$4,$5,$6,$7,'landing')`,
+    [fullName,companyName,email,phone||null,countryCode,interest,message||null],
   );
 
   return NextResponse.json({ok:true});

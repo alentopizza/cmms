@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import PhoneField from "@/components/PhoneField";
+import { CountrySelect } from "@/components/InternationalFields";
 
-type Fields = "full_name" | "company_name" | "email" | "phone" | "interest" | "message" | "general";
+type Fields = "full_name" | "company_name" | "email" | "phone" | "country_code" | "interest" | "message" | "general";
 type Errors = Partial<Record<Fields,string>>;
 
 export default function MarketingLeadForm() {
   const [errors,setErrors]=useState<Errors>({});
   const [sending,setSending]=useState(false);
   const [sent,setSent]=useState(false);
+  const [country,setCountry]=useState("CO");
+  const [phone,setPhone]=useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,6 +37,8 @@ export default function MarketingLeadForm() {
       }
 
       form.reset();
+      setCountry("CO");
+      setPhone("");
       setSent(true);
     } catch {
       setErrors({general:"No fue posible conectar con el servidor. Intenta nuevamente."});
@@ -61,11 +67,14 @@ export default function MarketingLeadForm() {
         <input name="email" type="email" placeholder="laura@empresa.com" />
         {errors.email && <small>{errors.email}</small>}
       </label>
-      <label className={errors.phone ? "has-error" : ""}>
-        <span>Teléfono</span>
-        <input name="phone" placeholder="+57 300 000 0000" />
+      <div className={errors.country_code ? "has-error" : ""}>
+        <CountrySelect id="marketing-lead-country" name="country_code" label="País" value={country} onChange={setCountry} required />
+        {errors.country_code && <small>{errors.country_code}</small>}
+      </div>
+      <div className={errors.phone ? "has-error" : ""}>
+        <PhoneField id="marketing-lead-phone" name="phone" label="Teléfono" countryCode={country} value={phone} onValueChange={setPhone}/>
         {errors.phone && <small>{errors.phone}</small>}
-      </label>
+      </div>
       <label className="marketing-lead-span-2">
         <span>¿Qué te interesa? *</span>
         <select name="interest" defaultValue="">

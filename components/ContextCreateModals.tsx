@@ -312,12 +312,14 @@ export function ContextUserCreateModal({
   serviceSuppliers,
   returnTo,
   triggerLabel = "Nuevo usuario",
+  countryCode = "CO",
 }: {
   organizationId: string;
   organizationName: string;
   serviceSuppliers: NamedOption[];
   returnTo: string;
   triggerLabel?: string;
+  countryCode?: string;
 }) {
   const [open,setOpen]=useState(false);
   const [role,setRole]=useState("viewer");
@@ -337,7 +339,7 @@ export function ContextUserCreateModal({
           <div className="form-span-2"><FileDropzone name="avatar" label="Foto de perfil" description="Identidad visual del usuario. La biometría facial se enrola por separado con cámara y prueba de vida." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Nombre completo *</label><input name="full_name" required autoFocus placeholder="Ej. Laura Gómez" /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="laura@empresa.com" /></div>
-          <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>
+          <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={countryCode} />
           <div className="field"><label>Contraseña temporal *</label><input name="password" type="password" minLength={8} required autoComplete="new-password" placeholder="Mínimo 8 caracteres" /></div>
           <div className="field"><label>Rol *</label><select name="role" value={role} onChange={event=>setRole(event.target.value)}><option value="admin">Administrador de empresa</option><option value="manager">Manager / Supervisor</option><option value="technician">Técnico</option><option value="requester">Solicitante</option><option value="viewer">Consulta</option><option value="provider">Proveedor de servicios</option><option value="external">Colaborador externo</option></select></div>
           {(role==="provider" || role==="external") && <div className="field"><label>Proveedor de servicios {role==="provider"?"*":"(opcional)"}</label><select name="external_supplier_id" required={role==="provider"}><option value="">Selecciona proveedor</option>{serviceSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>}

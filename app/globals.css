@@ -10271,3 +10271,16 @@ html[data-theme="dark"] .header-account-copy strong,html[data-theme="dark"] .hea
 @media(max-width:1050px){.entity-profile-grid{grid-template-columns:280px minmax(0,1fr)}.entity-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.entity-two-column{grid-template-columns:1fr}}
 @media(max-width:760px){.context-header-account-zone{gap:5px}.context-header-utility{display:none}.header-account-trigger{min-width:auto;width:42px;padding:4px;grid-template-columns:1fr}.header-account-copy,.header-account-chevron{display:none}.header-account-popover{position:fixed;top:86px;right:14px;width:min(290px,calc(100vw - 28px))}.entity-profile-toolbar{align-items:flex-start;flex-direction:column}.entity-profile-toolbar-actions{width:100%;justify-content:flex-start}.entity-profile-grid{grid-template-columns:1fr;padding:9px;min-height:0}.entity-profile-content-card{max-height:none}.entity-profile-tab-body{overflow:visible}.entity-info-grid,.entity-panel-grid{grid-template-columns:1fr}.entity-profile-tabs{position:sticky;top:0;z-index:5}.entity-stat-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.entity-stat-grid{grid-template-columns:1fr}.entity-profile-quick-actions>div{grid-template-columns:1fr}.entity-profile-title h2{font-size:19px}}
+
+
+/* Technician profile cards use the shared entity workspace */
+.user-profile-trigger{display:grid;gap:18px;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.user-profile-trigger:focus-visible{outline:2px solid var(--brand-teal);outline-offset:5px;border-radius:12px}
+.user-profile-backdrop{z-index:1320}.user-profile-modal{width:min(1220px,calc(100vw - 44px))}
+.entity-profile-modal{width:min(1320px,calc(100vw - 44px));max-height:calc(100vh - 44px);overflow:hidden;background:var(--bg)}
+.sublocation-profile-backdrop{z-index:1340}.sublocation-profile-modal{width:min(1180px,calc(100vw - 64px))}
+.entity-profile-toolbar .contextual-create-trigger{min-height:38px;padding:0 12px;border-radius:10px}
+.entity-profile-toolbar .profile-export-menu{flex:0 0 auto}
+.entity-profile-quick-actions .profile-export-menu{width:100%}.entity-profile-quick-actions .profile-export-menu>summary{width:100%;min-height:37px!important}.entity-profile-quick-actions .profile-export-options{left:0;right:auto;bottom:calc(100% + 7px);top:auto}
+.site-resource-actions button.site-resource-action{border:0;font-family:inherit;cursor:pointer}
+@media(max-width:760px){.entity-profile-modal,.user-profile-modal,.sublocation-profile-modal{width:100vw;max-height:100vh;border:0;border-radius:0;overflow:auto}.sublocation-profile-modal{width:100vw}}

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
+import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
+import ProfileExportMenu from "@/components/ProfileExportMenu";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -35,6 +38,12 @@ export type ManagedUser = {
   external_supplier_name: string | null;
   has_avatar: boolean;
   biometric_status: "verified" | "legacy" | "revoked" | "missing";
+  assigned_work_orders: number;
+  pending_activities: number;
+  completed_activities_30d: number;
+  attendance_hours_30d: number;
+  open_shift: boolean;
+  tracking_live: boolean;
 };
 
 type Organization = { id: string; name: string; country: string };
@@ -125,7 +134,9 @@ export default function UserManagement({
   serviceSuppliers: ServiceSupplier[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"create" | "edit" | null>(null);
+  const [selectedUserId,setSelectedUserId]=useState<string|null>(null);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -160,7 +171,26 @@ export default function UserManagement({
   const selectedOrganizationCountry = useMemo(() => {
     return organizations.find(org => org.id === draft.organization_id)?.country || "CO";
   }, [organizations, draft.organization_id]);
+  const selectedUser=useMemo(()=>users.find(user=>user.id===selectedUserId)||null,[users,selectedUserId]);
 
+  useEffect(()=>{
+    if(searchParams.get("create")!=="1") return;
+    const requestedOrg=searchParams.get("organization_id")||fixedOrganizationId||"";
+    const requestedSite=searchParams.get("site_id")||"";
+    const requestedRole=searchParams.get("role")||"technician";
+    const safeOrg=organizations.some(org=>org.id===requestedOrg)?requestedOrg:(fixedOrganizationId||"");
+    setMode("create");
+    setEditingUser(null);
+    setDraft({
+      ...EMPTY_DRAFT,
+      organization_id:safeOrg,
+      role:requestedRole,
+      access_all_sites:!requestedSite,
+      site_ids:requestedSite?[requestedSite]:[],
+    });
+    setErrors({});setActionError("");setSaveSuccess("");setAvatarFile(null);
+    router.replace("/dashboard/users");
+  },[searchParams,organizations,fixedOrganizationId,router]);
 
   function updateDraft<K extends keyof Draft>(field: K, value: Draft[K]) {
     setDraft(previous => ({ ...previous, [field]: value }));
@@ -203,6 +233,7 @@ export default function UserManagement({
   }
 
   function openEdit(user: ManagedUser) {
+    setSelectedUserId(null);
     if (user.platform_role === "platform_owner") return;
     if (!isPlatformOperator && user.platform_role !== "user") return;
     if (user.platform_role === "superadmin" && !isPlatformOwner) return;
@@ -363,34 +394,107 @@ export default function UserManagement({
 
       <div className="user-role-grid">
         {users.map(user => <article
-          className={`card user-role-card ${user.active ? "" : "user-role-card-inactive"}`}
+          className={"card user-role-card "+(user.active ? "" : "user-role-card-inactive")}
           key={user.id}
           data-module-record
           data-status={user.active ? "active" : "inactive"}
           data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[])].filter(Boolean).join(" ")}
         >
-          <div className="user-role-card-head">
-            <div className="user-avatar" aria-hidden="true">{user.has_avatar ? <img src={`/api/users/${user.id}/avatar`} alt="" /> : initials(user.full_name)}</div>
-            <div><strong>{user.full_name}</strong><span>{user.email}</span></div>
-            <span className={`status-badge ${user.active ? "status-active" : "status-inactive"}`}><i />{user.active ? "Activo" : "Inactivo"}</span>
-          </div>
+          <button className="user-profile-trigger" type="button" onClick={()=>setSelectedUserId(user.id)} aria-label={"Ver perfil de "+user.full_name}>
+            <div className="user-role-card-head">
+              <div className="user-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</div>
+              <div><strong>{user.full_name}</strong><span>{user.email}</span></div>
+              <span className={"status-badge "+(user.active ? "status-active" : "status-inactive")}><i />{user.active ? "Activo" : "Inactivo"}</span>
+            </div>
 
-          <div className="user-role-meta">
-            <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
-            <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
-            <div><span>Alcance de sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
-            <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
-            <div><span>Biometría</span><strong>{biometricStatusLabel(user.biometric_status)}</strong></div>
-          </div>
+            <div className="user-role-meta">
+              <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
+              <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
+              <div><span>Alcance de sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
+              <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
+              <div><span>Biometría</span><strong>{biometricStatusLabel(user.biometric_status)}</strong></div>
+            </div>
+          </button>
 
           {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <div className="user-card-actions">
             <button className="text-button" type="button" onClick={() => openEdit(user)}>Editar</button>
-            {user.id !== currentUserId && <button className={`text-button ${user.active ? "text-danger" : ""}`} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
+            {user.id !== currentUserId && <button className={"text-button "+(user.active ? "text-danger" : "")} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
             {isPlatformOwner && user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}
           </div>}
         </article>)}
       </div>
     </section>}
+
+    {selectedUser&&<div className="modal-backdrop user-profile-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedUserId(null);}}>
+      <section className="location-detail-modal entity-profile-modal user-profile-modal" role="dialog" aria-modal="true" aria-label={"Perfil de "+selectedUser.full_name}>
+        <EntityProfileWorkspace
+          eyebrow={selectedUser.role==="technician"?"Técnico":"Usuario"}
+          title={selectedUser.full_name}
+          subtitle={selectedUser.organization_name||"Desweb CMMS"}
+          meta={[roleName(roleKey(selectedUser)),siteAccessLabel(selectedUser)]}
+          imageSrc={selectedUser.has_avatar?"/api/users/"+selectedUser.id+"/avatar":null}
+          fallback={initials(selectedUser.full_name)}
+          status={<span className={"status-badge "+(selectedUser.active?"status-active":"status-inactive")}><i />{selectedUser.active?"Activo":"Inactivo"}</span>}
+          stats={[
+            {label:"OT asignadas",value:selectedUser.assigned_work_orders,icon:"✓"},
+            {label:"Actividades pendientes",value:selectedUser.pending_activities,icon:"▤"},
+            {label:"Completadas · 30 días",value:selectedUser.completed_activities_30d,icon:"◉"},
+            {label:"Horas campo · 30 días",value:selectedUser.attendance_hours_30d,icon:"◌"},
+          ]}
+          toolbarActions={<>
+            {selectedUser.platform_role!=="platform_owner"&&(isPlatformOperator?(isPlatformOwner||selectedUser.platform_role!=="superadmin"):selectedUser.platform_role==="user")&&<button className="button secondary" type="button" onClick={()=>openEdit(selectedUser)}>✎ Editar</button>}
+            {selectedUser.role==="technician"&&<Link className="button secondary" href="/dashboard/reaction">⌖ Ver en Reacción</Link>}
+            {selectedUser.phone&&<a className="button secondary" href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer">◉ WhatsApp</a>}
+            <ProfileExportMenu entity="user" id={selectedUser.id}/>
+          </>}
+          quickActions={<>
+            {selectedUser.phone&&<a href={"tel:"+selectedUser.phone.replace(/[^+\d]/g,"")}>☎ Llamar</a>}
+            {selectedUser.phone&&<a href={"https://wa.me/"+selectedUser.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer">◉ WhatsApp</a>}
+            {selectedUser.role==="technician"&&<Link href="/dashboard/reaction">⌖ Reacción</Link>}
+            <ProfileExportMenu entity="user" id={selectedUser.id} label="Hoja de vida"/>
+          </>}
+          tabs={[
+            {id:"general",label:"Información general",content:<div className="entity-section-stack">
+              <div className="entity-panel"><h3>Datos del usuario</h3><div className="entity-info-grid">
+                <div className="entity-info-field"><span>Nombre completo</span><strong>{selectedUser.full_name}</strong></div>
+                <div className="entity-info-field"><span>Rol</span><strong>{roleName(roleKey(selectedUser))}</strong></div>
+                <div className="entity-info-field"><span>Correo</span><strong>{selectedUser.email}</strong></div>
+                <div className="entity-info-field"><span>Teléfono / WhatsApp</span><strong>{selectedUser.phone||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Empresa</span><strong>{selectedUser.organization_name||"Acceso global"}</strong></div>
+                <div className="entity-info-field"><span>Alcance de sedes</span><strong>{siteAccessLabel(selectedUser)}</strong></div>
+                <div className="entity-info-field"><span>Último acceso</span><strong>{selectedUser.last_login_at?new Date(selectedUser.last_login_at).toLocaleString("es-CO"):"Aún no ingresa"}</strong></div>
+                <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
+              </div></div>
+            </div>},
+            {id:"statistics",label:"Estadísticas",content:<div className="entity-stat-grid">
+              <div className="entity-stat-card"><small>OT asignadas activas</small><strong>{selectedUser.assigned_work_orders}</strong><span>órdenes no cerradas</span></div>
+              <div className="entity-stat-card"><small>Actividades pendientes</small><strong>{selectedUser.pending_activities}</strong><span>pendientes o en progreso</span></div>
+              <div className="entity-stat-card"><small>Completadas · 30 días</small><strong>{selectedUser.completed_activities_30d}</strong><span>eventos de ejecución</span></div>
+              <div className="entity-stat-card"><small>Horas campo · 30 días</small><strong>{selectedUser.attendance_hours_30d}</strong><span>turnos de asistencia</span></div>
+            </div>},
+            {id:"operation",label:"Actividad",content:<div className="entity-panel-grid">
+              <div className="entity-panel"><h3>Trabajo asignado</h3><div className="entity-info-grid">
+                <div className="entity-info-field"><span>Órdenes activas</span><strong>{selectedUser.assigned_work_orders}</strong></div>
+                <div className="entity-info-field"><span>Actividades pendientes</span><strong>{selectedUser.pending_activities}</strong></div>
+                <div className="entity-info-field"><span>Completadas 30 días</span><strong>{selectedUser.completed_activities_30d}</strong></div>
+                <div className="entity-info-field"><span>Reacción</span><strong>{selectedUser.tracking_live?"Conectado en vivo":"Sin conexión en vivo"}</strong></div>
+              </div></div>
+              <div className="entity-panel"><h3>Accesos</h3><p className="entity-panel-copy">{roleDescription(roleKey(selectedUser))}</p></div>
+            </div>},
+            {id:"attendance",label:"Asistencia",content:<div className="entity-panel-grid">
+              <div className="entity-panel"><h3>Estado de campo</h3><div className="entity-info-grid">
+                <div className="entity-info-field"><span>Turno actual</span><strong>{selectedUser.open_shift?"Abierto":"Sin turno abierto"}</strong></div>
+                <div className="entity-info-field"><span>Horas 30 días</span><strong>{selectedUser.attendance_hours_30d}</strong></div>
+                <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
+                <div className="entity-info-field"><span>Seguimiento Reacción</span><strong>{selectedUser.tracking_live?"En línea":"Sin conexión"}</strong></div>
+              </div></div>
+            </div>},
+            {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida del técnico</h3><p className="entity-panel-copy">Consolida identidad, rol, alcance, indicadores de ejecución, asistencia y estado operativo con los permisos actuales.</p></div><ProfileExportMenu entity="user" id={selectedUser.id} label="Exportar hoja de vida"/></div>},
+          ]}
+          onClose={()=>setSelectedUserId(null)}
+        />
+      </section>
+    </div>}
 
     {mode && <div className="modal-backdrop user-modal-backdrop" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget && !saving) closeModal();

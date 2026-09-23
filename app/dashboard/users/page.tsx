@@ -29,6 +29,13 @@ export default async function UsersPage() {
                     WHEN bp.user_id IS NOT NULL THEN 'legacy'
                     ELSE 'missing'
                   END biometric_status,
+                  (SELECT count(*)::int FROM work_orders w WHERE w.assigned_to=u.id AND w.status NOT IN ('completed','cancelled')) assigned_work_orders,
+                  (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress')) pending_activities,
+                  (SELECT count(*)::int FROM activity_execution_events aee WHERE aee.user_id=u.id AND aee.event_type='completed' AND aee.occurred_at>=now()-interval '30 days') completed_activities_30d,
+                  COALESCE((SELECT ROUND((SUM(EXTRACT(EPOCH FROM (COALESCE(ats.check_out_at,now())-ats.check_in_at)))/3600)::numeric,1)::float8
+                            FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.check_in_at>=now()-interval '30 days'),0)::float8 attendance_hours_30d,
+                  EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
+                  EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
                   membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
@@ -77,6 +84,13 @@ export default async function UsersPage() {
                     WHEN bp.user_id IS NOT NULL THEN 'legacy'
                     ELSE 'missing'
                   END biometric_status,
+                  (SELECT count(*)::int FROM work_orders w WHERE w.assigned_to=u.id AND w.status NOT IN ('completed','cancelled')) assigned_work_orders,
+                  (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress')) pending_activities,
+                  (SELECT count(*)::int FROM activity_execution_events aee WHERE aee.user_id=u.id AND aee.event_type='completed' AND aee.occurred_at>=now()-interval '30 days') completed_activities_30d,
+                  COALESCE((SELECT ROUND((SUM(EXTRACT(EPOCH FROM (COALESCE(ats.check_out_at,now())-ats.check_in_at)))/3600)::numeric,1)::float8
+                            FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.check_in_at>=now()-interval '30 days'),0)::float8 attendance_hours_30d,
+                  EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
+                  EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE((
                     SELECT array_agg(oms.site_id::text ORDER BY site.name)

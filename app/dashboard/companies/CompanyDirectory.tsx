@@ -513,55 +513,57 @@ export default function CompanyDirectory({
               <div><strong>Cambios guardados correctamente</strong><p>{saveSuccess.message}</p>{saveSuccess.files.length>0&&<div className="company-save-success-files">{saveSuccess.files.map(file=><span key={file}>✓ {file}</span>)}</div>}</div>
               <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}>×</button>
             </div>}
-            <div className="entity-approved-general-grid">
-              <div className="entity-panel entity-approved-data-panel">
-                <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la empresa</h3>
-                <div className="entity-info-grid">
-                  <DetailField label="Nombre comercial" value={selected.name}/>
-                  <DetailField label="Razón social" value={selected.legal_name||"Sin registrar"}/>
-                  <DetailField label={(selected.tax_id_type||"NIT")+" / Identificación"} value={selected.tax_id||"Sin registrar"}/>
-                  <DetailField label="Plan" value={selected.plan_name||"Sin plan"}/>
-                  <DetailField label="Dirección administrativa / fiscal" value={selected.legal_address||"Sin registrar"}/>
-                  <DetailField label="Ciudad administrativa" value={selected.legal_city||"Sin registrar"}/>
-                  <DetailField label="País" value={countryLabel(selected.legal_country)}/>
-                  <DetailField label="Horario general" value={companyScheduleLabel(selected)}/>
-                  <DetailField label="Zona horaria" value={selected.timezone}/>
-                  <DetailField label="Sitio web" value={selected.website?<a href={selected.website} target="_blank" rel="noreferrer">{selected.website}</a>:"Sin registrar"}/>
+            <div className="entity-approved-columns">
+              <div className="entity-approved-column">
+                <div className="entity-panel entity-approved-data-panel">
+                  <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos de la empresa</h3>
+                  <div className="entity-info-grid">
+                    <DetailField label="Nombre comercial" value={selected.name}/>
+                    <DetailField label="Razón social" value={selected.legal_name||"Sin registrar"}/>
+                    <DetailField label={(selected.tax_id_type||"NIT")+" / Identificación"} value={selected.tax_id||"Sin registrar"}/>
+                    <DetailField label="Plan" value={selected.plan_name||"Sin plan"}/>
+                    <DetailField label="Dirección administrativa / fiscal" value={selected.legal_address||"Sin registrar"}/>
+                    <DetailField label="Ciudad administrativa" value={selected.legal_city||"Sin registrar"}/>
+                    <DetailField label="País" value={countryLabel(selected.legal_country)}/>
+                    <DetailField label="Horario general" value={companyScheduleLabel(selected)}/>
+                    <DetailField label="Zona horaria" value={selected.timezone}/>
+                    <DetailField label="Sitio web" value={selected.website?<a href={selected.website} target="_blank" rel="noreferrer">{selected.website}</a>:"Sin registrar"}/>
+                  </div>
+                </div>
+                <div className="entity-panel">
+                  <h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3>
+                  <div className="entity-info-grid">
+                    <DetailField label="Teléfono principal" value={selected.phone||"Sin registrar"}/>
+                    <DetailField label="Correo administrativo" value={selected.admin_email||"Sin registrar"}/>
+                    <DetailField label="Correo de facturación" value={selected.billing_email||"Sin registrar"}/>
+                    <DetailField label="Contacto principal" value={selected.primary_contact_name||"Sin registrar"}/>
+                    <DetailField label="Cargo" value={selected.primary_contact_title||"Sin registrar"}/>
+                    <DetailField label="Teléfono del contacto" value={selected.primary_contact_phone||"Sin registrar"}/>
+                    <div className="form-span-2"><DetailField label="Correo del contacto" value={selected.primary_contact_email||"Sin registrar"}/></div>
+                  </div>
+                </div>
+                <div className="entity-panel entity-approved-notes">
+                  <h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3>
+                  <p>{selected.internal_notes||"Sin notas internas registradas."}</p>
                 </div>
               </div>
-              <div className="entity-panel entity-approved-map-panel">
-                <h3><span className="entity-section-icon"><UiIcon name="location"/></span>Sede principal en el mapa</h3>
-                {selected.site_id?<GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.site_latitude} initialLongitude={selected.site_longitude} initialRadius={selected.site_geofence_radius_m||250} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null} markerLabel={selected.name}/>:<div className="location-detail-empty">Aún no hay una sede principal configurada.</div>}
-              </div>
-            </div>
-            <div className="entity-panel-grid entity-approved-secondary-grid">
-              <div className="entity-panel">
-                <h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3>
-                <div className="entity-info-grid">
-                  <DetailField label="Teléfono principal" value={selected.phone||"Sin registrar"}/>
-                  <DetailField label="Correo administrativo" value={selected.admin_email||"Sin registrar"}/>
-                  <DetailField label="Correo de facturación" value={selected.billing_email||"Sin registrar"}/>
-                  <DetailField label="Contacto principal" value={selected.primary_contact_name||"Sin registrar"}/>
-                  <DetailField label="Cargo" value={selected.primary_contact_title||"Sin registrar"}/>
-                  <DetailField label="Teléfono del contacto" value={selected.primary_contact_phone||"Sin registrar"}/>
-                  <div className="form-span-2"><DetailField label="Correo del contacto" value={selected.primary_contact_email||"Sin registrar"}/></div>
+              <div className="entity-approved-column entity-approved-map-column">
+                <div className="entity-panel entity-approved-map-panel">
+                  <h3><span className="entity-section-icon"><UiIcon name="location"/></span>Sede principal en el mapa</h3>
+                  {selected.site_id?<GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.site_latitude} initialLongitude={selected.site_longitude} initialRadius={selected.site_geofence_radius_m||250} cityHint={selected.city} countryHint={selected.country} readOnly addressRequired={false} coordinateRequired={false} markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null} markerLabel={selected.name} className="entity-profile-geofence"/>:<div className="location-detail-empty">Aún no hay una sede principal configurada.</div>}
+                </div>
+                <div className="entity-panel">
+                  <h3><span className="entity-section-icon"><UiIcon name="check"/></span>Estado del perfil</h3>
+                  <div className="entity-info-grid">
+                    <DetailField label="Completitud" value={selected.profile_completion+"%"}/>
+                    <DetailField label="Estado" value={selected.active?"Empresa activa":"Empresa inactiva"}/>
+                    <DetailField label="Documentos registrados" value={selected.document_count}/>
+                    <DetailField label="Pendientes documentales" value={selected.pending_document_count}/>
+                    <DetailField label="Sede principal" value={selected.site_name||"Sin registrar"}/>
+                    <DetailField label="Geocerca" value={selected.site_latitude!==null&&selected.site_longitude!==null?"Configurada":"Pendiente"}/>
+                  </div>
                 </div>
               </div>
-              <div className="entity-panel">
-                <h3><span className="entity-section-icon"><UiIcon name="check"/></span>Estado del perfil</h3>
-                <div className="entity-info-grid">
-                  <DetailField label="Completitud" value={selected.profile_completion+"%"}/>
-                  <DetailField label="Estado" value={selected.active?"Empresa activa":"Empresa inactiva"}/>
-                  <DetailField label="Documentos registrados" value={selected.document_count}/>
-                  <DetailField label="Pendientes documentales" value={selected.pending_document_count}/>
-                  <DetailField label="Sede principal" value={selected.site_name||"Sin registrar"}/>
-                  <DetailField label="Geocerca" value={selected.site_latitude!==null&&selected.site_longitude!==null?"Configurada":"Pendiente"}/>
-                </div>
-              </div>
-            </div>
-            <div className="entity-panel entity-approved-notes">
-              <h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3>
-              <p>{selected.internal_notes||"Sin notas internas registradas."}</p>
             </div>
           </div>},
           {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">

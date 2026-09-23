@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
+import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -12,6 +13,9 @@ export type CompanyDirectoryItem = {
   legal_name: string | null;
   tax_id: string | null;
   timezone: string;
+  business_days: number[];
+  business_open_time: string;
+  business_close_time: string;
   active: boolean;
   admin_email: string | null;
   primary_contact_name: string | null;
@@ -40,6 +44,9 @@ export type CompanyDirectoryItem = {
   site_latitude: number | null;
   site_longitude: number | null;
   site_geofence_radius_m: number | null;
+  site_business_days: number[] | null;
+  site_business_open_time: string | null;
+  site_business_close_time: string | null;
   has_logo: boolean;
   has_cover: boolean;
 };
@@ -328,6 +335,14 @@ export default function CompanyDirectory({
                     <option value="UTC">UTC</option>
                   </select>
                 </div>
+                <BusinessHoursFields
+                  days={selected.business_days}
+                  openTime={selected.business_open_time}
+                  closeTime={selected.business_close_time}
+                  disabled={!editing}
+                  title="Horario general de atención"
+                  description="Reacción usa este horario para el estado abierto/cerrado de la empresa."
+                />
               </div>
             </div>
           </details>
@@ -358,6 +373,15 @@ export default function CompanyDirectory({
                 coordinateRequired
                 markerImageUrl={selected.has_logo?`/api/organizations/${selected.id}/assets/logo`:null}
                 markerLabel={selected.name}
+              />
+              <BusinessHoursFields
+                prefix="site_business_"
+                days={selected.site_business_days}
+                openTime={selected.site_business_open_time}
+                closeTime={selected.site_business_close_time}
+                disabled={!editing}
+                title="Horario de la sede principal"
+                description="La sede puede manejar una franja distinta a la empresa."
               />
             </div>
           </details>

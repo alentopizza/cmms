@@ -400,3 +400,16 @@ The **Reaction** module introduces operational technician tracking independent f
 - Attendance shifts remain independent but may be linked to location samples for later reporting.
 
 **Mobile background limitation:** a browser/PWA may be suspended by iOS/Android after the screen locks or the app moves to the background. A future native/mobile-container phase is required for transportation-app-grade continuous background GPS.
+
+
+## International catalog and locale boundary
+
+Multi-country form behavior is centralized instead of duplicated across modules.
+
+- `lib/international-catalog.ts` is the application source of truth for supported Country codes, display names, calling codes, initial City lists, time zones, Company tax-identification types, personal identity-document types and default locales.
+- `components/InternationalFields.tsx` provides reusable controlled selectors. Country→City and Country→identification relationships are resolved client-side from that catalog, while existing legacy values may be displayed as a compatibility option during migration.
+- `components/PhoneField.tsx` receives the selected Country and persists E.164 phone values; the calling prefix is derived from the same catalog.
+- Mutation routes that persist Country or identification-type values repeat validation server-side with catalog helpers. A handcrafted POST must not bypass the supported-value boundary.
+- Migration `026_international_catalog_preferences.sql` adds `organizations.preferred_locale/default_country`, User identity-country/document fields and platform `app_customization.default_locale/default_country`.
+- `/api/preferences/locale` persists the platform or tenant locale/region default after RBAC checks.
+- Locale persistence is intentionally separate from translation dictionaries. The data model and settings are locale-ready; UI string translation can be rolled out module by module without changing Country/phone/document semantics.

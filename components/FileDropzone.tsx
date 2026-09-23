@@ -16,6 +16,7 @@ type Props = {
   kind?: FileDropzoneKind;
   compact?: boolean;
   existingFileName?: string | null;
+  existingPreviewUrl?: string | null;
   buttonLabel?: string;
   onFileChange?: (file: File | null) => void;
 };
@@ -71,6 +72,7 @@ export default function FileDropzone({
   kind = "file",
   compact = false,
   existingFileName,
+  existingPreviewUrl,
   buttonLabel = "Seleccionar archivo",
   onFileChange,
 }: Props) {
@@ -151,6 +153,7 @@ export default function FileDropzone({
   const typeLabel = fileTypeLabel(accept);
   const selectedName = selectedFile?.name || existingFileName || "";
   const hasSelected = Boolean(selectedFile);
+  const visiblePreviewUrl = previewUrl || (!selectedFile ? existingPreviewUrl || "" : "");
 
   return <div className={`file-dropzone-field ${compact ? "compact" : ""} ${error ? "has-error" : ""}`}>
     <div
@@ -188,9 +191,9 @@ export default function FileDropzone({
         onChange={handleInputChange}
       />
 
-      <div className={`file-dropzone-visual ${previewUrl ? "has-preview" : ""}`} aria-hidden="true">
-        {previewUrl
-          ? <img src={previewUrl} alt="" />
+      <div className={`file-dropzone-visual ${visiblePreviewUrl ? "has-preview" : ""}`} aria-hidden="true">
+        {visiblePreviewUrl
+          ? <img src={visiblePreviewUrl} alt="" />
           : kind === "image"
             ? <svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="18" rx="3"/><circle cx="12" cy="13" r="2.2"/><path d="m7.5 22 6-6 4 4 3-3 4 5"/></svg>
             : kind === "document"
@@ -201,7 +204,7 @@ export default function FileDropzone({
       <div className="file-dropzone-copy">
         <span className="file-dropzone-kicker">{required ? "Archivo obligatorio" : "Archivo opcional"}</span>
         <strong>{label}{required ? " *" : ""}</strong>
-        <p>{hasSelected ? "Archivo listo para guardar." : "Arrastra y suelta aquí o selecciónalo desde tu equipo."}</p>
+        <p>{hasSelected ? "Archivo reconocido y listo para guardar." : existingFileName ? "Archivo guardado actualmente. Puedes reemplazarlo si lo necesitas." : "Arrastra y suelta aquí o selecciónalo desde tu equipo."}</p>
         <div className="file-dropzone-meta" id={`${inputId}-help`}>
           {selectedFile
             ? <><span>{selectedFile.name}</span><span>{bytesLabel(selectedFile.size)}</span></>
@@ -209,6 +212,16 @@ export default function FileDropzone({
               ? <span>Actual: {existingFileName}</span>
               : <><span>{typeLabel || "Archivo compatible"}</span><span>Máx. {maxSizeMb} MB</span></>}
         </div>
+        {(selectedFile || existingFileName) && <div className={`file-dropzone-uploaded-file ${selectedFile ? "pending-save" : "saved"}`}>
+          <div className="file-dropzone-file-main">
+            <span className="file-dropzone-file-icon" aria-hidden="true">{kind === "image" ? "IMG" : kind === "document" ? "DOC" : "FILE"}</span>
+            <div>
+              <strong title={selectedName}>{selectedName}</strong>
+              <span>{selectedFile ? "100% · listo para guardar" : "Guardado correctamente"}</span>
+            </div>
+          </div>
+          <span className="file-dropzone-file-check" aria-label={selectedFile ? "Archivo listo" : "Archivo guardado"}>✓</span>
+        </div>}
         {description && <small>{description}</small>}
       </div>
 

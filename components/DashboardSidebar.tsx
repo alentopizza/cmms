@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { SidebarAccountMenu } from "@/components/DashboardChrome";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
 
 export type ReorderableNavItem = DashboardNavItem & { id: string };
@@ -404,12 +403,6 @@ export default function DashboardSidebar({
       </div>
 
       <div className="sidebar-bottom smart-sidebar-bottom">
-        <SidebarAccountMenu
-          fullName={fullName}
-          role={role}
-          canConfigure={canConfigure}
-          collapsed={collapsed && !mobileOpen}
-        />
         {showDeswebBranding && <div className="sidebar-signature smart-sidebar-signature">
           <span>DESWEB</span>
           <small>Desarrollo de Soluciones</small>

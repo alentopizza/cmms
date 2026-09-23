@@ -88,7 +88,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     />
 
     <main className="main">
-      <CurrentSectionHeader contextName={session.organizationName || roleLabel(session)} />
+      <CurrentSectionHeader
+        contextName={session.organizationName || roleLabel(session)}
+        fullName={session.fullName}
+        role={roleLabel(session)}
+        canConfigure={canConfigure}
+      />
       <div className="workspace-content">{children}</div>
     </main>
   </div>;

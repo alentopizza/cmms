@@ -33,7 +33,17 @@ function currentSection(pathname: string) {
   return sections.find(item => item.match(pathname))?.section || { label: "Desweb CMMS", eyebrow: "Plataforma", icon: "D" };
 }
 
-export function CurrentSectionHeader({ contextName }: { contextName: string | null }) {
+export function CurrentSectionHeader({
+  contextName,
+  fullName,
+  role,
+  canConfigure,
+}: {
+  contextName: string | null;
+  fullName: string;
+  role: string;
+  canConfigure: boolean;
+}) {
   const pathname = usePathname();
   const section = currentSection(pathname);
   const contextualEyebrow = pathname.startsWith("/dashboard/settings") && contextName ? "Empresa" : section.eyebrow;
@@ -48,6 +58,11 @@ export function CurrentSectionHeader({ contextName }: { contextName: string | nu
         {contextName && <small>{contextName}</small>}
       </div>
     </div>
+    <div className="context-header-account-zone">
+      <Link className="context-header-utility" href="/dashboard/help" title="Manual / Ayuda" aria-label="Manual / Ayuda">?</Link>
+      {canConfigure && <Link className="context-header-utility" href="/dashboard/settings" title="Configuración" aria-label="Configuración">⚙</Link>}
+      <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} placement="header" />
+    </div>
     <div id="context-header-tools" className="context-header-tools-slot" />
   </header>;
 }
@@ -57,11 +72,13 @@ export function SidebarAccountMenu({
   role,
   canConfigure,
   collapsed = false,
+  placement = "sidebar",
 }: {
   fullName: string;
   role: string;
   canConfigure: boolean;
   collapsed?: boolean;
+  placement?: "sidebar" | "header";
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -83,9 +100,10 @@ export function SidebarAccountMenu({
 
   const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
 
-  return <div className={"sidebar-account" + (collapsed ? " collapsed" : "")} ref={wrapperRef}>
-    {open && <div className="sidebar-account-popover" role="menu">
-      <div className="sidebar-account-popover-head">
+  const accountClass = placement === "header" ? "header-account" : "sidebar-account";
+  return <div className={accountClass + (collapsed ? " collapsed" : "")} ref={wrapperRef}>
+    {open && <div className={placement === "header" ? "header-account-popover" : "sidebar-account-popover"} role="menu">
+      <div className={placement === "header" ? "header-account-popover-head" : "sidebar-account-popover-head"}>
         <span>{fullName}</span>
         <small>{role}</small>
       </div>
@@ -110,19 +128,19 @@ export function SidebarAccountMenu({
     </div>}
 
     <button
-      className={`sidebar-account-trigger ${open ? "active" : ""}`}
+      className={`${placement === "header" ? "header-account-trigger" : "sidebar-account-trigger"} ${open ? "active" : ""}`}
       type="button"
       onClick={() => setOpen(value => !value)}
       aria-expanded={open}
       aria-haspopup="menu"
       title={collapsed ? fullName + " · " + role : undefined}
     >
-      <span className="sidebar-account-avatar">{initials}</span>
-      {!collapsed && <span className="sidebar-account-copy">
+      <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}>{initials}</span>
+      {!collapsed && <span className={placement === "header" ? "header-account-copy" : "sidebar-account-copy"}>
         <strong>{fullName}</strong>
         <small>{role}</small>
       </span>}
-      {!collapsed && <span className="sidebar-account-chevron" aria-hidden="true">{open ? "⌃" : "⌄"}</span>}
+      {!collapsed && <span className={placement === "header" ? "header-account-chevron" : "sidebar-account-chevron"} aria-hidden="true">{open ? "⌃" : "⌄"}</span>}
     </button>
   </div>;
 }

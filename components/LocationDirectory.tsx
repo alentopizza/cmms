@@ -13,6 +13,7 @@ export type LocationDirectorySite={
   latitude:number|null; longitude:number|null; geofence_radius_m:number;
   has_image:boolean; organization_has_logo:boolean; contact_name:string|null; contact_phone:string|null; contact_email:string|null;
   business_days:number[]; business_open_time:string; business_close_time:string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
 };
 export type LocationDirectorySub={
   id:string; organization_id:string; site_id:string; parent_id:string|null; name:string; code:string|null; type:string;

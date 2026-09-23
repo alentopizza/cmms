@@ -26,6 +26,8 @@ type GeofenceMapPickerProps = {
   currentLatitude?: number | null;
   currentLongitude?: number | null;
   currentAccuracy?: number | null;
+  markerImageUrl?: string | null;
+  markerLabel?: string | null;
   className?: string;
 };
 
@@ -125,6 +127,27 @@ function formatCoordinate(value: number | null) {
   return value === null ? "—" : value.toFixed(6);
 }
 
+function buildBrandMarker(imageUrl:string|null,label:string|null){
+  const root=document.createElement("div");
+  root.className="geofence-brand-marker";
+  const bubble=document.createElement("div");
+  bubble.className="geofence-brand-marker-bubble";
+  if(imageUrl){
+    const img=document.createElement("img");
+    img.src=imageUrl;
+    img.alt=label ? `Logo de ${label}` : "Logo de la ubicación";
+    bubble.appendChild(img);
+  }else{
+    const fallback=document.createElement("span");
+    fallback.textContent=(label||"S").split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase();
+    bubble.appendChild(fallback);
+  }
+  const tail=document.createElement("i");
+  root.appendChild(bubble);
+  root.appendChild(tail);
+  return root;
+}
+
 export default function GeofenceMapPicker({
   initialAddress = "",
   initialLatitude = null,
@@ -138,6 +161,8 @@ export default function GeofenceMapPicker({
   currentLatitude = null,
   currentLongitude = null,
   currentAccuracy = null,
+  markerImageUrl = null,
+  markerLabel = null,
   className = "",
 }: GeofenceMapPickerProps) {
   const [address, setAddress] = useState(initialAddress || "");
@@ -215,12 +240,14 @@ export default function GeofenceMapPicker({
       });
       mapRef.current = map;
 
-      const sitePin = new PinElement({ background: "#38b2a9", borderColor: "#293644", glyphColor: "#ffffff" });
+      const siteMarkerContent=(markerImageUrl||markerLabel)
+        ? buildBrandMarker(markerImageUrl,markerLabel)
+        : new PinElement({ background: "#38b2a9", borderColor: "#293644", glyphColor: "#ffffff" }).element;
       siteMarkerRef.current = new AdvancedMarkerElement({
         map: configured ? map : null,
         position: { lat: center.lat, lng: center.lon },
-        title: "Centro de geocerca",
-        content: sitePin.element,
+        title: markerLabel ? `Ubicación de ${markerLabel}` : "Centro de geocerca",
+        content: siteMarkerContent,
       });
 
       const currentPin = new PinElement({ background: "#2563eb", borderColor: "#dbeafe", glyphColor: "#ffffff", scale: 0.82 });
@@ -291,7 +318,7 @@ export default function GeofenceMapPicker({
       accuracyCircleRef.current?.setMap?.(null);
       mapRef.current = null;
     };
-  }, [useGoogle, readOnly, googleConfig?.apiKey, googleConfig?.mapId]);
+  }, [useGoogle, readOnly, googleConfig?.apiKey, googleConfig?.mapId, markerImageUrl, markerLabel]);
 
   // ── Google Places autocomplete (Maps-like address entry) ─────────────────
 
@@ -309,6 +336,8 @@ export default function GeofenceMapPicker({
 
         const element=new PlaceAutocompleteElement();
         element.placeholder="Busca una dirección o lugar";
+        element.classList.add("desweb-place-autocomplete");
+        element.style.colorScheme=document.documentElement.dataset.theme==="dark"?"dark":"light";
         const country=(countryHint||"CO").trim().toLowerCase();
         if(country)element.includedRegionCodes=[country];
 
@@ -567,7 +596,9 @@ export default function GeofenceMapPicker({
           {tiles.map(tile => <img key={tile.key} src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`} alt="" style={{ left: tile.left, top: tile.top }} />)}
         </span>
         {configured && <span className="geofence-radius-circle" aria-hidden="true" style={{ width: radiusPixels * 2, height: radiusPixels * 2 }} />}
-        {configured && <span className="geofence-map-marker" aria-hidden="true"><i /></span>}
+        {configured && <span className={"geofence-map-marker"+(markerImageUrl?" branded":"")} aria-hidden="true">
+          {markerImageUrl?<span className="geofence-map-marker-logo"><img src={markerImageUrl} alt="" /><i /></span>:<i />}
+        </span>}
         {currentMarker && <span className="geofence-current-marker" aria-label={`Tu ubicación actual${Number.isFinite(currentAccuracy) ? `, precisión aproximada ${Math.round(Number(currentAccuracy))} metros` : ""}`} style={currentMarker}><i /></span>}
         {!configured && <span className="geofence-map-empty">Valida la dirección o selecciona el punto en el mapa</span>}
       </button>}

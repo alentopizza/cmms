@@ -8009,3 +8009,35 @@ html[data-theme="dark"] .geocode-result-copy em{
   background:rgba(245,158,11,.16);
   color:#f8cf74;
 }
+
+
+/* Google Places address autocomplete */
+.google-place-autocomplete-host{
+  flex:1 1 auto;
+  min-width:0;
+}
+.google-place-autocomplete-host gmp-place-autocomplete{
+  display:block;
+  width:100%;
+  font:inherit;
+}
+.google-place-autocomplete-host:empty{
+  display:none;
+}
+.google-place-autocomplete-host:not(:empty) + input{
+  display:none;
+}
+.geofence-address-control:has(.google-place-autocomplete-host:not(:empty)) .geofence-fallback-validate{
+  display:none;
+}
+html[data-theme="dark"] .google-place-autocomplete-host{
+  color-scheme:dark;
+}
+@media(max-width:620px){
+  .geofence-address-control{
+    grid-template-columns:1fr;
+  }
+  .google-place-autocomplete-host{
+    width:100%;
+  }
+}

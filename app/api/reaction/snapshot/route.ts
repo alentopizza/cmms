@@ -16,6 +16,7 @@ type SiteRow={
 type TechRow={
   tracking_session_id:string;user_id:string;full_name:string;organization_id:string;organization_name:string;
   latitude:number;longitude:number;accuracy_m:number|null;last_seen_at:string;has_avatar:boolean;
+  live:boolean;
 };
 type SampleRow={tracking_session_id:string;latitude:number;longitude:number;recorded_at:string};
 
@@ -91,6 +92,7 @@ export async function GET(){
                 ts.organization_id,o.name organization_name,
                 ts.last_latitude latitude,ts.last_longitude longitude,
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
+                (ts.last_seen_at > now()-interval '2 minutes') live,
                 (u.avatar_data IS NOT NULL) has_avatar
          FROM technician_tracking_sessions ts
          JOIN users u ON u.id=ts.user_id
@@ -98,12 +100,13 @@ export async function GET(){
          JOIN organizations o ON o.id=ts.organization_id
          WHERE ts.status='active' AND om.role='technician'
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
-           AND ts.last_seen_at > now()-interval '2 minutes'
+           AND ts.last_seen_at > now()-interval '30 minutes'
          ORDER BY ts.last_seen_at DESC`
       : `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,
                 ts.organization_id,o.name organization_name,
                 ts.last_latitude latitude,ts.last_longitude longitude,
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
+                (ts.last_seen_at > now()-interval '2 minutes') live,
                 (u.avatar_data IS NOT NULL) has_avatar
          FROM technician_tracking_sessions ts
          JOIN users u ON u.id=ts.user_id
@@ -111,7 +114,7 @@ export async function GET(){
          JOIN organizations o ON o.id=ts.organization_id
          WHERE ts.status='active' AND ts.organization_id=$1 AND om.role='technician'
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
-           AND ts.last_seen_at > now()-interval '2 minutes'
+           AND ts.last_seen_at > now()-interval '30 minutes'
          ORDER BY ts.last_seen_at DESC`,
     global?[]:[organizationId],
   );
@@ -177,6 +180,7 @@ export async function GET(){
       lng:Number(tech.longitude),
       accuracy:tech.accuracy_m===null?null:Number(tech.accuracy_m),
       lastSeenAt:tech.last_seen_at,
+      telemetryState:tech.live?"live":"paused",
       avatarUrl:tech.has_avatar?`/api/users/${tech.user_id}/avatar`:null,
       route:routes[tech.tracking_session_id]||[],
     })),

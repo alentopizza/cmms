@@ -342,6 +342,10 @@ Migration `022_business_hours.sql` adds independent service schedules to `organi
 
 Business hours are operational metadata only. They do not automatically disable work orders, attendance, tracking or emergency dispatch; they are currently used for map state/filtering and user context.
 
+### Reaction client-session lifecycle
+
+Reaction tracking treats explicit logout as the authoritative session-close event. Browser refresh, route remounts and OS background suspension must not emit a disconnect because those events do not mean the technician intentionally ended the operational session. The client reuses an active tracking session when GPS resumes. Live telemetry is defined as a sample within two minutes; the supervisory map may keep the last known position visible for up to 30 minutes with a paused state to absorb mobile-browser suspension. This grace period does not claim background GPS collection occurred.
+
 ### Reaction connected tracking
 
 The **Reaction** module introduces operational technician tracking independent from Attendance.

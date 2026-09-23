@@ -8515,6 +8515,12 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
 .reaction-marker-technician>i{
   background:var(--brand-teal);
 }
+.reaction-marker-technician.is-paused .reaction-marker-bubble{
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--warning) 55%,transparent);
+}
+.reaction-marker-technician.is-paused>i{
+  background:var(--warning);
+}
 .reaction-marker-site{
   transform:scale(.88);
 }
@@ -8543,6 +8549,12 @@ html[data-theme="dark"] .geofence-map-shell.google-provider .geofence-drag-hint{
 .technician-tracking-indicator small{
   font-size:7px;
   font-weight:850;
+}
+.technician-tracking-indicator.is-checking{
+  border-color:color-mix(in srgb,var(--warning) 34%,var(--border));
+}
+.technician-tracking-indicator.is-checking span{
+  background:var(--warning);
 }
 .reaction-location-gate{
   position:fixed;

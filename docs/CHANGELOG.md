@@ -1,6 +1,22 @@
 # Changelog
 
 
+## 2026-09-23 — Rich information panels and activity-derived technicians
+
+### Added
+
+- Completed the approved **Información general** composition for Companies and principal Locations with denser data blocks, contextual section icons, map context, contact information and notes.
+- Added Site fields for **Zona / Localidad**, **Cargo del responsable** and **Notas adicionales** through migration `025_site_profile_details.sql`; creation and edit flows persist these values.
+- Added a read-only **Técnicos** tab to principal Locations and Sub-locations.
+- Technician presence in a Location/Sub-location is derived from real Work Order activity assignments, including direct person assignments and members of an assigned crew.
+- Hoja de vida exports now include the richer Company/Site fields and activity-derived technician counts.
+
+### Assignment rule
+
+- Do not create a duplicate Site↔Technician or Sub-location↔Technician assignment table for operational work.
+- The source of truth for “assigned technicians” is the Activity/Work Order task executor relation. Location profiles project that assignment for visibility.
+
+
 ## 2026-09-23 — Entity header visual fidelity pass
 
 ### Changed

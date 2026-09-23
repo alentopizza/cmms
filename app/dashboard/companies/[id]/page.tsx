@@ -22,6 +22,7 @@ type Organization = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   legal_address: string | null;
   legal_city: string | null;
   legal_country: string | null;
@@ -84,6 +85,7 @@ type Site = {
   business_days: number[];
   business_open_time: string;
   business_close_time: string;
+  business_schedule: import("@/lib/business-hours").BusinessDaySchedule[];
   asset_count: string;
   work_order_count: string;
 };
@@ -160,7 +162,7 @@ export default async function CompanyDetailPage({
   const [organizationResult, sitesResult, serviceSuppliersResult, documentsResult] = await Promise.all([
     query<Organization>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.tax_id_type,o.timezone,o.active,o.updated_at::text,
-        o.business_days,o.business_open_time::text,o.business_close_time::text,
+        o.business_days,o.business_open_time::text,o.business_close_time::text,o.business_schedule,
         o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
         o.primary_contact_name,o.primary_contact_title,o.primary_contact_phone,o.primary_contact_email,o.internal_notes,
         (o.logo_data IS NOT NULL) has_logo,
@@ -186,7 +188,7 @@ export default async function CompanyDetailPage({
     ),
     query<Site>(
       `SELECT s.id,s.name,s.code,s.address,s.city,s.country,s.active,
-              s.business_days,s.business_open_time::text,s.business_close_time::text,
+              s.business_days,s.business_open_time::text,s.business_close_time::text,s.business_schedule,
         count(DISTINCT a.id)::text asset_count,
         count(DISTINCT w.id)::text work_order_count
        FROM sites s
@@ -357,6 +359,7 @@ export default async function CompanyDetailPage({
             days={organization.business_days}
             openTime={organization.business_open_time}
             closeTime={organization.business_close_time}
+            schedule={organization.business_schedule}
             title="Horario general de atención"
             description="Este horario define el estado operativo general de la empresa en Reacción."
           />

@@ -36,10 +36,10 @@ export async function POST(
 
   const site = await query<{
     active:boolean; latitude:number|null; longitude:number|null; geofence_radius_m:number;
-    contact_name:string|null; contact_phone:string|null; contact_email:string|null;
+    locality:string|null; contact_name:string|null; contact_title:string|null; contact_phone:string|null; contact_email:string|null; notes:string|null;
     business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:unknown;
   }>(
-    `SELECT active,latitude,longitude,geofence_radius_m,contact_name,contact_phone,contact_email,
+    `SELECT active,latitude,longitude,geofence_radius_m,locality,contact_name,contact_title,contact_phone,contact_email,notes,
             business_days,business_open_time::text,business_close_time::text,business_schedule
      FROM sites WHERE id=$1 AND organization_id=$2`,
     [id, organizationId],
@@ -58,13 +58,16 @@ export async function POST(
   const code = String(form.get("code") || "").trim().toUpperCase();
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
+  const locality = form.has("locality") ? String(form.get("locality") || "").trim() : (site.rows[0].locality||"");
   const country = String(form.get("country") || "CO").trim().toUpperCase();
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
   const radiusRaw = String(form.get("geofence_radius_m") || "").trim();
   const contactName = form.has("contact_name") ? String(form.get("contact_name") || "").trim() : (site.rows[0].contact_name||"");
+  const contactTitle = form.has("contact_title") ? String(form.get("contact_title") || "").trim() : (site.rows[0].contact_title||"");
   const contactPhone = form.has("contact_phone") ? String(form.get("contact_phone") || "").trim() : (site.rows[0].contact_phone||"");
   const contactEmail = form.has("contact_email") ? String(form.get("contact_email") || "").trim().toLowerCase() : (site.rows[0].contact_email||"");
+  const notes = form.has("notes") ? String(form.get("notes") || "").trim() : (site.rows[0].notes||"");
   const currentHours = normalizeBusinessHoursRow(site.rows[0]);
   let businessHours = currentHours;
   try {
@@ -100,17 +103,17 @@ export async function POST(
   try {
     await query(
       `UPDATE sites
-       SET name=$1,code=$2,address=$3,city=$4,country=$5,
-           latitude=$6,longitude=$7,geofence_radius_m=$8,
-           contact_name=$9,contact_phone=$10,contact_email=$11,
-           business_days=$12,business_open_time=$13,business_close_time=$14,business_schedule=$15::jsonb,
-           image_data=COALESCE($16,image_data),
-           image_mime_type=CASE WHEN $16 IS NULL THEN image_mime_type ELSE $17 END
-       WHERE id=$18 AND organization_id=$19`,
+       SET name=$1,code=$2,address=$3,city=$4,locality=$5,country=$6,
+           latitude=$7,longitude=$8,geofence_radius_m=$9,
+           contact_name=$10,contact_title=$11,contact_phone=$12,contact_email=$13,notes=$14,
+           business_days=$15,business_open_time=$16,business_close_time=$17,business_schedule=$18::jsonb,
+           image_data=COALESCE($19,image_data),
+           image_mime_type=CASE WHEN $19 IS NULL THEN image_mime_type ELSE $20 END
+       WHERE id=$21 AND organization_id=$22`,
       [
-        name,code||null,address||null,city||null,country||"CO",
+        name,code||null,address||null,city||null,locality||null,country||"CO",
         latitude,longitude,geofenceRadius,
-        contactName||null,contactPhone||null,contactEmail||null,
+        contactName||null,contactTitle||null,contactPhone||null,contactEmail||null,notes||null,
         businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),
         image?.data||null,image?.mime||null,id,organizationId,
       ],

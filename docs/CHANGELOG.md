@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-23 — Reaction reset button state
+
+### Changed
+
+- Restyled **Borrar filtros** as an elevated dark-green button with white text inside the filter container.
+- The button remains disabled/subdued when no filters differ from the operational defaults.
+- As soon as search, Company, Site, Technician, business-hours or date filters are active, the button gains active green styling, shadow/relief and hover/press feedback.
+
 ## 2026-09-23 — Reaction technician selector
 
 ### Changed

@@ -12,7 +12,7 @@ type SitePoint={
 };
 type TechnicianPoint={
   trackingSessionId:string;userId:string;fullName:string;organizationId:string;organizationName:string;
-  lat:number;lng:number;accuracy:number|null;lastSeenAt:string;avatarUrl:string|null;
+  lat:number;lng:number;accuracy:number|null;lastSeenAt:string;telemetryState:"live"|"paused";avatarUrl:string|null;
   route:Array<{lat:number;lng:number;at:string}>;
 };
 type Snapshot={companies:CompanyPoint[];sites:SitePoint[];technicians:TechnicianPoint[];generatedAt:string};
@@ -69,11 +69,14 @@ function initials(value:string){
   return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase();
 }
 
-function markerContent(kind:"company"|"site"|"technician",imageUrl:string|null,label:string,openNow?:boolean){
+function markerContent(kind:"company"|"site"|"technician",imageUrl:string|null,label:string,openNow?:boolean,telemetryState?:"live"|"paused"){
   const root=document.createElement("div");
   root.className=`reaction-marker reaction-marker-${kind}`;
   if((kind==="company"||kind==="site")&&typeof openNow==="boolean"){
     root.classList.add(openNow?"is-open":"is-closed");
+  }
+  if(kind==="technician"&&telemetryState){
+    root.classList.add(telemetryState==="live"?"is-live":"is-paused");
   }
   const bubble=document.createElement("div");
   bubble.className="reaction-marker-bubble";
@@ -156,7 +159,9 @@ export default function ReactionMap(){
         snapshotRef.current=data;
         setSnapshot(data);
         draw(data,firstFit.current);
-        setStatus(`${data.companies.length} empresa${data.companies.length===1?"":"s"} · ${data.sites.length} sede${data.sites.length===1?"":"s"} · ${data.technicians.length} técnico${data.technicians.length===1?"":"s"} conectado${data.technicians.length===1?"":"s"}`);
+        const live=data.technicians.filter(tech=>tech.telemetryState==="live").length;
+        const paused=data.technicians.length-live;
+        setStatus(`${data.companies.length} empresa${data.companies.length===1?"":"s"} · ${data.sites.length} sede${data.sites.length===1?"":"s"} · ${live} técnico${live===1?"":"s"} en vivo${paused?` · ${paused} GPS pausado${paused===1?"":"s"}`:""}`);
       }catch(cause){
         setStatus(cause instanceof Error?cause.message:"No fue posible actualizar posiciones.");
       }
@@ -227,8 +232,8 @@ export default function ReactionMap(){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
             position:{lat:tech.lat,lng:tech.lng},
-            title:`${tech.fullName} · ${tech.organizationName}`,
-            content:markerContent("technician",tech.avatarUrl,tech.fullName),
+            title:`${tech.fullName} · ${tech.organizationName} · ${tech.telemetryState==="live"?"GPS en vivo":"GPS pausado · última ubicación conocida"}`,
+            content:markerContent("technician",tech.avatarUrl,tech.fullName,undefined,tech.telemetryState),
             zIndex:40,
           });
           overlaysRef.current.push(marker);

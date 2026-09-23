@@ -170,7 +170,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:["Asistencia sigue validando entrada/salida de forma explícita. Si el usuario es Técnico, el módulo Reacción mantiene además seguimiento GPS operativo mientras la sesión del panel permanezca conectada."],
 
-      "En Reacción puedes activar o desactivar las capas Técnicos, Empresas y Sedes. El filtro Horario permite ver todos, solo Abiertos ahora o solo Cerrados ahora. Los horarios se configuran desde la empresa y desde cada sede.",    keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
+    keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
   },
   {
     id:"attendance-contingency",
@@ -211,6 +211,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:[
       "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia.",
+      "Puedes activar o desactivar las capas Técnicos, Empresas y Sedes. El filtro Horario permite ver todos, solo Abiertos ahora o solo Cerrados ahora.",
+      "Los horarios se configuran de forma independiente en la empresa y en cada sede.",
       "En una web/PWA, el sistema operativo puede suspender el GPS con la pantalla bloqueada o la app en segundo plano. Para funcionamiento idéntico a una app de transporte se requerirá una fase móvil nativa.",
     ],
     keywords:["reacción","gps","seguimiento","trayecto","técnico","contingencia"],

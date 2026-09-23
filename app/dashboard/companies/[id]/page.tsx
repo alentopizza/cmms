@@ -92,6 +92,7 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (error === "document-fields") return <div className="notice error">Revisa la categoría, el nombre y el nivel de requisito del documento.</div>;
   if (error === "business-hours") return <div className="notice error">La hora de cierre debe ser posterior a la hora de apertura.</div>;
   if (error === "business-days") return <div className="notice error">Selecciona al menos un día de atención.</div>;
+  if (error === "document-archived") return <div className="notice error">Restaura el documento antes de editarlo.</div>;
   if (error) return <div className="notice error">Revisa los campos obligatorios e inténtalo nuevamente.</div>;
   if (created === "company") return <div className="notice success">La empresa y su sede principal fueron creadas correctamente.</div>;
   if (created === "site") return <div className="notice success">La nueva sede fue creada correctamente.</div>;
@@ -104,7 +105,6 @@ function Feedback({ saved, created, error }: { saved?: string; created?: string;
   if (saved === "document") return <div className="notice success">El documento empresarial fue guardado.</div>;
   if (saved === "document-archived") return <div className="notice success">El documento fue archivado. Puedes encontrarlo y restaurarlo en la pestaña Archivados.</div>;
   if (saved === "document-restored") return <div className="notice success">El documento fue restaurado a la ficha vigente.</div>;
-  if (error === "document-archived") return <div className="notice error">Restaura el documento antes de editarlo.</div>;
   return null;
 }
 

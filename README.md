@@ -53,6 +53,9 @@ Incluye:
 - Catálogo internacional reutilizable: País → Ciudad, indicativo telefónico, zona horaria, identificación fiscal y tipo de documento personal.
 - Configuración de Idioma y región a nivel plataforma/empresa como base para traducción progresiva.
 - Teléfonos con prefijo de país derivado y accesos directos de llamada/WhatsApp.
+- Proveedores con perfil visual, logo, documentos, actividades de servicio, suministros e Hoja de vida exportable.
+- Requisiciones independientes por proveedor, generables desde Proveedor o Inventario con separación automática cuando una selección contiene varios proveedores.
+- Exportación de requisiciones en PDF, Excel y Word compatible; el flujo de requisición se mantiene separado de la recepción física de inventario.
 - Perfiles operativos **en la misma pantalla** para Empresas, Ubicaciones, Sububicaciones y Técnicos, con migas de pan, estadísticas, acciones rápidas y tabs independientes.
 - Hoja de vida exportable por Empresa/Ubicación/Sububicación/Técnico en PDF, Excel y Word compatible.
 - Cuenta, ayuda y configuración del usuario ubicadas en el extremo superior derecho del panel de escritorio.

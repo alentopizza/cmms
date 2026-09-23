@@ -42,33 +42,41 @@ export function CountrySelect({
 
 export function CountryCityFields({
   countryId,countryName="country",cityId,cityName="city",countryLabel="País",cityLabel="Ciudad",
-  defaultCountry="CO",defaultCity="",required=true,
+  defaultCountry="CO",defaultCity="",countryValue,cityValue,onCountryChange,onCityChange,required=true,
 }:{
   countryId:string;countryName?:string;cityId:string;cityName?:string;countryLabel?:string;cityLabel?:string;
-  defaultCountry?:string|null;defaultCity?:string|null;required?:boolean;
+  defaultCountry?:string|null;defaultCity?:string|null;countryValue?:string;cityValue?:string;
+  onCountryChange?:(value:string)=>void;onCityChange?:(value:string)=>void;required?:boolean;
 }){
-  const [country,setCountry]=useState(String(defaultCountry||"CO").toUpperCase());
-  const [city,setCity]=useState(String(defaultCity||""));
+  const [internalCountry,setInternalCountry]=useState(String(defaultCountry||"CO").toUpperCase());
+  const [internalCity,setInternalCity]=useState(String(defaultCity||""));
+  const country=countryValue!==undefined?String(countryValue||"").toUpperCase():internalCountry;
+  const city=cityValue!==undefined?String(cityValue||""):internalCity;
   const cities=useMemo(()=>citiesForCountry(country),[country]);
   const legacy=Boolean(city&&!cities.includes(city));
 
-  useEffect(()=>{
-    if(city&&!cities.includes(city))return;
-    if(city&&cities.includes(city))return;
-    setCity("");
-  },[country]);
+  const changeCountry=(next:string)=>{
+    if(countryValue===undefined)setInternalCountry(next);
+    onCountryChange?.(next);
+    if(cityValue===undefined)setInternalCity("");
+    onCityChange?.("");
+  };
+  const changeCity=(next:string)=>{
+    if(cityValue===undefined)setInternalCity(next);
+    onCityChange?.(next);
+  };
 
   return <>
     <div className="field international-select-field">
       <label htmlFor={countryId}>{countryLabel}{required?" *":""}</label>
-      <select id={countryId} name={countryName} value={country} onChange={event=>{setCountry(event.target.value);setCity("");}} required={required}>
+      <select id={countryId} name={countryName} value={country} onChange={event=>changeCountry(event.target.value)} required={required}>
         <option value="" disabled>Selecciona un país</option>
         {COUNTRY_OPTIONS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
     </div>
     <div className="field international-select-field">
       <label htmlFor={cityId}>{cityLabel}{required?" *":""}</label>
-      <select id={cityId} name={cityName} value={city} onChange={event=>setCity(event.target.value)} required={required} disabled={!country}>
+      <select id={cityId} name={cityName} value={city} onChange={event=>changeCity(event.target.value)} required={required} disabled={!country}>
         <option value="">Selecciona una ciudad</option>
         {legacy&&<option value={city}>{city} · registrada previamente</option>}
         {cities.map(item=><option key={item} value={item}>{item}</option>)}

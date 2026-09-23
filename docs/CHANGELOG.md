@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-23 — Reaction filter-bar visual refinement
+
+### Changed
+
+- Unified the Reaction filter bar into one homogeneous surface; active layers are now indicated by green accent/underline instead of a separate colored block.
+- Reduced filter-bar height and control heights to recover more map space.
+- Added a final **Borrar filtros** action that restores search, layers, Company, Site, business-hours state and the date filter to **Hoy y retrasadas**.
+- Moved the live-status pill upward to match the more compact filter bar.
+
 ## 2026-09-23 — Reaction search and in-place operational details
 
 ### Added

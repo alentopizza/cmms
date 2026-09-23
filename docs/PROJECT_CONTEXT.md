@@ -613,3 +613,34 @@ A provisional **Reacción** module now provides emergency-response map infrastru
 - GPS telemetry is considered live for two minutes; a background-paused technician remains visible at the last known position for up to 30 minutes and is marked as paused rather than disconnected.
 - The right-side Reaction panel is intentionally reserved for the next dispatch/contingency workflow.
 - Current web/PWA implementation cannot guarantee transport-app-grade GPS while the OS suspends the browser in background; the data model is prepared for a later native mobile tracker.
+
+
+## Flexible operating schedules
+
+Company and Site operating hours use a seven-row JSON schedule (`business_schedule`) as the rich source for day-specific availability. Each row contains the ISO-style weekday number (1 Monday through 7 Sunday), enabled state, opening time and closing time. Legacy `business_days`, `business_open_time` and `business_close_time` columns remain populated as compatibility fields for existing code and integrations.
+
+Rules:
+- at least one day must be enabled;
+- every enabled day must close after it opens;
+- different days may use different time ranges;
+- closed days are represented explicitly instead of inferred;
+- Reaction uses the Site/Company timezone plus the day-specific schedule to compute open/closed state.
+
+## Company document lifecycle and preview
+
+`organization_documents` treats **archive** and **permanent deletion** as different operations.
+
+- Active documents appear under **Vigentes**.
+- Archive sets `archived_at` and `archived_by` and removes the item from the current dossier without destroying its bytes or metadata.
+- Archived documents remain previewable/downloadable by authorized users and can be restored.
+- Restore clears archive metadata and returns the document to the current dossier.
+- Permanent deletion remains a Platform Owner destructive action using the existing protected purge/confirmation path.
+- PDF/image previews use the authenticated document endpoint with `?inline=1`; ordinary access keeps attachment/download disposition.
+
+## Phone normalization and communication shortcuts
+
+Phone capture is country-aware. When a Company or Site country is known, the UI shows the calling prefix separately and the user enters the national portion only. The submitted value is normalized with the country prefix for storage/use in links.
+
+Current calling-code helpers cover the principal Latin American countries already represented by the product plus common North American/European codes. Unknown countries keep a safe international-entry fallback.
+
+WhatsApp and telephone actions are convenience links only; they do not grant permissions or send messages from the CMMS. Reaction entity details use normalized Company, Site and Technician numbers for these shortcuts.

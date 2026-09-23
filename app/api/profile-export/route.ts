@@ -167,11 +167,11 @@ async function loadLocation(id:string,session:NonNullable<Awaited<ReturnType<typ
 async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>):Promise<LifeProfile|null>{
   if(!can(session,"users.manage")) return null;
   const result=await query<{
-    id:string;full_name:string;email:string;phone:string|null;active:boolean;platform_role:string;last_login_at:string|null;
+    id:string;full_name:string;email:string;phone:string|null;country_code:string|null;identity_document_type:string|null;identity_document_number:string|null;active:boolean;platform_role:string;last_login_at:string|null;
     organization_id:string|null;organization_name:string|null;role:string|null;access_all_sites:boolean|null;site_names:string[]|null;
     biometric_status:string;assigned_orders:number;pending_activities:number;completed_30d:number;attendance_hours_30d:number;tracking_live:boolean;
     avatar_data:Buffer|null;avatar_mime_type:string|null;
-  }>(`SELECT u.id,u.full_name,u.email,u.phone,u.active,u.platform_role,u.last_login_at::text,
+  }>(`SELECT u.id,u.full_name,u.email,u.phone,u.country_code,u.identity_document_type,u.identity_document_number,u.active,u.platform_role,u.last_login_at::text,
             om.organization_id,o.name organization_name,om.role,om.access_all_sites,
             COALESCE((SELECT array_agg(s.name ORDER BY s.name) FROM organization_member_sites oms JOIN sites s ON s.id=oms.site_id
                       WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id),ARRAY[]::text[]) site_names,
@@ -198,6 +198,8 @@ async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof 
     entityLabel:row.role==="technician"?"Técnico":"Usuario",title:row.full_name,subtitle:row.organization_name||"Desweb CMMS",status:row.active?"Activo":"Inactivo",
     fields:[
       {label:"Correo",value:row.email},{label:"Teléfono / WhatsApp",value:safe(row.phone,"Sin registrar")},
+      {label:"País",value:safe(row.country_code,"Sin registrar")},{label:"Tipo de documento",value:safe(row.identity_document_type,"Sin registrar")},
+      {label:"Número de documento",value:safe(row.identity_document_number,"Sin registrar")},
       {label:"Rol",value:row.platform_role==="user"?roleName(row.role):row.platform_role==="platform_owner"?"Propietario Desweb":"Superadministrador"},
       {label:"Empresa",value:safe(row.organization_name,"Acceso global")},{label:"Alcance",value:scope},
       {label:"Último acceso",value:dateText(row.last_login_at)},{label:"Biometría",value:row.biometric_status},

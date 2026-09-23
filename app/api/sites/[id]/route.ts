@@ -37,10 +37,10 @@ export async function POST(
   const site = await query<{
     active:boolean; latitude:number|null; longitude:number|null; geofence_radius_m:number;
     contact_name:string|null; contact_phone:string|null; contact_email:string|null;
-    business_days:number[]; business_open_time:string; business_close_time:string;
+    business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:unknown;
   }>(
     `SELECT active,latitude,longitude,geofence_radius_m,contact_name,contact_phone,contact_email,
-            business_days,business_open_time::text,business_close_time::text
+            business_days,business_open_time::text,business_close_time::text,business_schedule
      FROM sites WHERE id=$1 AND organization_id=$2`,
     [id, organizationId],
   );
@@ -103,15 +103,15 @@ export async function POST(
        SET name=$1,code=$2,address=$3,city=$4,country=$5,
            latitude=$6,longitude=$7,geofence_radius_m=$8,
            contact_name=$9,contact_phone=$10,contact_email=$11,
-           business_days=$12,business_open_time=$13,business_close_time=$14,
-           image_data=COALESCE($15,image_data),
-           image_mime_type=CASE WHEN $15 IS NULL THEN image_mime_type ELSE $16 END
-       WHERE id=$17 AND organization_id=$18`,
+           business_days=$12,business_open_time=$13,business_close_time=$14,business_schedule=$15::jsonb,
+           image_data=COALESCE($16,image_data),
+           image_mime_type=CASE WHEN $16 IS NULL THEN image_mime_type ELSE $17 END
+       WHERE id=$18 AND organization_id=$19`,
       [
         name,code||null,address||null,city||null,country||"CO",
         latitude,longitude,geofenceRadius,
         contactName||null,contactPhone||null,contactEmail||null,
-        businessHours.days,businessHours.openTime,businessHours.closeTime,
+        businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),
         image?.data||null,image?.mime||null,id,organizationId,
       ],
     );

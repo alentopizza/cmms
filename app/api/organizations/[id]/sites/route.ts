@@ -35,7 +35,7 @@ export async function POST(
   const address = String(form.get("address") || "").trim();
   const city = String(form.get("city") || "").trim();
   const locality = String(form.get("locality") || "").trim();
-  const country = String(form.get("country") || "CO").trim().toUpperCase();
+  const country = String(form.get("country") || "").trim().toUpperCase();
   const latitudeRaw = String(form.get("latitude") || "").trim();
   const longitudeRaw = String(form.get("longitude") || "").trim();
   const radiusRaw = String(form.get("geofence_radius_m") || "250").trim();
@@ -90,7 +90,7 @@ export async function POST(
        )
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21)`,
       [
-        id,name,code||null,address,city,locality||null,country||"CO",latitude,longitude,geofenceRadius,
+        id,name,code||null,address,city,locality||null,country,latitude,longitude,geofenceRadius,
         contactName||null,contactTitle||null,contactPhone||null,contactEmail||null,notes||null,
         businessHours.days,businessHours.openTime,businessHours.closeTime,JSON.stringify(businessHours.schedule),
         image?.data||null,image?.mime||null,

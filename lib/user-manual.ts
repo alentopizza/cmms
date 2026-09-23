@@ -103,13 +103,13 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/locations",
     steps:[
-      "Completa primero Ciudad y País; después escribe la dirección y selecciona Validar. Google usa esos datos para reducir coincidencias ambiguas.",
+      "En Dirección, empieza a escribir como lo harías en Google Maps. Aparecerán sugerencias automáticas de Google Places; selecciona la correcta para centrar el mapa y cargar sus coordenadas.",
       "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
       "Ajusta el punto sobre el mapa si es necesario.",
       "Define el radio permitido entre 20 y 5000 metros.",
       "Guarda. Estas coordenadas son las mismas que usa Asistencia para verificar presencia.",
     ],
-    notes:["Google Maps aporta mapa y geocodificación; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],
+    notes:["Google Places aporta el autocompletado de dirección y Google Maps el contexto visual; el GPS real proviene del dispositivo. El servidor vuelve a calcular la distancia al registrar asistencia."],
     keywords:["gps","geocerca","radio","dirección","mapa"],
   },
   {

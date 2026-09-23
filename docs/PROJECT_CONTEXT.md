@@ -520,7 +520,8 @@ Company, Site, Sub-location and User/Technician directory records now use the sh
 - The entity heading uses the approved **Type / Name** hierarchy and keeps quick actions/export on the right.
 - The left column keeps entity identity visible with Company/Site/reference cover, Company logo or User photo, state, compact statistics and quick actions.
 - The right panel has independent tabs; changing Information, Statistics, Locations/Sub-locations/Services/Activity, Attendance, Documents, Technicians or Hoja de vida changes the panel body without extending the profile downward.
-- Site profiles include geofence/map, contact, flexible schedule summary, Sub-locations and maintenance-service context.
+- Site profiles include geofence/map, contact, flexible schedule summary, Zone/Locality, responsible person/title, notes, Sub-locations and maintenance-service context.
+- Site and Sub-location **Técnicos** tabs do not maintain their own assignment relation. They derive Technician visibility from Work Order Activity executors (direct Technician assignment or Crew membership), so future Activity creation/assignment automatically updates the profile view.
 - Sub-location profiles include hierarchy, Assets/direct Work Order statistics, edit/contextual child creation and Hoja de vida.
 - User/Technician profiles include role/Site scope, active Work Orders, pending/completed activity evidence, Attendance hours/shift state, biometric state and Reaction live state.
 - A Site quick action can start Technician creation with Company + Site + Technician role preselected; Users server rules remain authoritative.

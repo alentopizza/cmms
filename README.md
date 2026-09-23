@@ -50,6 +50,8 @@ Incluye:
 - Reacción: mapa operativo con técnicos conectados, rutas recientes, búsqueda, filtros y alertas de actividades pendientes.
 - Horarios flexibles por día para empresas y sedes, consumidos por Reacción para estado abierto/cerrado.
 - Expediente empresarial con vista previa, archivo reversible y restauración de documentos.
+- Catálogo internacional reutilizable: País → Ciudad, indicativo telefónico, zona horaria, identificación fiscal y tipo de documento personal.
+- Configuración de Idioma y región a nivel plataforma/empresa como base para traducción progresiva.
 - Teléfonos con prefijo de país derivado y accesos directos de llamada/WhatsApp.
 - Perfiles operativos **en la misma pantalla** para Empresas, Ubicaciones, Sububicaciones y Técnicos, con migas de pan, estadísticas, acciones rápidas y tabs independientes.
 - Hoja de vida exportable por Empresa/Ubicación/Sububicación/Técnico en PDF, Excel y Word compatible.

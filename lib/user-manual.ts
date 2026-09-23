@@ -103,7 +103,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/locations",
     steps:[
-      "Escribe la dirección de la sede y selecciona Validar. Cuando Google Maps está configurado, la dirección se valida con Google Geocoding.",
+      "Completa primero Ciudad y País; después escribe la dirección y selecciona Validar. Google usa esos datos para reducir coincidencias ambiguas.",
       "Elige la coincidencia correcta o usa Usar mi GPS si estás físicamente en el sitio.",
       "Ajusta el punto sobre el mapa si es necesario.",
       "Define el radio permitido entre 20 y 5000 metros.",

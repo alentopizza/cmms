@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-23 — Company quick-edit coverage layout
+
+### Changed
+
+- Reworked the Company quick-edit **Sede principal y cobertura** section so the geofence map uses the full available width.
+- Moved Site identity and city/country fields below the map into compact subcontainers instead of oversized side-by-side fields.
+- Kept geofence coordinates/radius immediately below the map in compact cards.
+- Removed the duplicated primary-Site schedule from Company quick edit. The single Company schedule is authoritative in this screen and is synchronized to the primary Site when saved from the Company directory.
+- Site-specific schedule exceptions remain editable from the Locations/Site workflow.
+
 ## 2026-09-23 — Reaction reset button state
 
 ### Changed

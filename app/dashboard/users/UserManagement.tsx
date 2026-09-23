@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import FileDropzone from "@/components/FileDropzone";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
 import {
@@ -403,12 +404,18 @@ export default function UserManagement({
           {errors.general && <div className="notice error">{errors.general}</div>}
 
           <div className="form-grid">
-            <div className={`field form-span-2 user-photo-field ${errors.avatar ? "field-error" : ""}`}>
-              <label>Foto de perfil {mode === "create" ? "*" : ""}</label>
-              <div className="user-photo-upload">
-                <div className="user-photo-preview">{avatarFile ? <img src={URL.createObjectURL(avatarFile)} alt="Vista previa" /> : editingUser?.has_avatar ? <img src={`/api/users/${editingUser.id}/avatar`} alt="" /> : <span>{initials(draft.full_name||"Usuario")}</span>}</div>
-                <div><input type="file" accept="image/png,image/jpeg,image/webp" required={mode === "create"} onChange={event=>{setAvatarFile(event.target.files?.[0]||null);setErrors(previous=>({...previous,avatar:undefined,general:undefined}));}} /><small>JPG, PNG o WEBP · máximo 5 MB. La foto identifica visualmente al usuario; la biometría facial se enrola por cámara con prueba de vida.</small>{errors.avatar && <small className="field-error-message">{errors.avatar}</small>}</div>
-              </div>
+            <div className={`form-span-2 user-photo-field ${errors.avatar ? "field-error" : ""}`}>
+              <FileDropzone
+                label={mode === "create" ? "Foto de perfil" : "Actualizar foto de perfil"}
+                description="La foto identifica visualmente al usuario. La biometría facial se enrola por cámara con prueba de vida."
+                accept="image/png,image/jpeg,image/webp"
+                maxSizeMb={5}
+                required={mode === "create"}
+                kind="image"
+                existingFileName={editingUser?.has_avatar ? "Foto de perfil actual" : null}
+                onFileChange={file=>{setAvatarFile(file);setErrors(previous=>({...previous,avatar:undefined,general:undefined}));}}
+              />
+              {errors.avatar && <small className="field-error-message">{errors.avatar}</small>}
             </div>
             <div className={`field ${errors.full_name ? "field-error" : ""}`}>
               <label htmlFor="managed-user-name">Nombre completo *</label>

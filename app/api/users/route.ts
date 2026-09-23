@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const fullName = String(form.get("full_name") || "").trim();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const phone = String(form.get("phone") || "").trim();
-  const countryCode = String(form.get("country_code") || "CO").trim().toUpperCase();
+  const countryCode = String(form.get("country_code") || "").trim().toUpperCase();
   const identityDocumentType = String(form.get("identity_document_type") || "").trim();
   const identityDocumentNumber = String(form.get("identity_document_number") || "").trim();
   const password = String(form.get("password") || "");

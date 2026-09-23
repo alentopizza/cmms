@@ -413,3 +413,21 @@ Multi-country form behavior is centralized instead of duplicated across modules.
 - Migration `026_international_catalog_preferences.sql` adds `organizations.preferred_locale/default_country`, User identity-country/document fields and platform `app_customization.default_locale/default_country`.
 - `/api/preferences/locale` persists the platform or tenant locale/region default after RBAC checks.
 - Locale persistence is intentionally separate from translation dictionaries. The data model and settings are locale-ready; UI string translation can be rolled out module by module without changing Country/phone/document semantics.
+
+
+## Supplier/requisition architecture
+
+Supplier detail follows the shared `EntityProfileWorkspace` client pattern while its data is assembled server-side by `app/dashboard/suppliers/page.tsx`. The browser only switches the selected Supplier/tab and submits authorized mutations.
+
+Authoritative relationships are intentionally reused:
+
+- Service work: `work_order_tasks.service_supplier_id`;
+- Supplied Inventory: `inventory_items.supplier_id`;
+- Supplier documents: `supplier_documents.supplier_id`;
+- Procurement request history: `supplier_requisitions.supplier_id`.
+
+`/api/requisitions/generate` is the single requisition generator for both Supplier and Inventory entry points. It validates selected Inventory records server-side, checks tenant/Site access, groups rows by Organization + Supplier, creates one requisition header for each group and snapshots item quantity/unit/cost/destination data.
+
+The requisition header is not an Inventory receipt. No stock mutation occurs in the requisition lifecycle endpoint. This separation preserves auditability between **requested**, **approved**, and **received** quantities.
+
+Supplier logos are persisted on `suppliers` and served through an authenticated binary route. Supplier documents are binary records with archive/restore behavior analogous to governed Company documents.

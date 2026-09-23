@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-22 — Google Places autocomplete address flow
+
+### Changed
+
+- Replaced the primary address-entry experience with Google Place Autocomplete (New), matching the interaction pattern of Google Maps.
+- Selecting a prediction now loads the formatted address, latitude/longitude, recenters the map and updates the geofence immediately.
+- Kept the existing Validate action only as an operational fallback when Places is unavailable.
+- Places predictions are region-restricted by the configured country when available.
+
 ## 2026-09-22 — Clearer Google address validation
 
 ### Changed

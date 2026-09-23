@@ -833,3 +833,14 @@ Configured company/site maps use a branded center marker inspired by navigation 
 In location edit mode only one interactive map is rendered. The previous read-only duplicate is replaced with a compact geofence summary; read-only/detail mode may still render the map for reference.
 
 Google Places autocomplete must visually inherit the product theme: light surface by default and dark surface only when the user explicitly selected dark mode.
+
+
+### Three geofence location methods
+
+Editable site geofences provide three equivalent ways to establish the center point:
+
+1. **Google Places autocomplete** for known addresses/places.
+2. **Usar mi GPS** for the device's current physical location.
+3. **Draggable map marker** for manual visual adjustment.
+
+The branded Advanced Marker is draggable only in edit/create mode. Dropping it updates latitude/longitude and recenters the geofence; read-only maps keep the marker fixed.

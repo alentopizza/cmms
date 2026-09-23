@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import FileDropzone from "@/components/FileDropzone";
 
 export type CompanyDirectoryItem = {
   id: string;
@@ -416,7 +417,7 @@ export default function CompanyDirectory({
                   <span>Identidad de sede</span>
                   <div className="company-site-info-fields">
                     <div className="field"><label htmlFor="detail-site-name">Nombre de sede</label><input id="detail-site-name" name="site_name" defaultValue={selected.site_name || ""} readOnly={!editing} /></div>
-                    <div className="field"><label htmlFor="detail-site-code">Código</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /></div>
+                    <div className="field"><label htmlFor="detail-site-code">Código interno</label><input id="detail-site-code" name="site_code" defaultValue={selected.site_code || ""} readOnly={!editing} /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
                   </div>
                 </div>
 
@@ -497,8 +498,8 @@ export default function CompanyDirectory({
                 <div><span>Portada</span><div className="company-profile-asset-preview cover">{selected.has_cover ? <img src={`/api/organizations/${selected.id}/assets/cover`} alt="" /> : <b>Sin portada</b>}</div></div>
               </div>
               {editing && <div className="form-grid">
-                <div className="field"><label htmlFor="detail-logo">Actualizar logo</label><input id="detail-logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · cuadrado · 800 × 800 px recomendado · máximo 2 MB.</small></div>
-                <div className="field"><label htmlFor="detail-cover">Actualizar portada</label><input id="detail-cover" name="cover" type="file" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB.</small></div>
+                <FileDropzone name="logo" label="Actualizar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={selected.has_logo ? "Logo actual" : null} compact />
+                <FileDropzone name="cover" label="Actualizar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={selected.has_cover ? "Portada actual" : null} compact />
               </div>}
             </div>
           </details>

@@ -217,6 +217,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Las fichas de empresa, sede y técnico muestran todas sus actividades pendientes. El panel derecho mantiene aparte su filtro por fecha.",
       "Al hacer clic en una tarjeta pendiente se abre el detalle de la actividad con OT, prioridad, ubicación, fecha compromiso y técnico/cuadrilla/proveedor asignado; abrir la OT completa es una acción explícita.",
       "El panel de alertas inicia en Hoy y retrasadas y permite filtrar por hoy, retrasadas, mañana, esta semana o una fecha específica.",
+      "En los campos de fotos y documentos puedes arrastrar y soltar el archivo o usar Seleccionar archivo; el sistema muestra formatos y tamaño máximo permitidos antes de guardar.",
+      "Cuando veas Código interno en una sede o sububicación, es una referencia opcional como MAIN o BOG-01 para identificarla en OT, reportes e integraciones.",
       "Los horarios se configuran de forma independiente en la empresa y en cada sede; verde indica abierto y rojo cerrado.",
       "En una web/PWA, el sistema operativo puede suspender el GPS con la pantalla bloqueada o la app en segundo plano. Para funcionamiento idéntico a una app de transporte se requerirá una fase móvil nativa.",
     ],

@@ -844,3 +844,23 @@ Editable site geofences provide three equivalent ways to establish the center po
 3. **Draggable map marker** for manual visual adjustment.
 
 The branded Advanced Marker is draggable only in edit/create mode. Dropping it updates latitude/longitude and recenters the geofence; read-only maps keep the marker fixed.
+
+
+## Unified file upload pattern
+
+All user-facing photo/document/file inputs must use the shared `FileDropzone` component instead of the browser-native file selector. The component is the standard visual contract for drag-and-drop and browse selection across the CMMS.
+
+Required behavior:
+
+- preserve the real HTML file input so existing multipart/API contracts continue to work;
+- expose accepted formats and the same maximum size enforced by the backend;
+- show selected filename and size;
+- preview images locally when possible;
+- support drag-and-drop and keyboard activation;
+- allow clearing/replacing a selection before submission;
+- distinguish required versus optional uploads;
+- surface local type/size validation without replacing server validation.
+
+Recommended sizes and aspect ratios are guidance only unless a backend rule explicitly validates them. Server-side MIME/type/size validation remains authoritative.
+
+Site/location code fields should be labelled as an optional **internal code/reference** where shown to end users. Explain that examples such as `MAIN`, `BOG-01` or `BODEGA-02` are short identifiers used in work orders, reporting and integrations; they are not postal addresses.

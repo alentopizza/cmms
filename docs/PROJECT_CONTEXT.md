@@ -413,6 +413,12 @@ When the owner deletes a record, the backend can remove dependent development hi
 Superadministrators and tenant users retain their existing hierarchy, creation flows and traceability restrictions. The Platform Owner identity itself remains protected from deletion.
 
 
+### Unified upload and internal-code UX
+
+File selection is standardized through `components/FileDropzone.tsx` across all current photo/document upload flows. It keeps native multipart form semantics while presenting drag-and-drop, file metadata, image preview and UI-side type/size feedback. Backend validation remains authoritative and displayed limits must mirror each route's actual contract.
+
+The Site `code` field remains useful as an optional internal short identifier. User-facing forms must explain its purpose (OT, reports and integrations) instead of presenting an unexplained generic “Código” field.
+
 ### Unified module UI
 
 Primary directory modules now share a reusable header with keyword search, contextual filters and a single Add action.

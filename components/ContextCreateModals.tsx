@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
+import FileDropzone from "@/components/FileDropzone";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 
 type NamedOption = { id: string; name: string };
@@ -117,11 +118,11 @@ export function SiteCreateModal({
         {fixedOrganizationId && <input type="hidden" name="organization_id" value={fixedOrganizationId} />}
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
-          <div className="field"><label>Código</label><input name="code" placeholder="Ej. BOG-01" /></div>
+          <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
           <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
-          <div className="field form-span-2"><label>Foto de la sede</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como imagen de referencia de la ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
@@ -180,7 +181,7 @@ export function SubLocationCreateModal({
           <div className="field"><label>Ubicación superior</label><select name="parent_id" value={parentId} onChange={event => setParentId(event.target.value)} disabled={Boolean(fixedParentId)}><option value="">{fixedSiteName || sites.find(site=>site.id===siteId)?.name || "Sede"} (nivel principal)</option>{visibleLocations.map(location=><option key={location.id} value={location.id}>{location.label || location.name}</option>)}</select>{fixedParentId && <input type="hidden" name="parent_id" value={fixedParentId} />}</div>
           <div className="field"><label>Tipo</label><select name="type" defaultValue="area"><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
           <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Ej. Nivel -1, acceso por corredor técnico" /></div>
-          <div className="field form-span-2"><label>Foto de la sububicación</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Foto de la sububicación" description="Ayuda a reconocer visualmente el área, piso, habitación o zona." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
         </div>
         <footer className="modal-actions">
           <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancelar</button>
@@ -332,7 +333,7 @@ export function ContextUserCreateModal({
         <input type="hidden" name="access_all_sites" value="true" />
         <input type="hidden" name="return_to" value={returnTo} />
         <div className="form-grid">
-          <div className="field form-span-2"><label>Foto de perfil</label><input name="avatar" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
+          <div className="form-span-2"><FileDropzone name="avatar" label="Foto de perfil" description="Identidad visual del usuario. La biometría facial se enrola por separado con cámara y prueba de vida." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Nombre completo *</label><input name="full_name" required autoFocus placeholder="Ej. Laura Gómez" /></div>
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="laura@empresa.com" /></div>
           <div className="field"><label>Teléfono</label><input name="phone" placeholder="+57 300 123 4567" /></div>
@@ -408,11 +409,11 @@ export function LocationCreateModal({
         {fixedOrganizationId && <input type="hidden" name="organization_id" value={fixedOrganizationId} />}
         <div className="form-grid">
           <div className="field"><label>Nombre *</label><input name="name" required autoFocus placeholder="Ej. Sede Bogotá Norte" /></div>
-          <div className="field"><label>Código</label><input name="code" placeholder="Ej. BOG-01" /></div>
+          <div className="field"><label>Código interno</label><input name="code" placeholder="Ej. BOG-01" /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
           <div className="field"><label>Ciudad *</label><input name="city" required placeholder="Ej. Bogotá" /></div>
           <div className="field"><label>País *</label><input name="country" defaultValue="CO" maxLength={2} required placeholder="CO" /></div>
           <div className="form-span-2"><GeofenceMapPicker cityHint="" countryHint="CO" /></div>
-          <div className="field form-span-2"><label>Foto de la sede</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB. Se usará como portada de la tarjeta.</small></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Foto de la sede" description="Se usará como portada de la tarjeta de ubicación." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
           <div className="field"><label>Contacto</label><input name="contact_name" placeholder="Ej. Iván Garzón" /></div>
           <div className="field"><label>WhatsApp / teléfono</label><input name="contact_phone" placeholder="+57 300 123 4567" /></div>
           <div className="field form-span-2"><label>Correo de contacto</label><input name="contact_email" type="email" placeholder="sede@empresa.com" /></div>
@@ -429,7 +430,7 @@ export function LocationCreateModal({
           <div className="field"><label>Ubicación superior</label><select name="parent_id" value={parentId} onChange={event=>setParentId(event.target.value)}><option value="">Nivel principal de la sede</option>{visibleLocations.map(location=><option key={location.id} value={location.id}>{location.label || location.name}</option>)}</select></div>
           <div className="field"><label>Tipo</label><select name="type" defaultValue="area"><option value="area">Área</option><option value="floor">Piso</option><option value="room">Habitación</option><option value="department">Departamento</option><option value="zone">Zona</option></select></div>
           <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Ej. Nivel -1, acceso por corredor técnico" /></div>
-          <div className="field form-span-2"><label>Foto de la sububicación</label><input name="image" type="file" accept="image/png,image/jpeg,image/webp" /><small>JPG, PNG o WEBP · máximo 5 MB.</small></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Foto de la sububicación" description="Ayuda a reconocer visualmente el área, piso, habitación o zona." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
         </div>
         <footer className="modal-actions"><button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="button" type="submit" disabled={!resolvedSiteId}>Crear sububicación</button></footer>
       </form>}

@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import FileDropzone from "@/components/FileDropzone";
 
 export default function NewCompanyModal({ error, autoOpen = false }: { error?: string; autoOpen?: boolean }) {
   const [open, setOpen] = useState(Boolean(error) || autoOpen);
   const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
 
   useEffect(()=>{ setPortalHost(document.body); },[]);
-  const [logoPreview, setLogoPreview] = useState("");
-  const [coverPreview, setCoverPreview] = useState("");
-
   useEffect(() => {
     if (autoOpen) setOpen(true);
   }, [autoOpen]);
@@ -29,11 +27,6 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
       document.body.classList.remove("modal-open");
     };
   }, [open]);
-
-  function previewFile(file: File | undefined, setter: (value: string) => void) {
-    if (!file) return setter("");
-    setter(URL.createObjectURL(file));
-  }
 
   const errorMessages: Record<string, string> = {
     required: "Completa los campos obligatorios.",
@@ -72,23 +65,23 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
           <div className="modal-section">
             <div className="modal-section-title"><strong>Identidad visual</strong><span>Logo obligatorio · portada opcional</span></div>
             <div className="company-upload-grid">
-              <label className="company-upload company-upload-logo">
-                <span className="company-upload-preview">
-                  {logoPreview ? <img src={logoPreview} alt="Vista previa del logo" /> : <span aria-hidden="true">LOGO</span>}
-                </span>
-                <strong>Cargar logo *</strong>
-                <small>PNG, JPG o WebP · cuadrada · 800 × 800 px recomendado · máximo 2 MB</small>
-                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" required onChange={event => previewFile(event.target.files?.[0], setLogoPreview)} />
-              </label>
-
-              <label className="company-upload company-upload-cover">
-                <span className="company-upload-preview">
-                  {coverPreview ? <img src={coverPreview} alt="Vista previa de la portada" /> : <span aria-hidden="true">FOTO DE PORTADA</span>}
-                </span>
-                <strong>Cargar foto del punto de referencia</strong>
-                <small>PNG, JPG o WebP · horizontal · 1600 × 700 px recomendado · máximo 5 MB</small>
-                <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" onChange={event => previewFile(event.target.files?.[0], setCoverPreview)} />
-              </label>
+              <FileDropzone
+                name="logo"
+                label="Logo de la empresa"
+                description="Imagen cuadrada recomendada: 800 × 800 px. Se usa como identidad visual en tarjetas y mapas."
+                accept="image/png,image/jpeg,image/webp"
+                maxSizeMb={2}
+                required
+                kind="image"
+              />
+              <FileDropzone
+                name="cover"
+                label="Foto de portada / punto de referencia"
+                description="Imagen horizontal recomendada: 1600 × 700 px."
+                accept="image/png,image/jpeg,image/webp"
+                maxSizeMb={5}
+                kind="image"
+              />
             </div>
           </div>
 
@@ -126,7 +119,7 @@ export default function NewCompanyModal({ error, autoOpen = false }: { error?: s
             <div className="modal-section-title"><strong>Sede principal</strong><span>Primer punto de operación</span></div>
             <div className="form-grid">
               <div className="field"><label htmlFor="new-company-site">Nombre de la sede</label><input id="new-company-site" name="site_name" required placeholder="Ej. Sede Bogotá" /></div>
-              <div className="field"><label htmlFor="new-company-code">Código</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="MAIN" /></div>
+              <div className="field"><label htmlFor="new-company-code">Código interno de sede</label><input id="new-company-code" name="site_code" defaultValue="MAIN" placeholder="Ej. MAIN o BOG-01" /><small>Opcional. Es una referencia corta para identificar la sede en OT, reportes e integraciones; no es la dirección.</small></div>
               <div className="field"><label htmlFor="new-company-city">Ciudad *</label><input id="new-company-city" name="city" required placeholder="Bogotá" /></div>
               <div className="field"><label htmlFor="new-company-country">País *</label><input id="new-company-country" name="country" defaultValue="CO" maxLength={2} required /></div>
               <div className="form-span-2"><GeofenceMapPicker cityHint="Bogotá" countryHint="CO" /></div>

@@ -7,6 +7,7 @@ import { ContextUserCreateModal, SiteCreateModal } from "@/components/ContextCre
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
+import FileDropzone from "@/components/FileDropzone";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -373,8 +374,8 @@ export default async function CompanyDetailPage({
           </div>
           <form className="company-profile-assets-form" method="post" action={`/api/organizations/${organization.id}`} encType="multipart/form-data">
             <input type="hidden" name="intent" value="assets" />
-            <div className="field"><label>Reemplazar logo</label><input type="file" name="logo" accept="image/png,image/jpeg,image/webp" /><small>Máx. 2 MB · 800×800 px recomendado.</small></div>
-            <div className="field"><label>Reemplazar portada</label><input type="file" name="cover" accept="image/png,image/jpeg,image/webp" /><small>Máx. 5 MB · 1600×700 px recomendado.</small></div>
+            <FileDropzone name="logo" label="Reemplazar logo" description="Cuadrado · 800 × 800 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={organization.has_logo ? "Logo actual" : null} compact />
+            <FileDropzone name="cover" label="Reemplazar portada" description="Horizontal · 1600 × 700 px recomendado." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={organization.has_cover ? "Portada actual" : null} compact />
             <button className="button secondary" type="submit">Actualizar identidad</button>
           </form>
         </article>
@@ -424,7 +425,7 @@ export default async function CompanyDetailPage({
           </div>
           <div className="field form-span-2"><label>Nombre del documento</label><input name="display_name" placeholder="Ej. RUT actualizado 2026" /></div>
           <div className="field"><label>Número / referencia</label><input name="reference" /></div>
-          <div className="field"><label>Archivo</label><input name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" /><small>PDF, PNG, JPG o WebP · máximo 10 MB.</small></div>
+          <FileDropzone name="file" label="Archivo del documento" description="Adjunta PDF o imagen del soporte corporativo." accept="application/pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} kind="document" compact />
           <div className="field"><label>Fecha de emisión</label><input name="issue_date" type="date" /></div>
           <div className="field"><label>Fecha de vencimiento</label><input name="expires_at" type="date" /></div>
           <div className="field form-span-2"><label>Observaciones</label><textarea name="notes" rows={3} /></div>
@@ -467,7 +468,7 @@ export default async function CompanyDetailPage({
                   <div className="field"><label>Referencia</label><input name="reference" defaultValue={document.reference || ""} /></div>
                   <div className="field"><label>Emisión</label><input name="issue_date" type="date" defaultValue={document.issue_date || ""} /></div>
                   <div className="field"><label>Vencimiento</label><input name="expires_at" type="date" defaultValue={document.expires_at || ""} /></div>
-                  <div className="field"><label>Reemplazar archivo</label><input name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" /></div>
+                  <FileDropzone name="file" label="Reemplazar archivo" description="Deja vacío si quieres conservar el archivo actual." accept="application/pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} kind="document" compact existingFileName={document.file_name} />
                   <div className="field"><label>Observaciones</label><textarea name="notes" rows={2} defaultValue={document.notes || ""} /></div>
                   <button className="button secondary" type="submit">Guardar cambios</button>
                 </form>
@@ -516,7 +517,7 @@ export default async function CompanyDetailPage({
             <input type="hidden" name="organization_id" value={organization.id} />
             <input type="hidden" name="intent" value="update" />
             <div className="field"><label>Nombre</label><input name="name" defaultValue={site.name} required /></div>
-            <div className="field"><label>Código</label><input name="code" defaultValue={site.code || ""} /></div>
+            <div className="field"><label>Código interno</label><input name="code" defaultValue={site.code || ""} /><small>Opcional. Referencia corta para OT, reportes e integraciones.</small></div>
             <div className="field form-span-2"><label>Dirección</label><input name="address" defaultValue={site.address || ""} /></div>
             <div className="field"><label>Ciudad</label><input name="city" defaultValue={site.city || ""} /></div>
             <div className="field"><label>País</label><input name="country" defaultValue={site.country} maxLength={2} /></div>

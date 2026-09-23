@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-23 — Unified file upload experience
+
+### Changed
+
+- Replaced native file selectors across Companies, Users, Locations/Sub-locations, Company documents, global Personalization and White Label settings with one reusable drag-and-drop upload surface.
+- The shared uploader displays accepted formats, real backend size limits, selected filename/size, image preview when applicable, remove/change actions and client-side type/size feedback before submit.
+- Upload limits now shown in the UI match the current server contracts: Company logo 2 MB, Company cover 5 MB, general images 5 MB, customization assets 2 MB and Company documents 10 MB.
+- Site **Código** labels now explain that the value is an optional short internal reference for work orders, reports and integrations, with examples such as `MAIN` or `BOG-01`.
+
 ## 2026-09-23 — Company edit confirmation and contact persistence
 
 ### Fixed

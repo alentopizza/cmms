@@ -5,7 +5,7 @@ import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { getPlanByCode } from "@/lib/billing";
-import { readBusinessHours } from "@/lib/business-hours";
+import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
 
 function slugify(value: string) {
   return value
@@ -161,6 +161,12 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ImageUploadError) {
       return creationError(request.url, error.code);
+    }
+    if (error instanceof BusinessHoursValidationError) {
+      return creationError(request.url, error.code);
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return creationError(request.url, "business-hours");
     }
     throw error;
   }

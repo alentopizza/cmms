@@ -4,7 +4,7 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
-import { businessHoursSubmitted, normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
+import { BusinessHoursValidationError, businessHoursSubmitted, normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
 import { DEFAULT_LIMITS, positiveLimit } from "@/lib/resource-limits";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 
@@ -155,9 +155,20 @@ export async function POST(
     [id],
   );
   const currentOrganizationHours = normalizeBusinessHoursRow(currentOrganizationHoursResult.rows[0] || {});
-  const organizationHours = businessHoursSubmitted(form, "business_")
-    ? readBusinessHours(form, "business_", currentOrganizationHours)
-    : currentOrganizationHours;
+  let organizationHours = currentOrganizationHours;
+  try {
+    if (businessHoursSubmitted(form, "business_")) {
+      organizationHours = readBusinessHours(form, "business_", currentOrganizationHours);
+    }
+  } catch (error) {
+    if (error instanceof BusinessHoursValidationError) {
+      const target = returnToDirectory
+        ? directoryUrl(request.url, `?error=${error.code}`)
+        : companyUrl(id, request.url, `?error=${error.code}`);
+      return respond(422, { message: error.message, code: error.code }, target);
+    }
+    throw error;
+  }
   const primarySiteId = String(form.get("primary_site_id") || "");
   const siteName = String(form.get("site_name") || "").trim();
   const siteCode = String(form.get("site_code") || "").trim().toUpperCase();
@@ -176,9 +187,20 @@ export async function POST(
         [primarySiteId,id],
       )
     : null;
-  const siteHours = businessHoursSubmitted(form, "site_business_")
-    ? readBusinessHours(form, "site_business_", normalizeBusinessHoursRow(currentSiteHours?.rows[0] || {}))
-    : normalizeBusinessHoursRow(currentSiteHours?.rows[0] || {});
+  let siteHours = normalizeBusinessHoursRow(currentSiteHours?.rows[0] || {});
+  try {
+    if (businessHoursSubmitted(form, "site_business_")) {
+      siteHours = readBusinessHours(form, "site_business_", siteHours);
+    }
+  } catch (error) {
+    if (error instanceof BusinessHoursValidationError) {
+      const target = returnToDirectory
+        ? directoryUrl(request.url, `?error=${error.code}`)
+        : companyUrl(id, request.url, `?error=${error.code}`);
+      return respond(422, { message: error.message, code: error.code }, target);
+    }
+    throw error;
+  }
   const canManageResources = can(session, "company_resources.manage");
   const hasResourceLimitFields = ["max_sites","max_sublocations","max_assets","max_inventory_items","max_technicians"]
     .some(field => form.has(field));
@@ -304,12 +326,15 @@ export async function POST(
     const errorCode = error instanceof ImageUploadError
       ? error.code
       : error instanceof Error && error.message === "SITE_GEOFENCE_REQUIRED" ? "site-geofence"
-      : (error as { code?: string }).code === "23505" ? "duplicate" : "save";
+      : (error as { code?: string }).code === "23505" ? "duplicate"
+      : (error as { code?: string }).code === "23514" ? "business-hours" : "save";
     const target = returnToDirectory
       ? directoryUrl(request.url, `?error=${errorCode}`)
       : companyUrl(id, request.url, `?error=${errorCode === "duplicate" ? "slug" : errorCode}`);
     const message = errorCode === "site-geofence"
       ? "Valida la dirección, coordenadas y radio de la sede principal antes de guardar."
+      : errorCode === "business-hours"
+        ? "Revisa el horario: selecciona días de atención y asegúrate de que el cierre sea posterior a la apertura."
       : errorCode === "duplicate"
         ? "El identificador de empresa ya está siendo usado."
         : error instanceof ImageUploadError

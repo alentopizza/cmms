@@ -5,7 +5,7 @@ import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
-import { normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
+import { BusinessHoursValidationError, normalizeBusinessHoursRow, readBusinessHours } from "@/lib/business-hours";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -66,7 +66,18 @@ export async function POST(
   const contactPhone = form.has("contact_phone") ? String(form.get("contact_phone") || "").trim() : (site.rows[0].contact_phone||"");
   const contactEmail = form.has("contact_email") ? String(form.get("contact_email") || "").trim().toLowerCase() : (site.rows[0].contact_email||"");
   const currentHours = normalizeBusinessHoursRow(site.rows[0]);
-  const businessHours = readBusinessHours(form, "business_", currentHours);
+  let businessHours = currentHours;
+  try {
+    businessHours = readBusinessHours(form, "business_", currentHours);
+  } catch (error) {
+    if (error instanceof BusinessHoursValidationError) {
+      return NextResponse.redirect(
+        targetUrl(organizationId, request.url, returnTo, `?error=${error.code}`),
+        303,
+      );
+    }
+    throw error;
+  }
   let image=null;
   try { image=await readImageUpload(form,"image"); }
   catch(error) {
@@ -107,6 +118,9 @@ export async function POST(
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       return NextResponse.redirect(targetUrl(organizationId, request.url, returnTo, "?error=site-code"), 303);
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return NextResponse.redirect(targetUrl(organizationId, request.url, returnTo, "?error=business-hours"), 303);
     }
     throw error;
   }

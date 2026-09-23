@@ -139,6 +139,10 @@ export default async function LocationsIndexPage({
         ? "Valida la dirección en el mapa y define un radio de geocerca entre 20 y 5000 metros."
         : params.error === "site-required"
           ? "Completa nombre, dirección, ciudad, país y punto geográfico de la ubicación."
+        : params.error === "business-hours"
+          ? "La hora de cierre debe ser posterior a la hora de apertura."
+        : params.error === "business-days"
+          ? "Selecciona al menos un día de atención."
           : params.error
             ? "Revisa la información de la ubicación."
             : "";

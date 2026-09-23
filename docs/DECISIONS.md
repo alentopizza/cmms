@@ -343,3 +343,22 @@ Rules:
 The initial City lists are curated product data rather than an exhaustive global municipality authority. Expanding geographic coverage belongs in the shared catalog (or a future authoritative geographic-data service), not in individual forms.
 
 Locale preference persistence is approved separately from full translation coverage: the platform can store a preferred locale before every UI string has been migrated to translation dictionaries.
+
+
+## ADR-034 — Requisitions are independent per Supplier
+
+Status: accepted and implemented.
+
+A material requisition must have exactly one Supplier header. Users may start the process from a Supplier profile or from Inventory, but the resulting persistence rule is identical.
+
+When a user selects Inventory items belonging to multiple Suppliers, the server groups by Organization + Supplier and creates an independent requisition for each Supplier. A mixed-Supplier requisition is not permitted.
+
+Consequences:
+
+- `supplier_requisitions.supplier_id` is mandatory and authoritative;
+- `supplier_requisition_items` may only contain items validated for the same Supplier and Organization at creation;
+- Supplier profile requisitions only expose that Supplier's Inventory items;
+- Inventory may offer a multi-Supplier selection UI because the backend performs the split;
+- requisition lifecycle changes never mutate Inventory stock;
+- receiving and stock entry remain a separate operation/transaction;
+- Supplier Activity and Inventory tabs remain projections from Work Orders and Inventory rather than duplicate assignment tables.

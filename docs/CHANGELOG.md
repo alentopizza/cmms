@@ -1,6 +1,22 @@
 # Changelog
 
 
+## 2026-09-23 — Compact information layout and remote coordinates
+
+### Changed
+
+- Reorganized Company and principal Location **Información general** into two independent vertical columns so a tall map no longer forces empty space beneath the data/contact panels.
+- The left entity identity card now sizes to its content instead of stretching to the full height of the right detail panel.
+- Embedded read-only maps use a bounded profile-map presentation and hide duplicated address/radius controls already represented elsewhere in the profile.
+- Geofence configuration rows now use flexible columns that can shrink inside narrow containers without horizontal overflow.
+
+### Added
+
+- Editable **Latitud** and **Longitud** fields are available whenever the geofence picker is in edit/create mode.
+- Manual coordinates accept remote sites, rural roads and points without usable street nomenclature; after leaving the field the map recenters on the entered point.
+- Existing GPS, address autocomplete/validation, map click and draggable-marker workflows remain available alongside manual coordinate entry.
+
+
 ## 2026-09-23 — Rich information panels and activity-derived technicians
 
 ### Added

@@ -212,7 +212,10 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     notes:[
       "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia.",
       "Puedes activar o desactivar las capas Técnicos, Empresas y Sedes y filtrar por empresa, sede y horario desde una sola barra.",
-      "Al seleccionar una empresa o sede —también haciendo clic en su marcador— el panel derecho muestra las actividades pendientes de ese alcance.",
+      "Puedes buscar técnicos, empresas y sedes por nombre y por información relacionada como correo, teléfono, dirección, ciudad o identificación disponible.",
+      "El selector Empresa limita el mapa y las sedes disponibles. Al hacer clic en una empresa, sede o técnico se abre su ficha encima de Reacción sin abandonar la pantalla.",
+      "Las fichas de empresa, sede y técnico muestran todas sus actividades pendientes. El panel derecho mantiene aparte su filtro por fecha.",
+      "Al hacer clic en una tarjeta pendiente se abre el detalle de la actividad con OT, prioridad, ubicación, fecha compromiso y técnico/cuadrilla/proveedor asignado; abrir la OT completa es una acción explícita.",
       "El panel de alertas inicia en Hoy y retrasadas y permite filtrar por hoy, retrasadas, mañana, esta semana o una fecha específica.",
       "Los horarios se configuran de forma independiente en la empresa y en cada sede; verde indica abierto y rojo cerrado.",
       "En una web/PWA, el sistema operativo puede suspender el GPS con la pantalla bloqueada o la app en segundo plano. Para funcionamiento idéntico a una app de transporte se requerirá una fase móvil nativa.",

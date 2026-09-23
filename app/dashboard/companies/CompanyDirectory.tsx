@@ -304,7 +304,19 @@ export default function CompanyDirectory({
                 <div className="field"><label htmlFor="detail-country">País</label><input id="detail-country" name="country" defaultValue={selected.country || "CO"} maxLength={2} readOnly={!editing} /></div>
               </div>
 
-              <GeofenceMapPicker initialAddress={selected.address} initialLatitude={selected.site_latitude} initialLongitude={selected.site_longitude} initialRadius={selected.site_geofence_radius_m || 250} cityHint={selected.city} countryHint={selected.country} readOnly={!editing} addressRequired coordinateRequired />
+              <GeofenceMapPicker
+                initialAddress={selected.address}
+                initialLatitude={selected.site_latitude}
+                initialLongitude={selected.site_longitude}
+                initialRadius={selected.site_geofence_radius_m || 250}
+                cityHint={selected.city}
+                countryHint={selected.country}
+                readOnly={!editing}
+                addressRequired
+                coordinateRequired
+                markerImageUrl={selected.has_logo?`/api/organizations/${selected.id}/assets/logo`:null}
+                markerLabel={selected.name}
+              />
             </div>
           </details>
 

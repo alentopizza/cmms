@@ -1,6 +1,31 @@
 # Changelog
 
 
+## 2026-09-23 — International catalog, dependent selectors and locale foundation
+
+### Added
+
+- Added a reusable international catalog in `lib/international-catalog.ts` for country, major-city options, telephone calling code, supported time zones, Company tax-identification types and personal identity-document types.
+- Added shared controlled fields in `components/InternationalFields.tsx`: Country, Country→City, tax-identification type, personal document type, country-aware timezone and Locale selectors.
+- Added migration `026_international_catalog_preferences.sql` for organization/platform locale and default-country preferences plus country/document identity fields on Users.
+- Added **Configuración → Idioma y región** for both platform administration and tenant Company settings.
+- User/Technician identity can now persist country, document type and document number; Hoja de vida export includes those fields.
+
+### Changed
+
+- Company creation/edit and Site creation/edit no longer use free-text Country/City fields in the migrated flows. City options depend on the selected Country.
+- Company tax-identification type is selected from the selected Country's catalog instead of being typed manually.
+- User/Technician personal document type is selected from the person's Country catalog instead of being typed manually.
+- `PhoneField` now derives the international calling prefix from the same Country catalog and asks only for the national number.
+- New Company and Location forms start from the configured platform/Company region instead of assuming Colombia everywhere.
+- Server mutation routes validate supported countries and relevant identification types instead of trusting client-side selectors alone.
+
+### Internationalization boundary
+
+- The first catalog contains an initial multi-country set and curated city lists; it is the central extension point, not an exhaustive worldwide municipality database.
+- Locale preferences are persisted now as the foundation for translation. Screens without a translation dictionary still render their existing Spanish text until the staged i18n pass covers them.
+
+
 ## 2026-09-23 — Compact information layout and remote coordinates
 
 ### Changed

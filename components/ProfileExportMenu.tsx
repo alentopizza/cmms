@@ -2,7 +2,7 @@
 
 import UiIcon from "@/components/UiIcon";
 
-export type ProfileExportEntity = "organization" | "site" | "location" | "user";
+export type ProfileExportEntity = "organization" | "site" | "location" | "user" | "supplier";
 
 export default function ProfileExportMenu({
   entity,

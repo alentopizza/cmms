@@ -252,7 +252,7 @@ export default async function Home() {
       </div>
       <div className="marketing-lead-card">
         <div className="marketing-lead-card-head"><span>Solicitud comercial</span><strong>Cuéntanos sobre tu empresa</strong></div>
-        <MarketingLeadForm />
+        <MarketingLeadForm defaultCountry={customization.defaultCountry} />
       </div>
     </section>
 

@@ -33,19 +33,19 @@ export async function POST(request: Request) {
     const name = String(form.get("name") || "").trim();
     const legalName = String(form.get("legal_name") || "").trim();
     const taxId = String(form.get("tax_id") || "").trim();
-    const legalCountry = String(form.get("legal_country") || "CO").trim().toUpperCase();
+    const legalCountry = String(form.get("legal_country") || "").trim().toUpperCase();
     const legalCity = String(form.get("legal_city") || "").trim();
     const taxIdType = String(form.get("tax_id_type") || "").trim();
     const phone = String(form.get("phone") || "").trim();
     const preferredLocale = String(form.get("preferred_locale") || "es-CO").trim();
-    const timezone = String(form.get("timezone") || "America/Bogota").trim();
+    const timezone = String(form.get("timezone") || "").trim();
     const organizationHours = readBusinessHours(form, "business_");
     const siteHours = readBusinessHours(form, "site_business_");
     const siteName = String(form.get("site_name") || "").trim();
     const siteCode = String(form.get("site_code") || "MAIN").trim().toUpperCase();
     const address = String(form.get("address") || "").trim();
     const city = String(form.get("city") || "").trim();
-    const country = String(form.get("country") || "CO").trim().toUpperCase();
+    const country = String(form.get("country") || "").trim().toUpperCase();
     const latitudeRaw = String(form.get("latitude") || "").trim();
     const longitudeRaw = String(form.get("longitude") || "").trim();
     const radiusRaw = String(form.get("geofence_radius_m") || "250").trim();
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       max_technicians: plan.max_technicians,
     };
 
-    if (!name || !siteName || !address || !city || !country || !legalCountry || !legalCity || !taxIdType) {
+    if (!name || !siteName || !address || !city || !country || !legalCountry || !legalCity || !taxIdType || !timezone) {
       return creationError(request.url, "required");
     }
     if (!isSupportedCountry(country) || !isSupportedCountry(legalCountry) || !isTaxIdTypeForCountry(legalCountry,taxIdType) || !isSupportedLocale(preferredLocale)) {

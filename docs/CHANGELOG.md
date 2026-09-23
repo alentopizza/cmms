@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-23 — Company edit confirmation and contact persistence
+
+### Fixed
+
+- Company quick edit now requires an explicit confirmation before protected fields are unlocked.
+- The read-only Contacto principal and Correo administrativo summary becomes editable fields only after that confirmation.
+- Quick-edit changes to primary contact and administrative email now persist to PostgreSQL; they are no longer limited to the full Company Profile form.
+- Cancelling edit resets unsaved form changes before returning to protected/read-only mode.
+
 ## 2026-09-23 — Company quick-edit coverage layout
 
 ### Changed

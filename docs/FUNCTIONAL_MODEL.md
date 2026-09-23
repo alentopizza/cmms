@@ -99,6 +99,8 @@ The **Técnicos** tab is a read-only projection of real Activity assignments. A 
 
 The right panel exposes general/contact/map/geofence data, statistics, Sub-locations, maintenance services, Technicians and Hoja de vida export.
 
+Location geofence editing supports four complementary ways to resolve a point: address search/autocomplete, device GPS, map click/drag, and direct Latitude/Longitude entry. Direct coordinates are intentionally supported for remote facilities, rural assets or locations without reliable street addressing; server validation still enforces valid latitude/longitude ranges and the configured geofence radius.
+
 For **Sububicación**, the same profile geometry uses the Sub-location reference image plus Company identity. Statistics focus on child spaces, Assets and directly related Work Orders. Editing and contextual child creation remain inside the authorized Site hierarchy.
 
 For **Técnico/Usuario**, the identity column uses the profile photo and Company/role scope. The right panel may show identity/access information, descriptive execution statistics, Attendance/biometric state and Reaction connection context. These statistics are operational evidence only and must not become automatic worker ranking or employment decisions.

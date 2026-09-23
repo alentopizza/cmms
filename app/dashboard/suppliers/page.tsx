@@ -20,7 +20,7 @@ import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder"
 type Organization={id:string;name:string;country:string};
 
 export default async function SuppliersPage({searchParams}:{searchParams:Promise<{
-  created?:string;updated?:string;deleted?:string;error?:string;supplier?:string;tab?:string;saved?:string;
+  created?:string;updated?:string;deleted?:string;error?:string;supplier?:string;tab?:string;saved?:string;requisition_created?:string;
 }>}){
   const session=await getSession();
   if(!session)redirect("/login");
@@ -115,6 +115,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     />
 
     {params.created&&<div className="notice success section">Proveedor creado correctamente.</div>}
+    {params.requisition_created&&<div className="notice success section">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} para el proveedor.</div>}
     {params.updated&&<div className="notice success section">Proveedor actualizado correctamente.</div>}
     {params.deleted&&<div className="notice success section">Proveedor eliminado correctamente.</div>}
     {params.saved&&<div className="notice success section">Documento del proveedor actualizado correctamente.</div>}

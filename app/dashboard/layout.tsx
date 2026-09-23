@@ -8,6 +8,7 @@ import { CurrentSectionHeader } from "@/components/DashboardChrome";
 import DashboardSidebar, { type ReorderableNavItem } from "@/components/DashboardSidebar";
 import { query } from "@/lib/db";
 import { getOrganizationBranding } from "@/lib/organization-branding";
+import TechnicianLocationTracker from "@/components/TechnicianLocationTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { id: "users", icon: "◎", label: "Usuarios", href: "/dashboard/users", permission: "users.manage" },
   { id: "crews", icon: "◉", label: "Cuadrillas", href: "/dashboard/crews", permission: "crews.manage" },
   { id: "attendance", icon: "◌", label: "Asistencia", href: "/dashboard/attendance", anyPermissions: ["attendance.self","attendance.manage","attendance.reports"] },
+  { id: "reaction", icon: "⌖", label: "Reacción", href: "/dashboard/reaction", permission: "reaction.view" },
   { id: "assets", icon: "◇", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },
   { id: "work_orders", icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
   { id: "maintenance", icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
@@ -70,6 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : "drawer";
 
   return <div className={"shell mobile-nav-" + mobileNavigationMode} style={shellStyle}>
+    {can(session,"reaction.track") && <TechnicianLocationTracker userName={session.fullName} />}
     <DashboardSidebar
       items={navigationItems}
       initialOrder={initialSidebarOrder}

@@ -612,3 +612,36 @@ Country, City, telephone calling code and identification types are one related f
 - Translation rollout is progressive: a stored locale is the preference source, but existing screens remain Spanish until their string dictionaries are implemented.
 
 The catalog is centrally extensible. Adding another Country must update the shared catalog and its validation rather than introducing a one-off free-text exception in a module.
+
+
+## Supplier profile and requisitions
+
+Supplier is now an operational profile, not only a lookup record.
+
+Supplier types remain:
+
+- **materials** — materials / supplies;
+- **services** — outsourced service execution;
+- **both** — both operational roles.
+
+The profile projects relationships from their authoritative modules:
+
+- **Activities** come from `work_order_tasks.service_supplier_id`;
+- **Inventory / supplies** come from `inventory_items.supplier_id`;
+- **Requisitions** come from `supplier_requisitions.supplier_id`;
+- **Documents** are supplier-owned records in `supplier_documents`.
+
+New Suppliers require a logo because the Supplier directory and profile use it as their primary identity image.
+
+### Requisition model
+
+A requisition is supplier-scoped. `supplier_requisitions` stores one header per Supplier and `supplier_requisition_items` stores the requested Inventory items, quantities, unit snapshots, estimated unit cost and destination Site/Sub-location snapshots.
+
+Two creation paths share the same generator:
+
+1. **Supplier → Inventarios / suministros → Requisiciones**: the available items are already limited to that Supplier.
+2. **Inventario → Generar requisiciones**: the user may select items from several Suppliers. The server groups them by Organization + Supplier and creates one independent requisition per group.
+
+Lifecycle states are `draft`, `sent`, `approved`, `rejected`, `partial`, `fulfilled`, `closed`, and `cancelled`.
+
+Requisition fulfillment does not mutate Inventory quantity. Requisitioning and receiving are separate business facts; a future or existing receipt transaction must be the source of stock increases.

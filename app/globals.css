@@ -7967,3 +7967,45 @@ html[data-theme="dark"] .geofence-map-provider{
 @media(max-width:620px){
   .geofence-google-map{min-height:300px}
 }
+
+
+/* Structured geocoding results */
+.geofence-search-results button{
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:start;
+  text-align:left;
+}
+.geocode-result-icon{
+  margin-top:2px;
+  color:var(--brand-teal);
+}
+.geocode-result-copy{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.geocode-result-copy strong{
+  color:var(--text);
+  font-size:9px;
+  line-height:1.35;
+}
+.geocode-result-copy small{
+  color:var(--text-soft);
+  font-size:7.5px;
+  line-height:1.4;
+}
+.geocode-result-copy em{
+  width:max-content;
+  max-width:100%;
+  padding:3px 6px;
+  border-radius:999px;
+  background:rgba(245,158,11,.12);
+  color:#b7791f;
+  font-size:6.5px;
+  font-style:normal;
+  font-weight:850;
+}
+html[data-theme="dark"] .geocode-result-copy em{
+  background:rgba(245,158,11,.16);
+  color:#f8cf74;
+}

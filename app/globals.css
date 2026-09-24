@@ -12955,3 +12955,23 @@ html[data-theme="dark"] .crew-member-options-visual label.active{background:rgba
 .dashboard-recovery-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 html[data-theme="dark"] .dashboard-recovery-card h1{color:var(--text)}
 @media(max-width:620px){.dashboard-recovery,.dashboard-segment-error{padding:10px}.dashboard-recovery-actions>*{width:100%}}
+
+
+/* Supplier financial profile: read-only summary first, explicit edit state */
+.entity-panel-heading-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:12px;
+}
+.entity-panel-heading-row>div{min-width:0}
+.entity-panel-heading-row h3{margin-bottom:5px}
+.entity-financial-edit-button{flex:0 0 auto}
+.entity-financial-summary{margin-top:12px}
+.entity-financial-notes{grid-column:1/-1}
+.entity-financial-notes strong{min-height:54px;align-items:flex-start}
+@media(max-width:620px){
+  .entity-panel-heading-row{flex-direction:column}
+  .entity-financial-edit-button{width:100%;justify-content:center}
+}

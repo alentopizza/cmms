@@ -11,11 +11,12 @@ import BulkImportModal from "@/components/BulkImportModal";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
+import FileDropzone from "@/components/FileDropzone";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
   supplier_type:string|null;sku:string;name:string;description:string|null;presentation:string|null;company:string;site:string|null;location:string|null;
-  category:string|null;warehouse:string|null;supplier:string|null;quantity:string;min_quantity:string;max_quantity:string;unit:string;unit_cost:string;storage_location:string|null;
+  category:string|null;warehouse:string|null;supplier:string|null;quantity:string;min_quantity:string;max_quantity:string;unit:string;unit_cost:string;storage_location:string|null;has_image:boolean;
 };
 type Site={id:string;label:string};
 type Location={id:string;label:string};
@@ -52,7 +53,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const itemSql=`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,i.category_id,i.warehouse_id,p.supplier_type,
       i.sku,i.name,i.description,i.presentation,o.name company,s.name site,l.name location,c.name category,w.name warehouse,p.name supplier,
-      i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+      i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image
     FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
     LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
     LEFT JOIN inventory_categories c ON c.id=i.category_id LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
@@ -120,7 +121,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         <ModuleExportMenu entity="inventory"/>
         {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
         {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" icon="▤">
-          <form className="form-grid unified-popup-form" method="post" action="/api/inventory">
+          <form className="form-grid unified-popup-form" method="post" action="/api/inventory" encType="multipart/form-data">
             <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
             <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
             <div className="field"><label>Proveedor *</label><select name="supplier_id" required><option value="">Selecciona proveedor</option>{suppliers.rows.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
@@ -128,6 +129,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Filtro plisado 20 x 20"/></div>
             <div className="field"><label>Categoría</label><input name="category" list="inventory-category-list" placeholder="Ej. Refrigeración"/><datalist id="inventory-category-list">{categories.rows.map(c=><option value={c.name} key={c.id}/>)}</datalist></div>
             <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Descripción del producto o repuesto"/></div>
+            <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="PNG, JPG o WebP. Se mostrará en las tarjetas y ficha del inventario." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image"/></div>
             <div className="field"><label>Presentación</label><input name="presentation" placeholder="Ej. caja x 12, rollo 100 m"/></div>
             <div className="field"><label>Unidad</label><input name="unit" defaultValue="unidad" placeholder="unidad, caja, metro..."/></div>
             <div className="field"><label>Bodega / almacén</label><input name="warehouse_name" list="inventory-warehouse-list" defaultValue="Almacén principal"/><datalist id="inventory-warehouse-list">{warehouses.rows.map(w=><option value={w.name} key={w.id}/>)}</datalist></div>
@@ -175,7 +177,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             data-filter-supplier={item.supplier_id||""} data-filter-supplier-label={item.supplier||""}
             data-filter-warehouse={item.warehouse_id||""} data-filter-warehouse-label={item.warehouse||""}>
             <div className="inventory-product-card-head">
-              <span className="inventory-product-visual"><UiIcon name="asset" size={32}/></span>
+              <span className={"inventory-product-visual"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={32}/>}</span>
               <div><span className={"inventory-stock-pill "+state.key}>{state.label}</span><small>SKU: {item.sku}</small><h3>{item.name}</h3><p>{item.category||"Sin categoría"} · {item.presentation||item.unit}</p></div>
             </div>
             <div className="inventory-product-stock">

@@ -3,6 +3,16 @@ import type { SVGProps } from "react";
 export type UiIconName =
   | "home"
   | "chevron-right"
+  | "chevron-down"
+  | "x"
+  | "search"
+  | "info"
+  | "warning"
+  | "error"
+  | "eye"
+  | "eye-off"
+  | "menu"
+  | "more"
   | "company"
   | "location"
   | "sublocation"
@@ -51,6 +61,16 @@ export default function UiIcon({
 
   if (name === "home") return <svg {...common}><path d="m3.8 10.5 8.2-6.3 8.2 6.3"/><path d="M5.8 9.3v9.2h12.4V9.3"/><path d="M9.4 18.5v-5.8h5.2v5.8"/></svg>;
   if (name === "chevron-right") return <svg {...common}><path d="m9 5 7 7-7 7"/></svg>;
+  if (name === "chevron-down") return <svg {...common}><path d="m5 9 7 7 7-7"/></svg>;
+  if (name === "x") return <svg {...common}><path d="M6 6l12 12M18 6 6 18"/></svg>;
+  if (name === "search") return <svg {...common}><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4"/></svg>;
+  if (name === "info") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M12 10.5V17"/><path d="M12 7h.01"/></svg>;
+  if (name === "warning") return <svg {...common}><path d="M12 3.8 21 20H3L12 3.8Z"/><path d="M12 9v5"/><path d="M12 17h.01"/></svg>;
+  if (name === "error") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>;
+  if (name === "eye") return <svg {...common}><path d="M3.5 12s3.2-5 8.5-5 8.5 5 8.5 5-3.2 5-8.5 5-8.5-5-8.5-5Z"/><circle cx="12" cy="12" r="2.4"/></svg>;
+  if (name === "eye-off") return <svg {...common}><path d="m4 4 16 16"/><path d="M10.2 7.2A9 9 0 0 1 12 7c5.3 0 8.5 5 8.5 5a13 13 0 0 1-2.4 2.8M14.2 14.2a3 3 0 0 1-4.4-4.4M7.2 8.2A13.8 13.8 0 0 0 3.5 12s3.2 5 8.5 5c1.2 0 2.3-.3 3.3-.7"/></svg>;
+  if (name === "menu") return <svg {...common}><path d="M4 7h16M4 12h16M4 17h16"/></svg>;
+  if (name === "more") return <svg {...common}><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>;
   if (name === "company") return <svg {...common}><path d="M4.5 20V5.5h7V20"/><path d="M11.5 8.5h8V20"/><path d="M7.5 8.5h1M7.5 12h1M7.5 15.5h1M14.5 12h1.5M14.5 15.5h1.5"/><path d="M3 20h18"/></svg>;
   if (name === "location") return <svg {...common}><path d="M20 10.2c0 5.4-8 11-8 11s-8-5.6-8-11a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.7"/></svg>;
   if (name === "sublocation") return <svg {...common}><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/><path d="M10 7h3a4 4 0 0 1 4 4v3"/></svg>;

@@ -818,6 +818,37 @@ export async function POST(request:Request){
     const client=await pool.connect();
     try{
       await client.query("BEGIN");
+
+      // Serialize confirmations for the same physical file. Context-only imports
+      // for different Suppliers remain valid, but Global and repeated same-context
+      // confirmation cannot race past the preflight duplicate check.
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[organizationId+"|inventory|"+hash]);
+      const lockedDuplicate=importScope==="context_only"&&contextSupplier
+        ?await client.query(
+          `SELECT 1 FROM bulk_import_batches
+           WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'
+             AND (
+               commit_scope='all'
+               OR (commit_scope='context_only' AND context_supplier_id=$3)
+             )
+           LIMIT 1`,
+          [organizationId,hash,contextSupplier.id],
+        )
+        :await client.query(
+          `SELECT 1 FROM bulk_import_batches
+           WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'
+           LIMIT 1`,
+          [organizationId,hash],
+        );
+      if(lockedDuplicate.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.json({
+          error:importScope==="context_only"
+            ?"Este mismo archivo ya fue importado para este proveedor o mediante una importación Global."
+            :"Este mismo archivo ya tiene una importación confirmada; una nueva carga Global podría duplicar Kardex.",
+        },{status:409});
+      }
+
       const skippedExisting=duplicatePolicy==="skip"?selectedInventory.filter(row=>Boolean(row.existing)).length:0;
       const omittedRows=omittedByScope+inv.skippedServices+skippedExisting;
       const batch=await client.query<{id:string;import_number:string;created_at:string}>(
@@ -829,7 +860,7 @@ export async function POST(request:Request){
           organizationId,session.userId||null,file.name,hash,
           inv.parsed.length+parsedKardex.length+warehousesToCommit.length+inv.skippedServices,
           issues.filter(item=>item.severity==="warning").length,
-          importMode==="contextual"?"supplier":"global",fixedSupplier?.id||null,importScope,omittedRows,
+          importMode==="contextual"?"supplier":"global",contextSupplier?.id||null,importScope,omittedRows,
         ],
       );
       const batchId=batch.rows[0].id;
@@ -991,7 +1022,7 @@ export async function POST(request:Request){
          VALUES($1,$2,'inventory.bulk_import_committed','bulk_import_batch',$3,$4::jsonb)`,
         [
           organizationId,session.userId||null,batchId,
-          JSON.stringify({origin:importMode,scope:importScope,context_supplier_id:fixedSupplier?.id||null,duplicate_policy:duplicatePolicy,file_name:file.name,summary:committedSummary}),
+          JSON.stringify({origin:importMode,scope:importScope,context_supplier_id:contextSupplier?.id||null,launch_supplier_id:fixedSupplier?.id||null,duplicate_policy:duplicatePolicy,file_name:file.name,summary:committedSummary}),
         ],
       );
       await client.query("COMMIT");

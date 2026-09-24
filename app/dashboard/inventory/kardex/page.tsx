@@ -24,6 +24,14 @@ function typeLabel(type:string,quantity:number){
   if(type==="transfer")return "Transferencia";
   return quantity<0?"Ajuste negativo":"Ajuste positivo";
 }
+function sectionTitle(type:string|undefined){
+  if(type==="receipt")return "Entradas";
+  if(type==="issue")return "Salidas";
+  if(type==="adjustment")return "Ajustes";
+  if(type==="transfer")return "Transferencias";
+  if(type==="return")return "Devoluciones";
+  return "Kardex";
+}
 function activeSection(type:string|undefined){
   if(type==="receipt")return "entries" as const;
   if(type==="issue")return "issues" as const;
@@ -80,7 +88,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   return <>
     <ModuleHeader
       eyebrow="Inventario"
-      title={requestedType?typeLabel(requestedType,requestedType==="adjustment"?1:1)+"s":"Kardex"}
+      title={sectionTitle(requestedType)}
       description="Historial auditable de entradas, salidas, ajustes, devoluciones y transferencias por bodega."
       count={transactions.rowCount||0}
       countLabel="movimientos"

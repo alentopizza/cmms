@@ -27,13 +27,13 @@ type ReceiptTx={
   movement_at:string;lot_number:string|null;expires_at:string|null;cost_center:string|null;created_by_name:string|null;
 };
 type ApprovalEvent={
-  id:string;action:"requested"|"approved"|"rejected"|"reopened";from_state:string|null;to_state:string;notes:string|null;
+  id:string;action:"requested"|"approved"|"rejected"|"reopened"|"amended";from_state:string|null;to_state:string;notes:string|null;
   actor_label:string;created_at:string;
 };
 
 function statusLabel(status:string){return ({draft:"Borrador",sent:"Enviada",approved:"Aprobada",rejected:"Rechazada",partial:"Parcialmente atendida",fulfilled:"Atendida",closed:"Cerrada",cancelled:"Cancelada"} as Record<string,string>)[status]||status;}
 function approvalLabel(state:Req["approval_state"]){return ({not_required:"No requerida",pending:"Pendiente",approved:"Aprobada",rejected:"Rechazada"} as Record<string,string>)[state]||state;}
-function approvalEventLabel(action:ApprovalEvent["action"]){return ({requested:"Enviada a aprobación",approved:"Aprobada",rejected:"Rechazada",reopened:"Aprobación reabierta"} as Record<string,string>)[action]||action;}
+function approvalEventLabel(action:ApprovalEvent["action"]){return ({requested:"Enviada a aprobación",approved:"Aprobada",rejected:"Rechazada",reopened:"Aprobación reabierta",amended:"Requisición modificada"} as Record<string,string>)[action]||action;}
 
 export default async function RequisitionDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{updated?:string;received?:string;approval?:string;error?:string}>}){
   const session=await getSession();

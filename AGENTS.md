@@ -383,3 +383,13 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - User deactivate/reactivate is a reversible status action and must not use the permanent-delete trash icon.
 - Supplier permanent deletion must use the shared `ConfirmDialog`; do not call browser-native `window.confirm()` for the Supplier entity.
 - Standard desktop density is 4 cards per row and wide desktop may use 5 when the viewport supports readable content.
+
+
+## Role dashboard comparison invariant
+
+- KPI comparisons must be computed from real server-scoped aggregates, never decorative/random percentages.
+- Default comparison is the previous equivalent period; same-period previous-year comparison is the supported alternative.
+- Site/Priority/status filters may only narrow the already authorized Organization/Site/assignee/provider/requester scope.
+- The six-month chart must use real monthly values and represent missing months as zero rather than invented interpolation.
+- Dashboard exports must preserve the same current-period Site, Priority, status and role scope visible on screen.
+- Field-person KPI comparisons are descriptive operational evidence. Do not turn them into leaderboards, employment rankings or automated personnel decisions.

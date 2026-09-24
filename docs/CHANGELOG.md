@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 · Fase 1 Foundations
+
+### Added
+
+- Nueva capa runtime `app/design-tokens.css` con el ADN V2 `#72F1DC / #2C8780 / #1D1D2C`.
+- Escalas Primary, Teal, Navy, Success, Warning, Danger e Info.
+- Tokens semánticos de fondos, texto, bordes y acciones.
+- Tokens para tipografía, spacing, radius, sombras, motion, gradientes y gráficos.
+- Mapeo semántico de tema oscuro y soporte de `prefers-reduced-motion`.
+- Catálogo tipado `lib/design-system.ts`.
+- Namespace oficial `components/ui-kit/`.
+- Playground autenticado `/ui-kit` con Foundations reales: color, tipografía, spacing, radius, sombras, motion y gráficos.
+- Auditoría `docs/DESIGN_AUDIT_PHASE1.md` del CSS legacy y componentes reutilizables.
+- Smoke `scripts/design-system-smoke.mjs` incorporado a CI.
+
+### Compatibility
+
+- Los aliases legacy `--brand-* / --bg / --surface / --text / --border / --success / --warning / --danger` ahora apuntan al sistema V2 sin realizar un reemplazo ciego del CSS existente.
+- El white-label de Organización alimenta también `--color-action-primary` y `--color-action-accent`.
+- `UiIcon` queda definido como sistema interno de iconos SVG durante las primeras fases de migración.
+
+### Baseline
+
+- `app/globals.css` supera 13.500 líneas y contiene 915 valores hex únicos; se mantiene como superficie legacy para migración gradual.
+
+### Next
+
+- Fase 2: UI Core primitives e interacción base.
+
 ## 2026-09-24 — DESWEB Design System V2 governance
 
 ### Added

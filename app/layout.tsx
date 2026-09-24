@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./design-tokens.css";
 
 export const metadata = {
   title: "Desweb CMMS",

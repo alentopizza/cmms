@@ -672,3 +672,34 @@ A visual PR does not authorize modifications to APIs, DB, authentication, permis
 10. Reports/Settings/final audit.
 
 The product owner intends to review implementation phase by phase.
+
+
+## 25. DESWEB Design System V2 Foundations checkpoint — 2026-09-24
+
+Phase 1 is implemented.
+
+Runtime files:
+
+- `app/design-tokens.css` — canonical V2 foundations and legacy aliases;
+- `lib/design-system.ts` — typed token metadata;
+- `components/ui-kit/FoundationPreview.tsx` — real token preview;
+- `app/ui-kit/page.tsx` — authenticated live playground;
+- `app/ui-kit/ui-kit.css` — playground composition using V2 tokens;
+- `docs/DESIGN_AUDIT_PHASE1.md` — legacy CSS/component baseline;
+- `scripts/design-system-smoke.mjs` — CI contract.
+
+Important implementation details:
+
+- `app/globals.css` remains untouched as the legacy style reservoir;
+- `app/design-tokens.css` loads after it so V2 aliases win without a blind rewrite;
+- old variables such as `--brand-teal`, `--bg`, `--surface`, `--text` and `--border` are compatibility aliases only;
+- new components must use V2 semantic tokens;
+- dark mode is mapped through semantic V2 variables;
+- reduced-motion collapses V2 motion durations to zero;
+- Organization white-label primary/secondary colors bridge into `--color-action-primary` and `--color-action-accent`;
+- `UiIcon` remains the official internal SVG icon system for now;
+- `/ui-kit` requires authentication and renders no tenant/private data.
+
+Baseline audit: the legacy global stylesheet was ~13.5k lines / ~540 KB with 915 unique hex values, so migration must remain phased.
+
+Next implementation phase: **Phase 2 — UI Core primitives**.

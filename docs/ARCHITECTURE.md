@@ -623,3 +623,22 @@ Migration `037_unified_inventory_import.sql` adds:
 The template route `GET /api/bulk-import/template?entity=inventory` always emits the same master workbook. Optional `supplier=<uuid>` and `data=current` affect context/preloaded data only, never column/sheet structure.
 
 Current-data template exports master Inventory only. It sets STOCK_INICIAL to zero and leaves KARDEX blank so downloading and reimporting current data cannot duplicate historical physical movements by default.
+
+
+## Frontend visual architecture — DESWEB V2
+
+The authenticated product now has an explicit visual layering model:
+
+`app/globals.css (legacy) → app/design-tokens.css (V2 foundations) → components/ui-kit (shared UI) → ERP modules`.
+
+Rules:
+
+- `app/design-tokens.css` is the canonical runtime source for V2 foundations;
+- `app/globals.css` remains a legacy migration surface and must not receive new arbitrary palette systems;
+- `lib/design-system.ts` contains typed metadata for consumers such as the live playground, not a second set of CSS values;
+- `components/ui-kit` is the official namespace for new reusable primitives/business UI;
+- `/ui-kit` is authenticated and contains no tenant records; it previews the real components/tokens;
+- Organization white-label customization maps into semantic action tokens rather than rewriting immutable DESWEB foundation tokens;
+- the current icon architecture remains `UiIcon` until a separate ADR changes it.
+
+No visual primitive may become an authorization boundary; Organization/Site/RBAC validation remains in existing server layers.

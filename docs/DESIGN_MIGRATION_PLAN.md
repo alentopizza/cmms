@@ -15,7 +15,7 @@
 
 ## Fase 0 — Gobierno y documentación
 
-**Estado: en implementación con este checkpoint.**
+**Estado: completada.**
 
 Entregables:
 
@@ -28,6 +28,8 @@ Entregables:
 No modifica la interfaz productiva.
 
 ## Fase 1 — Foundations + estructura técnica del UI Kit
+
+**Estado: implementada; pendiente únicamente de merge/CI en este checkpoint.**
 
 Objetivo: instalar la base sin migrar módulos completos.
 
@@ -272,15 +274,6 @@ Cada fase debe cerrar con:
 
 ## Siguiente fase
 
-Después de completar Fase 0, el siguiente trabajo es **Fase 1 — Foundations + estructura técnica del UI Kit**.
+Después de completar Fase 1, el siguiente trabajo es **Fase 2 — Primitives e interacción base**.
 
-La Fase 1 deberá empezar con un inventario real de:
-
-- tokens y aliases actuales de `app/globals.css`;
-- colores hardcoded;
-- variantes de `.button`, `.card`, inputs, badges, modals y tables;
-- `UiIcon` y uso de iconografía;
-- componentes ya reutilizables;
-- componentes duplicados por módulo.
-
-Solo después de ese inventario se implementan tokens/primitives.
+Phase 1 baseline is documented in `docs/DESIGN_AUDIT_PHASE1.md`. Phase 2 must evaluate existing reusable components before promoting/replacing them with official UI Kit primitives.

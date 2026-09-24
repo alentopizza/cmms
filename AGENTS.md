@@ -525,3 +525,16 @@ Mandatory rules:
 - every migrated module must satisfy the checklist in `docs/DESIGN_SYSTEM.md` and update documentation/manual when interaction changes.
 
 Before adding a new component or color, search the existing UI Kit/tokens first.
+
+
+### V2 runtime foundation paths
+
+Phase 1 is implemented in:
+
+- `app/design-tokens.css` — canonical V2 CSS variables and legacy aliases;
+- `lib/design-system.ts` — typed foundation catalog;
+- `components/ui-kit/` — official reusable UI namespace;
+- `app/ui-kit/` — authenticated live playground;
+- `scripts/design-system-smoke.mjs` — CI contract.
+
+Do not add a second token file or a second icon family. `UiIcon` remains the current official internal SVG icon system. Phase 2 must inspect and absorb existing shared components before introducing new primitives.

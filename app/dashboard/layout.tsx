@@ -68,9 +68,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? `/api/users/${session.userId}/avatar`
     : null;
 
+  // Keep organization white-label compatible with both legacy aliases and
+  // the DESWEB V2 semantic action tokens during the phased UI migration.
   const shellStyle = organizationBranding ? {
-    ...(organizationBranding.primaryColor ? { "--brand-teal": organizationBranding.primaryColor } : {}),
-    ...(organizationBranding.secondaryColor ? { "--brand-mint": organizationBranding.secondaryColor } : {}),
+    ...(organizationBranding.primaryColor ? {
+      "--brand-teal": organizationBranding.primaryColor,
+      "--color-action-primary": organizationBranding.primaryColor,
+    } : {}),
+    ...(organizationBranding.secondaryColor ? {
+      "--brand-mint": organizationBranding.secondaryColor,
+      "--color-action-accent": organizationBranding.secondaryColor,
+    } : {}),
   } as React.CSSProperties : undefined;
   const sidebarLogo = organizationBranding?.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"

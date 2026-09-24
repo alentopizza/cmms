@@ -164,23 +164,87 @@ export function SearchSelect({
 export function AsyncSelect({
   loadOptions,
   minimumQueryLength=2,
-  ...props
+  name,
+  label,
+  value,
+  defaultValue="",
+  onChange,
+  placeholder="Busca para seleccionar…",
+  helperText,
+  errorMessage,
+  disabled=false,
 }:Omit<SearchSelectProps,"options"|"loading">&{
   loadOptions:(query:string)=>Promise<AdvancedSelectOption[]>;
   minimumQueryLength?:number;
 }){
+  const [internal,setInternal]=useState(defaultValue);
+  const [query,setQuery]=useState("");
+  const [open,setOpen]=useState(false);
   const [options,setOptions]=useState<AdvancedSelectOption[]>([]);
   const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
+  const [loadError,setLoadError]=useState("");
+  const host=useRef<HTMLDivElement>(null);
+  const selected=value??internal;
+  const selectedOption=options.find(option=>option.value===selected);
 
-  // The consumer may explicitly preload by passing minimumQueryLength=0.
   useEffect(()=>{
-    if(minimumQueryLength>0)return;
-    let active=true;
-    setLoading(true);
-    loadOptions("").then(result=>{if(active)setOptions(result);}).catch(()=>{if(active)setError("No fue posible cargar las opciones.");}).finally(()=>{if(active)setLoading(false);});
-    return()=>{active=false;};
-  },[loadOptions,minimumQueryLength]);
+    if(!open)return;
+    const pointer=(event:MouseEvent)=>{if(host.current&&!host.current.contains(event.target as Node))setOpen(false);};
+    const key=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false);};
+    document.addEventListener("mousedown",pointer);
+    document.addEventListener("keydown",key);
+    return()=>{document.removeEventListener("mousedown",pointer);document.removeEventListener("keydown",key);};
+  },[open]);
 
-  return <SearchSelect {...props} options={options} loading={loading} errorMessage={props.errorMessage||error} />;
+  useEffect(()=>{
+    if(!open)return;
+    const normalized=query.trim();
+    if(normalized.length<minimumQueryLength){
+      setOptions([]);
+      setLoading(false);
+      setLoadError("");
+      return;
+    }
+    let active=true;
+    const timer=window.setTimeout(async()=>{
+      setLoading(true);setLoadError("");
+      try{
+        const result=await loadOptions(normalized);
+        if(active)setOptions(result);
+      }catch{
+        if(active){setOptions([]);setLoadError("No fue posible cargar las opciones.");}
+      }finally{
+        if(active)setLoading(false);
+      }
+    },180);
+    return()=>{active=false;window.clearTimeout(timer);};
+  },[open,query,minimumQueryLength,loadOptions]);
+
+  function commit(next:string){
+    if(value===undefined)setInternal(next);
+    onChange?.(next);
+    setOpen(false);
+    setQuery("");
+  }
+
+  const feedback=errorMessage||loadError||helperText;
+
+  return <div className={["ds-field","ds-search-select",(errorMessage||loadError)?"ds-field-error":""].filter(Boolean).join(" ")} ref={host}>
+    {label&&<span className="ds-field-label">{label}</span>}
+    <button className="ds-multiselect-trigger" type="button" disabled={disabled} aria-expanded={open} aria-haspopup="listbox" onClick={()=>setOpen(current=>!current)}>
+      <span className={selectedOption?"":"placeholder"}>{selectedOption?.label||placeholder}</span>
+      {loading?<span className="ds-spinner ds-spinner-sm" aria-hidden="true"/>:<UiIcon name="chevron-down" size={15}/>}
+    </button>
+    {name&&<input type="hidden" name={name} value={selected}/>}
+    {open&&<div className="ds-multiselect-popover">
+      <label className="ds-multiselect-search"><UiIcon name="search" size={15}/><input value={query} onChange={event=>setQuery(event.target.value)} autoFocus placeholder={`Escribe al menos ${minimumQueryLength} caracteres…`} aria-label="Buscar opciones"/></label>
+      <div className="ds-multiselect-options" role="listbox">
+        {loading&&<p className="ds-multiselect-empty">Cargando opciones…</p>}
+        {!loading&&query.trim().length<minimumQueryLength&&<p className="ds-multiselect-empty">Escribe para buscar.</p>}
+        {!loading&&query.trim().length>=minimumQueryLength&&options.map(option=><button type="button" role="option" aria-selected={selected===option.value} disabled={option.disabled} key={option.value} onClick={()=>commit(option.value)}>{option.label}</button>)}
+        {!loading&&query.trim().length>=minimumQueryLength&&!options.length&&!loadError&&<p className="ds-multiselect-empty">No hay coincidencias.</p>}
+      </div>
+    </div>}
+    {feedback&&<small className="ds-field-feedback" role={(errorMessage||loadError)?"alert":undefined}>{(errorMessage||loadError)&&<UiIcon name="error" size={13}/>}<span>{feedback}</span></small>}
+  </div>;
 }

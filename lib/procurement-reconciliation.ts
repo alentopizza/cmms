@@ -21,7 +21,7 @@ export type ProcurementDocumentLine={
 };
 
 export type ProcurementDocumentEvent={
-  id:string;document_id:string;action:"uploaded"|"verified"|"exception_accepted"|"disputed"|"voided";actor_label:string;notes:string|null;metadata:Record<string,unknown>;created_at:string;
+  id:string;document_id:string;action:"uploaded"|"evidence_linked"|"verified"|"exception_accepted"|"disputed"|"voided";actor_label:string;notes:string|null;metadata:Record<string,unknown>;created_at:string;
 };
 
 const QTY_TOLERANCE=.001;

@@ -28,6 +28,9 @@ export type SupplierResolution={
 function key(value:string|undefined|null){
   return normalizedHeader(value||"");
 }
+function taxKey(value:string|undefined|null){
+  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+}
 
 function exact(rows:ImportSupplier[],field:"id"|"tax_id"|"code"|"name",value:string){
   if(!value)return null;
@@ -35,6 +38,7 @@ function exact(rows:ImportSupplier[],field:"id"|"tax_id"|"code"|"name",value:str
     const idValue=value.trim().toLowerCase();
     return rows.find(row=>row.id.toLowerCase()===idValue||key(row.code)===key(value))||null;
   }
+  if(field==="tax_id")return rows.find(row=>taxKey(row.tax_id)===taxKey(value))||null;
   return rows.find(row=>key(row[field])===key(value))||null;
 }
 

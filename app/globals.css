@@ -12947,3 +12947,14 @@ html[data-theme="dark"] .crew-member-options-visual label.active{background:rgba
   .crew-leader-picker,.crew-member-options-visual{grid-template-columns:1fr}
   .crew-leader-actions a span{display:none}
 }
+
+
+/* Dashboard failure isolation */
+.dashboard-recovery,.dashboard-segment-error{min-height:52vh;display:grid;place-items:center;padding:22px}
+.dashboard-recovery-card{width:min(760px,100%);display:grid;gap:12px}
+.dashboard-recovery-card h1{margin:0;color:var(--brand-dark);font-size:26px;letter-spacing:-.03em}
+.dashboard-recovery-card p{margin:0;color:var(--text-soft);font-size:12px;line-height:1.6}
+.dashboard-recovery-card>small{color:var(--text-soft);font-size:9px}
+.dashboard-recovery-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+html[data-theme="dark"] .dashboard-recovery-card h1{color:var(--text)}
+@media(max-width:620px){.dashboard-recovery,.dashboard-segment-error{padding:10px}.dashboard-recovery-actions>*{width:100%}}

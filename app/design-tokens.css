@@ -82,6 +82,20 @@
   --color-info-700:#1D4ED8;
   --color-info-900:#1E3A8A;
 
+  /* Adaptive status semantics */
+  --color-success-surface:var(--color-success-50);
+  --color-success-border:var(--color-success-100);
+  --color-success-text:var(--color-success-700);
+  --color-warning-surface:var(--color-warning-50);
+  --color-warning-border:var(--color-warning-100);
+  --color-warning-text:var(--color-warning-700);
+  --color-danger-surface:var(--color-danger-50);
+  --color-danger-border:var(--color-danger-100);
+  --color-danger-text:var(--color-danger-700);
+  --color-info-surface:var(--color-info-50);
+  --color-info-border:var(--color-info-100);
+  --color-info-text:var(--color-info-700);
+
   /* Functional areas */
   --color-module-analytics:#8B5CF6;
   --color-module-procurement:#F97316;
@@ -234,6 +248,20 @@ html[data-theme="dark"]{
   --color-action-primary-hover:var(--color-primary-800);
   --color-action-primary-active:var(--color-teal-700);
   --color-focus-ring:var(--color-brand-primary);
+  --color-text-inverse:var(--color-navy-50);
+
+  --color-success-surface:color-mix(in srgb,var(--color-success-500) 14%,var(--color-surface));
+  --color-success-border:color-mix(in srgb,var(--color-success-500) 36%,var(--color-border-default));
+  --color-success-text:var(--color-success-300);
+  --color-warning-surface:color-mix(in srgb,var(--color-warning-500) 14%,var(--color-surface));
+  --color-warning-border:color-mix(in srgb,var(--color-warning-500) 38%,var(--color-border-default));
+  --color-warning-text:var(--color-warning-300);
+  --color-danger-surface:color-mix(in srgb,var(--color-danger-500) 14%,var(--color-surface));
+  --color-danger-border:color-mix(in srgb,var(--color-danger-500) 38%,var(--color-border-default));
+  --color-danger-text:var(--color-danger-300);
+  --color-info-surface:color-mix(in srgb,var(--color-info-500) 14%,var(--color-surface));
+  --color-info-border:color-mix(in srgb,var(--color-info-500) 38%,var(--color-border-default));
+  --color-info-text:var(--color-info-300);
 
   --shadow-xs:0 1px 2px rgba(0,0,0,.20);
   --shadow-sm:0 4px 12px rgba(0,0,0,.24);

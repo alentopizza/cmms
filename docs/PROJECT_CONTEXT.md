@@ -698,3 +698,14 @@ Every role family receives KPI cards, current-vs-comparison variation and six-mo
 Tenant/field/requester dashboards can additionally narrow Work Order/Activity data by authorized Site and Priority. These controls never broaden the session scope. Excel/CSV/PDF exports apply the same period, status, Site and Priority filters to the same server-authorized dataset.
 
 The dashboard visual layer is reusable through `components/DashboardAnalytics.tsx`; data aggregation remains server-side in the dashboard page/API. Field-person statistics continue to be descriptive operational evidence rather than automated personnel rankings.
+
+
+### Conditional filters and normalized administrative records
+
+Primary directory modules now use conditional/cascading facets. Company, Site, Role, Supplier, Category, Priority and similar filters appear only when the currently authorized dataset contains multiple useful choices. The implementation remains client-side narrowing over server-authorized records, so a hidden or selected facet is never an access-control boundary.
+
+Supplier classification is now multi-value and catalog driven. Stable capability/specialty codes replace new free-text entry while legacy Supplier type/category fields remain compatible with existing Inventory and service logic.
+
+User profiles now include a tenant-private personnel document dossier and emergency contact. Supplier profiles include separate payment/financial information. Migration 029 is the schema checkpoint for these additions.
+
+The product direction for bulk import/export is to prefer standardized codes/catalog values over free-text classifications whenever records must be exchanged with spreadsheets, databases or external systems.

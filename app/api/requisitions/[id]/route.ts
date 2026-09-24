@@ -127,7 +127,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         ?new Set(hasReceived?["partial","cancelled"]:["sent","cancelled"])
         :current.approval_state==="rejected"
           ?new Set(hasReceived?["partial","cancelled"]:["rejected","cancelled"])
-          :null;
+          :current.approval_state==="approved"
+            ?new Set([current.status,"closed","cancelled"])
+            :null;
       if(allowedByApprovalState&&!allowedByApprovalState.has(status)){
         await client.query("ROLLBACK");
         return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_locked",request.url),303);

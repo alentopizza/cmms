@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import UiIcon from "@/components/UiIcon";
 
 type ImportIssue={sheet:string;row:number;severity:"error"|"warning";message:string};
@@ -10,6 +10,10 @@ type ImportResult={
   error?:string;
   summary?:Record<string,number>;
   issues?:ImportIssue[];
+};
+type ImportBatch={
+  id:string;file_name:string;status:string;total_rows:number;imported_rows:number;error_rows:number;warning_rows:number;
+  summary:Record<string,unknown>|null;created_at:string;committed_at:string|null;user_name:string|null;
 };
 
 export default function BulkImportModal({
@@ -27,12 +31,27 @@ export default function BulkImportModal({
   const [file,setFile]=useState<File|null>(null);
   const [result,setResult]=useState<ImportResult|null>(null);
   const [busy,setBusy]=useState(false);
+  const [history,setHistory]=useState<ImportBatch[]>([]);
+  const [historyBusy,setHistoryBusy]=useState(false);
   const inputRef=useRef<HTMLInputElement>(null);
 
   const title=entity==="inventory"?"Importar inventario y Kardex":"Importar activos";
   const template=entity==="inventory"
     ?"/api/bulk-import/template?entity=inventory"+(supplierId?"&supplier="+encodeURIComponent(supplierId):"")
     :"/api/bulk-import/template?entity=assets";
+
+  useEffect(()=>{
+    if(!open)return;
+    let cancelled=false;
+    setHistoryBusy(true);
+    const url="/api/bulk-import/history?entity="+entity+(supplierId?"&supplier="+encodeURIComponent(supplierId):"");
+    fetch(url,{cache:"no-store"})
+      .then(async response=>response.ok?response.json():{batches:[]})
+      .then((payload:{batches?:ImportBatch[]})=>{if(!cancelled)setHistory(payload.batches||[]);})
+      .catch(()=>{if(!cancelled)setHistory([]);})
+      .finally(()=>{if(!cancelled)setHistoryBusy(false);});
+    return ()=>{cancelled=true;};
+  },[open,entity,supplierId]);
 
   async function run(mode:"validate"|"commit"){
     if(!file)return;
@@ -143,6 +162,17 @@ export default function BulkImportModal({
           {result.valid&&<div className="notice success">Validación correcta. Puedes confirmar la importación.</div>}
           {result.ok&&<div className="notice success">Importación completada. Actualizando el módulo…</div>}
         </div>}
+
+        <div className="bulk-import-history">
+          <div className="bulk-import-history-head"><div><strong>Historial reciente</strong><span>Últimas importaciones confirmadas o validadas para esta empresa.</span></div></div>
+          {historyBusy?<div className="bulk-import-history-empty">Consultando historial…</div>:history.length?<div className="bulk-import-history-list">
+            {history.map(batch=><article key={batch.id}>
+              <span className={"bulk-import-history-state "+batch.status}>{batch.status==="committed"?"Importada":batch.status==="rejected"?"Rechazada":"Validada"}</span>
+              <div><strong>{batch.file_name}</strong><small>{new Date(batch.committed_at||batch.created_at).toLocaleString("es-CO")}{batch.user_name?" · "+batch.user_name:""}</small></div>
+              <div className="bulk-import-history-counts"><span><b>{batch.imported_rows||batch.total_rows}</b> filas</span><span><b>{batch.warning_rows}</b> avisos</span><span><b>{batch.error_rows}</b> errores</span></div>
+            </article>)}
+          </div>:<div className="bulk-import-history-empty">Aún no hay importaciones registradas para este módulo.</div>}
+        </div>
 
         <footer className="modal-actions">
           <button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button>

@@ -362,3 +362,22 @@ Consequences:
 - requisition lifecycle changes never mutate Inventory stock;
 - receiving and stock entry remain a separate operation/transaction;
 - Supplier Activity and Inventory tabs remain projections from Work Orders and Inventory rather than duplicate assignment tables.
+
+
+## ADR-035 — Role dashboards compare server-scoped periods
+
+**Decision:** KPI comparisons and six-month dashboard trends are computed from the same server-authorized role scope as the visible current-period data.
+
+**Rationale:**
+- a dashboard comparison is only meaningful when both periods use identical tenant/Site/assignee/provider/requester boundaries;
+- UI-only comparison arithmetic could accidentally compare different populations or expose unauthorized records;
+- Site, Priority and status filters must narrow both current and comparison datasets consistently;
+- export parity requires one shared filter contract rather than screen-only state.
+
+**Consequences:**
+- `lib/dashboard-filters.ts` derives the comparison period and validates filter inputs;
+- current and comparison KPI aggregates are queried server-side;
+- default comparison is the immediately previous equivalent period, with previous-year comparison as an explicit alternative;
+- six-month chart series contain stored monthly values and zero-fill missing months;
+- dashboard exports contain the selected current period and preserve the same role, Site, Priority and status scope;
+- field-person comparisons remain descriptive evidence and must not become rankings or automated employment decisions.

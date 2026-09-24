@@ -12699,7 +12699,7 @@ html[data-theme="dark"] .multi-select-options label.active{
 
 /* Crew showcase — leader-forward visual hierarchy */
 .crew-showcase-section{display:grid;gap:16px}
-.crew-showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.crew-showcase-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .crew-showcase-card{
   min-width:0;
   display:grid;
@@ -12929,9 +12929,6 @@ html[data-theme="dark"] .crew-leader-option.active,
 html[data-theme="dark"] .crew-selected-leader,
 html[data-theme="dark"] .crew-member-options-visual label.active{background:rgba(56,178,169,.13)}
 
-@media(max-width:1320px){
-  .crew-showcase-grid{grid-template-columns:1fr}
-}
 @media(max-width:820px){
   .crew-showcase-card{grid-template-columns:1fr}
   .crew-leader-hero{grid-template-rows:280px auto}

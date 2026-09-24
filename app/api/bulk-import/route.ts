@@ -310,13 +310,26 @@ export async function POST(request:Request){
   const fixedSupplierId=String(form.get("supplier_id")||"");
   if(entity==="inventory"&&!can(session,"inventory.write"))return NextResponse.json({error:"Forbidden"},{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return NextResponse.json({error:"Forbidden"},{status:403});
-  if(!session.organizationId)return NextResponse.json({error:"Selecciona una empresa para importar."},{status:400});
+
+  let organizationId=session.organizationId;
+  if(fixedSupplierId){
+    const scopedSupplier=await query<{organization_id:string}>(
+      "SELECT organization_id FROM suppliers WHERE id=$1 AND active=true",
+      [fixedSupplierId],
+    );
+    if(!scopedSupplier.rowCount)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
+    if(session.platformRole==="user"&&scopedSupplier.rows[0].organization_id!==session.organizationId){
+      return NextResponse.json({error:"Forbidden"},{status:403});
+    }
+    organizationId=scopedSupplier.rows[0].organization_id;
+  }
+  if(!organizationId)return NextResponse.json({error:"Selecciona una empresa para importar."},{status:400});
+
   const file=form.get("file");
   if(!(file instanceof File))return NextResponse.json({error:"Adjunta un archivo .xlsx"},{status:400});
   if(file.size>12*1024*1024)return NextResponse.json({error:"El archivo supera 12 MB."},{status:413});
   const buffer=Buffer.from(await file.arrayBuffer());
   const hash=createHash("sha256").update(buffer).digest("hex");
-  const organizationId=session.organizationId;
   let workbook;
   try{
     workbook=await loadWorkbook(buffer);

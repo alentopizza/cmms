@@ -12,7 +12,7 @@ import BulkImportModal from "@/components/BulkImportModal";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
 import UiIcon from "@/components/UiIcon";
 
-type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null};
+type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean};
 type Site={id:string;organization_id:string;label:string};
 type Location={id:string;organization_id:string;site_id:string;label:string};
 type Supplier={id:string;organization_id:string;name:string};
@@ -38,7 +38,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
   const owner=isPlatformOwner(session);
 
   const assetSql=`SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,
-      a.status,a.criticality,a.manufacturer,a.model,a.serial_number
+      a.status,a.criticality,a.manufacturer,a.model,a.serial_number,(a.image_data IS NOT NULL) has_image
     FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
     LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN asset_categories c ON c.id=a.category_id LEFT JOIN suppliers p ON p.id=a.supplier_id`;
   const [assets,sites,locations,suppliers]=await Promise.all([
@@ -125,7 +125,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         data-filter-criticality={a.criticality} data-filter-criticality-label={criticalityLabel(a.criticality)}
         data-filter-category={a.category_id||""} data-filter-category-label={a.category||""}
         data-filter-supplier={a.supplier_id||""} data-filter-supplier-label={a.supplier||""}>
-        <div className="asset-modern-visual"><UiIcon name="asset" size={48}/><span className={"asset-status-pill "+a.status}>{statusLabel(a.status)}</span></div>
+        <div className={"asset-modern-visual"+(a.has_image?" has-image":"")}>{a.has_image?<img src={"/api/assets/"+a.id+"/image"} alt="" />:<UiIcon name="asset" size={48}/>}<span className={"asset-status-pill "+a.status}>{statusLabel(a.status)}</span></div>
         <div className="asset-modern-copy">
           <div className="asset-modern-code">Código: {a.code}</div>
           <h3>{a.name}</h3>

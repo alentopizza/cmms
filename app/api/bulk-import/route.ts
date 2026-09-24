@@ -192,7 +192,7 @@ async function catalogs(organizationId:string){
   return {
     suppliers:suppliers.rows,sites:sites.rows,locations:locations.rows,warehouses:warehouses.rows,items:items.rows,
     categories:categories.rows,limits:limits.rows[0],counts:counts.rows[0],
-    movementIds:new Set(movementIds.rows.map(row=>row.source_movement_id)),
+    movementIds:new Set(movementIds.rows.map(row=>key(row.source_movement_id))),
   };
 }
 
@@ -547,7 +547,7 @@ export async function POST(request:Request){
         const resolved=resolveImportSupplier(catalog.suppliers,reference);
         if(resolved.error){
           issue(
-            issues,providerSheet.name,row.rowNumber,"error",resolved.error,
+            issues,providerSheet.name,row.rowNumber,"warning","Proveedor de referencia no registrado: "+resolved.error,
             reference.supplierId?"PROVEEDOR_ID":reference.taxId?"NIT_PROVEEDOR":reference.code?"CODIGO_PROVEEDOR":"PROVEEDOR",
             reference.supplierId||reference.taxId||reference.code||reference.name||"",
             "Crea o corrige el proveedor en el módulo Proveedores antes de confirmar.",
@@ -598,7 +598,7 @@ export async function POST(request:Request){
           if(fileMovementIds.has(key(movementId))){
             issue(issues,kardexSheet.name,row.rowNumber,"error","MOVIMIENTO_ID duplicado dentro del archivo.","MOVIMIENTO_ID",movementId,"Usa un identificador único por movimiento.");
           }else fileMovementIds.add(key(movementId));
-          if(catalog.movementIds.has(movementId)){
+          if(catalog.movementIds.has(key(movementId))){
             issue(issues,kardexSheet.name,row.rowNumber,"error","MOVIMIENTO_ID ya fue importado anteriormente.","MOVIMIENTO_ID",movementId,"Elimina el movimiento duplicado o asigna el identificador correcto.");
           }
         }

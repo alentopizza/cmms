@@ -15,6 +15,7 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 - `docs/DESIGN_SYSTEM.md` — Design System V2 y tokens visuales canónicos.
 - `docs/UI_KIT.md` — contrato oficial de componentes reutilizables DESWEB.
 - `docs/DESIGN_MIGRATION_PLAN.md` — fases de migración visual sin regresión funcional.
+- `docs/DESIGN_AUDIT_PHASE1.md` — línea base técnica de CSS/componentes antes de la migración.
 - `docs/ROADMAP.md` — prioridades de desarrollo.
 - `docs/CHANGELOG.md` — historial de cambios relevantes.
 - `docs/COMMERCIAL_MODEL.md` — planes, suscripciones, ventas y entitlements.
@@ -87,6 +88,7 @@ TEST_CHECKOUT_ENABLED=false
 - `/downloads` — información de la edición self-hosted/descargable.
 - `/descargas` — alias en español de la misma página.
 - `/dashboard` — aplicación autenticada.
+- `/ui-kit` — catálogo técnico no indexable del Design System/UI Kit; actualmente muestra Foundations de Fase 1.
 
 ## Instalación descargable / self-hosted
 

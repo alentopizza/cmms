@@ -7,7 +7,7 @@ import { publicUrl } from "@/lib/urls";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BLOCKED=new Set(["rejected","fulfilled","closed","cancelled"]);
 
-type Req={organization_id:string;supplier_id:string;status:string};
+type Req={organization_id:string;supplier_id:string;status:string;approval_required:boolean;approval_state:string};
 type ReqItem={
   id:string;inventory_item_id:string|null;sku:string;description:string;quantity_requested:string;quantity_received:string;
   unit_cost_estimated:string;item_active:boolean|null;item_site_id:string|null;
@@ -21,13 +21,14 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
   const result=await query<Req>(
-    "SELECT organization_id,supplier_id,status FROM supplier_requisitions WHERE id=$1",
+    "SELECT organization_id,supplier_id,status,approval_required,approval_state FROM supplier_requisitions WHERE id=$1",
     [id],
   );
   if(!result.rowCount)return new NextResponse("Requisición no encontrada",{status:404});
   const req=result.rows[0];
   if(session.platformRole==="user"&&session.organizationId!==req.organization_id)return new NextResponse("Forbidden",{status:403});
   if(BLOCKED.has(req.status))return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_locked",request.url),303);
+  if(req.approval_required&&req.approval_state!=="approved")return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_approval",request.url),303);
 
   const form=await request.formData();
   const documentNumber=String(form.get("document_number")||"").trim();

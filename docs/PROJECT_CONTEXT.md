@@ -709,3 +709,13 @@ Supplier classification is now multi-value and catalog driven. Stable capability
 User profiles now include a tenant-private personnel document dossier and emergency contact. Supplier profiles include separate payment/financial information. Migration 029 is the schema checkpoint for these additions.
 
 The product direction for bulk import/export is to prefer standardized codes/catalog values over free-text classifications whenever records must be exchanged with spreadsheets, databases or external systems.
+
+### Procurement approval and audit — Phase 2
+
+Procurement governance is now configurable per Company. A Company may require no approval, approval for every requisition, or approval only when the requisition estimated value reaches a configured threshold. It may also choose whether approval is limited to Company Administrators or includes Managers/Supervisors, and whether a requester with an approver role may approve their own request.
+
+The Company policy is copied into each requisition at creation. This snapshot is deliberate: changing Company settings later does not rewrite the historical rule under which an existing requisition was created.
+
+When approval is required, receipt into Inventory/Kardex is a server-enforced gate. The receiving route rejects the operation until the requisition has a current approved decision. Approvals and rejections are separate from ordinary requisition lifecycle editing and are recorded with actor, time, notes and audit metadata.
+
+A requisition created below a snapshotted threshold is reevaluated when quantity/cost changes; if it reaches that stored threshold, it enters approval automatically. Once approval becomes required, later reductions do not remove the governance requirement. A material change to quantity, estimated cost or required date after a decision invalidates the previous approval/rejection and reopens the approval state. Existing receipt movements remain intact; only additional receipt of the outstanding balance is blocked until the new decision.

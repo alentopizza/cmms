@@ -13285,3 +13285,66 @@ html[data-theme="dark"] .bulk-import-history-head strong{color:var(--text)}
   .bulk-import-history-list article{grid-template-columns:auto minmax(0,1fr)}
   .bulk-import-history-counts{grid-column:1/-1}
 }
+
+
+/* Procurement approval policy and requisition audit — Phase 2 */
+.procurement-policy-form .field>small{display:block;margin-top:5px;font-size:8px;line-height:1.45;color:var(--text-soft)}
+.procurement-policy-note{display:grid;gap:4px;padding:11px 12px;border:1px solid #cfe6e3;border-radius:11px;background:var(--accent-soft)}
+.procurement-policy-note strong{font-size:9px;color:var(--brand-dark)}
+.procurement-policy-note span{font-size:8px;line-height:1.5;color:var(--text-soft)}
+.requisition-approval-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px;padding:11px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
+.requisition-approval-summary>div{display:grid;gap:3px}
+.requisition-approval-summary span{font-size:7px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--text-soft)}
+.requisition-approval-summary strong{font-size:10px;color:var(--brand-dark)}
+.requisition-approval-summary small{font-size:8px;line-height:1.45;color:var(--text-soft)}
+.requisition-approval-summary.pending{border-color:#ead9ad;background:#fffaf0}
+.requisition-approval-summary.approved{border-color:#bfe3d0;background:#f3fbf6}
+.requisition-approval-summary.rejected{border-color:#f0c5cb;background:#fff6f7}
+.requisition-approval-panel{overflow:visible}
+.requisition-approval-badge,.requisition-approval-mini{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;white-space:nowrap}
+.requisition-approval-badge{padding:7px 10px;font-size:8px;background:#edf1f2;color:#68777f}
+.requisition-approval-badge.pending,.requisition-approval-mini.pending{background:#fff2d6;color:#8a601e}
+.requisition-approval-badge.approved,.requisition-approval-mini.approved{background:#e7f7ed;color:#33724e}
+.requisition-approval-badge.rejected,.requisition-approval-mini.rejected{background:#ffecef;color:#a23f4c}
+.requisition-approval-mini{padding:4px 7px;font-size:6.8px;background:#edf1f2;color:#68777f}
+.requisition-approval-form{margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
+.requisition-approval-message{display:grid;gap:4px;padding:11px 12px;margin-top:8px;border-left:3px solid var(--brand-teal);border-radius:8px;background:var(--surface-soft)}
+.requisition-approval-message strong{font-size:9px;color:var(--text)}
+.requisition-approval-message span{font-size:8px;line-height:1.5;color:var(--text-soft)}
+.requisition-approval-history{display:grid;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.requisition-approval-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.requisition-approval-history-head strong{font-size:10px;color:var(--text)}
+.requisition-approval-history-head span{font-size:8px;color:var(--text-soft)}
+.requisition-approval-timeline{display:grid;gap:7px}
+.requisition-approval-timeline article{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:9px;align-items:start;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-soft)}
+.requisition-approval-timeline article>i{width:9px;height:9px;margin-top:3px;border-radius:50%;background:#8aa0aa;box-shadow:0 0 0 3px rgba(138,160,170,.12)}
+.requisition-approval-timeline article>i.approved{background:#43a66e;box-shadow:0 0 0 3px rgba(67,166,110,.13)}
+.requisition-approval-timeline article>i.rejected{background:#c55260;box-shadow:0 0 0 3px rgba(197,82,96,.12)}
+.requisition-approval-timeline article>i.requested,.requisition-approval-timeline article>i.reopened,.requisition-approval-timeline article>i.amended{background:#c89534;box-shadow:0 0 0 3px rgba(200,149,52,.12)}
+.requisition-approval-timeline article>div{display:grid;gap:2px}
+.requisition-approval-timeline article strong{font-size:9px;color:var(--text)}
+.requisition-approval-timeline article span,.requisition-approval-timeline article time{font-size:7.5px;color:var(--text-soft)}
+.requisition-approval-timeline article p{margin:3px 0 0;font-size:8px;line-height:1.45;color:var(--text)}
+.requisition-receive-approval-lock{display:flex;align-items:center;border-color:#ead9ad;background:#fffaf0}
+.requisition-receive-approval-lock>div{display:grid;gap:4px}
+.requisition-receive-approval-lock strong{font-size:10px;color:#7d571c}
+.requisition-receive-approval-lock span{font-size:8px;line-height:1.5;color:#816c48}
+.requisition-directory-state-stack{display:grid!important;justify-items:end;gap:5px!important}
+.supplier-requisition-status-stack{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.supplier-requisition-status-stack>strong{font-size:8px}
+.supplier-requisition-status-stack>em{font-style:normal}
+html[data-theme="dark"] .procurement-policy-note,
+html[data-theme="dark"] .requisition-approval-summary.pending,
+html[data-theme="dark"] .requisition-approval-summary.approved,
+html[data-theme="dark"] .requisition-approval-summary.rejected,
+html[data-theme="dark"] .requisition-receive-approval-lock{background:var(--surface-soft);border-color:var(--border)}
+html[data-theme="dark"] .procurement-policy-note strong,
+html[data-theme="dark"] .requisition-approval-summary strong{color:var(--text)}
+html[data-theme="dark"] .requisition-receive-approval-lock strong{color:#e6c57e}
+html[data-theme="dark"] .requisition-receive-approval-lock span{color:var(--text-soft)}
+@media(max-width:760px){
+  .requisition-approval-summary{grid-template-columns:1fr}
+  .requisition-approval-timeline article{grid-template-columns:12px minmax(0,1fr)}
+  .requisition-approval-timeline article time{grid-column:2}
+  .requisition-directory-state-stack{justify-items:start}
+}

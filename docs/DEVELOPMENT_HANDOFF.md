@@ -199,7 +199,7 @@ La preferencia de locale ya se persiste, pero eso **no significa que toda la int
 
 Las migraciones son inmutables y actualmente llegan al menos hasta:
 
-- `029_supplier_catalog_user_dossier_financial.sql`.
+- `034_requisition_approval_policy.sql`.
 
 Ante un cambio de esquema:
 
@@ -227,9 +227,20 @@ La **Fase 1 de abastecimiento** ya está implementada y validada:
 - exportes con solicitado / recibido / pendiente;
 - historial de importaciones masivas y recuperación de suministros inactivos.
 
+La **Fase 2 de abastecimiento** también está implementada:
+
+- política configurable de aprobación por empresa: sin aprobación, todas las requisiciones o desde un monto estimado;
+- alcance de aprobador configurable: Administrador o Administrador + Manager/Supervisor;
+- autoaprobación del solicitante bloqueada por defecto;
+- snapshot de política en cada requisición;
+- aprobación/rechazo servidor-autoritativos con auditoría;
+- recepción/Kardex bloqueados mientras una aprobación requerida no esté vigente;
+- cambio posterior de cantidad, costo estimado o fecha requerida reabre la aprobación;
+- historial de eventos requested/amended/approved/rejected/reopened y audit log general;
+- estado de aprobación visible en Requisiciones, Proveedor y exportes.
+
 Pendientes para fases posteriores:
 
-- política configurable de aprobación/auditoría previa a recepción;
 - KPIs comerciales de proveedor cuando exista historial suficiente;
 - devoluciones a proveedor vinculadas a requisición/recepción;
 - conciliación documental avanzada contra factura/remisión/orden de compra.

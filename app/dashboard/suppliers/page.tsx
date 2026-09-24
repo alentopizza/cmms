@@ -63,7 +63,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     LEFT JOIN inventory_categories c ON c.id=i.category_id
     LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
     WHERE p.active=true AND p.supplier_type IN ('materials','both')`;
-  const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,
+  const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.approval_required,r.approval_state,
       count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
       COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
       COALESCE(sum(ri.quantity_received),0)::text quantity_received

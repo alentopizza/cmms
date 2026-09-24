@@ -755,3 +755,28 @@ Every selected person must:
 - have access to the selected Site (all-sites access or explicit Site membership).
 
 The visual Crew directory emphasizes the leader's photo and contact actions, then shows operational counters and the remaining roster. These counters are workload/history summaries and are not employee ranking or performance scoring.
+
+## Requisition approval functional model
+
+A Company can configure one procurement approval rule:
+
+- **none**: requisitions do not require a decision before receipt;
+- **all**: every new requisition requires approval;
+- **threshold**: approval is required when estimated requisition value is greater than or equal to the configured threshold.
+
+The rule also defines the authorized role scope (`admin_only` or `admin_manager`) and whether requester self-approval is allowed. Self-approval is disabled by default.
+
+Approval lifecycle:
+
+1. creation snapshots the Company policy and places approval in `pending`;
+2. the receipt action is unavailable and is also rejected server-side;
+3. an eligible approver records **Approve** or **Reject** from the approval workspace;
+4. rejection requires a reason;
+5. approval enables receipt; rejection prevents receipt;
+6. if a requisition initially below a stored threshold is amended until it reaches that threshold, it enters approval automatically;
+7. once a requisition has required approval, lowering the amount does not remove that governance requirement;
+8. a later change to requested quantity, estimated unit cost or required date after a decision reopens approval;
+9. historical receipt/Kardex records remain untouched;
+10. every approval transition remains visible in the requisition audit timeline.
+
+`approved` and `rejected` are decision states, not ordinary status values that a user may assign from the generic lifecycle selector.

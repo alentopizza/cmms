@@ -373,3 +373,12 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Detailed User statistics belong behind `/api/users/[id]/statistics` or an equivalent on-demand reporting boundary.
 - A detailed statistics failure must degrade the Statistics tab only; it must never crash the Users directory.
 - User and Supplier cards are separate design patterns. Preserve their distinct personal vs commercial identity language when changing density or responsive behavior.
+
+
+## Compact directory card invariant
+
+- Users and Suppliers use distinct compact card languages: circular portrait for Users, rounded-square logo for Suppliers.
+- User directory cards must not surface raw/ambiguous `tracking_live` or missing-biometric labels such as "Offline" or "Pendiente"; expose those states only in contextual detail/statistics views.
+- User deactivate/reactivate is a reversible status action and must not use the permanent-delete trash icon.
+- Supplier permanent deletion must use the shared `ConfirmDialog`; do not call browser-native `window.confirm()` for the Supplier entity.
+- Standard desktop density is 4 cards per row and wide desktop may use 5 when the viewport supports readable content.

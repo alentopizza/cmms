@@ -292,9 +292,19 @@ Before production hardening, reinforce this development workflow with the approv
 - Supplier profile PDF/XLSX/Word export parity for the commercial indicators;
 - PostgreSQL smoke regression added to CI.
 
+### Recently completed supplier return phase
+
+- receipt-linked Supplier returns created from the requisition workspace;
+- dedicated `supplier_return` Kardex movement that decreases stock without changing the existing inbound `return` semantic;
+- return quantity limited by the originating receipt balance and by physical warehouse stock;
+- immutable DEV header/item history with reason, expected resolution, document, user and timestamp;
+- traceability DEV → requisition → requisition item → source receipt → outbound Kardex movement;
+- Supplier profile, requisition detail and Kardex surface/export parity;
+- requisition PDF/XLSX/Word exports include returned quantities and DEV history;
+- migration 035 and dedicated PostgreSQL smoke regression.
+
 ### Next procurement/inventory work
 
-- Supplier returns linked to the originating requisition/receipt and Kardex movement;
 - advanced document reconciliation against invoice, delivery note/remission and purchase-order evidence.
 
 

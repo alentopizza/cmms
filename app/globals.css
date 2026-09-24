@@ -13227,3 +13227,13 @@ html[data-theme="dark"] .requisition-progress-track{background:#2d3a41}
   .requisition-receive-identity>span{grid-column:1/-1}
   .requisition-receive-fields{grid-template-columns:1fr}
 }
+
+
+.requisition-directory-receipt{display:grid;gap:5px;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+.requisition-directory-receipt>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.requisition-directory-receipt span{font-size:7.5px;color:var(--text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.requisition-directory-receipt strong{font-size:10px;color:var(--brand-dark)}
+.requisition-directory-receipt small{font-size:7.5px;color:var(--text-soft)}
+.kardex-requisition-link{color:var(--brand-teal);font-weight:800;text-decoration:none}
+.kardex-requisition-link:hover{text-decoration:underline}
+html[data-theme="dark"] .requisition-directory-receipt strong{color:var(--text)}

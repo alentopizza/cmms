@@ -375,6 +375,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
       "Si es proveedor de Materiales/Suministros o Mixto, Inventarios / suministros es operativo: puedes crear, importar, editar, desactivar, reactivar y abrir el Kardex de sus artículos sin salir de la ficha. Los suministros inactivos conservan su historial y no aparecen para nuevas requisiciones hasta reactivarlos.",
+      "Cuando creas un suministro desde la ficha del proveedor, la empresa se toma automáticamente del proveedor abierto; Platform Owner/Superadministrador no necesita seleccionar previamente una empresa global. Al guardar, permaneces en la pestaña Inventarios / suministros.",
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
@@ -459,6 +460,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Alta de suministros desde proveedor corregida",
+    summary:"Crear un suministro desde la ficha del proveedor usa automáticamente la empresa asociada al proveedor y regresa a Inventarios / suministros con feedback específico.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Plantilla maestra única de Inventario y Kardex",

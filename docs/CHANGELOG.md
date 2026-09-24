@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-24 — Corrección de creación de suministros desde Proveedor
+
+### Fixed
+
+- Crear un suministro desde `Proveedor → Inventarios / suministros` ya no exige que Platform Owner/Superadministrador tenga una empresa seleccionada globalmente.
+- La empresa del nuevo artículo se resuelve desde el proveedor seleccionado y se revalidan sede/sububicación dentro de esa empresa.
+- Usuarios tenant siguen limitados a su propia empresa.
+- El guardado vuelve a la ficha del proveedor en la pestaña Inventarios / suministros.
+- Los mensajes de éxito/error son ahora específicos del suministro y ya no se confunden con mensajes de creación del proveedor.
+
 ## 2026-09-24 — Plantilla maestra única de Inventario y Kardex
 
 ### Changed

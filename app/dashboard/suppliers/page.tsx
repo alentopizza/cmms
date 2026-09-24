@@ -28,6 +28,7 @@ type InventoryWarehouseOption={id:string;organization_id:string;site_id:string|n
 
 export default async function SuppliersPage({searchParams}:{searchParams:Promise<{
   created?:string;updated?:string;deleted?:string;error?:string;supplier?:string;tab?:string;saved?:string;requisition_created?:string;
+  inventory_created?:string;inventory_error?:string;
 }>}){
   const session=await getSession();
   if(!session)redirect("/login");
@@ -124,6 +125,12 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     : params.error==="history"?"Este proveedor tiene inventario, actividades o requisiciones asociadas. Desactívalo para conservar la trazabilidad."
     : params.error==="required"?"Completa los datos obligatorios y adjunta el logo del proveedor."
     : params.error?"No fue posible completar la acción del proveedor.":"";
+  const inventoryError=params.inventory_error==="required"?"Completa los datos obligatorios del suministro."
+    : params.inventory_error==="relation"?"La sede, sububicación o proveedor no pertenece a la empresa asociada al proveedor."
+    : params.inventory_error==="sequence"?"Completa la configuración requerida de Inventario para esta empresa antes de crear suministros."
+    : params.inventory_error==="limit"?"La empresa alcanzó el límite de artículos de inventario de su plan."
+    : params.inventory_error==="sku"?"Ya existe un artículo con ese SKU en la empresa."
+    : params.inventory_error?params.inventory_error:"";
 
   return <>
     <ModuleHeader
@@ -165,11 +172,13 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     />
 
     {params.created&&<div className="notice success section">Proveedor creado correctamente.</div>}
+    {params.inventory_created&&<div className="notice success section">Suministro creado correctamente y asociado al proveedor.</div>}
     {params.requisition_created&&<div className="notice success section">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} para el proveedor.</div>}
     {params.updated&&<div className="notice success section">Proveedor actualizado correctamente.</div>}
     {params.deleted&&<div className="notice success section">Proveedor eliminado correctamente.</div>}
     {params.saved&&<div className="notice success section">Documento del proveedor actualizado correctamente.</div>}
     {error&&<div className="notice error section">{error}</div>}
+    {inventoryError&&<div className="notice error section">{inventoryError}</div>}
 
     {!creationGate.ready&&<CreationPrerequisiteState
       icon="▣" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}

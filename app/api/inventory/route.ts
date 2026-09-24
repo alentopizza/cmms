@@ -13,7 +13,6 @@ export async function POST(request:Request) {
   const session=await getSession();
   if(!session) return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"inventory.write")) return new NextResponse("Forbidden",{status:403});
-  if(!session.organizationId) return new NextResponse("Selecciona una empresa",{status:400});
 
   const form=await request.formData();
   const siteId=String(form.get("site_id")||"");
@@ -31,30 +30,47 @@ export async function POST(request:Request) {
   const minQuantity=Math.max(0,Number(form.get("min_quantity")||0));
   const maxQuantity=Math.max(0,Number(form.get("max_quantity")||0));
   const unitCost=Math.max(0,Number(form.get("unit_cost")||0));
-  const organizationId=session.organizationId;
   const returnTo=String(form.get("return_to")||"");
   const base=safeDashboardReturn(returnTo,"/dashboard/inventory");
   const target=(suffix:string)=>publicUrl(appendFeedback(base,suffix),request.url);
+  const supplierContextReturn=base.startsWith("/dashboard/suppliers");
+  const errorTarget=(code:string)=>target((supplierContextReturn?"?inventory_error=":"?error=")+encodeURIComponent(code));
+  const createdTarget=()=>target(supplierContextReturn?"?inventory_created=1":"?created=1");
+
+  if(!siteId||!locationId||!supplierId||!sku||!name) return NextResponse.redirect(errorTarget("required"),303);
+
+  // Supplier is part of the Inventory master record and therefore owns the
+  // Organization context for this create operation. This is especially
+  // important for Platform Owner/Superadmin flows opened directly from a
+  // Supplier profile, where the session intentionally has no selected tenant.
+  const supplierScope=await query<{organization_id:string}>(
+    "SELECT organization_id FROM suppliers WHERE id=$1 AND active=true AND supplier_type IN ('materials','both')",
+    [supplierId],
+  );
+  if(!supplierScope.rowCount) return NextResponse.redirect(errorTarget("relation"),303);
+
+  const organizationId=supplierScope.rows[0].organization_id;
+  if(session.platformRole==="user"&&session.organizationId!==organizationId){
+    return new NextResponse("Forbidden",{status:403});
+  }
   let image=null;
   try{ image=await readImageUpload(form,"image"); }
-  catch(error){ return NextResponse.redirect(target("?error="+encodeURIComponent(imageUploadMessage(error)||"image")),303); }
+  catch(error){ return NextResponse.redirect(errorTarget(imageUploadMessage(error)||"image"),303); }
 
-  if(!siteId||!locationId||!supplierId||!sku||!name) return NextResponse.redirect(target("?error=required"),303);
   if(!canAccessSite(session,siteId)) return new NextResponse("Forbidden",{status:403});
   if(!Number.isFinite(quantity)||!Number.isFinite(minQuantity)||!Number.isFinite(maxQuantity)||!Number.isFinite(unitCost)){
-    return NextResponse.redirect(target("?error=required"),303);
+    return NextResponse.redirect(errorTarget("required"),303);
   }
 
   const gate=gateFor(await getSetupState(organizationId),"inventory");
-  if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
-  if(!(await canCreateInventoryItem(organizationId))) return NextResponse.redirect(target("?error=limit"),303);
+  if(!gate.ready) return NextResponse.redirect(errorTarget("sequence"),303);
+  if(!(await canCreateInventoryItem(organizationId))) return NextResponse.redirect(errorTarget("limit"),303);
 
-  const [site,location,supplier]=await Promise.all([
+  const [site,location]=await Promise.all([
     query("SELECT 1 FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",[siteId,organizationId]),
     query("SELECT 1 FROM locations WHERE id=$1 AND organization_id=$2 AND site_id=$3 AND active=true",[locationId,organizationId,siteId]),
-    query("SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('materials','both')",[supplierId,organizationId]),
   ]);
-  if(!site.rowCount||!location.rowCount||!supplier.rowCount) return NextResponse.redirect(target("?error=relation"),303);
+  if(!site.rowCount||!location.rowCount) return NextResponse.redirect(errorTarget("relation"),303);
 
   const client=await pool.connect();
   try{
@@ -113,9 +129,9 @@ export async function POST(request:Request) {
     await client.query("COMMIT");
   }catch(error){
     await client.query("ROLLBACK");
-    if((error as {code?:string}).code==="23505") return NextResponse.redirect(target("?error=sku"),303);
+    if((error as {code?:string}).code==="23505") return NextResponse.redirect(errorTarget("sku"),303);
     throw error;
   }finally{client.release();}
 
-  return NextResponse.redirect(target("?created=1"),303);
+  return NextResponse.redirect(createdTarget(),303);
 }

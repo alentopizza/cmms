@@ -486,3 +486,12 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - `MOVIMIENTO_ID` is optional external traceability, but when present it must be unique per Organization and prevents reimporting the same physical movement.
 - Import history must preserve IMP folio, source file/user, Global/Supplier origin, contextual Supplier when applicable, selected scope, imported rows, omitted rows, warnings and errors.
 - Site authorization and Organization scope are server-authoritative for both validation and commit.
+
+
+## Supplier-context Inventory creation invariant
+
+- Creating an Inventory item from a Supplier profile must derive `organization_id` from the selected Supplier, not from the currently selected platform tenant.
+- Platform Owner/Superadmin can create Supplier inventory directly from the Supplier profile even when their session has no selected Organization.
+- Tenant users must still be rejected if the Supplier belongs to another Organization.
+- Site, Sublocation, Warehouse, limits and setup sequence must be validated against the Supplier-owned Organization.
+- Supplier-profile create redirects must return to the Supplier Inventory tab with Inventory-specific success/error feedback; do not reuse Supplier-create feedback keys.

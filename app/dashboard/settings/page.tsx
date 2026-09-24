@@ -45,6 +45,10 @@ type CompanySettingsRow = {
   branding_logo_light: boolean;
   branding_logo_dark: boolean;
   show_desweb_branding: boolean;
+  procurement_approval_mode: "none" | "all" | "threshold";
+  procurement_approval_threshold: string;
+  procurement_approver_scope: "admin_only" | "admin_manager";
+  procurement_self_approval: boolean;
 };
 
 type ResourceCard = {
@@ -71,6 +75,8 @@ function CompanySettings({
   planUpdated,
   welcome,
   localeSaved,
+  procurementSaved,
+  procurementError,
 }: {
   company: CompanySettingsRow;
   brandingSaved?: boolean;
@@ -78,6 +84,8 @@ function CompanySettings({
   planUpdated?: boolean;
   welcome?: boolean;
   localeSaved?: boolean;
+  procurementSaved?: boolean;
+  procurementError?: boolean;
 }) {
   const resources: ResourceCard[] = [
     { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "⌂" },
@@ -100,6 +108,8 @@ function CompanySettings({
     {welcome && <div className="notice success section">Tu empresa fue creada correctamente. Ya puedes revisar el plan, sus fechas y los recursos disponibles.</div>}
     {planUpdated && <div className="notice success section">Tu plan fue actualizado correctamente y los nuevos recursos ya están disponibles.</div>}
     {localeSaved && <div className="notice success section">Idioma y región predeterminados actualizados correctamente.</div>}
+    {procurementSaved && <div className="notice success section">Política de aprobación de abastecimiento actualizada correctamente.</div>}
+    {procurementError && <div className="notice error section">No fue posible guardar la política de aprobación. Revisa el modo, el monto y el alcance de aprobadores.</div>}
 
     <section className="company-settings-hero section">
       <article className="card company-plan-banner">
@@ -217,6 +227,49 @@ function CompanySettings({
       </form>
     </section>
 
+    <section className="card section settings-panel settings-panel-wide procurement-policy-panel">
+      <div className="settings-panel-head">
+        <div>
+          <span className="settings-kicker">Abastecimiento</span>
+          <h2>Aprobación de requisiciones</h2>
+          <p>Define cuándo una requisición necesita autorización antes de registrar recepciones en Inventario / Kardex.</p>
+        </div>
+        <span className="settings-panel-icon" aria-hidden="true">✓</span>
+      </div>
+      <form className="form-grid procurement-policy-form" method="post" action="/api/procurement-policy">
+        <div className="field">
+          <label>Política de aprobación</label>
+          <select name="approval_mode" defaultValue={company.procurement_approval_mode}>
+            <option value="none">Sin aprobación obligatoria</option>
+            <option value="all">Aprobar todas las requisiciones</option>
+            <option value="threshold">Aprobar desde un monto estimado</option>
+          </select>
+          <small>La regla se copia a cada requisición al momento de crearla para conservar trazabilidad histórica.</small>
+        </div>
+        <div className="field">
+          <label>Monto estimado mínimo</label>
+          <input name="approval_threshold" type="number" min="0" step="0.01" defaultValue={company.procurement_approval_threshold||"0"}/>
+          <small>Solo aplica cuando eliges aprobación por monto.</small>
+        </div>
+        <div className="field">
+          <label>Quién puede aprobar</label>
+          <select name="approver_scope" defaultValue={company.procurement_approver_scope}>
+            <option value="admin_only">Solo Administrador de empresa</option>
+            <option value="admin_manager">Administrador o Manager / Supervisor</option>
+          </select>
+        </div>
+        <label className="white-label-checkbox">
+          <input name="allow_requester_self_approval" type="checkbox" defaultChecked={company.procurement_self_approval}/>
+          <span>Permitir que el solicitante apruebe su propia requisición cuando además tenga rol autorizador.</span>
+        </label>
+        <div className="form-span-2 procurement-policy-note">
+          <strong>Regla de integridad</strong>
+          <span>Si una requisición aprobada cambia en cantidad, costo o fecha requerida, la aprobación se reabre y el saldo pendiente vuelve a quedar bloqueado hasta una nueva decisión.</span>
+        </div>
+        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar política de aprobación</button></div>
+      </form>
+    </section>
+
     <section className="settings-grid section company-settings-actions">
       <article className="card settings-panel">
         <div className="settings-panel-head">
@@ -254,7 +307,8 @@ function CompanySettings({
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ branding_saved?: string; branding_error?: string; plan_updated?: string; welcome?: string; locale_saved?: string }>;
+  searchParams: Promise<{ branding_saved?: string; branding_error?: string; plan_updated?: string; welcome?: string; locale_saved?: string; procurement_saved?: string; procurement_error?: string }>;
+
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -427,12 +481,17 @@ export default async function SettingsPage({
             ob.secondary_color branding_secondary_color,
             (ob.logo_on_light IS NOT NULL) branding_logo_light,
             (ob.logo_on_dark IS NOT NULL) branding_logo_dark,
-            COALESCE(ob.show_desweb_branding,false) show_desweb_branding
+            COALESCE(ob.show_desweb_branding,false) show_desweb_branding,
+            COALESCE(pp.approval_mode,'none') procurement_approval_mode,
+            COALESCE(pp.approval_threshold,0)::text procurement_approval_threshold,
+            COALESCE(pp.approver_scope,'admin_only') procurement_approver_scope,
+            COALESCE(pp.allow_requester_self_approval,false) procurement_self_approval
      FROM organizations o
      LEFT JOIN organization_limits ol ON ol.organization_id=o.id
      JOIN organization_subscriptions os ON os.organization_id=o.id
      JOIN billing_plans bp ON bp.id=os.plan_id
      LEFT JOIN organization_branding ob ON ob.organization_id=o.id
+     LEFT JOIN organization_procurement_policies pp ON pp.organization_id=o.id
      WHERE o.id=$1
      LIMIT 1`,
     [session.organizationId],
@@ -446,5 +505,7 @@ export default async function SettingsPage({
     planUpdated={params.plan_updated === "1"}
     welcome={params.welcome === "1"}
     localeSaved={params.locale_saved === "1"}
+    procurementSaved={params.procurement_saved === "1"}
+    procurementError={Boolean(params.procurement_error)}
   />;
 }

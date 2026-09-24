@@ -525,7 +525,19 @@ Antes de considerar migrado un componente/módulo:
 - respeta identidad DESWEB;
 - se ve coherente con el resto del ERP.
 
-## 25. Estado de migración
+## 25. Implementación runtime de Foundations
+
+Fase 1 implementa los tokens canónicos en:
+
+- `app/design-system/tokens.css`;
+- importados globalmente desde `app/layout.tsx` antes del CSS legacy;
+- documentados visualmente en `/ui-kit`;
+- referenciados desde `lib/design-system.ts` sin duplicar valores;
+- protegidos por `scripts/design-system-smoke.mjs`.
+
+El modo oscuro remapea tokens semánticos usando las escalas Navy/Teal aprobadas. `prefers-reduced-motion` reduce las duraciones de motion tokens a cero.
+
+## 26. Estado de migración
 
 La aplicación actual contiene estilos heredados, incluyendo la paleta previa `#293644/#38B2A9/#79CAC4/#BAE3E0` y numerosos valores específicos por componente.
 

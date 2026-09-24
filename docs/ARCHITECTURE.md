@@ -623,3 +623,33 @@ Migration `037_unified_inventory_import.sql` adds:
 The template route `GET /api/bulk-import/template?entity=inventory` always emits the same master workbook. Optional `supplier=<uuid>` and `data=current` affect context/preloaded data only, never column/sheet structure.
 
 Current-data template exports master Inventory only. It sets STOCK_INICIAL to zero and leaves KARDEX blank so downloading and reimporting current data cannot duplicate historical physical movements by default.
+
+
+## DESWEB Design System V2 runtime architecture — Phase 1
+
+Frontend foundation layers:
+
+```text
+app/design-system/tokens.css
+        ↓
+components/ui/*
+        ↓
+shared/business components
+        ↓
+ERP modules
+```
+
+Current implementation:
+
+- `app/layout.tsx` imports V2 tokens before `app/globals.css`;
+- `app/design-system/tokens.css` contains canonical runtime foundations;
+- `app/globals.css` remains the legacy production stylesheet during progressive migration;
+- `components/ui` is the canonical namespace for new UI Kit components;
+- `components/ui/Icon.tsx` currently bridges the existing `UiIcon` SVG system;
+- `lib/design-system.ts` contains token-name metadata for documentation, not duplicate values;
+- `/ui-kit` renders the real Foundations catalog using the same CSS variables;
+- `scripts/design-system-smoke.mjs` validates the foundation contract in CI.
+
+Compatibility rule:
+
+Do not globally remap legacy variables such as `--brand-teal`, `--brand-dark`, `--bg` or `--surface` to V2 values merely to make old screens look migrated. A component/module adopts V2 when its styles and interaction states are deliberately migrated and tested.

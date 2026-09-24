@@ -525,3 +525,18 @@ Mandatory rules:
 - every migrated module must satisfy the checklist in `docs/DESIGN_SYSTEM.md` and update documentation/manual when interaction changes.
 
 Before adding a new component or color, search the existing UI Kit/tokens first.
+
+
+## Design System V2 Phase 1 runtime invariant
+
+Phase 1 is implemented.
+
+- Canonical runtime tokens: `app/design-system/tokens.css`.
+- Load order: tokens first, legacy `app/globals.css` second.
+- Do not reverse this into a global legacy-variable override as a shortcut.
+- Canonical new-component namespace: `components/ui`.
+- Existing `UiIcon` is the provisional single icon system and is bridged through `components/ui/Icon.tsx`.
+- `/ui-kit` is the live no-index component catalog; Phase 1 contains Foundations only.
+- Baseline audit: `docs/DESIGN_AUDIT_PHASE1.md`.
+- CI guard: `scripts/design-system-smoke.mjs`.
+- Phase 2 must adapt/reuse existing shared components before creating replacements.

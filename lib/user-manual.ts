@@ -159,11 +159,14 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Selecciona el país de la persona y, si registras su documento, escoge el tipo disponible para ese país; el tipo de documento no se escribe manualmente.",
       "El indicativo del teléfono se toma automáticamente del país seleccionado. Escribe solo el número nacional restante.",
       "Asigna acceso a todas las sedes o limita el usuario a sedes concretas.",
+      "En el directorio puedes filtrar por Empresa, Rol, Sede y Proveedor cuando exista más de una opción útil. Si solo hay una empresa/sede posible, ese filtro se oculta automáticamente.",
       "La tarjeta compacta de usuario muestra foto, estado, rol, empresa, alcance de sedes y los indicadores operativos principales; usa cuatro columnas en escritorio normal y cinco solo cuando el ancho mantiene la legibilidad.",
       "Los estados de biometría y seguimiento Reacción no se muestran como etiquetas ambiguas en el directorio; consúltalos dentro de la ficha del usuario, donde tienen contexto.",
       "Si el usuario tiene teléfono registrado, la tarjeta ofrece acceso directo a WhatsApp. Desactivar/reactivar usa una acción de estado distinta de la eliminación definitiva.",
       "Selecciona la tarjeta para cambiar a su perfil en la misma pantalla; no se abre un popup. La miga Usuarios devuelve al directorio.",
-      "La foto, rol, alcance y estadísticas quedan visibles a la izquierda y las pestañas de Información, Estadísticas, Actividad, Asistencia y Hoja de vida cambian el contenido del panel derecho.",
+      "La foto, rol, alcance y estadísticas quedan visibles a la izquierda y las pestañas de Información, Documentos, Contacto de emergencia, Estadísticas, Actividad, Asistencia y Hoja de vida cambian el contenido del panel derecho.",
+      "En Documentos puedes cargar cédula/documento de identidad, hoja de vida, ARL, EPS, pensión, cesantías, caja de compensación, parafiscales/PILA, certificación bancaria, contratos y certificaciones con categorías estandarizadas.",
+      "En Contacto de emergencia registra nombre, relación, teléfono, correo opcional y observaciones de una referencia personal o familiar.",
       "La pestaña Estadísticas reúne OT activas, actividades pendientes/completadas, horas de campo, progreso de asistencia de los últimos siete días, tiempo registrado hoy, turno actual y próximos compromisos.",
       "Las estadísticas detalladas se cargan al abrir la ficha; si esa consulta falla, el directorio de Usuarios sigue disponible y la pestaña conserva los indicadores básicos.",
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
@@ -310,13 +313,16 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/suppliers",
     steps:[
-      "Crea el proveedor con logo, tipo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y Hoja de vida.",
+      "Crea el proveedor con logo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y Hoja de vida.",
+      "Selecciona uno o varios Tipos de proveedor y una o varias Categorías / especialidades desde los catálogos estándar. No se escriben libremente para evitar variaciones en reportes, bases de datos e importaciones.",
+      "El directorio permite filtrar por Empresa, Tipo/capacidad, Especialidad y País cuando exista más de una opción útil; los filtros se ocultan si no pueden reducir el listado.",
       "El directorio usa una tarjeta comercial compacta distinta a la de Usuarios: logo cuadrado redondeado superpuesto al banner, tipo, ubicación/categoría, contacto, actividades, suministros y requisiciones. Usa cuatro columnas en escritorio normal y cinco solo en pantallas suficientemente amplias.",
       "La eliminación definitiva del proveedor usa la ventana de seguridad propia de Desweb; si existe historial operativo, el sistema bloquea el borrado para preservar trazabilidad.",
       "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
       "Si es proveedor de Materiales/Suministros o Mixto, consulta Inventarios / suministros para ver los artículos que nos provee.",
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
+      "En Información financiera registra banco, tipo y número de cuenta, titular, moneda, plazo y correo para pagos. En el resumen normal el número de cuenta se presenta enmascarado.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente.",
       "Exporta la Hoja de vida del proveedor en PDF, Excel o Word compatible.",
     ],
@@ -372,6 +378,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Filtros inteligentes y expedientes estructurados",
+    summary:"Los directorios principales muestran filtros de Empresa, Sede y otros criterios solo cuando son útiles; Proveedores usa tipos/especialidades multi-selección estandarizados, Usuarios incorpora documentos y contacto de emergencia, y Proveedores añade información financiera para pagos.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Dashboards por rol con comparación de KPIs",

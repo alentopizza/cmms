@@ -64,7 +64,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
     WHERE i.active=true AND p.active=true AND p.supplier_type IN ('materials','both')`;
   const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,
-      count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
+      count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
+      COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
+      COALESCE(sum(ri.quantity_received),0)::text quantity_received
     FROM supplier_requisitions r LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id`;
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;

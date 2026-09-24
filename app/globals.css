@@ -13385,3 +13385,31 @@ html[data-theme="dark"] .supplier-commercial-trend-metric i{background:#2d3a41}
   .supplier-commercial-trend{overflow:auto}
   .supplier-commercial-trend>article{min-width:620px}
 }
+
+
+/* Supplier returns — Phase 4 */
+.supplier-return-panel,.supplier-return-history{overflow:hidden}
+.supplier-return-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;background:#fff0ee;color:#a34a3e;font-size:8px;font-weight:900;white-space:nowrap}
+.supplier-return-form{margin-top:8px}
+.supplier-return-source-list{display:grid;gap:8px}
+.supplier-return-source{display:grid;gap:9px;padding:11px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
+.supplier-return-source-head{display:grid;grid-template-columns:minmax(170px,1.4fr) repeat(4,minmax(90px,.7fr));gap:9px;align-items:center}
+.supplier-return-source-head>span,.supplier-return-source-head>div{display:grid;gap:2px}
+.supplier-return-source-head strong{font-size:9px;color:var(--text)}
+.supplier-return-source-head small{font-size:7px;color:var(--text-soft)}
+.supplier-return-source-fields{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(220px,1fr) minmax(240px,1.3fr);gap:9px;align-items:end;padding-top:8px;border-top:1px solid var(--border)}
+.supplier-return-source-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-bottom:7px}
+.supplier-return-source-meta span{font-size:7px;color:var(--text-soft)}
+.supplier-return-history .table td{vertical-align:top}
+.kardex-type-pill.supplier_return{background:#fff0ee;color:#a34a3e}
+html[data-theme="dark"] .supplier-return-badge,.kardex-type-pill.supplier_return{border-color:var(--border)}
+html[data-theme="dark"] .supplier-return-badge{background:var(--surface-soft);color:#e4a397}
+@media(max-width:980px){
+  .supplier-return-source-head{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .supplier-return-source-fields{grid-template-columns:1fr 1fr}
+  .supplier-return-source-meta{grid-column:1/-1}
+}
+@media(max-width:680px){
+  .supplier-return-source-head,.supplier-return-source-fields{grid-template-columns:1fr}
+  .supplier-return-source-meta{grid-column:auto}
+}

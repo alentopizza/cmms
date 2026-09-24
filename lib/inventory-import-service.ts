@@ -95,6 +95,22 @@ export function isServiceInventoryRow(typeValue:string,categoryValue:string,unit
     ||["servicio","hora","dia","viaje","visita","punto"].includes(unit);
 }
 
+export function supplierReferencePrimaryTargetsSupplier(reference:SupplierReference,supplier:ImportSupplier){
+  const candidates:[SupplierResolution["matchedBy"],string][]=[
+    ["id",(reference.supplierId||"").trim()],
+    ["tax_id",(reference.taxId||"").trim()],
+    ["code",(reference.code||"").trim()],
+    ["name",(reference.name||"").trim()],
+  ];
+  const primary=candidates.find(([,value])=>Boolean(value));
+  if(!primary)return true;
+  const [field,value]=primary;
+  if(field==="id")return supplier.id.toLowerCase()===value.toLowerCase()||key(supplier.code)===key(value);
+  if(field==="tax_id")return taxKey(supplier.tax_id)===taxKey(value);
+  if(field==="code")return key(supplier.code)===key(value);
+  return key(supplier.name)===key(value);
+}
+
 export function supplierBelongsToContext(supplier:ImportSupplier|null,contextSupplier:ImportSupplier|null){
   return !contextSupplier||supplier?.id===contextSupplier.id;
 }

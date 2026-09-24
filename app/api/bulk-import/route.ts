@@ -139,7 +139,7 @@ function resolveWarehouse(rows:Warehouse[],siteId:string,locationId:string,value
   return findByName(candidates,value)||findByName(rows,value);
 }
 
-function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<ReturnType<typeof catalogs>>){
+function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<ReturnType<typeof catalogs>>,fixedSupplier:Supplier|null){
   const issues:Issue[]=[];
   const parsed=[] as Array<Record<string,unknown>>;
   const fileSkus=new Set<string>();
@@ -152,7 +152,11 @@ function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
     if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta nombre.");
     if(sku&&fileSkus.has(sku))issue(issues,sheetName,row.rowNumber,"error","SKU repetido dentro del archivo: "+sku);
     fileSkus.add(sku);
-    const supplier=resolveSupplier(catalog.suppliers,textValue(row.values.supplier));
+    const supplierText=textValue(row.values.supplier);
+    const supplier=fixedSupplier || resolveSupplier(catalog.suppliers,supplierText);
+    if(fixedSupplier&&supplierText&&key(supplierText)!==key(fixedSupplier.name)&&key(supplierText)!==key(fixedSupplier.tax_id||"")){
+      issue(issues,sheetName,row.rowNumber,"error","La importación está abierta desde el proveedor "+fixedSupplier.name+"; la fila pertenece a otro proveedor.");
+    }
     if(!supplier)issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado en la empresa.");
     else if(!["materials","both"].includes(supplier.supplier_type))issue(issues,sheetName,row.rowNumber,"error","El proveedor no está habilitado para materiales/suministros.");
     const site=resolveSite(catalog.sites,textValue(row.values.site));
@@ -218,6 +222,7 @@ export async function POST(request:Request){
   const form=await request.formData();
   const entity=String(form.get("entity")||"inventory")==="assets"?"assets":"inventory";
   const mode=String(form.get("mode")||"validate");
+  const fixedSupplierId=String(form.get("supplier_id")||"");
   if(entity==="inventory"&&!can(session,"inventory.write"))return NextResponse.json({error:"Forbidden"},{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return NextResponse.json({error:"Forbidden"},{status:403});
   if(!session.organizationId)return NextResponse.json({error:"Selecciona una empresa para importar."},{status:400});
@@ -229,6 +234,8 @@ export async function POST(request:Request){
   const organizationId=session.organizationId;
   const workbook=await loadWorkbook(buffer);
   const catalog=await catalogs(organizationId);
+  const fixedSupplier=fixedSupplierId?catalog.suppliers.find(supplier=>supplier.id===fixedSupplierId)||null:null;
+  if(fixedSupplierId&&!fixedSupplier)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
   const issues:Issue[]=[];
 
   if(entity==="inventory"){
@@ -236,7 +243,7 @@ export async function POST(request:Request){
     if(!sheet)return NextResponse.json({error:"No se encontró la hoja Inventario o Productos."},{status:400});
     const parsedSheet=parseSheet(sheet,INVENTORY_ALIASES,["sku","name","supplier"]);
     if(parsedSheet.missing.length)issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "));
-    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog);
+    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog,fixedSupplier);
     issues.push(...inv.issues);
 
     const kardexSheet=findWorksheet(workbook,["Kardex"]);

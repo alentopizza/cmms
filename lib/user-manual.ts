@@ -303,7 +303,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex. La barra interna permite ir a Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex.",
       "Usa Nuevo producto para crear un artículo con proveedor, sede, sububicación, categoría, bodega, mínimos, máximos, costo y existencia inicial. La existencia inicial se registra como una Entrada de Kardex.",
       "Usa Importar para descargar primero la plantilla contextual de la empresa. Incluye Catálogos, Bodegas, Inventario y Kardex.",
-      "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes.",
+      "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes. El mismo modal conserva un historial reciente de importaciones con archivo, fecha, usuario y resultado.",
       "La importación reconoce también el formato demo con hojas Productos, Bodegas y Kardex; las filas declaradas como Servicios tercerizados se omiten porque no representan existencias.",
       "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes; lote, vencimiento y centro de costo quedan disponibles para trazabilidad.",
       "Abre Ver detalles en un producto para editar su ficha, reemplazar su imagen, consultar existencias por bodega y revisar todo su historial de movimientos.",
@@ -367,7 +367,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La eliminación definitiva del proveedor usa la ventana de seguridad propia de Desweb; si existe historial operativo, el sistema bloquea el borrado para preservar trazabilidad.",
       "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
-      "Si es proveedor de Materiales/Suministros o Mixto, Inventarios / suministros es operativo: puedes crear, importar, editar, desactivar y abrir el Kardex de sus artículos sin salir de la ficha.",
+      "Si es proveedor de Materiales/Suministros o Mixto, Inventarios / suministros es operativo: puedes crear, importar, editar, desactivar, reactivar y abrir el Kardex de sus artículos sin salir de la ficha. Los suministros inactivos conservan su historial y no aparecen para nuevas requisiciones hasta reactivarlos.",
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
@@ -429,6 +429,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Historial de importaciones y recuperación de suministros",
+    summary:"El importador muestra su historial reciente; la ficha del proveedor permite imágenes de suministros y reactivar artículos inactivos sin perder Kardex.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Recepción de requisiciones contra Kardex",

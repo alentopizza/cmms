@@ -436,6 +436,8 @@ Using only the live Company setting would make old requisitions change meaning a
 - receipt routes must independently enforce current requisition approval state;
 - approval permission is distinct from generic requisition write permission;
 - requester self-approval is explicitly governed;
+- a below-threshold requisition that is later amended above the stored threshold enters approval automatically;
+- once approval becomes required for a requisition, later amount reductions do not remove the requirement;
 - quantity, estimated cost or required-date changes invalidate a previous decision and reopen approval;
 - prior Inventory/Kardex receipt history remains immutable;
 - `supplier_requisition_approval_events` is the domain timeline and `audit_log` remains the cross-cutting audit record.

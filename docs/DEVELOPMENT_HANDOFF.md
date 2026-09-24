@@ -399,3 +399,17 @@ Database migrations:
 
 Regression validation:
 - `scripts/inventory-kardex-smoke.mjs` runs in CI after migrations and before the production build.
+
+
+### Inventory / Assets operational surface extension — 2026-09-24
+
+After the bulk-import checkpoint, the UI/API surface was extended so the modules are not import-only:
+
+- `components/InventorySubnav.tsx` is the shared navigation contract for Inventory subpages.
+- `/dashboard/inventory/categories` + `/api/inventory/categories/*` manage standardized inventory categories.
+- `/dashboard/inventory/warehouses` + `/api/inventory/warehouses/*` manage physical stock locations.
+- `/dashboard/inventory/kardex` + `/api/inventory/movements` provide the global movement workspace.
+- `/api/module-export?entity=kardex` exports Kardex independently in XLSX/CSV/PDF and supports a movement-type filter.
+- Inactive inventory masters remain queryable in the main Inventory directory and may be reactivated. Never hard-delete an item only to remove it from an operational list.
+- `/api/assets/[id]` is the complete asset mutation endpoint; the asset detail page is the normal edit surface for tenant operators.
+- Inventory/Asset images use authenticated endpoints (`/api/inventory/:id/image`, `/api/assets/:id/image`). Do not expose raw bytea data or public object URLs.

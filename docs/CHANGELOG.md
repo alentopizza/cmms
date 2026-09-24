@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 1 · Foundations
+
+### Added
+
+- Runtime token layer `app/design-system/tokens.css` with approved Brand, Primary, Teal, Navy, semantic, module and chart colors.
+- Typography, spacing, radius, shadow, control-height, focus and motion tokens.
+- Semantic dark-theme mapping using approved V2 scales.
+- Reduced-motion token behavior.
+- New UI Kit namespace under `components/ui`.
+- Existing `UiIcon` exposed through `components/ui/Icon.tsx` as the provisional canonical icon system.
+- Token-name manifest `lib/design-system.ts` for documentation surfaces without duplicating token values in TypeScript.
+- Live responsive/no-index `/ui-kit` Foundations catalog.
+- Technical baseline audit `docs/DESIGN_AUDIT_PHASE1.md`.
+- New `scripts/design-system-smoke.mjs` regression wired into CI.
+
+### Baseline findings
+
+- Legacy `app/globals.css` measured approximately 540 KB.
+- 1,561 raw hex occurrences and 915 distinct hex values were detected.
+- Multiple parallel button/card/modal/status/table/filter/KPI families remain and will be migrated progressively.
+
+### Compatibility
+
+- Phase 1 does not override the existing legacy aliases globally.
+- Existing modules retain their current appearance and behavior.
+- V2 tokens are available globally for new/migrated UI.
+- No API, database, authentication, RBAC or business-rule changes.
+
+### Migration status
+
+- Phase 0 — Governance: complete.
+- **Phase 1 — Foundations: implemented.**
+- Next: **Phase 2 — UI Core primitives.**
+
 ## 2026-09-24 — DESWEB Design System V2 governance
 
 ### Added

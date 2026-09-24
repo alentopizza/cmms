@@ -12,6 +12,8 @@ import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/Int
 import UiIcon from "@/components/UiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MultiSelectDropdown, { type MultiSelectOption } from "@/components/MultiSelectDropdown";
+import BulkImportModal from "@/components/BulkImportModal";
+import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import { countryName } from "@/lib/international-catalog";
 
 export type SupplierDirectoryItem={
@@ -34,6 +36,10 @@ export type SupplierDocument={
   id:string;supplier_id:string;category:string;display_name:string;reference:string|null;expires_at:string|null;file_name:string|null;
   file_mime_type:string|null;archived_at:string|null;created_at:string;
 };
+type InventorySiteOption={id:string;organization_id:string;name:string};
+type InventoryLocationOption={id:string;organization_id:string;site_id:string;name:string;label:string};
+type InventoryCategoryOption={id:string;organization_id:string;name:string};
+type InventoryWarehouseOption={id:string;organization_id:string;site_id:string|null;location_id:string|null;name:string};
 
 function typeLabel(type:SupplierDirectoryItem["supplier_type"]){
   if(type==="services")return "Servicios";
@@ -86,7 +92,7 @@ function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;
 }
 
 export default function SupplierDirectory({
-  suppliers,activities,items,requisitions,documents,capabilityOptions,specialtyOptions,initialSelectedId="",initialTab="general",
+  suppliers,activities,items,requisitions,documents,capabilityOptions,specialtyOptions,inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses,canInventoryWrite,initialSelectedId="",initialTab="general",
 }:{
   suppliers:SupplierDirectoryItem[];
   activities:SupplierActivity[];
@@ -95,6 +101,11 @@ export default function SupplierDirectory({
   documents:SupplierDocument[];
   capabilityOptions:MultiSelectOption[];
   specialtyOptions:MultiSelectOption[];
+  inventorySites:InventorySiteOption[];
+  inventoryLocations:InventoryLocationOption[];
+  inventoryCategories:InventoryCategoryOption[];
+  inventoryWarehouses:InventoryWarehouseOption[];
+  canInventoryWrite:boolean;
   initialSelectedId?:string;
   initialTab?:string;
 }){
@@ -350,18 +361,64 @@ export default function SupplierDirectory({
           <Link href={"/dashboard/work-orders/"+activity.work_order_id}>Ver OT</Link>
         </article>):<div className="location-detail-empty">No hay actividades asignadas a este proveedor de servicios.</div>}
       </div>}]:[]),
-      ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:<div className="entity-section-stack">
-        <div className="supplier-supply-grid">{selectedItems.length?selectedItems.map(item=><article className="supplier-supply-card" key={item.id}>
-          <div><small>{item.sku}</small><strong>{item.name}</strong><span>{item.site_name||"Sin sede"}{item.location_name?" · "+item.location_name:""}</span></div>
-          <div><span>Existencia</span><strong>{item.quantity} {item.unit}</strong></div>
-          <div><span>Costo ref.</span><strong>{item.unit_cost}</strong></div>
-        </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor.</div>}</div>
+      ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:<div className="entity-section-stack supplier-operational-tab">
+        <div className="entity-panel supplier-tab-toolbar">
+          <div><h3><span className="entity-section-icon"><UiIcon name="asset"/></span>Inventario del proveedor</h3><p className="entity-panel-copy">Crea, importa, edita y consulta los artículos suministrados por este proveedor. El Kardex permanece centralizado en Inventario.</p></div>
+          <div className="supplier-tab-actions">
+            {canInventoryWrite&&<BulkImportModal entity="inventory" supplierId={selected.id} compact label="Importar"/>}
+            <Link className="button secondary" href={"/dashboard/inventory"}><UiIcon name="asset" size={15}/> Abrir inventario</Link>
+          </div>
+        </div>
+        {canInventoryWrite&&<div className="entity-panel">
+          <h3>Crear suministro para {selected.name}</h3>
+          <form className="form-grid" method="post" action="/api/inventory">
+            <input type="hidden" name="supplier_id" value={selected.id}/>
+            <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+            <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{inventorySites.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></div>
+            <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{inventoryLocations.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.id}>{option.label}</option>)}</select></div>
+            <div className="field"><label>SKU *</label><input name="sku" required placeholder="REP-001"/></div>
+            <div className="field"><label>Nombre *</label><input name="name" required placeholder="Nombre del suministro"/></div>
+            <div className="field"><label>Categoría</label><input name="category" list={"supplier-category-"+selected.id}/><datalist id={"supplier-category-"+selected.id}>{inventoryCategories.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.name}/>)}</datalist></div>
+            <div className="field"><label>Presentación</label><input name="presentation" placeholder="Caja, rollo, unidad..."/></div>
+            <div className="field"><label>Unidad</label><input name="unit" defaultValue="unidad"/></div>
+            <div className="field"><label>Bodega</label><input name="warehouse_name" list={"supplier-warehouse-"+selected.id} defaultValue="Almacén principal"/><datalist id={"supplier-warehouse-"+selected.id}>{inventoryWarehouses.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.name}/>)}</datalist></div>
+            <div className="field"><label>Existencia inicial</label><input name="quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Stock mínimo</label><input name="min_quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Stock máximo</label><input name="max_quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" min="0" step="0.01" defaultValue="0"/></div>
+            <div className="field form-span-2"><label>Descripción</label><input name="description"/></div>
+            <div className="form-span-2 form-actions"><button className="button" type="submit">Crear suministro</button></div>
+          </form>
+        </div>}
+        <div className="supplier-supply-grid supplier-supply-grid-operational">{selectedItems.length?selectedItems.map(item=><article className="supplier-supply-card supplier-supply-card-operational" key={item.id}>
+          <div className="supplier-supply-card-head"><div><small>{item.sku}</small><strong>{item.name}</strong><span>{item.category_name||"Sin categoría"} · {item.site_name||"Sin sede"}{item.location_name?" · "+item.location_name:""}</span></div><span className={Number(item.quantity)<=Number(item.min_quantity)?"inventory-stock-pill low":"inventory-stock-pill ok"}>{Number(item.quantity)<=Number(item.min_quantity)?"Stock bajo":"En stock"}</span></div>
+          <div className="supplier-supply-card-metrics"><div><span>Existencia</span><strong>{item.quantity} {item.unit}</strong></div><div><span>Mínimo</span><strong>{item.min_quantity}</strong></div><div><span>Costo</span><strong>{item.unit_cost}</strong></div><div><span>Bodega</span><strong>{item.warehouse_name||item.storage_location||"Sin registrar"}</strong></div></div>
+          <div className="supplier-supply-card-actions">
+            <Link className="button secondary" href={"/dashboard/inventory/"+item.id}>Ver / Kardex</Link>
+            {canInventoryWrite&&<details className="supplier-inline-edit"><summary className="button secondary"><UiIcon name="edit" size={14}/> Editar</summary><form className="form-grid" method="post" action={"/api/inventory/"+item.id}>
+              <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+              <div className="field"><label>Nombre</label><input name="name" defaultValue={item.name} required/></div>
+              <div className="field"><label>Categoría</label><input name="category" defaultValue={item.category_name||""}/></div>
+              <div className="field"><label>Presentación</label><input name="presentation" defaultValue={item.presentation||""}/></div>
+              <div className="field"><label>Unidad</label><input name="unit" defaultValue={item.unit}/></div>
+              <div className="field"><label>Mínimo</label><input name="min_quantity" type="number" step="0.001" min="0" defaultValue={item.min_quantity}/></div>
+              <div className="field"><label>Máximo</label><input name="max_quantity" type="number" step="0.001" min="0" defaultValue={item.max_quantity||"0"}/></div>
+              <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" step="0.01" min="0" defaultValue={item.unit_cost}/></div>
+              <div className="field form-span-2"><label>Descripción</label><input name="description" defaultValue={item.description||""}/></div>
+              <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar</button></div>
+            </form></details>}
+          </div>
+        </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor. Puedes crearlos o importarlos desde aquí.</div>}</div>
       </div>}]:[]),
-      {id:"requisitions",label:"Requisiciones",content:<div className="entity-section-stack">
-        {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title="Nueva requisición al proveedor" description="Selecciona los insumos y cantidades que deseas solicitar a este proveedor."/></div>}
-        <div className="entity-panel"><h3>Historial de requisiciones</h3>{selectedReqs.length?<div className="supplier-requisition-list">{selectedReqs.map(req=><Link key={req.id} href={"/dashboard/requisitions/"+req.id}>
-          <span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong><small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small><UiIcon name="chevron-right" size={14}/>
-        </Link>)}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}</div>
+      {id:"requisitions",label:"Requisiciones",content:<div className="entity-section-stack supplier-operational-tab">
+        {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title={"Nueva requisición · "+selected.name} description="Selecciona los insumos y cantidades. Esta ficha genera una requisición directamente para este proveedor."/></div>}
+        <div className="entity-panel">
+          <div className="entity-panel-heading-row"><div><h3>Historial de requisiciones</h3><p className="entity-panel-copy">Consulta, actualiza y exporta cada requisición sin perder la relación con el proveedor.</p></div><Link className="button secondary" href="/dashboard/requisitions">Ver módulo completo</Link></div>
+          {selectedReqs.length?<div className="supplier-requisition-list supplier-requisition-list-operational">{selectedReqs.map(req=><article key={req.id} className="supplier-requisition-operational-row">
+            <Link href={"/dashboard/requisitions/"+req.id}><span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong><small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small><UiIcon name="chevron-right" size={14}/></Link>
+            <RequisitionExportMenu id={req.id}/>
+          </article>)}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}
+        </div>
       </div>},
     ]}
   />

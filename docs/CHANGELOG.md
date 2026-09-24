@@ -1563,3 +1563,28 @@ This file records meaningful product and engineering changes so future developer
 - After saving financial information, the supplier returns to the Financial tab in read-only state, so the primary action becomes **Editar** again.
 - Removed the duplicate **Hoja de vida** tab and its second export menu from Supplier profiles.
 - The only Supplier export control is now the upper profile toolbar **Exportar** action, labelled as **Ficha del proveedor** in PDF, Excel and Word formats.
+
+
+## 2026-09-24 — Inventario, Activos, Kardex e importación masiva
+
+### Added
+
+- Inventario y Activos incorporan importación masiva XLSX con validación previa, reporte de errores/advertencias por fila y confirmación explícita.
+- Plantillas descargables contextualizadas por empresa para Inventario/Kardex y Activos.
+- Inventario incorpora Bodegas, categorías, stock mínimo/máximo, stock por bodega y Kardex trazable.
+- El stock inicial se registra como Entrada de Kardex, no como saldo silencioso.
+- Kardex soporta Entrada, Salida, Ajustes, Devolución y Traslado, además de lote, vencimiento y centro de costo.
+- PostgreSQL rechaza salidas que produzcan stock negativo y mantiene el saldo agregado del artículo mediante trigger.
+- Inventario y Activos incorporan exportación Excel, CSV y PDF.
+- Requisiciones permite editar cantidades y costos estimados de ítems mientras siga abierta, y retirar ítems sin recepción.
+- La pestaña Inventarios / suministros del proveedor permite crear, importar, editar, desactivar y abrir el Kardex de artículos asociados.
+
+### Compatibility
+
+- El importador reconoce la plantilla demo revisada con hojas Productos, Bodegas y Kardex.
+- Las filas declaradas como Servicios tercerizados se omiten con advertencia en lugar de bloquear la carga de materiales.
+- La columna Cantidad base del formato demo se reconoce como stock inicial para artículos nuevos.
+
+### Validation
+
+- CI ahora ejecuta un smoke test de Kardex sobre PostgreSQL 17 para comprobar Entrada, Salida, Traslado, Ajuste, stock por bodega, saldo total y rechazo de inventario negativo.

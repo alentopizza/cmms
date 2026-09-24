@@ -105,6 +105,18 @@ For **Sububicación**, the same profile geometry uses the Sub-location reference
 
 For **Técnico/Usuario**, the identity column uses the profile photo and Company/role scope. The right panel may show identity/access information, descriptive execution statistics, Attendance/biometric state and Reaction connection context. These statistics are operational evidence only and must not become automatic worker ranking or employment decisions.
 
+The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
+
+- active assigned Work Orders;
+- pending Activities and Activity completions;
+- seven-day and 30-day Attendance hours;
+- current/open Attendance shift;
+- biometric enrollment state and live Reaction connection;
+- overdue Activities;
+- upcoming assigned Activities with Work Order and Site context.
+
+The dashboard may calculate presentation ratios from those facts (for example completed vs currently pending Activity counts), but those ratios are explanatory UI aids, not persisted worker ratings or automated HR decisions.
+
 The record export menu currently offers:
 - PDF — executive/printable Hoja de vida;
 - Excel — native XLSX structured record;

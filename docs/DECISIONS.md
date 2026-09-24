@@ -531,3 +531,35 @@ Separate templates or engines create schema drift, duplicate validation logic an
 - preflight is complete before atomic commit;
 - external movement IDs and IMP batch folios improve repeat-import traceability;
 - no future feature should fork a Supplier-only import route/service.
+
+
+## ADR — DESWEB Design System V2 and UI Kit are the visual source of truth
+
+**Status:** Accepted — 2026-09-24.
+
+### Context
+
+The CMMS has grown through iterative module development and currently contains a mixture of global CSS, reusable components and module-local visual rules. That has produced legacy palette values, duplicated component patterns and inconsistent spacing/state treatments.
+
+### Decision
+
+Adopt a three-layer frontend architecture:
+
+1. **DESWEB Design System V2** for foundations/tokens;
+2. **DESWEB UI Kit** for reusable UI Core + Business UI components;
+3. ERP modules composed from those components.
+
+The official brand DNA becomes `#72F1DC`, `#2C8780`, `#1D1D2C`. The previous product palette remains only as temporary legacy implementation until migrated.
+
+The project will not adopt a big-bang redesign. Migration follows `docs/DESIGN_MIGRATION_PLAN.md`.
+
+### Consequences
+
+- no arbitrary colors in new components;
+- no new module-local primitive components when a shared equivalent exists;
+- CSS variables/tokens are the canonical implementation mechanism because the current project uses global CSS rather than Tailwind or a component framework;
+- `/ui-kit` will become the live component catalog;
+- visual migration must preserve functional behavior and server-authoritative boundaries;
+- legacy styles may coexist temporarily with V2 via controlled compatibility aliases;
+- replacement of icon infrastructure or introduction of a third-party UI/CSS framework requires a separate ADR;
+- each module migration includes responsive/accessibility review and documentation synchronization.

@@ -89,3 +89,18 @@ When a code change introduces a new section or responsibility that another contr
 ## Refactoring rule
 
 When touching a large existing file, improve section readability opportunistically, but do not create noisy comment-only churn across the entire repository. New complex files should follow this convention from their first commit.
+
+
+## Frontend Design System implementation rules
+
+For visual work, read `docs/DESIGN_SYSTEM.md` and `docs/UI_KIT.md` before adding CSS/components.
+
+- Prefer semantic Design Tokens over raw color/spacing/radius values.
+- Do not put new hardcoded hex colors in JSX/TSX.
+- Before creating a Button/Input/Card/Badge/Modal/Table/Tabs/KPI/Search/Filter primitive, inspect the UI Kit.
+- Extend a reusable variant before copying a component into a module.
+- Business UI may own domain composition, but visual primitives stay shared.
+- Keep server/business logic outside visual primitives.
+- When migrating an existing component, preserve event/form/API contracts unless the functional change is separately approved.
+- Responsive behavior and keyboard/focus behavior belong in the component's implementation, not as a later module patch.
+- Component comments should document non-obvious composition/accessibility constraints rather than restating CSS.

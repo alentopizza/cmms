@@ -10,14 +10,16 @@ Before making changes, read:
 4. `docs/DECISIONS.md`
 5. `docs/BRANDING.md`
 6. `docs/DESIGN_SYSTEM.md`
-7. `docs/CHANGELOG.md`
-8. `docs/ROADMAP.md`
-9. `docs/FUNCTIONAL_MODEL.md`
-10. `docs/COMMERCIAL_MODEL.md`
-11. `docs/INSTALLATION.md`
-12. `docs/IP_AND_DISTRIBUTION.md`
-13. `docs/ROLE_MODEL.md`
-14. `docs/CODE_GUIDE.md`
+7. `docs/UI_KIT.md`
+8. `docs/DESIGN_MIGRATION_PLAN.md`
+9. `docs/CHANGELOG.md`
+10. `docs/ROADMAP.md`
+11. `docs/FUNCTIONAL_MODEL.md`
+12. `docs/COMMERCIAL_MODEL.md`
+13. `docs/INSTALLATION.md`
+14. `docs/IP_AND_DISTRIBUTION.md`
+15. `docs/ROLE_MODEL.md`
+16. `docs/CODE_GUIDE.md`
 
 ## Working rules
 
@@ -495,3 +497,31 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Tenant users must still be rejected if the Supplier belongs to another Organization.
 - Site, Sublocation, Warehouse, limits and setup sequence must be validated against the Supplier-owned Organization.
 - Supplier-profile create redirects must return to the Supplier Inventory tab with Inventory-specific success/error feedback; do not reuse Supplier-create feedback keys.
+
+
+## DESWEB Design System V2 / UI Kit invariant
+
+The approved visual direction from 2026-09-24 is governed by three documents:
+
+- `docs/DESIGN_SYSTEM.md` — visual tokens, color, typography, spacing, radius, shadows, motion, responsive and accessibility;
+- `docs/UI_KIT.md` — official reusable component catalog;
+- `docs/DESIGN_MIGRATION_PLAN.md` — phased migration order and non-regression rules.
+
+Mandatory rules:
+
+- the DESWEB visual DNA is `#72F1DC` (Primary), `#2C8780` (Secondary) and `#1D1D2C` (Dark);
+- the former `#293644/#38B2A9/#79CAC4/#BAE3E0` palette is legacy implementation, not the source for new components;
+- do not add arbitrary colors or module-local hex values when a Design Token exists;
+- do not create a module-specific Button/Input/Card/Badge/Modal/Table/Tabs/KPI/Search/Filter when the UI Kit already provides or can extend the pattern;
+- Business UI components must be composed from UI Core primitives;
+- all interactive components require visible focus and must cover relevant hover/active/disabled/loading/error/success states;
+- state meaning must use text/icon + color, never color alone;
+- all new UI must work across desktop, laptop/tablet and mobile, adapting composition rather than merely shrinking;
+- preserve the existing light/dark/system theme contract unless the product owner explicitly changes it;
+- the future `/ui-kit` page is the official live catalog and must render real reusable components, not static imitations;
+- visual migration is progressive. Never perform a blind repository-wide color replacement;
+- a visual phase must not silently alter API behavior, database models, RBAC, authentication, calculations, CRUD, integration or business rules;
+- when a visual change exposes a functional defect, document/separate the functional fix instead of hiding it inside styling work;
+- every migrated module must satisfy the checklist in `docs/DESIGN_SYSTEM.md` and update documentation/manual when interaction changes.
+
+Before adding a new component or color, search the existing UI Kit/tokens first.

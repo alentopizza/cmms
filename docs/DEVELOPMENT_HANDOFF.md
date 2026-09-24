@@ -609,3 +609,66 @@ Current contract:
 - Site/Sub-location/setup/limits/warehouse resolution run against that Supplier-owned Organization;
 - redirect feedback returns to `/dashboard/suppliers?supplier=<id>&tab=inventory`;
 - Supplier-context create uses `inventory_created` / `inventory_error` query keys, not generic Supplier create keys.
+
+
+## 24. DESWEB Design System V2 governance checkpoint — 2026-09-24
+
+The product owner supplied and approved a complete new Design System + UI Kit direction for the ERP.
+
+### Canonical frontend sources
+
+Read in this order before visual work:
+
+1. `docs/DESIGN_SYSTEM.md`;
+2. `docs/UI_KIT.md`;
+3. `docs/DESIGN_MIGRATION_PLAN.md`;
+4. relevant existing functional/profile/module invariants in this Handoff and `AGENTS.md`.
+
+### Visual DNA
+
+- Primary: `#72F1DC`
+- Secondary: `#2C8780`
+- Dark: `#1D1D2C`
+
+The old `#293644/#38B2A9/#79CAC4/#BAE3E0` palette still exists in legacy CSS but is no longer valid for new UI work.
+
+### Current technical reality
+
+- Next.js 16 + React 19 + TypeScript;
+- global CSS in `app/globals.css`;
+- no Tailwind;
+- no external component framework;
+- existing shared components include patterns such as `UiIcon`, `ModuleHeader`, profile workspaces and confirmation dialogs, but the codebase still has substantial module-local styling.
+
+### Migration rule
+
+Do not visually refactor all modules at once.
+
+Current next step is **Phase 1 — Foundations + technical UI Kit structure**:
+
+- audit current CSS/tokens/hardcoded values;
+- implement V2 token layer with controlled legacy aliases;
+- establish UI Kit folders/contracts;
+- decide how existing `UiIcon` maps into the single icon system;
+- create initial `/ui-kit` playground shell;
+- keep all existing APIs/RBAC/CRUD/business flows unchanged.
+
+### Non-regression boundary
+
+A visual PR does not authorize modifications to APIs, DB, authentication, permissions, calculations, integrations or business rules. If visual work exposes a functional defect, document it and separate the functional correction whenever possible.
+
+### Phase sequence
+
+0. Governance/documentation.
+1. Foundations.
+2. UI Core primitives.
+3. Global shell/navigation.
+4. Shared Data UI.
+5. Business UI.
+6. Dashboard/Companies/Locations.
+7. Assets/Inventory.
+8. Suppliers/Users/Crews/Attendance.
+9. Maintenance/Work Orders/Activities/Reaction.
+10. Reports/Settings/final audit.
+
+The product owner intends to review implementation phase by phase.

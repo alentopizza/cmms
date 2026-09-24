@@ -8,15 +8,21 @@ Tagline: **Desarrollo de Soluciones**
 
 Never use the misspelling “Deswel”.
 
-## Official palette
+## Official palette — DESWEB V2
+
+The canonical product palette is:
 
 | Role | Hex |
 |---|---|
-| Institutional dark | `#293644` |
-| White | `#FCFCFC` |
-| Mint light | `#BAE3E0` |
-| Mint medium | `#79CAC4` |
-| Primary teal | `#38B2A9` |
+| Primary / highlighted actions | `#72F1DC` |
+| Secondary / structural teal | `#2C8780` |
+| Dark / titles/sidebar | `#1D1D2C` |
+| Surface | `#FFFFFF` |
+| Product background | `#F4F8F9` |
+
+Full ramps, semantic colors, gradients and functional module colors live in `docs/DESIGN_SYSTEM.md`.
+
+The previous CMMS palette (`#293644`, `#38B2A9`, `#79CAC4`, `#BAE3E0`) is **legacy implementation only**. Existing screens may still contain it until they are migrated, but new visual work must not treat it as the current brand system.
 
 ## Logo variants
 
@@ -65,16 +71,17 @@ Future work should extend the existing module and storage model rather than hard
 
 ## Technology-forward expression
 
-The Desweb CMMS commercial identity should express technology through the existing Desweb palette rather than adopting a separate blue/cyan brand.
+The Desweb CMMS identity should express technology through the V2 DESWEB palette instead of introducing a separate blue/cyan brand.
 
 Preferred hierarchy:
 
-- institutional dark `#293644` as the structural anchor;
-- teal `#38B2A9` for primary interactive/highlight states;
-- mint `#79CAC4` and `#BAE3E0` for glow, telemetry, secondary emphasis and gradients;
-- white/off-white for contrast and legibility.
+- dark `#1D1D2C` as structural anchor;
+- secondary teal `#2C8780` for navigation and primary operational actions;
+- primary mint `#72F1DC` for highlighted actions, focus and active indicators;
+- neutral white/off-white surfaces for enterprise readability;
+- functional colors only when they communicate module/state meaning.
 
-Dark marketing surfaces may use deeper derived shades of the institutional dark while keeping teal/mint as the recognisable signature.
+Dark marketing surfaces may use the Navy scale and approved gradients while preserving the same DESWEB signature.
 
 
 ## Logo usage on public marketing

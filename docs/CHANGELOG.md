@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 governance
+
+### Added
+
+- Canonical `docs/DESIGN_SYSTEM.md` V2 with the new DESWEB visual DNA: Primary `#72F1DC`, Secondary `#2C8780`, Dark `#1D1D2C`.
+- New `docs/UI_KIT.md` defining the official reusable UI Core and ERP Business UI component catalog.
+- New `docs/DESIGN_MIGRATION_PLAN.md` defining the phased migration from foundations through module rollout and final audit.
+- ADR establishing Design System → UI Kit → ERP modules as the frontend architecture.
+- Contributor/code rules preventing arbitrary colors, duplicate primitives and silent functional changes inside visual refactors.
+- Roadmap/Handoff checkpoints for the phase-by-phase ERP redesign.
+
+### Changed
+
+- `docs/BRANDING.md` and README now identify the V2 palette as official.
+- The former `#293644/#38B2A9/#79CAC4/#BAE3E0` palette is explicitly classified as legacy implementation pending gradual migration.
+- Visual migration is now governed by non-regression rules: APIs, DB, authentication, RBAC, CRUD, calculations, integrations and business rules remain unchanged unless separately approved.
+
+### Migration status
+
+- **Phase 0 — Governance/documentation:** completed by this checkpoint.
+- **Next:** Phase 1 — Foundations + technical UI Kit structure.
+
 ## 2026-09-24 — Corrección de creación de suministros desde Proveedor
 
 ### Fixed

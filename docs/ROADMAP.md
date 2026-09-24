@@ -326,9 +326,29 @@ Before production hardening, reinforce this development workflow with the approv
 - IMP folio, origin/context/scope/omitted-row audit metadata;
 - migration 037 and dedicated PostgreSQL smoke regression.
 
-### Next cross-module work
+### DESWEB Design System V2 migration program
 
-- continue the global review of business logic, end-to-end flows and visual consistency across the CMMS, incorporating the next product changes defined with the user.
+The next cross-module program is the progressive visual/UX migration defined in `docs/DESIGN_MIGRATION_PLAN.md`.
+
+- **Phase 0 — Governance/documentation:** Design System V2, UI Kit contract, migration plan, branding/ADR/contributor rules.
+- **Phase 1 — Foundations:** CSS tokens, semantic aliases, typography, spacing, radius, shadows, motion, icon-system decision, initial `/ui-kit` structure.
+- **Phase 2 — UI Core primitives:** Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload.
+- **Phase 3 — Global shell/navigation:** Sidebar, header, responsive navigation, account actions and ModuleNavigation while preserving RBAC/preferences.
+- **Phase 4 — Shared Data UI:** Search, filters, DataTable, pagination, row/bulk actions, KPI, charts, timeline and progress.
+- **Phase 5 — Business UI:** AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, preserving distinct domain identities.
+- **Phase 6 — Dashboard + Companies + Locations.**
+- **Phase 7 — Assets + Inventory**, including their approved secondary navigation.
+- **Phase 8 — Suppliers + Users + Crews + Attendance.**
+- **Phase 9 — Maintenance + Work Orders + Activities/Reaction where shared patterns apply.**
+- **Phase 10 — Reports + Settings + final legacy CSS/accessibility/responsive audit.**
+
+Each phase must remain deployable, preserve business logic, update documentation/manual as needed and merge only after CI/build/regressions pass.
+
+### Immediate next phase
+
+**Phase 1 — Foundations + technical UI Kit structure.**
+
+Before implementation, audit `app/globals.css`, reusable components, hardcoded colors, duplicated primitives and `UiIcon`. Do not start module-by-module redesign before this foundation exists.
 
 
 ## Recently completed role-dashboard analytics slice

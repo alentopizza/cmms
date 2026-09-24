@@ -15,6 +15,16 @@ export type RequisitionSelectableItem={
   min_quantity:string;
   site_name:string|null;
   location_name:string|null;
+  site_id?:string|null;
+  location_id?:string|null;
+  category_id?:string|null;
+  category_name?:string|null;
+  warehouse_id?:string|null;
+  warehouse_name?:string|null;
+  description?:string|null;
+  presentation?:string|null;
+  max_quantity?:string|null;
+  storage_location?:string|null;
 };
 
 export default function RequisitionBuilder({

@@ -111,31 +111,39 @@ export default function SupplierDirectory({
         const supplierItems=items.filter(item=>item.supplier_id===s.id).length;
         const supplierActivities=activities.filter(item=>item.supplier_id===s.id&&["pending","in_progress"].includes(item.status)).length;
         const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
-        return <article className="supplier-profile-card" key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,s.service_category,s.contact_name,s.email].filter(Boolean).join(" ")}>
-          <button type="button" className="supplier-profile-card-main" onClick={()=>open(s.id)} aria-label={"Abrir ficha de "+s.name}>
-            <span className="supplier-profile-logo">{s.has_logo?<img src={"/api/suppliers/"+s.id+"/logo"} alt="" />:<b>{initials(s.name)}</b>}</span>
-            <span className="supplier-profile-card-copy">
-              <span className="supplier-profile-name-row"><strong>{s.name}</strong><em className={s.active?"active":"inactive"}>{s.active?"Activo":"Inactivo"}</em></span>
-              <span><b>Tipo:</b> {typeLabel(s.supplier_type)}</span>
-              <span><b>Contacto:</b> {s.contact_name||"Sin registrar"}</span>
-              <span><b>Correo:</b> {s.email||"Sin registrar"}</span>
-              <span><b>Teléfono:</b> {s.phone||"Sin registrar"}</span>
-              <span><b>Empresa:</b> {s.organization_name}</span>
+        return <article className={"supplier-directory-card-v2 "+(s.active?"":"inactive")} key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,s.service_category,s.contact_name,s.email].filter(Boolean).join(" ")}>
+          <button type="button" className="supplier-card-open" onClick={()=>open(s.id)} aria-label={"Abrir ficha de "+s.name}>
+            <span className="supplier-card-banner" aria-hidden="true">
+              <span className={"supplier-card-state "+(s.active?"active":"inactive")}>{s.active?"Activo":"Inactivo"}</span>
+            </span>
+            <span className="supplier-card-logo-row">
+              <span className="supplier-card-logo">{s.has_logo?<img src={"/api/suppliers/"+s.id+"/logo"} alt="" />:<b>{initials(s.name)}</b>}</span>
+              <span className="supplier-card-type">{typeLabel(s.supplier_type)}</span>
+            </span>
+            <span className="supplier-card-copy-v2">
+              <strong>{s.name}</strong>
+              <span>{s.legal_name||s.organization_name}</span>
+              <small>{[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}</small>
+              <em>{s.service_category||"Categoría sin registrar"}</em>
+            </span>
+            <span className="supplier-card-contact-v2">
+              <span><UiIcon name="user" size={12}/><b>{s.contact_name||"Sin contacto"}</b></span>
+              <span><UiIcon name="phone" size={12}/><b>{s.phone||"Sin teléfono"}</b></span>
+            </span>
+            <span className="supplier-card-metrics-v2">
+              <span><strong>{supplierActivities}</strong><small>Actividades</small></span>
+              <span><strong>{supplierItems}</strong><small>Suministros</small></span>
+              <span><strong>{supplierReqs}</strong><small>Requisiciones</small></span>
             </span>
           </button>
-          <div className="supplier-profile-card-stats">
-            <span><small>Actividades</small><strong>{supplierActivities}</strong></span>
-            <span><small>Suministros</small><strong>{supplierItems}</strong></span>
-            <span><small>Requisiciones</small><strong>{supplierReqs}</strong></span>
-          </div>
-          <div className="supplier-profile-card-actions">
-            <button type="button" onClick={()=>open(s.id)}><UiIcon name="file" size={14}/> Ver ficha</button>
-            <button type="button" onClick={()=>open(s.id,"general",true)}><UiIcon name="edit" size={14}/> Editar</button>
-            {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button type="button" onClick={()=>open(s.id,"requisitions")}><UiIcon name="plus" size={14}/> Requisición</button>}
-            {s.phone&&<a href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp" size={14}/> WhatsApp</a>}
+          <div className="supplier-card-actions-v2">
+            <button className="supplier-card-primary-action" type="button" onClick={()=>open(s.id)}><UiIcon name="file" size={14}/> Ver ficha</button>
+            <button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor"><UiIcon name="edit" size={14}/></button>
+            {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición"><UiIcon name="plus" size={14}/></button>}
+            {s.phone&&<a className="supplier-card-icon-action" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
             <form method="post" action={"/api/suppliers/"+s.id} onSubmit={event=>{if(!window.confirm("¿Eliminar definitivamente este proveedor? Solo será posible si no tiene historial relacionado."))event.preventDefault();}}>
               <input type="hidden" name="intent" value="delete"/>
-              <button type="submit" className="danger-text"><UiIcon name="trash" size={14}/> Eliminar</button>
+              <button type="submit" className="supplier-card-icon-action danger" title="Eliminar proveedor"><UiIcon name="trash" size={14}/></button>
             </form>
           </div>
         </article>;

@@ -130,7 +130,7 @@ export function CorePrimitivesPreview(){
         <p>Tabs y navegación secundaria comparten una misma gramática visual y accesible.</p>
       </div>
       <Breadcrumb items={[{label:"Inicio",href:"/dashboard"},{label:"Activos",href:"/dashboard/assets"},{label:"Activo TR-SIE-2500"}]}/>
-      <ModuleNavigation activeHref="/assets" items={[{label:"Lista de activos",href:"/assets"},{label:"Tipos",href:"/types"},{label:"Categorías",href:"/categories"},{label:"Mantenimientos",href:"/maintenance"}]}/>
+      <ModuleNavigation activeHref="/dashboard/assets" items={[{label:"Lista de activos",href:"/dashboard/assets"},{label:"Tipos",href:"/dashboard/assets"},{label:"Categorías",href:"/dashboard/assets"},{label:"Mantenimientos",href:"/dashboard/maintenance"}]}/>
       <Tabs items={[{id:"general",label:"Información general",content:<p>Contenido de la pestaña activa.</p>},{id:"history",label:"Historial",content:<p>Historial del registro.</p>},{id:"disabled",label:"Deshabilitada",disabled:true}]}/>
       <Pills items={[{id:"all",label:"Todos"},{id:"active",label:"Activos"},{id:"inactive",label:"Inactivos"}]}/>
       <SegmentedControl value={segment} onChange={setSegment} items={[{value:"grid",label:"Tarjetas"},{value:"table",label:"Tabla"}]}/>

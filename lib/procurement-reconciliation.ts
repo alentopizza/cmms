@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { query } from "@/lib/db";
 
 export type ProcurementDocumentType="purchase_order"|"delivery_note"|"invoice"|"credit_note"|"other";
@@ -38,7 +39,7 @@ export function procurementMatchLabel(state:ProcurementMatchState){
   return ({matched:"Coincide",difference:"Con diferencia",pending_evidence:"Pendiente de evidencia",informational:"Informativo",voided:"Anulado"} as Record<ProcurementMatchState,string>)[state];
 }
 
-function rawMatch(row:Omit<ProcurementDocumentSummary,"match_state"|"expected_quantity"|"expected_value"|"quantity_difference"|"value_difference">){
+export function deriveProcurementDocumentMatch(row:Omit<ProcurementDocumentSummary,"match_state"|"expected_quantity"|"expected_value"|"quantity_difference"|"value_difference">){
   if(row.voided_at)return {match_state:"voided" as const,expected_quantity:null,expected_value:null,quantity_difference:null,value_difference:null};
   const lineCount=Number(row.line_count||0);
   const documentQuantity=Number(row.document_quantity||0);
@@ -124,7 +125,7 @@ export async function loadProcurementReconciliation(requisitionId:string){
     [requisitionId],
   );
 
-  const summaries:ProcurementDocumentSummary[]=documents.rows.map(row=>({...row,...rawMatch(row)}));
+  const summaries:ProcurementDocumentSummary[]=documents.rows.map(row=>({...row,...deriveProcurementDocumentMatch(row)}));
 
   const lines=await query<{
     id:string;document_id:string;document_type:ProcurementDocumentType;requisition_item_id:string;sku:string;description:string;unit:string;
@@ -208,4 +209,38 @@ export async function loadProcurementReconciliation(requisitionId:string){
   );
 
   return {documents:summaries,lines:mappedLines,events:events.rows};
+}
+
+
+export async function loadProcurementDocumentMatchForUpdate(client:PoolClient,documentId:string){
+  const result=await client.query<Omit<ProcurementDocumentSummary,"match_state"|"expected_quantity"|"expected_value"|"quantity_difference"|"value_difference">>(
+    `SELECT pd.id,pd.organization_id,pd.supplier_id,pd.requisition_id,pd.document_type,pd.document_number,
+            pd.issue_date::text,pd.currency_code,pd.subtotal::text,pd.tax_total::text,pd.total::text,pd.notes,
+            pd.file_mime_type,pd.file_name,pd.file_size_bytes::text,pd.review_status,pd.review_notes,pd.reviewed_at::text,
+            reviewer.full_name reviewed_by_name,pd.voided_at::text,pd.void_reason,pd.created_at::text,creator.full_name created_by_name,
+            COALESCE((SELECT count(*) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::int line_count,
+            COALESCE((SELECT sum(l.quantity) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_quantity,
+            COALESCE((SELECT sum(l.line_total) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_value,
+            COALESCE((SELECT count(*) FROM procurement_document_receipts pr WHERE pr.document_id=pd.id),0)::int receipt_count,
+            COALESCE((SELECT sum(abs(t.quantity)) FROM procurement_document_receipts pr JOIN inventory_transactions t ON t.id=pr.receipt_transaction_id WHERE pr.document_id=pd.id),0)::text receipt_quantity,
+            COALESCE((SELECT sum(abs(t.quantity)*COALESCE(t.unit_cost,ri.unit_cost_estimated,0))
+                      FROM procurement_document_receipts pr
+                      JOIN inventory_transactions t ON t.id=pr.receipt_transaction_id
+                      JOIN supplier_requisition_items ri ON ri.id=t.requisition_item_id
+                      WHERE pr.document_id=pd.id),0)::text receipt_value,
+            COALESCE((SELECT count(*) FROM procurement_document_returns pdr WHERE pdr.document_id=pd.id),0)::int return_count,
+            COALESCE((SELECT sum(sri.quantity) FROM procurement_document_returns pdr JOIN supplier_return_items sri ON sri.return_id=pdr.supplier_return_id WHERE pdr.document_id=pd.id),0)::text return_quantity,
+            COALESCE((SELECT sum(sri.quantity*sri.unit_cost) FROM procurement_document_returns pdr JOIN supplier_return_items sri ON sri.return_id=pdr.supplier_return_id WHERE pdr.document_id=pd.id),0)::text return_value,
+            COALESCE((SELECT sum(ri.quantity_requested) FROM supplier_requisition_items ri WHERE ri.requisition_id=pd.requisition_id),0)::text requested_quantity,
+            COALESCE((SELECT sum(ri.quantity_requested*ri.unit_cost_estimated) FROM supplier_requisition_items ri WHERE ri.requisition_id=pd.requisition_id),0)::text requested_value
+     FROM procurement_documents pd
+     LEFT JOIN users creator ON creator.id=pd.created_by
+     LEFT JOIN users reviewer ON reviewer.id=pd.reviewed_by
+     WHERE pd.id=$1
+     FOR UPDATE OF pd`,
+    [documentId],
+  );
+  if(!result.rowCount)return null;
+  const row=result.rows[0];
+  return {...row,...deriveProcurementDocumentMatch(row)} as ProcurementDocumentSummary;
 }

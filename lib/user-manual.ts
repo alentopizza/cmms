@@ -139,6 +139,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La tarjeta de usuario muestra el estado biométrico: Verificada, Pendiente, Reenrolar o Revocada.",
       "Selecciona la tarjeta para cambiar a su perfil en la misma pantalla; no se abre un popup. La miga Usuarios devuelve al directorio.",
       "La foto, rol, alcance y estadísticas quedan visibles a la izquierda y las pestañas de Información, Estadísticas, Actividad, Asistencia y Hoja de vida cambian el contenido del panel derecho.",
+      "La pestaña Estadísticas reúne OT activas, actividades pendientes/completadas, horas de campo, progreso de asistencia de los últimos siete días, tiempo registrado hoy, turno actual y próximos compromisos.",
+      "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
@@ -342,6 +344,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Nuevo dashboard de estadísticas de usuario",
+    summary:"La ficha de Usuario/Técnico incorpora un dashboard operativo con asistencia semanal, tiempo de campo, cumplimiento y agenda de actividades usando datos reales del CMMS.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-23",
     title:"Proveedores y requisiciones por proveedor",

@@ -152,6 +152,7 @@ export function SearchSelect({
     {name&&<input type="hidden" name={name} value={selected}/>}
     {open&&<div className="ds-multiselect-popover">
       <label className="ds-multiselect-search"><UiIcon name="search" size={15}/><input value={query} onChange={event=>setQuery(event.target.value)} autoFocus placeholder="Buscar…" aria-label="Buscar opciones"/></label>
+      {selected&&<div className="ds-multiselect-actions"><button type="button" onClick={()=>commit("")}>Limpiar selección</button></div>}
       <div className="ds-multiselect-options" role="listbox">
         {visible.map(option=><button type="button" role="option" aria-selected={selected===option.value} disabled={option.disabled} key={option.value} onClick={()=>commit(option.value)}>{option.label}</button>)}
         {!visible.length&&<p className="ds-multiselect-empty">No hay coincidencias.</p>}
@@ -238,6 +239,7 @@ export function AsyncSelect({
     {name&&<input type="hidden" name={name} value={selected}/>}
     {open&&<div className="ds-multiselect-popover">
       <label className="ds-multiselect-search"><UiIcon name="search" size={15}/><input value={query} onChange={event=>setQuery(event.target.value)} autoFocus placeholder={`Escribe al menos ${minimumQueryLength} caracteres…`} aria-label="Buscar opciones"/></label>
+      {selected&&<div className="ds-multiselect-actions"><button type="button" onClick={()=>commit("")}>Limpiar selección</button></div>}
       <div className="ds-multiselect-options" role="listbox">
         {loading&&<p className="ds-multiselect-empty">Cargando opciones…</p>}
         {!loading&&query.trim().length<minimumQueryLength&&<p className="ds-multiselect-empty">Escribe para buscar.</p>}

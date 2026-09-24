@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import RequisitionBuilder, { type RequisitionSelectableItem } from "@/components/RequisitionBuilder";
@@ -9,6 +10,7 @@ import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import UiIcon from "@/components/UiIcon";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { countryName } from "@/lib/international-catalog";
 
 export type SupplierDirectoryItem={
@@ -92,7 +94,10 @@ export default function SupplierDirectory({
 }){
   const [selectedId,setSelectedId]=useState(initialSelectedId);
   const [editing,setEditing]=useState(false);
+  const router=useRouter();
   const [preferredTab,setPreferredTab]=useState(initialTab||"general");
+  const [deleteCandidate,setDeleteCandidate]=useState<SupplierDirectoryItem|null>(null);
+  const [deleteError,setDeleteError]=useState("");
   const selected=suppliers.find(item=>item.id===selectedId)||null;
 
   const selectedActivities=useMemo(()=>activities.filter(item=>item.supplier_id===selectedId),[activities,selectedId]);
@@ -104,8 +109,29 @@ export default function SupplierDirectory({
     setSelectedId(id);setPreferredTab(tab);setEditing(edit);window.scrollTo({top:0,behavior:"smooth"});
   }
 
+  async function confirmSupplierDelete(){
+    if(!deleteCandidate)return;
+    const supplier=deleteCandidate;
+    setDeleteCandidate(null);
+    setDeleteError("");
+    try{
+      const body=new FormData();
+      body.set("intent","delete");
+      const response=await fetch("/api/suppliers/"+supplier.id,{method:"POST",body});
+      if(response.redirected){
+        window.location.assign(response.url);
+        return;
+      }
+      if(!response.ok)throw new Error("No fue posible eliminar el proveedor.");
+      setSelectedId("");
+      router.refresh();
+    }catch(error){
+      setDeleteError(error instanceof Error?error.message:"No fue posible eliminar el proveedor.");
+    }
+  }
+
   if(!selected){
-    return <section className="section supplier-directory-modern">
+    return <><section className="section supplier-directory-modern">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2><p className="muted">Abre una tarjeta para consultar su operación, suministros y requisiciones sin salir del módulo.</p></div></div>
       {suppliers.length?<div className="supplier-profile-grid">{suppliers.map(s=>{
         const supplierItems=items.filter(item=>item.supplier_id===s.id).length;
@@ -141,14 +167,22 @@ export default function SupplierDirectory({
             <button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor"><UiIcon name="edit" size={14}/></button>
             {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición"><UiIcon name="plus" size={14}/></button>}
             {s.phone&&<a className="supplier-card-icon-action" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
-            <form method="post" action={"/api/suppliers/"+s.id} onSubmit={event=>{if(!window.confirm("¿Eliminar definitivamente este proveedor? Solo será posible si no tiene historial relacionado."))event.preventDefault();}}>
-              <input type="hidden" name="intent" value="delete"/>
-              <button type="submit" className="supplier-card-icon-action danger" title="Eliminar proveedor"><UiIcon name="trash" size={14}/></button>
-            </form>
+            <button type="button" className="supplier-card-icon-action danger" title="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={14}/></button>
           </div>
         </article>;
       })}</div>:<div className="card empty-state"><strong>Aún no hay proveedores.</strong><span>Registra el primero para asociar servicios, suministros y requisiciones.</span></div>}
-    </section>;
+      {deleteError&&<div className="notice error section">{deleteError}</div>}
+    </section>
+    <ConfirmDialog
+      open={Boolean(deleteCandidate)}
+      title="Eliminar proveedor"
+      message={deleteCandidate?"Vas a eliminar definitivamente a "+deleteCandidate.name+". Esta acción solo se completará si no tiene inventario, actividades ni requisiciones relacionadas.":"Confirma la eliminación del proveedor."}
+      confirmLabel="Eliminar proveedor"
+      cancelLabel="Conservar"
+      variant="danger"
+      onConfirm={confirmSupplierDelete}
+      onCancel={()=>setDeleteCandidate(null)}
+    /></>;
   }
 
   const activeActivities=selectedActivities.filter(item=>["pending","in_progress"].includes(item.status)).length;
@@ -244,9 +278,7 @@ export default function SupplierDirectory({
       <button className="button secondary entity-action-button" type="button" onClick={()=>{setEditing(value=>!value);setPreferredTab("general");}}><UiIcon name="edit"/><span>{editing?"Cancelar edición":"Editar"}</span></button>
       {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<button className="button secondary entity-action-button entity-action-wide" type="button" onClick={()=>setPreferredTab("requisitions")}><UiIcon name="plus"/><span>Nueva requisición</span></button>}
       <ProfileExportMenu entity="supplier" id={selected.id}/>
-      <form method="post" action={"/api/suppliers/"+selected.id} onSubmit={event=>{if(!window.confirm("¿Eliminar definitivamente este proveedor? Solo será posible si no tiene historial relacionado."))event.preventDefault();}}>
-        <input type="hidden" name="intent" value="delete"/><button className="button danger-secondary entity-action-button" type="submit"><UiIcon name="trash"/><span>Eliminar</span></button>
-      </form>
+      <button className="button danger-secondary entity-action-button" type="button" onClick={()=>setDeleteCandidate(selected)}><UiIcon name="trash"/><span>Eliminar</span></button>
     </>}
     initialTab={preferredTab}
     tabs={[
@@ -280,5 +312,16 @@ export default function SupplierDirectory({
       </div>},
       {id:"life",label:"Hoja de vida",content:<div className="entity-panel supplier-life-card"><UiIcon name="file" size={34}/><div><h3>Hoja de vida del proveedor</h3><p>Consolida identidad comercial, contacto, indicadores, actividades, suministros y requisiciones.</p></div><ProfileExportMenu entity="supplier" id={selected.id}/></div>},
     ]}
-  />;
+  />
+  {deleteError&&<div className="notice error section">{deleteError}</div>}
+  <ConfirmDialog
+    open={Boolean(deleteCandidate)}
+    title="Eliminar proveedor"
+    message={deleteCandidate?"Vas a eliminar definitivamente a "+deleteCandidate.name+". Esta acción solo se completará si no tiene inventario, actividades ni requisiciones relacionadas.":"Confirma la eliminación del proveedor."}
+    confirmLabel="Eliminar proveedor"
+    cancelLabel="Conservar"
+    variant="danger"
+    onConfirm={confirmSupplierDelete}
+    onCancel={()=>setDeleteCandidate(null)}
+  /></>;
 }

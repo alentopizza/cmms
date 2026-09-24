@@ -302,9 +302,14 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex. La barra interna permite ir a Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex.",
       "Usa Nuevo producto para crear un artículo con proveedor, sede, sububicación, categoría, bodega, mínimos, máximos, costo y existencia inicial. La existencia inicial se registra como una Entrada de Kardex.",
-      "Usa Importar para descargar primero la plantilla contextual de la empresa. Incluye Catálogos, Bodegas, Inventario y Kardex.",
-      "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes. El mismo modal conserva un historial reciente de importaciones con archivo, fecha, usuario y resultado.",
-      "La importación reconoce también el formato demo con hojas Productos, Bodegas y Kardex; las filas declaradas como Servicios tercerizados se omiten porque no representan existencias.",
+      "Usa Importar para descargar PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx. Es la única plantilla maestra y siempre conserva las hojas INSTRUCCIONES, INVENTARIO, KARDEX, PROVEEDORES, BODEGAS y CATALOGOS, tanto desde Inventario como desde un Proveedor.",
+      "Puedes descargar la plantilla vacía o con datos actuales. Con datos actuales se precargan maestros de inventario, pero STOCK_INICIAL queda en cero y KARDEX vacío para no duplicar el histórico.",
+      "Al cargar un Excel usa Analizar archivo. El sistema valida estructura, proveedores, SKU, sedes, sububicaciones, bodegas, cantidades, costos, Kardex, duplicados y stock antes de guardar; cada error puede mostrar hoja, fila, campo, valor, problema y solución sugerida.",
+      "Desde Inventario la importación es Global: cada producto resuelve su proveedor por PROVEEDOR_ID, luego NIT_PROVEEDOR, luego CODIGO_PROVEEDOR y finalmente nombre exacto. El resumen agrupa productos y movimientos por proveedor.",
+      "Desde la ficha de un Proveedor la importación comienza como Contextual: puedes dejar el proveedor vacío para heredarlo del contexto. Si el archivo contiene otros proveedores, elige Solo este proveedor para omitirlos o Importar todo para convertir el procesamiento a Global.",
+      "Cuando existen SKU ya registrados, elige Actualizar para modificar únicamente datos maestros u Omitir para conservarlos sin cambios. Comparar mantiene la confirmación bloqueada hasta que tomes una decisión. Ninguna opción reescribe Kardex histórico.",
+      "Cada importación confirmada recibe un folio IMP-AÑO-###### y el historial conserva archivo, usuario, origen Global/Proveedor, alcance, filas importadas, omitidas, avisos y errores.",
+      "Las filas TIPO=SERVICIO se contabilizan como servicios omitidos y nunca crean existencia ni Kardex físico. El Kardex hereda el proveedor del SKU cuando el archivo no lo repite; si informa otro proveedor, la validación lo bloquea."
       "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes; lote, vencimiento y centro de costo quedan disponibles para trazabilidad.",
       "Abre Ver detalles en un producto para editar su ficha, reemplazar su imagen, consultar existencias por bodega y revisar todo su historial de movimientos.",
       "Los artículos desactivados siguen visibles mediante el filtro Registro y pueden reactivarse desde su ficha sin perder Kardex ni relaciones.",
@@ -314,6 +319,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "El sistema impide movimientos que dejen existencias negativas.",
       "Una requisición no modifica stock. El saldo cambia únicamente mediante movimientos de Inventario/Kardex.",
       "El SKU identifica el artículo dentro de la empresa y debe mantenerse estable en importaciones sucesivas.",
+      "Una bodega usada por Inventario/Kardex debe existir o estar definida en la hoja BODEGAS del mismo archivo; no se crea silenciosamente desde una fila de producto.",
+      "MOVIMIENTO_ID permite identificar movimientos provenientes de otro sistema y no puede repetirse dentro de la empresa.",
     ],
     keywords:["inventario","kardex","bodega","stock","importar","excel","csv","movimientos","repuestos"],
   },
@@ -452,6 +459,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Plantilla maestra única de Inventario y Kardex",
+    summary:"Inventario y Proveedores usan el mismo Excel maestro. La importación puede operar Global o Contextual, distribuye productos por proveedor, hereda proveedor en Kardex, permite decidir sobre SKU existentes y registra trazabilidad IMP sin guardar parcialmente.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Conciliación documental de compras",

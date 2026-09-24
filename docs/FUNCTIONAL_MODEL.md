@@ -657,3 +657,28 @@ Two creation paths share the same generator:
 Lifecycle states are `draft`, `sent`, `approved`, `rejected`, `partial`, `fulfilled`, `closed`, and `cancelled`.
 
 Requisition fulfillment does not mutate Inventory quantity. Requisitioning and receiving are separate business facts; a future or existing receipt transaction must be the source of stock increases.
+
+
+## Role dashboard KPI comparison model
+
+The Dashboard is an analytical workspace tailored to the authenticated role.
+
+Shared behavior:
+- the selected date range is the current analytical period;
+- KPI cards compare against the immediately preceding equivalent-length period by default;
+- users may switch the comparison to the same period of the previous year;
+- six-month trend charts use real operational/commercial records and do not fabricate missing values;
+- tenant, field and requester roles may narrow data by authorized Site and Work Order Priority;
+- screen and export filters preserve identical authorization boundaries.
+
+Role emphasis:
+- **Platform Owner:** paid-plan growth, new estimated MRR, new Companies and Leads/conversion.
+- **Superadministrator:** Company onboarding, Trials, payment-attention state and global operational activity.
+- **Company Administrator:** authorized asset footprint, open Work Orders, preventive compliance and workforce/inventory context.
+- **Manager / Supervisor:** open/completed/overdue Work Orders, maintenance cost, downtime and operational distributions.
+- **Viewer:** read-only asset, completion, preventive-compliance and cost overview.
+- **Technician / External collaborator:** assigned Activity completion, pending workload, attendance hours and within-shift execution evidence.
+- **Provider:** Supplier-assigned Activity completion and active service workload without exposing unrelated worker attendance.
+- **Requester:** only the requester's own requests, resolution time, closure ratio, priority distribution and monthly request trend.
+
+Field-person analytics remain descriptive evidence. KPI comparison must not be converted into automatic worker ranking, disciplinary scoring or employment decisions.

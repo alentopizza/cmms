@@ -394,14 +394,19 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Si la selección incluye varios proveedores, el sistema divide automáticamente la solicitud y crea una requisición independiente por proveedor.",
       "Consulta cada requisición para revisar proveedor, solicitante, destino, cantidades, costos estimados, fecha requerida y observaciones.",
       "Mientras siga abierta puedes editar cantidades y costos estimados; también puedes retirar ítems que todavía no tengan recepción registrada.",
+      "Si la empresa tiene una política de aprobación, la requisición muestra Aprobación pendiente y bloquea la recepción hasta que un Administrador o Manager autorizado tome la decisión según la política configurada.",
+      "Aprobar o rechazar se realiza desde el bloque Aprobación y auditoría. El rechazo exige una observación; cada decisión registra usuario, fecha y trazabilidad.",
+      "Si después de una aprobación o rechazo cambias cantidad, costo estimado o fecha requerida, la aprobación se reabre automáticamente. Las recepciones ya registradas se conservan, pero el saldo pendiente queda bloqueado hasta una nueva aprobación.",
       "En Recepción física registra únicamente lo entregado, selecciona la bodega y opcionalmente documento, lote, vencimiento y centro de costo. Cada entrega genera una Entrada de Kardex vinculada a la requisición.",
       "Las entregas parciales actualizan automáticamente el estado a Parcialmente atendida; cuando todos los ítems alcanzan la cantidad solicitada, la requisición pasa a Atendida.",
       "El historial de recepciones muestra fecha, artículo, cantidad, bodega, documento, costo, lote y usuario. El Kardex también enlaza de vuelta a la requisición de origen.",
-      "Actualiza manualmente los demás estados entre Borrador, Enviada, Aprobada, Rechazada, Cerrada o Cancelada según el flujo real.",
-      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas y pendientes.",
+      "Los estados Aprobada y Rechazada son decisiones auditadas y no se asignan manualmente desde el selector general de estado.",
+      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas, pendientes y el estado de aprobación.",
     ],
     notes:[
       "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock.",
+      "La política de aprobación se toma como una fotografía al crear cada requisición; cambiar Configuración no altera retroactivamente requisiciones existentes.",
+      "La autoaprobación del solicitante está bloqueada salvo que la empresa la habilite explícitamente y el usuario tenga un rol aprobador.",
       "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
     ],
     keywords:["requisición","compras","proveedor","inventario","insumos","cantidades","abastecimiento"],
@@ -420,6 +425,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Si tu rol tiene permisos administrativos, también verás Configuración de empresa/plataforma.",
       "En Idioma y región selecciona el idioma preferido y el país predeterminado. El país se usa como punto de partida para nuevos formularios, pero cada registro puede elegir otro país soportado.",
       "La preferencia de idioma ya se guarda como base de internacionalización; las pantallas que todavía no tengan diccionario de traducción continúan mostrándose en español.",
+      "En Configuración de empresa, la sección Aprobación de requisiciones permite desactivar la aprobación obligatoria, exigirla para todas las requisiciones o activarla desde un monto estimado; también define si aprueba solo Administrador o Administrador/Manager y si se permite autoaprobación.",
       "Los cambios globales de identidad visual deben realizarse desde Personalización, no desde pantallas individuales.",
     ],
     keywords:["configuración","personalización","branding","tema"],
@@ -429,6 +435,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Aprobación y auditoría de requisiciones",
+    summary:"Configuración de empresa permite definir aprobación obligatoria o por monto. Las requisiciones pendientes bloquean la recepción, registran aprobaciones/rechazos y reabren la autorización si cambian cantidad, costo o fecha requerida.",
+    roles:["all","platform_owner","superadmin","admin","manager","requester"],
+  },
   {
     date:"2026-09-24",
     title:"Historial de importaciones y recuperación de suministros",

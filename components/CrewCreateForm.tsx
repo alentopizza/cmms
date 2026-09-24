@@ -72,12 +72,10 @@ export default function CrewCreateForm({
   function changeSite(next:string){
     setSiteId(next);
     setLeaderId("");
-    setMemberIds(current=>current.filter(id=>{
-      const worker=workers.find(item=>item.id===id);
-      return Boolean(worker&&worker.organization_id===organizationId&&(worker.access_all_sites||worker.site_ids.includes(next)));
-    }));
+    setMemberIds([]);
   }
   function toggleMember(id:string){
+    if(id===leaderId)return;
     setMemberIds(current=>current.includes(id)?current.filter(item=>item!==id):[...current,id]);
   }
   function chooseLeader(id:string){
@@ -142,7 +140,7 @@ export default function CrewCreateForm({
         {eligibleWorkers.map(worker=>{
           const checked=memberIds.includes(worker.id);
           return <label key={worker.id} className={checked?"active":""}>
-            <input type="checkbox" name="member_ids" value={worker.id} checked={checked} onChange={()=>toggleMember(worker.id)}/>
+            <input type="checkbox" name="member_ids" value={worker.id} checked={checked} disabled={worker.id===leaderId} onChange={()=>toggleMember(worker.id)}/>
             <span className="crew-person-avatar">{worker.has_avatar?<img src={"/api/users/"+worker.id+"/avatar"} alt=""/>:<b>{initials(worker.full_name)}</b>}</span>
             <span><strong>{worker.full_name}</strong><small>{roleLabel(worker.role)}{worker.id===leaderId?" · Líder":""}</small></span>
           </label>;

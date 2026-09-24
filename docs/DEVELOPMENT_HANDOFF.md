@@ -241,3 +241,35 @@ Para cada cambio significativo:
 - **Este handoff**: actualizar cuando cambie el estado global del producto, la zona activa de trabajo o la forma recomendada de retomar el proyecto.
 
 El objetivo es que un tercero pueda reconstruir la intención del sistema desde el repositorio sin necesitar la conversación original.
+
+
+## 12. Active checkpoint — role dashboard analytics (2026-09-24)
+
+The root Dashboard was redesigned after the supplied admin-dashboard visual reference.
+
+Current implementation:
+- reusable analytical UI in `components/DashboardAnalytics.tsx`;
+- role-aware KPI sets for Platform Owner, Superadministrator, Admin, Manager, Viewer, Technician, External collaborator, Provider and Requester;
+- current-period vs previous-equivalent-period comparison by default;
+- optional same-period-previous-year comparison;
+- six-month real PostgreSQL trend series;
+- tenant/field/requester Site and Priority filters;
+- existing status/date filters preserved;
+- Excel/CSV/PDF export route updated to preserve Site/Priority/status/period authorization scope;
+- responsive Desweb visual treatment in `app/globals.css`;
+- user manual and source-of-truth documentation synchronized.
+
+Important implementation boundaries:
+- Site filters are a narrowing predicate after session Organization/Site authorization, never a replacement for it.
+- Comparison-period queries reuse the same role and contextual filters as the current period.
+- Provider dashboards only expose Supplier-assigned Activities and do not expose worker attendance.
+- Technician/External metrics are descriptive; do not introduce leaderboard ordering or employment scoring.
+- Snapshot KPIs such as currently visible Assets may not have a historical comparison until an appropriate history model exists; do not fabricate one.
+
+Primary files for the next contributor:
+- `app/dashboard/page.tsx`;
+- `components/DashboardAnalytics.tsx`;
+- `components/DashboardControls.tsx`;
+- `lib/dashboard-filters.ts`;
+- `app/api/dashboard/export/route.ts`;
+- dashboard section at the end of `app/globals.css`.

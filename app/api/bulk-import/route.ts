@@ -773,6 +773,9 @@ export async function POST(request:Request){
     selectedKardex.forEach(row=>{neededWarehouseNames.add(key(row.warehouseName));if(row.destination)neededWarehouseNames.add(key(row.destination));});
     const warehousesToCommit=parsedWarehouses.parsed.filter(row=>neededWarehouseNames.has(key(row.name)));
     for(const row of warehousesToCommit){
+      if(!row.active){
+        issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","Una bodega utilizada por Inventario/Kardex no puede quedar inactiva.","ESTADO","INACTIVA","Marca la bodega como ACTIVA o retírala de las filas que se van a importar.");
+      }
       if(row.site&&!canAccessSite(session,row.site.id)){
         issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","No tienes autorización para administrar esta bodega.","SEDE",row.site.name,"Solicita acceso o retira la bodega del alcance.");
       }

@@ -2,7 +2,7 @@ import { normalizedHeader } from "@/lib/import-workbook";
 
 export type InventoryImportMode="global"|"contextual";
 export type InventoryImportScope="all"|"context_only";
-export type DuplicatePolicy="update"|"skip";
+export type DuplicatePolicy="compare"|"update"|"skip";
 
 export type ImportSupplier={
   id:string;

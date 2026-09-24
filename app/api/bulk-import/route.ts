@@ -508,9 +508,10 @@ export async function POST(request:Request){
   const issues:Issue[]=[];
 
   if(entity==="inventory"){
-    const importMode:InventoryImportMode=fixedSupplier?"contextual":"global";
     const requestedScope=String(form.get("import_scope")||"");
     const importScope:InventoryImportScope=fixedSupplier&&requestedScope!=="all"?"context_only":"all";
+    const contextSupplier=importScope==="context_only"?fixedSupplier:null;
+    const importMode:InventoryImportMode=contextSupplier?"contextual":"global";
     const duplicatePolicy:DuplicatePolicy=String(form.get("duplicate_policy")||"update")==="skip"?"skip":"update";
 
     const warehouseSheet=findWorksheet(workbook,["Bodegas","Almacenes","Almacén","Almacen"]);
@@ -527,7 +528,7 @@ export async function POST(request:Request){
     if(parsedSheet.missing.length){
       issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "),parsedSheet.missing.join(", "),"","Usa la plantilla maestra sin modificar los encabezados.");
     }
-    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog,fixedSupplier,fileWarehouseNames,importScope);
+    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog,contextSupplier,fileWarehouseNames,importScope);
     issues.push(...inv.issues);
 
     // The PROVEEDORES sheet is a reference/validation catalog. It never bypasses
@@ -566,7 +567,7 @@ export async function POST(request:Request){
     const kardexRows=kardexSheet?parseSheet(kardexSheet,KARDEX_ALIASES).rows:[];
     const selectedKnownSkus=new Set([
       ...catalog.items
-        .filter(item=>importScope==="all"||!fixedSupplier||item.supplier_id===fixedSupplier.id)
+        .filter(item=>importScope==="all"||!contextSupplier||item.supplier_id===contextSupplier.id)
         .map(item=>item.sku.toUpperCase()),
       ...selectedInventory.map(row=>row.sku),
     ]);
@@ -666,7 +667,7 @@ export async function POST(request:Request){
         parsedKardex.push({
           row:row.rowNumber,movementId,sku,movement:movement||{type:"receipt",sign:1},date,document:textValue(row.values.document),
           warehouseName,destination,quantity:quantity??0,cost:Math.max(0,rawCost??0),supplier:movementSupplier,
-          belongsContext:supplierBelongsToContext(movementSupplier,fixedSupplier),lot:textValue(row.values.lot),expiresAt,
+          belongsContext:supplierBelongsToContext(movementSupplier,contextSupplier),lot:textValue(row.values.lot),expiresAt,
           costCenter:textValue(row.values.costCenter),sourceUser:textValue(row.values.sourceUser),notes:textValue(row.values.notes),
         });
       }
@@ -681,7 +682,7 @@ export async function POST(request:Request){
         id:supplier.id,code:supplier.code,name:supplier.name,taxId:supplier.tax_id,
         products:selectedInventory.filter(row=>row.supplier?.id===supplier.id).length,
         movements:selectedKardex.filter(row=>row.supplier?.id===supplier.id).length,
-        context:fixedSupplier?.id===supplier.id,
+        context:contextSupplier?.id===supplier.id,
       };
     }).sort((a,b)=>a.name.localeCompare(b.name,"es"));
 
@@ -716,7 +717,7 @@ export async function POST(request:Request){
       scope:importScope,
       supplier:fixedSupplier?{id:fixedSupplier.id,code:fixedSupplier.code,name:fixedSupplier.name,taxId:fixedSupplier.tax_id}:null,
       otherSupplierRows,
-      canSwitchGlobal:Boolean(fixedSupplier&&otherSupplierRows>0),
+      canSwitchGlobal:Boolean(fixedSupplier),
     };
 
     if(mode!=="commit"||errors.length){

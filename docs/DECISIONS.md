@@ -381,3 +381,39 @@ Consequences:
 - six-month chart series contain stored monthly values and zero-fill missing months;
 - dashboard exports contain the selected current period and preserve the same role, Site, Priority and status scope;
 - field-person comparisons remain descriptive evidence and must not become rankings or automated employment decisions.
+
+
+## ADR-036 — Conditional facets and controlled multi-value catalogs
+
+**Decision:** Reusable module filters are derived from the authorized record set and only rendered when they can meaningfully narrow it. Supplier type/specialty becomes a controlled multi-value catalog instead of new free-text entry.
+
+**Why:**
+- operators with one Company should not spend space on a Company filter that cannot change the result;
+- platform operators need fast Company-first narrowing across shared directories;
+- cascading choices reduce noise and prevent selecting a Site/Supplier unrelated to the active context;
+- free-text Supplier categories create spelling/casing/synonym drift that damages spreadsheet imports, exports, reporting and future integrations;
+- Suppliers legitimately span multiple commercial capabilities and specialties.
+
+**Consequences:**
+- `ModuleHeader` is allowed to read facet metadata only from server-authorized DOM records and may only hide/narrow those records;
+- server authorization remains mandatory and independent of filters;
+- Supplier capability/specialty codes live in PostgreSQL catalogs and junction tables;
+- every submitted Supplier code is server validated;
+- legacy `supplier_type` is derived for compatibility until existing domain consumers migrate;
+- new governed classifications should prefer stable codes and catalog expansion over writable free text.
+
+## ADR-037 — Personnel documents and Supplier payment data are separate protected dossiers
+
+**Decision:** Personnel documents/emergency contacts and Supplier payment information are modeled separately from authentication, biometric templates and generic maintenance attachments.
+
+**Why:**
+- employment/administrative documents have different privacy and lifecycle requirements from operational attachments;
+- emergency contacts should not become User login/profile identity fields used by authorization;
+- Supplier banking/payment preparation data should not be mixed into public/commercial card metadata.
+
+**Consequences:**
+- User dossier files require `users.manage` and Organization scope;
+- User document archive is reversible;
+- emergency contact is one structured Organization-scoped record per User;
+- Supplier financial data requires `suppliers.manage` and is masked in read summaries;
+- neither dossier can independently grant access, verify biometric identity or execute a financial transaction.

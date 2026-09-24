@@ -15,7 +15,7 @@
 
 ## Fase 0 — Gobierno y documentación
 
-**Estado: en implementación con este checkpoint.**
+**Estado: completada.**
 
 Entregables:
 
@@ -28,6 +28,8 @@ Entregables:
 No modifica la interfaz productiva.
 
 ## Fase 1 — Foundations + estructura técnica del UI Kit
+
+**Estado: implementada en código; validación CI requerida antes de merge.**
 
 Objetivo: instalar la base sin migrar módulos completos.
 
@@ -270,17 +272,24 @@ Cada fase debe cerrar con:
 - convertir todo en glassmorphism, gradientes o cards;
 - usar colores funcionales como decoración.
 
+## Phase 1 implementation checkpoint
+
+Implemented:
+
+- `app/design-system/tokens.css` as the runtime V2 token layer;
+- semantic dark-theme mapping without overriding legacy variables;
+- reduced-motion token behavior;
+- UI Kit namespace under `components/ui`;
+- `UiIcon` bridged as the provisional canonical icon system;
+- `lib/design-system.ts` token-name manifest;
+- live, responsive, no-index `/ui-kit` Foundations catalog;
+- baseline audit in `docs/DESIGN_AUDIT_PHASE1.md`;
+- `scripts/design-system-smoke.mjs` wired into CI.
+
+Legacy `app/globals.css` is intentionally not mass-refactored in this phase.
+
 ## Siguiente fase
 
-Después de completar Fase 0, el siguiente trabajo es **Fase 1 — Foundations + estructura técnica del UI Kit**.
+**Fase 2 — Primitives e interacción base.**
 
-La Fase 1 deberá empezar con un inventario real de:
-
-- tokens y aliases actuales de `app/globals.css`;
-- colores hardcoded;
-- variantes de `.button`, `.card`, inputs, badges, modals y tables;
-- `UiIcon` y uso de iconografía;
-- componentes ya reutilizables;
-- componentes duplicados por módulo.
-
-Solo después de ese inventario se implementan tokens/primitives.
+Start by implementing reusable Button/Input/Select/Card/Badge/Status/Modal/Drawer/Tabs/Breadcrumb/Feedback primitives on top of the Phase 1 tokens, then document real examples in `/ui-kit`. Existing shared components must be adapted/reused rather than duplicated.

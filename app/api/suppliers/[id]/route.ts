@@ -1,16 +1,24 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { query } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const TYPES=new Set(["materials","services","both"]);
 
 function target(id:string,url:string,suffix:string){
   return publicUrl(`/dashboard/suppliers?supplier=${encodeURIComponent(id)}${suffix}`,url);
+}
+function normalizedCodes(form:FormData,name:string){
+  return [...new Set(form.getAll(name).map(value=>String(value).trim()).filter(Boolean))];
+}
+function legacySupplierType(capabilities:string[]){
+  const materials=capabilities.includes("materials");
+  const services=capabilities.some(code=>code!=="materials");
+  if(materials&&services)return "both";
+  return materials?"materials":"services";
 }
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
@@ -50,15 +58,45 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     return NextResponse.redirect(target(id,request.url,"&updated=1"),303);
   }
 
+  if(intent==="financial"){
+    const bankName=String(form.get("bank_name")||"").trim();
+    const accountType=String(form.get("account_type")||"").trim();
+    const accountNumber=String(form.get("account_number")||"").trim();
+    const accountHolder=String(form.get("account_holder")||"").trim();
+    const accountHolderTaxId=String(form.get("account_holder_tax_id")||"").trim();
+    const paymentTermsRaw=String(form.get("payment_terms_days")||"").trim();
+    const paymentTerms=paymentTermsRaw?Number(paymentTermsRaw):null;
+    const currencyCode=String(form.get("currency_code")||"COP").trim().toUpperCase();
+    const paymentEmail=String(form.get("payment_email")||"").trim().toLowerCase();
+    const paymentNotes=String(form.get("payment_notes")||"").trim();
+    if(accountType&&!["savings","checking","other"].includes(accountType))return NextResponse.redirect(target(id,request.url,"&tab=financial&error=required"),303);
+    if(paymentTerms!==null&&(!Number.isInteger(paymentTerms)||paymentTerms<0||paymentTerms>365))return NextResponse.redirect(target(id,request.url,"&tab=financial&error=required"),303);
+    if(!/^[A-Z]{3}$/.test(currencyCode))return NextResponse.redirect(target(id,request.url,"&tab=financial&error=required"),303);
+    await query(
+      `INSERT INTO supplier_financial_profiles(
+        supplier_id,organization_id,bank_name,account_type,account_number,account_holder,account_holder_tax_id,
+        payment_terms_days,currency_code,payment_email,payment_notes,updated_by,updated_at
+      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,now())
+      ON CONFLICT(supplier_id) DO UPDATE SET
+        bank_name=EXCLUDED.bank_name,account_type=EXCLUDED.account_type,account_number=EXCLUDED.account_number,
+        account_holder=EXCLUDED.account_holder,account_holder_tax_id=EXCLUDED.account_holder_tax_id,
+        payment_terms_days=EXCLUDED.payment_terms_days,currency_code=EXCLUDED.currency_code,
+        payment_email=EXCLUDED.payment_email,payment_notes=EXCLUDED.payment_notes,
+        updated_by=EXCLUDED.updated_by,updated_at=now()`,
+      [id,organizationId,bankName||null,accountType||null,accountNumber||null,accountHolder||null,accountHolderTaxId||null,paymentTerms,currencyCode,paymentEmail||null,paymentNotes||null,session.userId],
+    );
+    return NextResponse.redirect(target(id,request.url,"&tab=financial&updated=1"),303);
+  }
+
   const name=String(form.get("name")||"").trim();
   const legalName=String(form.get("legal_name")||"").trim();
-  const supplierType=String(form.get("supplier_type")||"materials");
+  const capabilityCodes=normalizedCodes(form,"capability_codes");
+  const specialtyCodes=normalizedCodes(form,"specialty_codes");
   const countryCode=String(form.get("country_code")||"").trim().toUpperCase();
   const city=String(form.get("city")||"").trim();
   const address=String(form.get("address")||"").trim();
   const taxIdType=String(form.get("tax_id_type")||"").trim();
   const taxId=String(form.get("tax_id")||"").trim();
-  const serviceCategory=String(form.get("service_category")||"").trim();
   const website=String(form.get("website")||"").trim();
   const contactName=String(form.get("contact_name")||"").trim();
   const contactTitle=String(form.get("contact_title")||"").trim();
@@ -67,7 +105,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const notes=String(form.get("notes")||"").trim();
   const active=String(form.get("active")||"on")==="on";
 
-  if(!name||!legalName||!city||!address||!TYPES.has(supplierType)||!isSupportedCountry(countryCode)){
+  if(!name||!legalName||!city||!address||!capabilityCodes.length||!isSupportedCountry(countryCode)){
     return NextResponse.redirect(target(id,request.url,"&error=required"),303);
   }
   if((taxId||taxIdType)&&(!taxId||!taxIdType||!isTaxIdTypeForCountry(countryCode,taxIdType))){
@@ -78,21 +116,56 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   try{logo=await readImageUpload(form,"logo");}
   catch(error){return NextResponse.redirect(target(id,request.url,"&error="+encodeURIComponent(imageUploadMessage(error)||"logo")),303);}
 
-  await query(
-    `UPDATE suppliers SET
-      name=$1,legal_name=$2,supplier_type=$3,country_code=$4,city=$5,address=$6,tax_id_type=$7,tax_id=$8,
-      service_category=$9,website=$10,contact_name=$11,contact_title=$12,email=$13,phone=$14,notes=$15,active=$16,
-      logo_data=COALESCE($17,logo_data),
-      logo_mime_type=CASE WHEN $17 IS NULL THEN logo_mime_type ELSE $18 END,
-      logo_file_name=CASE WHEN $17 IS NULL THEN logo_file_name ELSE $19 END,
-      updated_at=now()
-     WHERE id=$20 AND organization_id=$21`,
-    [
-      name,legalName,supplierType,countryCode,city,address,taxIdType||null,taxId||null,
-      serviceCategory||null,website||null,contactName||null,contactTitle||null,email||null,phone||null,notes||null,active,
-      logo?.data||null,logo?.mime||null,logo?"supplier-logo":null,id,organizationId,
-    ],
-  );
+  const client=await pool.connect();
+  try{
+    await client.query("BEGIN");
+    const validCapabilities=await client.query<{code:string;label:string}>(
+      "SELECT code,label FROM supplier_capability_catalog WHERE active=true AND code=ANY($1::text[]) ORDER BY sort_order,label",
+      [capabilityCodes],
+    );
+    const validSpecialties=specialtyCodes.length
+      ?await client.query<{code:string;label:string}>(
+        "SELECT code,label FROM supplier_specialty_catalog WHERE active=true AND code=ANY($1::text[]) ORDER BY sort_order,label",
+        [specialtyCodes],
+      )
+      :{rows:[],rowCount:0};
+    if(validCapabilities.rowCount!==capabilityCodes.length||validSpecialties.rowCount!==specialtyCodes.length){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(target(id,request.url,"&error=required"),303);
+    }
+    const supplierType=legacySupplierType(capabilityCodes);
+    const serviceCategory=validSpecialties.rows.map(row=>row.label).join(", ")||null;
+
+    await client.query(
+      `UPDATE suppliers SET
+        name=$1,legal_name=$2,supplier_type=$3,country_code=$4,city=$5,address=$6,tax_id_type=$7,tax_id=$8,
+        service_category=$9,website=$10,contact_name=$11,contact_title=$12,email=$13,phone=$14,notes=$15,active=$16,
+        logo_data=COALESCE($17,logo_data),
+        logo_mime_type=CASE WHEN $17 IS NULL THEN logo_mime_type ELSE $18 END,
+        logo_file_name=CASE WHEN $17 IS NULL THEN logo_file_name ELSE $19 END,
+        updated_at=now()
+       WHERE id=$20 AND organization_id=$21`,
+      [
+        name,legalName,supplierType,countryCode,city,address,taxIdType||null,taxId||null,
+        serviceCategory,website||null,contactName||null,contactTitle||null,email||null,phone||null,notes||null,active,
+        logo?.data||null,logo?.mime||null,logo?"supplier-logo":null,id,organizationId,
+      ],
+    );
+    await client.query("DELETE FROM supplier_capabilities WHERE supplier_id=$1",[id]);
+    await client.query("DELETE FROM supplier_specialties WHERE supplier_id=$1",[id]);
+    for(const code of capabilityCodes){
+      await client.query("INSERT INTO supplier_capabilities(supplier_id,organization_id,capability_code) VALUES($1,$2,$3)",[id,organizationId,code]);
+    }
+    for(const code of specialtyCodes){
+      await client.query("INSERT INTO supplier_specialties(supplier_id,organization_id,specialty_code) VALUES($1,$2,$3)",[id,organizationId,code]);
+    }
+    await client.query("COMMIT");
+  }catch(error){
+    await client.query("ROLLBACK");
+    throw error;
+  }finally{
+    client.release();
+  }
 
   return NextResponse.redirect(target(id,request.url,"&updated=1"),303);
 }

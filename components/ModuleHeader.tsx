@@ -45,6 +45,7 @@ export default function ModuleHeader({
   const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
 
   const normalizedSearch = useMemo(() => search.trim().toLocaleLowerCase("es"), [search]);
+  const facetSignature=JSON.stringify(facets);
 
   useEffect(()=>{
     setPortalHost(document.getElementById("context-header-tools"));
@@ -100,7 +101,7 @@ export default function ModuleHeader({
       }
       return changed?next:previous;
     });
-  }, [normalizedSearch, filter, count, facets, facetValues]);
+  }, [normalizedSearch, filter, count, facetSignature, facetValues]);
 
   if(!portalHost) return null;
 

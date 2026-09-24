@@ -264,12 +264,12 @@ Before production hardening, reinforce this development workflow with the approv
 - automatic split into one requisition per Supplier when Inventory selections span several Suppliers;
 - requisition PDF, Excel and Word-compatible export;
 - dedicated Requisitions module and navigation;
-- Inventory supplier validation restricted to material/mixed Suppliers.
+- Inventory supplier validation restricted to material/mixed Suppliers;
+- requisition receiving workflow that records delivered quantities as Inventory receipts while referencing the originating requisition;
+- partial/complete receipt reconciliation against `quantity_received`, including automatic `partial` / `fulfilled` status transitions and Kardex traceability.
 
 ### Next procurement/inventory work
 
-- receiving workflow that records delivered quantities as Inventory receipts while referencing the originating requisition;
-- partial receipt reconciliation against `quantity_received`;
 - optional approval policy and approval audit trail by Company;
 - Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists.
 
@@ -288,7 +288,7 @@ Before production hardening, reinforce this development workflow with the approv
 ### Next dashboard analytics opportunities
 
 - add historical inventory-value snapshots if a future stock-ledger model supports point-in-time valuation;
-- add procurement/requisition trend panels after receiving and partial-receipt reconciliation are implemented;
+- add procurement/requisition trend panels now that receiving and partial-receipt reconciliation are available;
 - add saved dashboard filter presets only if they remain presentation preferences and never authorization inputs.
 
 

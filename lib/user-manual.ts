@@ -300,15 +300,15 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager","viewer"],
     href:"/dashboard/inventory",
     steps:[
-      "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex. La barra interna permite ir a Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex."
+      "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex. La barra interna permite ir a Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex.",
       "Usa Nuevo producto para crear un artículo con proveedor, sede, sububicación, categoría, bodega, mínimos, máximos, costo y existencia inicial. La existencia inicial se registra como una Entrada de Kardex.",
       "Usa Importar para descargar primero la plantilla contextual de la empresa. Incluye Catálogos, Bodegas, Inventario y Kardex.",
       "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes.",
       "La importación reconoce también el formato demo con hojas Productos, Bodegas y Kardex; las filas declaradas como Servicios tercerizados se omiten porque no representan existencias.",
-      "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes; lote, vencimiento y centro de costo quedan disponibles para trazabilidad."
+      "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes; lote, vencimiento y centro de costo quedan disponibles para trazabilidad.",
       "Abre Ver detalles en un producto para editar su ficha, reemplazar su imagen, consultar existencias por bodega y revisar todo su historial de movimientos.",
       "Los artículos desactivados siguen visibles mediante el filtro Registro y pueden reactivarse desde su ficha sin perder Kardex ni relaciones.",
-      "Usa Exportar para descargar la base de Inventario en Excel, CSV o PDF; Kardex también tiene exportación independiente y respeta el tipo de movimiento seleccionado."
+      "Usa Exportar para descargar la base de Inventario en Excel, CSV o PDF; Kardex también tiene exportación independiente y respeta el tipo de movimiento seleccionado.",
     ],
     notes:[
       "El sistema impide movimientos que dejen existencias negativas.",

@@ -8,12 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cmms
+          POSTGRES_USER: cmms
+          POSTGRES_PASSWORD: cmms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cmms -d cmms"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm install
+      - run: npm run migrate
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/dashboard-sql-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

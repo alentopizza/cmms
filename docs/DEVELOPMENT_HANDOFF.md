@@ -218,12 +218,21 @@ Durante la implementación del Dashboard por rol, los commits que contienen los 
 
 ## 10. Prioridades que ya aparecen en el roadmap
 
-La línea de Proveedores/Requisiciones está implementada. El siguiente trabajo de abastecimiento ya documentado contempla:
+La **Fase 1 de abastecimiento** ya está implementada y validada:
 
-- recepción que registre cantidades entregadas como movimientos de Inventario;
-- conciliación de recepción parcial contra `quantity_received`;
-- política opcional de aprobación y auditoría;
-- KPIs comerciales de proveedor cuando exista historial suficiente.
+- recepción física de requisiciones contra Inventario/Kardex;
+- conciliación parcial y total contra `quantity_received`;
+- trazabilidad Requisición → ítem → movimiento Kardex;
+- progreso de recepción en Requisiciones y ficha de Proveedor;
+- exportes con solicitado / recibido / pendiente;
+- historial de importaciones masivas y recuperación de suministros inactivos.
+
+Pendientes para fases posteriores:
+
+- política configurable de aprobación/auditoría previa a recepción;
+- KPIs comerciales de proveedor cuando exista historial suficiente;
+- devoluciones a proveedor vinculadas a requisición/recepción;
+- conciliación documental avanzada contra factura/remisión/orden de compra.
 
 No ejecutar automáticamente esta lista por estar en el roadmap: cada nueva implementación debe partir del requerimiento actual del producto.
 

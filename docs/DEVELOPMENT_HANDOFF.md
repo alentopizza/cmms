@@ -370,3 +370,32 @@ The Financial tab uses two mutually exclusive client states:
 The financial POST continues redirecting to `?supplier=<id>&tab=financial&updated=1`; because the client state initializes as read-only, saving returns the operator to the summary rather than leaving a duplicate form visible.
 
 `ProfileExportMenu` now accepts an optional `documentLabel`. Supplier profiles pass `Ficha del proveedor`; other entities retain their existing default terminology.
+
+
+## 17. Inventory / Assets / Kardex checkpoint — 2026-09-24
+
+The operational design is documented in `docs/INVENTORY_ASSETS_IMPORT.md`.
+
+Key invariants for future work:
+
+- `inventory_transactions` is the authoritative event stream for new stock changes.
+- Do not directly increment/decrement `inventory_items.quantity` from UI/API code. Insert a Kardex transaction and let `cmms_apply_inventory_transaction()` update warehouse and aggregate balances.
+- Opening stock for new items must also be a Kardex `receipt`.
+- Negative stock is rejected in PostgreSQL.
+- Transfers require distinct source/destination warehouses and preserve total organization stock.
+- Bulk import is two-phase: validate first, commit only when validation has zero blocking errors.
+- `bulk_import_batches.file_hash` prevents committing the exact same file twice.
+- Supplier-scoped imports must pass `supplier_id`; rows for another supplier are rejected.
+- The legacy/demo spreadsheet shape `Productos + Bodegas + Kardex` is intentionally supported. `Servicios tercerizados` rows are warnings/skipped rather than inventory errors.
+- The standard generated inventory template is `LEEME + Catálogos + Bodegas + Inventario + Kardex`.
+- Provider tab `Inventarios / suministros` is now an operational surface, not read-only projection. It can create/import/edit/deactivate stock masters while the full Kardex stays in Inventory.
+- Global Requisitions can select multiple suppliers and split automatically; supplier-profile Requisitions is fixed to one supplier.
+- Requisition item quantities/costs may be edited while open. Fulfilled, closed and cancelled requisitions lock item editing.
+- Received requisition items cannot be removed and requested quantity cannot be reduced below quantity already received.
+
+Database migrations:
+- `030_bulk_import_inventory_kardex.sql`
+- `031_inventory_kardex_metadata.sql`
+
+Regression validation:
+- `scripts/inventory-kardex-smoke.mjs` runs in CI after migrations and before the production build.

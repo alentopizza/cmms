@@ -23,6 +23,13 @@ async function fileAccess(id:string,documentId:string,session:NonNullable<Awaite
   const row=result.rows[0];
   if(!row)return null;
   if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
+  if(session.platformRole==="user"&&!session.accessAllSites){
+    const sites=await query<{site_id:string}>(
+      "SELECT DISTINCT site_id FROM supplier_requisition_items WHERE requisition_id=$1 AND site_id IS NOT NULL",
+      [id],
+    );
+    if(sites.rows.some(site=>!session.siteIds.includes(site.site_id)))return null;
+  }
   return row;
 }
 

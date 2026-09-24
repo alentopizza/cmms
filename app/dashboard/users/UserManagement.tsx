@@ -49,14 +49,17 @@ export type ManagedUser = {
   pending_activities: number;
   completed_activities_30d: number;
   attendance_hours_30d: number;
+  open_shift: boolean;
+  tracking_live: boolean;
+};
+
+type UserStatisticsSnapshot = {
   attendance_hours_today: number;
   attendance_daily_7d: UserStatisticsDay[];
   completed_activities_7d: number;
   overdue_activities: number;
-  upcoming_activities: UserStatisticsActivity[];
-  open_shift: boolean;
   open_shift_started_at: string | null;
-  tracking_live: boolean;
+  upcoming_activities: UserStatisticsActivity[];
 };
 
 type Organization = { id: string; name: string; country: string };
@@ -164,6 +167,9 @@ export default function UserManagement({
   const [actionError, setActionError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
   const [avatarFile,setAvatarFile]=useState<File|null>(null);
+  const [statisticsByUser,setStatisticsByUser]=useState<Record<string,UserStatisticsSnapshot>>({});
+  const [statisticsLoadingUser,setStatisticsLoadingUser]=useState<string|null>(null);
+  const [statisticsError,setStatisticsError]=useState("");
 
   useEffect(() => {
     if (!mode) return;
@@ -191,6 +197,24 @@ export default function UserManagement({
     return organizations.find(org => org.id === draft.organization_id)?.country || "CO";
   }, [organizations, draft.organization_id]);
   const selectedUser=useMemo(()=>users.find(user=>user.id===selectedUserId)||null,[users,selectedUserId]);
+  const selectedStatistics=selectedUserId?statisticsByUser[selectedUserId]||null:null;
+
+  useEffect(()=>{
+    if(!selectedUserId||statisticsByUser[selectedUserId])return;
+    let cancelled=false;
+    setStatisticsLoadingUser(selectedUserId);
+    setStatisticsError("");
+    fetch("/api/users/"+selectedUserId+"/statistics",{headers:{Accept:"application/json"}})
+      .then(async response=>{
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(payload?.message||"No fue posible cargar las estadísticas.");
+        if(cancelled)return;
+        setStatisticsByUser(previous=>({...previous,[selectedUserId]:payload as UserStatisticsSnapshot}));
+      })
+      .catch(error=>{if(!cancelled)setStatisticsError(error instanceof Error?error.message:"No fue posible cargar las estadísticas.");})
+      .finally(()=>{if(!cancelled)setStatisticsLoadingUser(current=>current===selectedUserId?null:current);});
+    return()=>{cancelled=true;};
+  },[selectedUserId,statisticsByUser]);
 
   useEffect(()=>{
     if(searchParams.get("create")!=="1") return;
@@ -507,30 +531,39 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
               </div></div>
             </div>},
-            {id:"statistics",label:"Estadísticas",content:<UserStatisticsDashboard data={{
-              id:selectedUser.id,
-              name:selectedUser.full_name,
-              role:roleName(roleKey(selectedUser)),
-              company:selectedUser.organization_name||"Desweb CMMS",
-              photoUrl:selectedUser.has_avatar?"/api/users/"+selectedUser.id+"/avatar":null,
-              active:selectedUser.active,
-              biometricLabel:biometricStatusLabel(selectedUser.biometric_status),
-              trackingLive:selectedUser.tracking_live,
-              openShift:selectedUser.open_shift,
-              openShiftStartedAt:selectedUser.open_shift_started_at,
-              assignedWorkOrders:selectedUser.assigned_work_orders,
-              pendingActivities:selectedUser.pending_activities,
-              completedActivities30d:selectedUser.completed_activities_30d,
-              completedActivities7d:selectedUser.completed_activities_7d,
-              attendanceHours30d:selectedUser.attendance_hours_30d,
-              attendanceTodayHours:selectedUser.attendance_hours_today,
-              attendanceDaily7d:Array.isArray(selectedUser.attendance_daily_7d)?selectedUser.attendance_daily_7d:[],
-              activityCompletionRate30d:(selectedUser.completed_activities_30d+selectedUser.pending_activities)>0
-                ?Math.round((selectedUser.completed_activities_30d/(selectedUser.completed_activities_30d+selectedUser.pending_activities))*100)
-                :0,
-              overdueActivities:selectedUser.overdue_activities,
-              upcomingActivities:Array.isArray(selectedUser.upcoming_activities)?selectedUser.upcoming_activities:[],
-            }}/>},
+            {id:"statistics",label:"Estadísticas",content:statisticsError&&!selectedStatistics
+              ?<div className="entity-panel user-statistics-fallback"><div className="notice error">{statisticsError}</div><div className="entity-stat-grid">
+                <div className="entity-stat-card"><small>OT asignadas activas</small><strong>{selectedUser.assigned_work_orders}</strong><span>órdenes no cerradas</span></div>
+                <div className="entity-stat-card"><small>Actividades pendientes</small><strong>{selectedUser.pending_activities}</strong><span>pendientes o en progreso</span></div>
+                <div className="entity-stat-card"><small>Completadas · 30 días</small><strong>{selectedUser.completed_activities_30d}</strong><span>eventos de ejecución</span></div>
+                <div className="entity-stat-card"><small>Horas campo · 30 días</small><strong>{selectedUser.attendance_hours_30d}</strong><span>turnos de asistencia</span></div>
+              </div></div>
+              :!selectedStatistics||statisticsLoadingUser===selectedUser.id
+                ?<div className="user-statistics-loading"><span className="user-statistics-loading-ring"/><strong>Cargando estadísticas operativas…</strong><small>Asistencia, actividades y próximos compromisos.</small></div>
+                :<UserStatisticsDashboard data={{
+                  id:selectedUser.id,
+                  name:selectedUser.full_name,
+                  role:roleName(roleKey(selectedUser)),
+                  company:selectedUser.organization_name||"Desweb CMMS",
+                  photoUrl:selectedUser.has_avatar?"/api/users/"+selectedUser.id+"/avatar":null,
+                  active:selectedUser.active,
+                  biometricLabel:biometricStatusLabel(selectedUser.biometric_status),
+                  trackingLive:selectedUser.tracking_live,
+                  openShift:selectedUser.open_shift,
+                  openShiftStartedAt:selectedStatistics.open_shift_started_at,
+                  assignedWorkOrders:selectedUser.assigned_work_orders,
+                  pendingActivities:selectedUser.pending_activities,
+                  completedActivities30d:selectedUser.completed_activities_30d,
+                  completedActivities7d:selectedStatistics.completed_activities_7d,
+                  attendanceHours30d:selectedUser.attendance_hours_30d,
+                  attendanceTodayHours:selectedStatistics.attendance_hours_today,
+                  attendanceDaily7d:Array.isArray(selectedStatistics.attendance_daily_7d)?selectedStatistics.attendance_daily_7d:[],
+                  activityCompletionRate30d:(selectedUser.completed_activities_30d+selectedUser.pending_activities)>0
+                    ?Math.round((selectedUser.completed_activities_30d/(selectedUser.completed_activities_30d+selectedUser.pending_activities))*100)
+                    :0,
+                  overdueActivities:selectedStatistics.overdue_activities,
+                  upcomingActivities:Array.isArray(selectedStatistics.upcoming_activities)?selectedStatistics.upcoming_activities:[],
+                }}/>},
             {id:"operation",label:"Actividad",content:<div className="entity-panel-grid">
               <div className="entity-panel"><h3>Trabajo asignado</h3><div className="entity-info-grid">
                 <div className="entity-info-field"><span>Órdenes activas</span><strong>{selectedUser.assigned_work_orders}</strong></div>

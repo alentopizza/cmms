@@ -61,6 +61,25 @@ export default function BulkImportModal({
     setResult(null);
   }
 
+  function summaryLabel(key:string){
+    const labels:Record<string,string>={
+      inventoryRows:"filas de inventario",
+      kardexRows:"movimientos Kardex",
+      warehouseRows:"bodegas / almacenes",
+      newItems:"artículos nuevos",
+      skippedServices:"servicios omitidos",
+      assetRows:"filas de activos",
+      newAssets:"activos nuevos",
+      items:"artículos procesados",
+      kardex:"movimientos procesados",
+      warehouses:"bodegas procesadas",
+      assets:"activos procesados",
+      warnings:"advertencias",
+      errors:"errores",
+    };
+    return labels[key]||key.replace(/([A-Z])/g," $1").toLowerCase();
+  }
+
   return <>
     <button className={compact?"button secondary":"button secondary entity-action-button"} type="button" onClick={()=>setOpen(true)}>
       <UiIcon name="upload" size={16}/><span>{label}</span>
@@ -84,14 +103,22 @@ export default function BulkImportModal({
           <input ref={inputRef} type="file" accept=".xlsx" hidden onChange={event=>choose(event.target.files?.[0]||null)}/>
         </div>
 
-        <div className={"bulk-import-drop "+(file?"has-file":"")}>
+        <div
+          className={"bulk-import-drop "+(file?"has-file":"")}
+          onDragOver={event=>event.preventDefault()}
+          onDrop={event=>{event.preventDefault();choose(event.dataTransfer.files?.[0]||null);}}
+          onClick={()=>inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();inputRef.current?.click();}}}
+        >
           <UiIcon name="file" size={26}/>
-          {file?<><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></>:<><strong>Adjunta un archivo .xlsx</strong><span>Máximo 12 MB. Primero se ejecuta una validación completa.</span></>}
+          {file?<><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB · haz clic para reemplazar</span></>:<><strong>Arrastra aquí tu archivo .xlsx o haz clic para seleccionarlo</strong><span>Máximo 12 MB. Primero se ejecuta una validación completa.</span></>}
         </div>
 
         {result&&<div className="bulk-import-result">
           {result.error&&<div className="notice error">{result.error}</div>}
-          {result.summary&&<div className="bulk-import-summary">{Object.entries(result.summary).map(([key,value])=><span key={key}><strong>{value}</strong><small>{key.replace(/([A-Z])/g," $1")}</small></span>)}</div>}
+          {result.summary&&<div className="bulk-import-summary">{Object.entries(result.summary).map(([key,value])=><span key={key}><strong>{value}</strong><small>{summaryLabel(key)}</small></span>)}</div>}
           {result.issues&&result.issues.length>0&&<div className="bulk-import-issues">
             <div className="bulk-import-issues-head"><strong>Resultado de validación</strong><span>{result.issues.length} observaciones mostradas</span></div>
             <div>{result.issues.map((item,index)=><article key={item.sheet+"-"+item.row+"-"+index} className={item.severity}>

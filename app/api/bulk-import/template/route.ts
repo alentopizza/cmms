@@ -61,13 +61,13 @@ export async function GET(request:Request){
   const lines=entity==="inventory"?[
     ["Empresa",org.rows[0]?.name||""],
     ["Objetivo","Cargar catálogo de inventario y movimientos Kardex con validación previa."],
-    ["Flujo recomendado","1) Completa Inventario. 2) Completa Kardex. 3) Importa desde CMMS. 4) Corrige las filas señaladas antes de confirmar."],
+    ["Flujo recomendado","1) Revisa Bodegas. 2) Completa Inventario. 3) Completa Kardex. 4) Importa desde CMMS. 5) Corrige las filas señaladas antes de confirmar."],
     ["Regla SKU","El SKU debe ser único dentro de la empresa. Usa siempre el mismo SKU en Inventario y Kardex."],
     ["Proveedor","Debe existir previamente en Proveedores y tener capacidad de materiales/suministros."],
     ["Sede/Sububicación","Usa exactamente los nombres listados en Catálogos."],
-    ["Bodega","Puede ser una bodega existente o un nombre nuevo; el importador la crea dentro de la sede/sububicación indicada."],
+    ["Bodega","La hoja Bodegas permite crear/actualizar almacenes. Si un artículo usa un nombre nuevo, también puede crearse durante la importación."],
     ["Stock inicial","Se registra como movimiento de entrada para mantener trazabilidad en Kardex."],
-    ["Kardex","Tipos válidos: Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución, Traslado."],
+    ["Kardex","Tipos válidos: Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución, Traslado. Puedes registrar lote, vencimiento y centro de costo."],
     ["Traslado","Requiere Bodega origen y Bodega destino."],
     ["Compatibilidad","El importador también reconoce la hoja Productos y Kardex del archivo demo revisado, pero los servicios no se cargan como inventario."],
   ]:[
@@ -106,6 +106,24 @@ export async function GET(request:Request){
   fit(catalog);
 
   if(entity==="inventory"){
+    const warehouseSheet=workbook.addWorksheet("Bodegas",{views:[{showGridLines:false}]});
+    const warehouseHeaders=["Código","Bodega *","Tipo","Sede","Sububicación","Ubicación detalle","Responsable","Capacidad","Estado","Observaciones"];
+    warehouseSheet.addRow(warehouseHeaders);header(warehouseSheet.getRow(1));
+    warehouseSheet.addRow([
+      warehouses.rows[0]?.id?"ALM-001":"ALM-001",
+      warehouses.rows[0]?.name||"Almacén principal",
+      "Almacenamiento",
+      warehouses.rows[0]?.site_name||sites.rows[0]?.name||"",
+      warehouses.rows[0]?.location_name||locations.rows[0]?.name||"",
+      "Zona principal",
+      "",
+      1000,
+      "Activa",
+      "Bodega principal de inventario"
+    ]);
+    warehouseSheet.autoFilter={from:"A1",to:"J1"};
+    fit(warehouseSheet);
+
     const inventory=workbook.addWorksheet("Inventario",{views:[{showGridLines:false}]});
     const headers=["SKU *","Nombre *","Descripción","Categoría","Presentación","Unidad *","Proveedor *","Sede *","Sububicación *","Bodega *","Stock mínimo","Stock máximo","Costo unitario","Stock inicial","Activo"];
     inventory.addRow(headers);header(inventory.getRow(1));
@@ -115,10 +133,10 @@ export async function GET(request:Request){
     fit(inventory);
 
     const kardex=workbook.addWorksheet("Kardex",{views:[{showGridLines:false}]});
-    const kHeaders=["Fecha *","Tipo movimiento *","Documento","SKU *","Bodega origen *","Bodega destino","Cantidad *","Costo unitario","Observaciones"];
+    const kHeaders=["Fecha *","Tipo movimiento *","Documento","SKU *","Proveedor","Bodega origen *","Bodega destino","Cantidad *","Costo unitario","Lote","Vencimiento","Centro de costo","Usuario origen","Observaciones"];
     kardex.addRow(kHeaders);header(kardex.getRow(1));
-    kardex.addRow([new Date().toISOString().slice(0,10),"Entrada","OC-0001","REP-001","Almacén principal","",10,35000,"Compra inicial"]);
-    kardex.autoFilter={from:"A1",to:"I1"};
+    kardex.addRow([new Date().toISOString().slice(0,10),"Entrada","OC-0001","REP-001",suppliers.rows[0]?.name||"","Almacén principal","",10,35000,"LOTE-001","","Mantenimiento","","Compra inicial"]);
+    kardex.autoFilter={from:"A1",to:"N1"};
     fit(kardex);
   }else{
     const assets=workbook.addWorksheet("Activos",{views:[{showGridLines:false}]});

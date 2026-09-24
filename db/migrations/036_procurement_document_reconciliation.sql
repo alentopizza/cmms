@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS procurement_document_events (
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   document_id uuid NOT NULL REFERENCES procurement_documents(id) ON DELETE RESTRICT,
   action text NOT NULL
-    CHECK (action IN ('uploaded','verified','exception_accepted','disputed','voided')),
+    CHECK (action IN ('uploaded','evidence_linked','verified','exception_accepted','disputed','voided')),
   actor_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
   actor_label text NOT NULL DEFAULT 'Sistema',
   notes text,

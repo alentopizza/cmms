@@ -60,6 +60,11 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_locked",request.url),303);
     }
 
+    if(!req.approval_self_allowed&&req.requested_by&&session.userId===req.requested_by){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_self",request.url),303);
+    }
+
     if(session.platformRole==="user"){
       const roleAllowed=req.approval_approver_scope==="admin_only"
         ?session.role==="admin"
@@ -67,10 +72,6 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       if(!roleAllowed){
         await client.query("ROLLBACK");
         return new NextResponse("Forbidden",{status:403});
-      }
-      if(!req.approval_self_allowed&&req.requested_by&&session.userId===req.requested_by){
-        await client.query("ROLLBACK");
-        return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_self",request.url),303);
       }
       if(!session.accessAllSites){
         const sites=await client.query<{site_id:string}>(

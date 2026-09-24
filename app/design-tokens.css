@@ -1,0 +1,251 @@
+/* ==========================================================================
+   DESWEB Design System V2 — foundations
+   Canonical runtime tokens. New UI must consume these semantic variables.
+   Legacy aliases at the end keep current modules stable during migration.
+   ========================================================================== */
+
+:root{
+  color-scheme:light;
+
+  /* Brand DNA */
+  --color-brand-primary:#72F1DC;
+  --color-brand-secondary:#2C8780;
+  --color-brand-dark:#1D1D2C;
+
+  /* Primary scale */
+  --color-primary-50:#F0FFFC;
+  --color-primary-100:#D9FFF8;
+  --color-primary-200:#B8FFF1;
+  --color-primary-300:#91F8E7;
+  --color-primary-400:#72F1DC;
+  --color-primary-500:#55D8C5;
+  --color-primary-600:#35B9A9;
+  --color-primary-700:#2C8780;
+  --color-primary-800:#236D68;
+  --color-primary-900:#194F4C;
+
+  /* Teal scale */
+  --color-teal-50:#EFFBFA;
+  --color-teal-100:#D8F3F1;
+  --color-teal-200:#B6E5E1;
+  --color-teal-300:#8DD4CF;
+  --color-teal-400:#5DB5AE;
+  --color-teal-500:#2C8780;
+  --color-teal-600:#26746E;
+  --color-teal-700:#205E5A;
+  --color-teal-800:#194A47;
+  --color-teal-900:#123735;
+
+  /* Navy scale */
+  --color-navy-50:#F5F5F8;
+  --color-navy-100:#E9E9EF;
+  --color-navy-200:#D5D5E0;
+  --color-navy-300:#B7B7C8;
+  --color-navy-400:#8F90A7;
+  --color-navy-500:#686A83;
+  --color-navy-600:#4B4C63;
+  --color-navy-700:#353649;
+  --color-navy-800:#272838;
+  --color-navy-900:#1D1D2C;
+  --color-navy-950:#11111C;
+
+  /* Semantic status scales */
+  --color-success-50:#ECFDF5;
+  --color-success-100:#D1FAE5;
+  --color-success-300:#6EE7B7;
+  --color-success-500:#10B981;
+  --color-success-600:#059669;
+  --color-success-700:#047857;
+  --color-success-900:#064E3B;
+
+  --color-warning-50:#FFFBEB;
+  --color-warning-100:#FEF3C7;
+  --color-warning-300:#FCD34D;
+  --color-warning-500:#F59E0B;
+  --color-warning-600:#D97706;
+  --color-warning-700:#B45309;
+  --color-warning-900:#78350F;
+
+  --color-danger-50:#FEF2F2;
+  --color-danger-100:#FEE2E2;
+  --color-danger-300:#FCA5A5;
+  --color-danger-500:#EF4444;
+  --color-danger-600:#DC2626;
+  --color-danger-700:#B91C1C;
+  --color-danger-900:#7F1D1D;
+
+  --color-info-50:#EFF6FF;
+  --color-info-100:#DBEAFE;
+  --color-info-300:#93C5FD;
+  --color-info-500:#3B82F6;
+  --color-info-600:#2563EB;
+  --color-info-700:#1D4ED8;
+  --color-info-900:#1E3A8A;
+
+  /* Functional areas */
+  --color-module-analytics:#8B5CF6;
+  --color-module-procurement:#F97316;
+  --color-module-technology:#06B6D4;
+  --color-module-people:#EC4899;
+
+  /* Semantic surfaces */
+  --color-bg:#F4F8F9;
+  --color-surface:#FFFFFF;
+  --color-surface-soft:#F8FBFC;
+  --color-surface-teal:#F1FAF9;
+  --color-surface-blue:#F1F7FC;
+  --color-surface-dark:#1D1D2C;
+
+  --color-text-primary:#1D1D2C;
+  --color-text-secondary:#4B4C63;
+  --color-text-muted:#686A83;
+  --color-text-disabled:#8F90A7;
+  --color-text-inverse:#FFFFFF;
+
+  --color-border-subtle:#E2EAEC;
+  --color-border-default:#D5E1E3;
+  --color-border-strong:#B8CCCF;
+  --color-border-active:#2C8780;
+
+  /* Action semantics: may be tenant-customized by the dashboard shell. */
+  --color-action-primary:var(--color-brand-secondary);
+  --color-action-primary-hover:var(--color-primary-800);
+  --color-action-primary-active:var(--color-teal-700);
+  --color-action-accent:var(--color-brand-primary);
+  --color-focus-ring:var(--color-brand-primary);
+
+  /* Typography */
+  --font-family-sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-size-display:40px;
+  --font-size-h1:32px;
+  --font-size-h2:24px;
+  --font-size-h3:20px;
+  --font-size-h4:18px;
+  --font-size-body-lg:16px;
+  --font-size-body:14px;
+  --font-size-body-sm:12px;
+  --font-size-caption:12px;
+  --font-size-label:12px;
+  --font-weight-regular:400;
+  --font-weight-medium:500;
+  --font-weight-semibold:600;
+  --font-weight-bold:700;
+  --line-height-tight:1.2;
+  --line-height-body:1.5;
+
+  /* Spacing */
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+
+  /* Radius */
+  --radius-xs:4px;
+  --radius-sm:6px;
+  --radius-md:8px;
+  --radius-lg:10px;
+  --radius-xl:12px;
+  --radius-2xl:16px;
+  --radius-3xl:20px;
+
+  /* Shadows — derived from the approved Dark token. */
+  --shadow-xs:0 1px 2px rgba(29,29,44,.05);
+  --shadow-sm:0 4px 12px rgba(29,29,44,.07);
+  --shadow-md:0 12px 28px rgba(29,29,44,.10);
+  --shadow-lg:0 22px 52px rgba(29,29,44,.14);
+
+  /* Motion */
+  --motion-fast:120ms;
+  --motion-normal:180ms;
+  --motion-medium:240ms;
+  --motion-slow:320ms;
+  --ease-standard:cubic-bezier(.2,.8,.2,1);
+
+  /* Approved gradients */
+  --gradient-primary:linear-gradient(135deg,#72F1DC 0%,#2C8780 100%);
+  --gradient-teal:linear-gradient(135deg,#2C8780 0%,#194F4C 100%);
+  --gradient-navy:linear-gradient(135deg,#353649 0%,#1D1D2C 100%);
+  --gradient-ocean:linear-gradient(135deg,#72F1DC 0%,#3B82F6 100%);
+  --gradient-analytics:linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%);
+
+  /* Chart sequence */
+  --chart-1:#2C8780;
+  --chart-2:#72F1DC;
+  --chart-3:#3B82F6;
+  --chart-4:#8B5CF6;
+  --chart-5:#F59E0B;
+  --chart-6:#10B981;
+  --chart-7:#F97316;
+  --chart-8:#EC4899;
+  --chart-9:#06B6D4;
+  --chart-10:#64748B;
+
+  /* Legacy compatibility aliases.
+     These are temporary bridges; new components use semantic V2 tokens above. */
+  --brand-dark:var(--color-brand-dark);
+  --brand-white:var(--color-surface);
+  --brand-mint-light:var(--color-primary-200);
+  --brand-mint:var(--color-action-accent);
+  --brand-teal:var(--color-action-primary);
+  --brand-teal-hover:var(--color-action-primary-hover);
+  --bg:var(--color-bg);
+  --surface:var(--color-surface);
+  --text:var(--color-text-primary);
+  --text-soft:var(--color-text-muted);
+  --border:var(--color-border-default);
+  --success:var(--color-success-500);
+  --warning:var(--color-warning-500);
+  --danger:var(--color-danger-500);
+  --shadow:var(--shadow-sm);
+
+  font-family:var(--font-family-sans);
+  color:var(--color-text-primary);
+  background:var(--color-bg);
+}
+
+html[data-theme="dark"]{
+  color-scheme:dark;
+
+  --color-bg:var(--color-navy-950);
+  --color-surface:var(--color-navy-900);
+  --color-surface-soft:var(--color-navy-800);
+  --color-surface-teal:var(--color-teal-900);
+  --color-surface-blue:var(--color-navy-800);
+  --color-surface-dark:var(--color-navy-950);
+
+  --color-text-primary:var(--color-navy-50);
+  --color-text-secondary:var(--color-navy-200);
+  --color-text-muted:var(--color-navy-300);
+  --color-text-disabled:var(--color-navy-400);
+  --color-text-inverse:var(--color-navy-950);
+
+  --color-border-subtle:var(--color-navy-700);
+  --color-border-default:var(--color-navy-600);
+  --color-border-strong:var(--color-navy-500);
+  --color-border-active:var(--color-brand-primary);
+
+  --color-action-primary:var(--color-brand-secondary);
+  --color-action-primary-hover:var(--color-primary-800);
+  --color-action-primary-active:var(--color-teal-700);
+  --color-focus-ring:var(--color-brand-primary);
+
+  --shadow-xs:0 1px 2px rgba(0,0,0,.20);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.24);
+  --shadow-md:0 12px 28px rgba(0,0,0,.30);
+  --shadow-lg:0 22px 52px rgba(0,0,0,.38);
+}
+
+@media(prefers-reduced-motion:reduce){
+  :root{
+    --motion-fast:0ms;
+    --motion-normal:0ms;
+    --motion-medium:0ms;
+    --motion-slow:0ms;
+  }
+}

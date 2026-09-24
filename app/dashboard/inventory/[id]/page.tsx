@@ -13,7 +13,7 @@ type Item={
 };
 type Stock={warehouse_id:string;warehouse:string;quantity:string;min_quantity:string;max_quantity:string};
 type Warehouse={id:string;name:string};
-type Tx={id:string;type:string;quantity:string;unit_cost:string|null;document_number:string|null;movement_at:string;warehouse:string|null;destination:string|null;notes:string|null};
+type Tx={id:string;type:string;quantity:string;unit_cost:string|null;document_number:string|null;movement_at:string;warehouse:string|null;destination:string|null;lot_number:string|null;expires_at:string|null;cost_center:string|null;notes:string|null};
 
 function money(value:number){return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(value);}
 function movementLabel(type:string,qty:number){if(type==="receipt")return"Entrada";if(type==="issue")return"Salida";if(type==="return")return"Devolución";if(type==="transfer")return"Traslado";return qty<0?"Ajuste negativo":"Ajuste positivo";}
@@ -39,7 +39,8 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
     query<Stock>(`SELECT sl.warehouse_id,w.name warehouse,sl.quantity::text,sl.min_quantity::text,sl.max_quantity::text
                   FROM inventory_stock_levels sl JOIN inventory_warehouses w ON w.id=sl.warehouse_id WHERE sl.item_id=$1 ORDER BY w.name`,[id]),
     query<Warehouse>("SELECT id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[item.organization_id]),
-    query<Tx>(`SELECT t.id,t.type,t.quantity::text,t.unit_cost::text,t.document_number,t.movement_at::text,w.name warehouse,d.name destination,t.notes
+    query<Tx>(`SELECT t.id,t.type,t.quantity::text,t.unit_cost::text,t.document_number,t.movement_at::text,w.name warehouse,d.name destination,
+                      t.lot_number,t.expires_at::text,t.cost_center,t.notes
                FROM inventory_transactions t LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
                WHERE t.item_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 200`,[id]),
   ]);
@@ -104,6 +105,9 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
           <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" min="0" step="0.01"/></div>
           <div className="field"><label>Fecha / hora</label><input name="movement_at" type="datetime-local"/></div>
           <div className="field"><label>Documento</label><input name="document_number" placeholder="OC, REQ, ajuste..."/></div>
+          <div className="field"><label>Lote</label><input name="lot_number" placeholder="Lote o serie de recepción"/></div>
+          <div className="field"><label>Vencimiento</label><input name="expires_at" type="date"/></div>
+          <div className="field"><label>Centro de costo</label><input name="cost_center" placeholder="Área, contrato o proyecto"/></div>
           <div className="field form-span-2"><label>Observaciones</label><input name="notes"/></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Registrar movimiento</button></div>
         </form>}
@@ -112,8 +116,13 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
 
     <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Kardex</span><h2>Historial de movimientos</h2></div></div>
-      <div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Bodega</th><th>Cantidad</th><th>Costo</th><th>Observaciones</th></tr></thead><tbody>
-        {transactions.rows.map(tx=>{const qty=Number(tx.quantity);return <tr key={tx.id}><td>{new Date(tx.movement_at).toLocaleString("es-CO")}</td><td>{movementLabel(tx.type,qty)}</td><td>{tx.document_number||"—"}</td><td>{tx.warehouse||"—"}{tx.destination?" → "+tx.destination:""}</td><td>{qty>0?"+":""}{qty} {item.unit}</td><td>{tx.unit_cost?money(Number(tx.unit_cost)):"—"}</td><td>{tx.notes||"—"}</td></tr>})}
+      <div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Bodega</th><th>Cantidad</th><th>Costo</th><th>Lote / vencimiento</th><th>Centro de costo</th><th>Observaciones</th></tr></thead><tbody>
+        {transactions.rows.map(tx=>{const qty=Number(tx.quantity);return <tr key={tx.id}>
+          <td>{new Date(tx.movement_at).toLocaleString("es-CO")}</td><td>{movementLabel(tx.type,qty)}</td><td>{tx.document_number||"—"}</td>
+          <td>{tx.warehouse||"—"}{tx.destination?" → "+tx.destination:""}</td><td>{qty>0?"+":""}{qty} {item.unit}</td><td>{tx.unit_cost?money(Number(tx.unit_cost)):"—"}</td>
+          <td>{tx.lot_number||"—"}{tx.expires_at?<small className="table-subline">Vence {new Date(tx.expires_at+"T12:00:00").toLocaleDateString("es-CO")}</small>:null}</td>
+          <td>{tx.cost_center||"—"}</td><td>{tx.notes||"—"}</td>
+        </tr>})}
       </tbody></table></div>
     </section>
   </>;

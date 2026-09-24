@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-24 — Supplier directory density and typography
+
+### Changed
+
+- Supplier directory now renders **three profile cards per row** on wide desktop layouts, two on medium layouts and one on compact/mobile layouts.
+- Reduced Supplier card logo, padding and internal gaps so the third column is gained by better information density rather than shrinking the usable content area.
+- Raised Supplier directory text, status badges, counters and action buttons above the previous 7–8 px sizes.
+- Raised the legibility floor across the new Supplier profile and Requisition UI, including Activities, supplies, documents, requisition builder, requisition directory and requisition sheet.
+- Responsive breakpoints keep cards readable instead of forcing three columns when the viewport can no longer sustain them.
+
 
 ## 2026-09-23 — Supplier profile workspace and supplier-scoped requisitions
 

@@ -393,3 +393,28 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - The six-month chart must use real monthly values and represent missing months as zero rather than invented interpolation.
 - Dashboard exports must preserve the same current-period Site, Priority, status and role scope visible on screen.
 - Field-person KPI comparisons are descriptive operational evidence. Do not turn them into leaderboards, employment rankings or automated personnel decisions.
+
+
+## Conditional module-filter invariant
+
+- Module facets only narrow server-authorized records; they are never an authorization source.
+- Hide a facet when the current authorized/contextual dataset has fewer than two useful options.
+- Prefer cascading parent-to-child filters (Company → Site → domain facet) rather than independent selects containing unrelated values.
+- Put filter values in stable IDs/codes and display labels separately when possible.
+- Do not query or expose records from another tenant merely to populate a filter option.
+
+## Controlled Supplier catalog invariant
+
+- New Supplier capability/type and specialty/category values use `supplier_capability_catalog` and `supplier_specialty_catalog`; do not reintroduce free-text entry for these fields.
+- A Supplier may have several capabilities and specialties.
+- Server routes must validate every submitted code.
+- Preserve the derived legacy `suppliers.supplier_type` compatibility value until all Inventory/service consumers are deliberately migrated.
+- Existing legacy `service_category` text may remain visible as fallback, but editing through current UI should normalize it to catalog specialties.
+
+## User dossier / Supplier financial-data invariant
+
+- Personnel documents are Organization-scoped private records behind `users.manage`; never expose them through public profile routes or generic maintenance attachments.
+- Emergency contact is administrative information and must not affect RBAC, authentication or biometric identity.
+- Supplier financial information is tenant scoped behind `suppliers.manage`.
+- Mask account numbers in ordinary read summaries; do not treat stored payment details as permission to initiate a payment.
+- Document archive is reversible and distinct from permanent deletion.

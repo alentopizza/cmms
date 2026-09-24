@@ -12,6 +12,7 @@ import ModuleExportMenu from "@/components/ModuleExportMenu";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
+import InventorySubnav from "@/components/InventorySubnav";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -142,6 +143,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         </CreateRecordModal> : null}
       </div>}
     />
+    <InventorySubnav active="summary"/>
 
     {params.created && <div className="notice success section">Artículo creado y existencia inicial registrada en Kardex.</div>}
     {params.updated && <div className="notice success section">Artículo actualizado correctamente.</div>}
@@ -161,7 +163,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       <article className="inventory-kpi-card danger"><span>×</span><div><small>Sin stock</small><strong>{outStock}</strong><em>{items.rowCount?Math.round(outStock/items.rowCount*100):0}% del total</em></div></article>
     </section>
 
-    <section className="section inventory-dashboard-layout">
+    <section className="section inventory-dashboard-layout" id="productos">
       <div className="inventory-products-panel">
         <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div></div>
         {items.rows.length?<div className="inventory-product-grid">{items.rows.map(item=>{

@@ -332,7 +332,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 
 - **Phase 0 — Governance/documentation:** completed.
 - **Phase 1 — Foundations:** implemented — CSS tokens, semantic aliases, typography, spacing, radius, shadows, motion, icon-system decision, initial `/ui-kit` structure and CI smoke.
-- **Phase 2 — UI Core primitives:** Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload.
+- **Phase 2 — UI Core primitives:** implemented — Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload, compatibility wrappers and live /ui-kit examples.
 - **Phase 3 — Global shell/navigation:** Sidebar, header, responsive navigation, account actions and ModuleNavigation while preserving RBAC/preferences.
 - **Phase 4 — Shared Data UI:** Search, filters, DataTable, pagination, row/bulk actions, KPI, charts, timeline and progress.
 - **Phase 5 — Business UI:** AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, preserving distinct domain identities.
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 2 — UI Core primitives and interaction states.**
+**Phase 3 — Global shell and navigation.**
 
-Start by evaluating existing `ConfirmDialog`, `CreateRecordModal`, `MultiSelectDropdown`, `FileDropzone`, `ModuleHeader` and related patterns so the official primitives absorb working behavior instead of duplicating it.
+Migrate Sidebar, contextual header/account actions, responsive drawer/bottom navigation and global navigation grammar to V2 while preserving RBAC, routes, user-defined sidebar ordering/collapse, white-label branding and light/dark/system theme.
 
 
 ## Recently completed role-dashboard analytics slice

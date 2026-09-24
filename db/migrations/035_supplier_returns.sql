@@ -67,7 +67,17 @@ BEGIN
      OR receipt.organization_id<>NEW.organization_id
      OR receipt.requisition_id<>header.requisition_id
      OR receipt.requisition_item_id<>NEW.requisition_item_id
-     OR receipt.item_id<>NEW.inventory_item_id THEN
+     OR receipt.item_id<>NEW.inventory_item_id
+     OR NOT EXISTS (
+       SELECT 1 FROM supplier_requisitions r
+       WHERE r.id=header.requisition_id
+         AND r.organization_id=header.organization_id
+         AND r.supplier_id=header.supplier_id
+     )
+     OR NOT EXISTS (
+       SELECT 1 FROM inventory_warehouses w
+       WHERE w.id=NEW.warehouse_id AND w.organization_id=NEW.organization_id
+     ) THEN
     RAISE EXCEPTION 'Supplier return source relation mismatch';
   END IF;
   IF NEW.quantity>abs(receipt.quantity)+0.000001 THEN

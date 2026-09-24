@@ -413,3 +413,31 @@ After the bulk-import checkpoint, the UI/API surface was extended so the modules
 - Inactive inventory masters remain queryable in the main Inventory directory and may be reactivated. Never hard-delete an item only to remove it from an operational list.
 - `/api/assets/[id]` is the complete asset mutation endpoint; the asset detail page is the normal edit surface for tenant operators.
 - Inventory/Asset images use authenticated endpoints (`/api/inventory/:id/image`, `/api/assets/:id/image`). Do not expose raw bytea data or public object URLs.
+
+
+## 18. Requisition receiving checkpoint — 2026-09-24
+
+Supplier Requisitions now reconcile physical delivery directly with Inventory/Kardex.
+
+Implementation contract:
+
+- `POST /api/requisitions/[id]/receive` is the only requisition-aware stock receipt flow.
+- It requires both `requisitions.write` and `inventory.write`.
+- Receipt rows are processed inside one PostgreSQL transaction.
+- Never update `inventory_items.quantity` directly from this route; insert `inventory_transactions.type='receipt'` and let the Kardex trigger own stock mutation.
+- Never increment `quantity_received` before the Kardex insert succeeds.
+- Do not allow receipt quantity above `quantity_requested - quantity_received`.
+- Requisition items without an active `inventory_item_id` cannot be received until their master-data link is repaired.
+- Receipt warehouses must belong to the same Organization.
+- A partially completed requisition becomes `partial`; a fully completed requisition becomes `fulfilled` and gets `fulfilled_at`.
+- `inventory_transactions.requisition_id` and `requisition_item_id` are the traceability link back to Purchasing.
+- Global Kardex shows a link to the originating REQ and Kardex export includes the requisition reference.
+- Requisition PDF/XLS/Word exports include requested, received and pending quantities.
+- Supplier profile and global Requisitions directory both display receiving progress.
+
+Database migration:
+- `033_requisition_inventory_receipts.sql`
+
+Regression:
+- `scripts/requisition-receipt-smoke.mjs`
+- CI runs it after `inventory-kardex-smoke.mjs` and before the production build.

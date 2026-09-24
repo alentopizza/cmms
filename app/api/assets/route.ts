@@ -6,6 +6,7 @@ import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { canCreateAsset } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 export async function POST(request:Request) {
   const session=await getSession();
@@ -24,6 +25,9 @@ export async function POST(request:Request) {
   const returnTo=String(form.get("return_to")||"");
 
   const target=(suffix:string)=>publicUrl(appendFeedback(safeDashboardReturn(returnTo,"/dashboard/assets"),suffix),request.url);
+  let image=null;
+  try{image=await readImageUpload(form,"image");}
+  catch(error){return NextResponse.redirect(target("?error="+encodeURIComponent(imageUploadMessage(error)||"image")),303);}
 
   const site=session.platformRole!=="user"
     ? await query<{organization_id:string}>("SELECT organization_id FROM sites WHERE id=$1 AND active=true",[siteId])
@@ -44,9 +48,11 @@ export async function POST(request:Request) {
   if(!location.rowCount||!supplier.rowCount) return NextResponse.redirect(target("?error=relation"),303);
 
   await query(
-    `INSERT INTO assets(organization_id,site_id,location_id,supplier_id,code,name,criticality,manufacturer,model)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [organizationId,siteId,locationId,supplierId,code,name,criticality,manufacturer||null,model||null],
+    `INSERT INTO assets(
+       organization_id,site_id,location_id,supplier_id,code,name,criticality,manufacturer,model,
+       image_data,image_mime_type,image_file_name
+     ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [organizationId,siteId,locationId,supplierId,code,name,criticality,manufacturer||null,model||null,image?.data||null,image?.mime||null,image?"asset-image":null],
   );
   return NextResponse.redirect(target("?created=asset"),303);
 }

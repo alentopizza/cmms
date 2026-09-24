@@ -462,7 +462,6 @@ export default function UserManagement({
             </span>
             <span className="user-card-avatar-row">
               <span className="user-card-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</span>
-              <span className={"user-card-live "+(user.tracking_live?"live":"")} title={user.tracking_live?"Seguimiento Reacción activo":"Sin seguimiento en vivo"}><i/>{user.tracking_live?"En línea":"Offline"}</span>
             </span>
             <span className="user-card-identity">
               <strong>{user.full_name}</strong>
@@ -471,7 +470,6 @@ export default function UserManagement({
               <em title={user.email}>{user.email}</em>
             </span>
             <span className="user-card-badges">
-              <span><UiIcon name="check" size={12}/>{biometricStatusLabel(user.biometric_status)}</span>
               <span><UiIcon name="location" size={12}/>{siteAccessLabel(user)}</span>
             </span>
             <span className="user-card-metrics">
@@ -485,7 +483,8 @@ export default function UserManagement({
             <button className="user-card-primary-action" type="button" onClick={()=>setSelectedUserId(user.id)}><UiIcon name="user" size={14}/> Ver perfil</button>
             {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <>
               <button className="user-card-icon-action" type="button" onClick={() => openEdit(user)} title="Editar usuario"><UiIcon name="edit" size={14}/></button>
-              {user.id !== currentUserId && <button className={"user-card-icon-action "+(user.active?"danger":"")} type="button" onClick={() => setConfirm({ kind: "status", user })} title={user.active?"Desactivar usuario":"Reactivar usuario"}><UiIcon name={user.active?"trash":"check"} size={14}/></button>}
+              {user.phone&&<a className="user-card-icon-action whatsapp" href={"https://wa.me/"+user.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
+              {user.id !== currentUserId && <button className={"user-card-icon-action status-toggle "+(user.active?"deactivate":"activate")} type="button" onClick={() => setConfirm({ kind: "status", user })} title={user.active?"Desactivar usuario":"Reactivar usuario"}><UiIcon name={user.active?"power":"check"} size={14}/></button>}
               {isPlatformOwner && user.id !== currentUserId && <button className="user-card-icon-action danger" type="button" onClick={() => setConfirm({ kind: "delete", user })} title="Eliminar usuario"><UiIcon name="trash" size={14}/></button>}
             </>}
           </div>

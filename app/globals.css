@@ -13089,3 +13089,12 @@ html[data-theme="dark"] .inventory-detail-identity h2{color:var(--text)}
   .inventory-detail-identity{grid-template-columns:82px minmax(0,1fr)}
   .inventory-detail-image{width:82px;height:78px}
 }
+
+
+.asset-detail-visual-head{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;align-items:center;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.asset-detail-visual-head h2{margin:2px 0 3px;font-size:18px;color:var(--brand-dark)}
+.asset-detail-visual-head p{margin:0;color:var(--text-soft);font-size:9px}
+.asset-detail-photo{width:120px;height:96px;display:grid;place-items:center;border:1px solid var(--border);border-radius:13px;background:linear-gradient(145deg,#f3f7fa,#fff);color:#3476c9;font-size:38px;overflow:hidden}
+.asset-detail-photo.has-image img{width:100%;height:100%;object-fit:contain;display:block}
+html[data-theme="dark"] .asset-detail-visual-head h2{color:var(--text)}
+@media(max-width:620px){.asset-detail-visual-head{grid-template-columns:86px minmax(0,1fr)}.asset-detail-photo{width:86px;height:76px}}

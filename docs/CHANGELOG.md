@@ -1518,3 +1518,22 @@ This file records meaningful product and engineering changes so future developer
 - Added `AGENTS.md` as the entry point for future AI agents and contributors.
 - Added project context, architecture, decisions, branding, design system, roadmap and changelog under `docs/`.
 - Meaningful implementation changes must update the changelog and relevant technical documentation.
+
+
+## 2026-09-24 — Dashboard recovery, phone editing correction and leader-forward Crews
+
+### Fixed
+
+- Corrected the controlled Phone/WhatsApp field so an E.164 value emitted while typing no longer reappears inside the national-number input as the Country calling code. Editing now keeps the automatic prefix separate while the user can type the national number normally.
+- Hardened the root Dashboard against analytical-query failures: one failed metric/query now falls back to a safe navigation state instead of collapsing the entire `/dashboard` route into Next.js' generic server-error screen. The original exception is still logged server-side for diagnosis.
+
+### Changed — Crews
+
+- Redesigned the Crew directory around the supplied leader/member visual reference while keeping Desweb colors, typography, light/dark behavior and responsive layout.
+- The Crew leader now has a prominent photo/identity panel plus WhatsApp, call and email actions when those contact values exist.
+- Crew cards show member count, active Activities and completed Activities, plus a compact visual roster with profile photos.
+- Crew creation now uses a visual leader picker and visual member selector.
+- **Managers/Supervisors are valid Crew members and leaders**, alongside Technicians and authorized external collaborators.
+- Leadership is an explicit operational choice; it is not inferred from role. Selecting a leader automatically includes that person in the Crew.
+- Eligible members are restricted to the same Organization and must have access to the Crew's selected Site.
+- Setup-sequence workforce checks now count Managers/Supervisors as eligible Crew personnel.

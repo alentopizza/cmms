@@ -32,14 +32,14 @@ function taxKey(value:string|undefined|null){
   return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 }
 
-function exact(rows:ImportSupplier[],field:"id"|"tax_id"|"code"|"name",value:string){
-  if(!value)return null;
+function matches(rows:ImportSupplier[],field:"id"|"tax_id"|"code"|"name",value:string){
+  if(!value)return [] as ImportSupplier[];
   if(field==="id"){
     const idValue=value.trim().toLowerCase();
-    return rows.find(row=>row.id.toLowerCase()===idValue||key(row.code)===key(value))||null;
+    return rows.filter(row=>row.id.toLowerCase()===idValue||key(row.code)===key(value));
   }
-  if(field==="tax_id")return rows.find(row=>taxKey(row.tax_id)===taxKey(value))||null;
-  return rows.find(row=>key(row[field])===key(value))||null;
+  if(field==="tax_id")return rows.filter(row=>taxKey(row.tax_id)===taxKey(value));
+  return rows.filter(row=>key(row[field])===key(value));
 }
 
 /**
@@ -58,10 +58,14 @@ export function resolveImportSupplier(rows:ImportSupplier[],reference:SupplierRe
   if(!primary)return {supplier:null,matchedBy:null,error:"No se indicó un identificador de proveedor."};
 
   const [matchedBy,value]=primary;
-  const supplier=exact(rows,matchedBy!,value);
-  if(!supplier){
+  const primaryMatches=matches(rows,matchedBy!,value);
+  if(!primaryMatches.length){
     return {supplier:null,matchedBy,error:"No existe un proveedor que coincida con "+matchedBy+" = "+value+"."};
   }
+  if(primaryMatches.length>1){
+    return {supplier:null,matchedBy,error:"El identificador "+matchedBy+" = "+value+" coincide con más de un proveedor. Usa PROVEEDOR_ID o CODIGO_PROVEEDOR."};
+  }
+  const supplier=primaryMatches[0];
 
   const checks:[SupplierResolution["matchedBy"],string][]=[
     ["id",(reference.supplierId||"").trim()],
@@ -71,8 +75,11 @@ export function resolveImportSupplier(rows:ImportSupplier[],reference:SupplierRe
   ];
   for(const [field,raw] of checks){
     if(!field||!raw)continue;
-    const resolved=exact(rows,field,raw);
-    if(resolved&&resolved.id!==supplier.id){
+    const resolved=matches(rows,field,raw);
+    if(resolved.length>1){
+      return {supplier:null,matchedBy,error:"Uno de los identificadores secundarios coincide con más de un proveedor."};
+    }
+    if(resolved.length===1&&resolved[0].id!==supplier.id){
       return {supplier:null,matchedBy,error:"Los identificadores del proveedor son inconsistentes entre sí."};
     }
   }

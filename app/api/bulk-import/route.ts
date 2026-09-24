@@ -177,6 +177,16 @@ function criticality(value:string){
   return "";
 }
 function safeRows<T>(rows:T[],max=5000){return rows.slice(0,max);}
+function validateRowLimit(issues:Issue[],sheetName:string,rows:unknown[],max=5000){
+  if(rows.length>max){
+    issue(
+      issues,sheetName,max+2,"error",
+      "La hoja supera el máximo de "+max+" filas procesables; no se importará parcialmente.",
+      "HOJA",sheetName,
+      "Divide el archivo en lotes completos de máximo "+max+" filas y vuelve a analizar.",
+    );
+  }
+}
 function findByName<T extends {name:string}>(rows:T[],value:string){return rows.find(row=>key(row.name)===key(value))||null;}
 async function catalogs(organizationId:string){
   const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds,stockLevels]=await Promise.all([
@@ -362,6 +372,7 @@ function inventoryValidation(
     if(maxValue!==null&&maxValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock máximo inválido.","STOCK_MAXIMO",String(maxValue),"Usa un valor mayor o igual a cero.");
     if(minValue!==null&&maxValue!==null&&maxValue>0&&maxValue<minValue)issue(issues,sheetName,row.rowNumber,"error","Stock máximo menor que el stock mínimo.","STOCK_MAXIMO",String(maxValue),"Usa un máximo igual o mayor al mínimo.");
     if(initialValue!==null&&initialValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock inicial inválido.","STOCK_INICIAL",String(initialValue),"Usa un valor mayor o igual a cero.");
+    if(initialValue===0&&textValue(row.values.initial)!=="")issue(issues,sheetName,row.rowNumber,"warning","Stock inicial informado en cero.","STOCK_INICIAL","0","Confirma que el producto debe iniciar sin existencias.");
     if(costValue!==null&&costValue<0)issue(issues,sheetName,row.rowNumber,"error","Costo unitario inválido.","COSTO_UNITARIO",String(costValue),"Usa un valor mayor o igual a cero.");
     if(referenceValue!==null&&referenceValue<0)issue(issues,sheetName,row.rowNumber,"error","Precio de referencia inválido.","PRECIO_REFERENCIA",String(referenceValue),"Usa un valor mayor o igual a cero.");
     if(taxValue!==null&&(taxValue<0||taxValue>100))issue(issues,sheetName,row.rowNumber,"error","IVA inválido.","IVA",String(taxValue),"Usa un porcentaje entre 0 y 100.");
@@ -536,6 +547,7 @@ export async function POST(request:Request){
 
     const warehouseSheet=findWorksheet(workbook,["Bodegas","Almacenes","Almacén","Almacen"]);
     const warehouseRows=warehouseSheet?parseSheet(warehouseSheet,WAREHOUSE_ALIASES).rows:[];
+    if(warehouseSheet)validateRowLimit(issues,warehouseSheet.name,warehouseRows);
     const parsedWarehouses=warehouseSheet
       ?warehouseValidation(warehouseRows,warehouseSheet.name,catalog)
       :{parsed:[] as ParsedWarehouse[],issues:[] as Issue[]};
@@ -545,6 +557,7 @@ export async function POST(request:Request){
     const sheet=findWorksheet(workbook,["Inventario","Productos"]);
     if(!sheet)return NextResponse.json({error:"No se encontró la hoja INVENTARIO o Productos."},{status:400});
     const parsedSheet=parseSheet(sheet,INVENTORY_ALIASES,["sku","name"]);
+    validateRowLimit(issues,sheet.name,parsedSheet.rows);
     if(parsedSheet.missing.length){
       issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "),parsedSheet.missing.join(", "),"","Usa la plantilla maestra sin modificar los encabezados.");
     }
@@ -555,6 +568,7 @@ export async function POST(request:Request){
     // the canonical Supplier module: unknown providers must be created there first.
     const providerSheet=findWorksheet(workbook,["Proveedores"]);
     const providerRows=providerSheet?parseSheet(providerSheet,PROVIDER_ALIASES).rows:[];
+    if(providerSheet)validateRowLimit(issues,providerSheet.name,providerRows);
     if(providerSheet){
       for(const row of safeRows(providerRows)){
         const reference={
@@ -585,6 +599,7 @@ export async function POST(request:Request){
 
     const kardexSheet=findWorksheet(workbook,["Kardex"]);
     const kardexRows=kardexSheet?parseSheet(kardexSheet,KARDEX_ALIASES).rows:[];
+    if(kardexSheet)validateRowLimit(issues,kardexSheet.name,kardexRows);
     const selectedKnownSkus=new Set([
       ...catalog.items
         .filter(item=>importScope==="all"||!contextSupplier||item.supplier_id===contextSupplier.id)
@@ -894,6 +909,7 @@ export async function POST(request:Request){
       const batchId=batch.rows[0].id;
       const itemMap=new Map<string,{id:string;site_id:string;location_id:string;warehouse_id:string;supplier_id:string|null}>();
       const warehouseCache=[...catalog.warehouses];
+      const categoryCache=[...catalog.categories];
 
       for(const row of warehousesToCommit){
         const existingWarehouse=findByName(warehouseCache,row.name);
@@ -948,12 +964,18 @@ export async function POST(request:Request){
 
         let categoryId:string|null=null;
         if(row.category){
-          const categoryCode=stableCode("CAT",row.category);
-          const category=await client.query<{id:string}>(
-            "INSERT INTO inventory_categories(organization_id,code,name) VALUES($1,$2,$3) ON CONFLICT(organization_id,name) DO UPDATE SET name=EXCLUDED.name RETURNING id",
-            [organizationId,categoryCode,row.category],
-          );
-          categoryId=category.rows[0].id;
+          const existingCategory=findByName(categoryCache,row.category);
+          if(existingCategory){
+            categoryId=existingCategory.id;
+          }else{
+            const categoryCode=stableCode("CAT",row.category);
+            const category=await client.query<{id:string}>(
+              "INSERT INTO inventory_categories(organization_id,code,name) VALUES($1,$2,$3) ON CONFLICT(organization_id,name) DO UPDATE SET name=EXCLUDED.name RETURNING id",
+              [organizationId,categoryCode,row.category],
+            );
+            categoryId=category.rows[0].id;
+            categoryCache.push({id:categoryId,name:row.category});
+          }
         }
 
         const existing=await client.query<{id:string}>("SELECT id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);

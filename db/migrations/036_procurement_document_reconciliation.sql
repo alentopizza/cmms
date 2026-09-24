@@ -284,3 +284,28 @@ DROP TRIGGER IF EXISTS procurement_document_returns_validate ON procurement_docu
 CREATE TRIGGER procurement_document_returns_validate
 BEFORE INSERT ON procurement_document_returns
 FOR EACH ROW EXECUTE FUNCTION cmms_validate_procurement_return_link();
+
+CREATE OR REPLACE FUNCTION cmms_reopen_procurement_document_review()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $
+BEGIN
+  UPDATE procurement_documents
+  SET review_status='pending',
+      review_notes=NULL,
+      reviewed_at=NULL,
+      reviewed_by=NULL
+  WHERE id=NEW.document_id AND voided_at IS NULL;
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS procurement_document_receipts_reopen_review ON procurement_document_receipts;
+CREATE TRIGGER procurement_document_receipts_reopen_review
+AFTER INSERT ON procurement_document_receipts
+FOR EACH ROW EXECUTE FUNCTION cmms_reopen_procurement_document_review();
+
+DROP TRIGGER IF EXISTS procurement_document_returns_reopen_review ON procurement_document_returns;
+CREATE TRIGGER procurement_document_returns_reopen_review
+AFTER INSERT ON procurement_document_returns
+FOR EACH ROW EXECUTE FUNCTION cmms_reopen_procurement_document_review();

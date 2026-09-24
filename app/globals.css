@@ -13074,3 +13074,18 @@ html[data-theme="dark"] .inventory-kpi-card.value,html[data-theme="dark"] .inven
   .requisition-edit-table{overflow:auto}
   .requisition-edit-row{min-width:720px}
 }
+
+
+/* Product / asset photographic cards */
+.inventory-product-visual.has-image,.asset-modern-visual.has-image{padding:0;overflow:hidden;background:var(--surface-soft)}
+.inventory-product-visual.has-image img,.asset-modern-visual.has-image img{width:100%;height:100%;object-fit:contain;display:block}
+.inventory-detail-identity{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.inventory-detail-identity h2{margin:2px 0 3px;color:var(--brand-dark);font-size:18px}
+.inventory-detail-identity p{margin:0;color:var(--text-soft);font-size:9px}
+.inventory-detail-image{width:110px;height:100px;display:grid;place-items:center;border:1px solid var(--border);border-radius:13px;background:linear-gradient(145deg,#f2f7fa,#fff);color:#2f7dd7;overflow:hidden}
+.inventory-detail-image.has-image img{width:100%;height:100%;object-fit:contain;display:block}
+html[data-theme="dark"] .inventory-detail-identity h2{color:var(--text)}
+@media(max-width:620px){
+  .inventory-detail-identity{grid-template-columns:82px minmax(0,1fr)}
+  .inventory-detail-image{width:82px;height:78px}
+}

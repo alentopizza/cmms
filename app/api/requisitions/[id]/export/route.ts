@@ -64,7 +64,17 @@ async function load(id:string,session:NonNullable<Awaited<ReturnType<typeof getS
      ORDER BY sr.returned_at DESC,sr.number DESC,ri.sku`,
     [id],
   );
-  const reconciliation=can(session,"requisitions.reconcile")?await loadProcurementReconciliation(id):{documents:[] as ProcurementDocumentSummary[],lines:[] as ProcurementDocumentLine[],events:[]};
+  let canExportReconciliation=can(session,"requisitions.reconcile");
+  if(canExportReconciliation&&session.platformRole==="user"&&!session.accessAllSites){
+    const sites=await query<{site_id:string}>(
+      "SELECT DISTINCT site_id FROM supplier_requisition_items WHERE requisition_id=$1 AND site_id IS NOT NULL",
+      [id],
+    );
+    canExportReconciliation=sites.rows.every(site=>session.siteIds.includes(site.site_id));
+  }
+  const reconciliation=canExportReconciliation
+    ?await loadProcurementReconciliation(id)
+    :{documents:[] as ProcurementDocumentSummary[],lines:[] as ProcurementDocumentLine[],events:[]};
   return {req:req.rows[0],items:items.rows,returns:returns.rows,reconciliation};
 }
 

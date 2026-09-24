@@ -342,7 +342,7 @@ export default function SupplierDirectory({
         <div className="entity-panel supplier-commercial-panel">
           <div className="entity-panel-heading-row">
             <div>
-              <h3><span className="entity-section-icon"><UiIcon name="chart"/></span>Desempeño comercial · últimos 12 meses</h3>
+              <h3><span className="entity-section-icon"><UiIcon name="activity"/></span>Desempeño comercial · últimos 12 meses</h3>
               <p className="entity-panel-copy">Indicadores calculados con recepciones físicas enlazadas a requisiciones. No son una calificación del proveedor: muestran evidencia operativa disponible y el tamaño de la muestra.</p>
             </div>
             <span className="supplier-analytics-sample">{selectedCommercial?.received_requisitions||0} requisiciones con recepción</span>

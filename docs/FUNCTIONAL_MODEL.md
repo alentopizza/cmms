@@ -656,7 +656,7 @@ Two creation paths share the same generator:
 
 Lifecycle states are `draft`, `sent`, `approved`, `rejected`, `partial`, `fulfilled`, `closed`, and `cancelled`.
 
-Requisition fulfillment does not mutate Inventory quantity. Requisitioning and receiving are separate business facts; a future or existing receipt transaction must be the source of stock increases.
+Requisitioning and receiving are separate business facts. Creating, sending or approving a requisition does not mutate Inventory. Physical receipt is recorded explicitly from the requisition detail: each received line inserts an Inventory `receipt` transaction linked by `requisition_id` / `requisition_item_id`, and the Kardex trigger is the only source of stock increases. `quantity_received` is reconciled in the same database transaction; partial delivery sets `partial`, and complete delivery sets `fulfilled` with `fulfilled_at`.
 
 
 ## Role dashboard KPI comparison model

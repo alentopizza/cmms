@@ -199,7 +199,7 @@ La preferencia de locale ya se persiste, pero eso **no significa que toda la int
 
 Las migraciones son inmutables y actualmente llegan al menos hasta:
 
-- `036_procurement_document_reconciliation.sql`.
+- `037_unified_inventory_import.sql`.
 
 Ante un cambio de esquema:
 
@@ -275,6 +275,21 @@ La **Fase 5 de abastecimiento** también está implementada:
 - smoke test PostgreSQL específico incorporado a CI.
 
 Con las Fases 1–5 de abastecimiento completadas, el siguiente trabajo acordado es una revisión global de lógica, flujo y visual del sistema, junto con los próximos cambios de producto definidos por el usuario.
+
+Como primer ajuste de esa revisión global, la importación de Inventario/Kardex fue corregida a un modelo **único Global/Contextual**:
+
+- una sola plantilla `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx`;
+- un solo motor `POST /api/bulk-import`;
+- `lib/inventory-import-service.ts` centraliza resolución de proveedor/contexto;
+- Inventario inicia Global y distribuye múltiples proveedores;
+- Proveedor inicia Contextual y permite Solo este proveedor o Importar todo;
+- Importar todo vuelve a ejecutar reglas Globales y no hereda silenciosamente el proveedor abierto;
+- proveedor por fila se resuelve ID → NIT → código → nombre;
+- Kardex hereda proveedor desde SKU y bloquea inconsistencias;
+- servicios no producen stock/Kardex;
+- validación previa incluye stock simulado y errores estructurados;
+- SKU existentes exigen decisión Comparar/Actualizar/Omitir;
+- cada lote confirmado conserva IMP, origen, contexto, alcance e importados/omitidos.
 
 No ejecutar automáticamente esta lista por estar en el roadmap: cada nueva implementación debe partir del requerimiento actual del producto.
 
@@ -562,3 +577,21 @@ Implementation contract:
 - document match tolerance is 0.001 quantity and 0.01 value;
 - document/review actions never change Kardex or `quantity_received`;
 - regression coverage: `scripts/procurement-reconciliation-smoke.mjs`.
+
+
+## 22. Unified Inventory/Kardex import checkpoint — 2026-09-24
+
+Implementation contract:
+
+- Inventory and Supplier-profile import entry points render the same `BulkImportModal` and call the same backend;
+- the master template sheet schema is fixed: INSTRUCCIONES, INVENTARIO, KARDEX, PROVEEDORES, BODEGAS and CATALOGOS;
+- `data=current` changes preloaded master rows only; it leaves KARDEX blank and STOCK_INICIAL=0;
+- `supplier=<uuid>` supplies launch context, not a different workbook schema;
+- Global mode requires Supplier identity for each product;
+- Context-only may inherit the selected Supplier and omits explicit other-Supplier rows;
+- Import-all from a Supplier context means true Global mode;
+- warehouse names must resolve to an existing warehouse or a BODEGAS-sheet definition;
+- preflight catches negative stock before commit; PostgreSQL remains final stock authority;
+- `source_movement_id` prevents duplicate external movements when MOVIMIENTO_ID is supplied;
+- migration `037_unified_inventory_import.sql`;
+- regression coverage `scripts/unified-inventory-import-smoke.mjs`.

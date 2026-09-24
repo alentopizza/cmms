@@ -46,7 +46,7 @@ Incluye:
 - Proveedores.
 - Usuarios, membresías y roles en el modelo de datos.
 - Adjuntos y bitácora de auditoría.
-- Dashboard operativo y navegación responsive por rol.
+- Dashboard analítico y navegación responsive por rol, con comparación de KPIs, tendencias de seis meses y filtros autorizados por sede/prioridad.
 - Asistencia de campo con verificación facial 1:1 y geocerca.
 - Reacción: mapa operativo con técnicos conectados, rutas recientes, búsqueda, filtros y alertas de actividades pendientes.
 - Horarios flexibles por día para empresas y sedes, consumidos por Reacción para estado abierto/cerrado.

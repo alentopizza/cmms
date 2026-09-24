@@ -642,3 +642,24 @@ Rules:
 - the current icon architecture remains `UiIcon` until a separate ADR changes it.
 
 No visual primitive may become an authorization boundary; Organization/Site/RBAC validation remains in existing server layers.
+
+
+### UI Core runtime layer — Phase 2
+
+The frontend visual stack is now:
+
+`Design Tokens → UI Core primitives → compatibility wrappers / future Business UI → ERP modules`.
+
+Runtime locations:
+
+- `app/design-tokens.css` — semantic foundations;
+- `app/ui-kit-core.css` — official primitive styles using Design Tokens only;
+- `components/ui-kit/index.ts` — public UI Core entry point;
+- `components/ui-kit/*.tsx` — primitive implementations;
+- `app/ui-kit/` — authenticated live documentation.
+
+Overlay primitives own client-only focus/Escape behavior; they do not own authorization or persistence.
+
+Existing module-facing components can remain as compatibility wrappers while migration proceeds. A wrapper must preserve its public API while delegating visual/interaction behavior to the UI Kit.
+
+The UI Core smoke test rejects hardcoded hex colors in the official primitive implementation and verifies the expected accessibility/compatibility contract.

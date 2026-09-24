@@ -606,3 +606,53 @@ Not yet promoted to official primitives:
 - Search/Filter.
 
 Those belong to Phase 2 and must evaluate/absorb existing components before new parallel implementations are created.
+
+
+## 27. Phase 2 implementation status
+
+**Status: implemented.**
+
+Official UI Core runtime now lives in `components/ui-kit/` and is styled by `app/ui-kit-core.css`.
+
+Implemented primitives:
+
+- `Button`, `IconButton`, `SplitButton`;
+- `Input`, `SearchInput`, `NumberInput`, `CurrencyInput`, `PasswordInput`, `Textarea`;
+- native `Select`, `MultiSelect`, `SearchSelect`, `AsyncSelect`;
+- `Checkbox`, `Radio`, `Switch`;
+- `Badge`, `StatusIndicator`;
+- `Card` variants: basic, elevated, interactive, selected, warning, error;
+- `Modal`, `Drawer`;
+- `Tooltip`, `Dropdown`;
+- `Tabs`, `Pills`, `SegmentedControl`, `Breadcrumb`, `ModuleNavigation`;
+- `Alert`, `Toast`, `EmptyState`;
+- `Spinner`, `Skeleton`, `LoadingCard`, `LoadingTable`, `LoadingPage`;
+- `Avatar`;
+- `FileUpload`.
+
+Accessibility/interaction baseline:
+
+- visible `:focus-visible`;
+- native disabled semantics;
+- loading state with `aria-busy` where applicable;
+- Modal/Drawer Escape close, focus trap and previous-focus restoration;
+- keyboard-accessible native/input/button structures for custom selects;
+- status meaning through text/icon + color;
+- reduced-motion support.
+
+Theme behavior:
+
+- UI Core consumes semantic Design Tokens only;
+- no hardcoded hex colors are permitted in UI Core TSX/CSS;
+- adaptive status surface/border/text tokens support light/dark mode.
+
+Legacy compatibility wrappers now delegate to UI Kit without changing their public props:
+
+- `ConfirmDialog` → `Modal` + `Button`;
+- `CreateRecordModal` → `Modal` + `Button`, retaining temporary legacy layout classes;
+- `MultiSelectDropdown` → `MultiSelect`;
+- `FileDropzone` → `FileUpload`.
+
+The live `/ui-kit` page now documents Foundations plus Buttons, Forms, Cards/Status, Navigation, Overlays and Feedback using the real components.
+
+DataTable/Pagination/Search-Filter/KPI/Timeline/Progress remain Phase 4. ERP-specific Business UI remains Phase 5.

@@ -277,3 +277,14 @@ Cada fase debe cerrar con:
 Después de completar Fase 1, el siguiente trabajo es **Fase 2 — Primitives e interacción base**.
 
 Phase 1 baseline is documented in `docs/DESIGN_AUDIT_PHASE1.md`. Phase 2 must evaluate existing reusable components before promoting/replacing them with official UI Kit primitives.
+
+
+## Phase 2 completion checkpoint — 2026-09-24
+
+Phase 2 is implemented.
+
+The UI Core component contract is now available from `components/ui-kit/index.ts`, its global token-only styles are in `app/ui-kit-core.css`, and `/ui-kit` provides interactive examples.
+
+Existing high-value wrappers were absorbed instead of duplicated. No API/DB/RBAC/business-flow changes were introduced.
+
+**Next implementation phase: Phase 3 — Shell and global navigation.**

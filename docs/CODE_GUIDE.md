@@ -104,3 +104,18 @@ For visual work, read `docs/DESIGN_SYSTEM.md` and `docs/UI_KIT.md` before adding
 - When migrating an existing component, preserve event/form/API contracts unless the functional change is separately approved.
 - Responsive behavior and keyboard/focus behavior belong in the component's implementation, not as a later module patch.
 - Component comments should document non-obvious composition/accessibility constraints rather than restating CSS.
+
+
+## UI Core imports after Phase 2
+
+New frontend code should import primitives from:
+
+`@/components/ui-kit`
+
+instead of creating local equivalents.
+
+Keep domain composition separate from primitive behavior. For example, a Supplier card may compose `Card`, `Badge`, `Avatar` and `Button`, but Supplier-specific data/action rules stay in the Supplier component/server layer.
+
+Do not place raw presentation hex colors in UI Core TSX/CSS. Use the tokens from `app/design-tokens.css`.
+
+Compatibility wrappers are acceptable during migration when they preserve an existing public API and delegate to UI Kit; they should not become a second visual implementation.

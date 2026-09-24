@@ -826,3 +826,16 @@ The application now has:
 No module-specific redesign or business-flow change is part of this phase.
 
 Next: Phase 2, where existing reusable interaction patterns are evaluated and promoted/absorbed into official UI Core primitives.
+
+
+### DESWEB UI Core Phase 2 implemented — 2026-09-24
+
+The ERP now has a reusable, token-driven UI Core on top of the V2 foundations.
+
+Phase 2 adds the official primitives for actions, forms, selection controls, cards, status, overlays, navigation, feedback/loading, avatar and file upload. The live authenticated `/ui-kit` page renders those real components interactively.
+
+High-value legacy components were converted to compatibility wrappers so existing modules gain the new core behavior without changing their calls. This includes focus-trapped confirmation/create overlays, the multi-select and file dropzone.
+
+No application business logic, DB schema, API contract or authorization rule changes as part of this phase.
+
+The next visual program step is Phase 3: migrate the global application shell/sidebar/header/mobile navigation to the V2 UI grammar while preserving user ordering, collapse preferences, RBAC, Personalization and theme behavior.

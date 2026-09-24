@@ -703,3 +703,60 @@ Important implementation details:
 Baseline audit: the legacy global stylesheet was ~13.5k lines / ~540 KB with 915 unique hex values, so migration must remain phased.
 
 Next implementation phase: **Phase 2 — UI Core primitives**.
+
+
+## 26. DESWEB UI Core Phase 2 checkpoint — 2026-09-24
+
+Phase 2 is implemented.
+
+### Canonical primitive imports
+
+Prefer `@/components/ui-kit` (barrel) for new code.
+
+Implemented families:
+
+- Button/IconButton/SplitButton;
+- Form controls + native/advanced Select;
+- Checkbox/Radio/Switch;
+- Card;
+- Badge/Status;
+- Modal/Drawer;
+- Tooltip/Dropdown;
+- Tabs/Pills/Segmented/Breadcrumb/ModuleNavigation;
+- Alert/Toast/Empty/Loading;
+- Avatar;
+- FileUpload.
+
+### Compatibility bridges
+
+Do not remove these until their consumers have been migrated:
+
+- `components/ConfirmDialog.tsx`;
+- `components/CreateRecordModal.tsx`;
+- `components/MultiSelectDropdown.tsx`;
+- `components/FileDropzone.tsx`.
+
+They now delegate to UI Kit while preserving the old API.
+
+### Interaction baseline
+
+- overlays trap focus, close on Escape and restore prior focus;
+- interactive states use visible focus;
+- UI Core is responsive and reduced-motion aware;
+- semantic status tokens adapt to light/dark;
+- primitives use `UiIcon`, not an additional icon library.
+
+### CI
+
+`scripts/ui-kit-core-smoke.mjs` validates Phase 2 contracts before the production build.
+
+### Next
+
+Phase 3 — global shell/navigation migration. Preserve:
+
+- sidebar user-defined order;
+- collapsed preference;
+- role-aware mobile mode;
+- current routes/RBAC;
+- account/config/help behavior;
+- Organization branding and light/dark/system theme.

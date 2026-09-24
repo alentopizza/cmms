@@ -561,3 +561,14 @@ Runtime supporting files:
 The dashboard white-label bridge maps Organization colors to `--color-action-primary` and `--color-action-accent` while preserving legacy aliases during migration.
 
 `UiIcon` remains the official internal outline-SVG icon mechanism for the current migration. Unicode navigation glyphs are legacy targets for Phase 3.
+
+
+## 27. UI Core runtime — Phase 2
+
+The canonical primitive style layer is `app/ui-kit-core.css`, loaded after `app/design-tokens.css`.
+
+New modules must consume the official primitives from `@/components/ui-kit`; they must not reimplement primitive visuals locally.
+
+UI Core uses semantic/adaptive tokens for light and dark themes, visible focus states, responsive layouts and reduced-motion behavior. The implementation intentionally contains no local hexadecimal palette values.
+
+Legacy wrappers may preserve existing APIs while delegating to UI Core during migration.

@@ -538,3 +538,20 @@ Phase 1 is implemented in:
 - `scripts/design-system-smoke.mjs` — CI contract.
 
 Do not add a second token file or a second icon family. `UiIcon` remains the current official internal SVG icon system. Phase 2 must inspect and absorb existing shared components before introducing new primitives.
+
+
+### Phase 2 UI Core invariant
+
+The official primitive import surface is `components/ui-kit/index.ts`.
+
+Before adding any button, input, select, checkbox/radio/switch, card, badge/status, modal/drawer, tooltip/dropdown, tabs/breadcrumb, alert/toast/loading/empty state, avatar or file upload:
+
+1. reuse the UI Kit primitive;
+2. extend its documented variant if a reusable capability is missing;
+3. do not create a module-local parallel primitive.
+
+`app/ui-kit-core.css` may use Design Tokens and `color-mix()`, but must not introduce hardcoded hex palettes. UI Core TSX must not contain hardcoded presentation colors.
+
+Current compatibility wrappers (`ConfirmDialog`, `CreateRecordModal`, `MultiSelectDropdown`, `FileDropzone`) intentionally preserve old module APIs while delegating to UI Kit. Do not fork them back into separate implementations.
+
+DataTable/KPI/Search-Filter data tooling is deferred to Phase 4. Business entity cards are deferred to Phase 5.

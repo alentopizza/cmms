@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui-kit/Button";
 import { Modal } from "@/components/ui-kit/Overlay";
 
@@ -19,7 +19,7 @@ export default function CreateRecordModal({
   triggerLabel:string;
   icon?:string;
   disabled?:boolean;
-  children:React.ReactNode;
+  children:ReactNode;
 }){
   const [open,setOpen]=useState(false);
 

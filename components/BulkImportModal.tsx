@@ -16,10 +16,12 @@ export default function BulkImportModal({
   entity,
   label="Importar",
   compact=false,
+  supplierId="",
 }:{
   entity:"inventory"|"assets";
   label?:string;
   compact?:boolean;
+  supplierId?:string;
 }){
   const [open,setOpen]=useState(false);
   const [file,setFile]=useState<File|null>(null);
@@ -28,7 +30,9 @@ export default function BulkImportModal({
   const inputRef=useRef<HTMLInputElement>(null);
 
   const title=entity==="inventory"?"Importar inventario y Kardex":"Importar activos";
-  const template=entity==="inventory"?"/api/bulk-import/template?entity=inventory":"/api/bulk-import/template?entity=assets";
+  const template=entity==="inventory"
+    ?"/api/bulk-import/template?entity=inventory"+(supplierId?"&supplier="+encodeURIComponent(supplierId):"")
+    :"/api/bulk-import/template?entity=assets";
 
   async function run(mode:"validate"|"commit"){
     if(!file)return;
@@ -38,6 +42,7 @@ export default function BulkImportModal({
       body.set("entity",entity);
       body.set("mode",mode);
       body.set("file",file);
+      if(supplierId)body.set("supplier_id",supplierId);
       const response=await fetch("/api/bulk-import",{method:"POST",body});
       const payload=await response.json() as ImportResult;
       setResult(payload);

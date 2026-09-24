@@ -67,7 +67,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.approval_required,r.approval_state,
       count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
       COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
-      COALESCE(sum(ri.quantity_received),0)::text quantity_received
+      COALESCE(sum(ri.quantity_received),0)::text quantity_received,
+      COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri JOIN supplier_returns sr ON sr.id=sri.return_id WHERE sr.requisition_id=r.id),0)::text quantity_returned,
+      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.requisition_id=r.id) return_count
     FROM supplier_requisitions r LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id`;
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;

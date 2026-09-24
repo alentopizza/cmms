@@ -441,3 +441,14 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Price variance is weighted actual receipt value versus estimated value for the same received quantities. Never compare requested total value against a partial actual receipt.
 - Always surface sample sizes and show an empty/insufficient-history state instead of inventing zero performance.
 - Supplier profile exports must reuse the same server-side analytics model as the Statistics tab.
+
+## Supplier return invariant
+
+- Supplier returns are procurement-specific outbound stock movements and must originate from a requisition-linked physical receipt.
+- `inventory_transactions.type='return'` remains an inbound return-to-stock movement. Never reuse it for Supplier returns.
+- Use `inventory_transactions.type='supplier_return'` for stock sent back to a Supplier; it must decrease warehouse stock.
+- Preserve gross `supplier_requisition_items.quantity_received` as historical receiving evidence. Supplier returns are separate immutable events and do not rewrite the original receipt.
+- Returnable quantity for a receipt is its received quantity minus previously posted `supplier_return_items` linked to that receipt.
+- Revalidate Organization, Site scope, warehouse scope, receipt/requisition/item relation and available stock on the server.
+- Posted DEV headers/items are immutable. Do not delete or edit them to correct history; use a future compensating flow.
+- Expected resolution (replacement, credit note or other) is informational in Phase 4 and must not silently reopen requisitions or alter approval state.

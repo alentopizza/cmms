@@ -40,13 +40,27 @@ async function assetRows(session:NonNullable<Awaited<ReturnType<typeof getSessio
 }
 
 async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,type:string){
-  const allowed=new Set(["receipt","issue","adjustment","return","transfer"]);
+  const allowed=new Set(["receipt","issue","adjustment","return","transfer","supplier_return"]);
   const filter=allowed.has(type)?type:"";
-  const base=`SELECT t.movement_at::text movement_at,t.type,i.sku,i.name item_name,COALESCE(p.name,'') supplier,
-    COALESCE(w.name,'') warehouse,COALESCE(d.name,'') destination,t.quantity::text quantity,COALESCE(t.unit_cost,0)::text unit_cost,
+  const base=`SELECT t.movement_at::text movement_at,
+    CASE t.type
+      WHEN 'receipt' THEN 'Entrada'
+      WHEN 'issue' THEN 'Salida'
+      WHEN 'adjustment' THEN 'Ajuste'
+      WHEN 'return' THEN 'Devolución a inventario'
+      WHEN 'supplier_return' THEN 'Devolución a proveedor'
+      WHEN 'transfer' THEN 'Transferencia'
+      ELSE t.type END type,
+    i.sku,i.name item_name,COALESCE(p.name,'') supplier,
+    COALESCE(w.name,'') warehouse,COALESCE(d.name,'') destination,
+    (CASE WHEN t.type IN ('issue','supplier_return') THEN -abs(t.quantity) ELSE t.quantity END)::text quantity,
+    COALESCE(t.unit_cost,0)::text unit_cost,
     COALESCE(t.document_number,'') document_number,COALESCE(t.lot_number,'') lot_number,COALESCE(t.expires_at::text,'') expires_at,
     COALESCE(t.cost_center,'') cost_center,COALESCE(t.notes,'') notes,o.name company,COALESCE(s.name,'') site,
-    COALESCE(u.full_name,'Sistema') created_by,CASE WHEN r.number IS NULL THEN '' ELSE 'REQ-'||lpad(r.number::text,6,'0') END requisition
+    COALESCE(u.full_name,'Sistema') created_by,
+    CASE WHEN r.number IS NULL THEN '' ELSE 'REQ-'||lpad(r.number::text,6,'0') END requisition,
+    CASE WHEN sr.number IS NULL THEN '' ELSE 'DEV-'||lpad(sr.number::text,6,'0') END supplier_return,
+    CASE WHEN source.id IS NULL THEN '' ELSE to_char(source.movement_at,'YYYY-MM-DD HH24:MI')||' · '||substr(source.id::text,1,8) END source_receipt
     FROM inventory_transactions t
     JOIN inventory_items i ON i.id=t.item_id
     JOIN organizations o ON o.id=t.organization_id
@@ -55,7 +69,9 @@ async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSessi
     LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
     LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
     LEFT JOIN users u ON u.id=t.created_by
-    LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id`;
+    LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
+    LEFT JOIN supplier_returns sr ON sr.id=t.supplier_return_id
+    LEFT JOIN inventory_transactions source ON source.id=t.source_transaction_id`;
   if(session.platformRole!=="user"){
     return filter
       ?query<Row>(base+" WHERE t.type=$1 ORDER BY t.movement_at DESC,t.created_at DESC",[filter])
@@ -114,12 +130,12 @@ export async function GET(request:Request){
     ?["SKU","Artículo","Descripción","Categoría","Presentación","Unidad","Existencia","Mínimo","Máximo","Costo unitario","Empresa","Sede","Sububicación","Bodega","Proveedor","Estado"]
     :entity==="assets"
       ?["Código","Activo","Descripción","Categoría","Empresa","Sede","Sububicación","Proveedor","Fabricante","Modelo","Serial","Estado","Criticidad","Fecha compra","Fecha instalación","Garantía","Costo compra"]
-      :["Fecha","Tipo","SKU","Artículo","Proveedor","Bodega origen","Bodega destino","Cantidad","Costo unitario","Documento","Requisición","Lote","Vencimiento","Centro de costo","Empresa","Sede","Usuario","Observaciones"];
+      :["Fecha","Tipo","SKU","Artículo","Proveedor","Bodega origen","Bodega destino","Cantidad","Costo unitario","Documento","Requisición","DEV proveedor","Recepción origen","Lote","Vencimiento","Centro de costo","Empresa","Sede","Usuario","Observaciones"];
   const keys=entity==="inventory"
     ?["sku","name","description","category","presentation","unit","quantity","min_quantity","max_quantity","unit_cost","company","site","location","warehouse","supplier","status"]
     :entity==="assets"
       ?["code","name","description","category","company","site","location","supplier","manufacturer","model","serial","status","criticality","purchase_date","installation_date","warranty_expires","purchase_cost"]
-      :["movement_at","type","sku","item_name","supplier","warehouse","destination","quantity","unit_cost","document_number","requisition","lot_number","expires_at","cost_center","company","site","created_by","notes"];
+      :["movement_at","type","sku","item_name","supplier","warehouse","destination","quantity","unit_cost","document_number","requisition","supplier_return","source_receipt","lot_number","expires_at","cost_center","company","site","created_by","notes"];
   const base=safeName(entity==="inventory"?"inventario-desweb":entity==="assets"?"activos-desweb":"kardex-desweb");
   if(format==="csv"){
     const body=[headers.map(csvCell).join(","),...result.rows.map(row=>keys.map(key=>csvCell(row[key])).join(","))].join("\n");

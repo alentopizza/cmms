@@ -43,6 +43,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       COALESCE((SELECT array_agg(cs.label ORDER BY cs.sort_order,cs.label) FROM supplier_specialties ss JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code WHERE ss.supplier_id=s.id),ARRAY[]::text[]) specialty_labels,
       sf.bank_name,sf.account_type,sf.account_number,sf.account_holder,sf.account_holder_tax_id,sf.payment_terms_days,
       sf.currency_code,sf.payment_email,sf.payment_notes,
+      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.supplier_id=s.id) supplier_return_count,
+      COALESCE((SELECT sum(sri.quantity) FROM supplier_returns sr JOIN supplier_return_items sri ON sri.return_id=sr.id WHERE sr.supplier_id=s.id),0)::text supplier_return_quantity,
       (s.logo_data IS NOT NULL) has_logo
     FROM suppliers s JOIN organizations o ON o.id=s.organization_id
     LEFT JOIN supplier_financial_profiles sf ON sf.supplier_id=s.id`;
@@ -67,7 +69,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.approval_required,r.approval_state,
       count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
       COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
-      COALESCE(sum(ri.quantity_received),0)::text quantity_received
+      COALESCE(sum(ri.quantity_received),0)::text quantity_received,
+      COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri JOIN supplier_returns sr ON sr.id=sri.return_id WHERE sr.requisition_id=r.id),0)::text quantity_returned,
+      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.requisition_id=r.id) return_count
     FROM supplier_requisitions r LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id`;
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;

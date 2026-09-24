@@ -199,7 +199,7 @@ La preferencia de locale ya se persiste, pero eso **no significa que toda la int
 
 Las migraciones son inmutables y actualmente llegan al menos hasta:
 
-- `034_requisition_approval_policy.sql`.
+- `035_supplier_returns.sql`.
 
 Ante un cambio de esquema:
 
@@ -250,9 +250,19 @@ La **Fase 3 de abastecimiento** también está implementada:
 - paridad de los KPIs en la exportación PDF/XLSX/Word de la ficha del proveedor;
 - smoke test PostgreSQL específico incorporado a CI.
 
+La **Fase 4 de abastecimiento** también está implementada:
+
+- devolución física al proveedor desde la requisición y contra una recepción origen;
+- movimiento de Kardex `supplier_return` que descuenta stock sin alterar el movimiento `return` existente;
+- DEV inmutable con motivo, resolución esperada, documento, fecha, usuario y líneas;
+- control de cantidad devuelta contra la recepción origen y control de stock contra la bodega de salida;
+- trazabilidad DEV → requisición → ítem → recepción → Kardex;
+- visualización en Requisición, Proveedor y Kardex;
+- exportes de Requisición y Kardex incluyen DEV y recepción origen;
+- smoke test PostgreSQL específico incorporado a CI.
+
 Pendientes para fases posteriores:
 
-- devoluciones a proveedor vinculadas a requisición/recepción;
 - conciliación documental avanzada contra factura/remisión/orden de compra.
 
 No ejecutar automáticamente esta lista por estar en el roadmap: cada nueva implementación debe partir del requerimiento actual del producto.
@@ -501,3 +511,22 @@ Implementation contract:
 - regression coverage: `scripts/supplier-analytics-smoke.mjs`.
 
 This checkpoint intentionally avoids a new analytics persistence table. The existing requisition and Kardex history remains authoritative.
+
+
+## 20. Supplier returns checkpoint — 2026-09-24
+
+Supplier returns are now a procurement-specific outbound flow.
+
+Implementation contract:
+
+- `POST /api/requisitions/[id]/returns` requires both `requisitions.write` and `inventory.write`;
+- returns are created only against an existing requisition-linked physical receipt;
+- `supplier_returns` stores the immutable DEV header and `supplier_return_items` stores receipt-linked lines;
+- `inventory_transactions.type='supplier_return'` is outbound and decreases stock;
+- existing `inventory_transactions.type='return'` remains inbound to Inventory and must not be repurposed;
+- gross `quantity_received` is historical evidence and is not decremented by a supplier return;
+- returnable quantity is source receipt quantity minus prior DEV lines linked to that receipt;
+- selected warehouse must be authorized and PostgreSQL rejects the movement if available stock would become negative;
+- DEV rows are immutable; correction requires a future compensating/documented flow rather than deleting history;
+- expected resolution is captured as replacement, credit note or other, but Phase 4 does not auto-reopen the requisition or perform document reconciliation;
+- regression coverage: `scripts/supplier-return-smoke.mjs`.

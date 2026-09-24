@@ -23,8 +23,13 @@ type Item={
 };
 type Warehouse={id:string;name:string;site_name:string|null};
 type ReceiptTx={
-  id:string;sku:string;description:string;unit:string;quantity:string;unit_cost:string|null;warehouse:string|null;document_number:string|null;
-  movement_at:string;lot_number:string|null;expires_at:string|null;cost_center:string|null;created_by_name:string|null;
+  id:string;sku:string;description:string;unit:string;quantity:string;unit_cost:string|null;warehouse_id:string|null;warehouse:string|null;document_number:string|null;
+  movement_at:string;lot_number:string|null;expires_at:string|null;cost_center:string|null;created_by_name:string|null;returned_quantity:string;
+};
+type SupplierReturnLine={
+  return_id:string;return_number:string;status:string;reason_code:string;expected_resolution:string;reason_detail:string|null;document_number:string|null;
+  returned_at:string;created_by_name:string|null;sku:string;description:string;unit:string;quantity:string;unit_cost:string;warehouse:string|null;
+  source_receipt_id:string;source_receipt_at:string;
 };
 type ApprovalEvent={
   id:string;action:"requested"|"approved"|"rejected"|"reopened"|"amended";from_state:string|null;to_state:string;notes:string|null;
@@ -34,8 +39,10 @@ type ApprovalEvent={
 function statusLabel(status:string){return ({draft:"Borrador",sent:"Enviada",approved:"Aprobada",rejected:"Rechazada",partial:"Parcialmente atendida",fulfilled:"Atendida",closed:"Cerrada",cancelled:"Cancelada"} as Record<string,string>)[status]||status;}
 function approvalLabel(state:Req["approval_state"]){return ({not_required:"No requerida",pending:"Pendiente",approved:"Aprobada",rejected:"Rechazada"} as Record<string,string>)[state]||state;}
 function approvalEventLabel(action:ApprovalEvent["action"]){return ({requested:"Enviada a aprobación",approved:"Aprobada",rejected:"Rechazada",reopened:"Aprobación reabierta",amended:"Requisición modificada"} as Record<string,string>)[action]||action;}
+function returnReasonLabel(value:string){return ({damaged:"Producto averiado",wrong_item:"Artículo incorrecto",quality:"Problema de calidad",excess:"Exceso recibido",other:"Otro motivo"} as Record<string,string>)[value]||value;}
+function returnResolutionLabel(value:string){return ({replacement:"Reposición esperada",credit_note:"Nota crédito esperada",other:"Otra resolución"} as Record<string,string>)[value]||value;}
 
-export default async function RequisitionDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{updated?:string;received?:string;approval?:string;error?:string}>}){
+export default async function RequisitionDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{updated?:string;received?:string;returned?:string;approval?:string;error?:string}>}){
   const session=await getSession();
   if(!session)redirect("/login");
   if(!can(session,"requisitions.read"))redirect("/dashboard");
@@ -83,6 +90,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
   const receiveLifecycleOpen=canWrite&&can(session,"inventory.write")&&!["rejected","fulfilled","closed","cancelled"].includes(req.status);
   const approvalBlocksReceipt=req.approval_required&&req.approval_state!=="approved";
   const canReceive=receiveLifecycleOpen&&!approvalBlocksReceipt;
+  const canReturn=canWrite&&can(session,"inventory.write");
 
   const policyRoleAllowed=session.platformRole!=="user"
     ||(req.approval_approver_scope==="admin_only"
@@ -114,8 +122,8 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
           ?lifecycleStatuses.filter(([value])=>value===req.status||value==="closed"||value==="cancelled")
           :lifecycleStatuses;
 
-  const [warehouses,receipts,approvalEvents]=await Promise.all([
-    canReceive
+  const [warehouses,receipts,approvalEvents,returnLines]=await Promise.all([
+    (canReceive||canReturn)
       ?session.platformRole==="user"&&!session.accessAllSites
         ?query<Warehouse>(
           `SELECT w.id,w.name,s.name site_name
@@ -132,8 +140,9 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
         )
       :Promise.resolve({rows:[]} as {rows:Warehouse[]}),
     query<ReceiptTx>(
-      `SELECT t.id,ri.sku,ri.description,ri.unit,t.quantity::text,t.unit_cost::text,w.name warehouse,t.document_number,
-              t.movement_at::text,t.lot_number,t.expires_at::text,t.cost_center,u.full_name created_by_name
+      `SELECT t.id,ri.sku,ri.description,ri.unit,t.quantity::text,t.unit_cost::text,t.warehouse_id,w.name warehouse,t.document_number,
+              t.movement_at::text,t.lot_number,t.expires_at::text,t.cost_center,u.full_name created_by_name,
+              COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri WHERE sri.receipt_transaction_id=t.id),0)::text returned_quantity
        FROM inventory_transactions t
        JOIN supplier_requisition_items ri ON ri.id=t.requisition_item_id
        LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
@@ -149,7 +158,26 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
        ORDER BY created_at DESC`,
       [id],
     ),
+    query<SupplierReturnLine>(
+      `SELECT sr.id return_id,sr.number::text return_number,sr.status,sr.reason_code,sr.expected_resolution,sr.reason_detail,
+              sr.document_number,sr.returned_at::text,u.full_name created_by_name,
+              ri.sku,ri.description,ri.unit,sri.quantity::text,sri.unit_cost::text,w.name warehouse,
+              sri.receipt_transaction_id source_receipt_id,receipt.movement_at::text source_receipt_at
+       FROM supplier_returns sr
+       JOIN supplier_return_items sri ON sri.return_id=sr.id
+       JOIN supplier_requisition_items ri ON ri.id=sri.requisition_item_id
+       JOIN inventory_transactions receipt ON receipt.id=sri.receipt_transaction_id
+       LEFT JOIN inventory_warehouses w ON w.id=sri.warehouse_id
+       LEFT JOIN users u ON u.id=sr.created_by
+       WHERE sr.requisition_id=$1
+       ORDER BY sr.returned_at DESC,sr.number DESC,ri.sku`,
+      [id],
+    ),
   ]);
+
+  const returnedTotal=returnLines.rows.reduce((sum,row)=>sum+Number(row.quantity||0),0);
+  const retainedTotal=Math.max(0,receivedTotal-returnedTotal);
+  const returnableReceipts=receipts.rows.filter(row=>Number(row.quantity)-Number(row.returned_quantity)>0.000001);
 
   return <>
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
@@ -168,6 +196,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
 
     {feedback.updated&&<div className="notice success section">Requisición actualizada correctamente.</div>}
     {feedback.received&&<div className="notice success section">{feedback.received} ítem{feedback.received==="1"?"":"s"} recibido{feedback.received==="1"?"":"s"}; Kardex y estado de la requisición fueron conciliados.</div>}
+    {feedback.returned&&<div className="notice success section">{feedback.returned} línea{feedback.returned==="1"?"":"s"} devuelta{feedback.returned==="1"?"":"s"} al proveedor; Kardex registró la salida y conservó el vínculo con la recepción original.</div>}
     {feedback.approval==="approved"&&<div className="notice success section">Aprobación registrada. La requisición ya puede continuar con su recepción.</div>}
     {feedback.approval==="rejected"&&<div className="notice success section">Rechazo registrado con trazabilidad de auditoría.</div>}
     {feedback.error==="items"&&<div className="notice error section">Revisa cantidades y costos. La cantidad solicitada no puede ser menor que lo ya recibido.</div>}
@@ -185,8 +214,15 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     {feedback.error==="receive_over"&&<div className="notice error section">La cantidad recibida no puede superar el saldo pendiente de la requisición.</div>}
     {feedback.error==="receive_item"&&<div className="notice error section">Uno de los ítems ya no está enlazado a un artículo activo de Inventario.</div>}
     {feedback.error==="receive_warehouse"&&<div className="notice error section">Selecciona una bodega activa y válida para cada ítem recibido.</div>}
+    {feedback.error==="return_reason"&&<div className="notice error section">Selecciona el motivo y la resolución esperada. Si eliges Otro motivo, describe la novedad.</div>}
+    {feedback.error==="return_empty"&&<div className="notice error section">Ingresa una cantidad a devolver en al menos una recepción.</div>}
+    {feedback.error==="return_qty"&&<div className="notice error section">La cantidad a devolver debe ser mayor que cero.</div>}
+    {feedback.error==="return_over"&&<div className="notice error section">La devolución supera la cantidad disponible de la recepción seleccionada.</div>}
+    {feedback.error==="return_warehouse"&&<div className="notice error section">Selecciona una bodega activa y autorizada para la salida de la devolución.</div>}
+    {feedback.error==="return_stock"&&<div className="notice error section">La bodega no tiene existencias suficientes para registrar esta devolución al proveedor.</div>}
     {feedback.error&&feedback.error.startsWith("receive_")&&!["receive_locked","receive_approval","receive_empty","receive_over","receive_item","receive_warehouse"].includes(feedback.error)&&<div className="notice error section">No fue posible registrar la recepción. Revisa cantidades, costos, fechas y bodegas.</div>}
-    {feedback.error&& !["items","received","empty","fulfillment","status_locked","approval_route","approval_locked","approval_self","approval_notes"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&<div className="notice error section">No fue posible completar la acción. Revisa la requisición y vuelve a intentarlo.</div>}
+    {feedback.error&& !["items","received","empty","fulfillment","status_locked","approval_route","approval_locked","approval_self","approval_notes","return_reason","return_empty","return_qty","return_over","return_warehouse","return_stock"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&!feedback.error.startsWith("return")&&<div className="notice error section">No fue posible completar la acción. Revisa la requisición y vuelve a intentarlo.</div>}
+    {feedback.error==="return"&&<div className="notice error section">No fue posible registrar la devolución. Revisa cantidades, fecha, bodega y trazabilidad de la recepción.</div>}
 
     <section className="requisition-sheet card section">
       <div className="requisition-sheet-header">
@@ -224,7 +260,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
         })}
       </div>
       <div className="requisition-sheet-progress">
-        <div><span>Recepción física</span><strong>{receivedPct}%</strong><small>{receivedTotal.toLocaleString("es-CO")} de {requestedTotal.toLocaleString("es-CO")} unidades acumuladas</small></div>
+        <div><span>Recepción física</span><strong>{receivedPct}%</strong><small>{receivedTotal.toLocaleString("es-CO")} recibidas · {returnedTotal.toLocaleString("es-CO")} devueltas · {retainedTotal.toLocaleString("es-CO")} netas en historial de compra</small></div>
         <div className="requisition-progress-track"><i style={{width:receivedPct+"%"}}/></div>
       </div>
       <div className="requisition-sheet-total"><span>Total estimado</span><strong>{format(total)}</strong></div>
@@ -312,6 +348,61 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
       </form>
     </section>}
 
+
+    {canReturn&&(receipts.rowCount||0)>0&&<section className="card section supplier-return-panel">
+      <div className="section-heading">
+        <div><span className="eyebrow">Devolución a proveedor</span><h2>Registrar salida contra una recepción</h2><p className="muted">La devolución no borra la recepción original. Genera una salida de Kardex enlazada a la requisición y al movimiento de entrada que la originó.</p></div>
+        <span className="supplier-return-badge">{returnedTotal.toLocaleString("es-CO")} devuelto</span>
+      </div>
+      {returnableReceipts.length?<form className="form-grid supplier-return-form" method="post" action={"/api/requisitions/"+req.id+"/returns"}>
+        <div className="field"><label>Motivo *</label><select name="reason_code" required defaultValue="damaged"><option value="damaged">Producto averiado</option><option value="wrong_item">Artículo incorrecto</option><option value="quality">Problema de calidad</option><option value="excess">Exceso recibido</option><option value="other">Otro motivo</option></select></div>
+        <div className="field"><label>Resolución esperada *</label><select name="expected_resolution" required defaultValue="replacement"><option value="replacement">Reposición</option><option value="credit_note">Nota crédito</option><option value="other">Otra resolución</option></select></div>
+        <div className="field"><label>Documento / referencia</label><input name="document_number" placeholder="Acta, remisión, RMA, nota..."/></div>
+        <div className="field"><label>Fecha / hora</label><input name="returned_at" type="datetime-local"/></div>
+        <div className="field form-span-2"><label>Detalle del motivo</label><textarea name="reason_detail" rows={2} placeholder="Estado del producto, novedad o acuerdo con el proveedor. Obligatorio si eliges Otro motivo."/></div>
+        <div className="form-span-2 supplier-return-source-list">
+          {returnableReceipts.map(receipt=>{
+            const received=Number(receipt.quantity||0);
+            const returned=Number(receipt.returned_quantity||0);
+            const available=Math.max(0,received-returned);
+            return <article className="supplier-return-source" key={receipt.id}>
+              <div className="supplier-return-source-head">
+                <span><strong>{receipt.sku}</strong><small>{receipt.description}</small></span>
+                <div><small>Recepción origen</small><strong>{new Date(receipt.movement_at).toLocaleDateString("es-CO")}</strong></div>
+                <div><small>Recibido</small><strong>{received.toLocaleString("es-CO")} {receipt.unit}</strong></div>
+                <div><small>Ya devuelto</small><strong>{returned.toLocaleString("es-CO")} {receipt.unit}</strong></div>
+                <div><small>Disponible</small><strong>{available.toLocaleString("es-CO")} {receipt.unit}</strong></div>
+              </div>
+              <div className="supplier-return-source-fields">
+                <div className="field"><label>Devolver ahora</label><input name={"return_qty_"+receipt.id} type="number" min="0.001" max={available} step="0.001" placeholder="0"/></div>
+                <div className="field"><label>Bodega de salida</label><select name={"return_warehouse_"+receipt.id} defaultValue={receipt.warehouse_id||""}><option value="">Selecciona</option>{warehouses.rows.map(warehouse=><option key={warehouse.id} value={warehouse.id}>{warehouse.site_name?warehouse.site_name+" · ":""}{warehouse.name}</option>)}</select></div>
+                <div className="supplier-return-source-meta"><span>Entrada: {receipt.document_number||"sin documento"}</span><span>{receipt.lot_number?"Lote "+receipt.lot_number:"Sin lote"}</span><span>{receipt.unit_cost?format(Number(receipt.unit_cost))+" / "+receipt.unit:"Costo no registrado"}</span></div>
+              </div>
+            </article>;
+          })}
+        </div>
+        <div className="form-span-2 form-actions"><button className="button danger-secondary" type="submit"><UiIcon name="upload" size={15}/> Registrar devolución al proveedor</button></div>
+      </form>:<div className="empty-state"><strong>No hay cantidades pendientes por devolver.</strong><span>Todas las recepciones de esta requisición ya fueron devueltas completamente.</span></div>}
+    </section>}
+
+    {(returnLines.rowCount||0)>0&&<section className="card section supplier-return-history">
+      <div className="section-heading"><div><span className="eyebrow">Trazabilidad</span><h2>Devoluciones al proveedor</h2><p className="muted">Cada línea conserva la recepción de origen, bodega de salida, motivo, resolución esperada y movimiento de Kardex.</p></div><small>{returnLines.rowCount} líneas</small></div>
+      <div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>DEV</th><th>Fecha</th><th>SKU / artículo</th><th>Cantidad</th><th>Bodega</th><th>Motivo</th><th>Resolución</th><th>Documento</th><th>Recepción origen</th><th>Usuario</th></tr></thead><tbody>
+        {returnLines.rows.map(line=><tr key={line.return_id+"-"+line.source_receipt_id+"-"+line.sku}>
+          <td><strong>DEV-{line.return_number.padStart(6,"0")}</strong><small className="table-subline">{line.status==="posted"?"Registrada":line.status}</small></td>
+          <td>{new Date(line.returned_at).toLocaleString("es-CO")}</td>
+          <td><strong>{line.sku}</strong><small className="table-subline">{line.description}</small></td>
+          <td><strong className="kardex-negative">-{line.quantity} {line.unit}</strong><small className="table-subline">{format(Number(line.unit_cost||0))} / {line.unit}</small></td>
+          <td>{line.warehouse||"—"}</td>
+          <td>{returnReasonLabel(line.reason_code)}{line.reason_detail&&<small className="table-subline">{line.reason_detail}</small>}</td>
+          <td>{returnResolutionLabel(line.expected_resolution)}</td>
+          <td>{line.document_number||"—"}</td>
+          <td>{new Date(line.source_receipt_at).toLocaleString("es-CO")}<small className="table-subline">Movimiento {line.source_receipt_id.slice(0,8)}</small></td>
+          <td>{line.created_by_name||"Sistema"}</td>
+        </tr>)}
+      </tbody></table></div>
+    </section>}
+
     {canWrite&&<section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Edición y flujo</span><h2>Actualizar requisición</h2><p className="muted">{req.approval_required&&["approved","rejected"].includes(req.approval_state)?"Cambiar cantidad, costo o fecha requerida reabrirá la aprobación antes de permitir nuevas recepciones.":"Puedes ajustar cantidades y costos mientras la requisición siga abierta. El Kardex se modifica únicamente al registrar una recepción."}</p></div></div>
       <form className="form-grid requisition-edit-form" method="post" action={"/api/requisitions/"+req.id}>
@@ -341,11 +432,12 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
 
     <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Trazabilidad</span><h2>Recepciones registradas</h2><p className="muted">Movimientos de Kardex originados desde esta requisición.</p></div><small>{receipts.rowCount||0} movimientos</small></div>
-      {receipts.rowCount?<div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>SKU / artículo</th><th>Cantidad</th><th>Bodega</th><th>Documento</th><th>Costo</th><th>Lote / vencimiento</th><th>Centro</th><th>Usuario</th></tr></thead><tbody>
+      {receipts.rowCount?<div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>SKU / artículo</th><th>Recibido</th><th>Devuelto</th><th>Bodega</th><th>Documento</th><th>Costo</th><th>Lote / vencimiento</th><th>Centro</th><th>Usuario</th></tr></thead><tbody>
         {receipts.rows.map(receipt=><tr key={receipt.id}>
           <td>{new Date(receipt.movement_at).toLocaleString("es-CO")}</td>
           <td><strong>{receipt.sku}</strong><small className="table-subline">{receipt.description}</small></td>
           <td><strong className="kardex-positive">+{receipt.quantity} {receipt.unit}</strong></td>
+          <td>{Number(receipt.returned_quantity)>0?<strong className="kardex-negative">-{receipt.returned_quantity} {receipt.unit}</strong>:"—"}</td>
           <td>{receipt.warehouse||"—"}</td><td>{receipt.document_number||"—"}</td>
           <td>{receipt.unit_cost?format(Number(receipt.unit_cost)):"—"}</td>
           <td>{receipt.lot_number||"—"}{receipt.expires_at?<small className="table-subline">Vence {new Date(receipt.expires_at+"T12:00:00").toLocaleDateString("es-CO")}</small>:null}</td>

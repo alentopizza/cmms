@@ -225,7 +225,7 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
     id:string;organization_id:string;organization_name:string;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
     country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:string;service_category:string|null;
     contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;active:boolean;
-    activity_count:number;active_activity_count:number;inventory_count:number;requisition_count:number;open_requisition_count:number;document_count:number;
+    activity_count:number;active_activity_count:number;inventory_count:number;requisition_count:number;open_requisition_count:number;document_count:number;supplier_return_count:number;supplier_return_quantity:string;
     logo_data:Buffer|null;logo_mime_type:string|null;
   }>(`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,s.city,s.address,s.website,
             s.supplier_type,s.service_category,s.contact_name,s.contact_title,s.email,s.phone,s.notes,s.active,
@@ -235,6 +235,8 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
             (SELECT count(*)::int FROM supplier_requisitions r WHERE r.supplier_id=s.id) requisition_count,
             (SELECT count(*)::int FROM supplier_requisitions r WHERE r.supplier_id=s.id AND r.status NOT IN ('fulfilled','closed','cancelled')) open_requisition_count,
             (SELECT count(*)::int FROM supplier_documents d WHERE d.supplier_id=s.id AND d.archived_at IS NULL) document_count,
+            (SELECT count(*)::int FROM supplier_returns sr WHERE sr.supplier_id=s.id) supplier_return_count,
+            COALESCE((SELECT sum(sri.quantity) FROM supplier_returns sr JOIN supplier_return_items sri ON sri.return_id=sr.id WHERE sr.supplier_id=s.id),0)::text supplier_return_quantity,
             s.logo_data,s.logo_mime_type
      FROM suppliers s JOIN organizations o ON o.id=s.organization_id WHERE s.id=$1`,[id]);
   if(!result.rowCount)return null;
@@ -271,6 +273,8 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
       {label:"Requisiciones",value:String(row.requisition_count)},
       {label:"Requisiciones abiertas",value:String(row.open_requisition_count)},
       {label:"Documentos vigentes",value:String(row.document_count)},
+      {label:"Devoluciones a proveedor",value:String(row.supplier_return_count)},
+      {label:"Cantidad devuelta",value:Number(row.supplier_return_quantity||0).toLocaleString("es-CO")},
       ...analyticsStats,
     ],
     sections:[

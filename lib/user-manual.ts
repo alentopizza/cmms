@@ -371,6 +371,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
+      "Cuando una requisición tenga recepciones, la ficha permite registrar devoluciones físicas al proveedor desde la propia requisición. El historial de Requisiciones del proveedor muestra cuántas devoluciones existen y la cantidad total devuelta.",
       "En Estadísticas, el bloque Desempeño comercial usa los últimos 12 meses de recepciones físicas para mostrar tiempo a primera recepción, cumplimiento de cantidad, entregas completas dentro de fecha y variación ponderada entre costo real y estimado. Cada indicador muestra el tamaño de su muestra.",
       "La evolución mensual y la tabla Base reciente del indicador permiten abrir las requisiciones que originan los KPIs; estos datos son evidencia descriptiva y no una calificación automática del proveedor.",
       "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible; cuando existe historial de recepción, la ficha incluye también los KPIs comerciales y su muestra.",
@@ -403,11 +404,15 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "En Recepción física registra únicamente lo entregado, selecciona la bodega y opcionalmente documento, lote, vencimiento y centro de costo. Cada entrega genera una Entrada de Kardex vinculada a la requisición.",
       "Las entregas parciales actualizan automáticamente el estado a Parcialmente atendida; cuando todos los ítems alcanzan la cantidad solicitada, la requisición pasa a Atendida.",
       "El historial de recepciones muestra fecha, artículo, cantidad, bodega, documento, costo, lote y usuario. El Kardex también enlaza de vuelta a la requisición de origen.",
+      "En Devolución a proveedor selecciona la recepción origen, el motivo, la resolución esperada, la cantidad y la bodega desde la cual saldrá físicamente el material. El sistema impide devolver más de lo recibido en esa entrada o más stock del disponible.",
+      "Cada devolución genera una salida de Kardex identificada como Devolución a proveedor y conserva DEV, requisición y recepción origen. La recepción original no se borra ni se reduce; la devolución queda como evento independiente.",
+      "La resolución esperada puede ser Reposición, Nota crédito u Otra resolución. Es informativa en esta fase y servirá como base para la conciliación documental posterior.",
       "Los estados Aprobada y Rechazada son decisiones auditadas y no se asignan manualmente desde el selector general de estado.",
-      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas, pendientes y el estado de aprobación.",
+      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas, devueltas, pendientes, estado de aprobación e historial DEV cuando exista."
     ],
     notes:[
       "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock.",
+      "Registrar una devolución al proveedor sí disminuye existencias mediante un movimiento supplier_return. No uses el movimiento genérico Devolución del Kardex para este caso: ese movimiento devuelve material hacia Inventario y aumenta stock.",
       "La política de aprobación se toma como una fotografía al crear cada requisición; cambiar Configuración no altera retroactivamente requisiciones existentes.",
       "La autoaprobación del solicitante está bloqueada salvo que la empresa la habilite explícitamente y el usuario tenga un rol aprobador.",
       "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
@@ -438,6 +443,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Devoluciones a proveedor vinculadas a recepción",
+    summary:"Las requisiciones permiten devolver cantidades recibidas al proveedor con motivo, resolución esperada, documento y bodega; cada DEV genera una salida de Kardex enlazada a la requisición y a la recepción origen sin borrar el histórico recibido.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"KPIs comerciales de proveedores",

@@ -24,7 +24,7 @@ export type SupplierDirectoryItem={
   capability_codes:string[];capability_labels:string[];specialty_codes:string[];specialty_labels:string[];
   bank_name:string|null;account_type:string|null;account_number:string|null;account_holder:string|null;account_holder_tax_id:string|null;
   payment_terms_days:number|null;currency_code:string|null;payment_email:string|null;payment_notes:string|null;
-  active:boolean;has_logo:boolean;
+  supplier_return_count:number;supplier_return_quantity:string;active:boolean;has_logo:boolean;
 };
 export type SupplierActivity={
   id:string;supplier_id:string;work_order_id:string;order_number:string;order_title:string;description:string;status:string;due_date:string|null;
@@ -32,7 +32,7 @@ export type SupplierActivity={
 };
 export type SupplierRequisition={
   id:string;supplier_id:string;number:string;status:string;created_at:string;needed_by:string|null;item_count:number;total_estimated:string;
-  quantity_requested:string;quantity_received:string;approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
+  quantity_requested:string;quantity_received:string;quantity_returned:string;return_count:number;approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
 };
 export type SupplierDocument={
   id:string;supplier_id:string;category:string;display_name:string;reference:string|null;expires_at:string|null;file_name:string|null;
@@ -337,6 +337,7 @@ export default function SupplierDirectory({
           <div className="entity-stat-card"><small>Suministros asociados</small><strong>{selectedActiveItems.length}</strong><span>{selectedItems.length-selectedActiveItems.length} inactivos conservados</span></div>
           <div className="entity-stat-card"><small>Requisiciones</small><strong>{selectedReqs.length}</strong><span>{openReqs} abiertas</span></div>
           <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
+          <div className="entity-stat-card"><small>Devoluciones a proveedor</small><strong>{selected.supplier_return_count||0}</strong><span>{Number(selected.supplier_return_quantity||0).toLocaleString("es-CO")} unidades registradas</span></div>
         </div>
 
         <div className="entity-panel supplier-commercial-panel">
@@ -522,8 +523,8 @@ export default function SupplierDirectory({
               <Link href={"/dashboard/requisitions/"+req.id}>
                 <span>REQ-{req.number.padStart(6,"0")}</span>
                 <div className="supplier-requisition-status-stack"><strong>{statusLabel(req.status)}</strong>{req.approval_required&&<em className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</em>}</div>
-                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small>
-                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido</em></div>
+                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}{req.return_count>0?" · "+req.return_count+" DEV":""}</small>
+                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido{Number(req.quantity_returned)>0?" · "+Number(req.quantity_returned).toLocaleString("es-CO")+" devuelto":""}</em></div>
                 <UiIcon name="chevron-right" size={14}/>
               </Link>
               <RequisitionExportMenu id={req.id}/>

@@ -793,3 +793,19 @@ Supplier Statistics uses physical receiving evidence from the last 12 months:
 Each KPI displays its observation count. If no valid evidence exists, the product displays an insufficient-history state rather than `0%` or `0 days`.
 
 The monthly trend is grouped by the month of first physical receipt. Recent requisition rows expose lead time, quantity fulfillment, cost variance and date-completion evidence with a direct link back to the requisition.
+
+## Supplier return functional model
+
+A Supplier return starts from an already received requisition:
+
+1. operator opens the requisition and selects a source receipt with remaining returnable quantity;
+2. operator records reason, expected resolution, optional document/reference and return date;
+3. operator enters the quantity to return and the warehouse from which material physically leaves;
+4. server validates tenant/Site scope, receipt relation, previously returned quantity and warehouse authorization;
+5. DEV header/line and `supplier_return` Kardex movement are committed atomically;
+6. Kardex decreases stock and links back to DEV, requisition and original receipt;
+7. the original receipt and `quantity_received` remain unchanged.
+
+Valid reasons are damaged product, wrong item, quality issue, excess received or other. Expected resolution is replacement, credit note or other.
+
+A DEV may be created after the requisition is fulfilled/closed. Phase 4 does not automatically reopen fulfillment or approval because the commercial resolution has not yet been reconciled.

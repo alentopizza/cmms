@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-09-24 — Fase 2 de abastecimiento: aprobación y auditoría de requisiciones
+
+### Added
+
+- Política de aprobación configurable por Empresa: sin aprobación obligatoria, aprobación para todas las requisiciones o aprobación desde un monto estimado.
+- Alcance de aprobador configurable entre solo Administrador de empresa o Administrador + Manager/Supervisor.
+- Autoaprobación del solicitante deshabilitada por defecto y configurable explícitamente.
+- Snapshot de la política aplicable dentro de cada requisición para preservar la regla histórica aunque Configuración cambie después.
+- Permiso dedicado `requisitions.approve` separado de la edición general de requisiciones.
+- Bloque **Aprobación y auditoría** en la ficha de requisición con aprobar/rechazar, motivo de rechazo e historial de eventos.
+- Eventos de dominio para solicitud, modificación pendiente, aprobación, rechazo y reapertura de aprobación.
+- Estado de aprobación visible en el directorio de Requisiciones, la ficha de Proveedor y exportes PDF/Excel/Word.
+- Nueva migración `034_requisition_approval_policy.sql`.
+- Nuevo smoke test `scripts/requisition-approval-smoke.mjs` incorporado a CI.
+
+### Integrity and authorization
+
+- La recepción física/Kardex se bloquea en servidor mientras una aprobación requerida no esté vigente.
+- Aprobar/rechazar revalida Empresa, sedes autorizadas, rol aprobador configurado y política de autoaprobación.
+- `approved` y `rejected` dejan de ser estados asignables manualmente desde el selector general; son decisiones auditadas.
+- Cambiar cantidad solicitada, costo estimado o fecha requerida después de aprobar/rechazar reabre la aprobación.
+- Si la requisición cambia mientras aún está pendiente, el evento `amended` conserva evidencia de esa modificación.
+- Recepciones/Kardex ya registrados no se revierten cuando la aprobación se reabre; solo se bloquea el saldo pendiente hasta una nueva decisión.
+
+### Documentation
+
+- Roadmap, handoff, arquitectura, modelo funcional, ADR, contexto, invariantes de agentes y manual de usuario quedan sincronizados con la Fase 2.
+
 ## 2026-09-24 — Conditional directory filters, standardized Supplier catalogs and personnel/vendor dossiers
 
 ### Added

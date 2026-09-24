@@ -484,3 +484,26 @@ Reversing or decrementing the original receipt would destroy procurement history
 - posted DEV records are immutable;
 - replacement/credit expectations are captured but do not yet change requisition fulfillment or financial reconciliation;
 - future document reconciliation can link credit notes/replacements to the DEV without reconstructing history.
+
+
+## ADR — Commercial evidence is immutable and separate from physical stock truth
+
+**Status:** Accepted — 2026-09-24.
+
+### Decision
+
+Purchase orders, remissions/delivery notes, invoices and credit notes are modeled as immutable commercial evidence linked to a requisition. Reconciliation is calculated from document lines and explicitly linked physical receipt/DEV evidence. Human review is stored separately from the calculated match state.
+
+### Rationale
+
+Inventory receipts and Supplier returns already represent what physically entered or left the warehouse. Letting invoices or remissions rewrite that history would conflate accounting evidence with physical reality and make audits unreliable. Likewise, overwriting a document after review would erase the basis of a previous decision.
+
+### Consequences
+
+- document core/file/lines remain historical evidence;
+- wrong evidence is voided instead of deleted;
+- new receipt/DEV links may be appended as evidence becomes available;
+- adding evidence invalidates the previous human review by returning it to Pending;
+- only a current automatic match can be Verified;
+- calculated differences may be explicitly accepted as exceptions or disputed, both with audit notes;
+- no reconciliation action changes Kardex, received quantities, approval state or Supplier-return quantities.

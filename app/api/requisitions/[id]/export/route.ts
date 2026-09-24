@@ -11,7 +11,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 type Req={
   id:string;organization_id:string;organization_name:string;organization_country:string|null;supplier_name:string;supplier_tax_id:string|null;
   supplier_email:string|null;supplier_phone:string|null;number:string;status:string;needed_by:string|null;notes:string|null;
-  requested_by_name:string|null;created_at:string;
+  requested_by_name:string|null;created_at:string;approval_required:boolean;approval_state:string;approval_decided_at:string|null;approval_decided_by_name:string|null;approval_decision_notes:string|null;
 };
 type Item={sku:string;description:string;unit:string;quantity_requested:string;quantity_received:string;unit_cost_estimated:string;site_name:string|null;location_name:string|null};
 
@@ -23,11 +23,13 @@ async function load(id:string,session:NonNullable<Awaited<ReturnType<typeof getS
   const req=await query<Req>(
     `SELECT r.id,r.organization_id,o.name organization_name,COALESCE(o.default_country,o.legal_country) organization_country,
             s.name supplier_name,s.tax_id supplier_tax_id,s.email supplier_email,s.phone supplier_phone,
-            r.number::text,r.status,r.needed_by::text,r.notes,u.full_name requested_by_name,r.created_at::text
+            r.number::text,r.status,r.needed_by::text,r.notes,u.full_name requested_by_name,r.created_at::text,
+            r.approval_required,r.approval_state,r.approval_decided_at::text,approver.full_name approval_decided_by_name,r.approval_decision_notes
      FROM supplier_requisitions r
      JOIN organizations o ON o.id=r.organization_id
      JOIN suppliers s ON s.id=r.supplier_id
      LEFT JOIN users u ON u.id=r.requested_by
+     LEFT JOIN users approver ON approver.id=r.approval_decided_by
      WHERE r.id=$1`,[id],
   );
   if(!req.rowCount)return null;
@@ -59,8 +61,9 @@ async function pdf(req:Req,items:Item[],currency:string){
   page.drawText(req.supplier_name.slice(0,58),{x:38,y:752,size:12,font:bold,color:teal});
   page.drawText(req.organization_name.slice(0,70),{x:38,y:735,size:9,font:regular,color:soft});
   page.drawText("Estado: "+req.status,{x:395,y:775,size:9,font:bold,color:dark});
-  page.drawText("Creada: "+new Date(req.created_at).toLocaleDateString("es-CO"),{x:395,y:758,size:8,font:regular,color:soft});
-  page.drawText("Requerida: "+(req.needed_by?new Date(req.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"),{x:395,y:742,size:8,font:regular,color:soft});
+  page.drawText("Aprobación: "+(req.approval_required?req.approval_state:"no requerida"),{x:395,y:760,size:8,font:bold,color:teal});
+  page.drawText("Creada: "+new Date(req.created_at).toLocaleDateString("es-CO"),{x:395,y:745,size:8,font:regular,color:soft});
+  page.drawText("Requerida: "+(req.needed_by?new Date(req.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"),{x:395,y:730,size:8,font:regular,color:soft});
   let y=700;
   const cols={sku:38,desc:100,requested:300,received:350,pending:400,cost:452,total:512};
   const drawTableHead=()=>{
@@ -101,7 +104,8 @@ async function xlsx(req:Req,items:Item[],currency:string){
   sh.columns=[{width:18},{width:38},{width:12},{width:12},{width:12},{width:14},{width:18},{width:18},{width:28}];
   sh.mergeCells("A1:I2");sh.getCell("A1").value="DESWEB CMMS · REQUISICIÓN "+req.number.padStart(6,"0");sh.getCell("A1").font={bold:true,size:17,color:{argb:"293644"}};
   sh.mergeCells("A3:I3");sh.getCell("A3").value=req.supplier_name+" · "+req.organization_name;sh.getCell("A3").font={bold:true,color:{argb:"38B2A9"}};
-  sh.addRow(["Estado",req.status,"Fecha requerida",req.needed_by||"Sin fecha","Solicitante",req.requested_by_name||"Sin registrar","Moneda "+currency]);
+  sh.addRow(["Estado",req.status,"Aprobación",req.approval_required?req.approval_state:"No requerida","Fecha requerida",req.needed_by||"Sin fecha","Solicitante",req.requested_by_name||"Sin registrar","Moneda "+currency]);
+  if(req.approval_decided_at)sh.addRow(["Decisión por",req.approval_decided_by_name||"Operador de plataforma","Fecha decisión",req.approval_decided_at,"Observación",req.approval_decision_notes||""]);
   sh.addRow([]);
   sh.addRow(["SKU","Insumo","Solicitado","Recibido","Pendiente","Unidad","Costo estimado","Subtotal","Destino"]);
   const head=sh.lastRow!;head.font={bold:true,color:{argb:"FFFFFF"}};head.fill={type:"pattern",pattern:"solid",fgColor:{argb:"293644"}};
@@ -125,7 +129,8 @@ function word(req:Req,items:Item[],currency:string){
   const html=`<!doctype html><html><head><meta charset="utf-8"><style>
   body{font-family:Arial,sans-serif;color:#293644;margin:34px;border-top:18px solid #293644;padding-top:24px}h1{font-size:24px;margin:0}h2{font-size:15px;color:#38b2a9;margin:7px 0 18px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.meta div{border:1px solid #dde6e9;padding:9px}.meta span{display:block;font-size:8px;color:#71818a;text-transform:uppercase}.meta strong{font-size:10px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{padding:8px;border-bottom:1px solid #dde6e9;text-align:left;font-size:9px}th{background:#293644;color:#fff}.total{text-align:right;font-size:12px;font-weight:bold;margin-top:15px}.notes{margin-top:22px;padding:12px;background:#f6f9fa}</style></head><body>
   <h1>Requisición REQ-${req.number.padStart(6,"0")}</h1><h2>${esc(req.supplier_name)}</h2>
-  <div class="meta"><div><span>Empresa</span><strong>${esc(req.organization_name)}</strong></div><div><span>Estado</span><strong>${esc(req.status)}</strong></div><div><span>Fecha requerida</span><strong>${esc(req.needed_by||"Sin fecha")}</strong></div></div>
+  <div class="meta"><div><span>Empresa</span><strong>${esc(req.organization_name)}</strong></div><div><span>Estado</span><strong>${esc(req.status)}</strong></div><div><span>Aprobación</span><strong>${esc(req.approval_required?req.approval_state:"No requerida")}</strong></div></div>
+  ${req.approval_decided_at?`<div class="notes"><b>Decisión de aprobación</b><p>${esc(req.approval_decided_by_name||"Operador de plataforma")} · ${esc(req.approval_decided_at)}${req.approval_decision_notes?" · "+esc(req.approval_decision_notes):""}</p></div>`:""}
   <table><thead><tr><th>SKU</th><th>Insumo</th><th>Solicitado</th><th>Recibido</th><th>Pendiente</th><th>Unidad</th><th>Costo est.</th><th>Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="total">Total estimado: ${esc(money(grand,currency))}</div>
   ${req.notes?`<div class="notes"><b>Observaciones</b><p>${esc(req.notes)}</p></div>`:""}

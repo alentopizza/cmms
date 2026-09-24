@@ -91,6 +91,11 @@ Creation/edit decision flows may use modals, but **Company, Site, Sub-location a
 - validation errors stay inside the modal and preserve all entered values until the user explicitly cancels;
 - user cards expose status, role, company, site and last access;
 - destructive account actions require branded confirmation and preserve operational history.
+- the User/Technician **Estadísticas** tab uses a dashboard composition with KPI strip, profile/operational state, seven-day Attendance progress, today's field-time ring, execution progress, upcoming Activity agenda and pending work;
+- statistics cards must use real operational data already authorized for that User profile; do not populate reference-layout cards with invented HR metrics;
+- the supplied third-party dashboard references information density and composition only. Keep Desweb colors, typography, icons and entity-profile navigation;
+- statistics are descriptive evidence and must not visually imply an employee leaderboard, score tier or automated employment judgment;
+
 
 ### Confirmation dialogs
 - application confirmations must use the branded in-app dialog instead of browser-native `window.confirm()`;

@@ -11,12 +11,16 @@ import PhoneField from "@/components/PhoneField";
 import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import UiIcon from "@/components/UiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import MultiSelectDropdown, { type MultiSelectOption } from "@/components/MultiSelectDropdown";
 import { countryName } from "@/lib/international-catalog";
 
 export type SupplierDirectoryItem={
   id:string;organization_id:string;organization_name:string;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
   country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:"materials"|"services"|"both";
   service_category:string|null;contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;
+  capability_codes:string[];capability_labels:string[];specialty_codes:string[];specialty_labels:string[];
+  bank_name:string|null;account_type:string|null;account_number:string|null;account_holder:string|null;account_holder_tax_id:string|null;
+  payment_terms_days:number|null;currency_code:string|null;payment_email:string|null;payment_notes:string|null;
   active:boolean;has_logo:boolean;
 };
 export type SupplierActivity={
@@ -82,13 +86,15 @@ function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;
 }
 
 export default function SupplierDirectory({
-  suppliers,activities,items,requisitions,documents,initialSelectedId="",initialTab="general",
+  suppliers,activities,items,requisitions,documents,capabilityOptions,specialtyOptions,initialSelectedId="",initialTab="general",
 }:{
   suppliers:SupplierDirectoryItem[];
   activities:SupplierActivity[];
   items:RequisitionSelectableItem[];
   requisitions:SupplierRequisition[];
   documents:SupplierDocument[];
+  capabilityOptions:MultiSelectOption[];
+  specialtyOptions:MultiSelectOption[];
   initialSelectedId?:string;
   initialTab?:string;
 }){
@@ -137,20 +143,24 @@ export default function SupplierDirectory({
         const supplierItems=items.filter(item=>item.supplier_id===s.id).length;
         const supplierActivities=activities.filter(item=>item.supplier_id===s.id&&["pending","in_progress"].includes(item.status)).length;
         const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
-        return <article className={"supplier-directory-card-v2 "+(s.active?"":"inactive")} key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,s.service_category,s.contact_name,s.email].filter(Boolean).join(" ")}>
+        return <article className={"supplier-directory-card-v2 "+(s.active?"":"inactive")} key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,...(s.capability_labels||[]),...(s.specialty_labels||[]),s.contact_name,s.email].filter(Boolean).join(" ")}
+          data-filter-organization={s.organization_id} data-filter-organization-label={s.organization_name}
+          data-filter-capability={(s.capability_codes||[]).join("|")} data-filter-capability-label={(s.capability_labels||[]).join("|")}
+          data-filter-specialty={(s.specialty_codes||[]).join("|")} data-filter-specialty-label={(s.specialty_labels||[]).join("|")}
+          data-filter-country={s.country_code||""} data-filter-country-label={countryName(s.country_code)||s.country_code||""}>
           <button type="button" className="supplier-card-open" onClick={()=>open(s.id)} aria-label={"Abrir ficha de "+s.name}>
             <span className="supplier-card-banner" aria-hidden="true">
               <span className={"supplier-card-state "+(s.active?"active":"inactive")}>{s.active?"Activo":"Inactivo"}</span>
             </span>
             <span className="supplier-card-logo-row">
               <span className="supplier-card-logo">{s.has_logo?<img src={"/api/suppliers/"+s.id+"/logo"} alt="" />:<b>{initials(s.name)}</b>}</span>
-              <span className="supplier-card-type">{typeLabel(s.supplier_type)}</span>
+              <span className="supplier-card-type">{(s.capability_labels||[]).join(" · ")||typeLabel(s.supplier_type)}</span>
             </span>
             <span className="supplier-card-copy-v2">
               <strong>{s.name}</strong>
               <span>{s.legal_name||s.organization_name}</span>
               <small>{[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}</small>
-              <em>{s.service_category||"Categoría sin registrar"}</em>
+              <em>{(s.specialty_labels||[]).join(" · ")||"Especialidad sin registrar"}</em>
             </span>
             <span className="supplier-card-contact-v2">
               <span><UiIcon name="user" size={12}/><b>{s.contact_name||"Sin contacto"}</b></span>
@@ -194,8 +204,8 @@ export default function SupplierDirectory({
     <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Editar proveedor</h3><div className="form-grid">
       <div className="field"><label>Nombre comercial *</label><input name="name" defaultValue={selected.name} required/></div>
       <div className="field"><label>Razón social *</label><input name="legal_name" defaultValue={selected.legal_name||""} required/></div>
-      <div className="field"><label>Tipo *</label><select name="supplier_type" defaultValue={selected.supplier_type}><option value="materials">Materiales / suministros</option><option value="services">Servicios</option><option value="both">Materiales + servicios</option></select></div>
-      <div className="field"><label>Categoría / especialidad</label><input name="service_category" defaultValue={selected.service_category||""}/></div>
+      <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityOptions} defaultValues={selected.capability_codes||[]} required help="Puedes seleccionar múltiples capacidades normalizadas."/>
+      <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyOptions} defaultValues={selected.specialty_codes||[]} help="Catálogo estándar para mantener consistencia en filtros, importaciones y exportaciones."/>
       <TaxIdentificationTypeSelect id="supplier-edit-tax-type" name="tax_id_type" countryInputId="supplier-edit-country" countryCode={selected.country_code||"CO"} defaultValue={selected.tax_id_type||""}/>
       <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
       <CountryCityFields countryId="supplier-edit-country" countryName="country_code" cityId="supplier-edit-city" cityName="city" defaultCountry={selected.country_code||"CO"} defaultCity={selected.city||""} required/>
@@ -216,8 +226,8 @@ export default function SupplierDirectory({
         <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos del proveedor</h3><div className="entity-info-grid">
           <div className="entity-info-field"><span>Nombre comercial</span><strong>{selected.name}</strong></div>
           <div className="entity-info-field"><span>Razón social</span><strong>{selected.legal_name||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Tipo</span><strong>{typeLabel(selected.supplier_type)}</strong></div>
-          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{selected.service_category||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Tipo</span><strong>{(selected.capability_labels||[]).join(", ")||typeLabel(selected.supplier_type)}</strong></div>
+          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{(selected.specialty_labels||[]).join(", ")||"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>Identificación</span><strong>{selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>País</span><strong>{countryName(selected.country_code)||"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>Ciudad</span><strong>{selected.city||"Sin registrar"}</strong></div>
@@ -261,7 +271,7 @@ export default function SupplierDirectory({
     imageSrc={selected.has_logo?"/api/suppliers/"+selected.id+"/logo":null}
     fallback={initials(selected.name)}
     status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i/>{selected.active?"Activo":"Inactivo"}</span>}
-    meta={[typeLabel(selected.supplier_type),selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin identificación",[selected.city,countryName(selected.country_code)].filter(Boolean).join(" · ")]}
+    meta={[(selected.capability_labels||[]).join(" · ")||typeLabel(selected.supplier_type),selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin identificación",[selected.city,countryName(selected.country_code)].filter(Boolean).join(" · ")]}
     stats={[
       {label:"Actividades",value:activeActivities,icon:"work-order",hint:"activas"},
       {label:"Suministros",value:selectedItems.length,icon:"asset"},
@@ -290,6 +300,36 @@ export default function SupplierDirectory({
         <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
       </div></div>},
       {id:"documents",label:"Documentos",content:<SupplierDocuments supplier={selected} documents={selectedDocs}/>},
+      {id:"financial",label:"Información financiera",content:<div className="entity-section-stack">
+        <div className="entity-panel">
+          <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos para pagos</h3>
+          <p className="entity-panel-copy">Información administrativa usada para preparar pagos al proveedor. El número de cuenta se muestra enmascarado fuera del formulario.</p>
+          <div className="entity-info-grid">
+            <div className="entity-info-field"><span>Banco</span><strong>{selected.bank_name||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{selected.account_type==="savings"?"Ahorros":selected.account_type==="checking"?"Corriente":selected.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Número de cuenta</span><strong>{selected.account_number?("•••• "+selected.account_number.slice(-4)):"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Titular</span><strong>{selected.account_holder||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Identificación titular</span><strong>{selected.account_holder_tax_id||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Moneda</span><strong>{selected.currency_code||"COP"}</strong></div>
+            <div className="entity-info-field"><span>Plazo de pago</span><strong>{selected.payment_terms_days!=null?selected.payment_terms_days+" días":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Correo de pagos</span><strong>{selected.payment_email||"Sin registrar"}</strong></div>
+          </div>
+        </div>
+        <form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>
+          <input type="hidden" name="intent" value="financial"/>
+          <div className="field"><label>Banco</label><input name="bank_name" defaultValue={selected.bank_name||""} placeholder="Ej. Bancolombia"/></div>
+          <div className="field"><label>Tipo de cuenta</label><select name="account_type" defaultValue={selected.account_type||""}><option value="">Selecciona</option><option value="savings">Ahorros</option><option value="checking">Corriente</option><option value="other">Otra</option></select></div>
+          <div className="field"><label>Número de cuenta</label><input name="account_number" defaultValue={selected.account_number||""} autoComplete="off"/></div>
+          <div className="field"><label>Titular de la cuenta</label><input name="account_holder" defaultValue={selected.account_holder||selected.legal_name||""}/></div>
+          <div className="field"><label>Identificación del titular</label><input name="account_holder_tax_id" defaultValue={selected.account_holder_tax_id||selected.tax_id||""}/></div>
+          <div className="field"><label>Moneda</label><select name="currency_code" defaultValue={selected.currency_code||"COP"}><option value="COP">COP · Peso colombiano</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="MXN">MXN · Peso mexicano</option><option value="PEN">PEN · Sol peruano</option><option value="CLP">CLP · Peso chileno</option></select></div>
+          <div className="field"><label>Plazo de pago (días)</label><input name="payment_terms_days" type="number" min="0" max="365" defaultValue={selected.payment_terms_days??""}/></div>
+          <div className="field"><label>Correo para pagos</label><input name="payment_email" type="email" defaultValue={selected.payment_email||""}/></div>
+          <div className="field form-span-2"><label>Observaciones de pago</label><textarea name="payment_notes" rows={3} defaultValue={selected.payment_notes||""} placeholder="Condiciones, referencia, instrucciones administrativas."/></div>
+          <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar información financiera</button></div>
+        </form>
+      </div>},
+
       ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:<div className="supplier-activity-list">
         {selectedActivities.length?selectedActivities.map(activity=><article className="supplier-activity-row" key={activity.id}>
           <span className={"activity-status activity-status-"+activity.status}>{activity.status}</span>

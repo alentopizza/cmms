@@ -216,6 +216,7 @@ function inventoryValidation(
   catalog:Awaited<ReturnType<typeof catalogs>>,
   contextSupplier:Supplier|null,
   fileWarehouseNames:Set<string>,
+  importScope:InventoryImportScope,
 ){
   const issues:Issue[]=[];
   const parsed:ParsedInventory[]=[];
@@ -257,6 +258,32 @@ function inventoryValidation(
       name:textValue(row.values.supplier),
     };
     const hasSupplierReference=Object.values(supplierReference).some(Boolean);
+    const matchesContextReference=contextSupplier&&hasSupplierReference&&[
+      supplierReference.supplierId&&[contextSupplier.id,contextSupplier.code].filter(Boolean).some(value=>key(value||"")===key(supplierReference.supplierId)),
+      supplierReference.taxId&&key(contextSupplier.tax_id||"")===key(supplierReference.taxId),
+      supplierReference.code&&key(contextSupplier.code||"")===key(supplierReference.code),
+      supplierReference.name&&key(contextSupplier.name)===key(supplierReference.name),
+    ].some(Boolean);
+
+    if(contextSupplier&&importScope==="context_only"&&hasSupplierReference&&!matchesContextReference){
+      contextMismatchRows++;
+      issue(
+        issues,sheetName,row.rowNumber,"warning",
+        "Registro fuera del proveedor de contexto; se omitirá en modo Solo este proveedor.",
+        supplierReference.supplierId?"PROVEEDOR_ID":supplierReference.taxId?"NIT_PROVEEDOR":supplierReference.code?"CODIGO_PROVEEDOR":"PROVEEDOR",
+        supplierReference.supplierId||supplierReference.taxId||supplierReference.code||supplierReference.name||"",
+        "Cambia a Importar todo el archivo si quieres distribuir también estas filas.",
+      );
+      parsed.push({
+        row:row.rowNumber,sku,name,description:textValue(row.values.description),itemType,category,
+        subcategory:textValue(row.values.subcategory),brand:textValue(row.values.brand),model:textValue(row.values.model),
+        presentation:textValue(row.values.presentation),unit,barcode:textValue(row.values.barcode),supplier:null,belongsContext:false,
+        site:null,location:null,warehouseName:textValue(row.values.warehouse),warehouse:null,min:0,max:0,cost:0,referencePrice:0,taxRate:0,initial:0,
+        lot:textValue(row.values.lot),expiresAt:isoDateValue(row.values.expires),active:boolValue(row.values.active,true),existing:null,
+      });
+      continue;
+    }
+
     const resolution=hasSupplierReference
       ?resolveImportSupplier(catalog.suppliers,supplierReference)
       :contextSupplier

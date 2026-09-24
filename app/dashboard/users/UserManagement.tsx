@@ -448,35 +448,47 @@ export default function UserManagement({
         <small>Los accesos se limitan por empresa, rol y sedes autorizadas.</small>
       </div>
 
-      <div className="user-role-grid">
+      <div className="user-role-grid user-compact-profile-grid">
         {users.map(user => <article
-          className={"card user-role-card "+(user.active ? "" : "user-role-card-inactive")}
+          className={"user-directory-profile-card "+(user.active ? "" : "user-role-card-inactive")}
           key={user.id}
           data-module-record
           data-status={user.active ? "active" : "inactive"}
           data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[])].filter(Boolean).join(" ")}
         >
-          <button className="user-profile-trigger" type="button" onClick={()=>setSelectedUserId(user.id)} aria-label={"Ver perfil de "+user.full_name}>
-            <div className="user-role-card-head">
-              <div className="user-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</div>
-              <div><strong>{user.full_name}</strong><span>{user.email}</span></div>
-              <span className={"status-badge "+(user.active ? "status-active" : "status-inactive")}><i />{user.active ? "Activo" : "Inactivo"}</span>
-            </div>
-
-            <div className="user-role-meta">
-              <div><span>Rol</span><strong>{roleName(roleKey(user))}</strong></div>
-              <div><span>Empresa</span><strong>{user.organization_name || "Acceso global"}</strong></div>
-              <div><span>Alcance de sedes</span><strong title={(user.site_names || []).join(", ")}>{siteAccessLabel(user)}</strong></div>
-              <div><span>{user.role === "external" || user.role === "provider" ? "Proveedor" : "Último acceso"}</span><strong>{user.role === "external" || user.role === "provider" ? (user.external_supplier_name || "Independiente") : user.last_login_at ? new Date(user.last_login_at).toLocaleString("es-CO") : "Aún no ingresa"}</strong></div>
-              <div><span>Biometría</span><strong>{biometricStatusLabel(user.biometric_status)}</strong></div>
-            </div>
+          <button className="user-card-profile-trigger" type="button" onClick={()=>setSelectedUserId(user.id)} aria-label={"Ver perfil de "+user.full_name}>
+            <span className="user-card-cover" aria-hidden="true">
+              <span className={"user-card-status "+(user.active?"active":"inactive")}>{user.active?"Activo":"Inactivo"}</span>
+            </span>
+            <span className="user-card-avatar-row">
+              <span className="user-card-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</span>
+              <span className={"user-card-live "+(user.tracking_live?"live":"")} title={user.tracking_live?"Seguimiento Reacción activo":"Sin seguimiento en vivo"}><i/>{user.tracking_live?"En línea":"Offline"}</span>
+            </span>
+            <span className="user-card-identity">
+              <strong>{user.full_name}</strong>
+              <span>{roleName(roleKey(user))}</span>
+              <small>{user.organization_name || "Acceso global"}</small>
+              <em title={user.email}>{user.email}</em>
+            </span>
+            <span className="user-card-badges">
+              <span><UiIcon name="check" size={12}/>{biometricStatusLabel(user.biometric_status)}</span>
+              <span><UiIcon name="location" size={12}/>{siteAccessLabel(user)}</span>
+            </span>
+            <span className="user-card-metrics">
+              <span><strong>{user.assigned_work_orders}</strong><small>OT activas</small></span>
+              <span><strong>{user.pending_activities}</strong><small>Pendientes</small></span>
+              <span><strong>{user.completed_activities_30d}</strong><small>Completadas</small></span>
+            </span>
           </button>
 
-          {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <div className="user-card-actions">
-            <button className="text-button" type="button" onClick={() => openEdit(user)}>Editar</button>
-            {user.id !== currentUserId && <button className={"text-button "+(user.active ? "text-danger" : "")} type="button" onClick={() => setConfirm({ kind: "status", user })}>{user.active ? "Desactivar" : "Reactivar"}</button>}
-            {isPlatformOwner && user.id !== currentUserId && <button className="text-button text-danger" type="button" onClick={() => setConfirm({ kind: "delete", user })}>Eliminar</button>}
-          </div>}
+          <div className="user-card-compact-actions">
+            <button className="user-card-primary-action" type="button" onClick={()=>setSelectedUserId(user.id)}><UiIcon name="user" size={14}/> Ver perfil</button>
+            {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <>
+              <button className="user-card-icon-action" type="button" onClick={() => openEdit(user)} title="Editar usuario"><UiIcon name="edit" size={14}/></button>
+              {user.id !== currentUserId && <button className={"user-card-icon-action "+(user.active?"danger":"")} type="button" onClick={() => setConfirm({ kind: "status", user })} title={user.active?"Desactivar usuario":"Reactivar usuario"}><UiIcon name={user.active?"trash":"check"} size={14}/></button>}
+              {isPlatformOwner && user.id !== currentUserId && <button className="user-card-icon-action danger" type="button" onClick={() => setConfirm({ kind: "delete", user })} title="Eliminar usuario"><UiIcon name="trash" size={14}/></button>}
+            </>}
+          </div>
         </article>)}
       </div>
     </section>)}

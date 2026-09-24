@@ -538,3 +538,26 @@ A partir de este checkpoint:
 - cuando exista contradicción visual, **DESWEB Design System V2 prevalece**.
 
 Ver: `docs/DESIGN_MIGRATION_PLAN.md`.
+
+
+## 26. Runtime implementation — Phase 1
+
+The canonical runtime token layer is `app/design-tokens.css`.
+
+Loading order is intentional:
+
+1. `app/globals.css` — legacy implementation;
+2. `app/design-tokens.css` — V2 tokens and compatibility aliases.
+
+This allows the project to migrate incrementally while existing selectors continue to work.
+
+Runtime supporting files:
+
+- `lib/design-system.ts` — typed token catalog used by documentation/playground;
+- `components/ui-kit/FoundationPreview.tsx` — real Foundations preview;
+- `app/ui-kit/page.tsx` — authenticated live catalog;
+- `scripts/design-system-smoke.mjs` — CI contract check.
+
+The dashboard white-label bridge maps Organization colors to `--color-action-primary` and `--color-action-accent` while preserving legacy aliases during migration.
+
+`UiIcon` remains the official internal outline-SVG icon mechanism for the current migration. Unicode navigation glyphs are legacy targets for Phase 3.

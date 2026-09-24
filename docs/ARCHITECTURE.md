@@ -596,3 +596,30 @@ Document mutation boundaries:
 - general `audit_log` and document-domain events preserve upload, evidence-link, review and void actions.
 
 The reconciliation layer never invokes the Inventory balance trigger and never updates `quantity_received` or Supplier-return quantities.
+
+
+## Unified Inventory/Kardex import architecture
+
+The canonical entry point remains `POST /api/bulk-import`; there is no second Supplier-specific engine. `lib/inventory-import-service.ts` centralizes mode/context semantics, Supplier identity resolution, service detection and import-folio presentation.
+
+Inventory import pipeline:
+
+1. determine Organization from authenticated session or valid Supplier launch context;
+2. choose effective scope: Global or Context-only;
+3. parse BODEGAS before product validation so workbook-declared warehouses are known;
+4. parse INVENTARIO and resolve Supplier by ID → NIT/tax → code → exact name;
+5. omit non-inventoriable services;
+6. parse/validate KARDEX, inheriting Supplier from SKU and rejecting explicit mismatches;
+7. simulate the selected movement sequence against current warehouse stock plus new-item initial receipts;
+8. return validation summary/issues/Supplier groups without writing;
+9. on explicit confirmation, repeat the same deterministic selected scope and commit batch, warehouses, master data and Kardex in one PostgreSQL transaction.
+
+Migration `037_unified_inventory_import.sql` adds:
+- stable Supplier import code;
+- Inventory master fields needed by the workbook (subcategory, brand, model, barcode, reference price, tax rate);
+- external `inventory_transactions.source_movement_id` uniqueness;
+- bulk-import folio/origin/context/scope/omitted metadata.
+
+The template route `GET /api/bulk-import/template?entity=inventory` always emits the same master workbook. Optional `supplier=<uuid>` and `data=current` affect context/preloaded data only, never column/sheet structure.
+
+Current-data template exports master Inventory only. It sets STOCK_INICIAL to zero and leaves KARDEX blank so downloading and reimporting current data cannot duplicate historical physical movements by default.

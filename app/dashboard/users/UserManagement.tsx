@@ -53,6 +53,31 @@ export type ManagedUser = {
   tracking_live: boolean;
 };
 
+export type ManagedUserDocument={
+  id:string;
+  organization_id:string;
+  user_id:string;
+  category:string;
+  display_name:string;
+  reference:string|null;
+  issue_date:string|null;
+  expires_at:string|null;
+  file_name:string|null;
+  file_mime_type:string|null;
+  archived_at:string|null;
+  created_at:string;
+};
+
+export type ManagedEmergencyContact={
+  user_id:string;
+  organization_id:string;
+  full_name:string;
+  relationship_code:string;
+  phone:string;
+  email:string|null;
+  notes:string|null;
+};
+
 type UserStatisticsSnapshot = {
   attendance_hours_today: number;
   attendance_daily_7d: UserStatisticsDay[];
@@ -134,6 +159,67 @@ function siteAccessLabel(user: ManagedUser) {
   return `${siteNames.slice(0, 2).join(", ")} +${siteNames.length - 2}`;
 }
 
+const USER_DOCUMENT_CATEGORIES=[
+  {value:"identity",label:"Documento de identidad / cédula"},
+  {value:"resume",label:"Hoja de vida"},
+  {value:"occupational_risk",label:"ARL / riesgos laborales"},
+  {value:"health_eps",label:"EPS / salud"},
+  {value:"pension",label:"Pensión"},
+  {value:"severance",label:"Cesantías"},
+  {value:"compensation_fund",label:"Caja de compensación"},
+  {value:"payroll_contribution",label:"Parafiscales / PILA"},
+  {value:"bank_certificate",label:"Certificación / cuenta bancaria"},
+  {value:"contract",label:"Contrato"},
+  {value:"certification",label:"Certificación"},
+  {value:"other",label:"Otro"},
+];
+const EMERGENCY_RELATIONSHIPS=[
+  {value:"parent",label:"Padre / madre"},
+  {value:"spouse_partner",label:"Pareja / cónyuge"},
+  {value:"child",label:"Hijo / hija"},
+  {value:"sibling",label:"Hermano / hermana"},
+  {value:"relative",label:"Otro familiar"},
+  {value:"friend",label:"Amigo / persona de confianza"},
+  {value:"other",label:"Otro"},
+];
+function userDocumentLabel(code:string){
+  return USER_DOCUMENT_CATEGORIES.find(item=>item.value===code)?.label||code;
+}
+function emergencyRelationshipLabel(code:string){
+  return EMERGENCY_RELATIONSHIPS.find(item=>item.value===code)?.label||code;
+}
+function UserDocuments({user,documents}:{user:ManagedUser;documents:ManagedUserDocument[]}){
+  const active=documents.filter(document=>!document.archived_at);
+  const archived=documents.filter(document=>Boolean(document.archived_at));
+  return <div className="entity-section-stack">
+    <form className="entity-panel form-grid" method="post" action={"/api/users/"+user.id+"/documents"} encType="multipart/form-data">
+      <h3 className="form-span-2"><span className="entity-section-icon"><UiIcon name="file"/></span>Agregar documento al expediente</h3>
+      <div className="field"><label>Tipo *</label><select name="category" defaultValue="identity">{USER_DOCUMENT_CATEGORIES.map(option=><option value={option.value} key={option.value}>{option.label}</option>)}</select></div>
+      <div className="field"><label>Nombre *</label><input name="display_name" required placeholder="Ej. Cédula vigente"/></div>
+      <div className="field"><label>Referencia</label><input name="reference" placeholder="Número, entidad o referencia"/></div>
+      <div className="field"><label>Fecha de emisión</label><input name="issue_date" type="date"/></div>
+      <div className="field"><label>Fecha de vencimiento</label><input name="expires_at" type="date"/></div>
+      <div className="field form-span-2"><label>Notas</label><input name="notes" placeholder="Observaciones del documento"/></div>
+      <div className="form-span-2"><FileDropzone name="file" label="Archivo" accept=".pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} required kind="document"/></div>
+      <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar documento</button></div>
+    </form>
+    <div className="entity-panel">
+      <h3>Documentos vigentes</h3>
+      {active.length?<div className="supplier-document-list">{active.map(document=><article key={document.id} className="supplier-document-row">
+        <div><strong>{document.display_name}</strong><span>{userDocumentLabel(document.category)}{document.expires_at?" · vence "+new Date(document.expires_at+"T12:00:00").toLocaleDateString("es-CO"):""}</span></div>
+        <div className="supplier-document-actions">
+          {document.file_name&&<a href={"/api/users/"+user.id+"/documents/"+document.id}><UiIcon name="download" size={15}/> Descargar</a>}
+          <form method="post" action={"/api/users/"+user.id+"/documents/"+document.id}><input type="hidden" name="intent" value="archive"/><button type="submit">Archivar</button></form>
+        </div>
+      </article>)}</div>:<div className="location-detail-empty">No hay documentos vigentes en el expediente.</div>}
+    </div>
+    {archived.length>0&&<div className="entity-panel"><h3>Documentos archivados</h3><div className="supplier-document-list">{archived.map(document=><article key={document.id} className="supplier-document-row archived">
+      <div><strong>{document.display_name}</strong><span>{userDocumentLabel(document.category)}</span></div>
+      <div className="supplier-document-actions"><form method="post" action={"/api/users/"+user.id+"/documents/"+document.id}><input type="hidden" name="intent" value="restore"/><button type="submit">Restaurar</button></form></div>
+    </article>)}</div></div>}
+  </div>;
+}
+
 // ── User CRUD state, validation and tenant-safe actions ─────────────────────
 
 export default function UserManagement({
@@ -145,6 +231,8 @@ export default function UserManagement({
   fixedOrganizationId,
   currentUserId,
   serviceSuppliers,
+  documents,
+  emergencyContacts,
 }: {
   users: ManagedUser[];
   organizations: Organization[];
@@ -154,11 +242,14 @@ export default function UserManagement({
   fixedOrganizationId: string | null;
   currentUserId: string | null;
   serviceSuppliers: ServiceSupplier[];
+  documents: ManagedUserDocument[];
+  emergencyContacts: ManagedEmergencyContact[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"create" | "edit" | null>(null);
-  const [selectedUserId,setSelectedUserId]=useState<string|null>(null);
+  const [selectedUserId,setSelectedUserId]=useState<string|null>(searchParams.get("user"));
+  const [preferredTab,setPreferredTab]=useState(searchParams.get("tab")||"general");
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -198,6 +289,15 @@ export default function UserManagement({
   }, [organizations, draft.organization_id]);
   const selectedUser=useMemo(()=>users.find(user=>user.id===selectedUserId)||null,[users,selectedUserId]);
   const selectedStatistics=selectedUserId?statisticsByUser[selectedUserId]||null:null;
+  const selectedDocuments=useMemo(()=>documents.filter(document=>document.user_id===selectedUserId),[documents,selectedUserId]);
+  const selectedEmergencyContact=useMemo(()=>emergencyContacts.find(contact=>contact.user_id===selectedUserId)||null,[emergencyContacts,selectedUserId]);
+
+  useEffect(()=>{
+    const requestedUser=searchParams.get("user");
+    if(requestedUser&&users.some(user=>user.id===requestedUser))setSelectedUserId(requestedUser);
+    const requestedTab=searchParams.get("tab");
+    if(requestedTab)setPreferredTab(requestedTab);
+  },[searchParams,users]);
 
   useEffect(()=>{
     if(!selectedUserId||statisticsByUser[selectedUserId])return;
@@ -429,7 +529,13 @@ export default function UserManagement({
       description="Administra cuentas, roles y alcance operativo sin perder la trazabilidad de las acciones realizadas."
       count={users.length}
       countLabel="cuentas"
-      searchPlaceholder="Buscar nombre, correo, empresa o rol"
+      searchPlaceholder="Buscar nombre, correo, empresa, sede o rol"
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"role",label:"Rol",allLabel:"Todos los roles"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+        {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
+      ]}
       action={<button className="button module-add-button" type="button" onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}><span className="module-add-button-icon">◎</span><span>{organizations.length ? "Agregar" : "Crear empresa"}</span></button>}
     />
 
@@ -454,9 +560,17 @@ export default function UserManagement({
           key={user.id}
           data-module-record
           data-status={user.active ? "active" : "inactive"}
-          data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[])].filter(Boolean).join(" ")}
+          data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[]),user.external_supplier_name].filter(Boolean).join(" ")}
+          data-filter-organization={user.organization_id||""}
+          data-filter-organization-label={user.organization_name||""}
+          data-filter-role={roleKey(user)}
+          data-filter-role-label={roleName(roleKey(user))}
+          data-filter-site={(user.site_ids||[]).join("|")}
+          data-filter-site-label={(user.site_names||[]).join("|")}
+          data-filter-supplier={user.external_supplier_id||""}
+          data-filter-supplier-label={user.external_supplier_name||""}
         >
-          <button className="user-card-profile-trigger" type="button" onClick={()=>setSelectedUserId(user.id)} aria-label={"Ver perfil de "+user.full_name}>
+          <button className="user-card-profile-trigger" type="button" onClick={()=>{setSelectedUserId(user.id);setPreferredTab("general");}} aria-label={"Ver perfil de "+user.full_name}>
             <span className="user-card-cover" aria-hidden="true">
               <span className={"user-card-status "+(user.active?"active":"inactive")}>{user.active?"Activo":"Inactivo"}</span>
             </span>
@@ -480,7 +594,7 @@ export default function UserManagement({
           </button>
 
           <div className="user-card-compact-actions">
-            <button className="user-card-primary-action" type="button" onClick={()=>setSelectedUserId(user.id)}><UiIcon name="user" size={14}/> Ver perfil</button>
+            <button className="user-card-primary-action" type="button" onClick={()=>{setSelectedUserId(user.id);setPreferredTab("general");}}><UiIcon name="user" size={14}/> Ver perfil</button>
             {user.platform_role !== "platform_owner" && (isPlatformOperator ? (isPlatformOwner || user.platform_role !== "superadmin") : user.platform_role === "user") && <>
               <button className="user-card-icon-action" type="button" onClick={() => openEdit(user)} title="Editar usuario"><UiIcon name="edit" size={14}/></button>
               {user.phone&&<a className="user-card-icon-action whatsapp" href={"https://wa.me/"+user.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
@@ -499,7 +613,7 @@ export default function UserManagement({
           headingIcon="user"
           breadcrumbs={[
             {label:"Inicio",href:"/dashboard"},
-            {label:"Usuarios",onClick:()=>setSelectedUserId(null)},
+            {label:"Usuarios",onClick:()=>{setSelectedUserId(null);setPreferredTab("general");}},
             {label:selectedUser.full_name},
           ]}
           title={selectedUser.full_name}
@@ -526,6 +640,7 @@ export default function UserManagement({
             {selectedUser.role==="technician"&&<Link href="/dashboard/reaction"><UiIcon name="map"/> Reacción</Link>}
             <ProfileExportMenu entity="user" id={selectedUser.id} label="Hoja de vida"/>
           </>}
+          initialTab={preferredTab}
           tabs={[
             {id:"general",label:"Información general",content:<div className="entity-section-stack">
               <div className="entity-panel"><h3>Datos del usuario</h3><div className="entity-info-grid">
@@ -541,6 +656,23 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>Último acceso</span><strong>{selectedUser.last_login_at?new Date(selectedUser.last_login_at).toLocaleString("es-CO"):"Aún no ingresa"}</strong></div>
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
               </div></div>
+            </div>},
+            {id:"documents",label:"Documentos",content:<UserDocuments user={selectedUser} documents={selectedDocuments}/>},
+            {id:"emergency",label:"Contacto de emergencia",content:<div className="entity-section-stack">
+              <div className="entity-panel"><h3>Referencia personal / contacto de emergencia</h3><div className="entity-info-grid">
+                <div className="entity-info-field"><span>Nombre</span><strong>{selectedEmergencyContact?.full_name||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Relación</span><strong>{selectedEmergencyContact?emergencyRelationshipLabel(selectedEmergencyContact.relationship_code):"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Teléfono</span><strong>{selectedEmergencyContact?.phone||"Sin registrar"}</strong></div>
+                <div className="entity-info-field"><span>Correo</span><strong>{selectedEmergencyContact?.email||"Sin registrar"}</strong></div>
+              </div></div>
+              <form className="entity-panel form-grid" method="post" action={"/api/users/"+selectedUser.id+"/emergency-contact"}>
+                <div className="field"><label>Nombre completo *</label><input name="full_name" required defaultValue={selectedEmergencyContact?.full_name||""}/></div>
+                <div className="field"><label>Relación *</label><select name="relationship_code" required defaultValue={selectedEmergencyContact?.relationship_code||"relative"}>{EMERGENCY_RELATIONSHIPS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+                <PhoneField name="phone" label="Teléfono de emergencia" countryCode={selectedUser.country_code||"CO"} defaultValue={selectedEmergencyContact?.phone||""}/>
+                <div className="field"><label>Correo</label><input type="email" name="email" defaultValue={selectedEmergencyContact?.email||""}/></div>
+                <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} defaultValue={selectedEmergencyContact?.notes||""} placeholder="Indicaciones relevantes para una emergencia."/></div>
+                <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar contacto de emergencia</button></div>
+              </form>
             </div>},
             {id:"statistics",label:"Estadísticas",content:statisticsError&&!selectedStatistics
               ?<div className="entity-panel user-statistics-fallback"><div className="notice error">{statisticsError}</div><div className="entity-stat-grid">

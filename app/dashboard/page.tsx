@@ -369,6 +369,11 @@ async function operation(session:Session,filters:DashboardFilters) {
 
   const stockParams:unknown[]=[session.organizationId];
   let stockWhere="organization_id=$1 AND active=true AND quantity<=min_quantity";
+  if(!session.accessAllSites){
+    const index=stockParams.length+1;
+    stockParams.push(session.siteIds);
+    stockWhere+=" AND (site_id IS NULL OR site_id=ANY($"+index+"::uuid[]))";
+  }
   stockWhere+=appendSiteFilter(stockParams,"site_id",filters);
   const stock=can(session,"inventory.read")
     ?await query<C>("SELECT count(*)::text count FROM inventory_items WHERE "+stockWhere,stockParams)

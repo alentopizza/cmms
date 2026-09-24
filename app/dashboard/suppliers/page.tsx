@@ -45,6 +45,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       sf.currency_code,sf.payment_email,sf.payment_notes,
       (SELECT count(*)::int FROM supplier_returns sr WHERE sr.supplier_id=s.id) supplier_return_count,
       COALESCE((SELECT sum(sri.quantity) FROM supplier_returns sr JOIN supplier_return_items sri ON sri.return_id=sr.id WHERE sr.supplier_id=s.id),0)::text supplier_return_quantity,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=s.id AND pd.voided_at IS NULL) procurement_document_count,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=s.id AND pd.voided_at IS NULL AND pd.review_status='pending') procurement_document_pending,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=s.id AND pd.voided_at IS NULL AND pd.review_status='disputed') procurement_document_disputed,
       (s.logo_data IS NOT NULL) has_logo
     FROM suppliers s JOIN organizations o ON o.id=s.organization_id
     LEFT JOIN supplier_financial_profiles sf ON sf.supplier_id=s.id`;
@@ -71,7 +74,10 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
       COALESCE(sum(ri.quantity_received),0)::text quantity_received,
       COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri JOIN supplier_returns sr ON sr.id=sri.return_id WHERE sr.requisition_id=r.id),0)::text quantity_returned,
-      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.requisition_id=r.id) return_count
+      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.requisition_id=r.id) return_count,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL) document_count,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='pending') document_pending_review,
+      (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='disputed') document_disputed
     FROM supplier_requisitions r LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id`;
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;

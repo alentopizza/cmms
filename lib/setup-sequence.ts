@@ -7,6 +7,7 @@ export type SetupState = {
   suppliers: number;
   serviceSuppliers: number;
   technicians: number;
+  supervisors: number;
   externalCollaborators: number;
   crews: number;
   assets: number;
@@ -20,6 +21,7 @@ export async function getSetupState(organizationId: string, client?: PoolClient)
       (SELECT count(*)::int FROM suppliers WHERE organization_id=$1 AND active=true) suppliers,
       (SELECT count(*)::int FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('services','both')) "serviceSuppliers",
       (SELECT count(*)::int FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND om.role='technician' AND u.active=true) technicians,
+      (SELECT count(*)::int FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND om.role='manager' AND u.active=true) supervisors,
       (SELECT count(*)::int FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND om.role='external' AND u.active=true) "externalCollaborators",
       (SELECT count(*)::int FROM crews WHERE organization_id=$1 AND active=true) crews,
       (SELECT count(*)::int FROM assets WHERE organization_id=$1 AND status<>'retired') assets,
@@ -77,10 +79,10 @@ export function gateFor(state: SetupState, target: "supplier" | "workforce" | "p
     action:"Ir a proveedores",
   };
 
-  if (target === "crew" && state.technicians + state.externalCollaborators < 1) return {
+  if (target === "crew" && state.technicians + state.supervisors + state.externalCollaborators < 1) return {
     ready:false,
     title:"Primero crea personal ejecutor",
-    message:"Una cuadrilla necesita al menos un técnico interno o colaborador externo activo.",
+    message:"Una cuadrilla necesita al menos un Técnico, Supervisor o colaborador externo activo.",
     href:"/dashboard/users",
     action:"Crear personal",
   };
@@ -186,7 +188,7 @@ export function creationPrerequisiteFor(
     return {
       ready:false,
       title:"Primero debes crear personal ejecutor",
-      message:"No puedes crear una cuadrilla sin integrantes. Registra al menos un técnico interno o colaborador externo antes de conformar el equipo.",
+      message:"No puedes crear una cuadrilla sin integrantes. Registra al menos un Técnico, Supervisor o colaborador externo antes de conformar el equipo.",
       href:"/dashboard/users",
       action:"Crear personal",
     };
@@ -229,7 +231,7 @@ export async function getCreationHierarchyContext(organizationId?: string | null
         FROM organization_members om
         JOIN users u ON u.id=om.user_id
         WHERE u.active=true
-          AND om.role IN ('technician','external')
+          AND om.role IN ('manager','technician','external')
           ${memberFilter}
       ) workforce,
       (SELECT count(*)::int FROM assets WHERE status<>'retired' ${entityFilter}) assets`,
@@ -260,7 +262,7 @@ export async function getOrganizationCreationHierarchies(): Promise<Organization
         JOIN users u ON u.id=om.user_id
         WHERE om.organization_id=o.id
           AND u.active=true
-          AND om.role IN ('technician','external')
+          AND om.role IN ('manager','technician','external')
       ) workforce,
       (SELECT count(*)::int FROM assets a WHERE a.organization_id=o.id AND a.status<>'retired') assets
     FROM organizations o

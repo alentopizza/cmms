@@ -15,30 +15,52 @@ import {
   textValue,
   type ParsedSheetRow,
 } from "@/lib/import-workbook";
+import {
+  importBatchLabel,
+  isServiceInventoryRow,
+  resolveImportSupplier,
+  supplierBelongsToContext,
+  type DuplicatePolicy,
+  type ImportSupplier,
+  type InventoryImportMode,
+  type InventoryImportScope,
+} from "@/lib/inventory-import-service";
 
-type Issue={sheet:string;row:number;severity:"error"|"warning";message:string};
-type Supplier={id:string;name:string;tax_id:string|null;supplier_type:string};
+type Issue={
+  sheet:string;row:number;severity:"error"|"warning";message:string;
+  field?:string;value?:string;problem?:string;suggestion?:string;
+};
+type Supplier=ImportSupplier;
 type Site={id:string;name:string};
 type Location={id:string;site_id:string;name:string};
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
-type Item={id:string;sku:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean};
+type Item={id:string;sku:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean;};
 type ParsedWarehouse={
   row:number;code:string;name:string;type:string;responsible:string;locationDetail:string;capacity:number|null;active:boolean;notes:string;
   site:Site|null;location:Location|null;
 };
 type ParsedKardex={
-  row:number;sku:string;movement:{type:string;sign:number};date:string;document:string;warehouseName:string;destination:string;
-  quantity:number;cost:number;notes:string;supplierName:string;lot:string;expiresAt:string;costCenter:string;sourceUser:string;
+  row:number;movementId:string;sku:string;movement:{type:string;sign:number};date:string;document:string;warehouseName:string;destination:string;
+  quantity:number;cost:number;notes:string;lot:string;expiresAt:string;costCenter:string;sourceUser:string;
+  supplier:Supplier|null;belongsContext:boolean;
 };
 
 const INVENTORY_ALIASES={
+  supplierId:["PROVEEDOR_ID","Proveedor ID","ID proveedor","Proveedor_ID"],
+  supplierTaxId:["NIT_PROVEEDOR","NIT proveedor","NIT"],
+  supplierCode:["CODIGO_PROVEEDOR","Código proveedor","Codigo proveedor","Código interno proveedor"],
+  supplier:["PROVEEDOR","Proveedor *","Proveedor"],
   sku:["SKU *","SKU","Código","Codigo","Item"],
   name:["Nombre *","Nombre","Nombre producto/servicio","Producto"],
   description:["Descripción","Descripcion"],
+  itemType:["TIPO","Tipo producto","Tipo ítem","Tipo item"],
   category:["Categoría","Categoria"],
+  subcategory:["SUBCATEGORIA","Subcategoría","Subcategoria"],
+  brand:["MARCA","Marca","Fabricante"],
+  model:["MODELO","Modelo"],
   presentation:["Presentación","Presentacion"],
   unit:["Unidad *","Unidad"],
-  supplier:["Proveedor *","Proveedor"],
+  barcode:["CODIGO_BARRAS","Código de barras","Codigo de barras"],
   supplierType:["Tipo proveedor"],
   site:["Sede *","Sede"],
   location:["Sububicación *","Sububicacion","Ubicación física","Ubicacion fisica"],
@@ -46,8 +68,12 @@ const INVENTORY_ALIASES={
   min:["Stock mínimo","Stock minimo"],
   max:["Stock máximo","Stock maximo"],
   cost:["Costo unitario","Valor unitario"],
+  referencePrice:["PRECIO_REFERENCIA","Precio referencia","Precio de referencia"],
+  taxRate:["IVA","IVA %","Impuesto"],
   initial:["Stock inicial","Existencia inicial","Cantidad base"],
-  active:["Activo"],
+  lot:["LOTE","Lote"],
+  expires:["FECHA_VENCIMIENTO","Fecha vencimiento","Vencimiento"],
+  active:["Activo","Estado"],
 };
 const WAREHOUSE_ALIASES={
   code:["Código","Codigo","ID","ID bodega"],
@@ -62,6 +88,7 @@ const WAREHOUSE_ALIASES={
   notes:["Observaciones","Notas"],
 };
 const KARDEX_ALIASES={
+  movementId:["MOVIMIENTO_ID","Movimiento ID","ID movimiento"],
   date:["Fecha *","Fecha"],
   movement:["Tipo movimiento *","Tipo movimiento"],
   document:["Documento"],
@@ -72,7 +99,10 @@ const KARDEX_ALIASES={
   entry:["Entrada"],
   exit:["Salida"],
   cost:["Costo unitario"],
-  supplier:["Proveedor"],
+  supplierId:["PROVEEDOR_ID","Proveedor ID","ID proveedor"],
+  supplierTaxId:["NIT_PROVEEDOR","NIT proveedor","NIT"],
+  supplierCode:["CODIGO_PROVEEDOR","Código proveedor","Codigo proveedor"],
+  supplier:["PROVEEDOR","Proveedor"],
   lot:["Lote"],
   expires:["Vencimiento","Fecha vencimiento"],
   costCenter:["Centro de costo","Centro costo"],

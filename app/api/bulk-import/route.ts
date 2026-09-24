@@ -22,6 +22,10 @@ type Site={id:string;name:string};
 type Location={id:string;site_id:string;name:string};
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
 type Item={id:string;sku:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string};
+type ParsedKardex={
+  row:number;sku:string;movement:{type:string;sign:number};date:string;document:string;warehouseName:string;destination:string;
+  quantity:number;cost:number;notes:string;
+};
 
 const INVENTORY_ALIASES={
   sku:["SKU *","SKU","Código","Codigo","Item"],
@@ -249,7 +253,7 @@ export async function POST(request:Request){
     const kardexSheet=findWorksheet(workbook,["Kardex"]);
     const kardexRows=kardexSheet?parseSheet(kardexSheet,KARDEX_ALIASES).rows:[];
     const knownSkus=new Set([...catalog.items.map(item=>item.sku.toUpperCase()),...inv.parsed.map(row=>String(row.sku))]);
-    const parsedKardex=[] as Array<Record<string,unknown>>;
+    const parsedKardex:ParsedKardex[]=[];
     if(kardexSheet){
       for(const row of safeRows(kardexRows)){
         const sku=textValue(row.values.sku).toUpperCase();
@@ -269,7 +273,7 @@ export async function POST(request:Request){
         if(!warehouseName)issue(issues,kardexSheet.name,row.rowNumber,"error","Falta Bodega origen.");
         const destination=textValue(row.values.destination);
         if(movement?.type==="transfer"&&!destination)issue(issues,kardexSheet.name,row.rowNumber,"error","El traslado requiere Bodega destino.");
-        parsedKardex.push({row:row.rowNumber,sku,movement,date,document:textValue(row.values.document),warehouseName,destination,quantity:quantity??0,cost:Math.max(0,numberValue(row.values.cost)??0),notes:textValue(row.values.notes)});
+        parsedKardex.push({row:row.rowNumber,sku,movement:movement||{type:"receipt",sign:1},date,document:textValue(row.values.document),warehouseName,destination,quantity:quantity??0,cost:Math.max(0,numberValue(row.values.cost)??0),notes:textValue(row.values.notes)});
       }
     }
 

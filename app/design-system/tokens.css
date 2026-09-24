@@ -222,8 +222,6 @@ html[data-theme="dark"] {
   --color-text-secondary: var(--color-navy-200);
   --color-text-muted: var(--color-navy-300);
   --color-text-disabled: var(--color-navy-400);
-  --color-text-inverse: var(--color-navy-950);
-
   --color-border-subtle: var(--color-navy-800);
   --color-border-default: var(--color-navy-700);
   --color-border-strong: var(--color-navy-600);

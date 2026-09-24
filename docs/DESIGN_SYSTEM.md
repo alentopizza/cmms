@@ -1059,3 +1059,26 @@ The two compact directories share density rules but must not look like the same 
 - wide desktop (>= 1680 px viewport): 5 cards per row;
 - narrower layouts: 3 / 2 / 1 cards responsively.
 - Do not force five columns when doing so clips profile media, action labels or operational metadata.
+
+
+## Role dashboard analytical composition
+
+The approved Dashboard composition is based on the supplied dense admin-dashboard reference but uses Desweb colors, dimensional surfaces and existing navigation.
+
+Order:
+1. role-aware analytical heading with current and comparison periods;
+2. compact filter/export bar;
+3. four KPI cards with value, contextual hint, comparison badge and small trend evidence;
+4. a primary six-month trend panel plus role-relevant summary tiles;
+5. distribution/impact panels;
+6. filtered recent-detail table.
+
+Rules:
+- KPI comparisons use actual previous-period aggregates; never render decorative percentage changes.
+- Green/red comparison treatments reflect improvement/deterioration only when the metric has an unambiguous direction. Neutral metrics use neutral variation treatment.
+- Trend lines represent stored monthly data. Missing months render as zero; do not interpolate fake observations.
+- Operational dashboards may use Site, Priority and status filters, but controls only narrow records already authorized by the server.
+- Keep four KPI cards on wide desktop, two on medium layouts and one on narrow mobile.
+- Three-column analytical panels may collapse to two and then one column.
+- Charts must remain legible in dark mode and on mobile without adding a separate mobile-only dashboard.
+- Worker/field dashboards must not visually present leaderboard/ranking patterns.

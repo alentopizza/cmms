@@ -10,10 +10,14 @@ export default function DashboardControls({
   mode,
   companyStatusOptions=[],
   activityStatusOptions=[],
+  siteOptions=[],
+  priorityOptions=[],
 }:{
   mode:"platform"|"operation"|"field"|"requester";
   companyStatusOptions?:Option[];
   activityStatusOptions?:Option[];
+  siteOptions?:Option[];
+  priorityOptions?:Option[];
 }){
   const router=useRouter();
   const pathname=usePathname();
@@ -26,6 +30,9 @@ export default function DashboardControls({
   const to=searchParams.get("to")||"";
   const companyStatus=searchParams.get("company_status")||"all";
   const activityStatus=searchParams.get("activity_status")||"all";
+  const siteId=searchParams.get("site_id")||"all";
+  const priority=searchParams.get("priority")||"all";
+  const compare=searchParams.get("compare")||"previous_period";
 
   const exportQuery=useMemo(()=>{
     const params=new URLSearchParams(searchParams.toString());
@@ -73,7 +80,10 @@ export default function DashboardControls({
         onApply={({from:nextFrom,to:nextTo})=>apply({from:nextFrom,to:nextTo,month:""})}
       />
       {mode==="platform"&&companyStatusOptions.length>0&&<label><span>Empresa</span><select value={companyStatus} onChange={event=>apply({company_status:event.target.value})}><option value="all">Todas</option>{companyStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
+      {siteOptions.length>0&&<label><span>Sede</span><select value={siteId} onChange={event=>apply({site_id:event.target.value})}><option value="all">Todas</option>{siteOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
       {activityStatusOptions.length>0&&<label><span>{mode==="platform"?"Suscripción":mode==="field"?"Actividad":"Estado"}</span><select value={activityStatus} onChange={event=>apply({activity_status:event.target.value})}><option value="all">Todos</option>{activityStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
+      {priorityOptions.length>0&&<label><span>Prioridad</span><select value={priority} onChange={event=>apply({priority:event.target.value})}><option value="all">Todas</option>{priorityOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
+      <label><span>Comparar con</span><select value={compare} onChange={event=>apply({compare:event.target.value})}><option value="previous_period">Periodo anterior</option><option value="previous_year">Mismo periodo año anterior</option></select></label>
       <button className="text-button dashboard-clear-filters" type="button" onClick={clear}>Limpiar</button>
     </div>
     <div className="dashboard-export-menu" ref={exportRef}>

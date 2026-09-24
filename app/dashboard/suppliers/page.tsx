@@ -20,6 +20,10 @@ import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder"
 
 type Organization={id:string;name:string;country:string};
 type CatalogOption={code:string;label:string};
+type InventorySiteOption={id:string;organization_id:string;name:string};
+type InventoryLocationOption={id:string;organization_id:string;site_id:string;name:string;label:string};
+type InventoryCategoryOption={id:string;organization_id:string;name:string};
+type InventoryWarehouseOption={id:string;organization_id:string;site_id:string|null;location_id:string|null;name:string};
 
 export default async function SuppliersPage({searchParams}:{searchParams:Promise<{
   created?:string;updated?:string;deleted?:string;error?:string;supplier?:string;tab?:string;saved?:string;requisition_created?:string;
@@ -49,12 +53,15 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     LEFT JOIN assets a ON a.id=w.asset_id
     LEFT JOIN locations l ON l.id=COALESCE(w.location_id,a.location_id)
     WHERE wt.service_supplier_id IS NOT NULL`;
-  const itemSql=`SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.unit,i.unit_cost::text,i.quantity::text,i.min_quantity::text,
+  const itemSql=`SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,i.quantity::text,i.min_quantity::text,i.max_quantity::text,
+      i.site_id,i.location_id,i.category_id,i.warehouse_id,i.storage_location,c.name category_name,w.name warehouse_name,
       s.name site_name,l.name location_name
     FROM inventory_items i
     JOIN suppliers p ON p.id=i.supplier_id
     LEFT JOIN sites s ON s.id=i.site_id
     LEFT JOIN locations l ON l.id=i.location_id
+    LEFT JOIN inventory_categories c ON c.id=i.category_id
+    LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
     WHERE i.active=true AND p.active=true AND p.supplier_type IN ('materials','both')`;
   const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,
       count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
@@ -62,7 +69,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;
 
-  const [suppliers,organizations,activities,items,requisitions,documents,capabilityCatalog,specialtyCatalog]=await Promise.all([
+  const [suppliers,organizations,activities,items,requisitions,documents,capabilityCatalog,specialtyCatalog,inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses]=await Promise.all([
     platform
       ? query<SupplierDirectoryItem>(supplierSql+" ORDER BY o.name,s.active DESC,s.name")
       : query<SupplierDirectoryItem>(supplierSql+" WHERE s.organization_id=$1 ORDER BY s.active DESC,s.name",[session.organizationId]),
@@ -83,6 +90,18 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       : query<SupplierDocument>(documentSql+" WHERE organization_id=$1 ORDER BY created_at DESC LIMIT 800",[session.organizationId]),
     query<CatalogOption>("SELECT code,label FROM supplier_capability_catalog WHERE active=true ORDER BY sort_order,label"),
     query<CatalogOption>("SELECT code,label FROM supplier_specialty_catalog WHERE active=true ORDER BY sort_order,label"),
+    platform
+      ? query<InventorySiteOption>("SELECT id,organization_id,name FROM sites WHERE active=true ORDER BY organization_id,name")
+      : query<InventorySiteOption>("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId]),
+    platform
+      ? query<InventoryLocationOption>("SELECT l.id,l.organization_id,l.site_id,l.name,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.active=true ORDER BY l.organization_id,s.name,l.name")
+      : query<InventoryLocationOption>("SELECT l.id,l.organization_id,l.site_id,l.name,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[session.organizationId]),
+    platform
+      ? query<InventoryCategoryOption>("SELECT id,organization_id,name FROM inventory_categories WHERE active=true ORDER BY organization_id,name")
+      : query<InventoryCategoryOption>("SELECT id,organization_id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId]),
+    platform
+      ? query<InventoryWarehouseOption>("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE active=true ORDER BY organization_id,name")
+      : query<InventoryWarehouseOption>("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId]),
   ]);
 
   const creationGate=await getCreationGateForScope("supplier",session.organizationId,platform);
@@ -151,6 +170,11 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       documents={documents.rows}
       capabilityOptions={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       specialtyOptions={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))}
+      inventorySites={inventorySites.rows}
+      inventoryLocations={inventoryLocations.rows}
+      inventoryCategories={inventoryCategories.rows}
+      inventoryWarehouses={inventoryWarehouses.rows}
+      canInventoryWrite={can(session,"inventory.write")}
       initialSelectedId={params.supplier||""}
       initialTab={params.tab||"general"}
     />

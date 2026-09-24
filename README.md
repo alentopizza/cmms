@@ -44,9 +44,10 @@ Incluye:
 - Base para mantenimiento preventivo por calendario o medidor.
 - Inventario y repuestos.
 - Proveedores.
-- Usuarios, membresías y roles en el modelo de datos.
+- Usuarios, membresías y roles, con expediente documental administrativo y contacto de emergencia.
 - Adjuntos y bitácora de auditoría.
 - Dashboard analítico y navegación responsive por rol, con comparación de KPIs, tendencias de seis meses y filtros autorizados por sede/prioridad.
+- Directorios con filtros contextuales/cascada que aparecen solo cuando existe más de una opción útil dentro del alcance autorizado.
 - Asistencia de campo con verificación facial 1:1 y geocerca.
 - Reacción: mapa operativo con técnicos conectados, rutas recientes, búsqueda, filtros y alertas de actividades pendientes.
 - Horarios flexibles por día para empresas y sedes, consumidos por Reacción para estado abierto/cerrado.
@@ -54,7 +55,7 @@ Incluye:
 - Catálogo internacional reutilizable: País → Ciudad, indicativo telefónico, zona horaria, identificación fiscal y tipo de documento personal.
 - Configuración de Idioma y región a nivel plataforma/empresa como base para traducción progresiva.
 - Teléfonos con prefijo de país derivado y accesos directos de llamada/WhatsApp.
-- Proveedores con perfil visual, logo, documentos, actividades de servicio, suministros e Hoja de vida exportable.
+- Proveedores con perfil visual, logo, documentos, actividades de servicio, suministros, clasificación multi-selección estandarizada, información financiera para pagos e Hoja de vida exportable.
 - Requisiciones independientes por proveedor, generables desde Proveedor o Inventario con separación automática cuando una selección contiene varios proveedores.
 - Exportación de requisiciones en PDF, Excel y Word compatible; el flujo de requisición se mantiene separado de la recepción física de inventario.
 - Perfiles operativos **en la misma pantalla** para Empresas, Ubicaciones, Sububicaciones y Técnicos, con migas de pan, estadísticas, acciones rápidas y tabs independientes.

@@ -210,13 +210,11 @@ Ante un cambio de esquema:
 
 ## 9. Estado de validación automática
 
-Durante esta revisión del repositorio:
+El repositorio sí contiene `.github/workflows/ci.yml`. En cada push a `main` y en Pull Requests ejecuta `npm install` y `npm run build` con Node 24 y variables de entorno CI.
 
-- el HEAD revisado no presentó statuses/checks asociados en GitHub;
-- tampoco se observaron workflow runs asociados a ese commit mediante la conexión disponible;
-- `package.json` no define actualmente scripts de `test` ni `lint`; sí define `dev`, `build`, `start`, `migrate` y `seed`.
+`package.json` no define actualmente scripts separados de `test` o `lint`; sí define `dev`, `build`, `start`, `migrate` y `seed`.
 
-Por tanto, no asumir que un commit está validado solamente porque llegó a `main`. Al tocar una sección crítica debe revisarse sintaxis, autorización, consultas SQL, responsive y la documentación correspondiente. Cuando el entorno permita ejecutar el proyecto, `npm run build` debe formar parte de la validación de entrega.
+Durante la implementación del Dashboard por rol, los commits que contienen los cambios de código y manual fueron verificados por GitHub Actions con conclusión **success**. Aun así, un build exitoso valida compilación/empaquetado, no sustituye pruebas funcionales con datos reales, revisión de autorización ni validación visual responsive.
 
 ## 10. Prioridades que ya aparecen en el roadmap
 

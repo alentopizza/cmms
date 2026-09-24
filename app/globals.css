@@ -13189,3 +13189,41 @@ html[data-theme="dark"] .inventory-warehouse-head strong{color:var(--text)}
 .inventory-product-state-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .inventory-record-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf0f2;color:#667781;font-size:8px;font-weight:850}
 html[data-theme="dark"] .inventory-record-pill{background:#303b42;color:#cad5da}
+
+
+/* Requisition receiving and inventory reconciliation */
+.requisition-sheet-progress{display:grid;grid-template-columns:minmax(180px,.6fr) minmax(220px,1.4fr);gap:14px;align-items:center;padding:14px 16px;border-top:1px solid var(--border);background:var(--surface-soft)}
+.requisition-sheet-progress>div:first-child{display:grid;gap:3px}
+.requisition-sheet-progress span{font-size:8px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--text-soft)}
+.requisition-sheet-progress strong{font-size:16px;color:var(--brand-dark)}
+.requisition-sheet-progress small{font-size:8px;color:var(--text-soft)}
+.requisition-progress-track{height:9px;border-radius:999px;background:#e7eef0;overflow:hidden}
+.requisition-progress-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand-teal),var(--brand-mint));transition:width .2s ease}
+.requisition-receive-panel{overflow:visible}
+.requisition-receive-badge{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;background:var(--accent-soft);color:var(--brand-dark);font-size:8px;font-weight:900;white-space:nowrap}
+.requisition-receive-items{display:grid;gap:9px}
+.requisition-receive-item{display:grid;gap:10px;padding:11px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft)}
+.requisition-receive-item.locked{opacity:.72}
+.requisition-receive-identity{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(3,minmax(90px,.6fr));gap:10px;align-items:center}
+.requisition-receive-identity>span{display:grid;gap:2px;min-width:0}
+.requisition-receive-identity>span strong{font-size:10px;color:var(--brand-dark)}
+.requisition-receive-identity>span small{font-size:8px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.requisition-receive-identity>div{display:grid;gap:2px;padding:7px 8px;border-radius:8px;background:var(--surface)}
+.requisition-receive-identity>div small{font-size:7px;color:var(--text-soft)}
+.requisition-receive-identity>div strong{font-size:9.5px;color:var(--text)}
+.requisition-receive-fields{display:grid;grid-template-columns:.8fr 1.2fr .8fr .8fr .9fr;gap:9px;padding-top:9px;border-top:1px solid var(--border)}
+.requisition-receive-locked-note{padding:8px 10px;border-top:1px solid var(--border);font-size:8px;color:var(--text-soft)}
+html[data-theme="dark"] .requisition-sheet-progress strong,
+html[data-theme="dark"] .requisition-receive-identity>span strong{color:var(--text)}
+html[data-theme="dark"] .requisition-progress-track{background:#2d3a41}
+@media(max-width:980px){
+  .requisition-receive-identity{grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(86px,.6fr))}
+  .requisition-receive-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .requisition-receive-fields .field:nth-child(2){grid-column:span 1}
+}
+@media(max-width:680px){
+  .requisition-sheet-progress{grid-template-columns:1fr}
+  .requisition-receive-identity{grid-template-columns:1fr 1fr}
+  .requisition-receive-identity>span{grid-column:1/-1}
+  .requisition-receive-fields{grid-template-columns:1fr}
+}

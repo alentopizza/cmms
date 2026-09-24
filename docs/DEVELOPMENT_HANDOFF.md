@@ -334,3 +334,26 @@ Crew composition now includes roles:
 The leader is an explicit selection from eligible personnel, is automatically part of `crew_members`, and does not need a special role. Candidate and server validation require the same Organization and access to the selected Site.
 
 The current Crew directory is leader-forward: leader photo/contact panel, team identity, activity counters and member roster. Creation uses `components/CrewCreateForm.tsx` for visual leader/member selection.
+
+
+## 15. Dashboard SQL regression checkpoint — 2026-09-24
+
+The production Dashboard failure after the role-analytics redesign was traced to PostgreSQL parsing of the unquoted output alias `month` in `to_char(date_trunc(...),'YYYY-MM') month`.
+
+Approved pattern:
+
+```sql
+SELECT to_char(date_trunc('month',some_timestamp),'YYYY-MM') AS "month"
+```
+
+Do not reintroduce the unquoted `month` alias in Dashboard SQL.
+
+The Company/Admin dashboard no longer replaces the whole workspace with a safe-mode card when one analytical query fails. Core and secondary analytical queries are isolated so operational navigation and successful Dashboard data remain visible.
+
+CI is now database-aware:
+1. PostgreSQL 17 service starts;
+2. `npm run migrate` applies the full schema;
+3. `scripts/dashboard-sql-smoke.mjs` executes representative Dashboard SQL for every role family;
+4. `npm run build` runs only after SQL validation succeeds.
+
+This regression test is intentionally kept because the previous build-only CI could compile TypeScript successfully while shipping invalid PostgreSQL runtime SQL.

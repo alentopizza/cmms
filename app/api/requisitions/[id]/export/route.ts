@@ -13,7 +13,7 @@ type Req={
   supplier_email:string|null;supplier_phone:string|null;number:string;status:string;needed_by:string|null;notes:string|null;
   requested_by_name:string|null;created_at:string;
 };
-type Item={sku:string;description:string;unit:string;quantity_requested:string;unit_cost_estimated:string;site_name:string|null;location_name:string|null};
+type Item={sku:string;description:string;unit:string;quantity_requested:string;quantity_received:string;unit_cost_estimated:string;site_name:string|null;location_name:string|null};
 
 function fileSafe(value:string){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").toLowerCase();}
 function money(value:number,currency:string){return new Intl.NumberFormat("es-CO",{style:"currency",currency,maximumFractionDigits:2}).format(value);}
@@ -33,7 +33,7 @@ async function load(id:string,session:NonNullable<Awaited<ReturnType<typeof getS
   if(!req.rowCount)return null;
   if(session.platformRole==="user"&&session.organizationId!==req.rows[0].organization_id)return null;
   const items=await query<Item>(
-    `SELECT ri.sku,ri.description,ri.unit,ri.quantity_requested::text,ri.unit_cost_estimated::text,
+    `SELECT ri.sku,ri.description,ri.unit,ri.quantity_requested::text,ri.quantity_received::text,ri.unit_cost_estimated::text,
             s.name site_name,l.name location_name
      FROM supplier_requisition_items ri
      LEFT JOIN sites s ON s.id=ri.site_id
@@ -62,27 +62,29 @@ async function pdf(req:Req,items:Item[],currency:string){
   page.drawText("Creada: "+new Date(req.created_at).toLocaleDateString("es-CO"),{x:395,y:758,size:8,font:regular,color:soft});
   page.drawText("Requerida: "+(req.needed_by?new Date(req.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"),{x:395,y:742,size:8,font:regular,color:soft});
   let y=700;
-  const cols={sku:38,desc:105,qty:340,unit:395,cost:445,total:505};
+  const cols={sku:38,desc:100,requested:300,received:350,pending:400,cost:452,total:512};
   const drawTableHead=()=>{
-    page.drawText("SKU",{x:cols.sku,y,size:7,font:bold,color:soft});
-    page.drawText("INSUMO",{x:cols.desc,y,size:7,font:bold,color:soft});
-    page.drawText("CANT.",{x:cols.qty,y,size:7,font:bold,color:soft});
-    page.drawText("UNIDAD",{x:cols.unit,y,size:7,font:bold,color:soft});
-    page.drawText("EST.",{x:cols.cost,y,size:7,font:bold,color:soft});
-    page.drawText("SUBTOTAL",{x:cols.total,y,size:7,font:bold,color:soft});
+    page.drawText("SKU",{x:cols.sku,y,size:6.6,font:bold,color:soft});
+    page.drawText("INSUMO",{x:cols.desc,y,size:6.6,font:bold,color:soft});
+    page.drawText("SOLIC.",{x:cols.requested,y,size:6.6,font:bold,color:soft});
+    page.drawText("REC.",{x:cols.received,y,size:6.6,font:bold,color:soft});
+    page.drawText("PEND.",{x:cols.pending,y,size:6.6,font:bold,color:soft});
+    page.drawText("EST.",{x:cols.cost,y,size:6.6,font:bold,color:soft});
+    page.drawText("SUBTOTAL",{x:cols.total,y,size:6.6,font:bold,color:soft});
     y-=10;page.drawLine({start:{x:38,y},end:{x:557,y},thickness:1,color:teal});y-=15;
   };
   drawTableHead();
   let grand=0;
   for(const item of items){
     if(y<90){page=doc.addPage(pageSize);drawHeader();y=785;drawTableHead();}
-    const qty=Number(item.quantity_requested||0),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
-    page.drawText(item.sku.slice(0,16),{x:cols.sku,y,size:7.5,font:regular,color:dark});
-    page.drawText(item.description.slice(0,38),{x:cols.desc,y,size:7.5,font:regular,color:dark});
-    page.drawText(String(qty),{x:cols.qty,y,size:7.5,font:regular,color:dark});
-    page.drawText(item.unit.slice(0,12),{x:cols.unit,y,size:7.5,font:regular,color:dark});
-    page.drawText(money(cost,currency).slice(0,16),{x:cols.cost,y,size:7,font:regular,color:dark});
-    page.drawText(money(subtotal,currency).slice(0,16),{x:cols.total,y,size:7,font:bold,color:dark});
+    const qty=Number(item.quantity_requested||0),received=Number(item.quantity_received||0),pending=Math.max(0,qty-received),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
+    page.drawText(item.sku.slice(0,14),{x:cols.sku,y,size:7,font:regular,color:dark});
+    page.drawText(item.description.slice(0,31),{x:cols.desc,y,size:7,font:regular,color:dark});
+    page.drawText((String(qty)+" "+item.unit).slice(0,12),{x:cols.requested,y,size:6.6,font:regular,color:dark});
+    page.drawText(String(received).slice(0,10),{x:cols.received,y,size:6.6,font:regular,color:dark});
+    page.drawText(String(pending).slice(0,10),{x:cols.pending,y,size:6.6,font:regular,color:dark});
+    page.drawText(money(cost,currency).slice(0,13),{x:cols.cost,y,size:6.4,font:regular,color:dark});
+    page.drawText(money(subtotal,currency).slice(0,13),{x:cols.total,y,size:6.4,font:bold,color:dark});
     y-=17;page.drawLine({start:{x:38,y:y+6},end:{x:557,y:y+6},thickness:.4,color:line});
   }
   y-=12;
@@ -96,19 +98,19 @@ async function pdf(req:Req,items:Item[],currency:string){
 async function xlsx(req:Req,items:Item[],currency:string){
   const wb=new ExcelJS.Workbook();wb.creator="Desweb CMMS";
   const sh=wb.addWorksheet("Requisición",{views:[{showGridLines:false}]});
-  sh.columns=[{width:18},{width:38},{width:12},{width:14},{width:18},{width:18},{width:28}];
-  sh.mergeCells("A1:G2");sh.getCell("A1").value="DESWEB CMMS · REQUISICIÓN "+req.number.padStart(6,"0");sh.getCell("A1").font={bold:true,size:17,color:{argb:"293644"}};
-  sh.mergeCells("A3:G3");sh.getCell("A3").value=req.supplier_name+" · "+req.organization_name;sh.getCell("A3").font={bold:true,color:{argb:"38B2A9"}};
+  sh.columns=[{width:18},{width:38},{width:12},{width:12},{width:12},{width:14},{width:18},{width:18},{width:28}];
+  sh.mergeCells("A1:I2");sh.getCell("A1").value="DESWEB CMMS · REQUISICIÓN "+req.number.padStart(6,"0");sh.getCell("A1").font={bold:true,size:17,color:{argb:"293644"}};
+  sh.mergeCells("A3:I3");sh.getCell("A3").value=req.supplier_name+" · "+req.organization_name;sh.getCell("A3").font={bold:true,color:{argb:"38B2A9"}};
   sh.addRow(["Estado",req.status,"Fecha requerida",req.needed_by||"Sin fecha","Solicitante",req.requested_by_name||"Sin registrar","Moneda "+currency]);
   sh.addRow([]);
-  sh.addRow(["SKU","Insumo","Cantidad","Unidad","Costo estimado","Subtotal","Destino"]);
+  sh.addRow(["SKU","Insumo","Solicitado","Recibido","Pendiente","Unidad","Costo estimado","Subtotal","Destino"]);
   const head=sh.lastRow!;head.font={bold:true,color:{argb:"FFFFFF"}};head.fill={type:"pattern",pattern:"solid",fgColor:{argb:"293644"}};
   let grand=0;
   for(const item of items){
-    const qty=Number(item.quantity_requested||0),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
-    sh.addRow([item.sku,item.description,qty,item.unit,cost,subtotal,[item.site_name,item.location_name].filter(Boolean).join(" · ")]);
+    const qty=Number(item.quantity_requested||0),received=Number(item.quantity_received||0),pending=Math.max(0,qty-received),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
+    sh.addRow([item.sku,item.description,qty,received,pending,item.unit,cost,subtotal,[item.site_name,item.location_name].filter(Boolean).join(" · ")]);
   }
-  sh.addRow([]);sh.addRow(["","","","","TOTAL",grand,currency]);
+  sh.addRow([]);sh.addRow(["","","","","","","TOTAL",grand,currency]);
   sh.lastRow!.font={bold:true};
   if(req.notes){sh.addRow([]);sh.addRow(["Observaciones",req.notes]);}
   return Buffer.from(await wb.xlsx.writeBuffer());
@@ -117,14 +119,14 @@ async function xlsx(req:Req,items:Item[],currency:string){
 function word(req:Req,items:Item[],currency:string){
   let grand=0;
   const rows=items.map(item=>{
-    const qty=Number(item.quantity_requested||0),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
-    return `<tr><td>${esc(item.sku)}</td><td>${esc(item.description)}</td><td>${qty}</td><td>${esc(item.unit)}</td><td>${esc(money(cost,currency))}</td><td>${esc(money(subtotal,currency))}</td></tr>`;
+    const qty=Number(item.quantity_requested||0),received=Number(item.quantity_received||0),pending=Math.max(0,qty-received),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
+    return `<tr><td>${esc(item.sku)}</td><td>${esc(item.description)}</td><td>${qty}</td><td>${received}</td><td>${pending}</td><td>${esc(item.unit)}</td><td>${esc(money(cost,currency))}</td><td>${esc(money(subtotal,currency))}</td></tr>`;
   }).join("");
   const html=`<!doctype html><html><head><meta charset="utf-8"><style>
   body{font-family:Arial,sans-serif;color:#293644;margin:34px;border-top:18px solid #293644;padding-top:24px}h1{font-size:24px;margin:0}h2{font-size:15px;color:#38b2a9;margin:7px 0 18px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.meta div{border:1px solid #dde6e9;padding:9px}.meta span{display:block;font-size:8px;color:#71818a;text-transform:uppercase}.meta strong{font-size:10px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{padding:8px;border-bottom:1px solid #dde6e9;text-align:left;font-size:9px}th{background:#293644;color:#fff}.total{text-align:right;font-size:12px;font-weight:bold;margin-top:15px}.notes{margin-top:22px;padding:12px;background:#f6f9fa}</style></head><body>
   <h1>Requisición REQ-${req.number.padStart(6,"0")}</h1><h2>${esc(req.supplier_name)}</h2>
   <div class="meta"><div><span>Empresa</span><strong>${esc(req.organization_name)}</strong></div><div><span>Estado</span><strong>${esc(req.status)}</strong></div><div><span>Fecha requerida</span><strong>${esc(req.needed_by||"Sin fecha")}</strong></div></div>
-  <table><thead><tr><th>SKU</th><th>Insumo</th><th>Cantidad</th><th>Unidad</th><th>Costo est.</th><th>Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
+  <table><thead><tr><th>SKU</th><th>Insumo</th><th>Solicitado</th><th>Recibido</th><th>Pendiente</th><th>Unidad</th><th>Costo est.</th><th>Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="total">Total estimado: ${esc(money(grand,currency))}</div>
   ${req.notes?`<div class="notes"><b>Observaciones</b><p>${esc(req.notes)}</p></div>`:""}
   </body></html>`;

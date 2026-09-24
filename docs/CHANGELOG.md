@@ -1631,3 +1631,18 @@ This file records meaningful product and engineering changes so future developer
 
 - Nueva migración `033_requisition_inventory_receipts.sql`.
 - Nuevo smoke test `scripts/requisition-receipt-smoke.mjs` incorporado a CI.
+
+
+## 2026-09-24 — Inventario de proveedor e historial de importaciones
+
+### Added
+
+- Imágenes de producto al crear o editar suministros directamente desde la ficha del proveedor.
+- Reactivación de suministros desactivados sin perder Kardex ni relaciones.
+- Historial reciente de cargas masivas dentro del modal de Importar, con archivo, fecha, usuario, filas, avisos y errores.
+
+### Fixed
+
+- Los suministros inactivos ya no desaparecen definitivamente de la ficha del proveedor.
+- Los suministros inactivos quedan excluidos de nuevas requisiciones hasta ser reactivados.
+- Platform Owner/Superadministrador puede descargar la plantilla e importar desde una ficha de proveedor usando la empresa real del proveedor, sin depender del contexto global seleccionado.

@@ -413,7 +413,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Cuando una recepción o DEV aún no existe al cargar el documento, puedes agregarla después. Al vincular nueva evidencia la revisión vuelve a Pendiente para evitar conservar una decisión desactualizada.",
       "Un revisor puede Verificar solo cuando el documento coincide; Aceptar excepción solo cuando existe una diferencia y registra la justificación; también puede marcar En disputa o Anular el documento con motivo.",
       "El archivo y las líneas del documento no se editan. Si la evidencia cargada era incorrecta, anúlala y registra un documento nuevo para conservar el historial de auditoría.",
-      "La resolución esperada puede ser Reposición, Nota crédito u Otra resolución. Cuando exista una Nota crédito, un Administrador o Manager puede registrarla en Conciliación documental y vincularla al DEV correspondiente."
+      "La resolución esperada puede ser Reposición, Nota crédito u Otra resolución. Cuando exista una Nota crédito, un Administrador o Manager puede registrarla en Conciliación documental y vincularla al DEV correspondiente.",
       "Los estados Aprobada y Rechazada son decisiones auditadas y no se asignan manualmente desde el selector general de estado.",
       "Exporta la requisición en PDF, Excel o Word compatible; además de cantidades, aprobación y DEV, los usuarios autorizados para conciliación obtienen el estado de documentos comerciales y sus diferencias."
     ],

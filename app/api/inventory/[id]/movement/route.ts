@@ -37,11 +37,16 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const destinationId=String(form.get("destination_warehouse_id")||"");
   const document=String(form.get("document_number")||"").trim();
   const movementAt=String(form.get("movement_at")||"").trim();
+  const lot=String(form.get("lot_number")||"").trim();
+  const expires=String(form.get("expires_at")||"").trim();
+  const costCenter=String(form.get("cost_center")||"").trim();
   const notes=String(form.get("notes")||"").trim();
   const returnTo=String(form.get("return_to")||"");
   const base=safeDashboardReturn(returnTo,"/dashboard/inventory");
   const target=(suffix:string)=>publicUrl(appendFeedback(base,suffix),request.url);
   if(!action||!Number.isFinite(quantity)||quantity<=0||!warehouseId)return NextResponse.redirect(target("?error=movement"),303);
+  if(unitCost!==null&&(!Number.isFinite(unitCost)||unitCost<0))return NextResponse.redirect(target("?error=movement"),303);
+  if(expires&&!/^\d{4}-\d{2}-\d{2}$/.test(expires))return NextResponse.redirect(target("?error=movement"),303);
   if(action.type==="transfer"&&(!destinationId||destinationId===warehouseId))return NextResponse.redirect(target("?error=movement"),303);
   const warehouses=await query<{id:string}>(
     "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
@@ -51,9 +56,10 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   try{
     await query(
       `INSERT INTO inventory_transactions(
-         organization_id,item_id,type,quantity,unit_cost,warehouse_id,destination_warehouse_id,document_number,movement_at,created_by,notes
-       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9::timestamptz,now()),$10,$11)`,
-      [row.organization_id,id,action.type,quantity*action.sign,unitCost,warehouseId,destinationId||null,document||null,movementAt||null,session.userId||null,notes||null],
+         organization_id,item_id,type,quantity,unit_cost,warehouse_id,destination_warehouse_id,document_number,movement_at,created_by,
+         lot_number,expires_at,cost_center,notes
+       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9::timestamptz,now()),$10,$11,$12,$13,$14)`,
+      [row.organization_id,id,action.type,quantity*action.sign,unitCost,warehouseId,destinationId||null,document||null,movementAt||null,session.userId||null,lot||null,expires||null,costCenter||null,notes||null],
     );
   }catch(error){
     return NextResponse.redirect(target("?error=stock"),303);

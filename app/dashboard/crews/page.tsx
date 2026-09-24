@@ -205,7 +205,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
             <div className="crew-leader-actions">
               {crew.leader_phone&&<a href={"https://wa.me/"+crew.leader_phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="WhatsApp del líder"><UiIcon name="whatsapp" size={17}/><span>WhatsApp</span></a>}
               {crew.leader_phone&&<a href={"tel:"+crew.leader_phone.replace(/[^+\d]/g,"")} title="Llamar al líder"><UiIcon name="phone" size={17}/><span>Llamar</span></a>}
-              {crew.leader_email&&<a href={"mailto:"+crew.leader_email} title="Correo del líder"><UiIcon name="file" size={17}/><span>Correo</span></a>}
+              {crew.leader_email&&<a href={"mailto:"+crew.leader_email} title="Correo del líder"><UiIcon name="mail" size={17}/><span>Correo</span></a>}
             </div>
           </div>
 

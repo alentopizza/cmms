@@ -107,6 +107,42 @@ El color comunica; no se usa como decoración gratuita.
 
 ## 5. Semánticos
 
+Escalas aprobadas:
+
+```css
+--color-success-50:  #ECFDF5;
+--color-success-100: #D1FAE5;
+--color-success-300: #6EE7B7;
+--color-success-500: #10B981;
+--color-success-600: #059669;
+--color-success-700: #047857;
+--color-success-900: #064E3B;
+
+--color-warning-50:  #FFFBEB;
+--color-warning-100: #FEF3C7;
+--color-warning-300: #FCD34D;
+--color-warning-500: #F59E0B;
+--color-warning-600: #D97706;
+--color-warning-700: #B45309;
+--color-warning-900: #78350F;
+
+--color-danger-50:  #FEF2F2;
+--color-danger-100: #FEE2E2;
+--color-danger-300: #FCA5A5;
+--color-danger-500: #EF4444;
+--color-danger-600: #DC2626;
+--color-danger-700: #B91C1C;
+--color-danger-900: #7F1D1D;
+
+--color-info-50:  #EFF6FF;
+--color-info-100: #DBEAFE;
+--color-info-300: #93C5FD;
+--color-info-500: #3B82F6;
+--color-info-600: #2563EB;
+--color-info-700: #1D4ED8;
+--color-info-900: #1E3A8A;
+```
+
 ### Superficies y texto
 
 ```css

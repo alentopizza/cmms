@@ -20,6 +20,8 @@
 - La recepción física/Kardex se bloquea en servidor mientras una aprobación requerida no esté vigente.
 - Aprobar/rechazar revalida Empresa, sedes autorizadas, rol aprobador configurado y política de autoaprobación.
 - `approved` y `rejected` dejan de ser estados asignables manualmente desde el selector general; son decisiones auditadas.
+- Una requisición creada por debajo del umbral entra automáticamente a aprobación si una edición posterior de cantidad/costo alcanza el umbral guardado.
+- Una vez que una requisición entra a aprobación, reducir el monto no elimina esa exigencia de gobierno.
 - Cambiar cantidad solicitada, costo estimado o fecha requerida después de aprobar/rechazar reabre la aprobación.
 - Si la requisición cambia mientras aún está pendiente, el evento `amended` conserva evidencia de esa modificación.
 - Recepciones/Kardex ya registrados no se revierten cuando la aprobación se reabre; solo se bloquea el saldo pendiente hasta una nueva decisión.

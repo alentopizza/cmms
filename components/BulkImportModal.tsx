@@ -57,6 +57,21 @@ export default function BulkImportModal({
   }
 
   function choose(next:File|null){
+    if(!next){
+      setFile(null);
+      setResult(null);
+      return;
+    }
+    if(!next.name.toLowerCase().endsWith(".xlsx")){
+      setFile(null);
+      setResult({error:"Formato no permitido. Usa un archivo Excel .xlsx."});
+      return;
+    }
+    if(next.size>12*1024*1024){
+      setFile(null);
+      setResult({error:"El archivo supera el máximo permitido de 12 MB."});
+      return;
+    }
     setFile(next);
     setResult(null);
   }

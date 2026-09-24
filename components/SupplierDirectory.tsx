@@ -251,7 +251,7 @@ export default function SupplierDirectory({
     </div>
   </div>;
 
-  return <EntityProfileWorkspace
+  return <><EntityProfileWorkspace
     eyebrow="Directorio de proveedores"
     headingLabel="Proveedor"
     headingIcon="company"

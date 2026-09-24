@@ -773,7 +773,9 @@ For requisitions that require approval:
 3. an eligible approver records **Approve** or **Reject** from the approval workspace;
 4. rejection requires a reason;
 5. approval enables receipt; rejection prevents receipt;
-6. a later change to requested quantity, estimated unit cost or required date reopens approval;
+6. if a requisition initially below a stored threshold is amended until it reaches that threshold, it enters approval automatically;
+7. once a requisition has required approval, lowering the amount does not remove that governance requirement;
+8. a later change to requested quantity, estimated unit cost or required date after a decision reopens approval;
 7. historical receipt/Kardex records remain untouched;
 8. every approval transition remains visible in the requisition audit timeline.
 

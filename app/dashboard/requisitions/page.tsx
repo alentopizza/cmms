@@ -7,7 +7,7 @@ import ModuleHeader from "@/components/ModuleHeader";
 import UiIcon from "@/components/UiIcon";
 
 type Req={
-  id:string;number:string;status:string;created_at:string;needed_by:string|null;supplier_id:string;supplier_name:string;
+  id:string;organization_id:string;requested_by:string|null;number:string;status:string;created_at:string;needed_by:string|null;supplier_id:string;supplier_name:string;
   organization_name:string;requested_by_name:string|null;item_count:number;total_estimated:string;
 };
 
@@ -24,7 +24,7 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
 
   const reqs=platform
     ? await query<Req>(
-      `SELECT r.id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
+      `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
               u.full_name requested_by_name,count(ri.id)::int item_count,
               COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
        FROM supplier_requisitions r
@@ -35,7 +35,7 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
        GROUP BY r.id,s.name,o.name,u.full_name
        ORDER BY r.created_at DESC LIMIT 300`)
     : await query<Req>(
-      `SELECT r.id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
+      `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
               u.full_name requested_by_name,count(ri.id)::int item_count,
               COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
        FROM supplier_requisitions r
@@ -59,6 +59,11 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
         {value:"all",label:"Todos"},{value:"draft",label:"Borrador"},{value:"sent",label:"Enviadas"},
         {value:"approved",label:"Aprobadas"},{value:"partial",label:"Parciales"},{value:"fulfilled",label:"Atendidas"},{value:"closed",label:"Cerradas"},
       ]}
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
+        {key:"requester",label:"Solicitante",allLabel:"Todos los solicitantes"},
+      ]}
       action={can(session,"requisitions.write")?<Link className="button" href="/dashboard/inventory#crear-requisicion"><UiIcon name="plus" size={16}/> Crear desde inventario</Link>:undefined}
     />
 
@@ -68,7 +73,10 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Historial</span><h2>Requisiciones por proveedor</h2></div></div>
       {reqs.rowCount?<div className="requisition-directory-grid">
-        {reqs.rows.map(req=><article key={req.id} className="card requisition-directory-card" data-module-record data-status={req.status} data-search={[req.number,req.supplier_name,req.organization_name,req.status,req.requested_by_name].filter(Boolean).join(" ")}>
+        {reqs.rows.map(req=><article key={req.id} className="card requisition-directory-card" data-module-record data-status={req.status} data-search={[req.number,req.supplier_name,req.organization_name,req.status,req.requested_by_name].filter(Boolean).join(" ")}
+          data-filter-organization={req.organization_id} data-filter-organization-label={req.organization_name}
+          data-filter-supplier={req.supplier_id} data-filter-supplier-label={req.supplier_name}
+          data-filter-requester={req.requested_by||""} data-filter-requester-label={req.requested_by_name||""}>
           <div className="requisition-directory-head">
             <span className="requisition-directory-icon"><UiIcon name="file" size={18}/></span>
             <div><small>REQ-{req.number.padStart(6,"0")}</small><strong>{req.supplier_name}</strong><span>{req.organization_name}</span></div>

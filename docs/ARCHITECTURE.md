@@ -573,3 +573,26 @@ Migration `035_supplier_returns.sql` introduces:
 The server locks source receipt rows before calculating prior returned quantity. This serializes concurrent return attempts through the normal route and prevents two requests from consuming the same receipt balance. PostgreSQL also validates that a return line references a real receipt for the same Organization/requisition/item and rejects stock that would go negative.
 
 DEV headers and lines are database-immutable. Requisition gross receiving totals remain unchanged; return history is queried separately for operational and export views.
+
+
+## Procurement document reconciliation architecture
+
+Migration `036_procurement_document_reconciliation.sql` adds an evidence layer that is deliberately separate from Inventory:
+
+- `procurement_documents`: document header, file, review state and void metadata;
+- `procurement_document_lines`: immutable SKU/quantity/cost snapshots for the document;
+- `procurement_document_receipts`: append-only links to physical receipt transactions;
+- `procurement_document_returns`: append-only links to Supplier-return DEV headers;
+- `procurement_document_events`: append-only audit timeline.
+
+`lib/procurement-reconciliation.ts` is the canonical server-side derivation layer used by requisition UI and exports. Tolerances are 0.001 quantity units and 0.01 currency units.
+
+Document mutation boundaries:
+- file/header/core line evidence cannot be edited or deleted;
+- a wrong document is voided with reason, preserving history;
+- receipt/DEV evidence may be appended later;
+- evidence-link inserts reopen review to pending at the database layer;
+- review decisions lock the document row transactionally before deriving the current match state;
+- general `audit_log` and document-domain events preserve upload, evidence-link, review and void actions.
+
+The reconciliation layer never invokes the Inventory balance trigger and never updates `quantity_received` or Supplier-return quantities.

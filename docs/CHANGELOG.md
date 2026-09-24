@@ -1606,3 +1606,28 @@ This file records meaningful product and engineering changes so future developer
 
 - Los indicadores de Inventario calculan stock y valor operativo sobre registros activos, manteniendo los inactivos disponibles para auditoría y recuperación.
 - La ficha de Activo pasa a ser la superficie normal de edición para usuarios con permiso `assets.write`.
+
+
+## 2026-09-24 — Recepción de requisiciones y conciliación con Kardex
+
+### Added
+
+- Recepción física parcial o total desde la ficha de una requisición.
+- Selección de bodega por ítem recibido.
+- Captura opcional de documento, fecha/hora, costo real, lote, vencimiento, centro de costo y observaciones.
+- Enlace auditable entre movimientos de Kardex y requisición/ítem origen.
+- Historial de recepciones dentro de la requisición.
+- Progreso de recepción en el directorio general y en la ficha del proveedor.
+- Referencia REQ navegable desde Kardex y en exportes de Kardex.
+- Cantidades Solicitado / Recibido / Pendiente en PDF, Excel y Word de la requisición.
+
+### Changed
+
+- Una recepción parcial establece automáticamente el estado `partial`.
+- Al completar todas las cantidades solicitadas, la requisición cambia automáticamente a `fulfilled` y registra `fulfilled_at`.
+- Crear, enviar o aprobar una requisición continúa sin alterar stock; el inventario aumenta únicamente al registrar la recepción.
+
+### Validation
+
+- Nueva migración `033_requisition_inventory_receipts.sql`.
+- Nuevo smoke test `scripts/requisition-receipt-smoke.mjs` incorporado a CI.

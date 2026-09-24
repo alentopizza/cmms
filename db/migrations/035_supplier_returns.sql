@@ -44,6 +44,63 @@ CREATE INDEX IF NOT EXISTS supplier_return_items_receipt_idx
 CREATE INDEX IF NOT EXISTS supplier_return_items_requisition_item_idx
   ON supplier_return_items(requisition_item_id,created_at DESC);
 
+CREATE OR REPLACE FUNCTION cmms_validate_supplier_return_item()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $
+DECLARE
+  receipt inventory_transactions%ROWTYPE;
+  header supplier_returns%ROWTYPE;
+  req_item supplier_requisition_items%ROWTYPE;
+BEGIN
+  SELECT * INTO receipt FROM inventory_transactions WHERE id=NEW.receipt_transaction_id;
+  IF receipt.id IS NULL OR receipt.type<>'receipt' THEN
+    RAISE EXCEPTION 'Supplier return requires a receipt source transaction';
+  END IF;
+  SELECT * INTO header FROM supplier_returns WHERE id=NEW.return_id;
+  SELECT * INTO req_item FROM supplier_requisition_items WHERE id=NEW.requisition_item_id;
+
+  IF header.id IS NULL OR req_item.id IS NULL
+     OR header.organization_id<>NEW.organization_id
+     OR req_item.organization_id<>NEW.organization_id
+     OR header.requisition_id<>req_item.requisition_id
+     OR receipt.organization_id<>NEW.organization_id
+     OR receipt.requisition_id<>header.requisition_id
+     OR receipt.requisition_item_id<>NEW.requisition_item_id
+     OR receipt.item_id<>NEW.inventory_item_id THEN
+    RAISE EXCEPTION 'Supplier return source relation mismatch';
+  END IF;
+  IF NEW.quantity>abs(receipt.quantity)+0.000001 THEN
+    RAISE EXCEPTION 'Supplier return quantity exceeds source receipt';
+  END IF;
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS supplier_return_items_validate ON supplier_return_items;
+CREATE TRIGGER supplier_return_items_validate
+BEFORE INSERT ON supplier_return_items
+FOR EACH ROW EXECUTE FUNCTION cmms_validate_supplier_return_item();
+
+CREATE OR REPLACE FUNCTION cmms_supplier_return_immutable()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $
+BEGIN
+  RAISE EXCEPTION 'Posted supplier returns are immutable';
+END;
+$;
+
+DROP TRIGGER IF EXISTS supplier_returns_immutable ON supplier_returns;
+CREATE TRIGGER supplier_returns_immutable
+BEFORE UPDATE OR DELETE ON supplier_returns
+FOR EACH ROW EXECUTE FUNCTION cmms_supplier_return_immutable();
+
+DROP TRIGGER IF EXISTS supplier_return_items_immutable ON supplier_return_items;
+CREATE TRIGGER supplier_return_items_immutable
+BEFORE UPDATE OR DELETE ON supplier_return_items
+FOR EACH ROW EXECUTE FUNCTION cmms_supplier_return_immutable();
+
 ALTER TABLE inventory_transactions
   ADD COLUMN IF NOT EXISTS supplier_return_id uuid REFERENCES supplier_returns(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS supplier_return_item_id uuid REFERENCES supplier_return_items(id) ON DELETE SET NULL,

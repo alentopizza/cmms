@@ -26,6 +26,12 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(!STATUSES.has(status)||(neededBy&&!/^\d{4}-\d{2}-\d{2}$/.test(neededBy))){
     return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=required",request.url),303);
   }
+  if(["closed","cancelled"].includes(existing.rows[0].status)&&status!==existing.rows[0].status){
+    return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
+  }
+  if(existing.rows[0].status==="fulfilled"&&!["fulfilled","closed"].includes(status)){
+    return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
+  }
 
   const client=await pool.connect();
   try{
@@ -68,6 +74,16 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     if(Number(remaining.rows[0]?.count||0)===0){
       await client.query("ROLLBACK");
       return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=empty",request.url),303);
+    }
+    if(status==="fulfilled"){
+      const pending=await client.query<{count:string}>(
+        "SELECT count(*)::text count FROM supplier_requisition_items WHERE requisition_id=$1 AND quantity_received+0.000001 < quantity_requested",
+        [id],
+      );
+      if(Number(pending.rows[0]?.count||0)>0){
+        await client.query("ROLLBACK");
+        return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=fulfillment",request.url),303);
+      }
     }
 
     await client.query(

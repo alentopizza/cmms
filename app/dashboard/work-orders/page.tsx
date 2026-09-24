@@ -9,7 +9,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import CreateRecordModal from "@/components/CreateRecordModal";
 
-type OrderRow={id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;requested_at:string};
+type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
 
 // ── Responsive work-order directory: desktop table + mobile cards ──────────
 
@@ -31,19 +31,19 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   let orders;
   if(superadmin){
     orders=await query<OrderRow>(
-      `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-       FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+      `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+       FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
        ORDER BY w.requested_at DESC LIMIT 200`);
   }else if(requesterOnly){
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId])
       : await query<OrderRow>(
-          `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id=ANY($3::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId,session.siteIds]);
@@ -52,7 +52,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
     orders=session.accessAllSites
       ? await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND $2::uuid IS NOT NULL AND (
              w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
            )
@@ -60,7 +60,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           [orgId,supplierId])
       : await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND $2::uuid IS NOT NULL AND (
              w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
            )
@@ -70,7 +70,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
     orders=session.accessAllSites
       ? await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND (
              w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
                t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
@@ -80,7 +80,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           [orgId,session.userId])
       : await query<OrderRow>(
           `SELECT DISTINCT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND (
              w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
                t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2)
@@ -91,12 +91,12 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   }else{
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 200`,[orgId])
       : await query<OrderRow>(
-          `SELECT w.id,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.priority,w.status,w.requested_at::text
-           FROM work_orders w JOIN organizations o ON o.id=w.organization_id LEFT JOIN assets a ON a.id=w.asset_id
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+           FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,[orgId,session.siteIds]);
   }
@@ -122,8 +122,15 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         {value:"open",label:"Abiertas"},
         {value:"assigned",label:"Asignadas"},
         {value:"in_progress",label:"En progreso"},
+        {value:"paused",label:"Pausadas"},
         {value:"completed",label:"Completadas"},
         {value:"cancelled",label:"Canceladas"},
+      ]}
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+        {key:"priority",label:"Prioridad",allLabel:"Todas las prioridades"},
+        {key:"type",label:"Tipo",allLabel:"Todos los tipos"},
       ]}
       action={canWrite && creationGate.ready && assets.rows.length>0 ? <CreateRecordModal title={requesterOnly?"Crear solicitud":"Crear orden de trabajo"} eyebrow={requesterOnly?"Nueva solicitud":"Nueva orden"} description="Relaciona el trabajo con un activo y define los datos iniciales de atención." triggerLabel="Agregar" icon="✓">
         <form className="form-grid unified-popup-form" method="post" action="/api/work-orders">
@@ -148,7 +155,11 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
     <section className="section work-order-directory-section">
       <div className="work-order-mobile-list">
-        {orders.rows.map(w=><article key={w.id} className="work-order-mobile-card" data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.asset,w.priority,w.status].join(" ")}>
+        {orders.rows.map(w=><article key={w.id} className="work-order-mobile-card" data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}
+          data-filter-organization={w.organization_id} data-filter-organization-label={w.company}
+          data-filter-site={w.site_id} data-filter-site-label={w.site}
+          data-filter-priority={w.priority} data-filter-priority-label={w.priority}
+          data-filter-type={w.type} data-filter-type-label={w.type}>
           <Link href={"/dashboard/work-orders/"+w.id} className="work-order-mobile-main">
             <div className="work-order-mobile-icon" aria-hidden="true">✓</div>
             <div className="work-order-mobile-copy">
@@ -178,7 +189,11 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         </article>)}
       </div>
       <table className="table work-order-directory-table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-      {orders.rows.map(w=><tr key={w.id} data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.asset,w.priority,w.status].join(" ")}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td>{owner&&<td><OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+      {orders.rows.map(w=><tr key={w.id} data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}
+          data-filter-organization={w.organization_id} data-filter-organization-label={w.company}
+          data-filter-site={w.site_id} data-filter-site-label={w.site}
+          data-filter-priority={w.priority} data-filter-priority-label={w.priority}
+          data-filter-type={w.type} data-filter-type-label={w.type}><td>#{w.number}</td><td><strong>{w.title}</strong></td><td>{w.company}</td><td>{w.asset}</td><td>{w.priority}</td><td><span className="status">{w.status}</span></td><td><Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link></td>{owner&&<td><OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
         {name:"title",label:"Título",value:w.title},
         {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
           {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}

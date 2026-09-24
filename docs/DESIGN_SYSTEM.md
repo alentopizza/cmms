@@ -987,3 +987,15 @@ Supplier uses the same approved **in-page entity detail** language as Company, S
 - A requisition detail is displayed as a document/sheet, not as an Inventory transaction form.
 - Export remains a primary action and offers PDF, Excel and Word-compatible outputs.
 - Requisition status badges use descriptive lifecycle styling; never imply that an approved or fulfilled requisition has already modified stock.
+
+
+## Operational card typography and density
+
+Operational directories must optimize information density without sacrificing legibility.
+
+- Wide desktop Supplier directories use **3 cards per row** when the viewport can sustain readable content; degrade to 2 and then 1 column responsively.
+- Do not solve density by reducing operational copy to 7–8 px. Supplier/requisition card metadata should remain around 10–12 px, primary card titles around 14–16 px, and important numeric counters around 15–18 px.
+- Compact action buttons may reduce padding before reducing label legibility.
+- Status badges must remain readable at normal browser zoom; avoid micro-text badges.
+- When a card becomes too narrow for two metadata columns, collapse the metadata layout responsively instead of shrinking fonts further.
+- The same readability floor applies to requisition rows, documents, activities, supply cards and table-like sheet views.

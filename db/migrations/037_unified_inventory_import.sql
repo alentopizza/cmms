@@ -44,7 +44,7 @@ ALTER TABLE inventory_transactions
   ADD COLUMN IF NOT EXISTS source_movement_id text;
 
 CREATE UNIQUE INDEX IF NOT EXISTS inventory_transactions_source_movement_idx
-  ON inventory_transactions(organization_id,source_movement_id)
+  ON inventory_transactions(organization_id,upper(source_movement_id))
   WHERE source_movement_id IS NOT NULL AND source_movement_id<>'';
 
 ALTER TABLE bulk_import_batches

@@ -357,3 +357,16 @@ CI is now database-aware:
 4. `npm run build` runs only after SQL validation succeeds.
 
 This regression test is intentionally kept because the previous build-only CI could compile TypeScript successfully while shipping invalid PostgreSQL runtime SQL.
+
+
+## 16. Supplier profile UX checkpoint — 2026-09-24
+
+Supplier profiles use one export surface only: the toolbar-level `ProfileExportMenu`. Do not reintroduce a separate Supplier "Hoja de vida" tab with another exporter.
+
+The Financial tab uses two mutually exclusive client states:
+- default read-only summary with masked account number and **Editar**;
+- edit form with **Cancelar** and **Guardar información financiera**.
+
+The financial POST continues redirecting to `?supplier=<id>&tab=financial&updated=1`; because the client state initializes as read-only, saving returns the operator to the summary rather than leaving a duplicate form visible.
+
+`ProfileExportMenu` now accepts an optional `documentLabel`. Supplier profiles pass `Ficha del proveedor`; other entities retain their existing default terminology.

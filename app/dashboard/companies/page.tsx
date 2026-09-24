@@ -90,6 +90,11 @@ export default async function CompaniesPage({
       count={companies.rowCount || 0}
       countLabel="compañías"
       searchPlaceholder="Buscar compañía, ciudad, NIT o plan"
+      facets={[
+        {key:"plan",label:"Plan",allLabel:"Todos los planes"},
+        {key:"country",label:"País",allLabel:"Todos los países"},
+        {key:"city",label:"Ciudad",allLabel:"Todas las ciudades"},
+      ]}
       action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} defaultCountry={customization.defaultCountry} defaultLocale={customization.defaultLocale} />}
     />
 

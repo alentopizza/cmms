@@ -55,6 +55,15 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
   const canWrite=can(session,"requisitions.write");
   const canEditItems=canWrite&&!["fulfilled","closed","cancelled"].includes(req.status);
   const canReceive=canWrite&&can(session,"inventory.write")&&!["rejected","fulfilled","closed","cancelled"].includes(req.status);
+  const allStatuses=[
+    ["draft","Borrador"],["sent","Enviada"],["approved","Aprobada"],["rejected","Rechazada"],
+    ["partial","Parcialmente atendida"],["fulfilled","Atendida"],["closed","Cerrada"],["cancelled","Cancelada"],
+  ] as const;
+  const statusChoices=req.status==="fulfilled"
+    ?allStatuses.filter(([value])=>value==="fulfilled"||value==="closed")
+    :["closed","cancelled"].includes(req.status)
+      ?allStatuses.filter(([value])=>value===req.status)
+      :allStatuses;
   const [warehouses,receipts]=await Promise.all([
     canReceive
       ?query<Warehouse>(
@@ -177,10 +186,9 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
         {canWrite&&<section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Edición y flujo</span><h2>Actualizar requisición</h2><p className="muted">Puedes ajustar cantidades y costos mientras la requisición siga abierta. El Kardex se modifica únicamente al registrar la recepción o salida en Inventario.</p></div></div>
       <form className="form-grid requisition-edit-form" method="post" action={"/api/requisitions/"+req.id}>
-        <div className="field"><label>Estado</label><select name="status" defaultValue={req.status}>
-          <option value="draft">Borrador</option><option value="sent">Enviada</option><option value="approved">Aprobada</option><option value="rejected">Rechazada</option>
-          <option value="partial">Parcialmente atendida</option><option value="fulfilled">Atendida</option><option value="closed">Cerrada</option><option value="cancelled">Cancelada</option>
-        </select></div>
+        <div className="field"><label>Estado</label><select name="status" defaultValue={req.status} disabled={req.status==="closed"||req.status==="cancelled"}>
+          {statusChoices.map(([value,label])=><option value={value} key={value}>{label}</option>)}
+        </select>{(req.status==="closed"||req.status==="cancelled")&&<input type="hidden" name="status" value={req.status}/>}</div>
         <div className="field"><label>Fecha requerida</label><input type="date" name="needed_by" defaultValue={req.needed_by||""}/></div>
 
         <div className="form-span-2 requisition-edit-items">

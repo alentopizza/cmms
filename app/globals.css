@@ -13320,7 +13320,7 @@ html[data-theme="dark"] .bulk-import-history-head strong{color:var(--text)}
 .requisition-approval-timeline article>i{width:9px;height:9px;margin-top:3px;border-radius:50%;background:#8aa0aa;box-shadow:0 0 0 3px rgba(138,160,170,.12)}
 .requisition-approval-timeline article>i.approved{background:#43a66e;box-shadow:0 0 0 3px rgba(67,166,110,.13)}
 .requisition-approval-timeline article>i.rejected{background:#c55260;box-shadow:0 0 0 3px rgba(197,82,96,.12)}
-.requisition-approval-timeline article>i.requested,.requisition-approval-timeline article>i.reopened{background:#c89534;box-shadow:0 0 0 3px rgba(200,149,52,.12)}
+.requisition-approval-timeline article>i.requested,.requisition-approval-timeline article>i.reopened,.requisition-approval-timeline article>i.amended{background:#c89534;box-shadow:0 0 0 3px rgba(200,149,52,.12)}
 .requisition-approval-timeline article>div{display:grid;gap:2px}
 .requisition-approval-timeline article strong{font-size:9px;color:var(--text)}
 .requisition-approval-timeline article span,.requisition-approval-timeline article time{font-size:7.5px;color:var(--text-soft)}

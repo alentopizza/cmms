@@ -131,8 +131,11 @@ const ASSET_ALIASES={
 };
 
 function key(value:string){return normalizedHeader(value);}
-function issue(issues:Issue[],sheet:string,row:number,severity:Issue["severity"],message:string){
-  issues.push({sheet,row,severity,message});
+function issue(
+  issues:Issue[],sheet:string,row:number,severity:Issue["severity"],message:string,
+  field?:string,value?:string,suggestion?:string,
+){
+  issues.push({sheet,row,severity,message,field,value,problem:message,suggestion});
 }
 function movementType(value:string){
   const v=key(value);
@@ -168,16 +171,22 @@ function resolveSupplier(rows:Supplier[],value:string){
 }
 
 async function catalogs(organizationId:string){
-  const [suppliers,sites,locations,warehouses,items,limits,counts]=await Promise.all([
-    query<Supplier>("SELECT id,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+  const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds]=await Promise.all([
+    query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Item>("SELECT i.id,i.sku,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
+    query<{id:string;name:string}>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<{max_assets:number;max_inventory_items:number}>("SELECT max_assets,max_inventory_items FROM organization_limits WHERE organization_id=$1",[organizationId]),
     query<{assets:number;inventory:number}>("SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) assets,(SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) inventory",[organizationId]),
+    query<{source_movement_id:string}>("SELECT source_movement_id FROM inventory_transactions WHERE organization_id=$1 AND source_movement_id IS NOT NULL",[organizationId]),
   ]);
-  return {suppliers:suppliers.rows,sites:sites.rows,locations:locations.rows,warehouses:warehouses.rows,items:items.rows,limits:limits.rows[0],counts:counts.rows[0]};
+  return {
+    suppliers:suppliers.rows,sites:sites.rows,locations:locations.rows,warehouses:warehouses.rows,items:items.rows,
+    categories:categories.rows,limits:limits.rows[0],counts:counts.rows[0],
+    movementIds:new Set(movementIds.rows.map(row=>row.source_movement_id)),
+  };
 }
 
 function resolveSite(rows:Site[],value:string){

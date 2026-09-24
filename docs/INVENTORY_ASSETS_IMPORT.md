@@ -189,3 +189,27 @@ Additional behavior:
 - Product and asset cards support authenticated stored images in PostgreSQL bytea columns added by migration 030.
 - Assets now have a complete create/edit workflow covering category, technical identity, status, criticality, supplier, physical location, purchase/install/warranty dates, purchase cost, notes and image.
 - Asset editing preserves maintenance plans and existing operational history; it updates master data only.
+
+
+## Recepción de requisiciones contra Kardex
+
+La requisición ya no termina en un documento estático. Desde su detalle puede registrarse la recepción física parcial o total.
+
+Reglas vigentes:
+
+- la recepción exige permisos de `requisitions.write` e `inventory.write`;
+- cada línea recibida debe seguir vinculada a un `inventory_item_id` activo;
+- la cantidad recibida en una operación no puede superar el saldo pendiente;
+- cada línea requiere una bodega activa de la misma organización;
+- la recepción inserta una transacción `receipt` en `inventory_transactions`;
+- el trigger de Kardex actualiza stock por bodega y saldo agregado;
+- luego se incrementa `supplier_requisition_items.quantity_received`;
+- si aún existe saldo pendiente, la requisición queda `partial`;
+- cuando todas las líneas están completas, pasa a `fulfilled` y se registra `fulfilled_at`;
+- documento, fecha/hora, costo, lote, vencimiento, centro de costo y observaciones quedan disponibles para auditoría;
+- `inventory_transactions.requisition_id` y `requisition_item_id` permiten navegar desde Kardex hacia la requisición origen;
+- los exportes de requisición incluyen Solicitado, Recibido y Pendiente.
+
+La migración relacionada es `033_requisition_inventory_receipts.sql`.
+
+CI ejecuta `scripts/requisition-receipt-smoke.mjs`, que verifica recepción parcial, recepción final, actualización de stock, cantidades recibidas, estado y enlaces de trazabilidad.

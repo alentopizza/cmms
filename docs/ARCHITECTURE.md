@@ -431,3 +431,12 @@ Authoritative relationships are intentionally reused:
 The requisition header is not an Inventory receipt. No stock mutation occurs in the requisition lifecycle endpoint. This separation preserves auditability between **requested**, **approved**, and **received** quantities.
 
 Supplier logos are persisted on `suppliers` and served through an authenticated binary route. Supplier documents are binary records with archive/restore behavior analogous to governed Company documents.
+
+
+## User statistics loading boundary
+
+The Users directory must remain a lightweight, reliable management surface.
+
+Base User rows include only summary counters that are cheap and required by the directory/profile shell. Higher-cost statistics such as seven-day attendance series, today's attendance duration, overdue Activities and upcoming Activity agenda are loaded on demand from `/api/users/[id]/statistics` after a User profile is opened.
+
+This prevents a statistics/reporting query from becoming a hard dependency for loading the entire Users module. A failure in the detailed statistics endpoint must be contained inside the Statistics tab and must not prevent account administration.

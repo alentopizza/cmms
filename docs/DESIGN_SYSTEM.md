@@ -1035,3 +1035,27 @@ User and Supplier directories intentionally use different card languages.
 - Narrow tablet: 2 columns.
 - Mobile: 1 column.
 - Do not force the maximum column count when it makes names, actions or metrics unreadable.
+
+
+## User vs Supplier compact profile cards
+
+The two compact directories share density rules but must not look like the same entity type.
+
+**User card**
+- personal portrait is circular and overlaps the lower edge of the cover;
+- the cover carries account Active/Inactive state only;
+- live-tracking and biometric enrollment states do not appear as unexplained directory badges;
+- WhatsApp is a quick action when a phone exists;
+- temporary deactivation uses a power/status icon, while the trash icon is reserved for permanent deletion.
+
+**Supplier card**
+- Supplier identity uses a rounded-square logo overlapping the commercial banner;
+- Supplier type remains a commercial badge next to the logo;
+- the footer exposes operational counters and commercial quick actions;
+- destructive Supplier deletion always uses the shared Desweb confirmation dialog, never the browser-native confirm UI.
+
+**Grid rule**
+- standard desktop: 4 cards per row;
+- wide desktop (>= 1680 px viewport): 5 cards per row;
+- narrower layouts: 3 / 2 / 1 cards responsively.
+- Do not force five columns when doing so clips profile media, action labels or operational metadata.

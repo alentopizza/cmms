@@ -110,7 +110,9 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
       ?lifecycleStatuses.filter(([value])=>value===req.status)
       :req.approval_required&&["pending","rejected"].includes(req.approval_state)
         ?lifecycleStatuses.filter(([value])=>value===req.status||value==="cancelled")
-        :lifecycleStatuses;
+        :req.approval_required&&req.approval_state==="approved"
+          ?lifecycleStatuses.filter(([value])=>value===req.status||value==="closed"||value==="cancelled")
+          :lifecycleStatuses;
 
   const [warehouses,receipts,approvalEvents]=await Promise.all([
     canReceive

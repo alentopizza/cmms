@@ -10,7 +10,7 @@ const BLOCKED=new Set(["rejected","fulfilled","closed","cancelled"]);
 type Req={organization_id:string;supplier_id:string;status:string};
 type ReqItem={
   id:string;inventory_item_id:string|null;sku:string;description:string;quantity_requested:string;quantity_received:string;
-  unit_cost_estimated:string;item_active:boolean|null;
+  unit_cost_estimated:string;item_active:boolean|null;item_site_id:string|null;
 };
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
@@ -41,7 +41,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
 
     const items=await client.query<ReqItem>(
       `SELECT ri.id,ri.inventory_item_id,ri.sku,ri.description,ri.quantity_requested::text,ri.quantity_received::text,
-              ri.unit_cost_estimated::text,i.active item_active
+              ri.unit_cost_estimated::text,i.active item_active,i.site_id item_site_id
        FROM supplier_requisition_items ri
        LEFT JOIN inventory_items i ON i.id=ri.inventory_item_id AND i.organization_id=ri.organization_id
        WHERE ri.requisition_id=$1
@@ -70,6 +70,10 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         await client.query("ROLLBACK");
         return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_item",request.url),303);
       }
+      if(session.platformRole==="user"&&!session.accessAllSites&&item.item_site_id&&!session.siteIds.includes(item.item_site_id)){
+        await client.query("ROLLBACK");
+        return new NextResponse("Forbidden",{status:403});
+      }
 
       const warehouseId=String(form.get("warehouse_"+item.id)||"").trim();
       if(!UUID.test(warehouseId)){
@@ -97,10 +101,15 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     }
 
     const warehouseIds=[...new Set(pendingRows.map(row=>row.warehouseId))];
-    const warehouses=await client.query<{id:string}>(
-      "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
-      [req.organization_id,warehouseIds],
-    );
+    const warehouses=session.platformRole==="user"&&!session.accessAllSites
+      ?await client.query<{id:string}>(
+        "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) AND (site_id IS NULL OR site_id=ANY($3::uuid[]))",
+        [req.organization_id,warehouseIds,session.siteIds],
+      )
+      :await client.query<{id:string}>(
+        "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
+        [req.organization_id,warehouseIds],
+      );
     if(warehouses.rowCount!==warehouseIds.length){
       await client.query("ROLLBACK");
       return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_warehouse",request.url),303);

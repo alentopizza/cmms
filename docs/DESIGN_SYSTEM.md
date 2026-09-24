@@ -1004,3 +1004,34 @@ Operational directories must optimize information density without sacrificing le
 - Status badges must remain readable at normal browser zoom; avoid micro-text badges.
 - When a card becomes too narrow for two metadata columns, collapse the metadata layout responsively instead of shrinking fonts further.
 - The same readability floor applies to requisition rows, documents, activities, supply cards and table-like sheet views.
+
+
+## Compact profile directory patterns
+
+User and Supplier directories intentionally use different card languages.
+
+### Users — personal credential card
+
+- Use a visual cover band and overlapping circular avatar to communicate a person/profile.
+- Keep name, role and Company as the primary hierarchy.
+- Biometric state and Site scope are compact secondary badges.
+- Surface only the most useful operational counters in the directory: active Work Orders, pending Activities and recently completed Activities.
+- Primary action is **Ver perfil**; edit/status/delete remain compact secondary actions.
+- User cards may render up to 5 columns only when normal text remains legible.
+
+### Suppliers — commercial/vendor card
+
+- Use a branded commercial banner with the Supplier logo as the identity anchor.
+- Show Supplier type, legal/commercial context, location/category and primary contact.
+- Operational counters are Activities, Supplies and Requisitions.
+- Primary action is **Ver ficha**; edit, requisition, WhatsApp and delete remain compact secondary actions.
+- Supplier cards must remain visually distinct from User cards even when both use the same responsive grid density.
+
+### Directory density
+
+- Very wide desktop: up to 5 columns.
+- Large desktop: 4 columns.
+- Medium desktop/tablet landscape: 3 columns.
+- Narrow tablet: 2 columns.
+- Mobile: 1 column.
+- Do not force the maximum column count when it makes names, actions or metrics unreadable.

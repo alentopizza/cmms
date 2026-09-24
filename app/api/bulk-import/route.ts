@@ -216,7 +216,7 @@ function resolveLocation(rows:Location[],siteId:string,value:string){
 }
 function resolveWarehouse(rows:Warehouse[],siteId:string,locationId:string,value:string){
   const candidates=rows.filter(row=>(!row.site_id||row.site_id===siteId)&&(!row.location_id||row.location_id===locationId));
-  return findByName(candidates,value)||findByName(rows,value);
+  return findByName(candidates,value);
 }
 
 function inventoryValidation(
@@ -244,7 +244,7 @@ function inventoryValidation(
     const name=textValue(row.values.name);
     if(!sku&&!name)continue;
 
-    const itemType=textValue(row.values.itemType)||"PRODUCTO";
+    const itemType=textValue(row.values.itemType)||textValue(row.values.supplierType)||"PRODUCTO";
     const category=textValue(row.values.category);
     const unit=textValue(row.values.unit)||"unidad";
     if(isServiceInventoryRow(itemType,category,unit)){
@@ -594,13 +594,14 @@ export async function POST(request:Request){
           continue;
         }
 
+        if(!allKnownSkus.has(sku)){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","SKU no existe ni está incluido en la hoja INVENTARIO: "+sku,"SKU",sku,"Crea el producto en INVENTARIO o corrige el SKU.");
+          continue;
+        }
         if(importScope==="context_only"&&!selectedKnownSkus.has(sku)){
           omittedKardex++;
           issue(issues,kardexSheet.name,row.rowNumber,"warning","Movimiento omitido: el SKU no pertenece al proveedor de contexto.","SKU",sku,"Cambia a Importar todo el archivo si deseas procesarlo.");
           continue;
-        }
-        if(!allKnownSkus.has(sku)){
-          issue(issues,kardexSheet.name,row.rowNumber,"error","SKU no existe ni está incluido en la hoja INVENTARIO: "+sku,"SKU",sku,"Crea el producto en INVENTARIO o corrige el SKU.");
         }
 
         if(movementId){
@@ -634,6 +635,11 @@ export async function POST(request:Request){
           issue(issues,kardexSheet.name,row.rowNumber,"error","Bodega origen inexistente y no definida en BODEGAS.","BODEGA",warehouseName,"Crea la bodega o agrégala a la hoja BODEGAS.");
         }
 
+        const existingSourceWarehouse=findByName(catalog.warehouses,warehouseName);
+        if(existingSourceWarehouse?.site_id&&!canAccessSite(session,existingSourceWarehouse.site_id)){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","No tienes autorización sobre la bodega de origen.","BODEGA",warehouseName,"Usa una bodega dentro de tus sedes autorizadas.");
+        }
+
         const destination=textValue(row.values.destination);
         if(movement?.type==="transfer"){
           if(!destination)issue(issues,kardexSheet.name,row.rowNumber,"error","El traslado requiere Bodega destino.","BODEGA_DESTINO","", "Selecciona una bodega destino diferente.");
@@ -641,6 +647,10 @@ export async function POST(request:Request){
             issue(issues,kardexSheet.name,row.rowNumber,"error","Bodega destino inexistente y no definida en BODEGAS.","BODEGA_DESTINO",destination,"Crea la bodega o agrégala a la hoja BODEGAS.");
           }
           if(destination&&key(destination)===key(warehouseName))issue(issues,kardexSheet.name,row.rowNumber,"error","La bodega destino debe ser diferente de la bodega origen.","BODEGA_DESTINO",destination,"Selecciona otra bodega.");
+          const existingDestinationWarehouse=destination?findByName(catalog.warehouses,destination):null;
+          if(existingDestinationWarehouse?.site_id&&!canAccessSite(session,existingDestinationWarehouse.site_id)){
+            issue(issues,kardexSheet.name,row.rowNumber,"error","No tienes autorización sobre la bodega destino.","BODEGA_DESTINO",destination,"Usa una bodega dentro de tus sedes autorizadas.");
+          }
         }
 
         const expiresAt=isoDateValue(row.values.expires);

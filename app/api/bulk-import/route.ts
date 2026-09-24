@@ -176,9 +176,15 @@ function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
     if(!sku&&!name)continue;
 
     const declaredType=key(textValue(row.values.supplierType));
-    if(["servicios tercerizados","servicio tercerizado","servicios","services","service"].includes(declaredType)){
+    const declaredCategory=key(textValue(row.values.category));
+    const declaredUnit=key(textValue(row.values.unit));
+    const serviceLike=
+      ["servicios tercerizados","servicio tercerizado","servicios","services","service"].includes(declaredType)||
+      ["servicio","servicios"].includes(declaredCategory)||
+      ["servicio","hora","dia","viaje","visita","punto"].includes(declaredUnit);
+    if(serviceLike){
       skippedServices++;
-      issue(issues,sheetName,row.rowNumber,"warning","Fila omitida: corresponde a un servicio tercerizado y no a una existencia de inventario.");
+      issue(issues,sheetName,row.rowNumber,"warning","Fila omitida: corresponde a un servicio/no inventariable y no a una existencia física.");
       continue;
     }
 

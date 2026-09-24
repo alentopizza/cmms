@@ -687,3 +687,14 @@ Supplier data is intentionally projected from existing authoritative relations:
 Requisition creation has two approved entry points: Supplier profile and Inventory. Both call the same server generator. Inventory selections spanning several Suppliers are split automatically into independent Supplier requisitions.
 
 A requisition represents demand to a Supplier, not stock receipt. Inventory quantity changes only through inventory receiving/transaction logic, keeping requested, approved and received quantities auditable as separate facts.
+
+
+### Role dashboards with period comparison
+
+The root Dashboard now follows the approved analytical admin composition while remaining role-specific and authorization-scoped.
+
+Every role family receives KPI cards, current-vs-comparison variation and six-month trends relevant to its work. The default comparison is the immediately previous equivalent period; the operator may switch to the same period of the prior year.
+
+Tenant/field/requester dashboards can additionally narrow Work Order/Activity data by authorized Site and Priority. These controls never broaden the session scope. Excel/CSV/PDF exports apply the same period, status, Site and Priority filters to the same server-authorized dataset.
+
+The dashboard visual layer is reusable through `components/DashboardAnalytics.tsx`; data aggregation remains server-side in the dashboard page/API. Field-person statistics continue to be descriptive operational evidence rather than automated personnel rankings.

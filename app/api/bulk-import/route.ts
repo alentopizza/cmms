@@ -34,7 +34,7 @@ type Supplier=ImportSupplier;
 type Site={id:string;name:string};
 type Location={id:string;site_id:string;name:string};
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
-type Item={id:string;sku:string;unit:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean;};
+type Item={id:string;sku:string;name:string;unit:string;unit_cost:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean;};
 type ParsedWarehouse={
   row:number;code:string;name:string;type:string;responsible:string;locationDetail:string;capacity:number|null;active:boolean;notes:string;
   site:Site|null;location:Location|null;
@@ -184,7 +184,7 @@ async function catalogs(organizationId:string){
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Item>("SELECT i.id,i.sku,i.unit,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
+    query<Item>("SELECT i.id,i.sku,i.name,i.unit,i.unit_cost::text,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
     query<{id:string;name:string}>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<{max_assets:number;max_inventory_items:number}>("SELECT max_assets,max_inventory_items FROM organization_limits WHERE organization_id=$1",[organizationId]),
     query<{assets:number;inventory:number}>("SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) assets,(SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) inventory",[organizationId]),
@@ -360,6 +360,7 @@ function inventoryValidation(
     const initialValue=numberValue(row.values.initial),referenceValue=numberValue(row.values.referencePrice),taxValue=numberValue(row.values.taxRate);
     if(minValue!==null&&minValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock mínimo inválido.","STOCK_MINIMO",String(minValue),"Usa un valor mayor o igual a cero.");
     if(maxValue!==null&&maxValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock máximo inválido.","STOCK_MAXIMO",String(maxValue),"Usa un valor mayor o igual a cero.");
+    if(minValue!==null&&maxValue!==null&&maxValue>0&&maxValue<minValue)issue(issues,sheetName,row.rowNumber,"error","Stock máximo menor que el stock mínimo.","STOCK_MAXIMO",String(maxValue),"Usa un máximo igual o mayor al mínimo.");
     if(initialValue!==null&&initialValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock inicial inválido.","STOCK_INICIAL",String(initialValue),"Usa un valor mayor o igual a cero.");
     if(costValue!==null&&costValue<0)issue(issues,sheetName,row.rowNumber,"error","Costo unitario inválido.","COSTO_UNITARIO",String(costValue),"Usa un valor mayor o igual a cero.");
     if(referenceValue!==null&&referenceValue<0)issue(issues,sheetName,row.rowNumber,"error","Precio de referencia inválido.","PRECIO_REFERENCIA",String(referenceValue),"Usa un valor mayor o igual a cero.");
@@ -375,6 +376,14 @@ function inventoryValidation(
     if(existing){
       existingCount++;
       const supplierChange=existing.supplier_id&&supplier&&existing.supplier_id!==supplier.id;
+      if(costValue!==null&&Math.abs(Number(existing.unit_cost||0)-costValue)>0.01){
+        issue(
+          issues,sheetName,row.rowNumber,"warning",
+          "Costo unitario diferente al maestro actual.",
+          "COSTO_UNITARIO",String(costValue),
+          "Revisa la diferencia antes de elegir Actualizar; Omitir conserva el costo actual.",
+        );
+      }
       issue(
         issues,sheetName,row.rowNumber,"warning",
         supplierChange

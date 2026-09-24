@@ -117,7 +117,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {key:"category",label:"Categoría",allLabel:"Todas las categorías"},
         {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
         {key:"warehouse",label:"Bodega",allLabel:"Todas las bodegas"},
-        {key:"recordState",label:"Registro",allLabel:"Todos los registros"},
+        {key:"record",label:"Registro",allLabel:"Todos los registros"},
       ]}
       action={<div className="module-header-action-group">
         {canWrite&&orgId&&<BulkImportModal entity="inventory"/>}
@@ -180,7 +180,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             data-filter-category={item.category_id||""} data-filter-category-label={item.category||""}
             data-filter-supplier={item.supplier_id||""} data-filter-supplier-label={item.supplier||""}
             data-filter-warehouse={item.warehouse_id||""} data-filter-warehouse-label={item.warehouse||""}
-            data-filter-recordState={item.active?"active":"inactive"} data-filter-recordState-label={item.active?"Activo":"Inactivo"}>
+            data-filter-record={item.active?"active":"inactive"} data-filter-record-label={item.active?"Activo":"Inactivo"}>
             <div className="inventory-product-card-head">
               <span className={"inventory-product-visual"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={32}/>}</span>
               <div><div className="inventory-product-state-row"><span className={"inventory-stock-pill "+state.key}>{state.label}</span>{!item.active&&<span className="inventory-record-pill">Inactivo</span>}</div><small>SKU: {item.sku}</small><h3>{item.name}</h3><p>{item.category||"Sin categoría"} · {item.presentation||item.unit}</p></div>

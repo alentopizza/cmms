@@ -54,7 +54,15 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
     </nav>
     <header className="entity-profile-page-head">
       <div className="entity-profile-page-identity"><span className="entity-profile-page-icon"><UiIcon name="asset" size={27}/></span><div><span className="eyebrow">Inventario</span><h1>{item.name}</h1><p>{item.sku} · {item.company}</p></div></div>
-      <div className="entity-profile-toolbar-actions">{item.supplier_id&&<Link className="button secondary" href={"/dashboard/suppliers?supplier="+item.supplier_id+"&tab=inventory"}>Proveedor</Link>}<Link className="button secondary" href="/dashboard/inventory">Volver</Link></div>
+      <div className="entity-profile-toolbar-actions">
+        {item.supplier_id&&<Link className="button secondary" href={"/dashboard/suppliers?supplier="+item.supplier_id+"&tab=inventory"}>Proveedor</Link>}
+        {canWrite&&<form method="post" action={"/api/inventory/"+item.id}>
+          <input type="hidden" name="intent" value={item.active?"deactivate":"reactivate"}/>
+          <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
+          <button className="button secondary" type="submit">{item.active?"Desactivar":"Reactivar"}</button>
+        </form>}
+        <Link className="button secondary" href="/dashboard/inventory">Volver</Link>
+      </div>
     </header>
     {feedback.updated&&<div className="notice success section">Artículo actualizado.</div>}
     {feedback.movement&&<div className="notice success section">Movimiento registrado en Kardex.</div>}

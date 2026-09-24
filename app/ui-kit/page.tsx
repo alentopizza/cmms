@@ -1,4 +1,4 @@
-import type { CSSProperties, Metadata } from "react";
+import type { Metadata } from "react";
 import { Icon } from "@/components/ui";
 import type { UiIconName } from "@/components/ui";
 import {

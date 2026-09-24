@@ -517,3 +517,16 @@ Supplier financial data:
 - requires `suppliers.manage`;
 - is not used to execute bank transfers;
 - is masked in the normal read summary while the authorized edit form can manage the stored value.
+
+
+## Dashboard analytical failure isolation
+
+The root Dashboard is an analytical read surface, so individual analytical query failures must not make operational navigation unavailable. `app/dashboard/page.tsx` wraps the role-specific analytical renderer after authenticated session resolution. Unexpected analytical exceptions are logged server-side and render a safe in-app recovery panel with authorized module shortcuts.
+
+This is a resilience boundary, not an authorization fallback: the recovery view does not query or expose additional records.
+
+## Crew eligibility and Site scope
+
+Crew creation accepts Organization members with roles `manager`, `technician` or `external`. The creation UI filters candidates by Organization and Site access, and `POST /api/crews` independently validates the same rules server-side.
+
+The leader is stored through `crews.leader_user_id`, remains a normal `crew_members` member, and may hold any of the eligible Crew roles. The directory reads the existing authenticated User avatar route for visual identity; it does not duplicate profile images into Crew storage.

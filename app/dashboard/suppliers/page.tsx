@@ -43,6 +43,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       COALESCE((SELECT array_agg(cs.label ORDER BY cs.sort_order,cs.label) FROM supplier_specialties ss JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code WHERE ss.supplier_id=s.id),ARRAY[]::text[]) specialty_labels,
       sf.bank_name,sf.account_type,sf.account_number,sf.account_holder,sf.account_holder_tax_id,sf.payment_terms_days,
       sf.currency_code,sf.payment_email,sf.payment_notes,
+      (SELECT count(*)::int FROM supplier_returns sr WHERE sr.supplier_id=s.id) supplier_return_count,
+      COALESCE((SELECT sum(sri.quantity) FROM supplier_returns sr JOIN supplier_return_items sri ON sri.return_id=sr.id WHERE sr.supplier_id=s.id),0)::text supplier_return_quantity,
       (s.logo_data IS NOT NULL) has_logo
     FROM suppliers s JOIN organizations o ON o.id=s.organization_id
     LEFT JOIN supplier_financial_profiles sf ON sf.supplier_id=s.id`;

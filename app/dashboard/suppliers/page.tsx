@@ -8,6 +8,7 @@ import CreateRecordModal from "@/components/CreateRecordModal";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import PhoneField from "@/components/PhoneField";
 import FileDropzone from "@/components/FileDropzone";
+import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import SupplierDirectory, {
   type SupplierActivity,
@@ -18,6 +19,7 @@ import SupplierDirectory, {
 import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder";
 
 type Organization={id:string;name:string;country:string};
+type CatalogOption={code:string;label:string};
 
 export default async function SuppliersPage({searchParams}:{searchParams:Promise<{
   created?:string;updated?:string;deleted?:string;error?:string;supplier?:string;tab?:string;saved?:string;requisition_created?:string;
@@ -30,8 +32,15 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
 
   const supplierSql=`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,
       s.city,s.address,s.website,s.supplier_type,s.service_category,s.contact_name,s.contact_title,s.email,s.phone,s.notes,s.active,
+      COALESCE((SELECT array_agg(sc.capability_code ORDER BY cc.sort_order,cc.label) FROM supplier_capabilities sc JOIN supplier_capability_catalog cc ON cc.code=sc.capability_code WHERE sc.supplier_id=s.id),ARRAY[]::text[]) capability_codes,
+      COALESCE((SELECT array_agg(cc.label ORDER BY cc.sort_order,cc.label) FROM supplier_capabilities sc JOIN supplier_capability_catalog cc ON cc.code=sc.capability_code WHERE sc.supplier_id=s.id),ARRAY[]::text[]) capability_labels,
+      COALESCE((SELECT array_agg(ss.specialty_code ORDER BY cs.sort_order,cs.label) FROM supplier_specialties ss JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code WHERE ss.supplier_id=s.id),ARRAY[]::text[]) specialty_codes,
+      COALESCE((SELECT array_agg(cs.label ORDER BY cs.sort_order,cs.label) FROM supplier_specialties ss JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code WHERE ss.supplier_id=s.id),ARRAY[]::text[]) specialty_labels,
+      sf.bank_name,sf.account_type,sf.account_number,sf.account_holder,sf.account_holder_tax_id,sf.payment_terms_days,
+      sf.currency_code,sf.payment_email,sf.payment_notes,
       (s.logo_data IS NOT NULL) has_logo
-    FROM suppliers s JOIN organizations o ON o.id=s.organization_id`;
+    FROM suppliers s JOIN organizations o ON o.id=s.organization_id
+    LEFT JOIN supplier_financial_profiles sf ON sf.supplier_id=s.id`;
   const activitySql=`SELECT wt.id,wt.service_supplier_id supplier_id,w.id work_order_id,w.number::text order_number,w.title order_title,
       wt.description,wt.status,wt.due_date::text,s.name site_name,l.name location_name
     FROM work_order_tasks wt
@@ -53,7 +62,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const documentSql=`SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
     FROM supplier_documents`;
 
-  const [suppliers,organizations,activities,items,requisitions,documents]=await Promise.all([
+  const [suppliers,organizations,activities,items,requisitions,documents,capabilityCatalog,specialtyCatalog]=await Promise.all([
     platform
       ? query<SupplierDirectoryItem>(supplierSql+" ORDER BY o.name,s.active DESC,s.name")
       : query<SupplierDirectoryItem>(supplierSql+" WHERE s.organization_id=$1 ORDER BY s.active DESC,s.name",[session.organizationId]),
@@ -72,6 +81,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     platform
       ? query<SupplierDocument>(documentSql+" ORDER BY created_at DESC LIMIT 800")
       : query<SupplierDocument>(documentSql+" WHERE organization_id=$1 ORDER BY created_at DESC LIMIT 800",[session.organizationId]),
+    query<CatalogOption>("SELECT code,label FROM supplier_capability_catalog WHERE active=true ORDER BY sort_order,label"),
+    query<CatalogOption>("SELECT code,label FROM supplier_specialty_catalog WHERE active=true ORDER BY sort_order,label"),
   ]);
 
   const creationGate=await getCreationGateForScope("supplier",session.organizationId,platform);
@@ -90,18 +101,24 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       countLabel="proveedores"
       searchPlaceholder="Buscar proveedor, identificación, servicio, ciudad o contacto"
       filters={[{value:"all",label:"Todos"},{value:"active",label:"Activos"},{value:"inactive",label:"Inactivos"}]}
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"capability",label:"Tipo",allLabel:"Todos los tipos"},
+        {key:"specialty",label:"Especialidad",allLabel:"Todas las especialidades"},
+        {key:"country",label:"País",allLabel:"Todos los países"},
+      ]}
       action={creationGate.ready?<CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra su identidad, logo, alcance comercial y contacto." triggerLabel="Agregar" icon="▣">
         <form className="form-grid unified-popup-form" method="post" action="/api/suppliers" encType="multipart/form-data">
           {platform?<div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
             :<input type="hidden" name="organization_id" value={session.organizationId||""}/>}
-          <div className="field"><label>Tipo *</label><select name="supplier_type" defaultValue="materials"><option value="materials">Materiales / suministros</option><option value="services">Servicios</option><option value="both">Materiales + servicios</option></select></div>
+          <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))} defaultValues={["materials"]} required help="Puedes seleccionar varias capacidades. Se almacenan con códigos normalizados para filtros, exportación e importación."/>
           <div className="field"><label>Nombre comercial *</label><input name="name" required placeholder="Ej. Servicios Técnicos Andinos"/></div>
           <div className="field"><label>Razón social *</label><input name="legal_name" required placeholder="Ej. Servicios Técnicos Andinos S.A.S."/></div>
           <CountryCityFields countryId="supplier-country" countryName="country_code" cityId="supplier-city" cityName="city" defaultCountry={defaultCountry} defaultCity="" required/>
           <TaxIdentificationTypeSelect id="supplier-tax-type" name="tax_id_type" countryInputId="supplier-country" countryCode={defaultCountry}/>
           <div className="field"><label>Número de identificación</label><input name="tax_id" placeholder="Número fiscal / tributario"/></div>
           <div className="field form-span-2"><label>Dirección *</label><input name="address" required placeholder="Dirección comercial o administrativa"/></div>
-          <div className="field"><label>Categoría / especialidad</label><input name="service_category" placeholder="Refrigeración, ferretería, obra civil..."/></div>
+          <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))} help="Selecciona una o varias especialidades del catálogo estándar."/>
           <div className="field"><label>Sitio web</label><input type="url" name="website" placeholder="https://..."/></div>
           <div className="field"><label>Contacto principal</label><input name="contact_name" placeholder="Nombre del contacto"/></div>
           <div className="field"><label>Cargo</label><input name="contact_title" placeholder="Ej. Ejecutivo comercial"/></div>
@@ -132,6 +149,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       items={items.rows}
       requisitions={requisitions.rows}
       documents={documents.rows}
+      capabilityOptions={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))}
+      specialtyOptions={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       initialSelectedId={params.supplier||""}
       initialTab={params.tab||"general"}
     />

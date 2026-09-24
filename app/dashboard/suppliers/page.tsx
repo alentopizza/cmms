@@ -17,6 +17,7 @@ import SupplierDirectory, {
   type SupplierRequisition,
 } from "@/components/SupplierDirectory";
 import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder";
+import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
 
 type Organization={id:string;name:string;country:string};
 type CatalogOption={code:string;label:string};
@@ -106,6 +107,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       : query<InventoryWarehouseOption>("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId]),
   ]);
 
+  const commercialAnalytics=await loadSupplierCommercialAnalytics(suppliers.rows.map(supplier=>supplier.id));
   const creationGate=await getCreationGateForScope("supplier",session.organizationId,platform);
   const defaultCountry=organizations.rows[0]?.country||"CO";
   const error=params.error==="sequence"?creationGate.message
@@ -170,6 +172,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       items={items.rows}
       requisitions={requisitions.rows}
       documents={documents.rows}
+      commercialAnalytics={commercialAnalytics.summaries}
+      commercialTrends={commercialAnalytics.trends}
+      commercialRequisitions={commercialAnalytics.requisitions}
       capabilityOptions={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       specialtyOptions={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       inventorySites={inventorySites.rows}

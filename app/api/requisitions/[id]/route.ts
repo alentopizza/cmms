@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { pool, query } from "@/lib/db";
+import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -14,6 +14,8 @@ type Existing={
   needed_by:string|null;
   approval_required:boolean;
   approval_state:"not_required"|"pending"|"approved"|"rejected";
+  approval_policy_mode:"none"|"all"|"threshold";
+  approval_threshold:string;
 };
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
@@ -23,41 +25,66 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
 
-  const existing=await query<Existing>(
-    `SELECT organization_id,status,needed_by::text,approval_required,approval_state
-     FROM supplier_requisitions WHERE id=$1`,
-    [id],
-  );
-  if(!existing.rowCount)return new NextResponse("Requisición no encontrada",{status:404});
-  const current=existing.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==current.organization_id)return new NextResponse("Forbidden",{status:403});
-
   const form=await request.formData();
-  const status=String(form.get("status")||current.status);
+  const submittedStatus=String(form.get("status")||"");
   const notes=String(form.get("notes")||"").trim();
   const neededBy=String(form.get("needed_by")||"").trim();
-  if(!STATUSES.has(status)||(neededBy&&!/^\d{4}-\d{2}-\d{2}$/.test(neededBy))){
+  if(neededBy&&!/^\d{4}-\d{2}-\d{2}$/.test(neededBy)){
     return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=required",request.url),303);
-  }
-  // Approved/rejected are approval decisions, never ordinary editable lifecycle values.
-  if(["approved","rejected"].includes(status)&&status!==current.status){
-    return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_route",request.url),303);
-  }
-  if(["closed","cancelled"].includes(current.status)&&status!==current.status){
-    return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
-  }
-  if(current.status==="fulfilled"&&!["fulfilled","closed"].includes(status)){
-    return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
   }
 
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+
+    // ── Requisition integrity boundary ──────────────────────────────────────
+    // Lock the requisition so an approval decision cannot race an amendment that
+    // changes the amount/date being approved.
+    const existing=await client.query<Existing>(
+      `SELECT organization_id,status,needed_by::text,approval_required,approval_state,
+              approval_policy_mode,approval_threshold::text
+       FROM supplier_requisitions
+       WHERE id=$1
+       FOR UPDATE`,
+      [id],
+    );
+    if(!existing.rowCount){
+      await client.query("ROLLBACK");
+      return new NextResponse("Requisición no encontrada",{status:404});
+    }
+    const current=existing.rows[0];
+    if(session.platformRole==="user"&&session.organizationId!==current.organization_id){
+      await client.query("ROLLBACK");
+      return new NextResponse("Forbidden",{status:403});
+    }
+
+    const status=submittedStatus||current.status;
+    if(!STATUSES.has(status)){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=required",request.url),303);
+    }
+    // Approved/rejected are approval decisions, never ordinary editable lifecycle values.
+    if(["approved","rejected"].includes(status)&&status!==current.status){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=approval_route",request.url),303);
+    }
+    if(["closed","cancelled"].includes(current.status)&&status!==current.status){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
+    }
+    if(current.status==="fulfilled"&&!["fulfilled","closed"].includes(status)){
+      await client.query("ROLLBACK");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=status_locked",request.url),303);
+    }
+
     const itemRows=await client.query<{
       id:string;quantity_requested:string;quantity_received:string;unit_cost_estimated:string;
     }>(
       `SELECT id,quantity_requested::text,quantity_received::text,unit_cost_estimated::text
-       FROM supplier_requisition_items WHERE requisition_id=$1 ORDER BY created_at FOR UPDATE`,
+       FROM supplier_requisition_items
+       WHERE requisition_id=$1
+       ORDER BY created_at
+       FOR UPDATE`,
       [id],
     );
     const canEditItems=!LOCKED_ITEM_STATUSES.has(current.status);
@@ -95,10 +122,12 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       }
     }
 
-    const remaining=await client.query<{count:string;has_received:boolean}>(
+    const remaining=await client.query<{count:string;has_received:boolean;total_estimated:string}>(
       `SELECT count(*)::text count,
-              EXISTS(SELECT 1 FROM supplier_requisition_items WHERE requisition_id=$1 AND quantity_received>0) has_received
-       FROM supplier_requisition_items WHERE requisition_id=$1`,
+              EXISTS(SELECT 1 FROM supplier_requisition_items WHERE requisition_id=$1 AND quantity_received>0) has_received,
+              COALESCE(sum(quantity_requested*unit_cost_estimated),0)::text total_estimated
+       FROM supplier_requisition_items
+       WHERE requisition_id=$1`,
       [id],
     );
     if(Number(remaining.rows[0]?.count||0)===0){
@@ -106,6 +135,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=empty",request.url),303);
     }
     const hasReceived=Boolean(remaining.rows[0]?.has_received);
+    const totalEstimated=Number(remaining.rows[0]?.total_estimated||0);
 
     if(status==="fulfilled"){
       const pending=await client.query<{count:string}>(
@@ -116,6 +146,54 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         await client.query("ROLLBACK");
         return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=fulfillment",request.url),303);
       }
+    }
+
+    // A threshold policy is a snapshotted rule, not only a creation-time result.
+    // Once approval becomes required it remains required, preventing amount edits
+    // from being used to opt an already-governed requisition back out.
+    const threshold=Number(current.approval_threshold||0);
+    const policyRequiresNow=current.approval_policy_mode==="all"
+      ||(current.approval_policy_mode==="threshold"&&totalEstimated>=threshold);
+    const newlyRequiresApproval=!current.approval_required&&policyRequiresNow;
+
+    if(newlyRequiresApproval){
+      const nextStatus=hasReceived?"partial":"sent";
+      await client.query(
+        `UPDATE supplier_requisitions SET
+           status=$1,notes=$2,needed_by=$3,
+           approval_required=true,
+           approval_state='pending',
+           approval_requested_at=now(),
+           approval_decided_at=NULL,
+           approval_decided_by=NULL,
+           approval_decision_notes=NULL,
+           approved_at=NULL,
+           sent_at=COALESCE(sent_at,now()),
+           updated_at=now()
+         WHERE id=$4`,
+        [nextStatus,notes||null,neededBy||null,id],
+      );
+      const actorLabel=session.fullName||session.email||"Sistema";
+      await client.query(
+        `INSERT INTO supplier_requisition_approval_events(
+           organization_id,requisition_id,actor_user_id,actor_label,action,from_state,to_state,notes,metadata
+         ) VALUES($1,$2,$3,$4,'requested','not_required','pending',$5,$6::jsonb)`,
+        [
+          current.organization_id,id,session.userId||null,actorLabel,
+          "La requisición alcanzó la regla de aprobación configurada.",
+          JSON.stringify({reason:"approval_threshold_crossed",total_estimated:totalEstimated,threshold,policy_mode:current.approval_policy_mode}),
+        ],
+      );
+      await client.query(
+        `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+         VALUES($1,$2,'requisition.approval_requested','supplier_requisition',$3,$4::jsonb)`,
+        [
+          current.organization_id,session.userId||null,id,
+          JSON.stringify({reason:"approval_threshold_crossed",total_estimated:totalEstimated,threshold}),
+        ],
+      );
+      await client.query("COMMIT");
+      return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?updated=1",request.url),303);
     }
 
     const reopenApproval=current.approval_required
@@ -146,6 +224,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
            approval_decided_at=NULL,
            approval_decided_by=NULL,
            approval_decision_notes=NULL,
+           approved_at=NULL,
            sent_at=COALESCE(sent_at,now()),
            updated_at=now()
          WHERE id=$4`,
@@ -159,7 +238,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         [
           current.organization_id,id,session.userId||null,actorLabel,current.approval_state,
           "La requisición cambió después de una decisión y requiere nueva aprobación.",
-          JSON.stringify({reason:"requisition_changed",status_before:current.status,status_after:nextStatus}),
+          JSON.stringify({reason:"requisition_changed",status_before:current.status,status_after:nextStatus,total_estimated:totalEstimated}),
         ],
       );
       await client.query(
@@ -167,7 +246,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
          VALUES($1,$2,'requisition.approval_reopened','supplier_requisition',$3,$4::jsonb)`,
         [
           current.organization_id,session.userId||null,id,
-          JSON.stringify({approval_state_before:current.approval_state,status_before:current.status,status_after:nextStatus}),
+          JSON.stringify({approval_state_before:current.approval_state,status_before:current.status,status_after:nextStatus,total_estimated:totalEstimated}),
         ],
       );
     }else{
@@ -189,7 +268,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
           [
             current.organization_id,id,session.userId||null,actorLabel,
             "La requisición cambió mientras esperaba aprobación.",
-            JSON.stringify({reason:"pending_requisition_changed",status_before:current.status,status_after:status}),
+            JSON.stringify({reason:"pending_requisition_changed",status_before:current.status,status_after:status,total_estimated:totalEstimated}),
           ],
         );
         await client.query(
@@ -197,7 +276,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
            VALUES($1,$2,'requisition.pending_amended','supplier_requisition',$3,$4::jsonb)`,
           [
             current.organization_id,session.userId||null,id,
-            JSON.stringify({status_before:current.status,status_after:status}),
+            JSON.stringify({status_before:current.status,status_after:status,total_estimated:totalEstimated}),
           ],
         );
       }

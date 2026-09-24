@@ -365,3 +365,11 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Requisition state transitions must not alter Inventory quantity. Stock changes belong to receipt/issue/adjustment/return inventory transactions.
 - Deleting a Supplier with Inventory, Activity or requisition history is blocked to preserve traceability; use inactive state instead.
 - Requisition exports are document outputs (PDF/XLSX/Word) and must reflect the supplier-scoped item snapshots stored on the requisition.
+
+
+## User directory/statistics invariant
+
+- Keep the main `/dashboard/users` directory query lightweight. Do not add chart-series JSON aggregates or multi-day reporting joins to the directory query.
+- Detailed User statistics belong behind `/api/users/[id]/statistics` or an equivalent on-demand reporting boundary.
+- A detailed statistics failure must degrade the Statistics tab only; it must never crash the Users directory.
+- User and Supplier cards are separate design patterns. Preserve their distinct personal vs commercial identity language when changing density or responsive behavior.

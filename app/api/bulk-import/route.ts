@@ -508,75 +508,248 @@ export async function POST(request:Request){
   const issues:Issue[]=[];
 
   if(entity==="inventory"){
-    const sheet=findWorksheet(workbook,["Inventario","Productos"]);
-    if(!sheet)return NextResponse.json({error:"No se encontró la hoja Inventario o Productos."},{status:400});
-    const parsedSheet=parseSheet(sheet,INVENTORY_ALIASES,["sku","name","supplier"]);
-    if(parsedSheet.missing.length)issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "));
-    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog,fixedSupplier);
-    issues.push(...inv.issues);
+    const importMode:InventoryImportMode=fixedSupplier?"contextual":"global";
+    const requestedScope=String(form.get("import_scope")||"");
+    const importScope:InventoryImportScope=fixedSupplier&&requestedScope!=="all"?"context_only":"all";
+    const duplicatePolicy:DuplicatePolicy=String(form.get("duplicate_policy")||"update")==="skip"?"skip":"update";
 
     const warehouseSheet=findWorksheet(workbook,["Bodegas","Almacenes","Almacén","Almacen"]);
     const warehouseRows=warehouseSheet?parseSheet(warehouseSheet,WAREHOUSE_ALIASES).rows:[];
-    const parsedWarehouses=warehouseSheet?warehouseValidation(warehouseRows,warehouseSheet.name,catalog):{parsed:[] as ParsedWarehouse[],issues:[] as Issue[]};
+    const parsedWarehouses=warehouseSheet
+      ?warehouseValidation(warehouseRows,warehouseSheet.name,catalog)
+      :{parsed:[] as ParsedWarehouse[],issues:[] as Issue[]};
     issues.push(...parsedWarehouses.issues);
+    const fileWarehouseNames=new Set(parsedWarehouses.parsed.map(row=>key(row.name)));
+
+    const sheet=findWorksheet(workbook,["Inventario","Productos"]);
+    if(!sheet)return NextResponse.json({error:"No se encontró la hoja INVENTARIO o Productos."},{status:400});
+    const parsedSheet=parseSheet(sheet,INVENTORY_ALIASES,["sku","name"]);
+    if(parsedSheet.missing.length){
+      issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "),parsedSheet.missing.join(", "),"","Usa la plantilla maestra sin modificar los encabezados.");
+    }
+    const inv=inventoryValidation(parsedSheet.rows,sheet.name,catalog,fixedSupplier,fileWarehouseNames,importScope);
+    issues.push(...inv.issues);
+
+    // The PROVEEDORES sheet is a reference/validation catalog. It never bypasses
+    // the canonical Supplier module: unknown providers must be created there first.
+    const providerSheet=findWorksheet(workbook,["Proveedores"]);
+    const providerRows=providerSheet?parseSheet(providerSheet,PROVIDER_ALIASES).rows:[];
+    if(providerSheet){
+      for(const row of safeRows(providerRows)){
+        const reference={
+          supplierId:textValue(row.values.supplierId),
+          taxId:textValue(row.values.taxId),
+          code:textValue(row.values.code),
+          name:textValue(row.values.name),
+        };
+        if(!Object.values(reference).some(Boolean))continue;
+        const resolved=resolveImportSupplier(catalog.suppliers,reference);
+        if(resolved.error){
+          issue(
+            issues,providerSheet.name,row.rowNumber,"error",resolved.error,
+            reference.supplierId?"PROVEEDOR_ID":reference.taxId?"NIT_PROVEEDOR":reference.code?"CODIGO_PROVEEDOR":"PROVEEDOR",
+            reference.supplierId||reference.taxId||reference.code||reference.name||"",
+            "Crea o corrige el proveedor en el módulo Proveedores antes de confirmar.",
+          );
+        }
+      }
+    }
+
+    const selectedInventory=inv.parsed.filter(row=>importScope==="all"||row.belongsContext);
+    for(const row of selectedInventory){
+      if(row.site&&!canAccessSite(session,row.site.id)){
+        issue(issues,sheet.name,row.row,"error","No tienes autorización sobre la sede del producto.","SEDE",row.site.name,"Solicita acceso a la sede o retira la fila del alcance de importación.");
+      }
+    }
 
     const kardexSheet=findWorksheet(workbook,["Kardex"]);
     const kardexRows=kardexSheet?parseSheet(kardexSheet,KARDEX_ALIASES).rows:[];
-    const knownSkus=new Set([...catalog.items.map(item=>item.sku.toUpperCase()),...inv.parsed.map(row=>String(row.sku))]);
+    const selectedKnownSkus=new Set([
+      ...catalog.items
+        .filter(item=>importScope==="all"||!fixedSupplier||item.supplier_id===fixedSupplier.id)
+        .map(item=>item.sku.toUpperCase()),
+      ...selectedInventory.map(row=>row.sku),
+    ]);
+    const allKnownSkus=new Set([...catalog.items.map(item=>item.sku.toUpperCase()),...inv.parsed.map(row=>row.sku)]);
     const parsedKardex:ParsedKardex[]=[];
+    const fileMovementIds=new Set<string>();
+    let omittedKardex=0;
+
     if(kardexSheet){
       for(const row of safeRows(kardexRows)){
         const sku=textValue(row.values.sku).toUpperCase();
-        if(!sku)continue;
-        if(!knownSkus.has(sku))issue(issues,kardexSheet.name,row.rowNumber,"error","SKU no existe ni está incluido en la hoja Inventario: "+sku);
+        const movementId=textValue(row.values.movementId);
+        if(!sku){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","Movimiento Kardex sin SKU.","SKU","", "Completa el SKU del producto.");
+          continue;
+        }
+
+        if(importScope==="context_only"&&!selectedKnownSkus.has(sku)){
+          omittedKardex++;
+          issue(issues,kardexSheet.name,row.rowNumber,"warning","Movimiento omitido: el SKU no pertenece al proveedor de contexto.","SKU",sku,"Cambia a Importar todo el archivo si deseas procesarlo.");
+          continue;
+        }
+        if(!allKnownSkus.has(sku)){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","SKU no existe ni está incluido en la hoja INVENTARIO: "+sku,"SKU",sku,"Crea el producto en INVENTARIO o corrige el SKU.");
+        }
+
+        if(movementId){
+          if(fileMovementIds.has(key(movementId))){
+            issue(issues,kardexSheet.name,row.rowNumber,"error","MOVIMIENTO_ID duplicado dentro del archivo.","MOVIMIENTO_ID",movementId,"Usa un identificador único por movimiento.");
+          }else fileMovementIds.add(key(movementId));
+          if(catalog.movementIds.has(movementId)){
+            issue(issues,kardexSheet.name,row.rowNumber,"error","MOVIMIENTO_ID ya fue importado anteriormente.","MOVIMIENTO_ID",movementId,"Elimina el movimiento duplicado o asigna el identificador correcto.");
+          }
+        }
+
         const movement=movementType(textValue(row.values.movement));
-        if(!movement)issue(issues,kardexSheet.name,row.rowNumber,"error","Tipo de movimiento inválido.");
+        if(!movement)issue(issues,kardexSheet.name,row.rowNumber,"error","Tipo de movimiento inválido.","TIPO_MOVIMIENTO",textValue(row.values.movement),"Usa Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución o Traslado.");
+
         let quantity=numberValue(row.values.quantity);
         if(quantity===null){
           const entry=numberValue(row.values.entry)??0,exit=numberValue(row.values.exit)??0;
           quantity=entry>0?entry:exit>0?exit:null;
         }
-        if(quantity===null||quantity<=0)issue(issues,kardexSheet.name,row.rowNumber,"error","Cantidad inválida.");
+        if(quantity===null||quantity<=0)issue(issues,kardexSheet.name,row.rowNumber,"error","Cantidad inválida.","CANTIDAD",textValue(row.values.quantity),"Usa una cantidad mayor que cero.");
+        const rawCost=numberValue(row.values.cost);
+        if(rawCost!==null&&rawCost<0)issue(issues,kardexSheet.name,row.rowNumber,"error","Costo inválido.","COSTO_UNITARIO",String(rawCost),"Usa un valor mayor o igual a cero.");
+
         const date=isoDateValue(row.values.date);
-        if(!date)issue(issues,kardexSheet.name,row.rowNumber,"error","Fecha inválida; usa AAAA-MM-DD.");
+        if(!date)issue(issues,kardexSheet.name,row.rowNumber,"error","Fecha inválida; usa AAAA-MM-DD.","FECHA",textValue(row.values.date),"Usa formato AAAA-MM-DD.");
+
         const warehouseName=textValue(row.values.warehouse);
-        if(!warehouseName)issue(issues,kardexSheet.name,row.rowNumber,"error","Falta Bodega origen.");
+        if(!warehouseName){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","Falta Bodega origen.","BODEGA","", "Indica una bodega existente o definida en la hoja BODEGAS.");
+        }else if(!findByName(catalog.warehouses,warehouseName)&&!fileWarehouseNames.has(key(warehouseName))){
+          issue(issues,kardexSheet.name,row.rowNumber,"error","Bodega origen inexistente y no definida en BODEGAS.","BODEGA",warehouseName,"Crea la bodega o agrégala a la hoja BODEGAS.");
+        }
+
         const destination=textValue(row.values.destination);
-        if(movement?.type==="transfer"&&!destination)issue(issues,kardexSheet.name,row.rowNumber,"error","El traslado requiere Bodega destino.");
+        if(movement?.type==="transfer"){
+          if(!destination)issue(issues,kardexSheet.name,row.rowNumber,"error","El traslado requiere Bodega destino.","BODEGA_DESTINO","", "Selecciona una bodega destino diferente.");
+          else if(!findByName(catalog.warehouses,destination)&&!fileWarehouseNames.has(key(destination))){
+            issue(issues,kardexSheet.name,row.rowNumber,"error","Bodega destino inexistente y no definida en BODEGAS.","BODEGA_DESTINO",destination,"Crea la bodega o agrégala a la hoja BODEGAS.");
+          }
+          if(destination&&key(destination)===key(warehouseName))issue(issues,kardexSheet.name,row.rowNumber,"error","La bodega destino debe ser diferente de la bodega origen.","BODEGA_DESTINO",destination,"Selecciona otra bodega.");
+        }
+
         const expiresAt=isoDateValue(row.values.expires);
-        if(textValue(row.values.expires)&&!expiresAt)issue(issues,kardexSheet.name,row.rowNumber,"error","Fecha de vencimiento inválida; usa AAAA-MM-DD.");
+        if(textValue(row.values.expires)&&!expiresAt)issue(issues,kardexSheet.name,row.rowNumber,"error","Fecha de vencimiento inválida; usa AAAA-MM-DD.","FECHA_VENCIMIENTO",textValue(row.values.expires),"Usa formato AAAA-MM-DD.");
+
+        const inventoryRow=inv.parsed.find(candidate=>candidate.sku===sku&&candidate.supplier)||null;
+        const existingItem=catalog.items.find(candidate=>candidate.sku.toUpperCase()===sku)||null;
+        const expectedSupplier=inventoryRow?.supplier||catalog.suppliers.find(supplier=>supplier.id===existingItem?.supplier_id)||null;
+        const reference={
+          supplierId:textValue(row.values.supplierId),
+          taxId:textValue(row.values.supplierTaxId),
+          code:textValue(row.values.supplierCode),
+          name:textValue(row.values.supplier),
+        };
+        let movementSupplier=expectedSupplier;
+        if(Object.values(reference).some(Boolean)){
+          const resolved=resolveImportSupplier(catalog.suppliers,reference);
+          if(resolved.error){
+            issue(issues,kardexSheet.name,row.rowNumber,"error",resolved.error,"PROVEEDOR",reference.supplierId||reference.taxId||reference.code||reference.name||"","Corrige el proveedor del movimiento.");
+          }else{
+            movementSupplier=resolved.supplier;
+            if(expectedSupplier&&resolved.supplier?.id!==expectedSupplier.id){
+              issue(
+                issues,kardexSheet.name,row.rowNumber,"error",
+                "El proveedor del movimiento no coincide con el proveedor registrado para el SKU.",
+                "PROVEEDOR",resolved.supplier?.name||"",
+                "Deja el proveedor vacío para heredarlo del SKU o corrige el identificador.",
+              );
+            }
+          }
+        }
+
         parsedKardex.push({
-          row:row.rowNumber,sku,movement:movement||{type:"receipt",sign:1},date,document:textValue(row.values.document),
-          warehouseName,destination,quantity:quantity??0,cost:Math.max(0,numberValue(row.values.cost)??0),
-          supplierName:textValue(row.values.supplier),lot:textValue(row.values.lot),expiresAt,costCenter:textValue(row.values.costCenter),
-          sourceUser:textValue(row.values.sourceUser),notes:textValue(row.values.notes),
+          row:row.rowNumber,movementId,sku,movement:movement||{type:"receipt",sign:1},date,document:textValue(row.values.document),
+          warehouseName,destination,quantity:quantity??0,cost:Math.max(0,rawCost??0),supplier:movementSupplier,
+          belongsContext:supplierBelongsToContext(movementSupplier,fixedSupplier),lot:textValue(row.values.lot),expiresAt,
+          costCenter:textValue(row.values.costCenter),sourceUser:textValue(row.values.sourceUser),notes:textValue(row.values.notes),
         });
       }
     }
 
+    const selectedKardex=parsedKardex.filter(row=>importScope==="all"||row.belongsContext);
+    const selectedSupplierIds=new Set(selectedInventory.map(row=>row.supplier?.id).filter(Boolean) as string[]);
+    selectedKardex.forEach(row=>{if(row.supplier)selectedSupplierIds.add(row.supplier.id);});
+    const supplierGroups=[...selectedSupplierIds].map(supplierId=>{
+      const supplier=catalog.suppliers.find(item=>item.id===supplierId)!;
+      return {
+        id:supplier.id,code:supplier.code,name:supplier.name,taxId:supplier.tax_id,
+        products:selectedInventory.filter(row=>row.supplier?.id===supplier.id).length,
+        movements:selectedKardex.filter(row=>row.supplier?.id===supplier.id).length,
+        context:fixedSupplier?.id===supplier.id,
+      };
+    }).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+
+    const neededWarehouseNames=new Set<string>();
+    selectedInventory.forEach(row=>neededWarehouseNames.add(key(row.warehouseName)));
+    selectedKardex.forEach(row=>{neededWarehouseNames.add(key(row.warehouseName));if(row.destination)neededWarehouseNames.add(key(row.destination));});
+    const warehousesToCommit=parsedWarehouses.parsed.filter(row=>neededWarehouseNames.has(key(row.name)));
+    for(const row of warehousesToCommit){
+      if(row.site&&!canAccessSite(session,row.site.id)){
+        issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","No tienes autorización para administrar esta bodega.","SEDE",row.site.name,"Solicita acceso o retira la bodega del alcance.");
+      }
+    }
+
     const errors=issues.filter(item=>item.severity==="error");
+    const otherSupplierRows=inv.contextMismatchRows+omittedKardex;
+    const omittedByScope=importScope==="context_only"?otherSupplierRows:0;
+    const summary={
+      productsDetected:inv.parsed.length,
+      inventoryRows:selectedInventory.length,
+      newItems:selectedInventory.filter(row=>!row.existing).length,
+      existingItems:selectedInventory.filter(row=>Boolean(row.existing)).length,
+      kardexRows:selectedKardex.length,
+      suppliersDetected:supplierGroups.length,
+      warehouseRows:warehousesToCommit.length,
+      skippedServices:inv.skippedServices,
+      omittedRows:omittedByScope,
+      warnings:issues.filter(item=>item.severity==="warning").length,
+      errors:errors.length,
+    };
+    const context={
+      mode:importMode,
+      scope:importScope,
+      supplier:fixedSupplier?{id:fixedSupplier.id,code:fixedSupplier.code,name:fixedSupplier.name,taxId:fixedSupplier.tax_id}:null,
+      otherSupplierRows,
+      canSwitchGlobal:Boolean(fixedSupplier&&otherSupplierRows>0),
+    };
+
     if(mode!=="commit"||errors.length){
-      return NextResponse.json({entity,valid:errors.length===0,summary:{
-        inventoryRows:inv.parsed.length,kardexRows:parsedKardex.length,warehouseRows:parsedWarehouses.parsed.length,
-        newItems:inv.newCount,skippedServices:inv.skippedServices,warnings:issues.filter(i=>i.severity==="warning").length,errors:errors.length
-      },issues:issues.slice(0,250)});
+      return NextResponse.json({
+        entity,valid:errors.length===0,summary,issues:issues.slice(0,350),supplierGroups,context,duplicatePolicy,
+      });
     }
 
     const duplicate=await query("SELECT 1 FROM bulk_import_batches WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'",[organizationId,hash]);
-    if(duplicate.rowCount)return NextResponse.json({error:"Este mismo archivo ya fue importado anteriormente."},{status:409});
+    if(duplicate.rowCount)return NextResponse.json({error:"Este mismo archivo ya fue importado anteriormente. Revisa el historial para evitar duplicar Kardex."},{status:409});
 
     const client=await pool.connect();
     try{
       await client.query("BEGIN");
-      const batch=await client.query<{id:string}>(
-        "INSERT INTO bulk_import_batches(organization_id,user_id,entity,file_name,file_hash,status,total_rows,error_rows,warning_rows) VALUES($1,$2,'inventory',$3,$4,'validated',$5,0,$6) RETURNING id",
-        [organizationId,session.userId||null,file.name,hash,inv.parsed.length+parsedKardex.length+parsedWarehouses.parsed.length,issues.filter(i=>i.severity==="warning").length],
+      const skippedExisting=duplicatePolicy==="skip"?selectedInventory.filter(row=>Boolean(row.existing)).length:0;
+      const omittedRows=omittedByScope+inv.skippedServices+skippedExisting;
+      const batch=await client.query<{id:string;import_number:string;created_at:string}>(
+        `INSERT INTO bulk_import_batches(
+           organization_id,user_id,entity,file_name,file_hash,status,total_rows,error_rows,warning_rows,origin,context_supplier_id,commit_scope,omitted_rows
+         ) VALUES($1,$2,'inventory',$3,$4,'validated',$5,0,$6,$7,$8,$9,$10)
+         RETURNING id,import_number::text,created_at::text`,
+        [
+          organizationId,session.userId||null,file.name,hash,
+          inv.parsed.length+parsedKardex.length+warehousesToCommit.length+inv.skippedServices,
+          issues.filter(item=>item.severity==="warning").length,
+          importMode==="contextual"?"supplier":"global",fixedSupplier?.id||null,importScope,omittedRows,
+        ],
       );
       const batchId=batch.rows[0].id;
-      const itemMap=new Map<string,{id:string;site_id:string;location_id:string;warehouse_id:string}>();
+      const itemMap=new Map<string,{id:string;site_id:string;location_id:string;warehouse_id:string;supplier_id:string|null}>();
       const warehouseCache=[...catalog.warehouses];
 
-      for(const row of parsedWarehouses.parsed){
+      for(const row of warehousesToCommit){
         const existingWarehouse=findByName(warehouseCache,row.name);
         let resolved:Warehouse;
         if(existingWarehouse){
@@ -590,7 +763,7 @@ export async function POST(request:Request){
           );
           resolved=updated.rows[0];
         }else{
-          const code=row.code?row.code.trim().toUpperCase():stableCode("ALM",row.name);
+          const warehouseCode=row.code?row.code.trim().toUpperCase():stableCode("ALM",row.name);
           const created=await client.query<Warehouse>(
             `INSERT INTO inventory_warehouses(
                organization_id,site_id,location_id,code,name,type,responsible,capacity,active,location_detail,notes,updated_at
@@ -601,7 +774,7 @@ export async function POST(request:Request){
                name=EXCLUDED.name,type=EXCLUDED.type,responsible=EXCLUDED.responsible,capacity=EXCLUDED.capacity,
                active=EXCLUDED.active,location_detail=EXCLUDED.location_detail,notes=EXCLUDED.notes,updated_at=now()
              RETURNING id,site_id,location_id,name`,
-            [organizationId,row.site?.id||null,row.location?.id||null,code,row.name,row.type,row.responsible||null,row.capacity,row.active,row.locationDetail||null,row.notes||null],
+            [organizationId,row.site?.id||null,row.location?.id||null,warehouseCode,row.name,row.type,row.responsible||null,row.capacity,row.active,row.locationDetail||null,row.notes||null],
           );
           resolved=created.rows[0];
         }
@@ -609,112 +782,139 @@ export async function POST(request:Request){
         if(current>=0)warehouseCache[current]=resolved;else warehouseCache.push(resolved);
       }
 
-      for(const row of inv.parsed){
-        const supplier=row.supplier as Supplier,site=row.site as Site,location=row.location as Location;
-        let warehouse=(row.warehouse as Warehouse|null)||findByName(warehouseCache,String(row.warehouseName));
-        if(!warehouse){
-          const code=stableCode("ALM",site.name+"-"+location.name+"-"+String(row.warehouseName));
-          const created=await client.query<Warehouse>(
-            "INSERT INTO inventory_warehouses(organization_id,site_id,location_id,code,name) VALUES($1,$2,$3,$4,$5) ON CONFLICT(organization_id,code) DO UPDATE SET site_id=EXCLUDED.site_id,location_id=EXCLUDED.location_id,name=EXCLUDED.name,updated_at=now() RETURNING id,site_id,location_id,name",
-            [organizationId,site.id,location.id,code,row.warehouseName],
+      for(const row of selectedInventory){
+        const supplier=row.supplier,site=row.site,location=row.location;
+        if(!supplier||!site||!location)throw new Error("Relaciones no resueltas para SKU "+row.sku);
+        if(!canAccessSite(session,site.id))throw new Error("Sede no autorizada: "+site.name);
+
+        if(duplicatePolicy==="skip"&&row.existing){
+          const current=await client.query<{id:string;site_id:string;location_id:string;warehouse_id:string;supplier_id:string|null}>(
+            "SELECT id,site_id,location_id,warehouse_id,supplier_id FROM inventory_items WHERE id=$1 AND organization_id=$2",
+            [row.existing.id,organizationId],
           );
-          warehouse=created.rows[0];warehouseCache.push(warehouse);
+          if(!current.rowCount)throw new Error("SKU existente no disponible: "+row.sku);
+          itemMap.set(row.sku,current.rows[0]);
+          continue;
         }
+
+        const warehouse=findByName(warehouseCache,row.warehouseName);
+        if(!warehouse)throw new Error("Bodega no resuelta: "+row.warehouseName);
+
         let categoryId:string|null=null;
         if(row.category){
-          const code=stableCode("CAT",String(row.category));
+          const categoryCode=stableCode("CAT",row.category);
           const category=await client.query<{id:string}>(
             "INSERT INTO inventory_categories(organization_id,code,name) VALUES($1,$2,$3) ON CONFLICT(organization_id,name) DO UPDATE SET name=EXCLUDED.name RETURNING id",
-            [organizationId,code,row.category],
+            [organizationId,categoryCode,row.category],
           );
           categoryId=category.rows[0].id;
         }
-        const existing=await client.query<{id:string;quantity:string}>("SELECT id,quantity::text FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);
+
+        const existing=await client.query<{id:string}>("SELECT id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);
         let itemId:string;
         if(existing.rowCount){
           itemId=existing.rows[0].id;
           await client.query(
-            "UPDATE inventory_items SET site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,warehouse_id=$5,name=$6,description=$7,presentation=$8,unit=$9,min_quantity=$10,max_quantity=$11,unit_cost=$12,storage_location=$13,active=$14,updated_at=now() WHERE id=$15",
-            [site.id,location.id,supplier.id,categoryId,warehouse.id,row.name,row.description||null,row.presentation||null,row.unit,row.min,row.max,row.cost,row.warehouseName,row.active,itemId],
+            `UPDATE inventory_items SET
+               site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,warehouse_id=$5,name=$6,description=$7,presentation=$8,unit=$9,
+               min_quantity=$10,max_quantity=$11,unit_cost=$12,storage_location=$13,active=$14,subcategory=$15,brand=$16,model=$17,
+               barcode=$18,reference_price=$19,tax_rate=$20,updated_at=now()
+             WHERE id=$21`,
+            [
+              site.id,location.id,supplier.id,categoryId,warehouse.id,row.name,row.description||null,row.presentation||null,row.unit,
+              row.min,row.max,row.cost,row.warehouseName,row.active,row.subcategory||null,row.brand||null,row.model||null,row.barcode||null,
+              row.referencePrice,row.taxRate,itemId,
+            ],
           );
         }else{
           const inserted=await client.query<{id:string}>(
-            "INSERT INTO inventory_items(organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,sku,name,description,presentation,unit,quantity,min_quantity,max_quantity,unit_cost,storage_location,active) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,$12,$13,$14,$15,$16) RETURNING id",
-            [organizationId,site.id,location.id,supplier.id,categoryId,warehouse.id,row.sku,row.name,row.description||null,row.presentation||null,row.unit,row.min,row.max,row.cost,row.warehouseName,row.active],
+            `INSERT INTO inventory_items(
+               organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,sku,name,description,presentation,unit,quantity,
+               min_quantity,max_quantity,unit_cost,storage_location,active,subcategory,brand,model,barcode,reference_price,tax_rate
+             ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`,
+            [
+              organizationId,site.id,location.id,supplier.id,categoryId,warehouse.id,row.sku,row.name,row.description||null,row.presentation||null,
+              row.unit,row.min,row.max,row.cost,row.warehouseName,row.active,row.subcategory||null,row.brand||null,row.model||null,row.barcode||null,
+              row.referencePrice,row.taxRate,
+            ],
           );
           itemId=inserted.rows[0].id;
-          if(Number(row.initial)>0){
+          if(row.initial>0){
             await client.query(
-              "INSERT INTO inventory_transactions(organization_id,item_id,type,quantity,unit_cost,warehouse_id,document_number,movement_at,created_by,import_batch_id,source_row,notes) VALUES($1,$2,'receipt',$3,$4,$5,'IMPORT-INICIAL',now(),$6,$7,$8,'Stock inicial de importación')",
-              [organizationId,itemId,row.initial,row.cost,warehouse.id,session.userId||null,batchId,row.row],
+              `INSERT INTO inventory_transactions(
+                 organization_id,item_id,type,quantity,unit_cost,warehouse_id,document_number,movement_at,created_by,import_batch_id,source_row,
+                 lot_number,expires_at,notes
+               ) VALUES($1,$2,'receipt',$3,$4,$5,'IMPORT-INICIAL',now(),$6,$7,$8,$9,$10,'Stock inicial de importación')`,
+              [organizationId,itemId,row.initial,row.cost||null,warehouse.id,session.userId||null,batchId,row.row,row.lot||null,row.expiresAt||null],
             );
           }
         }
+
         await client.query(
           "INSERT INTO inventory_stock_levels(organization_id,item_id,warehouse_id,quantity,min_quantity,max_quantity) VALUES($1,$2,$3,0,$4,$5) ON CONFLICT(item_id,warehouse_id) DO UPDATE SET min_quantity=EXCLUDED.min_quantity,max_quantity=EXCLUDED.max_quantity,updated_at=now()",
           [organizationId,itemId,warehouse.id,row.min,row.max],
         );
-        itemMap.set(String(row.sku),{id:itemId,site_id:site.id,location_id:location.id,warehouse_id:warehouse.id});
+        itemMap.set(row.sku,{id:itemId,site_id:site.id,location_id:location.id,warehouse_id:warehouse.id,supplier_id:supplier.id});
       }
 
-      for(const row of parsedKardex){
-        let item=itemMap.get(String(row.sku));
+      for(const row of selectedKardex){
+        let item=itemMap.get(row.sku);
         if(!item){
-          const found=await client.query<{id:string;site_id:string;location_id:string;warehouse_id:string}>("SELECT id,site_id,location_id,warehouse_id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);
+          const found=await client.query<{id:string;site_id:string;location_id:string;warehouse_id:string;supplier_id:string|null}>(
+            "SELECT id,site_id,location_id,warehouse_id,supplier_id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",
+            [organizationId,row.sku],
+          );
           if(!found.rowCount)throw new Error("SKU no resuelto: "+row.sku);
           item=found.rows[0];
         }
         if(!canAccessSite(session,item.site_id))throw new Error("Sede no autorizada para SKU "+row.sku);
-        let source=findByName(warehouseCache,String(row.warehouseName));
-        if(!source){
-          const location=catalog.locations.find(loc=>loc.id===item!.location_id);
-          const site=catalog.sites.find(s=>s.id===item!.site_id);
-          const code=stableCode("ALM",(site?.name||"")+"-"+(location?.name||"")+"-"+String(row.warehouseName));
-          const created=await client.query<Warehouse>(
-            "INSERT INTO inventory_warehouses(organization_id,site_id,location_id,code,name) VALUES($1,$2,$3,$4,$5) ON CONFLICT(organization_id,code) DO UPDATE SET site_id=COALESCE(inventory_warehouses.site_id,EXCLUDED.site_id),location_id=COALESCE(inventory_warehouses.location_id,EXCLUDED.location_id),name=EXCLUDED.name,updated_at=now() RETURNING id,site_id,location_id,name",
-            [organizationId,item.site_id,item.location_id,code,row.warehouseName],
-          );
-          source=created.rows[0];warehouseCache.push(source);
-        }
-        let destination:Warehouse|null=null;
-        if(row.movement.type==="transfer"){
-          destination=findByName(warehouseCache,String(row.destination));
-          if(!destination){
-            const code=stableCode("ALM","DEST-"+String(row.destination));
-            const created=await client.query<Warehouse>(
-              "INSERT INTO inventory_warehouses(organization_id,site_id,location_id,code,name) VALUES($1,$2,$3,$4,$5) ON CONFLICT(organization_id,code) DO UPDATE SET site_id=COALESCE(inventory_warehouses.site_id,EXCLUDED.site_id),location_id=COALESCE(inventory_warehouses.location_id,EXCLUDED.location_id),name=EXCLUDED.name,updated_at=now() RETURNING id,site_id,location_id,name",
-              [organizationId,item.site_id,item.location_id,code,row.destination],
-            );
-            destination=created.rows[0];warehouseCache.push(destination);
-          }
-        }
-        if(row.supplierName){
-          const itemInfo=catalog.items.find(candidate=>candidate.sku.toUpperCase()===row.sku)||null;
-          if(itemInfo?.supplier_name&&key(itemInfo.supplier_name)!==key(row.supplierName)){
-            throw new Error("El proveedor del Kardex no coincide con el proveedor del SKU "+row.sku+".");
-          }
-        }
-        const signed=Number(row.quantity)*Number(row.movement.sign);
-        const auditNote=[row.notes,row.sourceUser?"Usuario origen archivo: "+row.sourceUser:""].filter(Boolean).join(" · ");
+        if(row.supplier&&item.supplier_id&&row.supplier.id!==item.supplier_id)throw new Error("El proveedor del movimiento no coincide con el proveedor del SKU "+row.sku+".");
+
+        const source=findByName(warehouseCache,row.warehouseName);
+        if(!source)throw new Error("Bodega origen no resuelta: "+row.warehouseName);
+        const destination=row.movement.type==="transfer"?findByName(warehouseCache,row.destination):null;
+        if(row.movement.type==="transfer"&&!destination)throw new Error("Bodega destino no resuelta: "+row.destination);
+
+        const signed=row.quantity*row.movement.sign;
+        const auditNote=[row.notes,row.sourceUser?"Responsable origen archivo: "+row.sourceUser:""].filter(Boolean).join(" · ");
         await client.query(
           `INSERT INTO inventory_transactions(
              organization_id,item_id,type,quantity,unit_cost,warehouse_id,destination_warehouse_id,document_number,movement_at,
-             created_by,import_batch_id,source_row,lot_number,expires_at,cost_center,notes
-           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::date,$10,$11,$12,$13,$14,$15,$16)`,
-          [organizationId,item.id,row.movement.type,signed,row.cost||null,source.id,destination?.id||null,row.document||null,row.date,
-           session.userId||null,batchId,row.row,row.lot||null,row.expiresAt||null,row.costCenter||null,auditNote||null],
+             created_by,import_batch_id,source_row,source_movement_id,lot_number,expires_at,cost_center,notes
+           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::date,$10,$11,$12,$13,$14,$15,$16,$17)`,
+          [
+            organizationId,item.id,row.movement.type,signed,row.cost||null,source.id,destination?.id||null,row.document||null,row.date,
+            session.userId||null,batchId,row.row,row.movementId||null,row.lot||null,row.expiresAt||null,row.costCenter||null,auditNote||null,
+          ],
         );
       }
-      await client.query("UPDATE bulk_import_batches SET status='committed',imported_rows=$1,committed_at=now(),summary=$2::jsonb WHERE id=$3",[
-        inv.parsed.length+parsedKardex.length+parsedWarehouses.parsed.length,
-        JSON.stringify({items:inv.parsed.length,kardex:parsedKardex.length,warehouses:parsedWarehouses.parsed.length,skippedServices:inv.skippedServices}),
-        batchId
-      ]);
+
+      const importedRows=(duplicatePolicy==="skip"?selectedInventory.filter(row=>!row.existing).length:selectedInventory.length)+selectedKardex.length+warehousesToCommit.length;
+      const committedSummary={
+        items:duplicatePolicy==="skip"?selectedInventory.filter(row=>!row.existing).length:selectedInventory.length,
+        existingSkipped:skippedExisting,kardex:selectedKardex.length,warehouses:warehousesToCommit.length,
+        skippedServices:inv.skippedServices,omittedRows,warnings:issues.filter(item=>item.severity==="warning").length,
+      };
+      await client.query(
+        "UPDATE bulk_import_batches SET status='committed',imported_rows=$1,omitted_rows=$2,committed_at=now(),summary=$3::jsonb WHERE id=$4",
+        [importedRows,omittedRows,JSON.stringify(committedSummary),batchId],
+      );
+      await client.query(
+        `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+         VALUES($1,$2,'inventory.bulk_import_committed','bulk_import_batch',$3,$4::jsonb)`,
+        [
+          organizationId,session.userId||null,batchId,
+          JSON.stringify({origin:importMode,scope:importScope,context_supplier_id:fixedSupplier?.id||null,duplicate_policy:duplicatePolicy,file_name:file.name,summary:committedSummary}),
+        ],
+      );
       await client.query("COMMIT");
-      return NextResponse.json({ok:true,summary:{
-        items:inv.parsed.length,kardex:parsedKardex.length,warehouses:parsedWarehouses.parsed.length,
-        skippedServices:inv.skippedServices,warnings:issues.filter(i=>i.severity==="warning").length
-      }});
+
+      return NextResponse.json({
+        ok:true,
+        importId:importBatchLabel(batch.rows[0].import_number,batch.rows[0].created_at),
+        summary:{...summary,items:committedSummary.items,kardex:committedSummary.kardex,warehouses:committedSummary.warehouses,omittedRows},
+        supplierGroups,context,
+      });
     }catch(error){
       await client.query("ROLLBACK");
       return NextResponse.json({error:error instanceof Error?error.message:"No fue posible importar el archivo."},{status:400});

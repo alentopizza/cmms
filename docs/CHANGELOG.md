@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-24 — User and Supplier compact-card correction
+
+### Fixed
+
+- User directory cards no longer expose the ambiguous **Offline** tracking label or **Pendiente** biometric label. Those states remain available inside the User profile where their meaning is explicit.
+- User deactivation no longer uses the trash icon; it uses a dedicated power/status action, while permanent deletion keeps the trash icon.
+- User cards now include a direct WhatsApp action whenever a phone number is available.
+- Supplier deletion no longer invokes the browser-native `confirm()` dialog. It uses the shared Desweb safety confirmation dialog.
+- User portraits and Supplier logos now render above their banners with explicit stacking, avoiding the clipped/hidden image seen in the first compact-card implementation.
+- The Users page keeps the statistics dashboard isolated behind the per-user statistics endpoint, so opening the directory does not execute the heavier dashboard queries.
+
+### Layout
+
+- User and Supplier directories render **4 cards per row** on standard desktop widths and **5** only on sufficiently wide viewports.
+- User cards keep a circular portrait language; Supplier cards keep a rounded-square commercial-logo language.
+- Responsive layouts degrade to 3, 2 and 1 card columns instead of reducing typography below the legibility floor.
+
 ## 2026-09-24 — Compact User/Supplier cards and resilient User statistics
 
 ### Fixed

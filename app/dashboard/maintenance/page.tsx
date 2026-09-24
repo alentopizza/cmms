@@ -9,6 +9,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
+type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean};
 
 // ── Responsive maintenance directory: desktop table + mobile cards ─────────
 
@@ -22,18 +23,18 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const creationGate=await getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
 
   const plans = session.platformRole !== "user"
-    ? await query<{id:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean}>(
-        `SELECT p.id,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-         FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id
+    ? await query<PlanRow>(
+        `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+         FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
          ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`)
     : session.accessAllSites
-      ? await query<{id:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean}>(
-          `SELECT p.id,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id
+      ? await query<PlanRow>(
+          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId])
-      : await query<{id:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean}>(
-          `SELECT p.id,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id
+      : await query<PlanRow>(
+          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 AND a.site_id = ANY($2::uuid[])
            ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId, session.siteIds]);
 
@@ -64,7 +65,12 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       description="Planes por calendario asociados a los activos visibles para tu cuenta."
       count={plans.rowCount || 0}
       countLabel="rutinas"
-      searchPlaceholder="Buscar rutina, empresa o activo"
+      searchPlaceholder="Buscar rutina, empresa, sede o activo"
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+        {key:"frequency",label:"Frecuencia",allLabel:"Todas las frecuencias"},
+      ]}
       action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="notice success section">Rutina creada correctamente.</div>}
@@ -80,7 +86,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     {creationGate.ready && <section className="card section"><p>Desde el módulo puedes escoger el activo. Si creas la rutina entrando al activo, esa relación queda preseleccionada automáticamente.</p></section>}
     <section className="section maintenance-directory-section">
       <div className="maintenance-mobile-list">
-        {plans.rows.map(p=><article key={p.id} className="maintenance-mobile-card" data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.frequency_unit].filter(Boolean).join(" ")}>
+        {plans.rows.map(p=><article key={p.id} className="maintenance-mobile-card" data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" ")}
+          data-filter-organization={p.organization_id} data-filter-organization-label={p.company}
+          data-filter-site={p.site_id} data-filter-site-label={p.site}
+          data-filter-frequency={p.frequency_unit} data-filter-frequency-label={p.frequency_unit}>
           <div className="maintenance-mobile-main">
             <div className="maintenance-mobile-icon" aria-hidden="true">↻</div>
             <div className="maintenance-mobile-copy">
@@ -107,7 +116,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         </article>)}
       </div>
       <table className="table maintenance-directory-table"><thead><tr><th>Plan</th><th>Empresa</th><th>Equipo</th><th>Frecuencia</th><th>Próximo vencimiento</th>{owner&&<th>Acciones</th>}</tr></thead>
-      <tbody>{plans.rows.map(p=><tr key={p.id} data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.frequency_unit].filter(Boolean).join(" ")}><td><strong>{p.name}</strong></td><td>{p.company}</td><td>{p.asset}</td><td>Cada {p.frequency_value} {p.frequency_unit}</td><td>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</td>{owner&&<td><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+      <tbody>{plans.rows.map(p=><tr key={p.id} data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" ")}
+          data-filter-organization={p.organization_id} data-filter-organization-label={p.company}
+          data-filter-site={p.site_id} data-filter-site-label={p.site}
+          data-filter-frequency={p.frequency_unit} data-filter-frequency-label={p.frequency_unit}><td><strong>{p.name}</strong></td><td>{p.company}</td><td>{p.asset}</td><td>Cada {p.frequency_value} {p.frequency_unit}</td><td>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</td>{owner&&<td><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
         {name:"name",label:"Nombre",value:p.name},
         {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
         {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[

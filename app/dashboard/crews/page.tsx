@@ -12,6 +12,7 @@ type Crew = {
   id:string;
   organization_id:string;
   organization_name:string;
+  site_id:string|null;
   site_name:string|null;
   name:string;
   description:string|null;
@@ -35,13 +36,13 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
   const [crews,organizations,sites,workers]=await Promise.all([
     superadmin
       ? query<Crew>(
-          `SELECT c.id,c.organization_id,o.name organization_name,s.name site_name,c.name,c.description,u.full_name leader_name,
+          `SELECT c.id,c.organization_id,o.name organization_name,c.site_id,s.name site_name,c.name,c.description,u.full_name leader_name,
                   (SELECT count(*)::int FROM crew_members cm WHERE cm.crew_id=c.id) member_count,c.active
            FROM crews c JOIN organizations o ON o.id=c.organization_id
            LEFT JOIN sites s ON s.id=c.site_id LEFT JOIN users u ON u.id=c.leader_user_id
            ORDER BY o.name,c.active DESC,c.name`)
       : query<Crew>(
-          `SELECT c.id,c.organization_id,o.name organization_name,s.name site_name,c.name,c.description,u.full_name leader_name,
+          `SELECT c.id,c.organization_id,o.name organization_name,c.site_id,s.name site_name,c.name,c.description,u.full_name leader_name,
                   (SELECT count(*)::int FROM crew_members cm WHERE cm.crew_id=c.id) member_count,c.active
            FROM crews c JOIN organizations o ON o.id=c.organization_id
            LEFT JOIN sites s ON s.id=c.site_id LEFT JOIN users u ON u.id=c.leader_user_id
@@ -81,6 +82,10 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       count={crews.rowCount || 0}
       countLabel="cuadrillas"
       searchPlaceholder="Buscar cuadrilla, empresa, sede o líder"
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+      ]}
       action={creationGate.ready ? <CreateRecordModal title="Crear cuadrilla" eyebrow="Nuevo equipo" description="Selecciona la empresa, sede, líder e integrantes que conformarán la cuadrilla." triggerLabel="Agregar" icon="◉">
         <form className="form-grid unified-popup-form" method="post" action="/api/crews">
           {superadmin ? <div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
@@ -109,7 +114,9 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Equipos</span><h2>Cuadrillas registradas</h2></div></div>
-      {crews.rowCount ? <div className="crew-grid">{crews.rows.map(c=><article className="card crew-card" key={c.id} data-module-record data-status={c.active?"active":"inactive"} data-search={[c.name,c.organization_name,c.site_name,c.leader_name,c.description].filter(Boolean).join(" ")}>
+      {crews.rowCount ? <div className="crew-grid">{crews.rows.map(c=><article className="card crew-card" key={c.id} data-module-record data-status={c.active?"active":"inactive"} data-search={[c.name,c.organization_name,c.site_name,c.leader_name,c.description].filter(Boolean).join(" ")}
+        data-filter-organization={c.organization_id} data-filter-organization-label={c.organization_name}
+        data-filter-site={c.site_id||""} data-filter-site-label={c.site_name||""}>
         <div className="crew-card-head"><span className="crew-icon">◉</span><div><strong>{c.name}</strong><span>{c.organization_name}{c.site_name?` · ${c.site_name}`:""}</span></div><span className={`status-badge ${c.active?"status-active":"status-inactive"}`}><i />{c.active?"Activa":"Inactiva"}</span></div>
         <div className="crew-card-meta"><div><span>Líder</span><strong>{c.leader_name||"Sin líder"}</strong></div><div><span>Integrantes</span><strong>{c.member_count}</strong></div></div>
         {c.description && <p>{c.description}</p>}

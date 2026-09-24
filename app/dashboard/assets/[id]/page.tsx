@@ -23,6 +23,7 @@ type AssetDetail={
   site_name:string;
   location_name:string|null;
   supplier_name:string|null;
+  has_image:boolean;
 };
 
 type Plan={
@@ -51,7 +52,8 @@ export default async function AssetDetailPage({
 
   const assetResult=await query<AssetDetail>(
     `SELECT a.id,a.organization_id,a.site_id,a.code,a.name,a.description,a.manufacturer,a.model,a.serial_number,
-            a.status,a.criticality,o.name organization_name,s.name site_name,l.name location_name,p.name supplier_name
+            a.status,a.criticality,o.name organization_name,s.name site_name,l.name location_name,p.name supplier_name,
+            (a.image_data IS NOT NULL) has_image
      FROM assets a
      JOIN organizations o ON o.id=a.organization_id
      JOIN sites s ON s.id=a.site_id
@@ -99,6 +101,10 @@ export default async function AssetDetailPage({
 
     <section className="asset-detail-grid section">
       <article className="card asset-detail-card">
+        <div className="asset-detail-visual-head">
+          <span className={"asset-detail-photo"+(asset.has_image?" has-image":"")}>{asset.has_image?<img src={"/api/assets/"+asset.id+"/image"} alt="" />:<span aria-hidden="true">◇</span>}</span>
+          <div><span className="eyebrow">Ficha técnica</span><h2>{asset.name}</h2><p>{asset.code} · {asset.status}</p></div>
+        </div>
         <div className="section-heading"><div><span className="eyebrow">Relaciones</span><h2>Contexto del activo</h2></div></div>
         <div className="asset-detail-meta">
           <div><span>Empresa</span><strong>{asset.organization_name}</strong></div>

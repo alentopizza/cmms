@@ -803,3 +803,25 @@ The migration is explicitly **visual/UX-first**. It must preserve APIs, data mod
 The target component catalog includes reusable Buttons, form controls, Cards, Badges/Status, Modal/Drawer, Dropdown/Tooltip, Tabs/Breadcrumb/ModuleNavigation, DataTable/Pagination, KPI, Search/Filter, feedback/loading/empty states, Avatar/FileUpload and ERP business components such as AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard and LocationCard.
 
 A live `/ui-kit` catalog is part of the target architecture and will become the official visual reference once implemented.
+
+
+### DESWEB Design System V2 Phase 1 implemented — 2026-09-24
+
+The governance plan is now backed by runtime code.
+
+Implemented foundations:
+
+- V2 CSS token layer;
+- semantic light/dark mapping;
+- typography, spacing, radius, shadows and motion;
+- approved chart/module color variables;
+- reduced-motion handling;
+- `components/ui` namespace;
+- existing `UiIcon` retained as provisional canonical outline icon system;
+- live `/ui-kit` Foundations catalog;
+- measured legacy CSS baseline;
+- CI smoke preventing regression of the foundation contract.
+
+The operational ERP modules have **not** been visually migrated yet. This is intentional: Phase 1 makes V2 available without globally overriding legacy aliases.
+
+Current next product/design phase: **Phase 2 — UI Core primitives**.

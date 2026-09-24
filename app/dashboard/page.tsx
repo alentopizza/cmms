@@ -288,72 +288,135 @@ async function platform(session:Session,filters:DashboardFilters) {
   </Frame>;
 }
 
-async function operationPeriodMetrics(session:Session,filters:DashboardFilters){
+async function guardedDashboard<T>(label:string,run:()=>Promise<T>,fallback:T){
+  try{
+    return {data:await run(),failed:false};
+  }catch(error){
+    console.error("[dashboard:"+label+"]",error);
+    return {data:fallback,failed:true};
+  }
+}
+
+function operationWhere(session:Session,filters:DashboardFilters,dateColumn:string){
   const sc=scope(session,"w");
   const params=[...sc.params];
-  const site=appendSiteFilter(params,"w.site_id",filters);
-  const priority=appendPriorityFilter(params,"w.priority",filters);
-  const status=filters.activityStatus!=="all"?" AND "+appendValue(params,"w.status",filters.activityStatus):"";
-  const start=params.length+1;
-  params.push(filters.startDate,filters.endDateExclusive);
-  const created="w.created_at >= $"+start+"::date AND w.created_at < $"+String(start+1)+"::date";
-  const completed="COALESCE(w.completed_at,w.updated_at) >= $"+start+"::date AND COALESCE(w.completed_at,w.updated_at) < $"+String(start+1)+"::date";
-  const result=await query<{
-    open:string;completed:string;late:string;cost:string;downtime:string;preventive:string;preventive_done:string;total:string;
-  }>(
-    "SELECT "+
-    "count(*) FILTER(WHERE "+created+" AND w.status IN ('open','assigned','in_progress','paused'))::text open,"+
-    "count(*) FILTER(WHERE "+completed+" AND w.status='completed')::text completed,"+
-    "count(*) FILTER(WHERE w.due_at >= $"+start+"::date AND w.due_at < $"+String(start+1)+"::date AND w.due_at<now() AND w.status NOT IN ('completed','cancelled'))::text late,"+
-    "COALESCE(sum(w.labor_cost+w.parts_cost+w.external_cost) FILTER(WHERE "+created+"),0)::text cost,"+
-    "COALESCE(sum(w.downtime_minutes) FILTER(WHERE "+created+"),0)::text downtime,"+
-    "count(*) FILTER(WHERE "+created+" AND w.type='preventive')::text preventive,"+
-    "count(*) FILTER(WHERE "+created+" AND w.type='preventive' AND w.status='completed')::text preventive_done,"+
-    "count(*) FILTER(WHERE "+created+")::text total "+
-    "FROM work_orders w WHERE "+sc.sql+site+priority+status,
-    params,
-  );
-  const row=result.rows[0]||{open:"0",completed:"0",late:"0",cost:"0",downtime:"0",preventive:"0",preventive_done:"0",total:"0"};
+  let where=sc.sql;
+  where+=appendSiteFilter(params,"w.site_id",filters);
+  where+=appendPriorityFilter(params,"w.priority",filters);
+  if(filters.activityStatus!=="all")where+=" AND "+appendValue(params,"w.status",filters.activityStatus);
+  where+=" AND "+appendPeriod(params,dateColumn,filters);
+  return {where,params};
+}
+
+async function operationPeriodMetrics(session:Session,filters:DashboardFilters){
+  const openBase=operationWhere(session,filters,"w.created_at");
+  const completedBase=operationWhere(session,filters,"w.completed_at");
+  const dueBase=operationWhere(session,filters,"w.due_at");
+  const costBase=operationWhere(session,filters,"w.created_at");
+  const preventiveBase=operationWhere(session,filters,"w.created_at");
+
+  const [open,completed,late,impact,preventive,preventiveDone]=await Promise.all([
+    guardedDashboard(
+      "operation-open",
+      ()=>query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+openBase.where+" AND w.status IN ('open','assigned','in_progress','paused')",openBase.params),
+      {rows:[{count:"0"}]} as any,
+    ),
+    guardedDashboard(
+      "operation-completed",
+      ()=>query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+completedBase.where+" AND w.status='completed'",completedBase.params),
+      {rows:[{count:"0"}]} as any,
+    ),
+    guardedDashboard(
+      "operation-late",
+      ()=>query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+dueBase.where+" AND w.due_at<now() AND w.status NOT IN ('completed','cancelled')",dueBase.params),
+      {rows:[{count:"0"}]} as any,
+    ),
+    guardedDashboard(
+      "operation-impact",
+      ()=>query<{cost:string;downtime:string}>(
+        "SELECT COALESCE(sum(w.labor_cost+w.parts_cost+w.external_cost),0)::text cost,COALESCE(sum(w.downtime_minutes),0)::text downtime FROM work_orders w WHERE "+costBase.where,
+        costBase.params,
+      ),
+      {rows:[{cost:"0",downtime:"0"}]} as any,
+    ),
+    guardedDashboard(
+      "operation-preventive",
+      ()=>query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+preventiveBase.where+" AND w.type='preventive'",preventiveBase.params),
+      {rows:[{count:"0"}]} as any,
+    ),
+    guardedDashboard(
+      "operation-preventive-completed",
+      ()=>query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+preventiveBase.where+" AND w.type='preventive' AND w.status='completed'",preventiveBase.params),
+      {rows:[{count:"0"}]} as any,
+    ),
+  ]);
+
   return {
-    open:n(row.open),completed:n(row.completed),late:n(row.late),cost:n(row.cost),downtime:n(row.downtime),
-    preventive:n(row.preventive),preventiveDone:n(row.preventive_done),total:n(row.total),
+    open:n(open.data.rows[0]?.count),
+    completed:n(completed.data.rows[0]?.count),
+    late:n(late.data.rows[0]?.count),
+    cost:n(impact.data.rows[0]?.cost),
+    downtime:n(impact.data.rows[0]?.downtime),
+    preventive:n(preventive.data.rows[0]?.count),
+    preventiveDone:n(preventiveDone.data.rows[0]?.count),
+    failed:open.failed||completed.failed||late.failed||impact.failed||preventive.failed||preventiveDone.failed,
   };
 }
 
 async function operationTrend(session:Session,filters:DashboardFilters){
   const window=trendWindow(filters);
-  const sc=scope(session,"w");
-  const build=(dateColumn:string,completedOnly=false)=>{
-    const params=[...sc.params];
-    const site=appendSiteFilter(params,"w.site_id",filters);
-    const priority=appendPriorityFilter(params,"w.priority",filters);
-    const status=filters.activityStatus!=="all"?" AND "+appendValue(params,"w.status",filters.activityStatus):"";
-    const start=params.length+1;
-    params.push(window.start,window.end);
-    return {
-      params,
-      sql:"SELECT to_char(date_trunc('month',"+dateColumn+"),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+sc.sql+site+priority+status+
-        " AND "+dateColumn+" >= $"+start+"::date AND "+dateColumn+" < $"+String(start+1)+"::date"+
-        (completedOnly?" AND w.status='completed'":"")+" GROUP BY 1 ORDER BY 1",
-    };
-  };
-  const created=build("w.created_at");
-  const completed=build("w.completed_at",true);
-  const [createdRows,completedRows]=await Promise.all([
-    query<{month:string;count:string}>(created.sql,created.params),
-    query<{month:string;count:string}>(completed.sql,completed.params),
+  const createdScope=scope(session,"w");
+  const createdParams=[...createdScope.params];
+  let createdWhere=createdScope.sql;
+  createdWhere+=appendSiteFilter(createdParams,"w.site_id",filters);
+  createdWhere+=appendPriorityFilter(createdParams,"w.priority",filters);
+  const createdStart=createdParams.length+1;
+  createdParams.push(window.start,window.end);
+
+  const completedScope=scope(session,"w");
+  const completedParams=[...completedScope.params];
+  let completedWhere=completedScope.sql;
+  completedWhere+=appendSiteFilter(completedParams,"w.site_id",filters);
+  completedWhere+=appendPriorityFilter(completedParams,"w.priority",filters);
+  const completedStart=completedParams.length+1;
+  completedParams.push(window.start,window.end);
+
+  const [created,completed]=await Promise.all([
+    guardedDashboard(
+      "operation-trend-created",
+      ()=>query<{month:string;count:string}>(
+        "SELECT to_char(date_trunc('month',w.created_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+createdWhere+
+        " AND w.created_at >= $"+createdStart+"::date AND w.created_at < $"+String(createdStart+1)+"::date GROUP BY 1 ORDER BY 1",
+        createdParams,
+      ),
+      {rows:[]} as any,
+    ),
+    guardedDashboard(
+      "operation-trend-completed",
+      ()=>query<{month:string;count:string}>(
+        "SELECT to_char(date_trunc('month',w.completed_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+completedWhere+
+        " AND w.status='completed' AND w.completed_at >= $"+completedStart+"::date AND w.completed_at < $"+String(completedStart+1)+"::date GROUP BY 1 ORDER BY 1",
+        completedParams,
+      ),
+      {rows:[]} as any,
+    ),
   ]);
+
   return {
     labels:window.labels,
-    created:monthValues(window.keys,createdRows.rows,"count"),
-    completed:monthValues(window.keys,completedRows.rows,"count"),
+    created:monthValues(window.keys,created.data.rows,"count"),
+    completed:monthValues(window.keys,completed.data.rows,"count"),
+    failed:created.failed||completed.failed,
   };
 }
 
 async function operation(session:Session,filters:DashboardFilters) {
   if(!session.organizationId)return null;
-  const sites=await siteOptions(session);
+
+  const sitesResult=await guardedDashboard("operation-sites",()=>siteOptions(session),[] as Option[]);
+  const sites=sitesResult.data;
   const previousFilters=comparisonFilters(filters);
+
   const [metrics,previous,trend]=await Promise.all([
     operationPeriodMetrics(session,filters),
     operationPeriodMetrics(session,previousFilters),
@@ -364,8 +427,12 @@ async function operation(session:Session,filters:DashboardFilters) {
   const assetParams=[...assetScope.params];
   const assetSite=appendSiteFilter(assetParams,"a.site_id",filters);
   const assets=can(session,"assets.read")
-    ?await query<C>("SELECT count(*)::text count FROM assets a WHERE "+assetScope.sql+assetSite+" AND a.status<>'retired'",assetParams)
-    :{rows:[{count:"0"}]} as any;
+    ?await guardedDashboard(
+      "operation-assets",
+      ()=>query<C>("SELECT count(*)::text count FROM assets a WHERE "+assetScope.sql+assetSite+" AND a.status<>'retired'",assetParams),
+      {rows:[{count:"0"}]} as any,
+    )
+    :{data:{rows:[{count:"0"}]} as any,failed:false};
 
   const stockParams:unknown[]=[session.organizationId];
   let stockWhere="organization_id=$1 AND active=true AND quantity<=min_quantity";
@@ -376,39 +443,80 @@ async function operation(session:Session,filters:DashboardFilters) {
   }
   stockWhere+=appendSiteFilter(stockParams,"site_id",filters);
   const stock=can(session,"inventory.read")
-    ?await query<C>("SELECT count(*)::text count FROM inventory_items WHERE "+stockWhere,stockParams)
-    :{rows:[{count:"0"}]} as any;
+    ?await guardedDashboard(
+      "operation-stock",
+      ()=>query<C>("SELECT count(*)::text count FROM inventory_items WHERE "+stockWhere,stockParams),
+      {rows:[{count:"0"}]} as any,
+    )
+    :{data:{rows:[{count:"0"}]} as any,failed:false};
 
   const techs=can(session,"users.manage")
-    ?await query<C>("SELECT count(*)::text count FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND u.active=true AND om.role IN ('technician','external')",[session.organizationId])
-    :{rows:[{count:"0"}]} as any;
+    ?await guardedDashboard(
+      "operation-workforce",
+      ()=>query<C>(
+        "SELECT count(*)::text count FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND u.active=true AND om.role IN ('manager','technician','external')",
+        [session.organizationId],
+      ),
+      {rows:[{count:"0"}]} as any,
+    )
+    :{data:{rows:[{count:"0"}]} as any,failed:false};
 
-  const distributionScope=scope(session,"w");
-  const distParams=[...distributionScope.params];
-  const distSite=appendSiteFilter(distParams,"w.site_id",filters);
-  const distPriority=appendPriorityFilter(distParams,"w.priority",filters);
-  const distStatus=filters.activityStatus!=="all"?" AND "+appendValue(distParams,"w.status",filters.activityStatus):"";
-  const distPeriod=appendPeriod(distParams,"w.created_at",filters);
-  const recentParams=[...distributionScope.params];
-  const recentSite=appendSiteFilter(recentParams,"w.site_id",filters);
-  const recentPriority=appendPriorityFilter(recentParams,"w.priority",filters);
-  const recentStatus=filters.activityStatus!=="all"?" AND "+appendValue(recentParams,"w.status",filters.activityStatus):"";
-  const recentPeriod=appendPeriod(recentParams,"w.created_at",filters);
+  const distBase=operationWhere(session,filters,"w.created_at");
+  const recentBase=operationWhere(session,filters,"w.created_at");
 
   const [statuses,types,siteDist,recent]=await Promise.all([
-    query<{status:string;count:string}>("SELECT w.status,count(*)::text count FROM work_orders w WHERE "+distributionScope.sql+distSite+distPriority+distStatus+" AND "+distPeriod+" GROUP BY w.status",distParams),
-    query<{type:string;count:string}>("SELECT w.type,count(*)::text count FROM work_orders w WHERE "+distributionScope.sql+distSite+distPriority+distStatus+" AND "+distPeriod+" GROUP BY w.type ORDER BY count(*) DESC",distParams),
-    query<{site:string;count:string}>("SELECT s.name site,count(*)::text count FROM work_orders w JOIN sites s ON s.id=w.site_id WHERE "+distributionScope.sql+distSite+distPriority+distStatus+" AND "+distPeriod+" GROUP BY s.name ORDER BY count(*) DESC LIMIT 6",distParams),
-    query<{id:string;number:string;title:string;status:string;priority:string;asset:string|null}>("SELECT w.id,w.number::text,w.title,w.status,w.priority,a.name asset FROM work_orders w LEFT JOIN assets a ON a.id=w.asset_id WHERE "+distributionScope.sql+recentSite+recentPriority+recentStatus+" AND "+recentPeriod+" ORDER BY w.updated_at DESC LIMIT 10",recentParams),
+    guardedDashboard(
+      "operation-status-distribution",
+      ()=>query<{status:string;count:string}>(
+        "SELECT w.status,count(*)::text count FROM work_orders w WHERE "+distBase.where+" GROUP BY w.status ORDER BY count(*) DESC",
+        distBase.params,
+      ),
+      {rows:[]} as any,
+    ),
+    guardedDashboard(
+      "operation-type-distribution",
+      ()=>query<{type:string;count:string}>(
+        "SELECT w.type,count(*)::text count FROM work_orders w WHERE "+distBase.where+" GROUP BY w.type ORDER BY count(*) DESC",
+        distBase.params,
+      ),
+      {rows:[]} as any,
+    ),
+    guardedDashboard(
+      "operation-site-distribution",
+      ()=>query<{site:string;count:string}>(
+        "SELECT s.name site,count(*)::text count FROM work_orders w JOIN sites s ON s.id=w.site_id WHERE "+distBase.where+" GROUP BY s.name ORDER BY count(*) DESC LIMIT 6",
+        distBase.params,
+      ),
+      {rows:[]} as any,
+    ),
+    guardedDashboard(
+      "operation-recent",
+      ()=>query<{id:string;number:string;title:string;status:string;priority:string;asset:string|null}>(
+        "SELECT w.id,w.number::text,w.title,w.status,w.priority,a.name asset FROM work_orders w LEFT JOIN assets a ON a.id=w.asset_id WHERE "+recentBase.where+" ORDER BY w.updated_at DESC LIMIT 10",
+        recentBase.params,
+      ),
+      {rows:[]} as any,
+    ),
   ]);
 
   const statusNames:Record<string,string>={open:"Abiertas",assigned:"Asignadas",in_progress:"En progreso",paused:"Pausadas",completed:"Completadas",cancelled:"Canceladas"};
   const typeNames:Record<string,string>={corrective:"Correctivo",preventive:"Preventivo",inspection:"Inspección",emergency:"Emergencia",improvement:"Mejora"};
-  const statusRows=statuses.rows.map(row=>({key:row.status,label:statusNames[row.status]||row.status,count:n(row.count)}));
-  const typeRows=types.rows.map(row=>({key:row.type,label:typeNames[row.type]||row.type,count:n(row.count)}));
-  const siteRows=siteDist.rows.map(row=>({key:row.site,label:row.site,count:n(row.count)}));
+  const statusRows=statuses.data.rows.map((row:{status:string;count:string})=>({key:row.status,label:statusNames[row.status]||row.status,count:n(row.count)}));
+  const typeRows=types.data.rows.map((row:{type:string;count:string})=>({key:row.type,label:typeNames[row.type]||row.type,count:n(row.count)}));
+  const siteRows=siteDist.data.rows.map((row:{site:string;count:string})=>({key:row.site,label:row.site,count:n(row.count)}));
+
   const preventiveCompliance=pct(metrics.preventiveDone,metrics.preventive);
   const previousPreventiveCompliance=pct(previous.preventiveDone,previous.preventive);
+  const failedSections=[
+    metrics.failed||previous.failed?"KPIs":"",
+    trend.failed?"tendencia":"",
+    assets.failed?"activos":"",
+    stock.failed?"inventario":"",
+    techs.failed?"equipo":"",
+    statuses.failed||types.failed||siteDist.failed?"distribuciones":"",
+    recent.failed?"actividad reciente":"",
+    sitesResult.failed?"sedes":"",
+  ].filter(Boolean);
 
   const role=session.role;
   let cards:DashboardKpiCard[]=[
@@ -417,17 +525,18 @@ async function operation(session:Session,filters:DashboardFilters) {
     {label:"Cumplimiento preventivo",value:String(preventiveCompliance)+"%",hint:String(metrics.preventiveDone)+"/"+String(metrics.preventive)+" preventivas del periodo",icon:"activity",current:preventiveCompliance,previous:previousPreventiveCompliance,comparisonLabel:filters.comparisonLabel,direction:"higher-better"},
     {label:"Costo de mantenimiento",value:money(metrics.cost),hint:hrs(metrics.downtime/60)+" de indisponibilidad",icon:"clock",current:metrics.cost,previous:previous.cost,comparisonLabel:filters.comparisonLabel,direction:"lower-better",tone:"warning"},
   ];
+
   if(role==="admin"){
     cards=[
-      {label:"Activos visibles",value:String(n(assets.rows[0]?.count)),hint:"Foto actual del alcance autorizado",icon:"asset",href:"/dashboard/assets"},
+      {label:"Activos visibles",value:String(n(assets.data.rows[0]?.count)),hint:"Foto actual del alcance autorizado",icon:"asset",href:"/dashboard/assets"},
       cards[0],
       cards[2],
-      {label:"Equipo técnico",value:String(n(techs.rows[0]?.count)),hint:String(n(stock.rows[0]?.count))+" artículos bajo mínimo",icon:"user",href:"/dashboard/users"},
+      {label:"Equipo operativo",value:String(n(techs.data.rows[0]?.count)),hint:String(n(stock.data.rows[0]?.count))+" artículos bajo mínimo",icon:"user",href:"/dashboard/users"},
     ];
   }
   if(role==="viewer"){
     cards=[
-      {label:"Activos visibles",value:String(n(assets.rows[0]?.count)),hint:"Foto actual del alcance autorizado",icon:"asset",href:"/dashboard/assets"},
+      {label:"Activos visibles",value:String(n(assets.data.rows[0]?.count)),hint:"Foto actual del alcance autorizado",icon:"asset",href:"/dashboard/assets"},
       cards[1],
       cards[2],
       cards[3],
@@ -443,6 +552,9 @@ async function operation(session:Session,filters:DashboardFilters) {
     siteOptions={sites}
     priorityOptions={PRIORITY_OPTIONS}
   >
+    {failedSections.length>0&&<div className="notice warning dashboard-partial-notice">
+      El Dashboard cargó con datos disponibles. No fue posible actualizar temporalmente: {failedSections.join(", ")}.
+    </div>}
     <div className="dashboard-layout-main dashboard-layout-analytics">
       <Panel eyebrow="Tendencia" title="Órdenes mes a mes">
         <DashboardTrendChart labels={trend.labels} series={[
@@ -454,7 +566,7 @@ async function operation(session:Session,filters:DashboardFilters) {
         <DashboardStatTiles items={[
           {label:"Costo",value:money(metrics.cost),hint:"Mano de obra + repuestos + externos",tone:"warning"},
           {label:"Indisponibilidad",value:hrs(metrics.downtime/60),hint:"Downtime acumulado"},
-          {label:"Inventario bajo mínimo",value:String(n(stock.rows[0]?.count)),hint:"Foto actual de existencias",tone:n(stock.rows[0]?.count)>0?"warning":"default"},
+          {label:"Inventario bajo mínimo",value:String(n(stock.data.rows[0]?.count)),hint:"Foto actual de existencias",tone:n(stock.data.rows[0]?.count)>0?"warning":"default"},
         ]}/>
       </Panel>
     </div>
@@ -463,7 +575,9 @@ async function operation(session:Session,filters:DashboardFilters) {
       <Panel eyebrow="Tipo de mantenimiento" title="Origen del trabajo">{typeRows.length?<Bars rows={typeRows}/>:<Empty>Sin datos por tipo.</Empty>}</Panel>
       <Panel eyebrow="Sedes" title="Carga por ubicación">{siteRows.length?<Bars rows={siteRows}/>:<Empty>Sin datos por sede.</Empty>}</Panel>
     </div>
-    <Panel eyebrow="Actividad reciente" title="Órdenes filtradas" action={<Link className="text-button" href="/dashboard/work-orders">Ver órdenes →</Link>}><div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>OT</th><th>Trabajo</th><th>Activo</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>{recent.rows.map(row=><tr key={row.id}><td><Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link></td><td>{row.title}</td><td>{row.asset||"—"}</td><td>{row.priority}</td><td><Status value={row.status}/></td></tr>)}</tbody></table></div></Panel>
+    <Panel eyebrow="Actividad reciente" title="Órdenes filtradas" action={<Link className="text-button" href="/dashboard/work-orders">Ver órdenes →</Link>}>
+      <div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>OT</th><th>Trabajo</th><th>Activo</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>{recent.data.rows.map((row:{id:string;number:string;title:string;status:string;priority:string;asset:string|null})=><tr key={row.id}><td><Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link></td><td>{row.title}</td><td>{row.asset||"—"}</td><td>{row.priority}</td><td><Status value={row.status}/></td></tr>)}</tbody></table></div>
+    </Panel>
   </Frame>;
 }
 
@@ -733,33 +847,12 @@ async function requester(session:Session,filters:DashboardFilters) {
   </Frame>;
 }
 
-function DashboardRecovery({session}:{session:Session}){
-  return <div className="role-dashboard dashboard-recovery">
-    <section className="card section dashboard-recovery-card">
-      <span className="eyebrow">Dashboard disponible en modo seguro</span>
-      <h1>No se pudo completar una consulta analítica</h1>
-      <p>La navegación y los módulos continúan disponibles. Recarga el Dashboard para volver a intentar los indicadores; el fallo de una métrica no debe derribar toda la aplicación.</p>
-      <div className="dashboard-recovery-actions">
-        {can(session,"work_orders.read")&&<Link className="button" href="/dashboard/work-orders">Órdenes de trabajo</Link>}
-        {can(session,"assets.read")&&<Link className="button secondary" href="/dashboard/assets">Activos</Link>}
-        {can(session,"locations.manage")&&<Link className="button secondary" href="/dashboard/locations">Ubicaciones</Link>}
-        {can(session,"users.manage")&&<Link className="button secondary" href="/dashboard/users">Usuarios</Link>}
-      </div>
-    </section>
-  </div>;
-}
-
 export default async function Dashboard({searchParams}:{searchParams:Promise<DashboardFilterInput>}){
   const session=await getSession();
   if(!session)redirect("/login");
   const filters=parseDashboardFilters(await searchParams);
-  try{
-    if(session.platformRole==="platform_owner"||session.platformRole==="superadmin")return await platform(session,filters);
-    if(session.role==="technician"||session.role==="external"||session.role==="provider")return await field(session,filters);
-    if(session.role==="requester")return await requester(session,filters);
-    return await operation(session,filters);
-  }catch(error){
-    console.error("[dashboard] analytical render failed",error);
-    return <DashboardRecovery session={session}/>;
-  }
+  if(session.platformRole==="platform_owner"||session.platformRole==="superadmin")return platform(session,filters);
+  if(session.role==="technician"||session.role==="external"||session.role==="provider")return field(session,filters);
+  if(session.role==="requester")return requester(session,filters);
+  return operation(session,filters);
 }

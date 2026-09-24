@@ -1082,3 +1082,32 @@ Rules:
 - Three-column analytical panels may collapse to two and then one column.
 - Charts must remain legible in dark mode and on mobile without adding a separate mobile-only dashboard.
 - Worker/field dashboards must not visually present leaderboard/ranking patterns.
+
+
+## Conditional facet filter pattern
+
+Module headers may add compact select facets beside search/status when the dataset benefits from structured narrowing.
+
+Rules:
+- derive choices only from the records already visible to the authenticated scope;
+- hide a facet entirely when it has zero or one useful choice;
+- facets cascade so a selected parent (for example Company) narrows child choices (for example Site/Supplier);
+- keep a single **Limpiar** action when any search/status/facet is active;
+- on compact/mobile layouts stack controls to full width rather than compressing labels;
+- do not duplicate a structured facet as a separate permanent filter panel unless the workflow requires more complex analytics.
+
+Recommended hierarchy is parent-to-specific: Company → Site → entity-specific facet.
+
+## Multi-select controlled-catalog pattern
+
+Use `MultiSelectDropdown` when one entity can belong to several values from a governed catalog.
+
+The control:
+- displays human labels;
+- submits stable codes as repeated form values;
+- supports select-all and clear;
+- remains keyboard/Escape dismissible;
+- stacks safely on mobile;
+- uses the same Desweb surface/focus treatment in light and dark mode.
+
+Do not replace a governed catalog with a free-text input merely for convenience. If a valid business category is missing, extend the shared catalog/migration deliberately so imports, exports and reports continue to use the same code set.

@@ -10,8 +10,8 @@ export type ProcurementDocumentSummary={
   document_number:string;issue_date:string|null;currency_code:string|null;subtotal:string;tax_total:string;total:string;notes:string|null;
   file_mime_type:string;file_name:string;file_size_bytes:string;review_status:ProcurementReviewStatus;review_notes:string|null;
   reviewed_at:string|null;reviewed_by_name:string|null;voided_at:string|null;void_reason:string|null;created_at:string;created_by_name:string|null;
-  line_count:number;document_quantity:string;document_value:string;receipt_count:number;receipt_quantity:string;receipt_value:string;
-  return_count:number;return_quantity:string;return_value:string;requested_quantity:string;requested_value:string;
+  line_count:number;document_quantity:string;document_value:string;receipt_count:number;receipt_ids:string[];receipt_quantity:string;receipt_value:string;
+  return_count:number;return_ids:string[];return_quantity:string;return_value:string;requested_quantity:string;requested_value:string;
   match_state:ProcurementMatchState;expected_quantity:number|null;expected_value:number|null;quantity_difference:number|null;value_difference:number|null;
 };
 
@@ -100,6 +100,7 @@ export async function loadProcurementReconciliation(requisitionId:string){
             COALESCE((SELECT sum(l.quantity) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_quantity,
             COALESCE((SELECT sum(l.line_total) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_value,
             COALESCE((SELECT count(*) FROM procurement_document_receipts pr WHERE pr.document_id=pd.id),0)::int receipt_count,
+            COALESCE((SELECT array_agg(pr.receipt_transaction_id) FROM procurement_document_receipts pr WHERE pr.document_id=pd.id),ARRAY[]::uuid[]) receipt_ids,
             COALESCE((SELECT sum(abs(t.quantity)) FROM procurement_document_receipts pr JOIN inventory_transactions t ON t.id=pr.receipt_transaction_id WHERE pr.document_id=pd.id),0)::text receipt_quantity,
             COALESCE((SELECT sum(abs(t.quantity)*COALESCE(t.unit_cost,ri.unit_cost_estimated,0))
                       FROM procurement_document_receipts pr
@@ -107,6 +108,7 @@ export async function loadProcurementReconciliation(requisitionId:string){
                       JOIN supplier_requisition_items ri ON ri.id=t.requisition_item_id
                       WHERE pr.document_id=pd.id),0)::text receipt_value,
             COALESCE((SELECT count(*) FROM procurement_document_returns pdr WHERE pdr.document_id=pd.id),0)::int return_count,
+            COALESCE((SELECT array_agg(pdr.supplier_return_id) FROM procurement_document_returns pdr WHERE pdr.document_id=pd.id),ARRAY[]::uuid[]) return_ids,
             COALESCE((SELECT sum(sri.quantity)
                       FROM procurement_document_returns pdr
                       JOIN supplier_return_items sri ON sri.return_id=pdr.supplier_return_id
@@ -222,6 +224,7 @@ export async function loadProcurementDocumentMatchForUpdate(client:PoolClient,do
             COALESCE((SELECT sum(l.quantity) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_quantity,
             COALESCE((SELECT sum(l.line_total) FROM procurement_document_lines l WHERE l.document_id=pd.id),0)::text document_value,
             COALESCE((SELECT count(*) FROM procurement_document_receipts pr WHERE pr.document_id=pd.id),0)::int receipt_count,
+            COALESCE((SELECT array_agg(pr.receipt_transaction_id) FROM procurement_document_receipts pr WHERE pr.document_id=pd.id),ARRAY[]::uuid[]) receipt_ids,
             COALESCE((SELECT sum(abs(t.quantity)) FROM procurement_document_receipts pr JOIN inventory_transactions t ON t.id=pr.receipt_transaction_id WHERE pr.document_id=pd.id),0)::text receipt_quantity,
             COALESCE((SELECT sum(abs(t.quantity)*COALESCE(t.unit_cost,ri.unit_cost_estimated,0))
                       FROM procurement_document_receipts pr
@@ -229,6 +232,7 @@ export async function loadProcurementDocumentMatchForUpdate(client:PoolClient,do
                       JOIN supplier_requisition_items ri ON ri.id=t.requisition_item_id
                       WHERE pr.document_id=pd.id),0)::text receipt_value,
             COALESCE((SELECT count(*) FROM procurement_document_returns pdr WHERE pdr.document_id=pd.id),0)::int return_count,
+            COALESCE((SELECT array_agg(pdr.supplier_return_id) FROM procurement_document_returns pdr WHERE pdr.document_id=pd.id),ARRAY[]::uuid[]) return_ids,
             COALESCE((SELECT sum(sri.quantity) FROM procurement_document_returns pdr JOIN supplier_return_items sri ON sri.return_id=pdr.supplier_return_id WHERE pdr.document_id=pd.id),0)::text return_quantity,
             COALESCE((SELECT sum(sri.quantity*sri.unit_cost) FROM procurement_document_returns pdr JOIN supplier_return_items sri ON sri.return_id=pdr.supplier_return_id WHERE pdr.document_id=pd.id),0)::text return_value,
             COALESCE((SELECT sum(ri.quantity_requested) FROM supplier_requisition_items ri WHERE ri.requisition_id=pd.requisition_id),0)::text requested_quantity,

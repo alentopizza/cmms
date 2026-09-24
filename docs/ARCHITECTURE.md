@@ -558,3 +558,18 @@ The query builds a requisition-level performance projection first, then derives:
 The same shared function is consumed by the Supplier workspace and `/api/profile-export`, preventing formula drift between screen and exported Supplier records. Existing Supplier and requisition/transaction indexes provide the access path; Phase 3 does not require a schema migration.
 
 Do not aggregate all Inventory transactions for Supplier cost analysis. Only receipt transactions carrying `requisition_id` and `requisition_item_id` are valid for these procurement KPIs.
+
+## Supplier return architecture
+
+Migration `035_supplier_returns.sql` introduces:
+
+- `supplier_returns`: immutable DEV header scoped to Organization, Supplier and requisition;
+- `supplier_return_items`: lines linked to requisition item, source receipt transaction, inventory item and outbound warehouse;
+- `inventory_transactions.supplier_return_id`, `supplier_return_item_id` and `source_transaction_id` for Kardex traceability;
+- Kardex movement type `supplier_return`.
+
+`cmms_apply_inventory_transaction()` treats `supplier_return` as an outbound delta and leaves the existing inbound `return` semantic unchanged. The return route inserts DEV header/lines and Kardex movements in one PostgreSQL transaction.
+
+The server locks source receipt rows before calculating prior returned quantity. This serializes concurrent return attempts through the normal route and prevents two requests from consuming the same receipt balance. PostgreSQL also validates that a return line references a real receipt for the same Organization/requisition/item and rejects stock that would go negative.
+
+DEV headers and lines are database-immutable. Requisition gross receiving totals remain unchanged; return history is queried separately for operational and export views.

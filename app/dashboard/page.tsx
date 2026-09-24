@@ -728,12 +728,33 @@ async function requester(session:Session,filters:DashboardFilters) {
   </Frame>;
 }
 
+function DashboardRecovery({session}:{session:Session}){
+  return <div className="role-dashboard dashboard-recovery">
+    <section className="card section dashboard-recovery-card">
+      <span className="eyebrow">Dashboard disponible en modo seguro</span>
+      <h1>No se pudo completar una consulta analítica</h1>
+      <p>La navegación y los módulos continúan disponibles. Recarga el Dashboard para volver a intentar los indicadores; el fallo de una métrica no debe derribar toda la aplicación.</p>
+      <div className="dashboard-recovery-actions">
+        {can(session,"work_orders.read")&&<Link className="button" href="/dashboard/work-orders">Órdenes de trabajo</Link>}
+        {can(session,"assets.read")&&<Link className="button secondary" href="/dashboard/assets">Activos</Link>}
+        {can(session,"locations.manage")&&<Link className="button secondary" href="/dashboard/locations">Ubicaciones</Link>}
+        {can(session,"users.manage")&&<Link className="button secondary" href="/dashboard/users">Usuarios</Link>}
+      </div>
+    </section>
+  </div>;
+}
+
 export default async function Dashboard({searchParams}:{searchParams:Promise<DashboardFilterInput>}){
   const session=await getSession();
   if(!session)redirect("/login");
   const filters=parseDashboardFilters(await searchParams);
-  if(session.platformRole==="platform_owner"||session.platformRole==="superadmin")return platform(session,filters);
-  if(session.role==="technician"||session.role==="external"||session.role==="provider")return field(session,filters);
-  if(session.role==="requester")return requester(session,filters);
-  return operation(session,filters);
+  try{
+    if(session.platformRole==="platform_owner"||session.platformRole==="superadmin")return await platform(session,filters);
+    if(session.role==="technician"||session.role==="external"||session.role==="provider")return await field(session,filters);
+    if(session.role==="requester")return await requester(session,filters);
+    return await operation(session,filters);
+  }catch(error){
+    console.error("[dashboard] analytical render failed",error);
+    return <DashboardRecovery session={session}/>;
+  }
 }

@@ -522,7 +522,7 @@ export default function SupplierDirectory({
               <Link href={"/dashboard/requisitions/"+req.id}>
                 <span>REQ-{req.number.padStart(6,"0")}</span>
                 <div className="supplier-requisition-status-stack"><strong>{statusLabel(req.status)}</strong>{req.approval_required&&<em className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</em>}</div>
-                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small>
+                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}{req.return_count>0?" · "+req.return_count+" DEV":""}</small>
                 <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido{Number(req.quantity_returned)>0?" · "+Number(req.quantity_returned).toLocaleString("es-CO")+" devuelto":""}</em></div>
                 <UiIcon name="chevron-right" size={14}/>
               </Link>

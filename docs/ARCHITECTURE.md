@@ -440,3 +440,27 @@ The Users directory must remain a lightweight, reliable management surface.
 Base User rows include only summary counters that are cheap and required by the directory/profile shell. Higher-cost statistics such as seven-day attendance series, today's attendance duration, overdue Activities and upcoming Activity agenda are loaded on demand from `/api/users/[id]/statistics` after a User profile is opened.
 
 This prevents a statistics/reporting query from becoming a hard dependency for loading the entire Users module. A failure in the detailed statistics endpoint must be contained inside the Statistics tab and must not prevent account administration.
+
+
+## Role dashboard comparison architecture
+
+The root `/dashboard` keeps one server-authoritative read model per role family rather than loading a universal cross-tenant dataset.
+
+Dashboard filters now include:
+- current date range;
+- comparison mode: previous equivalent period or same period of the previous year;
+- Work Order / Activity / Subscription status where applicable;
+- authorized Site for tenant/field/requester roles;
+- Work Order priority for operational records.
+
+`lib/dashboard-filters.ts` parses and validates these values, derives the comparison range, and exposes SQL helpers for period, Site and Priority predicates. Site selection never replaces the session scope: tenant queries first enforce Organization/Site authorization and only then narrow to the selected Site.
+
+Role-specific dashboard queries provide:
+- current-period KPI aggregates;
+- comparison-period aggregates using the identical authorization and contextual filters;
+- six-month monthly series for the visual trend layer;
+- authorized recent-detail rows and distributions.
+
+`components/DashboardAnalytics.tsx` is presentation-only. It receives already-scoped aggregates and renders KPI deltas, evidence sparklines, monthly line charts, role context and summary tiles. It does not fetch or authorize data.
+
+Dashboard exports remain a separate authenticated server route, but Site, Priority, status and period filters are parsed by the same filter module and re-applied to the same role scope. Comparison ranges are visual analytical context; exports contain the selected current-period dataset rather than duplicating both periods.

@@ -292,7 +292,7 @@ export default function SupplierDirectory({
     toolbarActions={<>
       <button className="button secondary entity-action-button" type="button" onClick={()=>{setFinancialEditing(false);setEditing(value=>!value);setPreferredTab("general");}}><UiIcon name="edit"/><span>{editing?"Cancelar edición":"Editar"}</span></button>
       {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<button className="button secondary entity-action-button entity-action-wide" type="button" onClick={()=>setPreferredTab("requisitions")}><UiIcon name="plus"/><span>Nueva requisición</span></button>}
-      <ProfileExportMenu entity="supplier" id={selected.id}/>
+      <ProfileExportMenu entity="supplier" id={selected.id} documentLabel="Ficha del proveedor"/>
       <button className="button danger-secondary entity-action-button" type="button" onClick={()=>setDeleteCandidate(selected)}><UiIcon name="trash"/><span>Eliminar</span></button>
     </>}
     initialTab={preferredTab}

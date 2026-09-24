@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import UiIcon from "@/components/UiIcon";
 import { IconButton } from "@/components/ui-kit/Button";
@@ -8,7 +8,7 @@ import { IconButton } from "@/components/ui-kit/Button";
 type OverlaySize="sm"|"md"|"lg";
 
 function useOverlay(open:boolean,onClose:()=>void){
-  const panelRef=useRef<HTMLElement>(null);
+  const panelRef=useRef<HTMLElement|null>(null);
   useEffect(()=>{
     if(!open)return;
     const previous=document.activeElement instanceof HTMLElement?document.activeElement:null;
@@ -48,7 +48,7 @@ export function Modal({
   const ref=useOverlay(open,onClose);
   if(!open||typeof document==="undefined")return null;
   return createPortal(<div className="ds-overlay-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <section ref={ref as RefObject<HTMLElement>} className={["ds-modal","ds-modal-"+size,className].filter(Boolean).join(" ")} role={role} aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
+    <section ref={ref} className={["ds-modal","ds-modal-"+size,className].filter(Boolean).join(" ")} role={role} aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
       <header className={["ds-overlay-header",headerClassName].filter(Boolean).join(" ")}>
         <div>{eyebrow&&<span className="ds-overlay-eyebrow">{eyebrow}</span>}<h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
         <IconButton icon="x" label={closeLabel} variant="ghost" onClick={onClose}/>

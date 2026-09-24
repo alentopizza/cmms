@@ -468,3 +468,21 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Reconciliation must never silently alter requisition approval, received quantities, Supplier returns or Inventory stock.
 - Commercial evidence requires `requisitions.reconcile`; tenant and Site scope must be revalidated server-side for upload, linking, review, preview/download and export.
 - Voided documents remain available as historical evidence but cannot receive new evidence or review changes.
+
+
+## Unified Inventory/Kardex import invariant
+
+- Inventory and Supplier-context inventory imports use one engine and one master workbook: `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx`. Never fork global and Supplier-specific templates or processing services.
+- Import launch context is not product ownership. Supplier is a property of the Inventory item; the import context only controls how that relation is resolved.
+- Global import resolves Supplier per row in this order: internal Supplier ID, tax/NIT, internal Supplier code, exact Supplier name.
+- Contextual Supplier import may inherit the opened Supplier when a row omits Supplier identifiers. If the file contains other Suppliers, the user must explicitly choose Context-only or Import-all/global behavior.
+- Switching a Supplier-context import to Import-all means true global mode: every in-scope row must resolve its own Supplier; do not silently inherit the opened Supplier.
+- The master workbook sheets are `INSTRUCCIONES`, `INVENTARIO`, `KARDEX`, `PROVEEDORES`, `BODEGAS` and `CATALOGOS`. Blank/current-data downloads must keep the exact same schema.
+- `TIPO=SERVICIO` is non-inventoriable: omit it from physical Inventory and Kardex and report it in validation summary.
+- Kardex inherits Supplier from the SKU whenever possible. An explicitly supplied different Supplier is a blocking inconsistency.
+- Validate the whole selected scope before any write. Commit remains one PostgreSQL transaction; no partial save is allowed.
+- Existing SKU handling may update master data or skip the master row, but neither option rewrites historical Kardex. Compatible duplicate file rows are not duplicated; incompatible duplicates block.
+- A warehouse referenced by Inventory/Kardex must already exist or be defined in the workbook BODEGAS sheet. Do not silently create a warehouse from an arbitrary product/movement row.
+- `MOVIMIENTO_ID` is optional external traceability, but when present it must be unique per Organization and prevents reimporting the same physical movement.
+- Import history must preserve IMP folio, source file/user, Global/Supplier origin, contextual Supplier when applicable, selected scope, imported rows, omitted rows, warnings and errors.
+- Site authorization and Organization scope are server-authoritative for both validation and commit.

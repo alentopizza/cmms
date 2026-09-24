@@ -60,7 +60,9 @@ async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSessi
     COALESCE(u.full_name,'Sistema') created_by,
     CASE WHEN r.number IS NULL THEN '' ELSE 'REQ-'||lpad(r.number::text,6,'0') END requisition,
     CASE WHEN sr.number IS NULL THEN '' ELSE 'DEV-'||lpad(sr.number::text,6,'0') END supplier_return,
-    CASE WHEN source.id IS NULL THEN '' ELSE to_char(source.movement_at,'YYYY-MM-DD HH24:MI')||' · '||substr(source.id::text,1,8) END source_receipt
+    CASE WHEN source.id IS NULL THEN '' ELSE to_char(source.movement_at,'YYYY-MM-DD HH24:MI')||' · '||substr(source.id::text,1,8) END source_receipt,
+    COALESCE(t.source_movement_id,'') source_movement_id,
+    CASE WHEN b.import_number IS NULL THEN '' ELSE 'IMP-'||to_char(b.created_at,'YYYY')||'-'||lpad(b.import_number::text,6,'0') END import_batch
     FROM inventory_transactions t
     JOIN inventory_items i ON i.id=t.item_id
     JOIN organizations o ON o.id=t.organization_id
@@ -71,7 +73,8 @@ async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSessi
     LEFT JOIN users u ON u.id=t.created_by
     LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
     LEFT JOIN supplier_returns sr ON sr.id=t.supplier_return_id
-    LEFT JOIN inventory_transactions source ON source.id=t.source_transaction_id`;
+    LEFT JOIN inventory_transactions source ON source.id=t.source_transaction_id
+    LEFT JOIN bulk_import_batches b ON b.id=t.import_batch_id`;
   if(session.platformRole!=="user"){
     return filter
       ?query<Row>(base+" WHERE t.type=$1 ORDER BY t.movement_at DESC,t.created_at DESC",[filter])
@@ -130,12 +133,12 @@ export async function GET(request:Request){
     ?["SKU","Artículo","Descripción","Categoría","Presentación","Unidad","Existencia","Mínimo","Máximo","Costo unitario","Empresa","Sede","Sububicación","Bodega","Proveedor","Estado"]
     :entity==="assets"
       ?["Código","Activo","Descripción","Categoría","Empresa","Sede","Sububicación","Proveedor","Fabricante","Modelo","Serial","Estado","Criticidad","Fecha compra","Fecha instalación","Garantía","Costo compra"]
-      :["Fecha","Tipo","SKU","Artículo","Proveedor","Bodega origen","Bodega destino","Cantidad","Costo unitario","Documento","Requisición","DEV proveedor","Recepción origen","Lote","Vencimiento","Centro de costo","Empresa","Sede","Usuario","Observaciones"];
+      :["Fecha","Tipo","SKU","Artículo","Proveedor","Bodega origen","Bodega destino","Cantidad","Costo unitario","Documento","MOVIMIENTO_ID","Importación","Requisición","DEV proveedor","Recepción origen","Lote","Vencimiento","Centro de costo","Empresa","Sede","Usuario","Observaciones"];
   const keys=entity==="inventory"
     ?["sku","name","description","category","presentation","unit","quantity","min_quantity","max_quantity","unit_cost","company","site","location","warehouse","supplier","status"]
     :entity==="assets"
       ?["code","name","description","category","company","site","location","supplier","manufacturer","model","serial","status","criticality","purchase_date","installation_date","warranty_expires","purchase_cost"]
-      :["movement_at","type","sku","item_name","supplier","warehouse","destination","quantity","unit_cost","document_number","requisition","supplier_return","source_receipt","lot_number","expires_at","cost_center","company","site","created_by","notes"];
+      :["movement_at","type","sku","item_name","supplier","warehouse","destination","quantity","unit_cost","document_number","source_movement_id","import_batch","requisition","supplier_return","source_receipt","lot_number","expires_at","cost_center","company","site","created_by","notes"];
   const base=safeName(entity==="inventory"?"inventario-desweb":entity==="assets"?"activos-desweb":"kardex-desweb");
   if(format==="csv"){
     const body=[headers.map(csvCell).join(","),...result.rows.map(row=>keys.map(key=>csvCell(row[key])).join(","))].join("\n");

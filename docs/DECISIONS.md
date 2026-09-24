@@ -507,3 +507,27 @@ Inventory receipts and Supplier returns already represent what physically entere
 - only a current automatic match can be Verified;
 - calculated differences may be explicitly accepted as exceptions or disputed, both with audit notes;
 - no reconciliation action changes Kardex, received quantities, approval state or Supplier-return quantities.
+
+
+## ADR — Inventory/Kardex uses one master template and one context-aware import engine
+
+**Status:** Accepted — 2026-09-24.
+
+### Decision
+
+Inventory and Supplier-profile imports share one workbook schema and one backend import engine. Supplier context is an input to resolution/selection, not a separate import product.
+
+### Rationale
+
+Separate templates or engines create schema drift, duplicate validation logic and make the same Excel behave differently depending on where the user clicks Importar. Supplier belongs to the product; the launch context should only reduce repeated input or narrow the selected rows.
+
+### Consequences
+
+- `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx` is the only Inventory/Kardex workbook format;
+- Provider context can inherit the opened Supplier but cannot silently steal rows explicitly owned by another Supplier;
+- Import-all from a Supplier profile reuses Global resolution rules;
+- blank/current-data downloads retain identical sheets/columns;
+- Supplier identity follows deterministic ID/NIT/code/name priority;
+- preflight is complete before atomic commit;
+- external movement IDs and IMP batch folios improve repeat-import traceability;
+- no future feature should fork a Supplier-only import route/service.

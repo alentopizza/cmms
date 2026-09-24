@@ -14,6 +14,7 @@ type Tx={
   site_id:string|null;site_name:string|null;type:string;quantity:string;unit_cost:string|null;warehouse_id:string|null;warehouse_name:string|null;
   destination_warehouse_id:string|null;destination_name:string|null;document_number:string|null;movement_at:string;lot_number:string|null;expires_at:string|null;
   cost_center:string|null;notes:string|null;created_by_name:string|null;requisition_id:string|null;requisition_number:string|null;supplier_return_number:string|null;
+  source_movement_id:string|null;import_number:string|null;import_created_at:string|null;
 };
 type Item={id:string;sku:string;name:string;unit:string;organization_id:string;site_id:string|null;warehouse_id:string|null};
 type Warehouse={id:string;name:string;organization_id:string;site_id:string|null};
@@ -56,7 +57,8 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   const base=`SELECT t.id,t.organization_id,o.name organization_name,t.item_id,i.sku,i.name item_name,i.unit,i.supplier_id,p.name supplier_name,
       i.site_id,s.name site_name,t.type,t.quantity::text,t.unit_cost::text,t.warehouse_id,w.name warehouse_name,
       t.destination_warehouse_id,d.name destination_name,t.document_number,t.movement_at::text,t.lot_number,t.expires_at::text,t.cost_center,t.notes,
-      u.full_name created_by_name,t.requisition_id,r.number::text requisition_number,sr.number::text supplier_return_number
+      u.full_name created_by_name,t.requisition_id,r.number::text requisition_number,sr.number::text supplier_return_number,
+      t.source_movement_id,b.import_number::text import_number,b.created_at::text import_created_at
     FROM inventory_transactions t
     JOIN inventory_items i ON i.id=t.item_id
     JOIN organizations o ON o.id=t.organization_id
@@ -64,7 +66,8 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
     LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
     LEFT JOIN users u ON u.id=t.created_by
     LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
-    LEFT JOIN supplier_returns sr ON sr.id=t.supplier_return_id`;
+    LEFT JOIN supplier_returns sr ON sr.id=t.supplier_return_id
+    LEFT JOIN bulk_import_batches b ON b.id=t.import_batch_id`;
 
   let transactions;
   if(platform){
@@ -97,7 +100,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       description="Historial auditable de entradas, salidas, ajustes, devoluciones y transferencias por bodega."
       count={transactions.rowCount||0}
       countLabel="movimientos"
-      searchPlaceholder="Buscar SKU, producto, documento, proveedor, bodega o lote"
+      searchPlaceholder="Buscar SKU, producto, documento, MOVIMIENTO_ID, IMP, proveedor, bodega o lote"
       filters={[
         {value:"all",label:"Todos"},{value:"receipt",label:"Entradas"},{value:"issue",label:"Salidas"},
         {value:"adjustment",label:"Ajustes"},{value:"return",label:"Dev. a inventario"},{value:"supplier_return",label:"Dev. a proveedor"},{value:"transfer",label:"Transferencias"},
@@ -141,7 +144,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
           const qty=Number(tx.quantity||0);
           const displayQty=tx.type==="issue"||tx.type==="supplier_return"?-Math.abs(qty):qty;
           return <tr key={tx.id} data-module-record data-status={tx.type}
-            data-search={[tx.sku,tx.item_name,tx.document_number,tx.supplier_name,tx.warehouse_name,tx.destination_name,tx.lot_number,tx.cost_center,tx.created_by_name,tx.requisition_number?"REQ-"+tx.requisition_number.padStart(6,"0"):null,tx.supplier_return_number?"DEV-"+tx.supplier_return_number.padStart(6,"0"):null].filter(Boolean).join(" ")}
+            data-search={[tx.sku,tx.item_name,tx.document_number,tx.source_movement_id,tx.import_number?"IMP-"+new Date(tx.import_created_at||tx.movement_at).getFullYear()+"-"+tx.import_number.padStart(6,"0"):null,tx.supplier_name,tx.warehouse_name,tx.destination_name,tx.lot_number,tx.cost_center,tx.created_by_name,tx.requisition_number?"REQ-"+tx.requisition_number.padStart(6,"0"):null,tx.supplier_return_number?"DEV-"+tx.supplier_return_number.padStart(6,"0"):null].filter(Boolean).join(" ")}
             data-filter-organization={tx.organization_id} data-filter-organization-label={tx.organization_name}
             data-filter-site={tx.site_id||""} data-filter-site-label={tx.site_name||""}
             data-filter-supplier={tx.supplier_id||""} data-filter-supplier-label={tx.supplier_name||""}
@@ -149,7 +152,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
             <td><strong>{new Date(tx.movement_at).toLocaleDateString("es-CO")}</strong><small className="table-subline">{new Date(tx.movement_at).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})}</small></td>
             <td><span className={"kardex-type-pill "+tx.type}>{typeLabel(tx.type,qty)}</span></td>
             <td><strong>{tx.sku}</strong><small className="table-subline">{tx.item_name} · {tx.supplier_name||"Sin proveedor"}</small></td>
-            <td>{tx.document_number||"—"}{tx.supplier_return_number?<small className="table-subline">DEV-{tx.supplier_return_number.padStart(6,"0")}</small>:null}{tx.requisition_id&&tx.requisition_number?<Link className="table-subline kardex-requisition-link" href={"/dashboard/requisitions/"+tx.requisition_id}>REQ-{tx.requisition_number.padStart(6,"0")}</Link>:null}</td>
+            <td>{tx.document_number||"—"}{tx.source_movement_id?<small className="table-subline">MOV · {tx.source_movement_id}</small>:null}{tx.import_number?<small className="table-subline">IMP-{new Date(tx.import_created_at||tx.movement_at).getFullYear()}-{tx.import_number.padStart(6,"0")}</small>:null}{tx.supplier_return_number?<small className="table-subline">DEV-{tx.supplier_return_number.padStart(6,"0")}</small>:null}{tx.requisition_id&&tx.requisition_number?<Link className="table-subline kardex-requisition-link" href={"/dashboard/requisitions/"+tx.requisition_id}>REQ-{tx.requisition_number.padStart(6,"0")}</Link>:null}</td>
             <td>{tx.warehouse_name||"—"}{tx.destination_name?<small className="table-subline">→ {tx.destination_name}</small>:null}</td>
             <td><strong className={displayQty<0?"kardex-negative":"kardex-positive"}>{displayQty>0?"+":""}{displayQty} {tx.unit}</strong></td>
             <td>{tx.unit_cost?Number(tx.unit_cost).toLocaleString("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}):"—"}</td>

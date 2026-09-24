@@ -7,28 +7,42 @@ import { query } from "@/lib/db";
 type Named={id:string;name:string};
 type Site={id:string;name:string};
 type Location={id:string;name:string;site_name:string};
-type Supplier={id:string;name:string;tax_id:string|null};
+type Supplier={id:string;code:string|null;name:string;tax_id:string|null;supplier_type:string};
 type Category={id:string;name:string};
-type Warehouse={id:string;name:string;site_name:string|null;location_name:string|null};
+type Warehouse={id:string;code:string;name:string;type:string;responsible:string|null;capacity:string|null;active:boolean;location_detail:string|null;notes:string|null;site_name:string|null;location_name:string|null};
+type InventoryRow={
+  supplier_id:string|null;supplier_code:string|null;supplier_tax_id:string|null;supplier_name:string|null;sku:string;name:string;description:string|null;
+  category:string|null;subcategory:string|null;brand:string|null;model:string|null;presentation:string|null;unit:string;barcode:string|null;
+  site_name:string|null;location_name:string|null;warehouse_name:string|null;min_quantity:string;max_quantity:string;quantity:string;unit_cost:string;
+  reference_price:string;tax_rate:string;active:boolean;
+};
 
 function header(row:ExcelJS.Row){
   row.font={bold:true,color:{argb:"FFFFFFFF"}};
   row.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F7F79"}};
-  row.alignment={vertical:"middle"};
+  row.alignment={vertical:"middle",wrapText:true};
 }
-function title(sheet:ExcelJS.Worksheet,text:string){
-  sheet.mergeCells("A1:F1");
+function title(sheet:ExcelJS.Worksheet,text:string,lastColumn="H"){
+  sheet.mergeCells("A1:"+lastColumn+"1");
   const cell=sheet.getCell("A1");
   cell.value=text;
   cell.font={bold:true,size:16,color:{argb:"FF17324A"}};
 }
-function fit(sheet:ExcelJS.Worksheet){
+function fit(sheet:ExcelJS.Worksheet,freeze=true){
   sheet.columns.forEach(column=>{
     let max=10;
-    column.eachCell?.({includeEmpty:true},cell=>{max=Math.min(38,Math.max(max,String(cell.value??"").length+2));});
+    column.eachCell?.({includeEmpty:true},cell=>{max=Math.min(42,Math.max(max,String(cell.value??"").length+2));});
     column.width=max;
   });
-  sheet.views=[{state:"frozen",ySplit:1}];
+  if(freeze)sheet.views=[{state:"frozen",ySplit:1}];
+}
+function addSheetHeader(sheet:ExcelJS.Worksheet,headers:string[]){
+  sheet.addRow(headers);
+  header(sheet.getRow(1));
+  sheet.autoFilter={from:"A1",to:{row:1,column:headers.length}};
+}
+function supplierTypeLabel(value:string){
+  return value==="both"?"Materiales + servicios":value==="services"?"Servicios":"Materiales / suministros";
 }
 
 export async function GET(request:Request){
@@ -36,133 +50,172 @@ export async function GET(request:Request){
   if(!session)return new NextResponse("No autorizado",{status:401});
   const url=new URL(request.url);
   const entity=url.searchParams.get("entity")==="assets"?"assets":"inventory";
-  const fixedSupplierId=url.searchParams.get("supplier")||"";
+  const contextSupplierId=url.searchParams.get("supplier")||"";
+  const dataMode=url.searchParams.get("data")==="current"?"current":"blank";
   if(entity==="inventory"&&!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return new NextResponse("Forbidden",{status:403});
 
   let organizationId=session.organizationId;
-  if(fixedSupplierId){
-    const scopedSupplier=await query<{organization_id:string}>(
-      "SELECT organization_id FROM suppliers WHERE id=$1 AND active=true",
-      [fixedSupplierId],
+  let contextSupplier:Supplier|null=null;
+  if(contextSupplierId){
+    const scoped=await query<Supplier&{organization_id:string}>(
+      "SELECT id,organization_id,code,name,tax_id,supplier_type FROM suppliers WHERE id=$1 AND active=true",
+      [contextSupplierId],
     );
-    if(!scopedSupplier.rowCount)return new NextResponse("Proveedor no disponible para esta plantilla.",{status:400});
-    if(session.platformRole==="user"&&scopedSupplier.rows[0].organization_id!==session.organizationId)return new NextResponse("Forbidden",{status:403});
-    organizationId=scopedSupplier.rows[0].organization_id;
+    if(!scoped.rowCount)return new NextResponse("Proveedor no disponible para esta plantilla.",{status:400});
+    if(session.platformRole==="user"&&scoped.rows[0].organization_id!==session.organizationId)return new NextResponse("Forbidden",{status:403});
+    organizationId=scoped.rows[0].organization_id;
+    contextSupplier=scoped.rows[0];
   }
   if(!organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
 
-  const [org,sites,locations,suppliers,categories,warehouses]=await Promise.all([
+  const [org,sites,locations,suppliers,categories,warehouses,presentations,subcategories,inventoryRows]=await Promise.all([
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT l.id,l.name,s.name site_name FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[organizationId]),
-    fixedSupplierId
-      ? query<Supplier>("SELECT id,name,tax_id FROM suppliers WHERE organization_id=$1 AND id=$2 AND active=true ORDER BY name",[organizationId,fixedSupplierId])
-      : query<Supplier>("SELECT id,name,tax_id FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Warehouse>("SELECT w.id,w.name,s.name site_name,l.name location_name FROM inventory_warehouses w LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id WHERE w.organization_id=$1 AND w.active=true ORDER BY w.name",[organizationId]),
+    query<Warehouse>(
+      `SELECT w.id,w.code,w.name,w.type,w.responsible,w.capacity::text,w.active,w.location_detail,w.notes,
+              s.name site_name,l.name location_name
+       FROM inventory_warehouses w
+       LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id
+       WHERE w.organization_id=$1 AND w.active=true ORDER BY w.name`,
+      [organizationId],
+    ),
+    query<{value:string}>("SELECT DISTINCT presentation value FROM inventory_items WHERE organization_id=$1 AND presentation IS NOT NULL AND btrim(presentation)<>'' ORDER BY presentation",[organizationId]),
+    query<{value:string}>("SELECT DISTINCT subcategory value FROM inventory_items WHERE organization_id=$1 AND subcategory IS NOT NULL AND btrim(subcategory)<>'' ORDER BY subcategory",[organizationId]),
+    dataMode==="current"
+      ?query<InventoryRow>(
+        `SELECT i.supplier_id,s.code supplier_code,s.tax_id supplier_tax_id,s.name supplier_name,i.sku,i.name,i.description,
+                c.name category,i.subcategory,i.brand,i.model,i.presentation,i.unit,i.barcode,site.name site_name,l.name location_name,
+                w.name warehouse_name,i.min_quantity::text,i.max_quantity::text,i.quantity::text,i.unit_cost::text,
+                i.reference_price::text,i.tax_rate::text,i.active
+         FROM inventory_items i
+         LEFT JOIN suppliers s ON s.id=i.supplier_id
+         LEFT JOIN inventory_categories c ON c.id=i.category_id
+         LEFT JOIN sites site ON site.id=i.site_id
+         LEFT JOIN locations l ON l.id=i.location_id
+         LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
+         WHERE i.organization_id=$1 AND ($2::uuid IS NULL OR i.supplier_id=$2::uuid)
+         ORDER BY s.name,i.sku`,
+        [organizationId,contextSupplierId||null],
+      )
+      :Promise.resolve({rows:[]} as {rows:InventoryRow[]}),
   ]);
 
   const workbook=new ExcelJS.Workbook();
   workbook.creator="Desweb CMMS";
   workbook.created=new Date();
-  const readme=workbook.addWorksheet("LEEME",{views:[{showGridLines:false}]});
-  title(readme,"PLANTILLA DE IMPORTACIÓN · DESWEB CMMS");
-  const lines=entity==="inventory"?[
-    ["Empresa",org.rows[0]?.name||""],
-    ["Objetivo","Cargar catálogo de inventario y movimientos Kardex con validación previa."],
-    ["Flujo recomendado","1) Revisa Bodegas. 2) Completa Inventario. 3) Completa Kardex. 4) Importa desde CMMS. 5) Corrige las filas señaladas antes de confirmar."],
-    ["Regla SKU","El SKU debe ser único dentro de la empresa. Usa siempre el mismo SKU en Inventario y Kardex."],
-    ["Proveedor","Debe existir previamente en Proveedores y tener capacidad de materiales/suministros."],
-    ["Sede/Sububicación","Usa exactamente los nombres listados en Catálogos."],
-    ["Bodega","La hoja Bodegas permite crear/actualizar almacenes. Si un artículo usa un nombre nuevo, también puede crearse durante la importación."],
-    ["Stock inicial","Se registra como movimiento de entrada para mantener trazabilidad en Kardex."],
-    ["Kardex","Tipos válidos: Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución, Traslado. Puedes registrar lote, vencimiento y centro de costo."],
-    ["Traslado","Requiere Bodega origen y Bodega destino."],
-    ["Compatibilidad","El importador también reconoce la hoja Productos y Kardex del archivo demo revisado, pero los servicios no se cargan como inventario."],
-  ]:[
-    ["Empresa",org.rows[0]?.name||""],
-    ["Objetivo","Carga masiva de activos con relaciones validadas contra Sede, Sububicación, Proveedor y Categoría."],
-    ["Regla código","El Código debe ser único dentro de la empresa."],
-    ["Categoría","Si la categoría no existe, el importador puede crearla automáticamente."],
-    ["Estados válidos","Operativo, En mantenimiento, Detenido, Retirado."],
-    ["Criticidad válida","Baja, Media, Alta, Crítica."],
-    ["Fechas","Usa formato AAAA-MM-DD."],
-    ["Relaciones","Sede, Sububicación y Proveedor deben existir y pertenecer a la misma empresa."],
-  ];
-  readme.addRows(lines);
-  readme.getColumn(1).font={bold:true};
-  readme.getColumn(1).width=24;readme.getColumn(2).width=95;readme.getColumn(2).alignment={wrapText:true,vertical:"top"};
 
-  const catalog=workbook.addWorksheet("Catálogos",{views:[{showGridLines:false}]});
-  const catalogHeaders=["Proveedores","Sedes","Sububicaciones","Bodegas","Categorías","Unidades","Estados activo","Criticidad","Tipos Kardex"];
-  catalog.addRow(catalogHeaders);header(catalog.getRow(1));
-  const max=Math.max(suppliers.rowCount||0,sites.rowCount||0,locations.rowCount||0,warehouses.rowCount||0,categories.rowCount||0,12);
-  const units=["unidad","caja","paquete","metro","rollo","litro","galón","kg","g","par","juego","bulto"];
-  const assetStatuses=["Operativo","En mantenimiento","Detenido","Retirado"];
-  const criticalities=["Baja","Media","Alta","Crítica"];
-  const movements=["Entrada","Salida","Ajuste positivo","Ajuste negativo","Devolución","Traslado"];
-  for(let i=0;i<max;i++)catalog.addRow([
-    suppliers.rows[i]?[suppliers.rows[i].name,suppliers.rows[i].tax_id].filter(Boolean).join(" · "):"",
-    sites.rows[i]?.name||"",
-    locations.rows[i]?(locations.rows[i].site_name+" · "+locations.rows[i].name):"",
-    warehouses.rows[i]?[warehouses.rows[i].name,warehouses.rows[i].site_name,warehouses.rows[i].location_name].filter(Boolean).join(" · "):"",
-    categories.rows[i]?.name||"",
-    units[i]||"",
-    assetStatuses[i]||"",
-    criticalities[i]||"",
-    movements[i]||"",
-  ]);
-  fit(catalog);
-
-  if(entity==="inventory"){
-    const warehouseSheet=workbook.addWorksheet("Bodegas",{views:[{showGridLines:false}]});
-    const warehouseHeaders=["Código","Bodega *","Tipo","Sede","Sububicación","Ubicación detalle","Responsable","Capacidad","Estado","Observaciones"];
-    warehouseSheet.addRow(warehouseHeaders);header(warehouseSheet.getRow(1));
-    warehouseSheet.addRow([
-      warehouses.rows[0]?.id?"ALM-001":"ALM-001",
-      warehouses.rows[0]?.name||"Almacén principal",
-      "Almacenamiento",
-      warehouses.rows[0]?.site_name||sites.rows[0]?.name||"",
-      warehouses.rows[0]?.location_name||locations.rows[0]?.name||"",
-      "Zona principal",
-      "",
-      1000,
-      "Activa",
-      "Bodega principal de inventario"
+  if(entity==="assets"){
+    const instructions=workbook.addWorksheet("INSTRUCCIONES",{views:[{showGridLines:false}]});
+    title(instructions,"PLANTILLA DE ACTIVOS · DESWEB CMMS");
+    instructions.addRows([
+      ["Empresa",org.rows[0]?.name||""],
+      ["Objetivo","Carga masiva de activos con validación previa."],
+      ["Código","Debe ser único dentro de la empresa."],
+      ["Relaciones","Sede, Sububicación y Proveedor deben existir."],
+      ["Fechas","Usa formato AAAA-MM-DD."],
     ]);
-    warehouseSheet.autoFilter={from:"A1",to:"J1"};
-    fit(warehouseSheet);
+    instructions.getColumn(1).font={bold:true};instructions.getColumn(1).width=24;instructions.getColumn(2).width=90;
 
-    const inventory=workbook.addWorksheet("Inventario",{views:[{showGridLines:false}]});
-    const headers=["SKU *","Nombre *","Descripción","Categoría","Presentación","Unidad *","Proveedor *","Sede *","Sububicación *","Bodega *","Stock mínimo","Stock máximo","Costo unitario","Stock inicial","Activo"];
-    inventory.addRow(headers);header(inventory.getRow(1));
-    inventory.addRow(["REP-001","Filtro plisado 20x20","Filtro para unidad HVAC","Repuestos HVAC","unidad","unidad",suppliers.rows[0]?.name||"",sites.rows[0]?.name||"",locations.rows[0]?.name||"","Almacén principal",2,20,35000,5,"Sí"]);
-    inventory.autoFilter={from:"A1",to:"O1"};
-    inventory.getColumn(3).width=34;
-    fit(inventory);
+    const catalogs=workbook.addWorksheet("CATALOGOS",{views:[{showGridLines:false}]});
+    addSheetHeader(catalogs,["PROVEEDORES","SEDES","SUBUBICACIONES","CATEGORIAS","ESTADOS","CRITICIDAD"]);
+    const max=Math.max(suppliers.rowCount||0,sites.rowCount||0,locations.rowCount||0,categories.rowCount||0,4);
+    const statuses=["Operativo","En mantenimiento","Detenido","Retirado"],criticalities=["Baja","Media","Alta","Crítica"];
+    for(let i=0;i<max;i++)catalogs.addRow([
+      suppliers.rows[i]?.name||"",sites.rows[i]?.name||"",locations.rows[i]?(locations.rows[i].site_name+" · "+locations.rows[i].name):"",
+      categories.rows[i]?.name||"",statuses[i]||"",criticalities[i]||"",
+    ]);
+    fit(catalogs);
 
-    const kardex=workbook.addWorksheet("Kardex",{views:[{showGridLines:false}]});
-    const kHeaders=["Fecha *","Tipo movimiento *","Documento","SKU *","Proveedor","Bodega origen *","Bodega destino","Cantidad *","Costo unitario","Lote","Vencimiento","Centro de costo","Usuario origen","Observaciones"];
-    kardex.addRow(kHeaders);header(kardex.getRow(1));
-    kardex.addRow([new Date().toISOString().slice(0,10),"Entrada","OC-0001","REP-001",suppliers.rows[0]?.name||"","Almacén principal","",10,35000,"LOTE-001","","Mantenimiento","","Compra inicial"]);
-    kardex.autoFilter={from:"A1",to:"N1"};
-    fit(kardex);
-  }else{
-    const assets=workbook.addWorksheet("Activos",{views:[{showGridLines:false}]});
-    const headers=["Código *","Nombre *","Descripción","Categoría","Sede *","Sububicación *","Proveedor *","Fabricante","Modelo","Serial","Estado *","Criticidad *","Fecha compra","Fecha instalación","Garantía vence","Costo compra","Ubicación detalle","Notas"];
-    assets.addRow(headers);header(assets.getRow(1));
-    assets.addRow(["ACT-001","Unidad manejadora de aire","Activo de ejemplo","HVAC",sites.rows[0]?.name||"",locations.rows[0]?.name||"",suppliers.rows[0]?.name||"","Carrier","39HQ","SN-DEMO-001","Operativo","Alta","","","","0","",""]);
-    assets.autoFilter={from:"A1",to:"R1"};
-    assets.getColumn(3).width=34;assets.getColumn(18).width=34;
+    const assets=workbook.addWorksheet("ACTIVOS",{views:[{showGridLines:false}]});
+    addSheetHeader(assets,["Código *","Nombre *","Descripción","Categoría","Sede *","Sububicación *","Proveedor *","Fabricante","Modelo","Serial","Estado *","Criticidad *","Fecha compra","Fecha instalación","Garantía vence","Costo compra","Ubicación detalle","Notas"]);
     fit(assets);
+    const body=Buffer.from(await workbook.xlsx.writeBuffer());
+    return new NextResponse(new Uint8Array(body),{headers:{
+      "Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition":"attachment; filename=\"plantilla-activos-desweb.xlsx\"",
+      "Cache-Control":"private, no-store",
+    }});
   }
 
+  const instructions=workbook.addWorksheet("INSTRUCCIONES",{views:[{showGridLines:false}]});
+  title(instructions,"PLANTILLA_INVENTARIO_KARDEX_DESWEB", "J");
+  const origin=contextSupplier?"IMPORTACIÓN CONTEXTUAL · "+contextSupplier.name:"IMPORTACIÓN GLOBAL";
+  instructions.addRows([
+    ["Empresa",org.rows[0]?.name||""],
+    ["Contexto de descarga",origin],
+    ["Regla principal","Esta es la única plantilla maestra. Puede cargarse desde Inventario o desde un Proveedor."],
+    ["Proveedor","Prioridad de identificación: PROVEEDOR_ID → NIT_PROVEEDOR → CODIGO_PROVEEDOR → PROVEEDOR exacto. En modo contextual puedes dejar estos campos vacíos para heredar el proveedor abierto."],
+    ["Servicios","TIPO=SERVICIO se detecta y se omite del inventario físico. No genera stock ni Kardex."],
+    ["Bodegas","Una bodega nueva debe definirse primero en la hoja BODEGAS. No se crean bodegas silenciosamente desde una fila de inventario o Kardex."],
+    ["Stock inicial","Solo aplica a productos nuevos y se registra como Entrada de Kardex. En productos existentes nunca reemplaza el saldo histórico."],
+    ["Duplicados","Un SKU existente se compara antes de confirmar; podrás elegir Actualizar datos maestros u Omitir. El Kardex histórico nunca se reemplaza."],
+    ["Kardex","El proveedor se hereda del SKU. Si informas un proveedor diferente al producto, la validación bloquea el movimiento."],
+    ["MOVIMIENTO_ID","Úsalo cuando el movimiento proviene de otro sistema. Debe ser único y evita reimportar el mismo movimiento."],
+    ["Contexto proveedor","Si el archivo contiene otros proveedores, podrás elegir Importar solo este proveedor o Importar todo el archivo."],
+    ["Validación","El archivo se analiza completamente antes de guardar. Con errores bloqueantes no se confirma ninguna fila."],
+    ["Plantilla con datos actuales","Las filas existentes se precargan solo como datos maestros. STOCK_INICIAL queda en 0 y KARDEX queda vacío para evitar duplicar movimientos históricos."],
+  ]);
+  instructions.getColumn(1).font={bold:true};instructions.getColumn(1).width=29;instructions.getColumn(2).width=105;instructions.getColumn(2).alignment={wrapText:true,vertical:"top"};
+
+  const inventory=workbook.addWorksheet("INVENTARIO",{views:[{showGridLines:false}]});
+  const inventoryHeaders=[
+    "PROVEEDOR_ID","NIT_PROVEEDOR","CODIGO_PROVEEDOR","PROVEEDOR","SKU","NOMBRE_PRODUCTO","DESCRIPCION","TIPO",
+    "CATEGORIA","SUBCATEGORIA","MARCA","MODELO","PRESENTACION","UNIDAD","CODIGO_BARRAS","SEDE","UBICACION","BODEGA",
+    "STOCK_MINIMO","STOCK_MAXIMO","STOCK_INICIAL","STOCK_ACTUAL_REFERENCIA","COSTO_UNITARIO","PRECIO_REFERENCIA","IVA",
+    "LOTE","FECHA_VENCIMIENTO","ESTADO",
+  ];
+  addSheetHeader(inventory,inventoryHeaders);
+  for(const item of inventoryRows.rows){
+    inventory.addRow([
+      item.supplier_id||"",item.supplier_tax_id||"",item.supplier_code||"",item.supplier_name||"",item.sku,item.name,item.description||"","PRODUCTO",
+      item.category||"",item.subcategory||"",item.brand||"",item.model||"",item.presentation||"",item.unit,item.barcode||"",item.site_name||"",
+      item.location_name||"",item.warehouse_name||"",Number(item.min_quantity),Number(item.max_quantity),0,Number(item.quantity),Number(item.unit_cost),
+      Number(item.reference_price),Number(item.tax_rate),"","",item.active?"ACTIVO":"INACTIVO",
+    ]);
+  }
+  fit(inventory);
+
+  const kardex=workbook.addWorksheet("KARDEX",{views:[{showGridLines:false}]});
+  addSheetHeader(kardex,[
+    "MOVIMIENTO_ID","FECHA","TIPO_MOVIMIENTO","DOCUMENTO","PROVEEDOR_ID","NIT_PROVEEDOR","CODIGO_PROVEEDOR","PROVEEDOR",
+    "SKU","BODEGA","BODEGA_DESTINO","UBICACION","LOTE","FECHA_VENCIMIENTO","CANTIDAD","COSTO_UNITARIO","CENTRO_COSTO",
+    "RESPONSABLE","OBSERVACIONES",
+  ]);
+  fit(kardex);
+
+  const providers=workbook.addWorksheet("PROVEEDORES",{views:[{showGridLines:false}]});
+  addSheetHeader(providers,["PROVEEDOR_ID","CODIGO_PROVEEDOR","NIT_PROVEEDOR","PROVEEDOR","TIPO","ESTADO"]);
+  for(const supplier of suppliers.rows)providers.addRow([supplier.id,supplier.code||"",supplier.tax_id||"",supplier.name,supplierTypeLabel(supplier.supplier_type),"ACTIVO"]);
+  fit(providers);
+
+  const warehousesSheet=workbook.addWorksheet("BODEGAS",{views:[{showGridLines:false}]});
+  addSheetHeader(warehousesSheet,["CODIGO_BODEGA","BODEGA","TIPO","SEDE","SUBUBICACION","UBICACION_DETALLE","RESPONSABLE","CAPACIDAD","ESTADO","OBSERVACIONES"]);
+  for(const warehouse of warehouses.rows)warehousesSheet.addRow([
+    warehouse.code,warehouse.name,warehouse.type,warehouse.site_name||"",warehouse.location_name||"",warehouse.location_detail||"",
+    warehouse.responsible||"",warehouse.capacity?Number(warehouse.capacity):"",warehouse.active?"ACTIVA":"INACTIVA",warehouse.notes||"",
+  ]);
+  fit(warehousesSheet);
+
+  const catalogs=workbook.addWorksheet("CATALOGOS",{views:[{showGridLines:false}]});
+  addSheetHeader(catalogs,["CATEGORIAS","SUBCATEGORIAS","PRESENTACIONES","UNIDADES","SEDES","UBICACIONES","TIPOS_PRODUCTO","TIPOS_KARDEX","ESTADOS"]);
+  const units=["unidad","caja","paquete","metro","rollo","litro","galón","kg","g","par","juego","bulto","pieza","set"];
+  const movements=["Entrada","Salida","Ajuste positivo","Ajuste negativo","Devolución","Traslado"];
+  const types=["PRODUCTO","SERVICIO"],statuses=["ACTIVO","INACTIVO"];
+  const max=Math.max(categories.rowCount||0,subcategories.rowCount||0,presentations.rowCount||0,units.length,sites.rowCount||0,locations.rowCount||0,movements.length);
+  for(let i=0;i<max;i++)catalogs.addRow([
+    categories.rows[i]?.name||"",subcategories.rows[i]?.value||"",presentations.rows[i]?.value||"",units[i]||"",sites.rows[i]?.name||"",
+    locations.rows[i]?(locations.rows[i].site_name+" · "+locations.rows[i].name):"",types[i]||"",movements[i]||"",statuses[i]||"",
+  ]);
+  fit(catalogs);
+
   const body=Buffer.from(await workbook.xlsx.writeBuffer());
-  const filename=entity==="inventory"?"plantilla-inventario-kardex-desweb.xlsx":"plantilla-activos-desweb.xlsx";
   return new NextResponse(new Uint8Array(body),{headers:{
     "Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "Content-Disposition":"attachment; filename=\""+filename+"\"",
+    "Content-Disposition":"attachment; filename=\"PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx\"",
     "Cache-Control":"private, no-store",
   }});
 }

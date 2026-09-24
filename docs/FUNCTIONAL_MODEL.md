@@ -837,3 +837,38 @@ Automatic comparison:
 - Other: informational only.
 
 A requisition export includes reconciliation evidence only when the authenticated user has the dedicated reconciliation permission.
+
+
+## Unified Inventory/Kardex import functional model
+
+### Global import
+
+Inventory → Importar opens Global mode. Every physical product must resolve a Supplier from the file. The engine uses PROVEEDOR_ID first, then NIT_PROVEEDOR, then CODIGO_PROVEEDOR, then exact PROVEEDOR name. Products and Kardex movements are grouped by resolved Supplier in the validation result.
+
+### Contextual Supplier import
+
+Proveedor → Inventarios / suministros → Importar starts Contextual mode. A product row without Supplier identity inherits the opened Supplier. Rows clearly referencing another Supplier are reported as warnings.
+
+The operator chooses:
+- **Solo este proveedor:** other-Supplier product/Kardex rows are omitted and do not make the selected scope invalid;
+- **Importar todo:** the same file is re-evaluated under Global rules and every row must resolve its own Supplier.
+
+### Products and services
+
+TIPO=PRODUCTO participates in physical Inventory. TIPO=SERVICIO is counted and omitted from stock/Kardex.
+
+Existing SKU:
+- Compare: user reviews warnings before making a decision;
+- Update: updates master fields only;
+- Skip: keeps the current master row unchanged.
+Historical Kardex is never overwritten.
+
+### Kardex
+
+Kardex uses the SKU as the primary relation. Supplier is inherited from the product if blank. If the movement explicitly identifies another Supplier, validation blocks it. MOVIMIENTO_ID, when present, must be unique.
+
+Validation simulates stock in row order so outgoing movements/transfers that would cause negative stock are reported before confirmation. PostgreSQL remains the final balance authority.
+
+### Atomicity and traceability
+
+No selected-scope row is persisted before validation succeeds. Confirming creates one transactionally committed import batch and an `IMP-YEAR-######` trace record containing origin, context, scope and imported/omitted counts.

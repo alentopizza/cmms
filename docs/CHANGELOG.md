@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-09-24 — Plantilla maestra única de Inventario y Kardex
+
+### Changed
+
+- Inventario y Proveedores ahora usan una única plantilla: `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx`.
+- La plantilla conserva siempre las hojas INSTRUCCIONES, INVENTARIO, KARDEX, PROVEEDORES, BODEGAS y CATALOGOS.
+- Plantilla vacía y Plantilla con datos actuales son modos de datos del mismo esquema, no archivos funcionalmente distintos.
+- Desde Inventario la importación funciona en modo Global y distribuye automáticamente productos/movimientos entre múltiples proveedores.
+- Desde la ficha de un Proveedor la importación inicia Contextual y permite elegir Solo este proveedor o Importar todo el archivo.
+- Importar todo desde Proveedor cambia realmente a reglas Globales; no hereda silenciosamente el proveedor abierto.
+
+### Supplier resolution and product master
+
+- Proveedor se resuelve por prioridad: ID interno → NIT/identificación fiscal → código interno → nombre exacto.
+- Proveedores incorporan código interno estable autogenerado.
+- Inventario incorpora subcategoría, marca, modelo, código de barras, precio de referencia e IVA para dar persistencia real a las columnas de la plantilla.
+- Servicios detectados no crean Inventario/Kardex y se reportan como omitidos.
+
+### Validation and Kardex integrity
+
+- Kardex hereda el proveedor desde el SKU cuando el archivo no lo informa y bloquea proveedores inconsistentes.
+- Bodegas usadas por Inventario/Kardex deben existir o estar declaradas en la hoja BODEGAS.
+- Validación previa simula la secuencia de stock y detecta saldos negativos antes de Confirmar.
+- MOVIMIENTO_ID permite deduplicación de movimientos externos mediante restricción única por empresa.
+- Errores/advertencias pueden incluir hoja, fila, campo, valor, problema y solución sugerida.
+- Validación muestra agrupación por proveedor con productos y movimientos.
+- SKU existentes requieren decisión Comparar, Actualizar u Omitir; actualizar nunca reescribe Kardex histórico.
+- La confirmación continúa siendo una única transacción PostgreSQL sin guardados parciales.
+
+### Traceability
+
+- Nueva migración `037_unified_inventory_import.sql`.
+- Cada lote confirmado tiene folio `IMP-AÑO-######`, origen Global/Proveedor, proveedor contextual cuando aplica, alcance, importados y omitidos.
+- Nuevo smoke `scripts/unified-inventory-import-smoke.mjs` incorporado a CI.
+
 ## 2026-09-24 — Fase 5 de abastecimiento: conciliación documental
 
 ### Added

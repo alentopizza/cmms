@@ -755,3 +755,20 @@ Physical receipts and Supplier returns remain authoritative for stock. The recon
 Automatic reconciliation and human review are intentionally separate. A document may calculate as `matched`, `difference`, `pending_evidence`, `informational` or `voided`; its review may separately be `pending`, `verified`, `exception_accepted` or `disputed`. Adding later evidence resets review to pending.
 
 Phase 5 completes the planned procurement sequence started with bulk Inventory/Kardex import, requisition receiving, approval/audit, Supplier KPIs and Supplier returns. The next project step is the planned global logic/flow/visual review rather than another predefined procurement phase.
+
+
+### Unified Inventory/Kardex master import — 2026-09-24
+
+Inventory and Supplier profiles now share one import architecture.
+
+The single workbook is `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx` with the same six sheets in every context: INSTRUCCIONES, INVENTARIO, KARDEX, PROVEEDORES, BODEGAS and CATALOGOS. Blank and current-data downloads are two data modes of the same schema, not separate templates.
+
+The import can start in:
+- **Global mode** from Inventory: each product resolves its own Supplier and multi-Supplier files are automatically distributed.
+- **Contextual mode** from a Supplier: the opened Supplier may be inherited when rows omit Supplier identity. If the file contains other Suppliers, the operator explicitly chooses Context-only or Import-all. Import-all switches to true Global rules.
+
+Supplier identity priority is internal ID → tax/NIT → internal Supplier code → exact name. Supplier code is now persisted on Supplier records and automatically generated when missing.
+
+The preflight validates structure, Supplier identity, SKU uniqueness, Site/Sub-location scope, warehouses, quantities/costs, expiry, Kardex relationships, external movement IDs and simulated warehouse stock before confirmation. Services are detected and omitted from physical Inventory/Kardex.
+
+Commit is still one PostgreSQL transaction and Kardex remains the stock authority. Import batches now carry `IMP-YEAR-######`, origin, contextual Supplier, commit scope and omitted-row counts.

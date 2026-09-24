@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-09-24 — Conditional directory filters, standardized Supplier catalogs and personnel/vendor dossiers
+
+### Added
+
+- Extended the shared module header with **conditional, cascading facets**. A facet such as Company, Site, Supplier, Role or Category is shown only when the authorized visible dataset contains more than one useful option.
+- Added contextual filters across Companies, Locations, Users, Suppliers, Assets, Inventory, Work Orders, Preventive Maintenance, Crews and Requisitions.
+- Added Company/Site filters where the directory can span multiple organizations or locations, plus domain-specific facets such as Role, Supplier, Criticality, Asset Category, Work Order Priority/Type, stock level, requisition requester and routine frequency.
+- Sublocations now gain a Type filter only when the selected Site actually contains more than one sublocation type.
+- Added migration `029_supplier_catalog_user_dossier_financial.sql`.
+
+### Supplier data normalization
+
+- Added standardized Supplier capability and specialty catalogs backed by stable codes rather than free-text labels.
+- Supplier capability and specialty selectors are multi-select, allowing one vendor to represent several kinds of commercial coverage and technical specialties.
+- Existing `supplier_type` remains as a derived compatibility field for current Inventory/Activity authorization and business rules.
+- Existing legacy free-text Supplier specialty text remains visible as a fallback until the Supplier is edited into the standardized catalog.
+- Added Company, capability, specialty and Country filters to the Supplier directory.
+
+### User dossier
+
+- Added an internal **Documents** tab to User/Technician profiles.
+- The personnel dossier supports standardized categories for identity document, résumé/CV, ARL, EPS, pension, severance, compensation fund, parafiscal/PILA evidence, bank certificate/account, contract, certifications and other records.
+- User documents are private, organization-scoped, authenticated and support archive/restore lifecycle.
+- Added **Emergency contact** to the User profile with normalized relationship type, phone, email and notes.
+
+### Supplier payment information
+
+- Added **Información financiera** to Supplier profiles for bank, account type/number, account holder and identification, currency, payment terms, payment email and administrative notes.
+- Normal profile display masks the account number to its final four digits.
+- Supplier payment data remains tenant scoped behind the existing Supplier-management permission.
+
+### Data integrity
+
+- Supplier catalog codes are validated server-side; a client dropdown is not treated as a data-integrity boundary.
+- Directory facets only narrow the records already returned under server-side authorization and never broaden tenant/Site scope.
+- Multi-select catalog values use stable codes to improve future spreadsheet/database imports, exports and integrations.
+
 ## 2026-09-24 — Role dashboards with KPI comparisons and analytical filters
 
 ### Changed

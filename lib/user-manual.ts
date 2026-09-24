@@ -401,7 +401,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas y pendientes.",
     ],
     notes:[
-      "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock."
+      "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock.",
       "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
     ],
     keywords:["requisición","compras","proveedor","inventario","insumos","cantidades","abastecimiento"],

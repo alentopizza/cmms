@@ -332,7 +332,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager"],
     href:"/dashboard/suppliers",
     steps:[
-      "Crea el proveedor con logo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y Hoja de vida.",
+      "Crea el proveedor con logo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y su ficha.",
       "Selecciona uno o varios Tipos de proveedor y una o varias Categorías / especialidades desde los catálogos estándar. No se escriben libremente para evitar variaciones en reportes, bases de datos e importaciones.",
       "El directorio permite filtrar por Empresa, Tipo/capacidad, Especialidad y País cuando exista más de una opción útil; los filtros se ocultan si no pueden reducir el listado.",
       "El directorio usa una tarjeta comercial compacta distinta a la de Usuarios: logo cuadrado redondeado superpuesto al banner, tipo, ubicación/categoría, contacto, actividades, suministros y requisiciones. Usa cuatro columnas en escritorio normal y cinco solo en pantallas suficientemente amplias.",
@@ -341,15 +341,15 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
       "Si es proveedor de Materiales/Suministros o Mixto, consulta Inventarios / suministros para ver los artículos que nos provee.",
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
-      "En Información financiera registra banco, tipo y número de cuenta, titular, moneda, plazo y correo para pagos. En el resumen normal el número de cuenta se presenta enmascarado.",
+      "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente.",
-      "Exporta la Hoja de vida del proveedor en PDF, Excel o Word compatible.",
+      "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible.",
     ],
     notes:[
       "Eliminar un proveedor con historial de inventario, actividades o requisiciones está bloqueado para conservar trazabilidad. Desactívalo cuando deba conservarse el historial.",
       "Actividades e Inventarios son proyecciones de sus módulos de origen; no se asignan de nuevo dentro de la ficha del proveedor.",
     ],
-    keywords:["proveedor","servicios","suministros","documentos","logo","hoja de vida"],
+    keywords:["proveedor","servicios","suministros","documentos","logo","ficha","exportar"],
   },
   {
     id:"requisitions",
@@ -397,6 +397,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Ficha de proveedor sin duplicados",
+    summary:"Información financiera ahora alterna entre resumen y edición; la pestaña Hoja de vida fue retirada y el único exportador queda en la cabecera de la ficha.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Cuadrillas visuales y edición correcta de teléfonos",

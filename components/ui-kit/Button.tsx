@@ -52,17 +52,24 @@ export function IconButton({
   variant="secondary",
   size="md",
   className,
+  loading=false,
+  fullWidth=false,
+  disabled,
+  type="button",
+  title,
   ...props
 }:Omit<ButtonProps,"children"|"iconLeft"|"iconRight">&{icon:UiIconName;label:string}){
   return <button
     {...props}
-    type={props.type||"button"}
+    type={type}
+    disabled={disabled||loading}
+    aria-busy={loading||undefined}
     aria-label={label}
-    title={props.title||label}
+    title={title||label}
     className={[
-      "ds-button","ds-icon-button","ds-button-"+variant,"ds-button-"+size,className||"",
+      "ds-button","ds-icon-button","ds-button-"+variant,"ds-button-"+size,fullWidth?"ds-button-full":"",className||"",
     ].filter(Boolean).join(" ")}
-  ><UiIcon name={icon} size={size==="sm"?14:size==="lg"?20:17}/></button>;
+  >{loading?<span className="ds-spinner ds-spinner-sm" aria-hidden="true"/>:<UiIcon name={icon} size={size==="sm"?14:size==="lg"?20:17}/>}</button>;
 }
 
 export function SplitButton({

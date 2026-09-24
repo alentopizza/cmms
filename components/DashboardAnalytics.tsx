@@ -50,12 +50,12 @@ function Sparkline({previous,current}:{previous:number;current:number}){
 
 function KpiBody({card}:{card:DashboardKpiCard}){
   const hasComparison=typeof card.current==="number"&&typeof card.previous==="number";
-  const change=hasComparison?delta(card.current!,card.previous!):undefined;
+  const change=hasComparison?delta(card.current!,card.previous!):null;
   const direction=card.direction||"neutral";
   return <article className={"dashboard-kpi dashboard-kpi-"+(card.tone||"default")}>
     <div className="dashboard-kpi-topline">
       <div className="dashboard-kpi-icon"><UiIcon name={card.icon} size={20}/></div>
-      {hasComparison&&<span className={"dashboard-kpi-change "+changeClass(change??null,direction)}>
+      {hasComparison&&<span className={"dashboard-kpi-change "+changeClass(change,direction)}>
         {change===null?"Nuevo":(change>=0?"+":"")+Math.round(change)+"%"}
       </span>}
     </div>

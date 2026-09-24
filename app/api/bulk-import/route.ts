@@ -21,7 +21,7 @@ type Supplier={id:string;name:string;tax_id:string|null;supplier_type:string};
 type Site={id:string;name:string};
 type Location={id:string;site_id:string;name:string};
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
-type Item={id:string;sku:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null};
+type Item={id:string;sku:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean};
 type ParsedWarehouse={
   row:number;code:string;name:string;type:string;responsible:string;locationDetail:string;capacity:number|null;active:boolean;notes:string;
   site:Site|null;location:Location|null;
@@ -143,7 +143,7 @@ async function catalogs(organizationId:string){
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Item>("SELECT i.id,i.sku,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1 AND i.active=true",[organizationId]),
+    query<Item>("SELECT i.id,i.sku,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
     query<{max_assets:number;max_inventory_items:number}>("SELECT max_assets,max_inventory_items FROM organization_limits WHERE organization_id=$1",[organizationId]),
     query<{assets:number;inventory:number}>("SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) assets,(SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) inventory",[organizationId]),
   ]);
@@ -215,14 +215,17 @@ function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
     const max=Math.max(0,numberValue(row.values.max)??0);
     const cost=Math.max(0,numberValue(row.values.cost)??0);
     const initial=Math.max(0,numberValue(row.values.initial)??0);
+    const active=boolValue(row.values.active,true);
     const existing=catalog.items.find(item=>item.sku.toUpperCase()===sku);
-    if(existing)issue(issues,sheetName,row.rowNumber,"warning","SKU existente: se actualizarán datos maestros; Stock inicial no reemplazará existencias actuales.");
-    else newCount++;
+    if(existing){
+      issue(issues,sheetName,row.rowNumber,"warning","SKU existente: se actualizarán datos maestros; Stock inicial no reemplazará existencias actuales.");
+      if(!existing.active&&active)newCount++;
+    }else if(active)newCount++;
 
     parsed.push({
       row:row.rowNumber,sku,name,description:textValue(row.values.description),category:textValue(row.values.category),
       presentation:textValue(row.values.presentation),unit,supplier,site,location,warehouseName,warehouse,min,max,cost,initial,
-      active:boolValue(row.values.active,true),existing,
+      active,existing,
     });
   }
   if(catalog.limits&&catalog.counts&&catalog.counts.inventory+newCount>catalog.limits.max_inventory_items){

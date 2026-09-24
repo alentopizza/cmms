@@ -68,7 +68,7 @@ export function Drawer({
   const ref=useOverlay(open,onClose);
   if(!open||typeof document==="undefined")return null;
   return createPortal(<div className="ds-overlay-backdrop ds-drawer-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <aside ref={ref as RefObject<HTMLElement>} className={["ds-drawer","ds-drawer-"+side].join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
+    <aside ref={ref} className={["ds-drawer","ds-drawer-"+side].join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
       <header className="ds-overlay-header">
         <div><h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
         <IconButton icon="x" label="Cerrar" variant="ghost" onClick={onClose}/>

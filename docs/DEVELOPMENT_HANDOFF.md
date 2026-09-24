@@ -644,14 +644,18 @@ The old `#293644/#38B2A9/#79CAC4/#BAE3E0` palette still exists in legacy CSS but
 
 Do not visually refactor all modules at once.
 
-Current next step is **Phase 1 — Foundations + technical UI Kit structure**:
+Phase 1 — Foundations + technical UI Kit structure is now implemented:
 
-- audit current CSS/tokens/hardcoded values;
-- implement V2 token layer with controlled legacy aliases;
-- establish UI Kit folders/contracts;
-- decide how existing `UiIcon` maps into the single icon system;
-- create initial `/ui-kit` playground shell;
-- keep all existing APIs/RBAC/CRUD/business flows unchanged.
+- runtime V2 token layer: `app/design-system/tokens.css`;
+- existing legacy `app/globals.css` deliberately left in place for gradual migration;
+- live no-index `/ui-kit` Foundations catalog;
+- UI Kit namespace: `components/ui`;
+- existing `UiIcon` re-exported as the provisional canonical icon system;
+- token manifest: `lib/design-system.ts`;
+- measured CSS baseline: `docs/DESIGN_AUDIT_PHASE1.md`;
+- CI guard: `scripts/design-system-smoke.mjs`.
+
+The next step is **Phase 2 — UI Core primitives**.
 
 ### Non-regression boundary
 
@@ -672,3 +676,44 @@ A visual PR does not authorize modifications to APIs, DB, authentication, permis
 10. Reports/Settings/final audit.
 
 The product owner intends to review implementation phase by phase.
+
+
+## 25. DESWEB Design System V2 Phase 1 implementation — 2026-09-24
+
+### Runtime architecture
+
+`app/layout.tsx` loads `app/design-system/tokens.css` before the existing `app/globals.css`.
+
+This order is intentional:
+
+- V2 variables become available everywhere;
+- legacy styles continue to use their old aliases/values;
+- Phase 1 does not silently restyle operational modules;
+- new UI Kit code uses V2 token names directly.
+
+### Baseline debt
+
+At the Phase 1 start, `app/globals.css` measured approximately 540 KB, 1,561 raw hex occurrences and 915 distinct hex values. Do not treat these numbers as a target to remove in one PR. Use `docs/DESIGN_AUDIT_PHASE1.md` as the migration baseline.
+
+### Icon system
+
+`components/UiIcon.tsx` remains the provisional canonical SVG outline system. New UI Kit code can import it from `components/ui`. Do not add a second icon library during Phase 2 without an ADR.
+
+### /ui-kit
+
+The route is a static/no-index developer catalog and contains no tenant/private records. Phase 1 includes Foundations only. Future phases extend the same page with real reusable components.
+
+### CI
+
+`scripts/design-system-smoke.mjs` verifies:
+
+- critical V2 tokens and values;
+- token import order;
+- dark/reduced-motion foundations;
+- /ui-kit presence;
+- UiIcon bridge;
+- no legacy palette leakage or raw hex colors inside the new UI Kit CSS.
+
+### Next contributor
+
+Start Phase 2 from existing reusable components first: `ConfirmDialog`, `CreateRecordModal`, `FileDropzone`, `MultiSelectDropdown`, `ModuleHeader`, existing `.button` consumers and form patterns. Refactor/extend before duplicating.

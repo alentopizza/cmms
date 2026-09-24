@@ -17,7 +17,7 @@ import InventorySubnav from "@/components/InventorySubnav";
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
   supplier_type:string|null;sku:string;name:string;description:string|null;presentation:string|null;company:string;site:string|null;location:string|null;
-  category:string|null;warehouse:string|null;supplier:string|null;quantity:string;min_quantity:string;max_quantity:string;unit:string;unit_cost:string;storage_location:string|null;has_image:boolean;
+  category:string|null;warehouse:string|null;supplier:string|null;quantity:string;min_quantity:string;max_quantity:string;unit:string;unit_cost:string;storage_location:string|null;has_image:boolean;active:boolean;
 };
 type Site={id:string;label:string};
 type Location={id:string;label:string};
@@ -54,11 +54,11 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const itemSql=`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,i.category_id,i.warehouse_id,p.supplier_type,
       i.sku,i.name,i.description,i.presentation,o.name company,s.name site,l.name location,c.name category,w.name warehouse,p.name supplier,
-      i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image
+      i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image,i.active
     FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
     LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
     LEFT JOIN inventory_categories c ON c.id=i.category_id LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
-    WHERE i.active=true`;
+    WHERE 1=1`;
   const [items,sites,locations,suppliers,categories,warehouses,movements]=await Promise.all([
     superadmin
       ? query<Item>(itemSql+" ORDER BY i.name LIMIT 600")
@@ -96,10 +96,11 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     : params.error==="movement" ? "Revisa el tipo de movimiento, cantidad y bodega."
     : params.error ? "Revisa la información del inventario." : "";
 
-  const totalValue=items.rows.reduce((sum,item)=>sum+Number(item.quantity||0)*Number(item.unit_cost||0),0);
-  const inStock=items.rows.filter(item=>Number(item.quantity)>Number(item.min_quantity)&&Number(item.quantity)>0).length;
-  const lowStock=items.rows.filter(item=>Number(item.quantity)>0&&Number(item.quantity)<=Number(item.min_quantity)).length;
-  const outStock=items.rows.filter(item=>Number(item.quantity)<=0).length;
+  const activeItems=items.rows.filter(item=>item.active);
+  const totalValue=activeItems.reduce((sum,item)=>sum+Number(item.quantity||0)*Number(item.unit_cost||0),0);
+  const inStock=activeItems.filter(item=>Number(item.quantity)>Number(item.min_quantity)&&Number(item.quantity)>0).length;
+  const lowStock=activeItems.filter(item=>Number(item.quantity)>0&&Number(item.quantity)<=Number(item.min_quantity)).length;
+  const outStock=activeItems.filter(item=>Number(item.quantity)<=0).length;
 
   return <>
     <ModuleHeader
@@ -116,6 +117,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {key:"category",label:"Categoría",allLabel:"Todas las categorías"},
         {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
         {key:"warehouse",label:"Bodega",allLabel:"Todas las bodegas"},
+        {key:"recordState",label:"Registro",allLabel:"Todos los registros"},
       ]}
       action={<div className="module-header-action-group">
         {canWrite&&orgId&&<BulkImportModal entity="inventory"/>}
@@ -157,10 +159,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     />}
 
     <section className="section inventory-kpi-grid">
-      <article className="inventory-kpi-card value"><span><UiIcon name="asset"/></span><div><small>Valor total inventario</small><strong>{money(totalValue)}</strong><em>{items.rowCount||0} productos</em></div></article>
-      <article className="inventory-kpi-card success"><span><UiIcon name="check"/></span><div><small>Productos en stock</small><strong>{inStock}</strong><em>{items.rowCount?Math.round(inStock/items.rowCount*100):0}% del total</em></div></article>
-      <article className="inventory-kpi-card warning"><span>!</span><div><small>Stock bajo</small><strong>{lowStock}</strong><em>{items.rowCount?Math.round(lowStock/items.rowCount*100):0}% del total</em></div></article>
-      <article className="inventory-kpi-card danger"><span>×</span><div><small>Sin stock</small><strong>{outStock}</strong><em>{items.rowCount?Math.round(outStock/items.rowCount*100):0}% del total</em></div></article>
+      <article className="inventory-kpi-card value"><span><UiIcon name="asset"/></span><div><small>Valor total inventario</small><strong>{money(totalValue)}</strong><em>{activeItems.length} productos activos</em></div></article>
+      <article className="inventory-kpi-card success"><span><UiIcon name="check"/></span><div><small>Productos en stock</small><strong>{inStock}</strong><em>{activeItems.length?Math.round(inStock/activeItems.length*100):0}% del total activo</em></div></article>
+      <article className="inventory-kpi-card warning"><span>!</span><div><small>Stock bajo</small><strong>{lowStock}</strong><em>{activeItems.length?Math.round(lowStock/activeItems.length*100):0}% del total activo</em></div></article>
+      <article className="inventory-kpi-card danger"><span>×</span><div><small>Sin stock</small><strong>{outStock}</strong><em>{activeItems.length?Math.round(outStock/activeItems.length*100):0}% del total activo</em></div></article>
     </section>
 
     <section className="section inventory-dashboard-layout" id="productos">
@@ -170,17 +172,18 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           const state=stockState(item);
           const quantity=Number(item.quantity||0),max=Math.max(Number(item.max_quantity||0),Number(item.min_quantity||0),quantity,1);
           const pct=Math.max(0,Math.min(100,quantity/max*100));
-          return <article className="inventory-product-card" key={item.id}
+          return <article className={"inventory-product-card"+(item.active?"":" inactive")} key={item.id}
             data-module-record data-status={state.key}
             data-search={[item.sku,item.name,item.description,item.category,item.company,item.site,item.location,item.warehouse,item.supplier].filter(Boolean).join(" ")}
             data-filter-organization={item.organization_id} data-filter-organization-label={item.company}
             data-filter-site={item.site_id||""} data-filter-site-label={item.site||""}
             data-filter-category={item.category_id||""} data-filter-category-label={item.category||""}
             data-filter-supplier={item.supplier_id||""} data-filter-supplier-label={item.supplier||""}
-            data-filter-warehouse={item.warehouse_id||""} data-filter-warehouse-label={item.warehouse||""}>
+            data-filter-warehouse={item.warehouse_id||""} data-filter-warehouse-label={item.warehouse||""}
+            data-filter-recordState={item.active?"active":"inactive"} data-filter-recordState-label={item.active?"Activo":"Inactivo"}>
             <div className="inventory-product-card-head">
               <span className={"inventory-product-visual"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={32}/>}</span>
-              <div><span className={"inventory-stock-pill "+state.key}>{state.label}</span><small>SKU: {item.sku}</small><h3>{item.name}</h3><p>{item.category||"Sin categoría"} · {item.presentation||item.unit}</p></div>
+              <div><div className="inventory-product-state-row"><span className={"inventory-stock-pill "+state.key}>{state.label}</span>{!item.active&&<span className="inventory-record-pill">Inactivo</span>}</div><small>SKU: {item.sku}</small><h3>{item.name}</h3><p>{item.category||"Sin categoría"} · {item.presentation||item.unit}</p></div>
             </div>
             <div className="inventory-product-stock">
               <div><strong>{item.quantity}</strong><span>{item.unit}</span></div>
@@ -216,7 +219,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
     {can(session,"requisitions.write")&&<section className="card section" id="crear-requisicion">
       <RequisitionBuilder
-        items={items.rows.filter(item=>Boolean(item.supplier_id)&&["materials","both"].includes(item.supplier_type||"")).map(item=>({
+        items={items.rows.filter(item=>item.active&&Boolean(item.supplier_id)&&["materials","both"].includes(item.supplier_type||"")).map(item=>({
           id:item.id,supplier_id:item.supplier_id||"",supplier_name:item.supplier||"Proveedor",sku:item.sku,name:item.name,unit:item.unit,
           unit_cost:item.unit_cost,quantity:item.quantity,min_quantity:item.min_quantity,site_name:item.site,location_name:item.location,
         }))}

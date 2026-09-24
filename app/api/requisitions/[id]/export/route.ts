@@ -212,6 +212,8 @@ function word(req:Req,items:Item[],returns:ReturnLine[],documents:ProcurementDoc
     const qty=Number(item.quantity_requested||0),received=Number(item.quantity_received||0),returned=Number(item.quantity_returned||0),pending=Math.max(0,qty-received),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;
     return `<tr><td>${esc(item.sku)}</td><td>${esc(item.description)}</td><td>${qty}</td><td>${received}</td><td>${returned}</td><td>${pending}</td><td>${esc(item.unit)}</td><td>${esc(money(cost,currency))}</td><td>${esc(money(subtotal,currency))}</td></tr>`;
   }).join("");
+  const documentRows=documents.map(document=>`<tr><td>${esc(procurementDocumentTypeLabel(document.document_type))}</td><td>${esc(document.document_number)}</td><td>${esc(procurementMatchLabel(document.match_state))}</td><td>${esc(document.voided_at?"Anulado":procurementReviewLabel(document.review_status))}</td><td>${esc(document.document_quantity)}</td><td>${document.expected_quantity===null?"—":document.expected_quantity}</td><td>${document.value_difference===null?"—":esc(money(document.value_difference,document.currency_code||currency))}</td></tr>`).join("");
+  const documentsHtml=documents.length?`<h2>Conciliación documental</h2><table><thead><tr><th>Tipo</th><th>Número</th><th>Conciliación</th><th>Revisión</th><th>Cant. doc</th><th>Esperada</th><th>Dif. valor</th></tr></thead><tbody>${documentRows}</tbody></table>`:"";
   const html=`<!doctype html><html><head><meta charset="utf-8"><style>
   body{font-family:Arial,sans-serif;color:#293644;margin:34px;border-top:18px solid #293644;padding-top:24px}h1{font-size:24px;margin:0}h2{font-size:15px;color:#38b2a9;margin:7px 0 18px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.meta div{border:1px solid #dde6e9;padding:9px}.meta span{display:block;font-size:8px;color:#71818a;text-transform:uppercase}.meta strong{font-size:10px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{padding:8px;border-bottom:1px solid #dde6e9;text-align:left;font-size:9px}th{background:#293644;color:#fff}.total{text-align:right;font-size:12px;font-weight:bold;margin-top:15px}.notes{margin-top:22px;padding:12px;background:#f6f9fa}</style></head><body>
   <h1>Requisición REQ-${req.number.padStart(6,"0")}</h1><h2>${esc(req.supplier_name)}</h2>
@@ -220,6 +222,7 @@ function word(req:Req,items:Item[],returns:ReturnLine[],documents:ProcurementDoc
   <table><thead><tr><th>SKU</th><th>Insumo</th><th>Solicitado</th><th>Recibido</th><th>Devuelto</th><th>Pendiente</th><th>Unidad</th><th>Costo est.</th><th>Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="total">Total estimado: ${esc(money(grand,currency))}</div>
   ${returns.length?`<h2>Devoluciones al proveedor</h2><table><thead><tr><th>DEV</th><th>Fecha</th><th>SKU</th><th>Cantidad</th><th>Motivo</th><th>Resolución</th><th>Documento</th><th>Bodega</th></tr></thead><tbody>${returns.map(lineItem=>`<tr><td>DEV-${lineItem.return_number.padStart(6,"0")}</td><td>${esc(lineItem.returned_at)}</td><td>${esc(lineItem.sku)}</td><td>-${esc(lineItem.quantity)} ${esc(lineItem.unit)}</td><td>${esc(returnReason(lineItem.reason_code)+(lineItem.reason_detail?" · "+lineItem.reason_detail:""))}</td><td>${esc(returnResolution(lineItem.expected_resolution))}</td><td>${esc(lineItem.document_number||"—")}</td><td>${esc(lineItem.warehouse||"—")}</td></tr>`).join("")}</tbody></table>`:""}
+  ${documentsHtml}
   ${req.notes?`<div class="notes"><b>Observaciones</b><p>${esc(req.notes)}</p></div>`:""}
   </body></html>`;
   return Buffer.from("\uFEFF"+html,"utf8");
@@ -238,13 +241,13 @@ export async function GET(request:Request,{params}:{params:Promise<{id:string}>}
   const currency=countryDefinition(data.req.organization_country)?.currency||"USD";
   const base="requisicion-"+data.req.number.padStart(6,"0")+"-"+fileSafe(data.req.supplier_name);
   if(format==="xlsx"){
-    const body=await xlsx(data.req,data.items,data.returns,currency);
+    const body=await xlsx(data.req,data.items,data.returns,data.reconciliation.documents,data.reconciliation.lines,currency);
     return new NextResponse(new Uint8Array(body),{headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","Content-Disposition":`attachment; filename="${base}.xlsx"`,"Cache-Control":"private, no-store"}});
   }
   if(format==="word"){
-    const body=word(data.req,data.items,data.returns,currency);
+    const body=word(data.req,data.items,data.returns,data.reconciliation.documents,currency);
     return new NextResponse(new Uint8Array(body),{headers:{"Content-Type":"application/msword; charset=utf-8","Content-Disposition":`attachment; filename="${base}.doc"`,"Cache-Control":"private, no-store"}});
   }
-  const body=await pdf(data.req,data.items,data.returns,currency);
+  const body=await pdf(data.req,data.items,data.returns,data.reconciliation.documents,currency);
   return new NextResponse(new Uint8Array(body),{headers:{"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="${base}.pdf"`,"Cache-Control":"private, no-store"}});
 }

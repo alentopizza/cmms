@@ -88,7 +88,7 @@ TEST_CHECKOUT_ENABLED=false
 - `/downloads` — información de la edición self-hosted/descargable.
 - `/descargas` — alias en español de la misma página.
 - `/dashboard` — aplicación autenticada.
-- `/ui-kit` — catálogo autenticado del DESWEB UI Kit; actualmente expone Foundations V2.
+- `/ui-kit` — catálogo autenticado del DESWEB UI Kit; expone Foundations V2 y UI Core primitives interactivos.
 
 ## Instalación descargable / self-hosted
 

@@ -58,3 +58,15 @@ ALTER TABLE bulk_import_batches
 
 CREATE UNIQUE INDEX IF NOT EXISTS bulk_import_batches_import_number_idx
   ON bulk_import_batches(import_number);
+
+DROP INDEX IF EXISTS bulk_import_batches_committed_hash_idx;
+
+CREATE UNIQUE INDEX IF NOT EXISTS bulk_import_batches_committed_scope_hash_idx
+  ON bulk_import_batches(
+    organization_id,
+    entity,
+    file_hash,
+    commit_scope,
+    COALESCE(context_supplier_id,'00000000-0000-0000-0000-000000000000'::uuid)
+  )
+  WHERE status='committed';

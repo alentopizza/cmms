@@ -85,6 +85,32 @@ try{
     throw new Error("Bulk import traceability metadata mismatch: "+JSON.stringify(row));
   }
 
+  const supplier2=await client.query("SELECT id FROM suppliers WHERE organization_id=$1 AND tax_id='900123456-8'",[organizationId]);
+  const supplier2Id=supplier2.rows[0].id;
+  await client.query(
+    `INSERT INTO bulk_import_batches(
+       organization_id,entity,file_name,file_hash,status,total_rows,imported_rows,omitted_rows,error_rows,warning_rows,
+       origin,context_supplier_id,commit_scope,committed_at
+     ) VALUES($1,'inventory','ci.xlsx','ci-hash','committed',12,4,8,0,1,'supplier',$2,'context_only',now())`,
+    [organizationId,supplier2Id],
+  );
+
+  let duplicateScopeRejected=false;
+  await client.query("SAVEPOINT duplicate_scope");
+  try{
+    await client.query(
+      `INSERT INTO bulk_import_batches(
+         organization_id,entity,file_name,file_hash,status,total_rows,imported_rows,omitted_rows,error_rows,warning_rows,
+         origin,context_supplier_id,commit_scope,committed_at
+       ) VALUES($1,'inventory','ci.xlsx','ci-hash','committed',12,4,8,0,1,'supplier',$2,'context_only',now())`,
+      [organizationId,supplierId],
+    );
+  }catch{
+    duplicateScopeRejected=true;
+    await client.query("ROLLBACK TO SAVEPOINT duplicate_scope");
+  }
+  if(!duplicateScopeRejected)throw new Error("Same file/same Supplier scope was not rejected");
+
   console.log("Unified inventory import smoke checks passed.");
   await client.query("ROLLBACK");
 }catch(error){

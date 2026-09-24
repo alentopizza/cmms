@@ -1552,3 +1552,14 @@ This file records meaningful product and engineering changes so future developer
 
 - CI now starts PostgreSQL 17, executes every database migration, runs dashboard SQL smoke queries, and only then performs the Next.js production build.
 - The SQL smoke suite covers Company KPI queries plus monthly trend SQL for Platform, Company, Field and Requester role families.
+
+
+## 2026-09-24 — Supplier financial view and export cleanup
+
+### Fixed
+
+- Supplier financial information no longer renders the read-only summary and edit form at the same time.
+- The Financial tab now opens in read-only mode with masked account data and an explicit **Editar** action.
+- After saving financial information, the supplier returns to the Financial tab in read-only state, so the primary action becomes **Editar** again.
+- Removed the duplicate **Hoja de vida** tab and its second export menu from Supplier profiles.
+- The only Supplier export control is now the upper profile toolbar **Exportar** action, labelled as **Ficha del proveedor** in PDF, Excel and Word formats.

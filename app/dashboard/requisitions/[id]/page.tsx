@@ -4,8 +4,10 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
+import FileDropzone from "@/components/FileDropzone";
 import UiIcon from "@/components/UiIcon";
 import { countryDefinition } from "@/lib/international-catalog";
+import { loadProcurementReconciliation,procurementDocumentTypeLabel,procurementMatchLabel,procurementReviewLabel } from "@/lib/procurement-reconciliation";
 
 type Req={
   id:string;organization_id:string;number:string;status:string;created_at:string;needed_by:string|null;notes:string|null;
@@ -42,7 +44,7 @@ function approvalEventLabel(action:ApprovalEvent["action"]){return ({requested:"
 function returnReasonLabel(value:string){return ({damaged:"Producto averiado",wrong_item:"Artículo incorrecto",quality:"Problema de calidad",excess:"Exceso recibido",other:"Otro motivo"} as Record<string,string>)[value]||value;}
 function returnResolutionLabel(value:string){return ({replacement:"Reposición esperada",credit_note:"Nota crédito esperada",other:"Otra resolución"} as Record<string,string>)[value]||value;}
 
-export default async function RequisitionDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{updated?:string;received?:string;returned?:string;approval?:string;error?:string}>}){
+export default async function RequisitionDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{updated?:string;received?:string;returned?:string;approval?:string;document_saved?:string;document_linked?:string;document_review?:string;error?:string}>}){
   const session=await getSession();
   if(!session)redirect("/login");
   if(!can(session,"requisitions.read"))redirect("/dashboard");
@@ -91,6 +93,9 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
   const approvalBlocksReceipt=req.approval_required&&req.approval_state!=="approved";
   const canReceive=receiveLifecycleOpen&&!approvalBlocksReceipt;
   const canReturn=canWrite&&can(session,"inventory.write");
+  const hasReconcilePermission=can(session,"requisitions.reconcile");
+  const reconcileSiteAllowed=session.platformRole!=="user"||session.accessAllSites||items.rows.every(item=>!item.site_id||session.siteIds.includes(item.site_id));
+  const canReconcile=hasReconcilePermission&&reconcileSiteAllowed;
 
   const policyRoleAllowed=session.platformRole!=="user"
     ||(req.approval_approver_scope==="admin_only"
@@ -175,9 +180,27 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     ),
   ]);
 
+  const reconciliation=canReconcile
+    ?await loadProcurementReconciliation(id)
+    :{documents:[],lines:[],events:[]};
   const returnedTotal=returnLines.rows.reduce((sum,row)=>sum+Number(row.quantity||0),0);
   const retainedTotal=Math.max(0,receivedTotal-returnedTotal);
   const returnableReceipts=receipts.rows.filter(row=>Number(row.quantity)-Number(row.returned_quantity)>0.000001);
+  const returnEvidence=[...returnLines.rows.reduce((map,line)=>{
+    const existing=map.get(line.return_id);
+    if(existing)existing.quantity+=Number(line.quantity||0);
+    else map.set(line.return_id,{id:line.return_id,number:line.return_number,returned_at:line.returned_at,quantity:Number(line.quantity||0)});
+    return map;
+  },new Map<string,{id:string;number:string;returned_at:string;quantity:number}>()).values()];
+  const matchedDocuments=reconciliation.documents.filter(doc=>doc.match_state==="matched"&&!doc.voided_at).length;
+  const differenceDocuments=reconciliation.documents.filter(doc=>doc.match_state==="difference"&&!doc.voided_at).length;
+  const pendingDocuments=reconciliation.documents.filter(doc=>doc.match_state==="pending_evidence"&&!doc.voided_at).length;
+  const disputedDocuments=reconciliation.documents.filter(doc=>doc.review_status==="disputed"&&!doc.voided_at).length;
+  const documentMoney=(value:number,code:string|null)=>{
+    const effective=code||currency;
+    try{return new Intl.NumberFormat("es-CO",{style:"currency",currency:effective,maximumFractionDigits:2}).format(value);}
+    catch{return value.toLocaleString("es-CO",{maximumFractionDigits:2})+" "+effective;}
+  };
 
   return <>
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
@@ -197,6 +220,12 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     {feedback.updated&&<div className="notice success section">Requisición actualizada correctamente.</div>}
     {feedback.received&&<div className="notice success section">{feedback.received} ítem{feedback.received==="1"?"":"s"} recibido{feedback.received==="1"?"":"s"}; Kardex y estado de la requisición fueron conciliados.</div>}
     {feedback.returned&&<div className="notice success section">{feedback.returned} línea{feedback.returned==="1"?"":"s"} devuelta{feedback.returned==="1"?"":"s"} al proveedor; Kardex registró la salida y conservó el vínculo con la recepción original.</div>}
+    {feedback.document_saved&&<div className="notice success section">Documento comercial registrado y conciliación inicial calculada.</div>}
+    {feedback.document_linked&&<div className="notice success section">{feedback.document_linked} vínculo{feedback.document_linked==="1"?"":"s"} de evidencia agregado{feedback.document_linked==="1"?"":"s"}; la revisión volvió a Pendiente para recalcular la conciliación.</div>}
+    {feedback.document_review==="verified"&&<div className="notice success section">Documento verificado contra la evidencia vinculada.</div>}
+    {feedback.document_review==="exception_accepted"&&<div className="notice success section">Diferencia aceptada con justificación auditada.</div>}
+    {feedback.document_review==="disputed"&&<div className="notice success section">Documento marcado en disputa con trazabilidad de revisión.</div>}
+    {feedback.document_review==="voided"&&<div className="notice success section">Documento anulado sin eliminar la evidencia histórica.</div>}
     {feedback.approval==="approved"&&<div className="notice success section">Aprobación registrada. La requisición ya puede continuar con su recepción.</div>}
     {feedback.approval==="rejected"&&<div className="notice success section">Rechazo registrado con trazabilidad de auditoría.</div>}
     {feedback.error==="items"&&<div className="notice error section">Revisa cantidades y costos. La cantidad solicitada no puede ser menor que lo ya recibido.</div>}
@@ -220,8 +249,23 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     {feedback.error==="return_over"&&<div className="notice error section">La devolución supera la cantidad disponible de la recepción seleccionada.</div>}
     {feedback.error==="return_warehouse"&&<div className="notice error section">Selecciona una bodega activa y autorizada para la salida de la devolución.</div>}
     {feedback.error==="return_stock"&&<div className="notice error section">La bodega no tiene existencias suficientes para registrar esta devolución al proveedor.</div>}
+    {feedback.error==="document_fields"&&<div className="notice error section">Completa tipo y número del documento comercial.</div>}
+    {feedback.error==="document_date"&&<div className="notice error section">La fecha del documento no es válida.</div>}
+    {feedback.error==="document_currency"&&<div className="notice error section">La moneda debe usar un código ISO de tres letras, por ejemplo COP o USD.</div>}
+    {feedback.error==="document_amount"&&<div className="notice error section">Los valores del documento no pueden ser negativos.</div>}
+    {feedback.error==="document_lines"&&<div className="notice error section">Registra al menos una línea documental con cantidad válida.</div>}
+    {feedback.error==="document_file"&&<div className="notice error section">Adjunta el PDF o imagen que servirá como evidencia comercial.</div>}
+    {feedback.error==="document_evidence"&&<div className="notice error section">La evidencia seleccionada no corresponde al tipo de documento o a esta requisición.</div>}
+    {feedback.error==="document_evidence_empty"&&<div className="notice error section">Selecciona al menos una recepción o DEV para agregar como evidencia.</div>}
+    {feedback.error==="document_evidence_duplicate"&&<div className="notice error section">La evidencia seleccionada ya estaba vinculada a este documento.</div>}
+    {feedback.error==="document_verify_match"&&<div className="notice error section">Solo puedes verificar un documento cuando la conciliación automática indica Coincide.</div>}
+    {feedback.error==="document_exception_state"&&<div className="notice error section">Solo puedes aceptar una excepción cuando existe una diferencia calculada.</div>}
+    {feedback.error==="document_review_notes"&&<div className="notice error section">Aceptar una excepción o marcar una disputa requiere una observación.</div>}
+    {feedback.error==="document_void_reason"&&<div className="notice error section">Anular un documento requiere registrar el motivo.</div>}
+    {feedback.error==="document_voided"&&<div className="notice error section">El documento está anulado y ya no admite cambios de revisión o evidencia.</div>}
+    {feedback.error&&feedback.error.startsWith("document_")&&!["document_fields","document_date","document_currency","document_amount","document_lines","document_file","document_evidence","document_evidence_empty","document_evidence_duplicate","document_verify_match","document_exception_state","document_review_notes","document_void_reason","document_voided"].includes(feedback.error)&&<div className="notice error section">No fue posible completar la conciliación documental. Revisa los datos y vuelve a intentarlo.</div>}
     {feedback.error&&feedback.error.startsWith("receive_")&&!["receive_locked","receive_approval","receive_empty","receive_over","receive_item","receive_warehouse"].includes(feedback.error)&&<div className="notice error section">No fue posible registrar la recepción. Revisa cantidades, costos, fechas y bodegas.</div>}
-    {feedback.error&& !["items","received","empty","fulfillment","status_locked","approval_route","approval_locked","approval_self","approval_notes","return_reason","return_empty","return_qty","return_over","return_warehouse","return_stock"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&!feedback.error.startsWith("return")&&<div className="notice error section">No fue posible completar la acción. Revisa la requisición y vuelve a intentarlo.</div>}
+    {feedback.error&& !["items","received","empty","fulfillment","status_locked","approval_route","approval_locked","approval_self","approval_notes","return_reason","return_empty","return_qty","return_over","return_warehouse","return_stock"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&!feedback.error.startsWith("return")&&!feedback.error.startsWith("document")&&<div className="notice error section">No fue posible completar la acción. Revisa la requisición y vuelve a intentarlo.</div>}
     {feedback.error==="return"&&<div className="notice error section">No fue posible registrar la devolución. Revisa cantidades, fecha, bodega y trazabilidad de la recepción.</div>}
 
     <section className="requisition-sheet card section">

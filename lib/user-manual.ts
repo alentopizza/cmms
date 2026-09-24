@@ -157,7 +157,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "Crea el usuario con nombre, correo, rol y foto de perfil obligatoria.",
       "Selecciona el país de la persona y, si registras su documento, escoge el tipo disponible para ese país; el tipo de documento no se escribe manualmente.",
-      "El indicativo del teléfono se toma automáticamente del país seleccionado. Escribe solo el número nacional restante.",
+      "El indicativo del teléfono se toma automáticamente del país seleccionado y permanece separado del campo. Escribe o edita únicamente el número nacional restante.",
       "Asigna acceso a todas las sedes o limita el usuario a sedes concretas.",
       "En el directorio puedes filtrar por Empresa, Rol, Sede y Proveedor cuando exista más de una opción útil. Si solo hay una empresa/sede posible, ese filtro se oculta automáticamente.",
       "La tarjeta compacta de usuario muestra foto, estado, rol, empresa, alcance de sedes y los indicadores operativos principales; usa cuatro columnas en escritorio normal y cinco solo cuando el ancho mantiene la legibilidad.",
@@ -176,6 +176,25 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
     keywords:["usuarios","foto","rol","sedes","permisos"],
+  },
+  {
+    id:"crews",
+    title:"Cuadrillas, integrantes y líder",
+    summary:"Cómo conformar equipos mixtos de Técnicos y Supervisores y elegir visualmente a su líder.",
+    icon:"◉",
+    module:"Cuadrillas",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+    href:"/dashboard/crews",
+    steps:[
+      "Selecciona la Empresa y la Sede. El sistema solo ofrece personal activo y con acceso a esa sede.",
+      "Una cuadrilla puede combinar Técnicos, Supervisores/Managers y Colaboradores externos autorizados.",
+      "Elige el líder visualmente por su foto y nombre. El liderazgo no depende del rol: cualquiera de los integrantes elegibles puede ser líder.",
+      "Al seleccionar al líder, el sistema lo incluye automáticamente como integrante de la cuadrilla.",
+      "La tarjeta de cuadrilla destaca la foto y datos de contacto del líder, muestra integrantes y resume actividades activas/completadas del equipo.",
+      "Cuando existe teléfono o correo puedes contactar al líder y a los integrantes desde las acciones disponibles.",
+    ],
+    notes:["Los indicadores de actividades de una cuadrilla describen trabajo asignado; no son una calificación automática de sus integrantes."],
+    keywords:["cuadrilla","líder","supervisor","técnico","integrantes","equipo"],
   },
   {
     id:"biometric-enrollment",
@@ -378,6 +397,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Cuadrillas visuales y edición correcta de teléfonos",
+    summary:"Cuadrillas ahora combina Técnicos y Supervisores, permite elegir visualmente al líder y destaca su foto/contactos; el campo Teléfono mantiene el indicativo separado al editar.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Filtros inteligentes y expedientes estructurados",

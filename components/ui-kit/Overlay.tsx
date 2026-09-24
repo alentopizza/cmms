@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import UiIcon from "@/components/UiIcon";
 import { IconButton } from "@/components/ui-kit/Button";
@@ -39,20 +39,22 @@ function useOverlay(open:boolean,onClose:()=>void){
 
 export function Modal({
   open,onClose,title,description,children,footer,size="md",closeLabel="Cerrar",role="dialog",
+  className="",headerClassName="",bodyClassName="",footerClassName="",eyebrow,
 }:{
   open:boolean;onClose:()=>void;title:string;description?:string;children?:ReactNode;footer?:ReactNode;size?:OverlaySize;closeLabel?:string;role?:"dialog"|"alertdialog";
+  className?:string;headerClassName?:string;bodyClassName?:string;footerClassName?:string;eyebrow?:string;
 }){
   const titleId=useId(),descriptionId=useId();
   const ref=useOverlay(open,onClose);
   if(!open||typeof document==="undefined")return null;
   return createPortal(<div className="ds-overlay-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <section ref={ref as React.RefObject<HTMLElement>} className={["ds-modal","ds-modal-"+size].join(" ")} role={role} aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
-      <header className="ds-overlay-header">
-        <div><h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
+    <section ref={ref as RefObject<HTMLElement>} className={["ds-modal","ds-modal-"+size,className].filter(Boolean).join(" ")} role={role} aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
+      <header className={["ds-overlay-header",headerClassName].filter(Boolean).join(" ")}>
+        <div>{eyebrow&&<span className="ds-overlay-eyebrow">{eyebrow}</span>}<h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
         <IconButton icon="x" label={closeLabel} variant="ghost" onClick={onClose}/>
       </header>
-      {children&&<div className="ds-overlay-body">{children}</div>}
-      {footer&&<footer className="ds-overlay-footer">{footer}</footer>}
+      {children&&<div className={["ds-overlay-body",bodyClassName].filter(Boolean).join(" ")}>{children}</div>}
+      {footer&&<footer className={["ds-overlay-footer",footerClassName].filter(Boolean).join(" ")}>{footer}</footer>}
     </section>
   </div>,document.body);
 }
@@ -66,7 +68,7 @@ export function Drawer({
   const ref=useOverlay(open,onClose);
   if(!open||typeof document==="undefined")return null;
   return createPortal(<div className="ds-overlay-backdrop ds-drawer-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <aside ref={ref as React.RefObject<HTMLElement>} className={["ds-drawer","ds-drawer-"+side].join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
+    <aside ref={ref as RefObject<HTMLElement>} className={["ds-drawer","ds-drawer-"+side].join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
       <header className="ds-overlay-header">
         <div><h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
         <IconButton icon="x" label="Cerrar" variant="ghost" onClick={onClose}/>

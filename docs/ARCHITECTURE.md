@@ -544,3 +544,17 @@ The snapshot prevents mutable tenant configuration from changing the historical 
 Authorization is server-authoritative. `app/api/requisitions/[id]/approval/route.ts` validates permission, Organization, configured approver scope, requester self-approval and Site scope. `app/api/requisitions/[id]/receive/route.ts` independently checks the approval gate before writing any Inventory transaction.
 
 `app/api/requisitions/[id]/route.ts` locks the requisition and its items before applying approval-relevant amendments, preventing an approval decision from racing a changed amount/date. Quantity/cost amendments are re-evaluated against the stored threshold; a requisition that newly reaches the threshold enters approval and stays governed thereafter. Quantity, estimated unit cost and required-date changes reopen a prior decision or append an `amended` event while approval is still pending. Receipt transactions already persisted are never rolled back by reapproval.
+
+## Supplier commercial analytics architecture
+
+`lib/supplier-analytics.ts` centralizes the Phase 3 procurement calculations. It reads `supplier_requisitions`, `supplier_requisition_items` and requisition-linked `inventory_transactions` without adding a second analytical persistence model.
+
+The query builds a requisition-level performance projection first, then derives:
+
+- 12-month Supplier summary KPIs;
+- six-month monthly trend grouped by first physical receipt month;
+- up to 12 recent requisitions as evidence for the Supplier Statistics table.
+
+The same shared function is consumed by the Supplier workspace and `/api/profile-export`, preventing formula drift between screen and exported Supplier records. Existing Supplier and requisition/transaction indexes provide the access path; Phase 3 does not require a schema migration.
+
+Do not aggregate all Inventory transactions for Supplier cost analysis. Only receipt transactions carrying `requisition_id` and `requisition_item_id` are valid for these procurement KPIs.

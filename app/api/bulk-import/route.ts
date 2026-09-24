@@ -178,7 +178,7 @@ function criticality(value:string){
 function safeRows<T>(rows:T[],max=5000){return rows.slice(0,max);}
 function findByName<T extends {name:string}>(rows:T[],value:string){return rows.find(row=>key(row.name)===key(value))||null;}
 async function catalogs(organizationId:string){
-  const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds]=await Promise.all([
+  const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds,stockLevels]=await Promise.all([
     query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
@@ -188,11 +188,20 @@ async function catalogs(organizationId:string){
     query<{max_assets:number;max_inventory_items:number}>("SELECT max_assets,max_inventory_items FROM organization_limits WHERE organization_id=$1",[organizationId]),
     query<{assets:number;inventory:number}>("SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) assets,(SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) inventory",[organizationId]),
     query<{source_movement_id:string}>("SELECT source_movement_id FROM inventory_transactions WHERE organization_id=$1 AND source_movement_id IS NOT NULL",[organizationId]),
+    query<{sku:string;warehouse_name:string;quantity:string}>(
+      `SELECT i.sku,w.name warehouse_name,s.quantity::text
+       FROM inventory_stock_levels s
+       JOIN inventory_items i ON i.id=s.item_id
+       JOIN inventory_warehouses w ON w.id=s.warehouse_id
+       WHERE s.organization_id=$1`,
+      [organizationId],
+    ),
   ]);
   return {
     suppliers:suppliers.rows,sites:sites.rows,locations:locations.rows,warehouses:warehouses.rows,items:items.rows,
     categories:categories.rows,limits:limits.rows[0],counts:counts.rows[0],
     movementIds:new Set(movementIds.rows.map(row=>key(row.source_movement_id))),
+    stockLevels:stockLevels.rows,
   };
 }
 

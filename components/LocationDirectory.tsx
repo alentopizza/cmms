@@ -68,6 +68,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
   const [editingSub,setEditingSub]=useState(false);
   const [subSearch,setSubSearch]=useState("");
   const [subStatus,setSubStatus]=useState("all");
+  const [subType,setSubType]=useState("all");
   const [serviceSearch,setServiceSearch]=useState("");
   const [serviceStatus,setServiceStatus]=useState("all");
   const [copied,setCopied]=useState("");
@@ -78,8 +79,10 @@ export default function LocationDirectory({sites,sublocations,services,technicia
     const search=subSearch.trim().toLocaleLowerCase("es");
     const matchesSearch=!search||[item.name,item.code,item.type,item.description].filter(Boolean).join(" ").toLocaleLowerCase("es").includes(search);
     const matchesStatus=subStatus==="all"||(subStatus==="active"?item.active:!item.active);
-    return matchesSearch&&matchesStatus;
-  }),[siteSubs,subSearch,subStatus]);
+    const matchesType=subType==="all"||item.type===subType;
+    return matchesSearch&&matchesStatus&&matchesType;
+  }),[siteSubs,subSearch,subStatus,subType]);
+  const subTypeOptions=useMemo(()=>Array.from(new Set(siteSubs.map(item=>item.type))).sort((a,b)=>typeLabel(a).localeCompare(typeLabel(b),"es")),[siteSubs]);
   const siteServices=useMemo(()=>services.filter(item=>item.site_id===selectedSiteId),[services,selectedSiteId]);
   const visibleServices=useMemo(()=>siteServices.filter(item=>{
     const search=serviceSearch.trim().toLocaleLowerCase("es");
@@ -100,7 +103,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
   }
   function openSite(id:string){
     setSelectedSiteId(id);setEditingSite(false);setSelectedSubId(null);setEditingSub(false);
-    setSubSearch("");setSubStatus("all");setServiceSearch("");setServiceStatus("all");
+    setSubSearch("");setSubStatus("all");setSubType("all");setServiceSearch("");setServiceStatus("all");
   }
 
   function technicianList(items:LocationDirectoryTechnician[],scope:string){
@@ -132,6 +135,9 @@ export default function LocationDirectory({sites,sublocations,services,technicia
       {sites.map(site=><article
         className="site-visual-card site-compact-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"}
         data-search={[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" ")}
+        data-filter-organization={site.organization_id} data-filter-organization-label={site.organization_name}
+        data-filter-country={site.country} data-filter-country-label={countryName(site.country)}
+        data-filter-city={site.city||""} data-filter-city-label={site.city||""}
       >
         <button className="site-visual-card-button site-card-main-action" type="button" onClick={()=>openSite(site.id)}>
           <div className={"site-visual-cover"+(site.has_image?"":" fallback")}>{site.has_image&&<img src={"/api/sites/"+site.id+"/image"} alt="" />}</div>
@@ -256,7 +262,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               </div></div>
             </div>},
             {id:"sublocations",label:"Sububicaciones",content:<div>
-              <div className="location-list-toolbar"><strong>Cantidad: {visibleSubs.length}</strong><div><input value={subSearch} onChange={event=>setSubSearch(event.target.value)} placeholder="Buscar sububicación"/><select value={subStatus} onChange={event=>setSubStatus(event.target.value)}><option value="all">Todas</option><option value="active">Activas</option><option value="inactive">Inactivas</option></select></div></div>
+              <div className="location-list-toolbar"><strong>Cantidad: {visibleSubs.length}</strong><div><input value={subSearch} onChange={event=>setSubSearch(event.target.value)} placeholder="Buscar sububicación"/><select value={subStatus} onChange={event=>setSubStatus(event.target.value)}><option value="all">Todas</option><option value="active">Activas</option><option value="inactive">Inactivas</option></select>{subTypeOptions.length>1&&<select value={subType} onChange={event=>setSubType(event.target.value)}><option value="all">Todos los tipos</option>{subTypeOptions.map(type=><option key={type} value={type}>{typeLabel(type)}</option>)}</select>}</div></div>
               {visibleSubs.length?<div className="sublocation-visual-grid">{visibleSubs.map(item=><article className="sublocation-visual-card" key={item.id}><button type="button" onClick={()=>{setSelectedSubId(item.id);setEditingSub(false);}}>
                 <div className={"sublocation-visual-photo"+(item.has_image?"":" fallback")}>{item.has_image&&<img src={"/api/locations/"+item.id+"/image"} alt="" />}</div>
                 <div className="sublocation-mini-logo">{selected.organization_has_logo?<img src={"/api/organizations/"+selected.organization_id+"/assets/logo"} alt="" />:<span>{initials(selected.organization_name)}</span>}</div>

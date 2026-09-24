@@ -1,1113 +1,504 @@
-# Desweb CMMS design system
+# DESWEB Design System V2
 
-## Core brand tokens
+> Estado: **canónico / aprobado como objetivo de migración** desde 2026-09-24.
+>
+> Este documento reemplaza la antigua paleta visual del CMMS como referencia para todo trabajo nuevo. El código existente todavía contiene estilos y tokens heredados; deben migrarse progresivamente según `docs/DESIGN_MIGRATION_PLAN.md`, nunca mediante reemplazos ciegos.
+
+## 1. Propósito
+
+DESWEB CMMS debe sentirse como un único producto empresarial: profesional, tecnológico, moderno, confiable, ordenado, escalable y premium.
+
+El Design System controla de forma centralizada:
+
+- color;
+- tipografía;
+- espaciado;
+- radios;
+- bordes;
+- sombras;
+- motion;
+- estados;
+- navegación;
+- formularios;
+- tablas;
+- cards;
+- badges;
+- KPI;
+- feedback;
+- responsive;
+- accesibilidad;
+- jerarquía visual.
+
+Los módulos no pueden inventar estilos, colores o patrones aislados cuando existe una solución dentro de este sistema.
+
+## 2. Regla fundamental
+
+1. No introducir colores arbitrarios.
+2. No usar hexadecimales dispersos dentro de componentes.
+3. Antes de crear una variante, comprobar si un token existente resuelve la necesidad.
+4. Si hace falta un nuevo token, agregarlo aquí, documentar su propósito y reutilizarlo.
+5. No realizar reemplazos masivos sin revisar el significado del estilo original.
+
+## 3. ADN visual DESWEB
+
+Los tres colores de marca son inmutables:
+
+| Rol | Token | Valor |
+| --- | --- | --- |
+| Primary | `--color-brand-primary` | `#72F1DC` |
+| Secondary | `--color-brand-secondary` | `#2C8780` |
+| Dark | `--color-brand-dark` | `#1D1D2C` |
+
+Proporción recomendada de color:
+
+- 70% neutros;
+- 20% colores estructurales;
+- 10% acción/acento.
+
+El color comunica; no se usa como decoración gratuita.
+
+## 4. Escalas de color
+
+### Primary
 
 ```css
-:root {
-  --brand-dark: #293644;
-  --brand-white: #FCFCFC;
-  --brand-mint-light: #BAE3E0;
-  --brand-mint: #79CAC4;
-  --brand-teal: #38B2A9;
-  --brand-teal-hover: #2F9D95;
-}
+--color-primary-50:  #F0FFFC;
+--color-primary-100: #D9FFF8;
+--color-primary-200: #B8FFF1;
+--color-primary-300: #91F8E7;
+--color-primary-400: #72F1DC;
+--color-primary-500: #55D8C5;
+--color-primary-600: #35B9A9;
+--color-primary-700: #2C8780;
+--color-primary-800: #236D68;
+--color-primary-900: #194F4C;
 ```
 
-## Theme implementation
+### Teal
 
-Two themes are implemented.
+```css
+--color-teal-50:  #EFFBFA;
+--color-teal-100: #D8F3F1;
+--color-teal-200: #B6E5E1;
+--color-teal-300: #8DD4CF;
+--color-teal-400: #5DB5AE;
+--color-teal-500: #2C8780;
+--color-teal-600: #26746E;
+--color-teal-700: #205E5A;
+--color-teal-800: #194A47;
+--color-teal-900: #123735;
+```
 
-### Light
+### Navy
 
-- light workspace;
-- white/light surfaces;
-- institutional dark text;
-- Desweb teal primary actions;
-- dark logo variant.
+```css
+--color-navy-50:  #F5F5F8;
+--color-navy-100: #E9E9EF;
+--color-navy-200: #D5D5E0;
+--color-navy-300: #B7B7C8;
+--color-navy-400: #8F90A7;
+--color-navy-500: #686A83;
+--color-navy-600: #4B4C63;
+--color-navy-700: #353649;
+--color-navy-800: #272838;
+--color-navy-900: #1D1D2C;
+--color-navy-950: #11111C;
+```
 
-### Dark
+## 5. Semánticos
 
-- dark workspace;
-- darker elevated surfaces;
-- light text;
-- teal and mint accents;
-- light/white logo variant.
+### Superficies y texto
 
-Mechanism:
+```css
+--color-bg: #F4F8F9;
+--color-surface: #FFFFFF;
+--color-surface-soft: #F8FBFC;
+--color-surface-teal: #F1FAF9;
+--color-surface-blue: #F1F7FC;
+--color-surface-dark: #1D1D2C;
 
-- `data-theme="light"` or `data-theme="dark"` on `<html>`;
-- preference persisted in `localStorage` under `desweb-theme`;
-- supported preferences: `light`, `dark` and `system`;
-- first visit and the `system` option honor `prefers-color-scheme`;
-- appearance is configured from **Dashboard → Configuración → Apariencia**, not from the operational header.
+--color-text-primary: #1D1D2C;
+--color-text-secondary: #4B4C63;
+--color-text-muted: #686A83;
+--color-text-disabled: #8F90A7;
+--color-text-inverse: #FFFFFF;
 
-Do not duplicate complete component styles per theme. Prefer semantic CSS variables and targeted overrides.
+--color-border-subtle: #E2EAEC;
+--color-border-default: #D5E1E3;
+--color-border-strong: #B8CCCF;
+--color-border-active: #2C8780;
+```
 
-## Personalization module
+### Success
 
-Visual branding is controlled through **Dashboard → Personalización**.
+Base: `#10B981`.
 
-Current editable assets:
+Uso: Operativo, Completado, Aprobado, Disponible, Pagado, Recibido, Activo, Correcto.
 
-- logo for light backgrounds;
-- logo for dark backgrounds;
-- favicon.
+### Warning
 
-Guidelines:
+Base: `#F59E0B`.
 
-- transparent PNG, WebP or SVG for logos;
-- SVG or square PNG preferred for favicon;
-- maximum upload size: 2 MB per asset;
-- preserve original logo aspect ratio;
-- do not apply arbitrary recoloring to uploaded logos.
+Uso: Stock bajo, Pendiente, En revisión, Próximo mantenimiento, Por aprobar, Vencimiento próximo, En gestión.
 
-The module is designed to expand later with color, typography and other visual settings.
+### Danger
 
-## Application shell
+Base: `#EF4444`.
 
-- desktop uses a persistent institutional sidebar and a compact floating workspace header;
-- the workspace header is contextual only: it identifies the current module and optional organization, but does not duplicate the sidebar navigation;
-- the sidebar is the single desktop navigation source and clearly marks the active module;
-- authenticated account actions live in a compact bottom-of-sidebar account menu that opens upward;
-- global settings are accessed from that account menu rather than occupying permanent navigation space;
-- the authenticated workspace uses the available viewport width up to a large enterprise content ceiling instead of a narrow centered column;
-- surfaces use restrained elevation, subtle gradients and teal accents to communicate a modern technology product without overdecorating the maintenance UI.
+Uso: Sin stock, Fuera de servicio, Error, Rechazado, Vencido, Eliminación, Incidencia crítica.
 
-## Components
+### Info
+
+Base: `#3B82F6`.
+
+Uso: Información, Ayuda, Nuevo registro, Importación, Sincronización, Actualizaciones.
+
+Los estados siempre usan icono/texto además de color.
+
+## 6. Colores funcionales por área
+
+| Área | Color | Uso |
+| --- | --- | --- |
+| Analytics | `#8B5CF6` | Reportes, analytics, dashboards avanzados, automatización, IA, auditoría |
+| Compras / logística | `#F97316` | Compras, OC, logística, transporte, recepción, devoluciones |
+| Tecnología | `#06B6D4` | Integraciones, API, IoT, automatización |
+| Personas / comunicación | `#EC4899` | Usuarios, comunicación, cultura, experiencia |
+
+Estos colores complementan la marca; no sustituyen Primary/Secondary/Dark.
+
+## 7. Paleta de gráficos
+
+Orden fijo:
+
+1. `#2C8780`
+2. `#72F1DC`
+3. `#3B82F6`
+4. `#8B5CF6`
+5. `#F59E0B`
+6. `#10B981`
+7. `#F97316`
+8. `#EC4899`
+9. `#06B6D4`
+10. `#64748B`
+
+No elegir colores aleatorios por gráfico.
+
+## 8. Gradientes
+
+Solo para elementos destacados:
+
+```css
+--gradient-primary: linear-gradient(135deg,#72F1DC 0%,#2C8780 100%);
+--gradient-teal: linear-gradient(135deg,#2C8780 0%,#194F4C 100%);
+--gradient-navy: linear-gradient(135deg,#353649 0%,#1D1D2C 100%);
+--gradient-ocean: linear-gradient(135deg,#72F1DC 0%,#3B82F6 100%);
+--gradient-analytics: linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%);
+```
+
+No aplicar gradientes indiscriminadamente.
+
+## 9. Tipografía
+
+Familia base: **Inter**, con fallback del sistema.
+
+Jerarquía oficial:
+
+| Estilo | Referencia |
+| --- | --- |
+| Display | uso excepcional |
+| H1 | 32 / Bold |
+| H2 | 24 / Semibold |
+| H3 | 20 / Semibold |
+| H4 | 18 / Semibold |
+| Body Large | 16 / Medium |
+| Body | 14 / Regular |
+| Body Small | 12 / Regular |
+| Caption | 12 / Medium |
+| Label | 12 / Semibold |
+
+Títulos: `--color-text-primary`.  
+Texto secundario: `--color-text-secondary`.  
+Texto terciario/metadatos: `--color-text-muted`.
+
+No usar texto esencial con contraste demasiado bajo ni reducir tipografía para ganar densidad artificial.
+
+## 10. Spacing
+
+Escala permitida:
+
+`4, 8, 12, 16, 20, 24, 32, 40, 48, 64px`.
+
+Tokens sugeridos:
+
+```css
+--space-1: 4px;
+--space-2: 8px;
+--space-3: 12px;
+--space-4: 16px;
+--space-5: 20px;
+--space-6: 24px;
+--space-8: 32px;
+--space-10: 40px;
+--space-12: 48px;
+--space-16: 64px;
+```
+
+Evitar valores arbitrarios como 13, 17, 23 o 27 px salvo justificación técnica documentada.
+
+## 11. Radius
+
+```css
+--radius-xs: 4px;
+--radius-sm: 6px;
+--radius-md: 8px;
+--radius-lg: 10px;
+--radius-xl: 12px;
+--radius-2xl: 16px;
+--radius-3xl: 20px;
+```
+
+Guía:
+
+- controles: 8–12px;
+- cards: 12–16px;
+- contenedores destacados: hasta 20px.
+
+No convertir toda la interfaz en píldoras/círculos.
+
+## 12. Sombras
+
+Crear únicamente:
+
+- `--shadow-xs`
+- `--shadow-sm`
+- `--shadow-md`
+- `--shadow-lg`
+
+Aplicarlas principalmente en dropdowns, modales, popovers y cards elevadas. La interfaz debe sentirse ligera.
+
+## 13. Motion
+
+Duraciones:
+
+```css
+--motion-fast: 120ms;
+--motion-normal: 180ms;
+--motion-medium: 240ms;
+--motion-slow: 320ms;
+```
+
+Motion sirve para hover, dropdown, modal, drawer, tooltip y tabs. No usar animaciones decorativas innecesarias. Respetar `prefers-reduced-motion`.
+
+## 14. Estados de interacción
+
+Todo componente interactivo debe contemplar cuando aplique:
+
+- default;
+- hover;
+- focus;
+- active;
+- selected;
+- disabled;
+- loading;
+- error;
+- success.
+
+Focus debe ser visible; no retirar outlines sin reemplazo accesible.
+
+## 15. Componentes principales
+
+El catálogo funcional vive en `docs/UI_KIT.md`.
+
+Ningún módulo debe crear versiones privadas de Button, Input, Card, Badge, Modal, Table, Tabs, Search, Filter o KPI si el UI Kit ya resuelve el caso.
+
+## 16. Navegación
+
+### Sidebar
+
+- fondo: `#1D1D2C`;
+- texto: `#E9E9EF`;
+- secundario: `#8F90A7`;
+- hover: `#272838`;
+- activo: `#2C8780`;
+- indicador activo: `#72F1DC`.
+
+El módulo activo debe identificarse de inmediato.
+
+### Navegación secundaria
+
+Los módulos complejos usan `ModuleNavigation` debajo del encabezado.
+
+Inventario:
+
+- Resumen
+- Productos
+- Categorías
+- Almacenes
+- Entradas
+- Salidas
+- Ajustes
+- Transferencias
+- Kardex
+- Reportes
+- Configuración
+
+Activos:
+
+- Lista de Activos
+- Tipos de Activos
+- Categorías
+- Marcas
+- Modelos
+- Estados
+- Mantenimientos
+- Historial
+- Documentos
+- Configuración
+
+No crear estilos independientes de navegación por módulo.
+
+## 17. Cards, KPI y tablas
 
 ### Cards
-- subtle border;
-- restrained shadow;
-- 14px radius.
 
-Company directory cards use a horizontal point-of-reference cover, a centered circular logo, location metadata and compact operational metrics. Missing legacy images use branded fallbacks.
+- fondo blanco;
+- borde `--color-border-subtle`;
+- sombra muy sutil;
+- hover solo si son interactivas;
+- jerarquía: Basic, Elevated, Interactive, Selected, Warning, Error.
 
-Creation/edit decision flows may use modals, but **Company, Site, Sub-location and User/Technician card details use the approved in-page profile workspace**. These detail views are read-only by default; editing must be explicitly enabled, saving requires confirmation where governed, and destructive deletion requires a separate irreversible-action confirmation.
+### KPI
 
-### User administration
-- user creation and editing use an in-app modal instead of a permanently visible form;
-- empty directories show a clear empty state with one primary creation action;
-- role selection must show a plain-language explanation of the permissions being granted;
-- validation errors stay inside the modal and preserve all entered values until the user explicitly cancels;
-- user cards expose status, role, company, site and last access;
-- destructive account actions require branded confirmation and preserve operational history.
-- the User/Technician **Estadísticas** tab uses a dashboard composition with KPI strip, profile/operational state, seven-day Attendance progress, today's field-time ring, execution progress, upcoming Activity agenda and pending work;
-- statistics cards must use real operational data already authorized for that User profile; do not populate reference-layout cards with invented HR metrics;
-- the supplied third-party dashboard references information density and composition only. Keep Desweb colors, typography, icons and entity-profile navigation;
-- statistics are descriptive evidence and must not visually imply an employee leaderboard, score tier or automated employment judgment;
+Estructura: icono, título, valor, descripción, tendencia y estado cuando existan.
 
+La mayoría de KPI permanecen blancos; el color se concentra en icono/indicador/estado.
 
-### Confirmation dialogs
-- application confirmations must use the branded in-app dialog instead of browser-native `window.confirm()`;
-- default confirmations use Desweb teal/mint accents;
-- irreversible actions use the semantic danger treatment and explicit action labels;
-- dialogs must support Escape, backdrop cancellation, keyboard focus, light/dark themes and reduced-motion preferences;
-- confirmation copy should explain the consequence rather than rely on generic “Aceptar” wording.
+### Tablas
 
-### Buttons
-Primary: Desweb teal with white label.  
-Secondary: neutral surface with theme-aware text.
+- header: `#F8FBFC`;
+- body: `#FFFFFF`;
+- border: `#E2EAEC`;
+- hover: `#F1FAF9`;
+- selected: `#E8F2F5`;
+- texto principal: `#1D1D2C`;
+- secundario: `#686A83`.
 
-### Inputs
-- visible labels;
-- semantic surface/background;
-- teal focus state;
-- 9px radius.
+Alta densidad no significa saturación visual.
 
-### Tables
-- semantic surface;
-- soft row borders;
-- theme-aware header background.
+## 18. Formularios
 
-### Status
-Semantic red/amber/green remain available where operational meaning requires them.
+Inputs:
 
-## Accessibility
+- fondo `#FFFFFF`;
+- borde `#D5E1E3`;
+- hover `#B8CCCF`;
+- focus `#2C8780`;
+- focus ring `#72F1DC`;
+- error `#EF4444`;
+- success `#10B981`;
+- disabled `#F4F8F9`.
 
-- sufficient contrast in both themes;
-- visible focus state;
-- no status conveyed through color only;
-- avoid tiny essential text;
-- uploaded branding must not compromise readability.
+Cada control debe integrar Label, Helper, Error, Success y Disabled cuando aplique.
 
+## 19. Responsive
 
-## Public marketing surfaces
+Todo componente debe funcionar en Desktop, Laptop, Tablet y Mobile.
 
-The public landing and self-hosted/download pages are commercial product surfaces, not internal admin screens.
+En móvil:
 
-Required principles:
+- sidebar → navegación compacta/drawer;
+- tablas → responsive o cards según la tarea;
+- grids → 3→2→1 columnas;
+- KPI → disposición vertical;
+- navegación secundaria → scroll horizontal cuando sea apropiado;
+- acciones principales permanecen accesibles.
 
-- retain the Desweb palette and product identity;
-- use a professional technology/SaaS visual language with strong hierarchy and generous spacing;
-- communicate product value before implementation details;
-- show the CMMS through illustrative product UI rather than generic decoration;
-- landing navigation must expose solution, workflow, plans, login and self-hosted entry points;
-- plan cards must communicate capacity clearly without inventing unapproved prices;
-- technical-beta notices must be visually secondary to the product proposition;
-- `/downloads` and `/descargas` must resolve to the same self-hosted information experience during beta.
+Responsive no significa únicamente reducir tamaños.
 
+## 20. Accesibilidad
 
-## Login public navigation
+Obligatorio:
 
-The login screen remains authentication-first and must not duplicate the full marketing landing.
+- navegación por teclado;
+- focus visible;
+- ARIA cuando corresponda;
+- contraste suficiente;
+- estados comunicados por texto/icono + color;
+- tooltips solo para información complementaria;
+- acción icon-only con nombre accesible.
 
-Public navigation allowed from login:
+## 21. Jerarquía ERP
 
-- **Inicio**;
-- **Ver planes**;
-- **Self-hosted**;
-- clickable Desweb logo returning to Home;
-- a compact post-form CTA to start the 15-day Trial.
+El usuario debe distinguir rápidamente:
 
-Do not expose operational modules before authentication. Do not show password-recovery affordances until a real recovery flow exists.
+- Información;
+- Acción;
+- Estado;
+- Alerta;
+- Error;
+- Navegación.
 
+Prioridad de diseño:
 
-## Global visual direction
+1. jerarquía;
+2. claridad;
+3. velocidad de lectura;
+4. consistencia;
+5. densidad controlada;
+6. acciones frecuentes;
+7. estados operativos.
 
-Desweb CMMS should consistently feel **fresh, modern and technological** across public and authenticated surfaces.
+## 22. Temas y branding configurable
 
-For public/commercial pages, the preferred visual language is:
+El nuevo sistema se implementará sobre la arquitectura de temas ya existente. La dirección visual V2 define el lenguaje canónico; el modo oscuro seguirá usando tokens semánticos, no copias completas de cada componente.
 
-- dark control-center backgrounds;
-- subtle technical grids and circuit-like separators;
-- Desweb teal/mint as the primary glow/accent family;
-- restrained glass/translucent surfaces;
-- data visualization and operational telemetry as decoration with product relevance;
-- compact, high-contrast typography and strong information hierarchy;
-- premium SaaS feel without copying third-party layouts or brand identities.
+Los logos/favicons continúan viniendo del sistema de Personalización. El Design System no debe hardcodear una identidad alternativa en módulos individuales.
 
-The landing reference direction is inspiration only. Do not reproduce third-party artwork, logos, exact compositions or proprietary visual assets.
+## 23. Regla de no regresión
 
-Avoid:
-- generic neon-blue cyberpunk styling that ignores Desweb colors;
-- oversized decorative gradients without product meaning;
-- generic stock illustrations;
-- fake customer logos, testimonials or performance claims;
-- excessive animation that harms readability.
+La migración visual no debe cambiar silenciosamente:
 
-Authenticated product surfaces should stay calmer than the public landing while preserving the same technological DNA.
-
-
-## Public landing conversion architecture
-
-The public landing is not only a product brochure. It is a commercial acquisition surface with two conversion paths:
-
-1. self-service Trial/plan checkout;
-2. advisor-assisted lead capture.
-
-Header requirements:
-- always use the configured Desweb logo rather than a text-only substitute;
-- preserve logo legibility in both light and dark themes;
-- include a compact light/dark switch;
-- keep navigation focused on Solution, Workflow, Plans, FAQ, Contact and Self-hosted;
-- keep Login/Dashboard and Trial CTA visually distinct.
-
-Footer requirements:
-- repeat the configured Desweb identity at a larger, legible size;
-- group links by Product and Start/Conversion;
-- include a direct advisor CTA;
-- retain a compact legal/copyright strip.
-
-The landing supports both light and dark appearance using the same `desweb-theme` preference used elsewhere in the product.
-
-
-## Landing header and theme policy
-
-The public CMMS landing is intentionally **dark-only**. The authenticated application may continue to support light/dark/system themes independently.
-
-Header:
-- use a floating, compact white navigation surface over the dark landing background;
-- use the configured Desweb logo for light backgrounds;
-- preserve generous horizontal breathing room around the logo;
-- navigation should remain visually light, with one prominent conversion CTA;
-- mobile reduces navigation to brand + primary CTA.
-
-Footer:
-- remains dark and uses the dark-background/negative logo variant when available;
-- groups Product, Start and advisor-conversion links;
-- may use restrained geometric brand accents derived from the Desweb identity system.
-
-
-## Public wording for downloadable deployment
-
-Use **Instalación propia** in customer-facing navigation and marketing instead of the technical term **Self-hosted**.
-
-The technical documentation may continue to use `self-hosted` when discussing architecture, Docker or deployment internals, but public CTAs, menus and sales copy should prefer terminology a non-technical buyer can understand.
-
-
-## Global branding editor
-
-Superadministrator global branding must be directly visible inside **Configuración**, not hidden only behind a secondary module link.
-
-The editor uses three visual asset cards:
-
-- logo for light backgrounds;
-- logo for dark backgrounds;
-- favicon.
-
-Each card must show:
-- current preview;
-- intended usage;
-- accepted formats;
-- maximum file size;
-- recommended pixel dimensions;
-- file input.
-
-Current constraints:
-
-| Asset | Accepted formats | Maximum | Recommended |
-| --- | --- | ---: | --- |
-| Light-background logo | PNG, JPG, WebP, SVG | 2 MB | transparent, approximately 1200×320 px |
-| Dark-background logo | PNG, JPG, WebP, SVG | 2 MB | transparent, approximately 1200×320 px |
-| Favicon | ICO, PNG, WebP, SVG | 2 MB | square, 64×64 or 128×128 px |
-
-The legacy dedicated personalization route may remain available, but **Configuración** is the primary Superadministrator entry point.
-
-
-## Retractable personalized sidebar
-
-The authenticated dashboard uses a technology-oriented dark sidebar with a vertical teal/cyan accent rail inspired by compact smart-control interfaces.
-
-Behavior:
-- expanded mode shows icon + module label;
-- collapsed mode shows the module icon rail;
-- desktop users can collapse/expand the sidebar;
-- mobile uses an overlay drawer;
-- active modules use a high-contrast teal capsule/icon treatment;
-- the account/configuration control remains anchored at the bottom.
-
-### User-defined module order
-
-Visible modules can be reorganized per user.
-
-- Use **Organizar** to enter reorder mode.
-- Desktop supports drag and drop.
-- Up/down controls provide an accessible and touch-friendly alternative.
-- **Restaurar** returns to the permission-filtered default module order.
-- A user can only reorder modules they are authorized to see; reordering never grants access to hidden modules.
-- Real database-backed users persist order and collapsed state in `user_dashboard_preferences`.
-- The environment bootstrap Superadministrator has no user row, so its preference uses browser-local storage as a fallback.
-
-Navigation preference is presentation state only. Authorization and routing continue to come from the server-side permission model.
-
-
-## Company Profile v2 visual pattern
-
-The full company page is a structured enterprise profile, not a long CRUD form.
-
-Visual hierarchy:
-
-- cover image and logo establish organization identity;
-- status + plan + profile-completeness summary are visible in the hero;
-- sticky local navigation links to Summary, Information, Documents, Sites and Resources;
-- legal/administrative information uses calm card surfaces and clear field groups;
-- operational sites remain visually and semantically separate from the enterprise address;
-- corporate documents use compact dossier cards with visible status, dates, file metadata and actions;
-- the company logo sits fully below the cover/hero with clear separation; it must not overlap the cover image.
-
-Document states must use both text and color:
-
-- Vigente;
-- Próximo a vencer;
-- Vencido;
-- Pendiente;
-- Sin archivo;
-- No aplica.
-
-The directory company card may show plan, profile completion and documentation health, but it should stay scan-friendly. Selecting the card switches the Companies module to the shared in-page profile workspace. The full enterprise page remains available for deeper dossier/document administration, but the directory detail itself is no longer a modal.
-
-
-## Unified module directory pattern
-
-All primary CMMS directory modules should use the shared module-directory visual language.
-
-### Header
-
-Use a clean header with:
-
-- module eyebrow/category;
-- module title;
-- short operational description;
-- keyword search;
-- contextual filter;
-- one primary **Agregar** action with an icon that represents the entity.
-
-Avoid secondary information bands between the header and directory unless they communicate an actual operational prerequisite or warning. In particular, the former **Roles en uso** summary band is not part of the general pattern.
-
-### Creation
-
-Creation from a directory must open a modal/popup instead of permanently occupying page space.
-
-Modal rules:
-
-- use the shared wide modal treatment;
-- target approximately 1040 px maximum width on desktop;
-- reflow to one column on narrow screens;
-- preserve the same server-side validation and authorization as the previous inline form;
-- use useful example placeholders, not generic labels repeated as placeholders;
-- keep contextual creation preselection when entering from a parent record.
-
-Examples:
-
-- `Carrera 15 # 93-47, Bogotá`
-- `HVAC-001`
-- `Servicios Técnicos Andinos S.A.S.`
-- `Almacén técnico · Estante A-03`
-
-### Search and filter
-
-Directory records expose searchable text and a normalized status. Search/filtering is a presentation layer over the already-authorized result set and must never replace server-side authorization or tenant/site scoping.
-
-### Company cards
-
-Company cards use:
-
-- wide cover image;
-- circular logo positioned fully below the cover inside the identity region; it must not overlap or sit on top of the cover image;
-- centered company identity and status;
-- plan indicator;
-- operational resource rows and quota progress only where a real enforced quota exists;
-- no fabricated quota for resources that are currently unlimited.
-
-The layout should remain readable in two columns on wide screens and one column on narrow screens.
-
-
-## Entity profile workspace pattern
-
-Companies, Locations, Sub-locations and Users/Technicians use a common **same-screen** profile drill-down instead of modal detail overlays or long stacked detail forms.
-
-Navigation contract:
-
-- selecting a directory card replaces the directory body inside the same module;
-- the sticky/global module header remains visible;
-- breadcrumbs are mandatory and appear above the entity title;
-- minimum breadcrumb chain is **Inicio → Módulo → Registro**;
-- nested Sub-locations add their parent Site before the current record;
-- clicking a module/parent breadcrumb changes the current view in place rather than “closing” a dialog;
-- do not render an X/close affordance as the primary way to leave these profile views.
-
-Desktop composition:
-
-- **page heading:** contextual entity icon, **Type / Name**, secondary Company/context line and right-aligned action toolbar;
-- the heading icon is a real SVG line icon inside a pale mint circular container; do not use Unicode glyphs as entity icons;
-- breadcrumb Home uses a Home SVG followed by label text, then lightweight chevrons between levels;
-- breadcrumb labels are secondary blue-gray, while the current record is darker and heavier;
-- header secondary actions use white bordered buttons with teal SVG icons, consistent 44 px control height and compact rounded corners;
-- **Exportar** is the primary teal gradient action and carries Download + dropdown-chevron icons;
-- action icons and labels are horizontally centered with consistent gap; avoid icon-only header actions when space allows;
-- the title/subtitle block must visually align with the center of the circular entity icon, matching the approved reference;
-- the **Información general** tab uses two independent vertical columns on desktop: the data/contact/notes stack and the map/status-or-geofence stack. Do not force both sides into equal-height rows when that creates dead space;
-- embedded profile maps must be width-bounded by their panel (`min-width:0; max-width:100%; overflow:hidden`) and must not leak geofence controls outside the card;
-- read-only profile maps omit duplicated address/coordinate/radius editor controls when those values already appear in surrounding profile cards;
-- section headings use compact mint icon tiles and must describe the information group, not repeat the entity title;
-- data values remain read-only field surfaces until Edit is explicitly activated;
-- Location responsible-person fields may show initials/photo-style identity, name and responsibility/title inside one value surface;
-- Technician lists under Locations/Sub-locations use compact identity cards with avatar, active/historical Activity counts, next due date and communication shortcuts; the list is informational, not an assignment editor;
-- **left identity rail:** cover/reference image where applicable, circular Company logo or User photo, name, contextual subtitle, status, four compact statistics and a two-column quick-action area;
-- **right content surface:** one independent horizontal tab bar plus one scrollable content body;
-- **top action row:** contextual Edit/View/Create/communication actions followed by **Exportar** when Hoja de vida is available;
-- changing a tab replaces only the right content body and must not append sections below the profile;
-- the identity rail stays visually stable while operators inspect Information, Statistics, Sub-locations/Services/Activity, Attendance or Hoja de vida.
-
-Identity image rules:
-
-- Site: Site reference cover/photo plus Company logo as the circular identity mark;
-- Sub-location: Sub-location reference image plus Company logo/initial fallback;
-- User/Technician: profile photograph, falling back to initials only when a legacy record has no photo;
-- profile photos remain human-readable identity assets and are not biometric templates.
-
-Quick actions must be entity-specific and permission-aware. Examples include map, edit, contextual Sub-location creation, contextual Technician creation, assets/Work Orders, telephone and WhatsApp. Icon-only or compact actions require visible labels or hover/focus titles.
-
-### Hoja de vida export pattern
-
-The entity profile exposes one **Exportar** dropdown instead of parallel primary export buttons.
-
-Current formats for Company, Site, Sub-location and User/Technician:
-- **Hoja de vida PDF** — executive printable record;
-- **Hoja de vida Excel** — native XLSX;
-- **Hoja de vida Word** — Word-compatible editable DOC.
-
-Exports are generated server-side and must use the same authorization/tenant/Site scope as the profile. Export styling must preserve Desweb readability and identity without inventing fields or metrics that are not present in the source record.
-
-### Top-right account pattern
-
-On desktop, account/system controls belong at the far right of the sticky contextual header, after the module search/filter/action tools.
-
-- show User photo when available, otherwise initials;
-- keep name and role visible when horizontal space permits;
-- the account dropdown contains **Mi configuración**, **Manual / Ayuda**, permitted **Configuración**, and **Cerrar sesión**;
-- the left sidebar bottom must not duplicate this desktop account panel;
-- mobile field roles keep their existing **Más** bottom sheet for touch-friendly account/system access.
-
-This placement is a navigation convention, not an authorization source.
-
-
-## Creation hierarchy blocker pattern
-
-When a module cannot create its entity because a prerequisite is missing, do not leave a disabled form or a vague error.
-
-Show the shared prerequisite state, visually aligned with the Users empty state:
-
-- entity/process icon;
-- eyebrow describing the creation hierarchy;
-- explicit blocking title;
-- one sentence explaining exactly what exists and what is still missing;
-- one primary CTA that navigates to the earliest missing prerequisite.
-
-Examples:
-
-- no company → **Primero debes crear una empresa** → **Crear empresa**;
-- company exists but no principal location → **Primero debes crear una ubicación principal** → **Crear ubicación**;
-- location exists but no sub-location → **Primero debes crear una sububicación** → **Crear sububicación**;
-- physical hierarchy exists but supplier is missing → **Primero debes registrar un proveedor**;
-- crew without executable staff → **Primero debes crear personal ejecutor**;
-- work order or routine without an asset → **Primero debes registrar un activo**.
-
-The CTA must point to the earliest missing dependency, not merely the immediately previous module.
-
-When the prerequisite state is visible, suppress duplicate generic empty-state copy such as “No records yet”.
-
-
-## Mobile navigation strategy
-
-Dashboard navigation adapts by role instead of forcing the desktop sidebar pattern onto every mobile user.
-
-### Drawer navigation
-
-Roles with broad/module-heavy access use a hamburger-triggered drawer on screens below 900px.
-
-This applies to:
-- Platform Owner;
-- Superadministrator;
-- Company Administrator;
-- Manager / Supervisor;
-- Requester;
-- Viewer;
-- Provider and other roles with broader module discovery needs.
-
-The drawer reuses the same permission-filtered navigation items as desktop.
-
-### Field bottom navigation
-
-Technician and External collaborator roles use a mobile-first bottom navigation inspired by native field-service apps.
-
-Priority destinations:
-- Dashboard;
-- Orders;
-- Attendance;
-- Assets;
-- More.
-
-The active destination lifts visually above the bar. **More** opens the full permission-filtered drawer for secondary modules.
-
-The bottom navigation:
-- must never become a separate authorization source;
-- must use the same routes and permission-filtered items as desktop;
-- must respect mobile safe-area insets;
-- must leave enough bottom content padding so controls are not obscured;
-- must remain compatible with light/dark and organization white-label colors.
-
-This pattern is intentionally reusable for a future PWA/native shell so module screens require minimal visual restructuring.
-
-
-## Dashboard single-header rule
-
-The root Dashboard follows the same module-shell pattern as the rest of the authenticated application.
-
-Do not render a second introductory hero/header below the global context header.
-
-The first context header is the single source for:
-- module name;
-- module category/eyebrow;
-- current company when available, otherwise authenticated role context.
-
-Dashboard-specific controls belong below that header:
-- date range;
-- state filters;
-- export actions;
-- KPI cards.
-
-Avoid repeating role, title, explanatory copy or period in a second large panel when those elements are already represented by the shared shell and filter controls.
-
-
-## Dashboard export menu
-
-Dashboard exports are consolidated under one **Exportar** control instead of separate format buttons.
-
-The menu exposes:
-- **Excel (.xlsx)**: styled workbook with executive summary, status/type distributions, detailed data and metadata;
-- **CSV (.csv)**: flat UTF-8 dataset suitable for Power BI / Power Query and general interoperability;
-- **PDF (.pdf)**: executive report with KPI cards, charts, detailed records and corporate letterhead styling.
-
-### PDF letterhead
-
-Desweb platform/non-Pro PDF reports follow the supplied A4 landscape letterhead language:
-- centered Desweb identity at the top;
-- large pale brand watermark in the document body;
-- clean white business-report canvas;
-- Desweb slogan centered near the footer;
-- page number at the lower-right corner.
-
-The report data overlays this stationery while preserving sufficient white space and legibility.
-
-Pro white-label tenants retain the same report composition but substitute their own:
-- name/logo;
-- primary and secondary colors;
-- watermark initial/brand treatment;
-- Desweb attribution according to `show_desweb_branding`.
-
-A future portrait/vertical stationery variant should plug into the same report renderer without changing export permissions, filtering or dataset semantics.
-
-
-## Dimensional glass visual language
-
-Desweb CMMS uses a restrained dimensional-glass visual language for interactive surfaces.
-
-The reference direction is modern liquid-glass UI, adapted to a professional CMMS rather than copied literally.
-
-### Principles
-
-- Preserve Desweb brand colors as the primary visual identity.
-- Use depth, translucency and luminous edges to make controls feel interactive.
-- Keep the resting state calm; stronger glow belongs to hover, focus and selected states.
-- Avoid decorative neon that competes with data readability.
-- Do not reduce contrast for labels, tables, metrics or operational status information.
-- Light and dark themes must remain equally usable.
-- Mobile variants must preserve the same interaction hierarchy with lower visual density.
-
-### Buttons
-
-Primary buttons use:
-- teal dimensional gradient;
-- subtle highlight rim;
-- inner highlight;
-- soft elevation shadow;
-- slightly stronger hover glow.
-
-Secondary buttons use:
-- translucent neutral surface;
-- visible border;
-- mild depth;
-- teal-accent hover.
-
-### Inputs and selects
-
-Text fields, search boxes and selects use:
-- subtle inset surface;
-- dimensional border;
-- calm resting shadow;
-- stronger teal focus ring and depth when active.
-
-### Cards and module surfaces
-
-Headers, cards and analytical panels may use:
-- semi-translucent surfaces;
-- controlled backdrop blur;
-- soft gradient highlights;
-- one clear elevation level.
-
-Visual directory cards such as Companies, Locations and Users receive stronger hover elevation while retaining predictable card geometry.
-
-### Tabs and selectable controls
-
-Active tabs, checkbox cards and segmented controls use a glass-capsule selected state with:
-- brand edge;
-- light elevation;
-- subtle luminous accent;
-- no exaggerated glow.
-
-### Modals and popovers
-
-Modals, menus and popovers are the highest visual layer:
-- stronger blur;
-- deeper shadow;
-- bright surface rim;
-- clear separation from the backdrop.
-
-The backdrop itself remains darkened and blurred without obscuring context completely.
-
-### Accessibility
-
-- Focus-visible states must remain obvious.
-- Do not rely on glow/color alone to communicate state.
-- Preserve text labels and status text.
-- Respect `prefers-reduced-motion`.
-- Maintain sufficient hit areas on mobile.
-
-
-## Reference-grid component standard
-
-The supplied UI guide is now a canonical geometry and hierarchy reference for Desweb CMMS. It is adapted to the Desweb identity rather than copied literally.
-
-### Core scales
-
-Use these shared scales across authenticated modules, public/conversion pages and future mobile/PWA surfaces:
-
-- **Elevation:** Base, Raised, Inset and Deep.
-- **Visual priority:** Level 1 Important through Level 5 Optional.
-- **Border thickness:** 1 px fine, 2 px standard/selected and 4 px strong semantic accent.
-- **Radius scale:** 4, 8, 12, 16 and 24 px.
-- **Icon scale:** 16, 20 and 24 px. Icon strokes should visually approximate 2 px where vector icons are used.
-- **Spacing rhythm:** 16 px for normal component spacing and 24 px for larger content/feedback separation.
-- **Control height:** approximately 42 px desktop and 44 px mobile for primary interactive controls.
-
-These values are exposed in `app/globals.css` through the `--ui-*` design tokens and should be reused instead of inventing local geometry.
-
-### Elevation rules
-
-**Base** is the default card/container level. Use a restrained shadow and fine border.
-
-**Raised** is for hover, selected navigation, featured cards and interactive emphasis. It should be visibly above Base without becoming decorative.
-
-**Inset** is for input wells, pressed controls and selected/toggle interiors. It should communicate physical depth without lowering contrast.
-
-**Deep** is reserved for modals, popovers, checkout/login hero containers and decision layers. Do not use Deep elevation for ordinary directory cards.
-
-### Buttons and controls
-
-- Primary actions are priority level 1 and use Desweb teal with dimensional depth.
-- Secondary actions use a neutral raised surface and visible border.
-- Pressed states use inset depth rather than only a color change.
-- Disabled controls reduce saturation/elevation and must keep a clear disabled cursor/state.
-- Inputs, selects and textareas use inset wells with an explicit Desweb teal focus ring.
-- Native checkbox, radio and range controls use the Desweb accent color while retaining browser semantics and accessibility.
-- Compact icon actions use the 36 px tier; normal primary controls use the 42/44 px tier.
-
-### Navigation
-
-Tabs and segmented navigation remain visually calm at rest. The active item uses a raised state with a clear text/state cue. Mobile bottom navigation follows the same geometry and must not introduce a separate visual language.
-
-### Data display
-
-Tables use a 16 px outer radius, fine border and Base elevation. Status labels remain pill-shaped and combine text with semantic color. Directory cards may rise one level on hover but should preserve stable geometry.
-
-### Feedback and empty states
-
-- Success/error notices use Base/Raised surfaces with a 4 px semantic edge accent where appropriate.
-- Confirmation dialogs use Deep elevation and a 24 px radius.
-- Empty/prerequisite states use a bounded 16 px container; dashed borders are acceptable when communicating absence rather than an error.
-- Loading and future skeleton components should use the same radius/spacing scale rather than bespoke shapes.
-
-### Public and conversion surfaces
-
-The same geometry applies to landing, login, checkout and lead forms, but color rules remain context-specific. In particular, the public landing remains intentionally dark-only; the reference guide does not override that product decision.
-
-### Implementation rule
-
-When creating or redesigning a component, select values from the shared `--ui-*` scales first. A new radius, shadow, icon size or spacing value should only be introduced when the existing scale cannot satisfy a documented functional need.
-
-
-### Landing account access control
-
-The public landing header uses a compact icon-only account control instead of text such as **Ir al panel** or **Iniciar sesión**. The destination is session-aware: unauthenticated visitors go to `/login`, while authenticated users go directly to `/dashboard`.
-
-The control follows the shared reference-grid rules: 20 px user icon, 42 px desktop control height, 38–40 px compact mobile size, 12 px radius tier, Base elevation at rest, Raised on hover and Inset on press. It must remain visible on mobile next to the trial CTA.
-
-### Export popover stacking rule
-
-Dropdowns that visually escape a dashboard toolbar must elevate the toolbar's stacking context while open. Raising only the child popover is insufficient when later content participates in another stacking context. Dashboard export therefore marks the filter bar as open, keeps overflow visible and raises the parent plus popover above following panels.
-
-
-### Mobile dashboard header and drawer
-
-The dashboard mobile menu is part of the contextual header, not a floating control detached from it. A dedicated mobile navigation slot keeps the hamburger aligned with the current module identity.
-
-For drawer-mode roles below 900 px:
-
-- the hamburger uses the compact 40 px control tier inside the contextual header;
-- opening navigation locks page scroll;
-- the drawer is a fixed, full-height mobile layer above the overlay;
-- the overlay uses dark translucency without backdrop blur so it cannot visually obscure or wash out the drawer;
-- the drawer explicitly overrides legacy generic `.sidebar{display:none}` mobile rules;
-- the open drawer remains interactive and visible through explicit visibility, opacity and pointer-event states;
-- the sidebar collapse control becomes a close control while the mobile drawer is open;
-- navigation closes on route change, Escape, overlay tap or module selection.
-
-Field-role bottom navigation continues to hide the header hamburger and uses **Más** to open the same authorized drawer.
-
-### Landing account icon contrast
-
-The compact landing account button uses a stronger mint surface, darker icon color and thicker 20–22 px user-icon stroke so the action remains visible against the white floating landing header on mobile.
-
-
-### Mobile contextual-header alignment
-
-On drawer-mode mobile layouts, the hamburger remains anchored on the left side of the contextual header. The current-module identity is aligned to the right: the module icon sits at the far-right edge and the eyebrow/title/context copy sits immediately to its left with right-aligned text. This preserves a clear left navigation affordance while visually separating it from the current module identity.
-
-
-### Opaque decision-layer rule
-
-Glass/translucent surfaces are not used for components where the user must read, choose or confirm information. Popovers, dropdown panels, date pickers, account menus, contextual action panels and modals use an opaque surface so underlying page text cannot remain visible through the component.
-
-The rule is:
-
-- ordinary cards and contextual surfaces may retain restrained glass/depth treatment;
-- reading and decision layers use solid `--overlay-surface` / `--overlay-surface-soft` tokens;
-- shadows and borders provide depth instead of background transparency;
-- sticky modal headers/action bars use the same opaque surface as the modal body;
-- dark mode uses an equally opaque dark surface;
-- backdrop blur may remain on the page backdrop where useful, but never as a substitute for an opaque popup body.
-
-
-### Sticky module-header contrast
-
-The shared contextual header must remain visually distinct from scrolling module content. It uses a dedicated opaque module-header surface rather than the same white/card surface used by directories and panels.
-
-- Light mode uses a restrained mint/blue-gray surface with a stronger lower elevation shadow.
-- Dark mode uses a deeper blue-gray surface than the normal content cards.
-- A subtle Desweb teal lower accent reinforces the separation without becoming decorative.
-- The header remains opaque and does not depend on backdrop blur for readability.
-- This rule applies to every authenticated module that uses the shared `.context-header` shell, including mobile.
-
-
-### Compact directory-card pattern
-
-Company and principal-location directories use a compact card pattern optimized for dense operational browsing.
-
-- Desktop target is four cards per row when workspace width allows it; responsive breakpoints reduce to three, two and one columns.
-- Cover imagery is shallow and identity circles are smaller than the previous directory cards.
-- The main card body is a dedicated click target for opening detail; resource shortcuts are separate interactive links so nested-button/link markup is never used.
-- Resource shortcuts use icon + `used/assigned` for company entitlements, with a tooltip naming the resource on hover/focus.
-- Each resource shortcut navigates to its associated module: locations/sublocations → Locations, assets → Assets, inventory → Inventory, technicians → Users.
-- Location cards use the same compact pattern and expose direct shortcuts for their sublocations and assets.
-- Tooltip information must also be available through `title`/accessible labels so mouse and keyboard users receive equivalent context.
-
-### Company logo creation rule
-
-A company logo is mandatory when a company is created. The requirement is enforced both by the browser form and the server endpoint. The logo is the default identity image shown inside the circular company mark throughout company and location directory cards. A company cover/reference image is optional and must never replace the logo as the circular identity asset. In Company profile/detail surfaces the logo must be placed fully below the cover rather than floating across the cover boundary.
-
-### Company document workspace pattern
-
-- Use separate **Vigentes** and **Archivados** states/tabs so archiving never makes a record appear lost.
-- Selecting a document keeps the list/context visible and opens a side preview/details card rather than forcing immediate navigation away.
-- PDF and supported image files should preview in place when possible; download remains a distinct action.
-- Current-document actions may include edit, archive, download and the protected permanent-delete action when the role allows it.
-- Archived-document actions emphasize preview/download and **Restaurar**; archived records are not editable until restored.
-- Permanent delete remains visually distinct from archive and must keep the branded security-confirmation dialog.
-
-### Country-aware phone action pattern
-
-- When country is already known from Company/Site context, show the international calling prefix as a fixed contextual element and ask only for the national-number remainder.
-- Do not require users to duplicate the country prefix inside the editable number field.
-- Telephone and WhatsApp icon buttons use the normalized number and provide an explicit tooltip/title on hover and focus (for example, **Llamar** and **Abrir en WhatsApp**).
-- Icon-only actions require accessible labels; their function must not depend on icon recognition alone.
-
-
-### Company profile detail pattern
-
-The Company quick-detail uses the shared in-page profile layout instead of a modal or tall free-form form.
-
-- A shallow hero/cover is separated from the identity block so the company name never overlaps or disappears over imagery.
-- The logo is fully below the cover/hero boundary; neither the logo nor company name should be mounted over the cover image.
-- Logo, status, plan, legal identity and primary-site context form one clear identity region.
-- Quick actions provide direct access to Locations, Assets, Users and the full company record.
-- Executive summary cards expose profile completion, locations, assets and documentation state.
-- Long-form content is organized into accessible native `details/summary` accordions: General information, Primary site and coverage, Resources and consumption, Documentation/compliance and Visual identity.
-- The primary-site coverage accordion is the insertion point for interactive map/geofence controls in the next phase.
-- Mobile reduces the hero height, stacks actions and accordions, and keeps the entity name readable above all secondary metadata.
-
-### User photo versus biometric enrollment
-
-A profile photo is mandatory when a user account is created and is used for human-readable identity in directories/cards. It is **not** the biometric reference used for attendance verification.
-
-Biometric enrollment remains a separate live-camera flow with liveness/anti-spoof checks. Attendance-controlled users must enroll a live facial template before field biometric verification can succeed. The encrypted facial template is distinct from the stored profile photo.
-
-
-### Site geofence map pattern
-
-Principal sites use an interactive map/geofence component wherever their physical position is created or edited.
-
-- The administrator enters a human-readable address and explicitly validates it.
-- Address validation returns candidate results; choosing one sets latitude/longitude.
-- The marker can then be adjusted manually by selecting a point on the map.
-- **Use my location** requests browser geolocation and may be used when the administrator is physically at the site.
-- A visible circular overlay represents the permitted geofence radius.
-- Radius is configurable between 20 and 5000 metres and is shown together with the exact stored coordinates.
-- Read-only company/location detail surfaces show the same map and radius without editing controls.
-- Map bodies are operational/reading layers and therefore follow the opaque-surface rule around their surrounding UI.
-- Mobile keeps the map touch-safe, stacks coordinates/radius vertically and preserves the same validation semantics.
-
-The map is not decorative: the saved latitude, longitude and radius are the same site values consumed by attendance verification.
-
-
-### Field presence start workflow
-
-The mobile attendance experience is modeled as **presence in site**, not as an assigned-task prerequisite.
-
-- A field user may start a biometric shift even when zero work activities are assigned.
-- The UI communicates this as **En sitio y disponible** rather than implying that a task is already in progress.
-- Geolocation is validated before opening the camera, avoiding unnecessary facial capture when GPS permission, accuracy or geofence conditions fail.
-- When multiple authorized sites exist, the nearest configured site inside its geofence may be selected automatically from the current GPS fix; the server remains authoritative.
-- The presence workflow presents GPS, geofence and facial verification as explicit sequential steps.
-- The main mobile action is **Iniciar actividades** / **Finalizar actividades**; these actions open/close the attendance shift, not a work-order task.
-- A compact map can show the configured site point, radius and current-device marker during presence validation.
-- Camera UI is only surfaced during live enrollment or verification.
-
-
-### Supervised biometric enrollment pattern
-
-The Attendance module provides a dedicated administrator/manager enrollment surface.
-
-- Person and enrollment site are explicit selections.
-- The selected user's profile photo is shown as a human verification aid.
-- Users without a profile photo are visibly ineligible until their profile is completed.
-- Identity-verification and consent confirmations are separate controls.
-- The camera remains off until the supervisor starts enrollment.
-- Statuses distinguish **Verified**, **Requires reenrollment**, **Revoked** and **No biometric**.
-- Field users with no verified supervised template see a blocked explanatory state rather than a self-enrollment button.
-- Enrollment/revocation updates remain visually distinct from normal attendance check-in/out.
-
-
-### Field mobile navigation and directory pattern
-
-Field-role mobile navigation is a persistent safe-area-aware bottom bar with four primary operational modules and a **Más** action. **Más** must not duplicate the primary items. It opens a bottom sheet containing only secondary authorized modules plus account/system actions such as Configuration and Sign out.
-
-Mobile module directories must not force desktop tables into the viewport. Modules with dense columnar data should provide a compact card/list representation below 700 px while keeping the desktop table for larger widths. Orders and Assets are the first field-directory references. Both switch from desktop tables to compact cards on small screens while preserving the same search/filter data attributes.
-
-The mobile workspace must reserve bottom padding equal to the navigation height plus device safe-area inset so content never hides behind the fixed navigation.
-
-
-### Attendance contingency pattern
-
-Biometric/geolocation contingency is an explicitly exceptional UI state, not a hidden bypass.
-
-- Field users with a previously supervised biometric identity may submit a contingency request for check-in or check-out when camera, GPS, geofence, connectivity or device failures prevent the normal flow.
-- The request captures site, action, reason, user explanation and whatever diagnostic/location evidence is available.
-- Pending and approved states are visually distinct.
-- Approval is temporary, single-use and displayed with its expiration time.
-- Supervisor review cards show subject, role, site, affected event, reason, diagnostic accuracy and an optional review note.
-- Reports expose contingency counts separately from ordinary attendance.
-- Contingency styling uses warning/exception semantics and must never visually imply ordinary biometric verification.
-
-
-### User manual / help-center pattern
-
-The help center is hybrid rather than role-exclusive.
-
-- Authenticated users land on content prioritized for their actual role.
-- A **Toda la plataforma** option explains the overall workflow and how modules relate.
-- Public `/manual` shows general platform guidance without private tenant context.
-- Articles are collapsible process cards with module, purpose, ordered steps, notes and optional direct module action.
-- Search operates over titles, summaries, keywords, steps and notes.
-- **Qué cambió** highlights user-relevant product changes.
-- Mobile uses one-column cards and full-width actions.
-
-
-### Rutinas and Inventario mobile directory pattern
-
-Rutinas and Inventario follow the same mobile directory rule used by Activos and Órdenes: desktop keeps the dense table, while screens at 700 px or less render compact cards.
-
-- Rutinas cards prioritize routine name, asset, frequency and next due date.
-- Inventario cards prioritize SKU, item, current stock, minimum, physical location and supplier.
-- Low stock receives a distinct warning badge.
-- The field workspace continues reserving bottom space for the fixed mobile navigation.
-
-### Dark-mode form/dropdown contrast
-
-Dark mode must explicitly style form controls inside modals/popovers. Native `select`, `option` and `optgroup` surfaces use a dark background and light text, and modal headers/actions remain on opaque theme surfaces. Never rely on browser-default white dropdown surfaces in dark mode.
-
-
-### Google Maps geofence provider
-
-Google Maps Platform is the preferred production cartography/geocoding provider.
-
-- Google Maps JavaScript API renders the interactive map and geofence.
-- The server Geocoding API validates/searches addresses.
-- Browser/device GPS remains the source of the user's physical position.
-- The server remains authoritative for geofence distance checks.
-- OpenStreetMap remains a temporary operational fallback when Google credentials are missing or unavailable.
-- A Google Map ID may be supplied for cloud-based light/dark styling without changing geofence logic.
-
-
-### Branded geofence marker
-
-Configured company/site maps use a branded center marker inspired by navigation apps: a circular company logo with white separation ring, subtle shadow and location tail. The geofence circle remains independent and visible around that marker. If no logo exists, the map falls back to initials/default pin.
-
-In location edit mode only one interactive map is rendered. The previous read-only duplicate is replaced with a compact geofence summary; read-only/detail mode may still render the map for reference.
-
-Google Places autocomplete must visually inherit the product theme: light surface by default and dark surface only when the user explicitly selected dark mode.
-
-
-### Three geofence location methods
-
-Editable site geofences provide three equivalent ways to establish the center point:
-
-1. **Google Places autocomplete** for known addresses/places.
-2. **Usar mi GPS** for the device's current physical location.
-3. **Draggable map marker** for manual visual adjustment.
-
-The branded Advanced Marker is draggable only in edit/create mode. Dropping it updates latitude/longitude and recenters the geofence; read-only maps keep the marker fixed.
-
-
-## Unified file upload pattern
-
-All user-facing photo/document/file inputs must use the shared `FileDropzone` component instead of the browser-native file selector. The component is the standard visual contract for drag-and-drop and browse selection across the CMMS.
-
-Required behavior:
-
-- preserve the real HTML file input so existing multipart/API contracts continue to work;
-- expose accepted formats and the same maximum size enforced by the backend;
-- show selected filename and size;
-- preview images locally when possible;
-- support drag-and-drop and keyboard activation;
-- allow clearing/replacing a selection before submission;
-- distinguish required versus optional uploads;
-- surface local type/size validation without replacing server validation.
-
-Recommended sizes and aspect ratios are guidance only unless a backend rule explicitly validates them. Server-side MIME/type/size validation remains authoritative.
-
-Site/location code fields should be labelled as an optional **internal code/reference** where shown to end users. Explain that examples such as `MAIN`, `BOG-01` or `BODEGA-02` are short identifiers used in work orders, reporting and integrations; they are not postal addresses.
-
-
-## International controlled-field pattern
-
-Country-related identity inputs use controlled select components rather than free-text textboxes.
-
-- Use `CountrySelect` for Country.
-- Use `CountryCityFields` whenever Country and City are captured together. Country appears first and City depends on it.
-- Use `TaxIdentificationTypeSelect` for Company/legal identification types.
-- Use `PersonalDocumentTypeSelect` for human identity-document types.
-- Use `CountryTimezoneSelect` for Country-related time-zone selection.
-- Use `PhoneField` with the same Country source; show the calling code as a non-editable prefix and ask for the national number only.
-- Do not place a writable two-letter Country-code field in normal user-facing forms.
-- When changing Country invalidates the current City, time zone or identification type, reset to a valid choice rather than leaving an inconsistent hidden value.
-- Legacy data outside the current catalog may be shown as a clearly marked compatibility option so an existing record can still be opened and migrated intentionally.
-
-
-## Supplier profile and requisition UX
-
-Supplier uses the same approved **in-page entity detail** language as Company, Site, Sub-location and Technician.
-
-- The Supplier directory uses identity cards with Supplier logo as the primary visual, commercial/contact summary, compact operational counters and quick actions.
-- Opening or editing a Supplier changes the current module workspace; the Supplier detail must not be implemented as a read-only detail modal.
-- The Supplier detail retains breadcrumbs, entity heading actions, left identity/statistics rail and right tab workspace.
-- Supplier tabs are capability-aware: **Actividades** is shown for service/mixed Suppliers and **Inventarios / suministros** for material/mixed Suppliers. **Requisiciones**, **Documentos**, **Estadísticas**, **Información general** and **Hoja de vida** remain profile-level concerns.
-- Supplier deletion uses an explicit destructive action and confirmation. Historical dependencies block destructive deletion; deactivate the Supplier instead.
-- Supplier documents follow the same visual archive convention as governed Company documents: active and archived records remain visibly distinct, archived content can be restored, and permanent deletion requires confirmation.
-
-### Requisition visual pattern
-
-- A requisition builder presents selectable Inventory items, requested quantity and stock context in one card.
-- When selected items belong to more than one Supplier, show a visible preview of the Supplier groups and the number of requisitions that will be generated.
-- A requisition detail is displayed as a document/sheet, not as an Inventory transaction form.
-- Export remains a primary action and offers PDF, Excel and Word-compatible outputs.
-- Requisition status badges use descriptive lifecycle styling; never imply that an approved or fulfilled requisition has already modified stock.
-
-
-## Operational card typography and density
-
-Operational directories must optimize information density without sacrificing legibility.
-
-- Wide desktop Supplier directories use **3 cards per row** when the viewport can sustain readable content; degrade to 2 and then 1 column responsively.
-- Do not solve density by reducing operational copy to 7–8 px. Supplier/requisition card metadata should remain around 10–12 px, primary card titles around 14–16 px, and important numeric counters around 15–18 px.
-- Compact action buttons may reduce padding before reducing label legibility.
-- Status badges must remain readable at normal browser zoom; avoid micro-text badges.
-- When a card becomes too narrow for two metadata columns, collapse the metadata layout responsively instead of shrinking fonts further.
-- The same readability floor applies to requisition rows, documents, activities, supply cards and table-like sheet views.
-
-
-## Compact profile directory patterns
-
-User and Supplier directories intentionally use different card languages.
-
-### Users — personal credential card
-
-- Use a visual cover band and overlapping circular avatar to communicate a person/profile.
-- Keep name, role and Company as the primary hierarchy.
-- Biometric state and Site scope are compact secondary badges.
-- Surface only the most useful operational counters in the directory: active Work Orders, pending Activities and recently completed Activities.
-- Primary action is **Ver perfil**; edit/status/delete remain compact secondary actions.
-- User cards may render up to 5 columns only when normal text remains legible.
-
-### Suppliers — commercial/vendor card
-
-- Use a branded commercial banner with the Supplier logo as the identity anchor.
-- Show Supplier type, legal/commercial context, location/category and primary contact.
-- Operational counters are Activities, Supplies and Requisitions.
-- Primary action is **Ver ficha**; edit, requisition, WhatsApp and delete remain compact secondary actions.
-- Supplier cards must remain visually distinct from User cards even when both use the same responsive grid density.
-
-### Directory density
-
-- Very wide desktop: up to 5 columns.
-- Large desktop: 4 columns.
-- Medium desktop/tablet landscape: 3 columns.
-- Narrow tablet: 2 columns.
-- Mobile: 1 column.
-- Do not force the maximum column count when it makes names, actions or metrics unreadable.
-
-
-## User vs Supplier compact profile cards
-
-The two compact directories share density rules but must not look like the same entity type.
-
-**User card**
-- personal portrait is circular and overlaps the lower edge of the cover;
-- the cover carries account Active/Inactive state only;
-- live-tracking and biometric enrollment states do not appear as unexplained directory badges;
-- WhatsApp is a quick action when a phone exists;
-- temporary deactivation uses a power/status icon, while the trash icon is reserved for permanent deletion.
-
-**Supplier card**
-- Supplier identity uses a rounded-square logo overlapping the commercial banner;
-- Supplier type remains a commercial badge next to the logo;
-- the footer exposes operational counters and commercial quick actions;
-- destructive Supplier deletion always uses the shared Desweb confirmation dialog, never the browser-native confirm UI.
-
-**Grid rule**
-- standard desktop: 4 cards per row;
-- wide desktop (>= 1680 px viewport): 5 cards per row;
-- narrower layouts: 3 / 2 / 1 cards responsively.
-- Do not force five columns when doing so clips profile media, action labels or operational metadata.
-
-
-## Role dashboard analytical composition
-
-The approved Dashboard composition is based on the supplied dense admin-dashboard reference but uses Desweb colors, dimensional surfaces and existing navigation.
-
-Order:
-1. role-aware analytical heading with current and comparison periods;
-2. compact filter/export bar;
-3. four KPI cards with value, contextual hint, comparison badge and small trend evidence;
-4. a primary six-month trend panel plus role-relevant summary tiles;
-5. distribution/impact panels;
-6. filtered recent-detail table.
-
-Rules:
-- KPI comparisons use actual previous-period aggregates; never render decorative percentage changes.
-- Green/red comparison treatments reflect improvement/deterioration only when the metric has an unambiguous direction. Neutral metrics use neutral variation treatment.
-- Trend lines represent stored monthly data. Missing months render as zero; do not interpolate fake observations.
-- Operational dashboards may use Site, Priority and status filters, but controls only narrow records already authorized by the server.
-- Keep four KPI cards on wide desktop, two on medium layouts and one on narrow mobile.
-- Three-column analytical panels may collapse to two and then one column.
-- Charts must remain legible in dark mode and on mobile without adding a separate mobile-only dashboard.
-- Worker/field dashboards must not visually present leaderboard/ranking patterns.
-
-
-## Conditional facet filter pattern
-
-Module headers may add compact select facets beside search/status when the dataset benefits from structured narrowing.
-
-Rules:
-- derive choices only from the records already visible to the authenticated scope;
-- hide a facet entirely when it has zero or one useful choice;
-- facets cascade so a selected parent (for example Company) narrows child choices (for example Site/Supplier);
-- keep a single **Limpiar** action when any search/status/facet is active;
-- on compact/mobile layouts stack controls to full width rather than compressing labels;
-- do not duplicate a structured facet as a separate permanent filter panel unless the workflow requires more complex analytics.
-
-Recommended hierarchy is parent-to-specific: Company → Site → entity-specific facet.
-
-## Multi-select controlled-catalog pattern
-
-Use `MultiSelectDropdown` when one entity can belong to several values from a governed catalog.
-
-The control:
-- displays human labels;
-- submits stable codes as repeated form values;
-- supports select-all and clear;
-- remains keyboard/Escape dismissible;
-- stacks safely on mobile;
-- uses the same Desweb surface/focus treatment in light and dark mode.
-
-Do not replace a governed catalog with a free-text input merely for convenience. If a valid business category is missing, extend the shared catalog/migration deliberately so imports, exports and reports continue to use the same code set.
+- APIs;
+- base de datos;
+- autenticación;
+- permisos;
+- CRUD;
+- cálculos;
+- integraciones;
+- reglas de negocio.
+
+Si un conflicto funcional aparece durante una fase visual:
+
+1. documentarlo;
+2. separar el problema del cambio visual;
+3. resolverlo únicamente con decisión explícita.
+
+## 24. Calidad de salida
+
+Antes de considerar migrado un componente/módulo:
+
+- usa tokens;
+- no contiene colores arbitrarios;
+- cubre hover/focus/disabled/loading/error/success según corresponda;
+- es responsive;
+- es accesible;
+- mantiene jerarquía;
+- reutiliza UI Kit;
+- no duplica componentes;
+- preserva lógica;
+- respeta identidad DESWEB;
+- se ve coherente con el resto del ERP.
+
+## 25. Estado de migración
+
+La aplicación actual contiene estilos heredados, incluyendo la paleta previa `#293644/#38B2A9/#79CAC4/#BAE3E0` y numerosos valores específicos por componente.
+
+A partir de este checkpoint:
+
+- esos valores se consideran **legacy implementation**, no tokens autorizados para nuevo desarrollo;
+- no deben eliminarse de golpe;
+- cada fase migra componentes de forma controlada;
+- las reglas antiguas que describen patrones funcionales válidos siguen vigentes mientras no contradigan este documento;
+- cuando exista contradicción visual, **DESWEB Design System V2 prevalece**.
+
+Ver: `docs/DESIGN_MIGRATION_PLAN.md`.

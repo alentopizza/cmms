@@ -237,7 +237,7 @@ html[data-theme="dark"]{
   --color-text-secondary:var(--color-navy-200);
   --color-text-muted:var(--color-navy-300);
   --color-text-disabled:var(--color-navy-400);
-  --color-text-inverse:var(--color-navy-950);
+  --color-text-inverse:var(--color-navy-50);
 
   --color-border-subtle:var(--color-navy-700);
   --color-border-default:var(--color-navy-600);
@@ -248,7 +248,6 @@ html[data-theme="dark"]{
   --color-action-primary-hover:var(--color-primary-800);
   --color-action-primary-active:var(--color-teal-700);
   --color-focus-ring:var(--color-brand-primary);
-  --color-text-inverse:var(--color-navy-50);
 
   --color-success-surface:color-mix(in srgb,var(--color-success-500) 14%,var(--color-surface));
   --color-success-border:color-mix(in srgb,var(--color-success-500) 36%,var(--color-border-default));

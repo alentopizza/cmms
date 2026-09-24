@@ -145,7 +145,7 @@ function trendWindow(filters:DashboardFilters){
   });
   return {start:iso(start),end:iso(end),keys,labels};
 }
-function monthValues<T extends Record<string,unknown>>(keys:string[],rows:T[],field:keyof T){
+function monthValues(keys:string[],rows:Array<Record<string,unknown>>,field:string){
   const map=new Map(rows.map(row=>[String(row.month),n(row[field] as string|number|null|undefined)]));
   return keys.map(key=>map.get(key)||0);
 }
@@ -375,7 +375,6 @@ async function operation(session:Session,filters:DashboardFilters) {
     ?await query<C>("SELECT count(*)::text count FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND u.active=true AND om.role IN ('technician','external')",[session.organizationId])
     :{rows:[{count:"0"}]} as any;
 
-  const distributionParams=[...scope(session,"w").params];
   const distributionScope=scope(session,"w");
   const distParams=[...distributionScope.params];
   const distSite=appendSiteFilter(distParams,"w.site_id",filters);

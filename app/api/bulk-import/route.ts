@@ -1092,6 +1092,7 @@ export async function POST(request:Request){
   const sheet=findWorksheet(workbook,["Activos"]);
   if(!sheet)return NextResponse.json({error:"No se encontró la hoja Activos."},{status:400});
   const parsedSheet=parseSheet(sheet,ASSET_ALIASES,["code","name","supplier"]);
+  validateRowLimit(issues,sheet.name,parsedSheet.rows);
   if(parsedSheet.missing.length)issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "));
   const existingCodesResult=await query<{code:string}>("SELECT code FROM assets WHERE organization_id=$1",[organizationId]);
   const assets=assetValidation(parsedSheet.rows,sheet.name,catalog,new Set(existingCodesResult.rows.map(row=>row.code.toUpperCase())));

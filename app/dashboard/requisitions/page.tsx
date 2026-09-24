@@ -8,7 +8,7 @@ import UiIcon from "@/components/UiIcon";
 
 type Req={
   id:string;organization_id:string;requested_by:string|null;number:string;status:string;created_at:string;needed_by:string|null;supplier_id:string;supplier_name:string;
-  organization_name:string;requested_by_name:string|null;item_count:number;total_estimated:string;
+  organization_name:string;requested_by_name:string|null;item_count:number;total_estimated:string;quantity_requested:string;quantity_received:string;
 };
 
 function statusLabel(status:string){
@@ -26,7 +26,9 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
     ? await query<Req>(
       `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
               u.full_name requested_by_name,count(ri.id)::int item_count,
-              COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
+              COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
+              COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
+              COALESCE(sum(ri.quantity_received),0)::text quantity_received
        FROM supplier_requisitions r
        JOIN suppliers s ON s.id=r.supplier_id
        JOIN organizations o ON o.id=r.organization_id
@@ -37,7 +39,9 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
     : await query<Req>(
       `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,
               u.full_name requested_by_name,count(ri.id)::int item_count,
-              COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated
+              COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
+              COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
+              COALESCE(sum(ri.quantity_received),0)::text quantity_received
        FROM supplier_requisitions r
        JOIN suppliers s ON s.id=r.supplier_id
        JOIN organizations o ON o.id=r.organization_id
@@ -88,6 +92,11 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
             <div><span>Requerida</span><strong>{req.needed_by?new Date(req.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}</strong></div>
             <div><span>Solicitante</span><strong>{req.requested_by_name||"Sistema"}</strong></div>
           </div>
+          {Number(req.quantity_requested)>0&&<div className="requisition-directory-receipt">
+            <div><span>Recepción</span><strong>{Math.min(100,Math.round(Number(req.quantity_received)/Number(req.quantity_requested)*100))}%</strong></div>
+            <div className="requisition-progress-track"><i style={{width:Math.min(100,Number(req.quantity_received)/Number(req.quantity_requested)*100)+"%"}}/></div>
+            <small>{Number(req.quantity_received).toLocaleString("es-CO")} de {Number(req.quantity_requested).toLocaleString("es-CO")} unidades acumuladas</small>
+          </div>}
           <div className="requisition-directory-actions">
             <Link href={"/dashboard/requisitions/"+req.id}><UiIcon name="file" size={15}/> Ver requisición</Link>
             <Link href={"/dashboard/suppliers?supplier="+req.supplier_id}><UiIcon name="company" size={15}/> Ver proveedor</Link>

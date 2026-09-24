@@ -25,6 +25,8 @@ export type RequisitionSelectableItem={
   presentation?:string|null;
   max_quantity?:string|null;
   storage_location?:string|null;
+  active?:boolean;
+  has_image?:boolean;
 };
 
 export default function RequisitionBuilder({
@@ -40,7 +42,8 @@ export default function RequisitionBuilder({
 }){
   const [selected,setSelected]=useState<Record<string,boolean>>({});
   const [quantities,setQuantities]=useState<Record<string,string>>({});
-  const selectedItems=items.filter(item=>selected[item.id]);
+  const availableItems=items.filter(item=>item.active!==false);
+  const selectedItems=availableItems.filter(item=>selected[item.id]);
   const groups=useMemo(()=>{
     const map=new Map<string,{name:string;items:RequisitionSelectableItem[]}>();
     for(const item of selectedItems){
@@ -65,7 +68,7 @@ export default function RequisitionBuilder({
       </div>
     </div>
 
-    {items.length?<form method="post" action="/api/requisitions/generate">
+    {availableItems.length?<form method="post" action="/api/requisitions/generate">
       <input type="hidden" name="return_to" value={returnTo}/>
       <div className="requisition-builder-options">
         <div className="field"><label>Fecha requerida</label><input type="date" name="needed_by"/></div>
@@ -73,7 +76,7 @@ export default function RequisitionBuilder({
       </div>
 
       <div className="requisition-item-grid">
-        {items.map(item=>{
+        {availableItems.map(item=>{
           const checked=Boolean(selected[item.id]);
           const low=Number(item.quantity||0)<=Number(item.min_quantity||0);
           return <label key={item.id} className={"requisition-select-item"+(checked?" selected":"")}>

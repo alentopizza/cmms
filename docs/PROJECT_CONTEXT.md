@@ -772,3 +772,34 @@ Supplier identity priority is internal ID → tax/NIT → internal Supplier code
 The preflight validates structure, Supplier identity, SKU uniqueness, Site/Sub-location scope, warehouses, quantities/costs, expiry, Kardex relationships, external movement IDs and simulated warehouse stock before confirmation. Services are detected and omitted from physical Inventory/Kardex.
 
 Commit is still one PostgreSQL transaction and Kardex remains the stock authority. Import batches now carry `IMP-YEAR-######`, origin, contextual Supplier, commit scope and omitted-row counts.
+
+
+## Strategic visual direction — DESWEB Design System V2 (2026-09-24)
+
+The product owner approved a major ERP visual-system refactor. The goal is not a recolor: DESWEB CMMS will progressively move to a centralized Design System + UI Kit architecture so all modules feel like one enterprise product.
+
+Canonical documents:
+
+- `docs/DESIGN_SYSTEM.md`
+- `docs/UI_KIT.md`
+- `docs/DESIGN_MIGRATION_PLAN.md`
+
+The approved visual DNA is:
+
+- Primary `#72F1DC`;
+- Secondary `#2C8780`;
+- Dark `#1D1D2C`.
+
+The existing CSS implementation still contains the previous palette and many local styles. Those are considered legacy migration targets, not new-development guidance.
+
+Strategic frontend model:
+
+`Design System → DESWEB UI Kit → UI Core / Business UI → ERP modules`.
+
+Implementation is phased. Documentation/governance comes first, then foundations/tokens, primitives, global shell/navigation, shared data UI, ERP-specific components and finally module-by-module migration.
+
+The migration is explicitly **visual/UX-first**. It must preserve APIs, data models, authentication, permissions, calculations, integrations and operational business rules. Functional defects discovered during visual work are documented and fixed separately when necessary.
+
+The target component catalog includes reusable Buttons, form controls, Cards, Badges/Status, Modal/Drawer, Dropdown/Tooltip, Tabs/Breadcrumb/ModuleNavigation, DataTable/Pagination, KPI, Search/Filter, feedback/loading/empty states, Avatar/FileUpload and ERP business components such as AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard and LocationCard.
+
+A live `/ui-kit` catalog is part of the target architecture and will become the official visual reference once implemented.

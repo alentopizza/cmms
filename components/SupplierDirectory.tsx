@@ -31,6 +31,7 @@ export type SupplierActivity={
 };
 export type SupplierRequisition={
   id:string;supplier_id:string;number:string;status:string;created_at:string;needed_by:string|null;item_count:number;total_estimated:string;
+  quantity_requested:string;quantity_received:string;
 };
 export type SupplierDocument={
   id:string;supplier_id:string;category:string;display_name:string;reference:string|null;expires_at:string|null;file_name:string|null;
@@ -419,10 +420,20 @@ export default function SupplierDirectory({
         {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title={"Nueva requisición · "+selected.name} description="Selecciona los insumos y cantidades. Esta ficha genera una requisición directamente para este proveedor."/></div>}
         <div className="entity-panel">
           <div className="entity-panel-heading-row"><div><h3>Historial de requisiciones</h3><p className="entity-panel-copy">Consulta, actualiza y exporta cada requisición sin perder la relación con el proveedor.</p></div><Link className="button secondary" href="/dashboard/requisitions">Ver módulo completo</Link></div>
-          {selectedReqs.length?<div className="supplier-requisition-list supplier-requisition-list-operational">{selectedReqs.map(req=><article key={req.id} className="supplier-requisition-operational-row">
-            <Link href={"/dashboard/requisitions/"+req.id}><span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong><small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small><UiIcon name="chevron-right" size={14}/></Link>
-            <RequisitionExportMenu id={req.id}/>
-          </article>)}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}
+          {selectedReqs.length?<div className="supplier-requisition-list supplier-requisition-list-operational">{selectedReqs.map(req=>{
+            const requested=Number(req.quantity_requested||0);
+            const received=Number(req.quantity_received||0);
+            const pct=requested>0?Math.min(100,Math.round(received/requested*100)):0;
+            return <article key={req.id} className="supplier-requisition-operational-row">
+              <Link href={"/dashboard/requisitions/"+req.id}>
+                <span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong>
+                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small>
+                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido</em></div>
+                <UiIcon name="chevron-right" size={14}/>
+              </Link>
+              <RequisitionExportMenu id={req.id}/>
+            </article>;
+          })}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}
         </div>
       </div>},
     ]}

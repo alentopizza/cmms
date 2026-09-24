@@ -9,7 +9,7 @@ import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 
-type Asset={id:string;code:string;name:string;company:string;site:string;location:string|null;supplier:string|null;status:string;criticality:string};
+type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string};
 type Site={id:string;organization_id:string;label:string};
 type Location={id:string;organization_id:string;site_id:string;label:string};
 type Supplier={id:string;organization_id:string;name:string};
@@ -29,18 +29,18 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
 
   const [assets,sites,locations,suppliers]=await Promise.all([
     superadmin
-      ? query<Asset>(`SELECT a.id,a.code,a.name,o.name company,s.name site,l.name location,p.name supplier,a.status,a.criticality
+      ? query<Asset>(`SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,a.status,a.criticality
                        FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
-                       LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN suppliers p ON p.id=a.supplier_id
+                       LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN asset_categories c ON c.id=a.category_id LEFT JOIN suppliers p ON p.id=a.supplier_id
                        ORDER BY a.created_at DESC LIMIT 200`)
       : session.accessAllSites
-        ? query<Asset>(`SELECT a.id,a.code,a.name,o.name company,s.name site,l.name location,p.name supplier,a.status,a.criticality
+        ? query<Asset>(`SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,a.status,a.criticality
                          FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
-                         LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN suppliers p ON p.id=a.supplier_id
+                         LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN asset_categories c ON c.id=a.category_id LEFT JOIN suppliers p ON p.id=a.supplier_id
                          WHERE a.organization_id=$1 ORDER BY a.created_at DESC LIMIT 200`,[orgId])
-        : query<Asset>(`SELECT a.id,a.code,a.name,o.name company,s.name site,l.name location,p.name supplier,a.status,a.criticality
+        : query<Asset>(`SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,a.status,a.criticality
                          FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
-                         LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN suppliers p ON p.id=a.supplier_id
+                         LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN asset_categories c ON c.id=a.category_id LEFT JOIN suppliers p ON p.id=a.supplier_id
                          WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[])
                          ORDER BY a.created_at DESC LIMIT 200`,[orgId,session.siteIds]),
     canWrite
@@ -83,6 +83,13 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         {value:"down",label:"Detenidos"},
         {value:"retired",label:"Retirados"},
       ]}
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+        {key:"criticality",label:"Criticidad",allLabel:"Todas las criticidades"},
+        {key:"category",label:"Categoría",allLabel:"Todas las categorías"},
+        {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
+      ]}
       action={canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
     />
     {params.created && <div className="notice success section">Activo creado correctamente.</div>}
@@ -99,7 +106,12 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
 
     <section className="section asset-directory-section">
       <div className="asset-mobile-list">
-        {assets.rows.map(a=><article key={a.id} className="asset-mobile-card" data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}>
+        {assets.rows.map(a=><article key={a.id} className="asset-mobile-card" data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.category,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}
+          data-filter-organization={a.organization_id} data-filter-organization-label={a.company}
+          data-filter-site={a.site_id} data-filter-site-label={a.site}
+          data-filter-criticality={a.criticality} data-filter-criticality-label={a.criticality}
+          data-filter-category={a.category_id||""} data-filter-category-label={a.category||""}
+          data-filter-supplier={a.supplier_id||""} data-filter-supplier-label={a.supplier||""}>
           <Link className="asset-mobile-card-main" href={"/dashboard/assets/"+a.id}>
             <div className="asset-mobile-card-icon" aria-hidden="true">◇</div>
             <div className="asset-mobile-card-copy">
@@ -130,7 +142,12 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         </article>)}
       </div>
       <table className="table asset-directory-table"><thead><tr><th>Código</th><th>Activo</th><th>Ubicación</th><th>Proveedor</th><th>Estado</th><th>Criticidad</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-      {assets.rows.map(a=><tr key={a.id} data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+      {assets.rows.map(a=><tr key={a.id} data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.category,a.supplier,a.status,a.criticality].filter(Boolean).join(" ")}
+          data-filter-organization={a.organization_id} data-filter-organization-label={a.company}
+          data-filter-site={a.site_id} data-filter-site-label={a.site}
+          data-filter-criticality={a.criticality} data-filter-criticality-label={a.criticality}
+          data-filter-category={a.category_id||""} data-filter-category-label={a.category||""}
+          data-filter-supplier={a.supplier_id||""} data-filter-supplier-label={a.supplier||""}><td>{a.code}</td><td><Link className="table-entity-link" href={"/dashboard/assets/"+a.id}><strong>{a.name}</strong><small className="table-subline">{a.company}</small></Link></td><td>{a.site}{a.location?" · "+a.location:""}</td><td>{a.supplier||"Sin proveedor"}</td><td><span className="status">{a.status}</span></td><td>{a.criticality}</td>{owner&&<td><OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
         {name:"code",label:"Código",value:a.code},
         {name:"name",label:"Nombre",value:a.name},
         {name:"status",label:"Estado",value:a.status,type:"select",options:[

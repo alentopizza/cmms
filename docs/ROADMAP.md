@@ -290,3 +290,21 @@ Before production hardening, reinforce this development workflow with the approv
 - add historical inventory-value snapshots if a future stock-ledger model supports point-in-time valuation;
 - add procurement/requisition trend panels after receiving and partial-receipt reconciliation are implemented;
 - add saved dashboard filter presets only if they remain presentation preferences and never authorization inputs.
+
+
+## Recently completed filtering / master-data foundation
+
+- conditional cascading directory facets that hide single-value filters;
+- Company/Site contextual filtering across the major operational directories;
+- entity-specific facets for role, provider, criticality, category, priority, work type, stock state, frequency and requester;
+- standardized multi-select Supplier capability and specialty catalogs;
+- User personnel document dossier and emergency contact;
+- Supplier financial/payment-preparation profile;
+- migration 029 and compatibility bridge for legacy Supplier `materials/services/both`.
+
+### Follow-on data-management opportunities
+
+- reusable spreadsheet import templates should expose the stable Supplier capability/specialty codes and reject unknown codes with row-level feedback;
+- bulk User/Supplier import should reuse the same country/document/catalog validation paths as interactive forms;
+- consider controlled master data for additional fields only when the business domain is sufficiently stable; avoid creating catalogs merely to replace genuinely record-specific text;
+- add document-expiry operational alerts/reports when notification workflow requirements are defined.

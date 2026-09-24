@@ -349,7 +349,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     </section>}
 
 
-    {canReturn&&receipts.rowCount>0&&<section className="card section supplier-return-panel">
+    {canReturn&&(receipts.rowCount||0)>0&&<section className="card section supplier-return-panel">
       <div className="section-heading">
         <div><span className="eyebrow">Devolución a proveedor</span><h2>Registrar salida contra una recepción</h2><p className="muted">La devolución no borra la recepción original. Genera una salida de Kardex enlazada a la requisición y al movimiento de entrada que la originó.</p></div>
         <span className="supplier-return-badge">{returnedTotal.toLocaleString("es-CO")} devuelto</span>
@@ -385,7 +385,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
       </form>:<div className="empty-state"><strong>No hay cantidades pendientes por devolver.</strong><span>Todas las recepciones de esta requisición ya fueron devueltas completamente.</span></div>}
     </section>}
 
-    {returnLines.rowCount>0&&<section className="card section supplier-return-history">
+    {(returnLines.rowCount||0)>0&&<section className="card section supplier-return-history">
       <div className="section-heading"><div><span className="eyebrow">Trazabilidad</span><h2>Devoluciones al proveedor</h2><p className="muted">Cada línea conserva la recepción de origen, bodega de salida, motivo, resolución esperada y movimiento de Kardex.</p></div><small>{returnLines.rowCount} líneas</small></div>
       <div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>DEV</th><th>Fecha</th><th>SKU / artículo</th><th>Cantidad</th><th>Bodega</th><th>Motivo</th><th>Resolución</th><th>Documento</th><th>Recepción origen</th><th>Usuario</th></tr></thead><tbody>
         {returnLines.rows.map(line=><tr key={line.return_id+"-"+line.source_receipt_id+"-"+line.sku}>

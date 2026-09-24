@@ -426,5 +426,6 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - A required approval must be `approved` before the receiving route may create Inventory/Kardex receipts. Revalidate this on the server even when the receive UI is hidden.
 - Approval/rejection must use the dedicated approval action and `requisitions.approve`; do not treat `approved` / `rejected` as ordinary editable lifecycle values.
 - Tenant Organization, Site scope, configured approver role and requester self-approval rule must be revalidated server-side for every approval decision.
+- Re-evaluate the snapshotted threshold rule after quantity/cost amendments. A requisition created below threshold must enter approval if an amendment reaches the stored threshold. Once approval becomes required, do not let later amount reductions opt it back out.
 - Changing quantity, estimated unit cost or required date after an approval/rejection reopens approval before additional receipt. Existing receipt history is preserved.
 - Approval events are historical evidence. Preserve requested, amended, approved, rejected and reopened transitions rather than overwriting the audit trail.

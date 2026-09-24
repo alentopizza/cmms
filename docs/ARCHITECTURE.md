@@ -530,3 +530,17 @@ This is a resilience boundary, not an authorization fallback: the recovery view 
 Crew creation accepts Organization members with roles `manager`, `technician` or `external`. The creation UI filters candidates by Organization and Site access, and `POST /api/crews` independently validates the same rules server-side.
 
 The leader is stored through `crews.leader_user_id`, remains a normal `crew_members` member, and may hold any of the eligible Crew roles. The directory reads the existing authenticated User avatar route for visual identity; it does not duplicate profile images into Crew storage.
+
+## Procurement approval architecture
+
+Migration `034_requisition_approval_policy.sql` adds three related layers:
+
+1. `organization_procurement_policies` stores the current Company configuration.
+2. `supplier_requisitions` stores a snapshot of the applicable policy plus the current approval state/decision.
+3. `supplier_requisition_approval_events` stores the append-style decision history (`requested`, `amended`, `approved`, `rejected`, `reopened`).
+
+The snapshot prevents mutable tenant configuration from changing the historical meaning of a requisition. The event table complements the general `audit_log`: the former is a domain-readable approval timeline while the latter remains the cross-system audit stream.
+
+Authorization is server-authoritative. `app/api/requisitions/[id]/approval/route.ts` validates permission, Organization, configured approver scope, requester self-approval and Site scope. `app/api/requisitions/[id]/receive/route.ts` independently checks the approval gate before writing any Inventory transaction.
+
+`app/api/requisitions/[id]/route.ts` detects approval-relevant amendments. Quantity, estimated unit cost and required-date changes reopen a prior approval or append an `amended` event while the requisition is still pending. Receipt transactions already persisted are never rolled back by reapproval.

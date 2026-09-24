@@ -429,3 +429,15 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Re-evaluate the snapshotted threshold rule after quantity/cost amendments. A requisition created below threshold must enter approval if an amendment reaches the stored threshold. Once approval becomes required, do not let later amount reductions opt it back out.
 - Changing quantity, estimated unit cost or required date after an approval/rejection reopens approval before additional receipt. Existing receipt history is preserved.
 - Approval events are historical evidence. Preserve requested, amended, approved, rejected and reopened transitions rather than overwriting the audit trail.
+
+## Supplier commercial analytics invariant
+
+- Supplier commercial KPIs are descriptive procurement evidence, never a score, ranking or automated supplier-selection decision.
+- Use physical requisition-linked `inventory_transactions.type='receipt'` as the evidence source. Do not calculate Supplier performance from client-side status counters alone.
+- The default KPI window is the last 12 months, based on requisitions whose first physical receipt falls in that window.
+- Lead time is `COALESCE(sent_at, created_at)` to first physical receipt.
+- Quantity fulfillment compares received quantity with requested quantity for the same requisitions and must not exceed 100%.
+- Complete-on-time rate only uses fully received requisitions with `needed_by`; completion date is the last receipt date.
+- Price variance is weighted actual receipt value versus estimated value for the same received quantities. Never compare requested total value against a partial actual receipt.
+- Always surface sample sizes and show an empty/insufficient-history state instead of inventing zero performance.
+- Supplier profile exports must reuse the same server-side analytics model as the Statistics tab.

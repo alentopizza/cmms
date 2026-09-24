@@ -441,3 +441,25 @@ Using only the live Company setting would make old requisitions change meaning a
 - quantity, estimated cost or required-date changes invalidate a previous decision and reopen approval;
 - prior Inventory/Kardex receipt history remains immutable;
 - `supplier_requisition_approval_events` is the domain timeline and `audit_log` remains the cross-cutting audit record.
+
+## ADR — Supplier commercial KPIs are receipt-based and formula-shared
+
+**Status:** Accepted — 2026-09-24.
+
+### Decision
+
+Supplier performance analytics use requisition-linked physical receipt transactions as the evidence source and are implemented once in `lib/supplier-analytics.ts` for reuse by UI and exports.
+
+### Why
+
+Requisition statuses alone cannot represent real lead time, partial receipt cost or the difference between estimated and physically received value. Client-side aggregation would also be affected by directory limits and could diverge from exported records.
+
+### Consequences
+
+- only physical receipt history contributes to procurement performance;
+- no Supplier ranking or composite score is generated;
+- sample sizes remain visible;
+- partial receipts compare actual versus estimated cost on the same received quantities;
+- on-time completion excludes requisitions without a required date and incomplete requisitions;
+- screen and Supplier profile export share one calculation source;
+- no new analytics table is introduced in Phase 3.

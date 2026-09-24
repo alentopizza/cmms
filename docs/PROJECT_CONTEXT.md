@@ -719,3 +719,11 @@ The Company policy is copied into each requisition at creation. This snapshot is
 When approval is required, receipt into Inventory/Kardex is a server-enforced gate. The receiving route rejects the operation until the requisition has a current approved decision. Approvals and rejections are separate from ordinary requisition lifecycle editing and are recorded with actor, time, notes and audit metadata.
 
 A requisition created below a snapshotted threshold is reevaluated when quantity/cost changes; if it reaches that stored threshold, it enters approval automatically. Once approval becomes required, later reductions do not remove the governance requirement. A material change to quantity, estimated cost or required date after a decision invalidates the previous approval/rejection and reopens the approval state. Existing receipt movements remain intact; only additional receipt of the outstanding balance is blocked until the new decision.
+
+### Supplier commercial analytics — Phase 3
+
+Supplier Statistics now derives procurement performance from requisition-linked physical receipt history. The default analytical window is 12 months and the UI explicitly displays sample sizes so missing history is not presented as zero performance.
+
+The current indicators are average time to first receipt, weighted quantity fulfillment, complete-on-time rate and weighted receipt-cost variance. Complete-on-time only evaluates fully received requisitions that have `needed_by`. Cost variance compares actual receipt unit cost with the requisition estimated unit cost for exactly the quantities physically received.
+
+`lib/supplier-analytics.ts` is the shared server model for the Supplier Statistics workspace and Supplier profile exports. It also exposes a six-month trend and recent requisition-level evidence so every KPI can be traced back to its operational source. These indicators are descriptive evidence and must not become automatic Supplier rankings or procurement decisions.

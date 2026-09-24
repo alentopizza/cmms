@@ -371,11 +371,14 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
-      "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible.",
+      "En Estadísticas, el bloque Desempeño comercial usa los últimos 12 meses de recepciones físicas para mostrar tiempo a primera recepción, cumplimiento de cantidad, entregas completas dentro de fecha y variación ponderada entre costo real y estimado. Cada indicador muestra el tamaño de su muestra.",
+      "La evolución mensual y la tabla Base reciente del indicador permiten abrir las requisiciones que originan los KPIs; estos datos son evidencia descriptiva y no una calificación automática del proveedor.",
+      "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible; cuando existe historial de recepción, la ficha incluye también los KPIs comerciales y su muestra.",
     ],
     notes:[
       "Eliminar un proveedor con historial de inventario, actividades o requisiciones está bloqueado para conservar trazabilidad. Desactívalo cuando deba conservarse el historial.",
       "Actividades sigue siendo una proyección de Órdenes; Inventarios / suministros y Requisiciones sí permiten operar directamente dentro de la ficha del proveedor.",
+      "Lead time se calcula desde Enviada —o creación cuando no existe fecha de envío— hasta la primera recepción. El cumplimiento de fecha solo considera requisiciones totalmente recibidas que tengan Fecha requerida.",
     ],
     keywords:["proveedor","servicios","suministros","documentos","logo","ficha","exportar"],
   },
@@ -435,6 +438,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"KPIs comerciales de proveedores",
+    summary:"Estadísticas de Proveedor ahora calcula lead time, cumplimiento de cantidad, entregas completas dentro de fecha y variación ponderada de costo a partir de recepciones físicas de los últimos 12 meses, con tendencia y trazabilidad a las requisiciones origen.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Aprobación y auditoría de requisiciones",

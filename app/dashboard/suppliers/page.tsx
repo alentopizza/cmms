@@ -17,6 +17,7 @@ import SupplierDirectory, {
   type SupplierRequisition,
 } from "@/components/SupplierDirectory";
 import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder";
+import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
 
 type Organization={id:string;name:string;country:string};
 type CatalogOption={code:string;label:string};
@@ -34,7 +35,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   const params=await searchParams;
   const platform=session.platformRole!=="user";
 
-  const supplierSql=`SELECT s.id,s.organization_id,o.name organization_name,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,
+  const supplierSql=`SELECT s.id,s.organization_id,o.name organization_name,COALESCE(o.default_country,o.legal_country) organization_country,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,
       s.city,s.address,s.website,s.supplier_type,s.service_category,s.contact_name,s.contact_title,s.email,s.phone,s.notes,s.active,
       COALESCE((SELECT array_agg(sc.capability_code ORDER BY cc.sort_order,cc.label) FROM supplier_capabilities sc JOIN supplier_capability_catalog cc ON cc.code=sc.capability_code WHERE sc.supplier_id=s.id),ARRAY[]::text[]) capability_codes,
       COALESCE((SELECT array_agg(cc.label ORDER BY cc.sort_order,cc.label) FROM supplier_capabilities sc JOIN supplier_capability_catalog cc ON cc.code=sc.capability_code WHERE sc.supplier_id=s.id),ARRAY[]::text[]) capability_labels,
@@ -106,6 +107,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       : query<InventoryWarehouseOption>("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId]),
   ]);
 
+  const commercialAnalytics=await loadSupplierCommercialAnalytics(suppliers.rows.map(supplier=>supplier.id));
   const creationGate=await getCreationGateForScope("supplier",session.organizationId,platform);
   const defaultCountry=organizations.rows[0]?.country||"CO";
   const error=params.error==="sequence"?creationGate.message
@@ -170,6 +172,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       items={items.rows}
       requisitions={requisitions.rows}
       documents={documents.rows}
+      commercialAnalytics={commercialAnalytics.summaries}
+      commercialTrends={commercialAnalytics.trends}
+      commercialRequisitions={commercialAnalytics.requisitions}
       capabilityOptions={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       specialtyOptions={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))}
       inventorySites={inventorySites.rows}

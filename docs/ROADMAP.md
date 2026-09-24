@@ -281,9 +281,19 @@ Before production hardening, reinforce this development workflow with the approv
 - approval state exposed in Requisitions, Supplier profile and requisition exports;
 - migration 034 and dedicated PostgreSQL smoke validation.
 
+### Recently completed supplier commercial analytics phase
+
+- 12-month Supplier procurement KPIs derived from physical requisition receipts rather than client-side counters;
+- average lead time from sent/created timestamp to first physical receipt;
+- weighted quantity fulfillment across requisitions with receipt history;
+- complete-on-time rate using last receipt versus `needed_by` only when a fully received requisition has a required date;
+- weighted receipt cost variance comparing actual receipt unit cost against the estimated unit cost for the same received quantities;
+- six-month monthly trend plus recent requisition evidence behind each Supplier KPI;
+- Supplier profile PDF/XLSX/Word export parity for the commercial indicators;
+- PostgreSQL smoke regression added to CI.
+
 ### Next procurement/inventory work
 
-- Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists;
 - Supplier returns linked to the originating requisition/receipt and Kardex movement;
 - advanced document reconciliation against invoice, delivery note/remission and purchase-order evidence.
 

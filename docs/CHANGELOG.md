@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-09-24 — Fase 3 de abastecimiento: KPIs comerciales de proveedores
+
+### Added
+
+- Nuevo modelo compartido `lib/supplier-analytics.ts` para analítica comercial basada en recepciones físicas de requisiciones.
+- Estadísticas de Proveedor ahora muestran, para los últimos 12 meses:
+  - tiempo promedio a primera recepción;
+  - cumplimiento ponderado de cantidad;
+  - porcentaje de requisiciones totalmente recibidas dentro de Fecha requerida;
+  - variación ponderada entre costo real recibido y costo estimado para las mismas cantidades.
+- Cada KPI muestra la muestra disponible y usa estado sin historial cuando no existe evidencia válida.
+- Tendencia mensual de seis meses basada en el mes de primera recepción.
+- Tabla de las últimas requisiciones con recepción como evidencia navegable hacia el origen de cada indicador.
+- La ficha PDF/XLSX/Word del Proveedor incorpora los KPIs comerciales cuando existe historial suficiente.
+- Nuevo smoke test `scripts/supplier-analytics-smoke.mjs` incorporado a CI.
+
+### Analytics integrity
+
+- Los KPIs no usan el límite de registros del directorio ni cálculos únicamente del cliente.
+- Lead time parte de `sent_at` y usa `created_at` como fallback.
+- Cumplimiento de fecha excluye requisiciones incompletas o sin `needed_by`.
+- La variación de costo compara costos reales y estimados sobre exactamente las mismas cantidades recibidas, evitando mezclar total solicitado con recepción parcial.
+- Los indicadores son descriptivos; no generan ranking, score ni selección automática de proveedores.
+- La tendencia conserva el alias PostgreSQL `AS "month"` para evitar la regresión conocida en PostgreSQL 17.
+
+### Validation
+
+- CI valida la consulta de analítica comercial sobre PostgreSQL real antes del build de producción.
+
 ## 2026-09-24 — Fase 2 de abastecimiento: aprobación y auditoría de requisiciones
 
 ### Added

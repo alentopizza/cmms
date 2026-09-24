@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { can, ROLE_LABELS } from "@/lib/permissions";
+import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -240,6 +241,13 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
   const row=result.rows[0];
   if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
   const type=row.supplier_type==="services"?"Servicios":row.supplier_type==="both"?"Materiales + servicios":"Materiales / suministros";
+  const analytics=(await loadSupplierCommercialAnalytics([row.id])).summaries[0]||null;
+  const analyticsStats=analytics&&analytics.received_requisitions>0?[
+    {label:"Lead time promedio · 12 meses",value:analytics.average_lead_time_days==null?"Sin muestra":analytics.average_lead_time_days.toLocaleString("es-CO",{maximumFractionDigits:1})+" días"},
+    {label:"Cumplimiento de cantidad · 12 meses",value:analytics.quantity_fulfillment_pct==null?"Sin muestra":analytics.quantity_fulfillment_pct.toLocaleString("es-CO",{maximumFractionDigits:1})+"%"},
+    {label:"Completas dentro de fecha · 12 meses",value:analytics.on_time_complete_pct==null?"Sin muestra":analytics.on_time_complete_pct.toLocaleString("es-CO",{maximumFractionDigits:1})+"%"},
+    {label:"Variación ponderada de costo · 12 meses",value:analytics.price_variance_pct==null?"Sin muestra":analytics.price_variance_pct.toLocaleString("es-CO",{maximumFractionDigits:1})+"%"},
+  ]:[] as Field[];
   return {
     entityLabel:"Proveedor",title:row.name,subtitle:row.organization_name,status:row.active?"Activo":"Inactivo",
     fields:[
@@ -263,8 +271,19 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
       {label:"Requisiciones",value:String(row.requisition_count)},
       {label:"Requisiciones abiertas",value:String(row.open_requisition_count)},
       {label:"Documentos vigentes",value:String(row.document_count)},
+      ...analyticsStats,
     ],
-    sections:row.notes?[{title:"Notas adicionales",fields:[{label:"Notas",value:row.notes}]}]:[],
+    sections:[
+      ...(analytics&&analytics.received_requisitions>0?[{title:"Analítica de abastecimiento",fields:[
+        {label:"Requisiciones con recepción · 12 meses",value:String(analytics.received_requisitions)},
+        {label:"Requisiciones completas",value:String(analytics.completed_requisitions)},
+        {label:"Requisiciones parciales",value:String(analytics.partial_requisitions)},
+        {label:"Muestra de fecha requerida",value:String(analytics.on_time_sample)},
+        {label:"Líneas comparables de costo",value:String(analytics.price_sample_lines)},
+        {label:"Última recepción",value:dateText(analytics.latest_receipt_at)},
+      ]}]:[]),
+      ...(row.notes?[{title:"Notas adicionales",fields:[{label:"Notas",value:row.notes}]}]:[]),
+    ],
     image:row.logo_data,imageMime:row.logo_mime_type,
   };
 }

@@ -47,7 +47,7 @@ type ParsedInventory={
 };
 type ParsedKardex={
   row:number;movementId:string;sku:string;movement:{type:string;sign:number};date:string;document:string;warehouseName:string;destination:string;
-  quantity:number;cost:number;notes:string;lot:string;expiresAt:string;costCenter:string;sourceUser:string;
+  locationName:string;quantity:number;cost:number;notes:string;lot:string;expiresAt:string;costCenter:string;sourceUser:string;
   supplier:Supplier|null;belongsContext:boolean;
 };
 
@@ -101,6 +101,7 @@ const KARDEX_ALIASES={
   sku:["SKU *","SKU","Código","Codigo"],
   warehouse:["Bodega origen *","Bodega origen","Bodega"],
   destination:["Bodega destino"],
+  location:["UBICACION","Ubicación","Sububicación","Sububicacion"],
   quantity:["Cantidad *","Cantidad"],
   entry:["Entrada"],
   exit:["Salida"],
@@ -640,6 +641,21 @@ export async function POST(request:Request){
         if(existingSourceWarehouse?.site_id&&!canAccessSite(session,existingSourceWarehouse.site_id)){
           issue(issues,kardexSheet.name,row.rowNumber,"error","No tienes autorización sobre la bodega de origen.","BODEGA",warehouseName,"Usa una bodega dentro de tus sedes autorizadas.");
         }
+        const declaredSourceWarehouse=parsedWarehouses.parsed.find(candidate=>key(candidate.name)===key(warehouseName))||null;
+        const locationName=textValue(row.values.location);
+        if(locationName){
+          const sourceLocationName=existingSourceWarehouse?.location_id
+            ?catalog.locations.find(location=>location.id===existingSourceWarehouse.location_id)?.name||""
+            :declaredSourceWarehouse?.location?.name||"";
+          if(sourceLocationName&&key(sourceLocationName)!==key(locationName)){
+            issue(
+              issues,kardexSheet.name,row.rowNumber,"error",
+              "La ubicación del movimiento no coincide con la sububicación configurada para la bodega.",
+              "UBICACION",locationName,
+              "Corrige UBICACION o selecciona la bodega correspondiente.",
+            );
+          }
+        }
 
         const destination=textValue(row.values.destination);
         if(movement?.type==="transfer"){
@@ -686,7 +702,7 @@ export async function POST(request:Request){
 
         parsedKardex.push({
           row:row.rowNumber,movementId,sku,movement:movement||{type:"receipt",sign:1},date,document:textValue(row.values.document),
-          warehouseName,destination,quantity:quantity??0,cost:Math.max(0,rawCost??0),supplier:movementSupplier,
+          warehouseName,destination,locationName,quantity:quantity??0,cost:Math.max(0,rawCost??0),supplier:movementSupplier,
           belongsContext:supplierBelongsToContext(movementSupplier,contextSupplier),lot:textValue(row.values.lot),expiresAt,
           costCenter:textValue(row.values.costCenter),sourceUser:textValue(row.values.sourceUser),notes:textValue(row.values.notes),
         });

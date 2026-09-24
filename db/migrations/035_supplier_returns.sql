@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS supplier_return_items_requisition_item_idx
 CREATE OR REPLACE FUNCTION cmms_validate_supplier_return_item()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $$
 DECLARE
   receipt inventory_transactions%ROWTYPE;
   header supplier_returns%ROWTYPE;
@@ -85,7 +85,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS supplier_return_items_validate ON supplier_return_items;
 CREATE TRIGGER supplier_return_items_validate
@@ -95,11 +95,11 @@ FOR EACH ROW EXECUTE FUNCTION cmms_validate_supplier_return_item();
 CREATE OR REPLACE FUNCTION cmms_supplier_return_immutable()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   RAISE EXCEPTION 'Posted supplier returns are immutable';
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS supplier_returns_immutable ON supplier_returns;
 CREATE TRIGGER supplier_returns_immutable

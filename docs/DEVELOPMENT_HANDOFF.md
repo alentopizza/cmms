@@ -595,3 +595,17 @@ Implementation contract:
 - `source_movement_id` prevents duplicate external movements when MOVIMIENTO_ID is supplied;
 - migration `037_unified_inventory_import.sql`;
 - regression coverage `scripts/unified-inventory-import-smoke.mjs`.
+
+
+## 23. Supplier-context Inventory create fix — 2026-09-24
+
+The direct create form inside Supplier → Inventarios / suministros must not depend on `session.organizationId` for platform operators.
+
+Current contract:
+
+- `POST /api/inventory` reads `supplier_id` first;
+- the Supplier's `organization_id` becomes the authoritative Organization for the create operation;
+- tenant users are rejected if that Organization differs from their membership;
+- Site/Sub-location/setup/limits/warehouse resolution run against that Supplier-owned Organization;
+- redirect feedback returns to `/dashboard/suppliers?supplier=<id>&tab=inventory`;
+- Supplier-context create uses `inventory_created` / `inventory_error` query keys, not generic Supplier create keys.

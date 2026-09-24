@@ -738,3 +738,20 @@ Supplier profiles include a separate Financial Information tab for payment prepa
 - payment instructions/notes.
 
 This information supports administrative payment preparation only. Desweb CMMS does not initiate or authorize a banking transaction from these fields.
+
+
+## Crew composition and leadership
+
+A Crew is a Site-scoped execution team. Eligible participants are:
+- Technician;
+- Manager / Supervisor;
+- authorized External collaborator.
+
+The **leader is selected explicitly** from the eligible people and is not inferred from role seniority. A Supervisor may lead Technicians, a Technician may lead a mixed team, and the selected leader is automatically part of the Crew.
+
+Every selected person must:
+- be active;
+- belong to the same Organization as the Crew;
+- have access to the selected Site (all-sites access or explicit Site membership).
+
+The visual Crew directory emphasizes the leader's photo and contact actions, then shows operational counters and the remaining roster. These counters are workload/history summaries and are not employee ranking or performance scoring.

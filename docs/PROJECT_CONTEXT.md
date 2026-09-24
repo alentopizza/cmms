@@ -727,3 +727,13 @@ Supplier Statistics now derives procurement performance from requisition-linked 
 The current indicators are average time to first receipt, weighted quantity fulfillment, complete-on-time rate and weighted receipt-cost variance. Complete-on-time only evaluates fully received requisitions that have `needed_by`. Cost variance compares actual receipt unit cost with the requisition estimated unit cost for exactly the quantities physically received.
 
 `lib/supplier-analytics.ts` is the shared server model for the Supplier Statistics workspace and Supplier profile exports. It also exposes a six-month trend and recent requisition-level evidence so every KPI can be traced back to its operational source. These indicators are descriptive evidence and must not become automatic Supplier rankings or procurement decisions.
+
+### Supplier returns — Phase 4
+
+Procurement now supports physical returns to Suppliers from the requisition detail. A return must select an existing physical receipt as its source and records reason, expected resolution, reference/document, return date, user, quantity and outbound warehouse.
+
+The return creates a dedicated `supplier_return` Kardex transaction that decreases stock. This is intentionally distinct from the pre-existing `return` movement, which represents material returning into Inventory and increases stock.
+
+The original receipt remains immutable historical evidence: `quantity_received` is not decremented. DEV history records what was later sent back. Returns can therefore be registered after a requisition is fulfilled or closed without rewriting the procurement past.
+
+Expected resolution is captured as replacement, credit note or other. It is not yet a financial/document-reconciliation workflow; that dependency is reserved for the next procurement phase.

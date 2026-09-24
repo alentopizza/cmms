@@ -780,3 +780,16 @@ Approval lifecycle:
 10. every approval transition remains visible in the requisition audit timeline.
 
 `approved` and `rejected` are decision states, not ordinary status values that a user may assign from the generic lifecycle selector.
+
+## Supplier commercial KPI functional model
+
+Supplier Statistics uses physical receiving evidence from the last 12 months:
+
+1. **Lead time**: elapsed days from `sent_at`, falling back to requisition `created_at`, until the first physical receipt.
+2. **Quantity fulfillment**: total physically received quantity divided by total requested quantity for requisitions in the analytical sample, capped at 100%.
+3. **Complete within required date**: percentage of fully received requisitions whose last receipt date is on/before `needed_by`. Requisitions without a required date are excluded from this denominator.
+4. **Weighted cost variance**: `(actual received value - estimated value for those same received quantities) / estimated received value`. Positive means actual receipt cost was above estimate; negative means below estimate.
+
+Each KPI displays its observation count. If no valid evidence exists, the product displays an insufficient-history state rather than `0%` or `0 days`.
+
+The monthly trend is grouped by the month of first physical receipt. Recent requisition rows expose lead time, quantity fulfillment, cost variance and date-completion evidence with a direct link back to the requisition.

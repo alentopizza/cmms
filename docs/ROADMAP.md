@@ -272,3 +272,21 @@ Before production hardening, reinforce this development workflow with the approv
 - partial receipt reconciliation against `quantity_received`;
 - optional approval policy and approval audit trail by Company;
 - Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists.
+
+
+## Recently completed role-dashboard analytics slice
+
+- role-specific root dashboards for platform, tenant administration, supervision, read-only users, field workers, providers and requesters;
+- KPI comparison against previous equivalent period or same period in the previous year;
+- six-month real-data trend charts;
+- Site and Priority filters for applicable tenant/field/requester views;
+- operational distributions by Work Order status, type, Site and request priority;
+- comparison-aware KPI cards and responsive analytical composition;
+- Excel/CSV/PDF filter parity for Site, Priority, status and period;
+- documentation/manual synchronization for the new dashboard workflow.
+
+### Next dashboard analytics opportunities
+
+- add historical inventory-value snapshots if a future stock-ledger model supports point-in-time valuation;
+- add procurement/requisition trend panels after receiving and partial-receipt reconciliation are implemented;
+- add saved dashboard filter presets only if they remain presentation preferences and never authorization inputs.

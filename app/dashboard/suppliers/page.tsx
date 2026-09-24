@@ -55,14 +55,14 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     WHERE wt.service_supplier_id IS NOT NULL`;
   const itemSql=`SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,i.quantity::text,i.min_quantity::text,i.max_quantity::text,
       i.site_id,i.location_id,i.category_id,i.warehouse_id,i.storage_location,c.name category_name,w.name warehouse_name,
-      s.name site_name,l.name location_name
+      s.name site_name,l.name location_name,i.active,(i.image_data IS NOT NULL) has_image
     FROM inventory_items i
     JOIN suppliers p ON p.id=i.supplier_id
     LEFT JOIN sites s ON s.id=i.site_id
     LEFT JOIN locations l ON l.id=i.location_id
     LEFT JOIN inventory_categories c ON c.id=i.category_id
     LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
-    WHERE i.active=true AND p.active=true AND p.supplier_type IN ('materials','both')`;
+    WHERE p.active=true AND p.supplier_type IN ('materials','both')`;
   const requisitionSql=`SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,
       count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
       COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,

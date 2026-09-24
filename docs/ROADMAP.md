@@ -268,10 +268,24 @@ Before production hardening, reinforce this development workflow with the approv
 - requisition receiving workflow that records delivered quantities as Inventory receipts while referencing the originating requisition;
 - partial/complete receipt reconciliation against `quantity_received`, including automatic `partial` / `fulfilled` status transitions and Kardex traceability.
 
+### Recently completed procurement approval phase
+
+- Company-configurable requisition approval policy: disabled, all requisitions, or threshold by estimated amount;
+- approver scope configurable between Company Administrator only or Administrator + Manager/Supervisor;
+- requester self-approval disabled by default and explicitly configurable;
+- policy snapshot stored on each requisition so later Company-setting changes do not rewrite historical meaning;
+- server-authoritative approval/rejection route with tenant/Site/role validation;
+- receipt-to-Kardex blocked while a required approval is not current;
+- quantity, estimated-cost or required-date changes reopen a prior approval before additional receipt;
+- approval events and general audit log preserve requested, amended, approved, rejected and reopened transitions;
+- approval state exposed in Requisitions, Supplier profile and requisition exports;
+- migration 034 and dedicated PostgreSQL smoke validation.
+
 ### Next procurement/inventory work
 
-- optional approval policy and approval audit trail by Company;
-- Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists.
+- Supplier commercial KPIs such as lead time, fulfillment rate and price variance after sufficient historical data exists;
+- Supplier returns linked to the originating requisition/receipt and Kardex movement;
+- advanced document reconciliation against invoice, delivery note/remission and purchase-order evidence.
 
 
 ## Recently completed role-dashboard analytics slice

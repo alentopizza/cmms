@@ -63,7 +63,7 @@ export function isoDateValue(value:ImportCell){
 
 export async function loadWorkbook(buffer:Buffer){
   const workbook=new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
   return workbook;
 }
 

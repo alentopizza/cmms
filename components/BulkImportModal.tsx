@@ -95,7 +95,7 @@ export default function BulkImportModal({
       if(supplierId)body.set("supplier_id",supplierId);
       if(entity==="inventory"){
         body.set("import_scope",importScope);
-        body.set("duplicate_policy",duplicateMode==="skip"?"skip":"update");
+        body.set("duplicate_policy",duplicateMode);
       }
       const response=await fetch("/api/bulk-import",{method:"POST",body});
       const payload=await response.json() as ImportResult;

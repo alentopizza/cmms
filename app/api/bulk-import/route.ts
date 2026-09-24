@@ -20,6 +20,7 @@ import {
   isServiceInventoryRow,
   resolveImportSupplier,
   supplierBelongsToContext,
+  supplierReferencePrimaryTargetsSupplier,
   type DuplicatePolicy,
   type ImportSupplier,
   type InventoryImportMode,
@@ -278,14 +279,11 @@ function inventoryValidation(
       name:textValue(row.values.supplier),
     };
     const hasSupplierReference=Object.values(supplierReference).some(Boolean);
-    const matchesContextReference=contextSupplier&&hasSupplierReference&&[
-      supplierReference.supplierId&&[contextSupplier.id,contextSupplier.code].filter(Boolean).some(value=>key(value||"")===key(supplierReference.supplierId)),
-      supplierReference.taxId&&key(contextSupplier.tax_id||"")===key(supplierReference.taxId),
-      supplierReference.code&&key(contextSupplier.code||"")===key(supplierReference.code),
-      supplierReference.name&&key(contextSupplier.name)===key(supplierReference.name),
-    ].some(Boolean);
+    const primaryTargetsContext=contextSupplier
+      ?supplierReferencePrimaryTargetsSupplier(supplierReference,contextSupplier)
+      :false;
 
-    if(contextSupplier&&importScope==="context_only"&&hasSupplierReference&&!matchesContextReference){
+    if(contextSupplier&&importScope==="context_only"&&hasSupplierReference&&!primaryTargetsContext){
       contextMismatchRows++;
       issue(
         issues,sheetName,row.rowNumber,"warning",

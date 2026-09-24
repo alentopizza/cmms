@@ -178,6 +178,27 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
          WHERE id=$4`,
         [status,notes||null,neededBy||null,id],
       );
+      if(current.approval_required&&approvalRelevantChange&&current.approval_state==="pending"){
+        const actorLabel=session.fullName||session.email||"Sistema";
+        await client.query(
+          `INSERT INTO supplier_requisition_approval_events(
+             organization_id,requisition_id,actor_user_id,actor_label,action,from_state,to_state,notes,metadata
+           ) VALUES($1,$2,$3,$4,'amended','pending','pending',$5,$6::jsonb)`,
+          [
+            current.organization_id,id,session.userId||null,actorLabel,
+            "La requisición cambió mientras esperaba aprobación.",
+            JSON.stringify({reason:"pending_requisition_changed",status_before:current.status,status_after:status}),
+          ],
+        );
+        await client.query(
+          `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+           VALUES($1,$2,'requisition.pending_amended','supplier_requisition',$3,$4::jsonb)`,
+          [
+            current.organization_id,session.userId||null,id,
+            JSON.stringify({status_before:current.status,status_after:status}),
+          ],
+        );
+      }
     }
 
     await client.query("COMMIT");

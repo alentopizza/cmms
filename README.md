@@ -12,7 +12,9 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 - `docs/ARCHITECTURE.md` — arquitectura, estructura y modelo de datos.
 - `docs/DECISIONS.md` — decisiones técnicas y de producto.
 - `docs/BRANDING.md` — identidad oficial Desweb, logo y paleta.
-- `docs/DESIGN_SYSTEM.md` — reglas visuales y componentes de interfaz.
+- `docs/DESIGN_SYSTEM.md` — Design System V2 y tokens visuales canónicos.
+- `docs/UI_KIT.md` — contrato oficial de componentes reutilizables DESWEB.
+- `docs/DESIGN_MIGRATION_PLAN.md` — fases de migración visual sin regresión funcional.
 - `docs/ROADMAP.md` — prioridades de desarrollo.
 - `docs/CHANGELOG.md` — historial de cambios relevantes.
 - `docs/COMMERCIAL_MODEL.md` — planes, suscripciones, ventas y entitlements.
@@ -22,13 +24,13 @@ Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 
 ## Branding
 
-Paleta oficial:
+Paleta oficial DESWEB V2:
 
-- `#293644`
-- `#FCFCFC`
-- `#BAE3E0`
-- `#79CAC4`
-- `#38B2A9`
+- Primary: `#72F1DC`
+- Secondary: `#2C8780`
+- Dark: `#1D1D2C`
+
+Las escalas completas, semánticos y reglas de migración viven en `docs/DESIGN_SYSTEM.md`.
 
 Logo de aplicación:
 

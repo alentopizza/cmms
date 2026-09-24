@@ -79,9 +79,11 @@ El importador reconoce:
 - Usuario origen
 - Observaciones
 
-Tipos válidos: Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado.
+Tipos válidos para el Kardex genérico/importado: Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. **Devolución** en este contexto significa retorno hacia Inventario y aumenta stock.
 
 El usuario real que confirma la importación queda como `created_by`. Si el Excel contiene una columna Usuario, se conserva como dato de origen dentro de la nota de auditoría.
+
+Las **devoluciones a proveedor** no se importan como un movimiento Kardex libre. Deben nacer desde la requisición/recepción de origen para poder validar cuánto fue realmente recibido, cuánto ya fue devuelto y qué bodega entrega físicamente el material. El movimiento resultante es `supplier_return` y disminuye stock.
 
 ## Reglas de seguridad de la importación
 

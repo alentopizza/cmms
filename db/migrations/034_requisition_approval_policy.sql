@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS supplier_requisition_approval_events (
   actor_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
   actor_label text NOT NULL,
   action text NOT NULL
-    CHECK (action IN ('requested','approved','rejected','reopened')),
+    CHECK (action IN ('requested','approved','rejected','reopened','amended')),
   from_state text,
   to_state text NOT NULL,
   notes text,

@@ -125,7 +125,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
           <div className="field"><label>Correo</label><input name="email" type="email" placeholder="proveedor@empresa.com"/></div>
           <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={defaultCountry} countryInputId="supplier-country"/>
           <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} placeholder="Cobertura, tiempos de entrega, emergencias u observaciones."/></div>
-          <div className="form-span-2"><FileDropzone name="logo" label="Logo del proveedor" description="Se utilizará en tarjetas, ficha y Hoja de vida." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} required kind="image"/></div>
+          <div className="form-span-2"><FileDropzone name="logo" label="Logo del proveedor" description="Se utilizará en tarjetas y en la ficha del proveedor." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} required kind="image"/></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear proveedor</button></div>
         </form>
       </CreateRecordModal>:undefined}

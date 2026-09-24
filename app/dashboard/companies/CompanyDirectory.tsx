@@ -287,6 +287,9 @@ export default function CompanyDirectory({
           data-module-record
           data-status={company.active ? "active" : "inactive"}
           data-search={[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" ")}
+          data-filter-plan={company.plan_name||""} data-filter-plan-label={company.plan_name||""}
+          data-filter-country={company.legal_country||company.country||""} data-filter-country-label={company.legal_country||company.country||""}
+          data-filter-city={company.legal_city||company.city||""} data-filter-city-label={company.legal_city||company.city||""}
         >
           <button className="company-card-button company-card-main-action" type="button" onClick={() => {
             setSelected(company);

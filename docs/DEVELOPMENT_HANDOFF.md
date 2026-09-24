@@ -199,7 +199,7 @@ La preferencia de locale ya se persiste, pero eso **no significa que toda la int
 
 Las migraciones son inmutables y actualmente llegan al menos hasta:
 
-- `028_supplier_profiles_requisitions.sql`.
+- `029_supplier_catalog_user_dossier_financial.sql`.
 
 Ante un cambio de esquema:
 
@@ -271,3 +271,47 @@ Primary files for the next contributor:
 - `lib/dashboard-filters.ts`;
 - `app/api/dashboard/export/route.ts`;
 - dashboard section at the end of `app/globals.css`.
+
+
+## 13. Active checkpoint — conditional facets, Supplier catalogs and administrative dossiers (2026-09-24)
+
+The primary directory filter system now supports **conditional cascading facets** through `ModuleHeader`.
+
+Behavior:
+- a facet is derived only from records already authorized and rendered by the server;
+- Company/Site/etc. filters disappear when fewer than two meaningful options exist;
+- selecting a parent facet narrows options in the other facets;
+- filters never broaden Organization/Site/RBAC scope.
+
+Directories currently using contextual facets:
+- Companies: plan, Country, City;
+- Locations: Company, Country, City; Sublocations add Type internally when useful;
+- Users: Company, Role, Site, linked Supplier;
+- Suppliers: Company, capability/type, specialty, Country;
+- Assets: Company, Site, Criticality, Category, Supplier;
+- Inventory: stock level, Company, Site, Supplier;
+- Work Orders: status, Company, Site, Priority, Type;
+- Maintenance: Company, Site, frequency;
+- Crews: Company, Site;
+- Requisitions: status, Company, Supplier, requester.
+
+Migration 029 adds:
+- standardized multi-value Supplier capability/specialty catalogs and junctions;
+- User personnel documents;
+- User emergency contacts;
+- Supplier financial/payment-preparation profiles.
+
+Supplier forms must use catalog codes through `MultiSelectDropdown`. Preserve the derived legacy `supplier_type` field because Inventory and service-assignment consumers still depend on `materials/services/both`.
+
+User document routes remain behind `users.manage` and tenant scope. Supplier financial data remains behind `suppliers.manage`; read summaries mask account numbers and the CMMS does not execute payments.
+
+Primary files for this checkpoint:
+- `components/ModuleHeader.tsx`;
+- `components/MultiSelectDropdown.tsx`;
+- `db/migrations/029_supplier_catalog_user_dossier_financial.sql`;
+- `app/dashboard/users/UserManagement.tsx`;
+- `app/api/users/[id]/documents/*`;
+- `app/api/users/[id]/emergency-contact/route.ts`;
+- `app/dashboard/suppliers/page.tsx`;
+- `components/SupplierDirectory.tsx`;
+- `app/api/suppliers/*`.

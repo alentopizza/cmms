@@ -4,11 +4,12 @@ import { getSession,canAccessSite } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import UiIcon from "@/components/UiIcon";
+import FileDropzone from "@/components/FileDropzone";
 
 type Item={
   id:string;organization_id:string;site_id:string;sku:string;name:string;description:string|null;presentation:string|null;unit:string;
   quantity:string;min_quantity:string;max_quantity:string;unit_cost:string;category:string|null;supplier_id:string|null;supplier:string|null;
-  company:string;site:string;location:string|null;warehouse_id:string|null;warehouse:string|null;active:boolean;
+  company:string;site:string;location:string|null;warehouse_id:string|null;warehouse:string|null;active:boolean;has_image:boolean;
 };
 type Stock={warehouse_id:string;warehouse:string;quantity:string;min_quantity:string;max_quantity:string};
 type Warehouse={id:string;name:string};
@@ -25,7 +26,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
   const feedback=await searchParams;
   const result=await query<Item>(
     `SELECT i.id,i.organization_id,i.site_id,i.sku,i.name,i.description,i.presentation,i.unit,i.quantity::text,i.min_quantity::text,i.max_quantity::text,
-      i.unit_cost::text,c.name category,i.supplier_id,p.name supplier,o.name company,s.name site,l.name location,i.warehouse_id,w.name warehouse,i.active
+      i.unit_cost::text,c.name category,i.supplier_id,p.name supplier,o.name company,s.name site,l.name location,i.warehouse_id,w.name warehouse,i.active,(i.image_data IS NOT NULL) has_image
      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id JOIN sites s ON s.id=i.site_id
      LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
      LEFT JOIN inventory_categories c ON c.id=i.category_id LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
@@ -67,17 +68,21 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
 
     <section className="section inventory-detail-grid">
       <div className="card inventory-detail-panel">
-        <div className="section-heading"><div><span className="eyebrow">Ficha</span><h2>Datos del artículo</h2></div></div>
+        <div className="inventory-detail-identity">
+          <span className={"inventory-detail-image"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={44}/>}</span>
+          <div><span className="eyebrow">Ficha</span><h2>{item.name}</h2><p>{item.sku} · {item.category||"Sin categoría"}</p></div>
+        </div>
         <div className="entity-info-grid">
           <div className="entity-info-field"><span>SKU</span><strong>{item.sku}</strong></div><div className="entity-info-field"><span>Categoría</span><strong>{item.category||"Sin categoría"}</strong></div>
           <div className="entity-info-field"><span>Proveedor</span><strong>{item.supplier||"Sin proveedor"}</strong></div><div className="entity-info-field"><span>Unidad</span><strong>{item.unit}</strong></div>
           <div className="entity-info-field"><span>Descripción</span><strong>{item.description||"Sin descripción"}</strong></div><div className="entity-info-field"><span>Presentación</span><strong>{item.presentation||"Sin registrar"}</strong></div>
         </div>
-        {canWrite&&<form className="form-grid inventory-inline-form" method="post" action={"/api/inventory/"+item.id}>
+        {canWrite&&<form className="form-grid inventory-inline-form" method="post" encType="multipart/form-data" action={"/api/inventory/"+item.id}>
           <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
           <div className="field"><label>Nombre</label><input name="name" defaultValue={item.name} required/></div>
           <div className="field"><label>Categoría</label><input name="category" defaultValue={item.category||""}/></div>
           <div className="field form-span-2"><label>Descripción</label><input name="description" defaultValue={item.description||""}/></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="Puedes reemplazar la imagen actual sin afectar el Kardex." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={item.has_image?"Imagen actual":null} existingPreviewUrl={item.has_image?"/api/inventory/"+item.id+"/image":null}/></div>
           <div className="field"><label>Presentación</label><input name="presentation" defaultValue={item.presentation||""}/></div>
           <div className="field"><label>Unidad</label><input name="unit" defaultValue={item.unit}/></div>
           <div className="field"><label>Mínimo</label><input type="number" step="0.001" min="0" name="min_quantity" defaultValue={item.min_quantity}/></div>

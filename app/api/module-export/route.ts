@@ -39,6 +39,34 @@ async function assetRows(session:NonNullable<Awaited<ReturnType<typeof getSessio
   return query<Row>(base+" WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) ORDER BY a.name",[session.organizationId,session.siteIds]);
 }
 
+async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,type:string){
+  const allowed=new Set(["receipt","issue","adjustment","return","transfer"]);
+  const filter=allowed.has(type)?type:"";
+  const base=`SELECT t.movement_at::text movement_at,t.type,i.sku,i.name item_name,COALESCE(p.name,'') supplier,
+    COALESCE(w.name,'') warehouse,COALESCE(d.name,'') destination,t.quantity::text quantity,COALESCE(t.unit_cost,0)::text unit_cost,
+    COALESCE(t.document_number,'') document_number,COALESCE(t.lot_number,'') lot_number,COALESCE(t.expires_at::text,'') expires_at,
+    COALESCE(t.cost_center,'') cost_center,COALESCE(t.notes,'') notes,o.name company,COALESCE(s.name,'') site,
+    COALESCE(u.full_name,'Sistema') created_by
+    FROM inventory_transactions t
+    JOIN inventory_items i ON i.id=t.item_id
+    JOIN organizations o ON o.id=t.organization_id
+    LEFT JOIN suppliers p ON p.id=i.supplier_id
+    LEFT JOIN sites s ON s.id=i.site_id
+    LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
+    LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+    LEFT JOIN users u ON u.id=t.created_by`;
+  if(session.platformRole!=="user"){
+    return filter
+      ?query<Row>(base+" WHERE t.type=$1 ORDER BY t.movement_at DESC,t.created_at DESC",[filter])
+      :query<Row>(base+" ORDER BY t.movement_at DESC,t.created_at DESC");
+  }
+  const values:unknown[]=[session.organizationId];
+  let where=" WHERE t.organization_id=$1";
+  if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))";}
+  if(filter){values.push(filter);where+=" AND t.type=$"+values.length;}
+  return query<Row>(base+where+" ORDER BY t.movement_at DESC,t.created_at DESC",values);
+}
+
 async function xlsx(headers:string[],keys:string[],rows:Row[],sheetName:string){
   const wb=new ExcelJS.Workbook();wb.creator="Desweb CMMS";
   const sh=wb.addWorksheet(sheetName,{views:[{state:"frozen",ySplit:1,showGridLines:false}]});
@@ -72,25 +100,34 @@ async function pdf(title:string,headers:string[],keys:string[],rows:Row[]){
 export async function GET(request:Request){
   const session=await getSession();
   if(!session)return new NextResponse("Unauthorized",{status:401});
-  const url=new URL(request.url),entity=url.searchParams.get("entity")==="assets"?"assets":"inventory",format=url.searchParams.get("format")||"xlsx";
-  if(entity==="inventory"&&!can(session,"inventory.read"))return new NextResponse("Forbidden",{status:403});
+  const url=new URL(request.url);
+  const requestedEntity=url.searchParams.get("entity")||"inventory";
+  const entity=requestedEntity==="assets"?"assets":requestedEntity==="kardex"?"kardex":"inventory";
+  const format=url.searchParams.get("format")||"xlsx";
+  const type=url.searchParams.get("type")||"";
+  if((entity==="inventory"||entity==="kardex")&&!can(session,"inventory.read"))return new NextResponse("Forbidden",{status:403});
   if(entity==="assets"&&!can(session,"assets.read"))return new NextResponse("Forbidden",{status:403});
-  const result=entity==="inventory"?await inventoryRows(session):await assetRows(session);
+
+  const result=entity==="inventory"?await inventoryRows(session):entity==="assets"?await assetRows(session):await kardexRows(session,type);
   const headers=entity==="inventory"
     ?["SKU","Artículo","Descripción","Categoría","Presentación","Unidad","Existencia","Mínimo","Máximo","Costo unitario","Empresa","Sede","Sububicación","Bodega","Proveedor","Estado"]
-    :["Código","Activo","Descripción","Categoría","Empresa","Sede","Sububicación","Proveedor","Fabricante","Modelo","Serial","Estado","Criticidad","Fecha compra","Fecha instalación","Garantía","Costo compra"];
+    :entity==="assets"
+      ?["Código","Activo","Descripción","Categoría","Empresa","Sede","Sububicación","Proveedor","Fabricante","Modelo","Serial","Estado","Criticidad","Fecha compra","Fecha instalación","Garantía","Costo compra"]
+      :["Fecha","Tipo","SKU","Artículo","Proveedor","Bodega origen","Bodega destino","Cantidad","Costo unitario","Documento","Lote","Vencimiento","Centro de costo","Empresa","Sede","Usuario","Observaciones"];
   const keys=entity==="inventory"
     ?["sku","name","description","category","presentation","unit","quantity","min_quantity","max_quantity","unit_cost","company","site","location","warehouse","supplier","status"]
-    :["code","name","description","category","company","site","location","supplier","manufacturer","model","serial","status","criticality","purchase_date","installation_date","warranty_expires","purchase_cost"];
-  const base=safeName(entity==="inventory"?"inventario-desweb":"activos-desweb");
+    :entity==="assets"
+      ?["code","name","description","category","company","site","location","supplier","manufacturer","model","serial","status","criticality","purchase_date","installation_date","warranty_expires","purchase_cost"]
+      :["movement_at","type","sku","item_name","supplier","warehouse","destination","quantity","unit_cost","document_number","lot_number","expires_at","cost_center","company","site","created_by","notes"];
+  const base=safeName(entity==="inventory"?"inventario-desweb":entity==="assets"?"activos-desweb":"kardex-desweb");
   if(format==="csv"){
     const body=[headers.map(csvCell).join(","),...result.rows.map(row=>keys.map(key=>csvCell(row[key])).join(","))].join("\n");
     return new NextResponse("\uFEFF"+body,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=\""+base+".csv\""}});
   }
   if(format==="pdf"){
-    const body=await pdf(entity==="inventory"?"Inventario Desweb CMMS":"Activos Desweb CMMS",headers,keys,result.rows);
+    const body=await pdf(entity==="inventory"?"Inventario Desweb CMMS":entity==="assets"?"Activos Desweb CMMS":"Kardex Desweb CMMS",headers,keys,result.rows);
     return new NextResponse(new Uint8Array(body),{headers:{"Content-Type":"application/pdf","Content-Disposition":"attachment; filename=\""+base+".pdf\""}});
   }
-  const body=await xlsx(headers,keys,result.rows,entity==="inventory"?"Inventario":"Activos");
+  const body=await xlsx(headers,keys,result.rows,entity==="inventory"?"Inventario":entity==="assets"?"Activos":"Kardex");
   return new NextResponse(new Uint8Array(body),{headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","Content-Disposition":"attachment; filename=\""+base+".xlsx\""}});
 }

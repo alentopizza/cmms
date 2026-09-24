@@ -4,19 +4,20 @@ This repository is the source of truth for **Desweb CMMS**, deployed at `https:/
 
 Before making changes, read:
 
-1. `docs/PROJECT_CONTEXT.md`
-2. `docs/ARCHITECTURE.md`
-3. `docs/DECISIONS.md`
-4. `docs/BRANDING.md`
-5. `docs/DESIGN_SYSTEM.md`
-6. `docs/CHANGELOG.md`
-7. `docs/ROADMAP.md`
-8. `docs/FUNCTIONAL_MODEL.md`
-9. `docs/COMMERCIAL_MODEL.md`
-10. `docs/INSTALLATION.md`
-11. `docs/IP_AND_DISTRIBUTION.md`
-12. `docs/ROLE_MODEL.md`
-13. `docs/CODE_GUIDE.md`
+1. `docs/DEVELOPMENT_HANDOFF.md`
+2. `docs/PROJECT_CONTEXT.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/DECISIONS.md`
+5. `docs/BRANDING.md`
+6. `docs/DESIGN_SYSTEM.md`
+7. `docs/CHANGELOG.md`
+8. `docs/ROADMAP.md`
+9. `docs/FUNCTIONAL_MODEL.md`
+10. `docs/COMMERCIAL_MODEL.md`
+11. `docs/INSTALLATION.md`
+12. `docs/IP_AND_DISTRIBUTION.md`
+13. `docs/ROLE_MODEL.md`
+14. `docs/CODE_GUIDE.md`
 
 ## Working rules
 

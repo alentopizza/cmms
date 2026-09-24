@@ -4,6 +4,19 @@
 >
 > El UI Kit implementa el Design System V2 dentro del código real. No define una identidad distinta; materializa los tokens y patrones de `docs/DESIGN_SYSTEM.md`.
 
+## Estado de implementación
+
+**Fase 1 disponible:**
+
+- runtime tokens: `app/design-system/tokens.css`;
+- namespace: `components/ui`;
+- icon bridge: `components/ui/Icon.tsx`;
+- token manifest: `lib/design-system.ts`;
+- catálogo vivo: `/ui-kit`;
+- baseline audit: `docs/DESIGN_AUDIT_PHASE1.md`.
+
+`/ui-kit` contiene únicamente Foundations en esta fase. Los primitives descritos más abajo son el contrato de Fase 2 y no deben considerarse implementados hasta que existan como componentes reutilizables y aparezcan en el catálogo vivo.
+
 ## 1. Principio
 
 Una pantalla nueva debe construirse **ensamblando componentes existentes**, no diseñando cada vista desde cero.

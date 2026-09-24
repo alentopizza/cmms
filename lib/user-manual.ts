@@ -136,10 +136,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Selecciona el país de la persona y, si registras su documento, escoge el tipo disponible para ese país; el tipo de documento no se escribe manualmente.",
       "El indicativo del teléfono se toma automáticamente del país seleccionado. Escribe solo el número nacional restante.",
       "Asigna acceso a todas las sedes o limita el usuario a sedes concretas.",
+      "La tarjeta compacta de usuario muestra foto, estado, rol, empresa, biometría, alcance de sedes y los indicadores operativos principales; en pantallas amplias el directorio aprovecha hasta cinco columnas sin reducir la legibilidad.",
       "La tarjeta de usuario muestra el estado biométrico: Verificada, Pendiente, Reenrolar o Revocada.",
       "Selecciona la tarjeta para cambiar a su perfil en la misma pantalla; no se abre un popup. La miga Usuarios devuelve al directorio.",
       "La foto, rol, alcance y estadísticas quedan visibles a la izquierda y las pestañas de Información, Estadísticas, Actividad, Asistencia y Hoja de vida cambian el contenido del panel derecho.",
       "La pestaña Estadísticas reúne OT activas, actividades pendientes/completadas, horas de campo, progreso de asistencia de los últimos siete días, tiempo registrado hoy, turno actual y próximos compromisos.",
+      "Las estadísticas detalladas se cargan al abrir la ficha; si esa consulta falla, el directorio de Usuarios sigue disponible y la pestaña conserva los indicadores básicos.",
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
@@ -285,6 +287,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/suppliers",
     steps:[
       "Crea el proveedor con logo, tipo, identidad fiscal, país/ciudad, dirección y contacto. El logo identifica sus tarjetas y Hoja de vida.",
+      "El directorio usa una tarjeta comercial compacta distinta a la de Usuarios: logo, tipo, ubicación/categoría, contacto, actividades, suministros y requisiciones. En pantallas amplias puede mostrar hasta cinco tarjetas por fila.",
       "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
       "Si es proveedor de Materiales/Suministros o Mixto, consulta Inventarios / suministros para ver los artículos que nos provee.",
@@ -344,6 +347,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Directorios compactos de Usuarios y Proveedores",
+    summary:"Usuarios usa tarjetas tipo credencial y Proveedores tarjetas comerciales; ambos directorios aprovechan hasta cinco columnas y las estadísticas detalladas de Usuario ahora cargan bajo demanda para no bloquear el módulo.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Nuevo dashboard de estadísticas de usuario",

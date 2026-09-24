@@ -269,9 +269,6 @@ function inventoryValidation(
       continue;
     }
 
-    if(!sku)issue(issues,sheetName,row.rowNumber,"error","Falta SKU.","SKU","", "Completa un SKU único para el producto.");
-    if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta nombre del producto.","NOMBRE_PRODUCTO","", "Completa el nombre del producto.");
-
     const supplierReference={
       supplierId:textValue(row.values.supplierId),
       taxId:textValue(row.values.supplierTaxId),
@@ -301,6 +298,9 @@ function inventoryValidation(
       });
       continue;
     }
+
+    if(!sku)issue(issues,sheetName,row.rowNumber,"error","Falta SKU.","SKU","", "Completa un SKU único para el producto.");
+    if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta nombre del producto.","NOMBRE_PRODUCTO","", "Completa el nombre del producto.");
 
     const resolution=hasSupplierReference
       ?resolveImportSupplier(catalog.suppliers,supplierReference)

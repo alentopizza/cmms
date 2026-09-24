@@ -9,7 +9,7 @@ import UiIcon from "@/components/UiIcon";
 type Req={
   id:string;organization_id:string;requested_by:string|null;number:string;status:string;created_at:string;needed_by:string|null;supplier_id:string;supplier_name:string;
   organization_name:string;requested_by_name:string|null;item_count:number;total_estimated:string;quantity_requested:string;quantity_received:string;
-  approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
+  approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";document_count:number;document_pending_review:number;document_disputed:number;
 };
 
 function statusLabel(status:string){
@@ -27,6 +27,9 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
   const reqs=platform
     ? await query<Req>(
       `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,r.approval_required,r.approval_state,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL) document_count,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='pending') document_pending_review,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='disputed') document_disputed,
               u.full_name requested_by_name,count(ri.id)::int item_count,
               COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
               COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
@@ -40,6 +43,9 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
        ORDER BY r.created_at DESC LIMIT 300`)
     : await query<Req>(
       `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,r.approval_required,r.approval_state,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL) document_count,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='pending') document_pending_review,
+              (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='disputed') document_disputed,
               u.full_name requested_by_name,count(ri.id)::int item_count,
               COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
               COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
@@ -91,6 +97,7 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
             <div className="requisition-directory-state-stack">
               <span className={"requisition-status "+req.status}>{statusLabel(req.status)}</span>
               {req.approval_required&&<span className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</span>}
+              {req.document_count>0&&<span className={"requisition-document-mini"+(req.document_disputed>0?" disputed":req.document_pending_review>0?" pending":" reviewed")}>Docs · {req.document_count}{req.document_disputed>0?" · "+req.document_disputed+" disputa"+(req.document_disputed===1?"":"s"):req.document_pending_review>0?" · "+req.document_pending_review+" pendiente"+(req.document_pending_review===1?"":"s"):" · revisados"}</span>}
             </div>
           </div>
           <div className="requisition-directory-meta">

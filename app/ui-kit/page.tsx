@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import UiIcon from "@/components/UiIcon";
 import { FoundationPreview } from "@/components/ui-kit/FoundationPreview";
+import { CorePrimitivesPreview } from "@/components/ui-kit/CorePrimitivesPreview";
 import "./ui-kit.css";
 
 export const dynamic="force-dynamic";
@@ -16,8 +17,8 @@ export default async function UiKitPage(){
       <header className="ds-ui-kit-hero">
         <div className="ds-ui-kit-hero-copy">
           <span>DESWEB CMMS · UI Kit</span>
-          <h1>Foundations V2</h1>
-          <p>Catálogo vivo de los tokens reales cargados por la aplicación. Esta primera fase documenta y valida Foundations; los primitives interactivos se incorporan en la Fase 2.</p>
+          <h1>DESWEB UI Kit V2</h1>
+          <p>Catálogo vivo de Foundations y UI Core reales. Los ejemplos usan los mismos primitives y tokens que deben consumir los módulos del ERP.</p>
         </div>
         <Link className="ds-ui-kit-back" href="/dashboard">
           <UiIcon name="home" size={16}/>
@@ -31,13 +32,20 @@ export default async function UiKitPage(){
         <a href="#spacing">Spacing</a>
         <a href="#radius">Radius / Shadows</a>
         <a href="#motion">Motion</a>
+        <a href="#buttons">Buttons</a>
+        <a href="#forms">Forms</a>
+        <a href="#cards">Cards</a>
+        <a href="#navigation">Navigation</a>
+        <a href="#overlays">Overlays</a>
+        <a href="#feedback">Feedback</a>
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 1.</strong> El playground usa los tokens canónicos y componentes compartidos existentes como <code>UiIcon</code>. Buttons, Forms, Cards, Tables, Navigation y Feedback completos se documentarán aquí cuando sean implementados como primitives oficiales.
+        <strong>Fase 2.</strong> Buttons, Forms, Cards, Navigation, Overlays y Feedback ya son primitives oficiales. DataTable, filtros, KPI, Timeline y Progress pertenecen a la Fase 4; los componentes ERP especializados pertenecen a la Fase 5.
       </div>
 
       <FoundationPreview/>
+      <CorePrimitivesPreview/>
     </div>
   </main>;
 }

@@ -406,7 +406,7 @@ export async function POST(request:Request){
           );
           resolved=updated.rows[0];
         }else{
-          const code=stableCode("ALM",row.code||row.name);
+          const code=row.code?row.code.trim().toUpperCase():stableCode("ALM",row.name);
           const created=await client.query<Warehouse>(
             `INSERT INTO inventory_warehouses(
                organization_id,site_id,location_id,code,name,type,responsible,capacity,active,location_detail,notes,updated_at

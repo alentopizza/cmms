@@ -31,7 +31,7 @@ export type SupplierActivity={
 };
 export type SupplierRequisition={
   id:string;supplier_id:string;number:string;status:string;created_at:string;needed_by:string|null;item_count:number;total_estimated:string;
-  quantity_requested:string;quantity_received:string;
+  quantity_requested:string;quantity_received:string;approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
 };
 export type SupplierDocument={
   id:string;supplier_id:string;category:string;display_name:string;reference:string|null;expires_at:string|null;file_name:string|null;
@@ -49,6 +49,7 @@ function typeLabel(type:SupplierDirectoryItem["supplier_type"]){
 }
 function initials(value:string){return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase()||"P";}
 function statusLabel(status:string){return ({draft:"Borrador",sent:"Enviada",approved:"Aprobada",rejected:"Rechazada",partial:"Parcial",fulfilled:"Atendida",closed:"Cerrada",cancelled:"Cancelada"} as Record<string,string>)[status]||status;}
+function approvalLabel(status:string){return ({not_required:"No requerida",pending:"Pendiente",approved:"Aprobada",rejected:"Rechazada"} as Record<string,string>)[status]||status;}
 
 function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;documents:SupplierDocument[]}){
   const active=documents.filter(doc=>!doc.archived_at);
@@ -433,7 +434,8 @@ export default function SupplierDirectory({
             const pct=requested>0?Math.min(100,Math.round(received/requested*100)):0;
             return <article key={req.id} className="supplier-requisition-operational-row">
               <Link href={"/dashboard/requisitions/"+req.id}>
-                <span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong>
+                <span>REQ-{req.number.padStart(6,"0")}</span>
+                <div className="supplier-requisition-status-stack"><strong>{statusLabel(req.status)}</strong>{req.approval_required&&<em className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</em>}</div>
                 <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small>
                 <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido</em></div>
                 <UiIcon name="chevron-right" size={14}/>

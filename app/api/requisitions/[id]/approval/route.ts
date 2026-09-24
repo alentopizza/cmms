@@ -100,7 +100,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
          approval_decided_at=now(),
          approval_decided_by=$2,
          approval_decision_notes=$3,
-         approved_at=CASE WHEN $1='approved' THEN now() ELSE approved_at END,
+         approved_at=CASE WHEN $1='approved' THEN now() ELSE NULL END,
          status=$4,
          updated_at=now()
        WHERE id=$5`,

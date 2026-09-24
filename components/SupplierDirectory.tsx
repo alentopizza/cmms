@@ -32,7 +32,7 @@ export type SupplierActivity={
 };
 export type SupplierRequisition={
   id:string;supplier_id:string;number:string;status:string;created_at:string;needed_by:string|null;item_count:number;total_estimated:string;
-  quantity_requested:string;quantity_received:string;approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
+  quantity_requested:string;quantity_received:string;quantity_returned:string;return_count:number;approval_required:boolean;approval_state:"not_required"|"pending"|"approved"|"rejected";
 };
 export type SupplierDocument={
   id:string;supplier_id:string;category:string;display_name:string;reference:string|null;expires_at:string|null;file_name:string|null;
@@ -523,7 +523,7 @@ export default function SupplierDirectory({
                 <span>REQ-{req.number.padStart(6,"0")}</span>
                 <div className="supplier-requisition-status-stack"><strong>{statusLabel(req.status)}</strong>{req.approval_required&&<em className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</em>}</div>
                 <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small>
-                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido</em></div>
+                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido{Number(req.quantity_returned)>0?" · "+Number(req.quantity_returned).toLocaleString("es-CO")+" devuelto":""}</em></div>
                 <UiIcon name="chevron-right" size={14}/>
               </Link>
               <RequisitionExportMenu id={req.id}/>

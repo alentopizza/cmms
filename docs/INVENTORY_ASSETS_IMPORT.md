@@ -92,36 +92,47 @@ Del mismo modo, **Orden de compra, Remisión, Factura y Nota crédito no se impo
 - máximo 12 MB por archivo;
 - máximo 5.000 filas procesadas por hoja;
 - no se permite confirmar con errores;
-- SKU/código duplicado dentro del mismo archivo es error;
+- SKU duplicado compatible se reporta y se procesa una sola vez; duplicados incompatibles son error bloqueante;
 - se validan proveedor, sede y sububicación antes de escribir;
 - se respetan los límites del plan para Inventario y Activos;
 - el hash SHA-256 impide volver a confirmar exactamente el mismo archivo;
 - toda confirmación se ejecuta en transacción;
 - los lotes de importación quedan registrados en `bulk_import_batches`;
-- una salida que dejaría stock negativo es rechazada por PostgreSQL;
+- la validación previa simula el stock y reporta saldos negativos antes de confirmar; PostgreSQL mantiene la validación final;
 - las transferencias requieren dos bodegas diferentes.
 
 ## Plantillas descargables
 
+### Inventario/Kardex: una sola plantilla maestra
+
 `GET /api/bulk-import/template?entity=inventory`
 
-Genera un Excel contextualizado para la empresa con:
+Siempre descarga:
 
-- LEEME
-- Catálogos
-- Bodegas
-- Inventario
-- Kardex
+`PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx`
+
+con exactamente estas hojas:
+
+- `INSTRUCCIONES`
+- `INVENTARIO`
+- `KARDEX`
+- `PROVEEDORES`
+- `BODEGAS`
+- `CATALOGOS`
+
+No existe una plantilla Global y otra de Proveedor.
+
+Parámetros opcionales:
+
+- `data=blank`: misma plantilla, sin precargar productos;
+- `data=current`: misma plantilla, con maestros actuales; STOCK_INICIAL se exporta en cero y KARDEX queda vacío para evitar duplicar historial;
+- `supplier=<uuid>`: conserva el mismo formato y solo define el contexto de descarga. Con `data=current`, precarga los productos actuales de ese Proveedor.
+
+### Activos
 
 `GET /api/bulk-import/template?entity=assets`
 
-Genera:
-
-- LEEME
-- Catálogos
-- Activos
-
-Cuando la importación se abre desde un proveedor, se usa `&supplier=<uuid>` para limitar la plantilla y la validación a ese proveedor.
+mantiene la plantilla específica de Activos porque pertenece a otro dominio de importación, no a la plantilla maestra Inventario/Kardex.
 
 ## Activos
 
@@ -148,7 +159,7 @@ Las pestañas **Inventarios / suministros** y **Requisiciones** son operativas.
 Desde Inventarios / suministros se puede:
 
 - crear un suministro ya asociado al proveedor;
-- importar Excel limitado al proveedor;
+- abrir la misma plantilla maestra en modo contextual; puede importar solo ese proveedor o cambiar explícitamente a importación Global;
 - ver existencia, mínimo, costo y bodega;
 - editar datos maestros;
 - abrir la ficha/Kardex;
@@ -171,12 +182,13 @@ Migraciones relacionadas:
 - `028_supplier_profiles_requisitions.sql`
 - `030_bulk_import_inventory_kardex.sql`
 - `031_inventory_kardex_metadata.sql`
+- `037_unified_inventory_import.sql`
 
 El trigger `cmms_apply_inventory_transaction()` es la autoridad de saldo para movimientos nuevos: actualiza existencias por bodega y el total agregado del artículo.
 
 ## CI
 
-CI ejecuta PostgreSQL 17 real, todas las migraciones, los smoke tests del Dashboard y `scripts/inventory-kardex-smoke.mjs`. Este último verifica entrada, salida, traslado, ajuste, saldo total por bodegas y rechazo de stock negativo antes del build de producción.
+CI ejecuta PostgreSQL 17 real, todas las migraciones y los smoke tests operativos. `scripts/inventory-kardex-smoke.mjs` verifica saldos/movimientos y `scripts/unified-inventory-import-smoke.mjs` verifica código estable de proveedor, metadatos del maestro, MOVIMIENTO_ID único y trazabilidad del lote IMP antes del build de producción.
 
 
 ## Operational workspace added after the import foundation
@@ -219,10 +231,69 @@ La migración relacionada es `033_requisition_inventory_receipts.sql`.
 CI ejecuta `scripts/requisition-receipt-smoke.mjs`, que verifica recepción parcial, recepción final, actualización de stock, cantidades recibidas, estado y enlaces de trazabilidad.
 
 
-## Import audit and supplier-scoped operation
+## Import audit and Global/Contextual operation
 
-The import modal now shows the 12 most recent import batches for the active company/module, including file name, state, imported rows, warnings, errors, user and timestamp.
+The import modal shows the 12 most recent import batches for the active company/module, including the `IMP-YEAR-######` folio, file, state, user, Global/Supplier origin, imported rows, omitted rows, warnings and errors.
 
-Supplier-profile imports derive the tenant from the selected Supplier for platform operators. This prevents a Platform Owner/Superadministrator from having to switch company context just to download a supplier template or import supplier inventory, while tenant users remain restricted to their own organization.
+Supplier-profile imports derive the tenant from the selected Supplier for platform operators. Tenant users remain restricted to their own Organization/Site scope.
+
+The selected Supplier is launch context, not a hardcoded owner of every row:
+
+- **Solo este proveedor**: rows explicitly belonging to other Suppliers are reported and omitted;
+- **Importar todo**: the same workbook is re-evaluated as Global and every product must resolve its own Supplier;
+- a blank Supplier identity may inherit the opened Supplier only while the effective scope remains Context-only.
 
 Inactive supplier inventory remains visible in the supplier profile, can be reactivated, and is excluded from new requisition selection until active again. Supplier inventory create/edit forms also support product images.
+
+
+## Current master Inventory/Kardex import contract — 2026-09-24
+
+The canonical import engine is `POST /api/bulk-import`; there is no Supplier-only backend.
+
+### Supplier identity
+
+Resolution order:
+
+1. `PROVEEDOR_ID` (real Supplier UUID or stable internal code);
+2. `NIT_PROVEEDOR` / tax identity, normalized without punctuation;
+3. `CODIGO_PROVEEDOR`;
+4. exact `PROVEEDOR` name.
+
+When multiple identifiers are supplied, they must resolve consistently.
+
+### INVENTARIO
+
+The master sheet persists:
+
+- Supplier identifiers;
+- SKU, name and description;
+- product/service type;
+- category/subcategory;
+- brand/model;
+- presentation/unit;
+- barcode;
+- Site/Sub-location/Warehouse;
+- min/max/initial stock;
+- unit cost/reference price/IVA;
+- lot/expiration for a new initial receipt;
+- active state.
+
+Services are reported as omitted and do not create physical Inventory.
+
+### KARDEX
+
+`MOVIMIENTO_ID` is optional but unique per Organization. It is intended for external-system traceability and prevents the same movement from being confirmed twice.
+
+Supplier on a movement is optional. The engine inherits it from the SKU. An explicit different Supplier is a blocking relationship error.
+
+### Existing SKU
+
+Validation reports existing SKUs before confirmation:
+
+- **Comparar**: no commit until the user decides;
+- **Actualizar**: master fields are updated, historical Kardex is untouched;
+- **Omitir**: current master record is preserved.
+
+### Atomic commit
+
+No selected-scope data is stored during analysis. After all blocking errors are resolved, confirmation stores warehouses, product masters, initial-stock receipts and explicit Kardex movements inside one PostgreSQL transaction. Any failure rolls back the complete batch.

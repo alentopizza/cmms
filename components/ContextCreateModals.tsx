@@ -241,7 +241,7 @@ export function AssetCreateModal({
   return <>
     <TriggerButton label={triggerLabel} icon="asset" secondary={secondary} disabled={(sites.length===0 && !fixedSiteId) || suppliers.length===0} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Registro técnico" title="Crear activo" description={fixedLocationName ? `Quedará asociado directamente a ${fixedLocationName}.` : fixedSiteName ? `La sede ${fixedSiteName} ya está resuelta; solo selecciona la sububicación.` : "Selecciona el contexto físico del activo."}>
-      <form className="company-modal-form" method="post" action="/api/assets">
+      <form className="company-modal-form" method="post" encType="multipart/form-data" action="/api/assets">
         <input type="hidden" name="return_to" value={returnTo} />
         <div className="form-grid">
           {!fixedSiteId && <div className="field"><label>Sede *</label><select name="site_id" value={siteId} onChange={event=>{setSiteId(event.target.value);setLocationId("");}} required><option value="">Selecciona sede</option>{sites.map(site=><option key={site.id} value={site.id}>{site.organization_name ? site.organization_name+" · " : ""}{site.name}</option>)}</select></div>}
@@ -254,6 +254,7 @@ export function AssetCreateModal({
           <div className="field"><label>Criticidad</label><select name="criticality" defaultValue="medium"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="critical">Crítica</option></select></div>
           <div className="field"><label>Fabricante</label><input name="manufacturer" placeholder="Ej. Carrier" /></div>
           <div className="field"><label>Modelo</label><input name="model" placeholder="Ej. 39HQ-120" /></div>
+          <div className="form-span-2"><FileDropzone name="image" label="Imagen del activo" description="PNG, JPG o WebP. Se usará en las tarjetas y ficha técnica." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
         </div>
         {visibleSuppliers.length===0 && <div className="notice error">La empresa seleccionada todavía no tiene proveedores activos. Registra uno antes de crear el activo.</div>}
         <footer className="modal-actions">

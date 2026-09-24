@@ -546,10 +546,10 @@ async function operationRows(session:NonNullable<Awaited<ReturnType<typeof getSe
 async function fieldRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,filters:ReturnType<typeof parseDashboardFilters>){
   if(!session.userId||!session.organizationId) return [];
   const provider=session.role==="provider",sid=session.externalSupplierId,org=session.organizationId,uid=session.userId;
-  let pred=provider&&sid
+  let pred=provider
     ? "t.organization_id=$1 AND t.service_supplier_id=$2"
     : "t.organization_id=$1 AND (t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2))";
-  const params=provider&&sid?[org,sid] as unknown[]:[org,uid] as unknown[];
+  const params=provider?[org,sid] as unknown[]:[org,uid] as unknown[];
   if(!session.accessAllSites){
     const index=params.length+1;
     params.push(session.siteIds);

@@ -682,3 +682,59 @@ Role emphasis:
 - **Requester:** only the requester's own requests, resolution time, closure ratio, priority distribution and monthly request trend.
 
 Field-person analytics remain descriptive evidence. KPI comparison must not be converted into automatic worker ranking, disciplinary scoring or employment decisions.
+
+
+## Contextual directory filtering
+
+Directory filtering follows a progressive-disclosure rule: **do not show a facet when it cannot reduce the current authorized dataset**.
+
+Examples:
+- Company appears only when the visible records belong to more than one Company.
+- Site appears only when more than one relevant Site exists after the active Company/search/status filters.
+- Supplier, Role, Category, Priority, Type and similar facets follow the same rule.
+- Sublocation Type appears inside a Site only when multiple types are present.
+
+Current domain facets:
+- **Companies:** plan, Country, City.
+- **Locations:** Company, Country, City; internal Sublocations add Type.
+- **Users:** Company, Role, Site, linked service Supplier.
+- **Suppliers:** Company, capability/type, specialty, Country.
+- **Assets:** Company, Site, Criticality, Asset Category, Supplier.
+- **Inventory:** stock state, Company, Site, Supplier.
+- **Work Orders:** status, Company, Site, Priority, Work Order Type.
+- **Preventive Maintenance:** Company, Site, frequency unit.
+- **Crews:** Company, Site.
+- **Requisitions:** status, Company, Supplier, requester.
+
+These filters accelerate browsing but never change the authorized record population.
+
+## Supplier standardized classification
+
+A Supplier can have **multiple capabilities** and **multiple specialties**.
+
+Capabilities represent the broad commercial relationship (materials, technical services, contractor/works, equipment rental, consulting/engineering, logistics, technology/software, general services).
+
+Specialties represent normalized operational categories such as HVAC/refrigeration, electrical, mechanical, plumbing, civil works, fire protection, elevators, generators, automation, calibration, IT/networks, cleaning, pest control, spare parts, hardware/tools, PPE, environmental services and others in the central catalog.
+
+Business rules that historically depend on `materials/services/both` continue using the derived compatibility field until those consumers are explicitly migrated.
+
+## User administrative dossier
+
+Authorized User profiles include:
+- **Documents:** identity document, CV/résumé, ARL, EPS, pension, severance, compensation fund, parafiscal/PILA records, bank certificate/account evidence, contract, certifications and other controlled categories.
+- **Emergency contact:** name, normalized relationship, phone, optional email and notes.
+
+Document archive is reversible. These files are administrative evidence and do not alter attendance, biometric identity, RBAC or assignment logic.
+
+## Supplier financial information
+
+Supplier profiles include a separate Financial Information tab for payment preparation:
+- bank;
+- account type and account number;
+- account holder and identification;
+- currency;
+- payment term in days;
+- payment email;
+- payment instructions/notes.
+
+This information supports administrative payment preparation only. Desweb CMMS does not initiate or authorize a banking transaction from these fields.

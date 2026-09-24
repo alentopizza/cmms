@@ -313,9 +313,22 @@ Before production hardening, reinforce this development workflow with the approv
 - document status surfaced in Requisitions, Supplier profiles and exports;
 - migration 036 and dedicated PostgreSQL smoke regression.
 
+### Recently completed unified Inventory/Kardex import correction
+
+- one master workbook `PLANTILLA_INVENTARIO_KARDEX_DESWEB.xlsx` shared by Inventory and Supplier contexts;
+- Global and Contextual modes handled by the same import engine;
+- deterministic Supplier resolution by internal ID, NIT/tax, internal code and exact name;
+- explicit Context-only versus Import-all choice from Supplier profiles;
+- Supplier inheritance from SKU in Kardex with blocking mismatch validation;
+- services omitted from physical stock/Kardex;
+- preflight stock simulation, structured row/field/value/suggestion errors and Supplier grouping;
+- existing-SKU Compare/Update/Skip decision without rewriting historical Kardex;
+- IMP folio, origin/context/scope/omitted-row audit metadata;
+- migration 037 and dedicated PostgreSQL smoke regression.
+
 ### Next cross-module work
 
-- global review of business logic, end-to-end flows and visual consistency across the CMMS, incorporating the next product changes defined with the user.
+- continue the global review of business logic, end-to-end flows and visual consistency across the CMMS, incorporating the next product changes defined with the user.
 
 
 ## Recently completed role-dashboard analytics slice

@@ -580,3 +580,29 @@ Un componente entra al UI Kit cuando:
 - reemplaza o absorbe equivalentes duplicados sin romper sus flujos;
 - pasa build y pruebas aplicables;
 - está listo para ser reutilizado por al menos dos superficies o representa un patrón empresarial oficial.
+
+
+## 26. Phase 1 implementation status
+
+Implemented foundation:
+
+- `components/ui-kit/` namespace created;
+- `FoundationPreview` consumes real runtime tokens;
+- `lib/design-system.ts` provides typed foundation metadata;
+- authenticated `/ui-kit` route created;
+- current playground sections: Color, Typography, Spacing, Radius/Shadows and Motion;
+- `UiIcon` retained as the initial unified icon system;
+- Design System foundation contract checked in CI.
+
+Not yet promoted to official primitives:
+
+- Button;
+- form controls;
+- Card;
+- Badge/Status;
+- Modal/Drawer;
+- DataTable;
+- Toast/Alert;
+- Search/Filter.
+
+Those belong to Phase 2 and must evaluate/absorb existing components before new parallel implementations are created.

@@ -180,6 +180,10 @@
 .ds-drawer-right{right:0;animation:ds-drawer-right var(--motion-medium) var(--ease-standard)}
 .ds-drawer-left{left:0;border-left:0;border-right:1px solid var(--color-border-subtle);animation:ds-drawer-left var(--motion-medium) var(--ease-standard)}
 .ds-drawer .ds-overlay-body{flex:1}
+.ds-modal.unified-create-modal{width:min(1040px,calc(100vw - 36px));max-width:1040px;max-height:min(86vh,900px)}
+.ds-overlay-header.unified-create-modal-header{position:sticky;top:0;z-index:4;background:var(--color-surface)}
+.ds-overlay-body.unified-create-modal-body{padding:0 var(--space-6) var(--space-6)}
+.ds-overlay-body.unified-create-modal-body>.form-grid,.ds-overlay-body.unified-create-modal-body>.unified-popup-form{padding-top:var(--space-5)}
 @keyframes ds-fade{from{opacity:0}to{opacity:1}}@keyframes ds-rise{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}@keyframes ds-drawer-right{from{transform:translateX(100%)}to{transform:none}}@keyframes ds-drawer-left{from{transform:translateX(-100%)}to{transform:none}}
 
 .ds-tooltip{position:relative;display:inline-flex}

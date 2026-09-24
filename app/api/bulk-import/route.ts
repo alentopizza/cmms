@@ -683,6 +683,43 @@ export async function POST(request:Request){
     }
 
     const selectedKardex=parsedKardex.filter(row=>importScope==="all"||row.belongsContext);
+
+    // Simulate the complete physical sequence before commit. PostgreSQL remains
+    // the final stock authority, but users should see negative-stock failures in
+    // the validation step instead of after pressing Confirmar.
+    const simulatedStock=new Map<string,number>();
+    for(const level of catalog.stockLevels){
+      simulatedStock.set(level.sku.toUpperCase()+"|"+key(level.warehouse_name),Number(level.quantity||0));
+    }
+    for(const row of selectedInventory){
+      if(!row.existing&&row.initial>0){
+        const stockKey=row.sku+"|"+key(row.warehouseName);
+        simulatedStock.set(stockKey,(simulatedStock.get(stockKey)||0)+row.initial);
+      }
+    }
+    for(const row of selectedKardex){
+      const sourceKey=row.sku+"|"+key(row.warehouseName);
+      const current=simulatedStock.get(sourceKey)||0;
+      let sourceDelta=0;
+      if(row.movement.type==="receipt"||row.movement.type==="return")sourceDelta=Math.abs(row.quantity);
+      else if(row.movement.type==="issue"||row.movement.type==="transfer")sourceDelta=-Math.abs(row.quantity);
+      else if(row.movement.type==="adjustment")sourceDelta=row.quantity*row.movement.sign;
+
+      if(current+sourceDelta<-0.000001){
+        issue(
+          issues,kardexSheet?.name||"KARDEX",row.row,"error",
+          "El movimiento dejaría existencias negativas en la bodega de origen.",
+          "CANTIDAD",String(row.quantity),
+          "Ajusta la cantidad, registra antes la entrada correspondiente o corrige la bodega.",
+        );
+      }else{
+        simulatedStock.set(sourceKey,current+sourceDelta);
+        if(row.movement.type==="transfer"&&row.destination){
+          const destinationKey=row.sku+"|"+key(row.destination);
+          simulatedStock.set(destinationKey,(simulatedStock.get(destinationKey)||0)+Math.abs(row.quantity));
+        }
+      }
+    }
     const selectedSupplierIds=new Set(selectedInventory.map(row=>row.supplier?.id).filter(Boolean) as string[]);
     selectedKardex.forEach(row=>{if(row.supplier)selectedSupplierIds.add(row.supplier.id);});
     const supplierGroups=[...selectedSupplierIds].map(supplierId=>{

@@ -393,25 +393,41 @@ export async function POST(request:Request){
       const warehouseCache=[...catalog.warehouses];
 
       for(const row of parsedWarehouses.parsed){
-        const code=stableCode("ALM",row.code||row.name);
-        const created=await client.query<Warehouse>(
-          `INSERT INTO inventory_warehouses(
-             organization_id,site_id,location_id,code,name,type,responsible,capacity,active,location_detail,notes,updated_at
-           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())
-           ON CONFLICT(organization_id,code) DO UPDATE SET
-             site_id=EXCLUDED.site_id,location_id=EXCLUDED.location_id,name=EXCLUDED.name,type=EXCLUDED.type,
-             responsible=EXCLUDED.responsible,capacity=EXCLUDED.capacity,active=EXCLUDED.active,
-             location_detail=EXCLUDED.location_detail,notes=EXCLUDED.notes,updated_at=now()
-           RETURNING id,site_id,location_id,name`,
-          [organizationId,row.site?.id||null,row.location?.id||null,code,row.name,row.type,row.responsible||null,row.capacity,row.active,row.locationDetail||null,row.notes||null],
-        );
-        const current=warehouseCache.findIndex(item=>key(item.name)===key(created.rows[0].name));
-        if(current>=0)warehouseCache[current]=created.rows[0];else warehouseCache.push(created.rows[0]);
+        const existingWarehouse=findByName(warehouseCache,row.name);
+        let resolved:Warehouse;
+        if(existingWarehouse){
+          const updated=await client.query<Warehouse>(
+            `UPDATE inventory_warehouses SET
+               site_id=COALESCE($1,site_id),location_id=COALESCE($2,location_id),type=$3,responsible=$4,capacity=$5,
+               active=$6,location_detail=$7,notes=$8,updated_at=now()
+             WHERE id=$9 AND organization_id=$10
+             RETURNING id,site_id,location_id,name`,
+            [row.site?.id||null,row.location?.id||null,row.type,row.responsible||null,row.capacity,row.active,row.locationDetail||null,row.notes||null,existingWarehouse.id,organizationId],
+          );
+          resolved=updated.rows[0];
+        }else{
+          const code=stableCode("ALM",row.code||row.name);
+          const created=await client.query<Warehouse>(
+            `INSERT INTO inventory_warehouses(
+               organization_id,site_id,location_id,code,name,type,responsible,capacity,active,location_detail,notes,updated_at
+             ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())
+             ON CONFLICT(organization_id,code) DO UPDATE SET
+               site_id=COALESCE(EXCLUDED.site_id,inventory_warehouses.site_id),
+               location_id=COALESCE(EXCLUDED.location_id,inventory_warehouses.location_id),
+               name=EXCLUDED.name,type=EXCLUDED.type,responsible=EXCLUDED.responsible,capacity=EXCLUDED.capacity,
+               active=EXCLUDED.active,location_detail=EXCLUDED.location_detail,notes=EXCLUDED.notes,updated_at=now()
+             RETURNING id,site_id,location_id,name`,
+            [organizationId,row.site?.id||null,row.location?.id||null,code,row.name,row.type,row.responsible||null,row.capacity,row.active,row.locationDetail||null,row.notes||null],
+          );
+          resolved=created.rows[0];
+        }
+        const current=warehouseCache.findIndex(item=>key(item.name)===key(resolved.name));
+        if(current>=0)warehouseCache[current]=resolved;else warehouseCache.push(resolved);
       }
 
       for(const row of inv.parsed){
         const supplier=row.supplier as Supplier,site=row.site as Site,location=row.location as Location;
-        let warehouse=row.warehouse as Warehouse|null;
+        let warehouse=(row.warehouse as Warehouse|null)||findByName(warehouseCache,String(row.warehouseName));
         if(!warehouse){
           const code=stableCode("ALM",site.name+"-"+location.name+"-"+String(row.warehouseName));
           const created=await client.query<Warehouse>(

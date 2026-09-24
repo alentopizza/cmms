@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-09-24 — Role dashboards with KPI comparisons and analytical filters
+
+### Changed
+
+- Redesigned the root Dashboard using the approved reference composition while preserving Desweb branding, light/dark behavior and responsive navigation.
+- Platform Owner, Superadministrator, Company Administrator, Manager/Supervisor, Viewer, Technician, External collaborator, Provider and Requester now receive role-specific KPI sets instead of a generic summary.
+- KPI cards show the current value plus comparison against the immediately previous equivalent period or the same period of the previous year.
+- Added six-month trend charts using real PostgreSQL data rather than mock series.
+- Added operational distribution panels for Work Order status, maintenance type, Site and request priority where applicable.
+- Added field/operator summaries for attendance hours, execution evidence and active workload without introducing worker rankings or automated employment scoring.
+
+### Filters and export parity
+
+- Added **Sede** and **Prioridad** filters to tenant/field/requester dashboards when applicable.
+- Added **Comparar con** selector for previous equivalent period or same period in the previous year.
+- Existing period and status filters remain available.
+- Site options are loaded only from the authenticated user's authorized Organization/Site scope.
+- Excel, CSV and PDF dashboard exports now apply the same Site, Priority, status, period and role scope used on screen.
+
+### UI
+
+- Added reusable KPI comparison cards, two-point evidence sparklines, six-month line charts, statistical tiles and a role-aware dashboard header.
+- Dashboard analytics collapse from desktop multi-column layouts to single-column mobile layouts without introducing a separate mobile implementation.
+
 ## 2026-09-24 — User and Supplier compact-card correction
 
 ### Fixed

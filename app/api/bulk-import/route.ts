@@ -443,6 +443,10 @@ function warehouseValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
     const locationText=textValue(row.values.location);
     const location=site&&locationText?resolveLocation(catalog.locations,site.id,locationText):null;
     if(site&&locationText&&!location)issue(issues,sheetName,row.rowNumber,"error","Sububicación de la bodega no encontrada dentro de la sede: "+locationText);
+    const capacity=numberValue(row.values.capacity);
+    if(capacity!==null&&capacity<0){
+      issue(issues,sheetName,row.rowNumber,"error","Capacidad de bodega inválida.","CAPACIDAD",String(capacity),"Usa un valor mayor o igual a cero.");
+    }
     parsed.push({
       row:row.rowNumber,
       code:textValue(row.values.code),
@@ -450,7 +454,7 @@ function warehouseValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
       type:textValue(row.values.type)||"storage",
       responsible:textValue(row.values.responsible),
       locationDetail:textValue(row.values.locationDetail),
-      capacity:numberValue(row.values.capacity),
+      capacity,
       active:boolValue(row.values.active,true),
       notes:textValue(row.values.notes),
       site,

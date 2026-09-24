@@ -104,6 +104,7 @@ export async function loadSupplierCommercialAnalytics(supplierIds:string[]){
              count(*) FILTER (WHERE ri.unit_cost_estimated>0)::int price_sample_lines
       FROM inventory_transactions t
       JOIN supplier_requisition_items ri ON ri.id=t.requisition_item_id
+      JOIN supplier_requisitions rr ON rr.id=t.requisition_id AND rr.supplier_id=ANY($1::uuid[])
       WHERE t.requisition_id IS NOT NULL
         AND t.type='receipt'
         AND ri.requisition_id=t.requisition_id

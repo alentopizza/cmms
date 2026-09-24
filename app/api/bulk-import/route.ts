@@ -317,7 +317,12 @@ export async function POST(request:Request){
   const buffer=Buffer.from(await file.arrayBuffer());
   const hash=createHash("sha256").update(buffer).digest("hex");
   const organizationId=session.organizationId;
-  const workbook=await loadWorkbook(buffer);
+  let workbook;
+  try{
+    workbook=await loadWorkbook(buffer);
+  }catch{
+    return NextResponse.json({error:"No se pudo leer el archivo. Verifica que sea un Excel .xlsx válido y no esté protegido o dañado."},{status:400});
+  }
   const catalog=await catalogs(organizationId);
   const fixedSupplier=fixedSupplierId?catalog.suppliers.find(supplier=>supplier.id===fixedSupplierId)||null:null;
   if(fixedSupplierId&&!fixedSupplier)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});

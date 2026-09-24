@@ -66,12 +66,20 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
       :allStatuses;
   const [warehouses,receipts]=await Promise.all([
     canReceive
-      ?query<Warehouse>(
-        `SELECT w.id,w.name,s.name site_name
-         FROM inventory_warehouses w LEFT JOIN sites s ON s.id=w.site_id
-         WHERE w.organization_id=$1 AND w.active=true ORDER BY s.name NULLS LAST,w.name`,
-        [req.organization_id],
-      )
+      ?session.platformRole==="user"&&!session.accessAllSites
+        ?query<Warehouse>(
+          `SELECT w.id,w.name,s.name site_name
+           FROM inventory_warehouses w LEFT JOIN sites s ON s.id=w.site_id
+           WHERE w.organization_id=$1 AND w.active=true AND (w.site_id IS NULL OR w.site_id=ANY($2::uuid[]))
+           ORDER BY s.name NULLS LAST,w.name`,
+          [req.organization_id,session.siteIds],
+        )
+        :query<Warehouse>(
+          `SELECT w.id,w.name,s.name site_name
+           FROM inventory_warehouses w LEFT JOIN sites s ON s.id=w.site_id
+           WHERE w.organization_id=$1 AND w.active=true ORDER BY s.name NULLS LAST,w.name`,
+          [req.organization_id],
+        )
       :Promise.resolve({rows:[]} as {rows:Warehouse[]}),
     query<ReceiptTx>(
       `SELECT t.id,ri.sku,ri.description,ri.unit,t.quantity::text,t.unit_cost::text,w.name warehouse,t.document_number,

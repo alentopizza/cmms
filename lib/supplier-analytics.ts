@@ -166,7 +166,7 @@ export async function loadSupplierCommercialAnalytics(supplierIds:string[]){
     ),
     query<SupplierCommercialTrend>(
       performanceCte+`
-      SELECT supplier_id,to_char(date_trunc('month',first_receipt_at),'YYYY-MM') month,
+      SELECT supplier_id,to_char(date_trunc('month',first_receipt_at),'YYYY-MM') AS "month",
              count(*)::int received_requisitions,
              CASE WHEN sum(requested_quantity)>0
                   THEN LEAST(100.0,sum(received_quantity)/sum(requested_quantity)*100.0)::float8 ELSE NULL END quantity_fulfillment_pct,

@@ -173,3 +173,19 @@ El trigger `cmms_apply_inventory_transaction()` es la autoridad de saldo para mo
 ## CI
 
 CI ejecuta PostgreSQL 17 real, todas las migraciones, los smoke tests del Dashboard y `scripts/inventory-kardex-smoke.mjs`. Este último verifica entrada, salida, traslado, ajuste, saldo total por bodegas y rechazo de stock negativo antes del build de producción.
+
+
+## Operational workspace added after the import foundation
+
+Inventory now exposes a persistent internal navigation for **Summary, Products, Categories, Warehouses, Entries, Issues, Adjustments, Transfers and Kardex**.
+
+Additional behavior:
+
+- Categories can be created, edited, activated and deactivated.
+- Warehouses can be created, edited, activated and deactivated with site, sublocation, type, responsible person, capacity, detail and notes.
+- Kardex has an independent operational page with search/facets, movement creation and Excel/CSV/PDF export.
+- Item-level Kardex and global Kardex both capture optional lot, expiration date and cost center.
+- Inventory records may be deactivated without deleting history. Inactive records remain discoverable through the **Registro** facet and can be reactivated from their detail page.
+- Product and asset cards support authenticated stored images in PostgreSQL bytea columns added by migration 030.
+- Assets now have a complete create/edit workflow covering category, technical identity, status, criticality, supplier, physical location, purchase/install/warranty dates, purchase cost, notes and image.
+- Asset editing preserves maintenance plans and existing operational history; it updates master data only.

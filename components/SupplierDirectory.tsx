@@ -160,7 +160,7 @@ export default function SupplierDirectory({
               <strong>{s.name}</strong>
               <span>{s.legal_name||s.organization_name}</span>
               <small>{[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}</small>
-              <em>{(s.specialty_labels||[]).join(" · ")||"Especialidad sin registrar"}</em>
+              <em>{(s.specialty_labels||[]).join(" · ")||s.service_category||"Especialidad sin registrar"}</em>
             </span>
             <span className="supplier-card-contact-v2">
               <span><UiIcon name="user" size={12}/><b>{s.contact_name||"Sin contacto"}</b></span>
@@ -227,7 +227,7 @@ export default function SupplierDirectory({
           <div className="entity-info-field"><span>Nombre comercial</span><strong>{selected.name}</strong></div>
           <div className="entity-info-field"><span>Razón social</span><strong>{selected.legal_name||"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>Tipo</span><strong>{(selected.capability_labels||[]).join(", ")||typeLabel(selected.supplier_type)}</strong></div>
-          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{(selected.specialty_labels||[]).join(", ")||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{(selected.specialty_labels||[]).join(", ")||selected.service_category||"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>Identificación</span><strong>{selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>País</span><strong>{countryName(selected.country_code)||"Sin registrar"}</strong></div>
           <div className="entity-info-field"><span>Ciudad</span><strong>{selected.city||"Sin registrar"}</strong></div>

@@ -418,3 +418,13 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Supplier financial information is tenant scoped behind `suppliers.manage`.
 - Mask account numbers in ordinary read summaries; do not treat stored payment details as permission to initiate a payment.
 - Document archive is reversible and distinct from permanent deletion.
+
+## Procurement approval invariant
+
+- Company procurement approval is an authorization/audit boundary, not a client-only workflow.
+- `organization_procurement_policies` defines the current Company rule, but every created requisition stores a policy snapshot. Never reinterpret an existing requisition using a later Company setting.
+- A required approval must be `approved` before the receiving route may create Inventory/Kardex receipts. Revalidate this on the server even when the receive UI is hidden.
+- Approval/rejection must use the dedicated approval action and `requisitions.approve`; do not treat `approved` / `rejected` as ordinary editable lifecycle values.
+- Tenant Organization, Site scope, configured approver role and requester self-approval rule must be revalidated server-side for every approval decision.
+- Changing quantity, estimated unit cost or required date after an approval/rejection reopens approval before additional receipt. Existing receipt history is preserved.
+- Approval events are historical evidence. Preserve requested, amended, approved, rejected and reopened transitions rather than overwriting the audit trail.

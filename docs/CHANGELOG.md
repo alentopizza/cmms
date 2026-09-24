@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-24 — Compact User/Supplier cards and resilient User statistics
+
+### Fixed
+
+- Restored `/dashboard/users` reliability by removing the newly added heavy statistics aggregates from the directory query.
+- Detailed User statistics now load only when a User profile is opened through `/api/users/[id]/statistics`.
+- A statistics API failure is isolated to the Statistics tab and falls back to the stable summary metrics instead of crashing the whole Users module.
+
+### Changed
+
+- User directory cards now use a personal credential/profile visual language with cover treatment, overlapping avatar, role/company identity, biometric/site badges, operational metrics and compact actions.
+- Supplier directory cards use a distinct commercial/vendor visual language with branded banner, Supplier logo, supplier type, location/category, contact summary, metrics and procurement actions.
+- Both directories support up to **5 cards per row** on very wide desktops, then adapt to 4, 3, 2 and 1 columns as available width decreases.
+- Card density is achieved through hierarchy and spacing, not by returning to unreadable micro-fonts.
+
 
 ## 2026-09-24 — User operational statistics dashboard
 

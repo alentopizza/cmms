@@ -394,11 +394,14 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Si la selección incluye varios proveedores, el sistema divide automáticamente la solicitud y crea una requisición independiente por proveedor.",
       "Consulta cada requisición para revisar proveedor, solicitante, destino, cantidades, costos estimados, fecha requerida y observaciones.",
       "Mientras siga abierta puedes editar cantidades y costos estimados; también puedes retirar ítems que todavía no tengan recepción registrada.",
-      "Actualiza el estado entre Borrador, Enviada, Aprobada, Rechazada, Parcialmente atendida, Atendida, Cerrada o Cancelada según el flujo real.",
-      "Exporta la requisición en PDF, Excel o Word compatible para compartirla o tramitarla fuera del sistema.",
+      "En Recepción física registra únicamente lo entregado, selecciona la bodega y opcionalmente documento, lote, vencimiento y centro de costo. Cada entrega genera una Entrada de Kardex vinculada a la requisición.",
+      "Las entregas parciales actualizan automáticamente el estado a Parcialmente atendida; cuando todos los ítems alcanzan la cantidad solicitada, la requisición pasa a Atendida.",
+      "El historial de recepciones muestra fecha, artículo, cantidad, bodega, documento, costo, lote y usuario. El Kardex también enlaza de vuelta a la requisición de origen.",
+      "Actualiza manualmente los demás estados entre Borrador, Enviada, Aprobada, Rechazada, Cerrada o Cancelada según el flujo real.",
+      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas y pendientes.",
     ],
     notes:[
-      "Crear o aprobar una requisición no aumenta existencias. La recepción del material debe registrarse como una operación de Inventario independiente.",
+      "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock."
       "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
     ],
     keywords:["requisición","compras","proveedor","inventario","insumos","cantidades","abastecimiento"],
@@ -426,6 +429,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Recepción de requisiciones contra Kardex",
+    summary:"Las requisiciones ahora permiten registrar entregas parciales o totales directamente contra una bodega; cada recepción actualiza Kardex, cantidades recibidas, progreso y estado de la requisición con trazabilidad de documento/lote.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Inventario operativo y activos editables",

@@ -1537,3 +1537,18 @@ This file records meaningful product and engineering changes so future developer
 - Leadership is an explicit operational choice; it is not inferred from role. Selecting a leader automatically includes that person in the Crew.
 - Eligible members are restricted to the same Organization and must have access to the Crew's selected Site.
 - Setup-sequence workforce checks now count Managers/Supervisors as eligible Crew personnel.
+
+
+## 2026-09-24 — Dashboard monthly trend SQL root-cause correction
+
+### Fixed
+
+- Removed the temporary whole-Dashboard "safe mode" substitution for Company dashboards. The real role Dashboard is rendered again.
+- Identified the runtime failure in PostgreSQL 17: monthly trend queries used the unquoted alias `month`, producing `syntax error at or near "month"`.
+- All monthly trend queries now expose the period key as quoted SQL alias `"month"` for Platform, Company, Field and Requester dashboards.
+- Company-dashboard analytical blocks now use simpler isolated queries. A secondary analytical failure can omit only the affected block while the rest of the real Dashboard remains available.
+
+### Validation
+
+- CI now starts PostgreSQL 17, executes every database migration, runs dashboard SQL smoke queries, and only then performs the Next.js production build.
+- The SQL smoke suite covers Company KPI queries plus monthly trend SQL for Platform, Company, Field and Requester role families.

@@ -521,7 +521,8 @@ export async function POST(request:Request){
     const importScope:InventoryImportScope=fixedSupplier&&requestedScope!=="all"?"context_only":"all";
     const contextSupplier=importScope==="context_only"?fixedSupplier:null;
     const importMode:InventoryImportMode=contextSupplier?"contextual":"global";
-    const duplicatePolicy:DuplicatePolicy=String(form.get("duplicate_policy")||"update")==="skip"?"skip":"update";
+    const requestedDuplicatePolicy=String(form.get("duplicate_policy")||"compare");
+    const duplicatePolicy:DuplicatePolicy=requestedDuplicatePolicy==="skip"?"skip":requestedDuplicatePolicy==="update"?"update":"compare";
 
     const warehouseSheet=findWorksheet(workbook,["Bodegas","Almacenes","Almacén","Almacen"]);
     const warehouseRows=warehouseSheet?parseSheet(warehouseSheet,WAREHOUSE_ALIASES).rows:[];
@@ -782,8 +783,37 @@ export async function POST(request:Request){
       });
     }
 
-    const duplicate=await query("SELECT 1 FROM bulk_import_batches WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'",[organizationId,hash]);
-    if(duplicate.rowCount)return NextResponse.json({error:"Este mismo archivo ya fue importado anteriormente. Revisa el historial para evitar duplicar Kardex."},{status:409});
+    if(summary.existingItems>0&&duplicatePolicy==="compare"){
+      return NextResponse.json({
+        error:"Selecciona Actualizar u Omitir para los SKU existentes antes de confirmar.",
+        entity,valid:true,summary,issues:issues.slice(0,350),supplierGroups,context,duplicatePolicy,
+      },{status:409});
+    }
+
+    const duplicate=importScope==="context_only"&&contextSupplier
+      ?await query(
+        `SELECT 1 FROM bulk_import_batches
+         WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'
+           AND (
+             commit_scope='all'
+             OR (commit_scope='context_only' AND context_supplier_id=$3)
+           )
+         LIMIT 1`,
+        [organizationId,hash,contextSupplier.id],
+      )
+      :await query(
+        `SELECT 1 FROM bulk_import_batches
+         WHERE organization_id=$1 AND entity='inventory' AND file_hash=$2 AND status='committed'
+         LIMIT 1`,
+        [organizationId,hash],
+      );
+    if(duplicate.rowCount){
+      return NextResponse.json({
+        error:importScope==="context_only"
+          ?"Este mismo archivo ya fue importado para este proveedor o mediante una importación Global."
+          :"Este mismo archivo ya tiene una importación confirmada; una nueva carga Global podría duplicar Kardex.",
+      },{status:409});
+    }
 
     const client=await pool.connect();
     try{

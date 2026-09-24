@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-09-24 — DESWEB UI Kit · Fase 2 UI Core
+
+### Added
+
+- Primitives oficiales `Button`, `IconButton`, `SplitButton`.
+- Familia de formularios: Input/Search/Number/Currency/Password, Textarea, Select, Checkbox, Radio y Switch.
+- Selects avanzados: MultiSelect, SearchSelect y AsyncSelect con búsqueda, limpieza, loading y error.
+- Card, Badge y StatusIndicator.
+- Modal y Drawer con Escape, focus trap y restauración de foco.
+- Tooltip y Dropdown.
+- Tabs, Pills, SegmentedControl, Breadcrumb y ModuleNavigation.
+- Alert, Toast, EmptyState, Spinner, Skeleton, LoadingCard, LoadingTable y LoadingPage.
+- Avatar y FileUpload.
+- Nueva hoja global `app/ui-kit-core.css` basada exclusivamente en Design Tokens V2.
+- Estados semánticos adaptativos para light/dark.
+- Playground `/ui-kit` ampliado con ejemplos interactivos de todos los primitives de Fase 2.
+- Smoke `scripts/ui-kit-core-smoke.mjs` incorporado a CI.
+
+### Compatibility
+
+- `ConfirmDialog`, `CreateRecordModal`, `MultiSelectDropdown` y `FileDropzone` conservan sus APIs públicas pero delegan al UI Kit.
+- CreateRecordModal conserva temporalmente clases legacy de layout para no romper formularios existentes.
+- `UiIcon` se amplía con los glyphs outline requeridos por UI Core sin incorporar otra librería.
+
+### Integrity
+
+- UI Core no contiene hexadecimales de presentación en TSX/CSS.
+- Visual migration continues without API, DB, RBAC or business-rule changes.
+
+### Next
+
+- Fase 3: shell y navegación global.
+
 ## 2026-09-24 — DESWEB Design System V2 · Fase 1 Foundations
 
 ### Added

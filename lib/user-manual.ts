@@ -300,14 +300,15 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","platform_owner","superadmin","admin","manager","viewer"],
     href:"/dashboard/inventory",
     steps:[
-      "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex.",
+      "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex. La barra interna permite ir a Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex."
       "Usa Nuevo producto para crear un artículo con proveedor, sede, sububicación, categoría, bodega, mínimos, máximos, costo y existencia inicial. La existencia inicial se registra como una Entrada de Kardex.",
       "Usa Importar para descargar primero la plantilla contextual de la empresa. Incluye Catálogos, Bodegas, Inventario y Kardex.",
       "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes.",
       "La importación reconoce también el formato demo con hojas Productos, Bodegas y Kardex; las filas declaradas como Servicios tercerizados se omiten porque no representan existencias.",
-      "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes.",
-      "Abre Ver detalles en un producto para editar su ficha, consultar existencias por bodega y revisar todo su historial de movimientos.",
-      "Usa Exportar para descargar la base de Inventario en Excel, CSV o PDF.",
+      "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes; lote, vencimiento y centro de costo quedan disponibles para trazabilidad."
+      "Abre Ver detalles en un producto para editar su ficha, reemplazar su imagen, consultar existencias por bodega y revisar todo su historial de movimientos.",
+      "Los artículos desactivados siguen visibles mediante el filtro Registro y pueden reactivarse desde su ficha sin perder Kardex ni relaciones.",
+      "Usa Exportar para descargar la base de Inventario en Excel, CSV o PDF; Kardex también tiene exportación independiente y respeta el tipo de movimiento seleccionado."
     ],
     notes:[
       "El sistema impide movimientos que dejen existencias negativas.",
@@ -330,7 +331,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Cada activo aparece como una tarjeta visual con código, ubicación, proveedor, estado, criticidad y fabricante/modelo; el diseño se adapta a celular.",
       "Usa Importar para descargar una plantilla Excel contextual, validar la carga y crear o actualizar activos por Código.",
       "Usa Exportar para descargar la base de Activos en Excel, CSV o PDF.",
-      "Toca la tarjeta para abrir la ficha completa del activo.",
+      "Toca la tarjeta para abrir la ficha completa del activo. Desde allí puedes editar sede, sububicación, proveedor, categoría, estado, criticidad, identificación técnica, fechas, costo, notas e imagen sin perder rutinas ni historial."
     ],
     keywords:["activos","equipos","móvil","criticidad","proveedor"],
   },
@@ -425,6 +426,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Inventario operativo y activos editables",
+    summary:"Inventario añade navegación interna para categorías, almacenes y Kardex, exportación independiente de movimientos, recuperación de artículos inactivos y metadatos de lote/vencimiento; Activos incorpora alta y edición técnica completa con imagen.",
+    roles:["all","platform_owner","superadmin","admin","manager","viewer"],
+  },
   {
     date:"2026-09-24",
     title:"Inventario, Kardex e importación masiva",

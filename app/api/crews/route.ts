@@ -20,10 +20,12 @@ export async function POST(request:Request) {
   const memberIds=[...new Set(form.getAll("member_ids").map(v=>String(v)).filter(Boolean))];
   const target=(suffix:string)=>publicUrl(`/dashboard/crews${suffix}`,request.url);
 
-  if(!organizationId||!siteId||!name||!leaderUserId||memberIds.length<1) {
+  if(!organizationId||!siteId||!name||!leaderUserId) {
     return NextResponse.redirect(target("?error=members"),303);
   }
 
+  // The leader is always part of the Crew even when the visual leader
+  // checkbox is disabled and therefore not submitted by the browser.
   if(!memberIds.includes(leaderUserId)) memberIds.push(leaderUserId);
 
   const client=await pool.connect();

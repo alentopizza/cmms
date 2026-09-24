@@ -12,6 +12,7 @@ export type UiIconName =
   | "plus"
   | "user-plus"
   | "download"
+  | "upload"
   | "file"
   | "trash"
   | "asset"
@@ -59,6 +60,7 @@ export default function UiIcon({
   if (name === "plus") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>;
   if (name === "user-plus") return <svg {...common}><circle cx="9" cy="8" r="3"/><path d="M3.8 19c.7-3.3 2.5-5 5.2-5 1.3 0 2.4.3 3.3.9"/><path d="M17 10v7M13.5 13.5h7"/></svg>;
   if (name === "download") return <svg {...common}><path d="M12 3v11"/><path d="m8 10 4 4 4-4"/><path d="M5 18.5h14"/></svg>;
+  if (name === "upload") return <svg {...common}><path d="M12 15V4"/><path d="m8 8 4-4 4 4"/><path d="M5 18.5h14"/></svg>;
   if (name === "file") return <svg {...common}><path d="M6 3.5h8l4 4V20H6V3.5Z"/><path d="M14 3.5V8h4"/><path d="M9 12h6M9 15h6"/></svg>;
   if (name === "trash") return <svg {...common}><path d="M4.5 7h15"/><path d="M9 7V4.5h6V7"/><path d="m7 7 .8 13h8.4L17 7"/><path d="M10 10.5v6M14 10.5v6"/></svg>;
   if (name === "asset") return <svg {...common}><path d="m4 8 8-4 8 4-8 4-8-4Z"/><path d="m4 8 8 4 8-4v8l-8 4-8-4V8Z"/><path d="M12 12v8"/></svg>;

@@ -55,7 +55,7 @@ export const MANUAL_ROLES:Array<{id:ManualRole;label:string;summary:string}> = [
   {id:"external",label:"Colaborador externo",summary:"Trabajo de campo asignado directamente o mediante cuadrilla."},
 ];
 
-export const MANUAL_LAST_REVIEW = "2026-09-23";
+export const MANUAL_LAST_REVIEW = "2026-09-24";
 
 // ── User-facing articles ────────────────────────────────────────────────────
 
@@ -76,6 +76,29 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:["Los módulos que no aparecen no deben interpretarse como un error: la navegación respeta los permisos de tu rol."],
     keywords:["menu","móvil","navegación","cerrar sesión","más"],
+  },
+  {
+    id:"role-dashboard",
+    title:"Dashboard por rol y comparación de KPIs",
+    summary:"Cómo leer indicadores, tendencias y comparaciones sin salir de tu alcance autorizado.",
+    icon:"▥",
+    module:"Dashboard",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
+    href:"/dashboard",
+    steps:[
+      "El Dashboard cambia según tu rol: plataforma muestra crecimiento/adopción; administración y supervisión muestran mantenimiento y continuidad; campo muestra ejecución/asistencia; solicitantes ven el seguimiento de sus propias solicitudes.",
+      "Selecciona el periodo con el calendario. Las tarjetas KPI comparan ese rango con el periodo anterior equivalente de forma predeterminada.",
+      "En Comparar con puedes cambiar a Mismo periodo año anterior cuando necesites una referencia interanual.",
+      "En roles de empresa/campo puedes filtrar por Sede y Prioridad además del Estado. Las sedes disponibles ya están limitadas por tu alcance de acceso.",
+      "La gráfica de tendencia resume los últimos seis meses con datos reales del CMMS; los bloques secundarios muestran distribuciones útiles según el rol.",
+      "Los porcentajes verdes/rojos de las tarjetas indican mejora o deterioro según la naturaleza del KPI; en indicadores neutrales solo describen la variación.",
+      "Exportar mantiene los mismos filtros y permisos en Excel, CSV y PDF.",
+    ],
+    notes:[
+      "Los filtros nunca amplían permisos. Si no tienes acceso a una empresa, sede o registro, el Dashboard y sus exportes tampoco lo incluyen.",
+      "Los indicadores de Técnicos y Colaboradores son evidencia operativa descriptiva; no son rankings automáticos ni decisiones laborales.",
+    ],
+    keywords:["dashboard","kpi","comparación","mes","tendencia","filtros","sede","prioridad","exportar"],
   },
   {
     id:"company-setup",
@@ -349,6 +372,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Dashboards por rol con comparación de KPIs",
+    summary:"El Dashboard ahora muestra KPIs y tendencias según el rol, compara periodos, incorpora filtros de Sede/Prioridad donde aplican y conserva esos filtros en Excel, CSV y PDF.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
+  },
   {
     date:"2026-09-24",
     title:"Directorios compactos de Usuarios y Proveedores",

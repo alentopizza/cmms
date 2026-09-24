@@ -36,6 +36,7 @@ export async function GET(request:Request){
   if(!session)return new NextResponse("No autorizado",{status:401});
   const url=new URL(request.url);
   const entity=url.searchParams.get("entity")==="assets"?"assets":"inventory";
+  const fixedSupplierId=url.searchParams.get("supplier")||"";
   if(entity==="inventory"&&!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return new NextResponse("Forbidden",{status:403});
   if(!session.organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
@@ -45,7 +46,9 @@ export async function GET(request:Request){
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),
     query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Location>("SELECT l.id,l.name,s.name site_name FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[organizationId]),
-    query<Supplier>("SELECT id,name,tax_id FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    fixedSupplierId
+      ? query<Supplier>("SELECT id,name,tax_id FROM suppliers WHERE organization_id=$1 AND id=$2 AND active=true ORDER BY name",[organizationId,fixedSupplierId])
+      : query<Supplier>("SELECT id,name,tax_id FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Warehouse>("SELECT w.id,w.name,s.name site_name,l.name location_name FROM inventory_warehouses w LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id WHERE w.organization_id=$1 AND w.active=true ORDER BY w.name",[organizationId]),
   ]);

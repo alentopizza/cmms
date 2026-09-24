@@ -63,7 +63,7 @@ try{
     await client.query(
       `INSERT INTO inventory_transactions(
          organization_id,item_id,type,quantity,unit_cost,warehouse_id,source_movement_id,document_number
-       ) VALUES($1,$2,'receipt',1,100,$3,'MOV-CI-001','CI-DOC-2')`,
+       ) VALUES($1,$2,'receipt',1,100,$3,'mov-ci-001','CI-DOC-2')`,
       [organizationId,itemId,warehouseId],
     );
   }catch{

@@ -251,9 +251,19 @@ export function AssetCreateModal({
           <div className="field"><label>Proveedor *</label><select name="supplier_id" required><option value="">Selecciona proveedor</option>{visibleSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
           <div className="field"><label>Código *</label><input name="code" required autoFocus placeholder="Ej. HVAC-001" /></div>
           <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Unidad manejadora de aire 01" /></div>
+          <div className="field"><label>Categoría</label><input name="category" placeholder="Ej. HVAC, Eléctrico, Mobiliario" /></div>
+          <div className="field"><label>Estado</label><select name="status" defaultValue="operational"><option value="operational">Operativo</option><option value="maintenance">En mantenimiento</option><option value="down">Fuera de servicio</option><option value="retired">Retirado</option></select></div>
           <div className="field"><label>Criticidad</label><select name="criticality" defaultValue="medium"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="critical">Crítica</option></select></div>
           <div className="field"><label>Fabricante</label><input name="manufacturer" placeholder="Ej. Carrier" /></div>
           <div className="field"><label>Modelo</label><input name="model" placeholder="Ej. 39HQ-120" /></div>
+          <div className="field"><label>Serial</label><input name="serial_number" placeholder="Número de serie" /></div>
+          <div className="field form-span-2"><label>Descripción</label><textarea name="description" rows={3} placeholder="Características, función o referencia técnica." /></div>
+          <div className="field"><label>Fecha de compra</label><input name="purchase_date" type="date" /></div>
+          <div className="field"><label>Fecha de instalación</label><input name="installation_date" type="date" /></div>
+          <div className="field"><label>Garantía vence</label><input name="warranty_expires" type="date" /></div>
+          <div className="field"><label>Costo de compra</label><input name="purchase_cost" type="number" min="0" step="0.01" /></div>
+          <div className="field form-span-2"><label>Ubicación detalle</label><input name="location_detail" placeholder="Cuarto, rack, posición o referencia visual." /></div>
+          <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} placeholder="Garantía, condiciones especiales u observaciones." /></div>
           <div className="form-span-2"><FileDropzone name="image" label="Imagen del activo" description="PNG, JPG o WebP. Se usará en las tarjetas y ficha técnica." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" /></div>
         </div>
         {visibleSuppliers.length===0 && <div className="notice error">La empresa seleccionada todavía no tiene proveedores activos. Registra uno antes de crear el activo.</div>}

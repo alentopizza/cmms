@@ -6,6 +6,7 @@ import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import InventorySubnav from "@/components/InventorySubnav";
 import UiIcon from "@/components/UiIcon";
+import ModuleExportMenu from "@/components/ModuleExportMenu";
 
 type Tx={
   id:string;organization_id:string;organization_name:string;item_id:string;sku:string;item_name:string;unit:string;supplier_id:string|null;supplier_name:string|null;
@@ -94,7 +95,9 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
         {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
         {key:"warehouse",label:"Bodega",allLabel:"Todas las bodegas"},
       ]}
-      action={canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" icon="▤">
+      action={<div className="module-header-action-group">
+        <ModuleExportMenu entity="kardex" type={requestedType||undefined}/>
+        {canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" icon="▤">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/movements">
           <div className="field form-span-2"><label>Artículo *</label><select name="item_id" required><option value="">Selecciona SKU / producto</option>{items.rows.map(item=><option key={item.id} value={item.id}>{item.sku} · {item.name}</option>)}</select></div>
           <div className="field"><label>Movimiento *</label><select name="movement_type" defaultValue={initialMovement} required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución</option><option value="transfer">Transferencia</option></select></div>
@@ -110,7 +113,8 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
           <div className="field form-span-2"><label>Observaciones</label><textarea name="notes" rows={3}/></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Registrar movimiento</button></div>
         </form>
-      </CreateRecordModal>:undefined}
+      </CreateRecordModal>:null}
+      </div>}
     />
     <InventorySubnav active={activeSection(requestedType)}/>
     {params.created&&<div className="notice success section">Movimiento registrado y existencias actualizadas correctamente.</div>}

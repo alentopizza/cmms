@@ -13183,3 +13183,9 @@ html[data-theme="dark"] .inventory-warehouse-head strong{color:var(--text)}
   .inventory-category-metrics{grid-template-columns:1fr 1fr 1fr}
   .inventory-popover-form{position:fixed;left:12px;right:12px;top:92px;width:auto;max-height:75vh;overflow:auto}
 }
+
+
+.inventory-product-card.inactive{opacity:.7;filter:saturate(.75)}
+.inventory-product-state-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.inventory-record-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf0f2;color:#667781;font-size:8px;font-weight:850}
+html[data-theme="dark"] .inventory-record-pill{background:#303b42;color:#cad5da}

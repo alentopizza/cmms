@@ -145,8 +145,11 @@ function trendWindow(filters:DashboardFilters){
   });
   return {start:iso(start),end:iso(end),keys,labels};
 }
-function monthValues(keys:string[],rows:Array<Record<string,unknown>>,field:string){
-  const map=new Map(rows.map(row=>[String(row.month),n(row[field] as string|number|null|undefined)]));
+function monthValues(keys:string[],rows:unknown[],field:string){
+  const map=new Map(rows.map(item=>{
+    const row=item as Record<string,unknown>;
+    return [String(row.month),n(row[field] as string|number|null|undefined)] as const;
+  }));
   return keys.map(key=>map.get(key)||0);
 }
 

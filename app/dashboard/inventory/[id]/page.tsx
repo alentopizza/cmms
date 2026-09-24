@@ -5,6 +5,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
+import InventorySubnav from "@/components/InventorySubnav";
 
 type Item={
   id:string;organization_id:string;site_id:string;sku:string;name:string;description:string|null;presentation:string|null;unit:string;
@@ -64,6 +65,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
         <Link className="button secondary" href="/dashboard/inventory">Volver</Link>
       </div>
     </header>
+    <InventorySubnav active="products"/>
     {feedback.updated&&<div className="notice success section">Artículo actualizado.</div>}
     {feedback.movement&&<div className="notice success section">Movimiento registrado en Kardex.</div>}
     {feedback.error&&<div className="notice error section">No fue posible completar la operación. Revisa existencias, bodega y datos.</div>}

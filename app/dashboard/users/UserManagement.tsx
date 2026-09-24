@@ -11,6 +11,7 @@ import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
+import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -48,7 +49,13 @@ export type ManagedUser = {
   pending_activities: number;
   completed_activities_30d: number;
   attendance_hours_30d: number;
+  attendance_hours_today: number;
+  attendance_daily_7d: UserStatisticsDay[];
+  completed_activities_7d: number;
+  overdue_activities: number;
+  upcoming_activities: UserStatisticsActivity[];
   open_shift: boolean;
+  open_shift_started_at: string | null;
   tracking_live: boolean;
 };
 
@@ -500,12 +507,30 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
               </div></div>
             </div>},
-            {id:"statistics",label:"Estadísticas",content:<div className="entity-stat-grid">
-              <div className="entity-stat-card"><small>OT asignadas activas</small><strong>{selectedUser.assigned_work_orders}</strong><span>órdenes no cerradas</span></div>
-              <div className="entity-stat-card"><small>Actividades pendientes</small><strong>{selectedUser.pending_activities}</strong><span>pendientes o en progreso</span></div>
-              <div className="entity-stat-card"><small>Completadas · 30 días</small><strong>{selectedUser.completed_activities_30d}</strong><span>eventos de ejecución</span></div>
-              <div className="entity-stat-card"><small>Horas campo · 30 días</small><strong>{selectedUser.attendance_hours_30d}</strong><span>turnos de asistencia</span></div>
-            </div>},
+            {id:"statistics",label:"Estadísticas",content:<UserStatisticsDashboard data={{
+              id:selectedUser.id,
+              name:selectedUser.full_name,
+              role:roleName(roleKey(selectedUser)),
+              company:selectedUser.organization_name||"Desweb CMMS",
+              photoUrl:selectedUser.has_avatar?"/api/users/"+selectedUser.id+"/avatar":null,
+              active:selectedUser.active,
+              biometricLabel:biometricStatusLabel(selectedUser.biometric_status),
+              trackingLive:selectedUser.tracking_live,
+              openShift:selectedUser.open_shift,
+              openShiftStartedAt:selectedUser.open_shift_started_at,
+              assignedWorkOrders:selectedUser.assigned_work_orders,
+              pendingActivities:selectedUser.pending_activities,
+              completedActivities30d:selectedUser.completed_activities_30d,
+              completedActivities7d:selectedUser.completed_activities_7d,
+              attendanceHours30d:selectedUser.attendance_hours_30d,
+              attendanceTodayHours:selectedUser.attendance_hours_today,
+              attendanceDaily7d:Array.isArray(selectedUser.attendance_daily_7d)?selectedUser.attendance_daily_7d:[],
+              activityCompletionRate30d:(selectedUser.completed_activities_30d+selectedUser.pending_activities)>0
+                ?Math.round((selectedUser.completed_activities_30d/(selectedUser.completed_activities_30d+selectedUser.pending_activities))*100)
+                :0,
+              overdueActivities:selectedUser.overdue_activities,
+              upcomingActivities:Array.isArray(selectedUser.upcoming_activities)?selectedUser.upcoming_activities:[],
+            }}/>},
             {id:"operation",label:"Actividad",content:<div className="entity-panel-grid">
               <div className="entity-panel"><h3>Trabajo asignado</h3><div className="entity-info-grid">
                 <div className="entity-info-field"><span>Órdenes activas</span><strong>{selectedUser.assigned_work_orders}</strong></div>

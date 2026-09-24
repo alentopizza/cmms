@@ -288,7 +288,7 @@ FOR EACH ROW EXECUTE FUNCTION cmms_validate_procurement_return_link();
 CREATE OR REPLACE FUNCTION cmms_reopen_procurement_document_review()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   UPDATE procurement_documents
   SET review_status='pending',
@@ -298,7 +298,7 @@ BEGIN
   WHERE id=NEW.document_id AND voided_at IS NULL;
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS procurement_document_receipts_reopen_review ON procurement_document_receipts;
 CREATE TRIGGER procurement_document_receipts_reopen_review

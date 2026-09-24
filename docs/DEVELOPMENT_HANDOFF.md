@@ -441,3 +441,12 @@ Database migration:
 Regression:
 - `scripts/requisition-receipt-smoke.mjs`
 - CI runs it after `inventory-kardex-smoke.mjs` and before the production build.
+
+
+### Supplier inventory and import audit extension — 2026-09-24
+
+- Supplier-profile Inventory shows active and inactive item masters; inactive items retain full Kardex/history and can be reactivated.
+- Requisition builders must exclude inventory items where `active=false`.
+- Supplier-profile item create/edit uses multipart forms so the same authenticated product-image pipeline as Inventory is preserved.
+- Supplier-scoped bulk imports and template downloads resolve `organization_id` from the Supplier for platform-level sessions. Tenant sessions must still match their own organization.
+- `/api/bulk-import/history` exposes only organization-scoped recent import batches and is used by `BulkImportModal` as the user-visible import audit trail.

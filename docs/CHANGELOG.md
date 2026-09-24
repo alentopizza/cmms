@@ -1588,3 +1588,21 @@ This file records meaningful product and engineering changes so future developer
 ### Validation
 
 - CI ahora ejecuta un smoke test de Kardex sobre PostgreSQL 17 para comprobar Entrada, Salida, Traslado, Ajuste, stock por bodega, saldo total y rechazo de inventario negativo.
+
+
+## 2026-09-24 — Inventario operativo y edición completa de Activos
+
+### Added
+
+- Navegación interna de Inventario para Resumen, Productos, Categorías, Almacenes, Entradas, Salidas, Ajustes, Transferencias y Kardex.
+- Gestión CRUD operativa de Categorías y Almacenes/Bodegas.
+- Kardex global con alta de movimientos, búsqueda/filtros y exportación independiente a Excel, CSV y PDF.
+- Lote, vencimiento y centro de costo disponibles tanto en Kardex global como en la ficha del artículo.
+- Productos inactivos permanecen visibles mediante filtro de registro y pueden reactivarse sin perder historial.
+- Imágenes autenticadas para Productos de Inventario y Activos.
+- Creación y edición técnica completa de Activos: ubicación, proveedor, categoría, estado, criticidad, fabricante, modelo, serial, fechas, costo, notas e imagen.
+
+### Changed
+
+- Los indicadores de Inventario calculan stock y valor operativo sobre registros activos, manteniendo los inactivos disponibles para auditoría y recuperación.
+- La ficha de Activo pasa a ser la superficie normal de edición para usuarios con permiso `assets.write`.

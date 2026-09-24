@@ -39,6 +39,12 @@ type ParsedWarehouse={
   row:number;code:string;name:string;type:string;responsible:string;locationDetail:string;capacity:number|null;active:boolean;notes:string;
   site:Site|null;location:Location|null;
 };
+type ParsedInventory={
+  row:number;sku:string;name:string;description:string;itemType:string;category:string;subcategory:string;brand:string;model:string;
+  presentation:string;unit:string;barcode:string;supplier:Supplier|null;belongsContext:boolean;site:Site|null;location:Location|null;
+  warehouseName:string;warehouse:Warehouse|null;min:number;max:number;cost:number;referencePrice:number;taxRate:number;initial:number;
+  lot:string;expiresAt:string;active:boolean;existing:Item|null;
+};
 type ParsedKardex={
   row:number;movementId:string;sku:string;movement:{type:string;sign:number};date:string;document:string;warehouseName:string;destination:string;
   quantity:number;cost:number;notes:string;lot:string;expiresAt:string;costCenter:string;sourceUser:string;
@@ -165,11 +171,6 @@ function criticality(value:string){
 }
 function safeRows<T>(rows:T[],max=5000){return rows.slice(0,max);}
 function findByName<T extends {name:string}>(rows:T[],value:string){return rows.find(row=>key(row.name)===key(value))||null;}
-function resolveSupplier(rows:Supplier[],value:string){
-  const normalized=key(value);
-  return rows.find(row=>key(row.name)===normalized||key(row.tax_id||"")===normalized)||null;
-}
-
 async function catalogs(organizationId:string){
   const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds]=await Promise.all([
     query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
@@ -203,74 +204,163 @@ function resolveWarehouse(rows:Warehouse[],siteId:string,locationId:string,value
   return findByName(candidates,value)||findByName(rows,value);
 }
 
-function inventoryValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<ReturnType<typeof catalogs>>,fixedSupplier:Supplier|null){
+function inventoryValidation(
+  rows:ParsedSheetRow[],
+  sheetName:string,
+  catalog:Awaited<ReturnType<typeof catalogs>>,
+  contextSupplier:Supplier|null,
+  fileWarehouseNames:Set<string>,
+){
   const issues:Issue[]=[];
-  const parsed=[] as Array<Record<string,unknown>>;
-  const fileSkus=new Set<string>();
+  const parsed:ParsedInventory[]=[];
+  const firstBySku=new Map<string,{row:number;name:string;supplierId:string|null}>();
+  const allowedUnits=new Set([
+    "unidad","caja","paquete","metro","rollo","litro","galon","kg","g","par","juego","bulto","pieza","set",
+    ...catalog.items.map(item=>key((item as Item&{unit?:string}).unit||"")).filter(Boolean),
+  ]);
   let newCount=0;
+  let existingCount=0;
   let skippedServices=0;
+  let contextMismatchRows=0;
+
   for(const row of safeRows(rows)){
     const sku=textValue(row.values.sku).toUpperCase();
     const name=textValue(row.values.name);
     if(!sku&&!name)continue;
 
-    const declaredType=key(textValue(row.values.supplierType));
-    const declaredCategory=key(textValue(row.values.category));
-    const declaredUnit=key(textValue(row.values.unit));
-    const serviceLike=
-      ["servicios tercerizados","servicio tercerizado","servicios","services","service"].includes(declaredType)||
-      ["servicio","servicios"].includes(declaredCategory)||
-      ["servicio","hora","dia","viaje","visita","punto"].includes(declaredUnit);
-    if(serviceLike){
+    const itemType=textValue(row.values.itemType)||"PRODUCTO";
+    const category=textValue(row.values.category);
+    const unit=textValue(row.values.unit)||"unidad";
+    if(isServiceInventoryRow(itemType,category,unit)){
       skippedServices++;
-      issue(issues,sheetName,row.rowNumber,"warning","Fila omitida: corresponde a un servicio/no inventariable y no a una existencia física.");
+      issue(
+        issues,sheetName,row.rowNumber,"warning",
+        "Servicio detectado: no genera stock ni Kardex físico y será omitido del inventario.",
+        "TIPO",itemType,"Gestiona el servicio desde el flujo operativo correspondiente; no requiere existencias físicas.",
+      );
       continue;
     }
 
-    if(!sku)issue(issues,sheetName,row.rowNumber,"error","Falta SKU.");
-    if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta nombre.");
-    if(sku&&fileSkus.has(sku))issue(issues,sheetName,row.rowNumber,"error","SKU repetido dentro del archivo: "+sku);
-    fileSkus.add(sku);
+    if(!sku)issue(issues,sheetName,row.rowNumber,"error","Falta SKU.","SKU","", "Completa un SKU único para el producto.");
+    if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta nombre del producto.","NOMBRE_PRODUCTO","", "Completa el nombre del producto.");
 
-    const supplierText=textValue(row.values.supplier);
-    const supplier=fixedSupplier || resolveSupplier(catalog.suppliers,supplierText);
-    if(fixedSupplier&&supplierText&&key(supplierText)!==key(fixedSupplier.name)&&key(supplierText)!==key(fixedSupplier.tax_id||"")){
-      issue(issues,sheetName,row.rowNumber,"error","La importación está abierta desde el proveedor "+fixedSupplier.name+"; la fila pertenece a otro proveedor.");
+    const supplierReference={
+      supplierId:textValue(row.values.supplierId),
+      taxId:textValue(row.values.supplierTaxId),
+      code:textValue(row.values.supplierCode),
+      name:textValue(row.values.supplier),
+    };
+    const hasSupplierReference=Object.values(supplierReference).some(Boolean);
+    const resolution=hasSupplierReference
+      ?resolveImportSupplier(catalog.suppliers,supplierReference)
+      :contextSupplier
+        ?{supplier:contextSupplier,matchedBy:"id" as const,error:null}
+        :{supplier:null,matchedBy:null,error:"No se indicó un identificador de proveedor."};
+    const supplier=resolution.supplier;
+
+    if(resolution.error){
+      issue(
+        issues,sheetName,row.rowNumber,"error",resolution.error,
+        supplierReference.supplierId?"PROVEEDOR_ID":supplierReference.taxId?"NIT_PROVEEDOR":supplierReference.code?"CODIGO_PROVEEDOR":"PROVEEDOR",
+        supplierReference.supplierId||supplierReference.taxId||supplierReference.code||supplierReference.name||"",
+        "Corrige el identificador o crea el proveedor antes de importar.",
+      );
+    }else if(supplier&&!["materials","both"].includes(supplier.supplier_type)){
+      issue(issues,sheetName,row.rowNumber,"error","El proveedor no está habilitado para materiales/suministros.","PROVEEDOR",supplier.name,"Habilita al proveedor para materiales o usa otro proveedor.");
     }
-    if(!supplier)issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado en la empresa.");
-    else if(!["materials","both"].includes(supplier.supplier_type))issue(issues,sheetName,row.rowNumber,"error","El proveedor no está habilitado para materiales/suministros.");
+
+    const belongsContext=supplierBelongsToContext(supplier,contextSupplier);
+    if(contextSupplier&&supplier&&!belongsContext){
+      contextMismatchRows++;
+      issue(
+        issues,sheetName,row.rowNumber,"warning",
+        "Este registro pertenece a otro proveedor: "+supplier.name+".",
+        "PROVEEDOR",supplier.name,
+        "Puedes importar solo el proveedor de contexto o cambiar a Importar todo el archivo.",
+      );
+    }
+
+    const previous=sku?firstBySku.get(sku):null;
+    if(previous){
+      const compatible=previous.name===key(name)&&previous.supplierId===(supplier?.id||null);
+      issue(
+        issues,sheetName,row.rowNumber,compatible?"warning":"error",
+        compatible?"SKU repetido compatible; se procesará únicamente la primera fila.":"Duplicado incompatible para SKU "+sku+".",
+        "SKU",sku,
+        compatible?"Elimina la fila duplicada para mantener el archivo limpio.":"Unifica nombre/proveedor para el SKU o usa un SKU diferente.",
+      );
+      if(compatible)continue;
+    }else if(sku){
+      firstBySku.set(sku,{row:row.rowNumber,name:key(name),supplierId:supplier?.id||null});
+    }
 
     const site=resolveSite(catalog.sites,textValue(row.values.site));
-    if(!site)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.site)?"Sede no encontrada.":"Falta Sede y no existe una única sede para inferirla.");
+    if(!site){
+      issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.site)?"Sede no encontrada.":"Falta Sede y no existe una única sede para inferirla.","SEDE",textValue(row.values.site),"Usa una sede activa de la empresa.");
+    }
     const location=site?resolveLocation(catalog.locations,site.id,textValue(row.values.location)):null;
-    if(site&&!location)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.location)?"Sububicación no encontrada dentro de la sede.":"Falta Sububicación y no existe una única opción para inferirla.");
+    if(site&&!location){
+      issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.location)?"Sububicación no encontrada dentro de la sede.":"Falta Sububicación y no existe una única opción para inferirla.","UBICACION",textValue(row.values.location),"Usa una sububicación activa de la sede.");
+    }
 
     const warehouseName=textValue(row.values.warehouse)||"Almacén principal";
     const warehouse=site&&location?resolveWarehouse(catalog.warehouses,site.id,location.id,warehouseName):findByName(catalog.warehouses,warehouseName);
-    if(!warehouse)issue(issues,sheetName,row.rowNumber,"warning","La bodega '"+warehouseName+"' se creará durante la importación.");
+    if(!warehouse&&!fileWarehouseNames.has(key(warehouseName))){
+      issue(issues,sheetName,row.rowNumber,"error","Bodega inexistente y no definida en la hoja BODEGAS.","BODEGA",warehouseName,"Crea la bodega previamente o agrégala a la hoja BODEGAS.");
+    }
 
-    const unit=textValue(row.values.unit)||"unidad";
-    const min=Math.max(0,numberValue(row.values.min)??0);
-    const max=Math.max(0,numberValue(row.values.max)??0);
-    const cost=Math.max(0,numberValue(row.values.cost)??0);
-    const initial=Math.max(0,numberValue(row.values.initial)??0);
+    if(!allowedUnits.has(key(unit))){
+      issue(issues,sheetName,row.rowNumber,"warning","Unidad no incluida en el catálogo conocido.","UNIDAD",unit,"Verifica que la unidad sea consistente con el producto.");
+    }
+
+    const minValue=numberValue(row.values.min),maxValue=numberValue(row.values.max),costValue=numberValue(row.values.cost);
+    const initialValue=numberValue(row.values.initial),referenceValue=numberValue(row.values.referencePrice),taxValue=numberValue(row.values.taxRate);
+    if(minValue!==null&&minValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock mínimo inválido.","STOCK_MINIMO",String(minValue),"Usa un valor mayor o igual a cero.");
+    if(maxValue!==null&&maxValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock máximo inválido.","STOCK_MAXIMO",String(maxValue),"Usa un valor mayor o igual a cero.");
+    if(initialValue!==null&&initialValue<0)issue(issues,sheetName,row.rowNumber,"error","Stock inicial inválido.","STOCK_INICIAL",String(initialValue),"Usa un valor mayor o igual a cero.");
+    if(costValue!==null&&costValue<0)issue(issues,sheetName,row.rowNumber,"error","Costo unitario inválido.","COSTO_UNITARIO",String(costValue),"Usa un valor mayor o igual a cero.");
+    if(referenceValue!==null&&referenceValue<0)issue(issues,sheetName,row.rowNumber,"error","Precio de referencia inválido.","PRECIO_REFERENCIA",String(referenceValue),"Usa un valor mayor o igual a cero.");
+    if(taxValue!==null&&(taxValue<0||taxValue>100))issue(issues,sheetName,row.rowNumber,"error","IVA inválido.","IVA",String(taxValue),"Usa un porcentaje entre 0 y 100.");
+
+    const expiresAt=isoDateValue(row.values.expires);
+    if(textValue(row.values.expires)&&!expiresAt){
+      issue(issues,sheetName,row.rowNumber,"error","Fecha de vencimiento inválida.","FECHA_VENCIMIENTO",textValue(row.values.expires),"Usa formato AAAA-MM-DD.");
+    }
+
     const active=boolValue(row.values.active,true);
-    const existing=catalog.items.find(item=>item.sku.toUpperCase()===sku);
+    const existing=catalog.items.find(item=>item.sku.toUpperCase()===sku)||null;
     if(existing){
-      issue(issues,sheetName,row.rowNumber,"warning","SKU existente: se actualizarán datos maestros; Stock inicial no reemplazará existencias actuales.");
+      existingCount++;
+      const supplierChange=existing.supplier_id&&supplier&&existing.supplier_id!==supplier.id;
+      issue(
+        issues,sheetName,row.rowNumber,"warning",
+        supplierChange
+          ?"SKU existente con proveedor diferente; Actualizar cambiará la relación maestra del producto."
+          :"SKU existente: puedes actualizar datos maestros u omitirlo; el Kardex histórico no se reemplaza.",
+        "SKU",sku,
+        "Revisa la política de duplicados antes de confirmar.",
+      );
       if(!existing.active&&active)newCount++;
     }else if(active)newCount++;
 
+    if(category&&!catalog.categories.some(existingCategory=>key(existingCategory.name)===key(category))){
+      issue(issues,sheetName,row.rowNumber,"warning","Categoría nueva: se creará al confirmar.","CATEGORIA",category,"Confirma que el nombre sea el deseado.");
+    }
+
     parsed.push({
-      row:row.rowNumber,sku,name,description:textValue(row.values.description),category:textValue(row.values.category),
-      presentation:textValue(row.values.presentation),unit,supplier,site,location,warehouseName,warehouse,min,max,cost,initial,
-      active,existing,
+      row:row.rowNumber,sku,name,description:textValue(row.values.description),itemType,category,
+      subcategory:textValue(row.values.subcategory),brand:textValue(row.values.brand),model:textValue(row.values.model),
+      presentation:textValue(row.values.presentation),unit,barcode:textValue(row.values.barcode),supplier,belongsContext,site,location,
+      warehouseName,warehouse,min:Math.max(0,minValue??0),max:Math.max(0,maxValue??0),cost:Math.max(0,costValue??0),
+      referencePrice:Math.max(0,referenceValue??0),taxRate:Math.max(0,taxValue??0),initial:Math.max(0,initialValue??0),
+      lot:textValue(row.values.lot),expiresAt,active,existing,
     });
   }
+
   if(catalog.limits&&catalog.counts&&catalog.counts.inventory+newCount>catalog.limits.max_inventory_items){
-    issue(issues,sheetName,1,"error","La importación excede el límite de artículos de inventario del plan.");
+    issue(issues,sheetName,1,"error","La importación excede el límite de artículos de inventario del plan.","SKU","","Reduce productos nuevos o amplía el límite de la organización.");
   }
-  return {parsed,issues,newCount,skippedServices};
+  return {parsed,issues,newCount,existingCount,skippedServices,contextMismatchRows};
 }
 
 function warehouseValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<ReturnType<typeof catalogs>>){

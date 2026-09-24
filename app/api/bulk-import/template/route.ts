@@ -39,8 +39,18 @@ export async function GET(request:Request){
   const fixedSupplierId=url.searchParams.get("supplier")||"";
   if(entity==="inventory"&&!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return new NextResponse("Forbidden",{status:403});
-  if(!session.organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
-  const organizationId=session.organizationId;
+
+  let organizationId=session.organizationId;
+  if(fixedSupplierId){
+    const scopedSupplier=await query<{organization_id:string}>(
+      "SELECT organization_id FROM suppliers WHERE id=$1 AND active=true",
+      [fixedSupplierId],
+    );
+    if(!scopedSupplier.rowCount)return new NextResponse("Proveedor no disponible para esta plantilla.",{status:400});
+    if(session.platformRole==="user"&&scopedSupplier.rows[0].organization_id!==session.organizationId)return new NextResponse("Forbidden",{status:403});
+    organizationId=scopedSupplier.rows[0].organization_id;
+  }
+  if(!organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
 
   const [org,sites,locations,suppliers,categories,warehouses]=await Promise.all([
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),

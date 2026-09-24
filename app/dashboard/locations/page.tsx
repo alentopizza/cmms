@@ -213,6 +213,11 @@ export default async function LocationsIndexPage({
       count={sites.rowCount || 0}
       countLabel="sedes"
       searchPlaceholder="Buscar sede, empresa, ciudad o código"
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"country",label:"País",allLabel:"Todos los países"},
+        {key:"city",label:"Ciudad",allLabel:"Todas las ciudades"},
+      ]}
       action={organizations.rows.length > 0 ? <LocationCreateModal
         organizations={organizations.rows}
         sites={siteOptions}

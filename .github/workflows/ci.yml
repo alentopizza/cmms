@@ -49,6 +49,9 @@ jobs:
       - run: node scripts/supplier-return-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/procurement-reconciliation-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

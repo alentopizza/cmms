@@ -372,6 +372,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
       "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
       "Cuando una requisición tenga recepciones, la ficha permite registrar devoluciones físicas al proveedor desde la propia requisición. El historial de Requisiciones del proveedor muestra cuántas devoluciones existen y la cantidad total devuelta.",
+      "El historial de Requisiciones también muestra el estado de sus documentos de compra. En Estadísticas puedes ver cuántos documentos comerciales están activos, pendientes de revisión o en disputa.",
       "En Estadísticas, el bloque Desempeño comercial usa los últimos 12 meses de recepciones físicas para mostrar tiempo a primera recepción, cumplimiento de cantidad, entregas completas dentro de fecha y variación ponderada entre costo real y estimado. Cada indicador muestra el tamaño de su muestra.",
       "La evolución mensual y la tabla Base reciente del indicador permiten abrir las requisiciones que originan los KPIs; estos datos son evidencia descriptiva y no una calificación automática del proveedor.",
       "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible; cuando existe historial de recepción, la ficha incluye también los KPIs comerciales y su muestra.",
@@ -406,13 +407,21 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "El historial de recepciones muestra fecha, artículo, cantidad, bodega, documento, costo, lote y usuario. El Kardex también enlaza de vuelta a la requisición de origen.",
       "En Devolución a proveedor selecciona la recepción origen, el motivo, la resolución esperada, la cantidad y la bodega desde la cual saldrá físicamente el material. El sistema impide devolver más de lo recibido en esa entrada o más stock del disponible.",
       "Cada devolución genera una salida de Kardex identificada como Devolución a proveedor y conserva DEV, requisición y recepción origen. La recepción original no se borra ni se reduce; la devolución queda como evento independiente.",
-      "La resolución esperada puede ser Reposición, Nota crédito u Otra resolución. Es informativa en esta fase y servirá como base para la conciliación documental posterior.",
+      "En Conciliación documental, Administradores y Managers pueden registrar Orden de compra, Remisión/entrega, Factura, Nota crédito u Otro documento con archivo y líneas por SKU.",
+      "La Orden de compra se compara con cantidades solicitadas y costos estimados; la Remisión se compara con las recepciones vinculadas; la Factura compara cantidad y valor contra recepciones; la Nota crédito compara cantidad y valor contra DEV vinculados.",
+      "Un documento puede aparecer como Coincide, Con diferencia, Pendiente de evidencia, Informativo o Anulado. Este resultado es automático y no modifica Inventario.",
+      "Cuando una recepción o DEV aún no existe al cargar el documento, puedes agregarla después. Al vincular nueva evidencia la revisión vuelve a Pendiente para evitar conservar una decisión desactualizada.",
+      "Un revisor puede Verificar solo cuando el documento coincide; Aceptar excepción solo cuando existe una diferencia y registra la justificación; también puede marcar En disputa o Anular el documento con motivo.",
+      "El archivo y las líneas del documento no se editan. Si la evidencia cargada era incorrecta, anúlala y registra un documento nuevo para conservar el historial de auditoría.",
+      "La resolución esperada puede ser Reposición, Nota crédito u Otra resolución. Cuando exista una Nota crédito, un Administrador o Manager puede registrarla en Conciliación documental y vincularla al DEV correspondiente.",
       "Los estados Aprobada y Rechazada son decisiones auditadas y no se asignan manualmente desde el selector general de estado.",
-      "Exporta la requisición en PDF, Excel o Word compatible; los exportes incluyen cantidades solicitadas, recibidas, devueltas, pendientes, estado de aprobación e historial DEV cuando exista."
+      "Exporta la requisición en PDF, Excel o Word compatible; además de cantidades, aprobación y DEV, los usuarios autorizados para conciliación obtienen el estado de documentos comerciales y sus diferencias."
     ],
     notes:[
       "Crear o aprobar una requisición no aumenta existencias. Solo la acción Registrar recepción genera la Entrada de Kardex y aumenta el stock.",
       "Registrar una devolución al proveedor sí disminuye existencias mediante un movimiento supplier_return. No uses el movimiento genérico Devolución del Kardex para este caso: ese movimiento devuelve material hacia Inventario y aumenta stock.",
+      "Orden de compra, Remisión, Factura y Nota crédito son evidencia comercial: ninguna crea entradas o salidas de Kardex por sí misma.",
+      "La conciliación documental está reservada a Administradores, Managers y operadores de plataforma con alcance sobre todas las sedes de la requisición.",
       "La política de aprobación se toma como una fotografía al crear cada requisición; cambiar Configuración no altera retroactivamente requisiciones existentes.",
       "La autoaprobación del solicitante está bloqueada salvo que la empresa la habilite explícitamente y el usuario tenga un rol aprobador.",
       "Un artículo de Inventario solo puede vincularse a un proveedor activo de Materiales/Suministros o Mixto.",
@@ -443,6 +452,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Conciliación documental de compras",
+    summary:"Las requisiciones concilian Orden de compra, Remisión, Factura y Nota crédito contra cantidades solicitadas, recepciones y DEV. La evidencia queda inmutable, admite revisión auditada y nunca modifica Kardex automáticamente.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Devoluciones a proveedor vinculadas a recepción",

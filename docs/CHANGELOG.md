@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-09-24 — Fase 5 de abastecimiento: conciliación documental
+
+### Added
+
+- Evidencia comercial por requisición para Orden de compra, Remisión/entrega, Factura, Nota crédito y Otros.
+- Nueva migración `036_procurement_document_reconciliation.sql`.
+- Nuevas entidades `procurement_documents`, `procurement_document_lines`, enlaces a recepciones/DEV y eventos de auditoría.
+- Permiso dedicado `requisitions.reconcile` para Administradores, Managers y operadores de plataforma.
+- Carga de archivo PDF/imagen con número, fecha, moneda, valores y líneas por SKU.
+- Conciliación automática de cantidad y valor según tipo documental.
+- Vínculos posteriores de evidencia física sin reemplazar el documento.
+- Estados automáticos Coincide, Con diferencia, Pendiente de evidencia, Informativo y Anulado.
+- Revisión humana Pendiente, Verificado, Excepción aceptada y En disputa.
+- Descarga/vista previa segura y anulación con motivo sin eliminar historia.
+- Resumen documental en directorio de Requisiciones y ficha/estadísticas de Proveedor.
+- Exportes PDF/XLSX/Word de requisición con conciliación para usuarios autorizados.
+- Nuevo smoke test `scripts/procurement-reconciliation-smoke.mjs` incorporado a CI.
+
+### Integrity and authorization
+
+- Recepciones y DEV siguen siendo la verdad física; los documentos comerciales no alteran Kardex.
+- Archivo, cabecera y líneas documentales son evidencia histórica y no se editan.
+- Las relaciones a recepción/DEV son append-only.
+- Agregar nueva evidencia reabre automáticamente la revisión a Pendiente.
+- Verificar exige que la conciliación automática sea Coincide.
+- Aceptar una excepción exige una diferencia calculada y observación.
+- Marcar disputa o anular exige observación/motivo.
+- La conciliación revalida Empresa y alcance completo de sedes del revisor.
+
+### Completion
+
+- Con esta entrega quedan implementadas las Fases 1–5 planificadas para abastecimiento. El siguiente checkpoint acordado es la revisión integral de lógica, flujo y visual del CMMS.
+
 ## 2026-09-24 — Fase 4 de abastecimiento: devoluciones a proveedor
 
 ### Added

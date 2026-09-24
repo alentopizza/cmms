@@ -85,6 +85,8 @@ El usuario real que confirma la importación queda como `created_by`. Si el Exce
 
 Las **devoluciones a proveedor** no se importan como un movimiento Kardex libre. Deben nacer desde la requisición/recepción de origen para poder validar cuánto fue realmente recibido, cuánto ya fue devuelto y qué bodega entrega físicamente el material. El movimiento resultante es `supplier_return` y disminuye stock.
 
+Del mismo modo, **Orden de compra, Remisión, Factura y Nota crédito no se importan como movimientos de Kardex**. Se registran en la Conciliación documental de la requisición y se vinculan a las recepciones/DEV físicos que corresponda. Esta evidencia comercial nunca crea ni corrige stock por sí sola.
+
 ## Reglas de seguridad de la importación
 
 - máximo 12 MB por archivo;

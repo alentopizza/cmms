@@ -809,3 +809,31 @@ A Supplier return starts from an already received requisition:
 Valid reasons are damaged product, wrong item, quality issue, excess received or other. Expected resolution is replacement, credit note or other.
 
 A DEV may be created after the requisition is fulfilled/closed. Phase 4 does not automatically reopen fulfillment or approval because the commercial resolution has not yet been reconciled.
+
+
+## Procurement document reconciliation functional model
+
+After a requisition exists, authorized Administrators/Managers can register its commercial documents.
+
+1. Register document type, number, date, currency, totals and immutable file.
+2. Enter the document lines against the existing requisition SKUs.
+3. Optionally link physical evidence immediately:
+   - Remission/Delivery note and Invoice → physical receipt transactions;
+   - Credit note → Supplier-return DEV records.
+4. The server derives document quantity/value versus its expected evidence.
+5. If evidence arrives later, append the receipt/DEV links; review automatically returns to Pending.
+6. Review options:
+   - **Verify** only when automatic reconciliation says Coincide;
+   - **Accept exception** only when there is a calculated difference and a reason is recorded;
+   - **Dispute** with mandatory observations;
+   - **Void** with mandatory reason when the wrong commercial evidence was loaded.
+7. All actions remain traceable without changing the physical procurement history.
+
+Automatic comparison:
+- Purchase order: requested quantity and estimated requisition value.
+- Remission/Delivery note: linked received quantity.
+- Invoice: linked received quantity and receipt value using actual receipt unit cost, with requisition estimate as fallback.
+- Credit note: linked DEV quantity and DEV value.
+- Other: informational only.
+
+A requisition export includes reconciliation evidence only when the authenticated user has the dedicated reconciliation permission.

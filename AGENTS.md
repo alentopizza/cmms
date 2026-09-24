@@ -452,3 +452,19 @@ Country-related fields are governed by `lib/international-catalog.ts`.
 - Revalidate Organization, Site scope, warehouse scope, receipt/requisition/item relation and available stock on the server.
 - Posted DEV headers/items are immutable. Do not delete or edit them to correct history; use a future compensating flow.
 - Expected resolution (replacement, credit note or other) is informational in Phase 4 and must not silently reopen requisitions or alter approval state.
+
+
+## Procurement document reconciliation invariant
+
+- Physical Inventory movements remain the stock source of truth. Purchase orders, delivery notes, invoices and credit notes never change Kardex by themselves.
+- Commercial procurement evidence is stored in `procurement_documents` and immutable line/file rows. Correct an incorrect document by voiding it with a reason and recording a replacement; never rewrite evidence.
+- Reconciliation is derived server-side from document lines plus current linked physical evidence:
+  - purchase order → requisition requested quantity/value;
+  - delivery note/remission → linked receipt quantity;
+  - invoice → linked receipt quantity/value;
+  - credit note → linked Supplier-return quantity/value.
+- Receipt/DEV evidence links are append-only. Adding evidence reopens human review to `pending`.
+- Human review and automatic reconciliation are separate concepts. `verified` requires an automatic `matched` state; `exception_accepted` requires a calculated difference and an explicit note; disputes require a note.
+- Reconciliation must never silently alter requisition approval, received quantities, Supplier returns or Inventory stock.
+- Commercial evidence requires `requisitions.reconcile`; tenant and Site scope must be revalidated server-side for upload, linking, review, preview/download and export.
+- Voided documents remain available as historical evidence but cannot receive new evidence or review changes.

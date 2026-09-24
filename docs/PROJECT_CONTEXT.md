@@ -737,3 +737,21 @@ The return creates a dedicated `supplier_return` Kardex transaction that decreas
 The original receipt remains immutable historical evidence: `quantity_received` is not decremented. DEV history records what was later sent back. Returns can therefore be registered after a requisition is fulfilled or closed without rewriting the procurement past.
 
 Expected resolution is captured as replacement, credit note or other. It is not yet a financial/document-reconciliation workflow; that dependency is reserved for the next procurement phase.
+
+
+### Procurement document reconciliation — Phase 5
+
+The procurement lifecycle now includes commercial evidence reconciliation after approval, physical receiving and Supplier returns.
+
+Supported evidence:
+- purchase order;
+- delivery note/remission;
+- invoice;
+- credit note;
+- other informational procurement documents.
+
+Physical receipts and Supplier returns remain authoritative for stock. The reconciliation layer stores immutable document files and line snapshots, links commercial documents to the physical receipt/DEV evidence they represent, and derives quantity/value differences without changing Kardex.
+
+Automatic reconciliation and human review are intentionally separate. A document may calculate as `matched`, `difference`, `pending_evidence`, `informational` or `voided`; its review may separately be `pending`, `verified`, `exception_accepted` or `disputed`. Adding later evidence resets review to pending.
+
+Phase 5 completes the planned procurement sequence started with bulk Inventory/Kardex import, requisition receiving, approval/audit, Supplier KPIs and Supplier returns. The next project step is the planned global logic/flow/visual review rather than another predefined procurement phase.

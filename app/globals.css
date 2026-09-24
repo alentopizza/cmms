@@ -12126,3 +12126,147 @@ html[data-theme="dark"] .user-card-badges>span{background:#1d333a;border-color:#
 html[data-theme="dark"] .user-card-primary-action{background:#244f68}
 html[data-theme="dark"] .supplier-card-type{background:#193b3a;color:#a9ded8}
 html[data-theme="dark"] .supplier-card-logo{background:#fff}
+
+
+/* 2026-09-24 approved compact user/supplier card refinement */
+.user-role-grid.user-compact-profile-grid,
+.supplier-profile-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+/* Users: circular portrait overlaps the personal cover, without presence/biometric noise. */
+.user-card-cover{
+  height:88px;
+}
+.user-card-avatar-row{
+  position:relative;
+  z-index:4;
+  min-height:42px;
+  justify-content:flex-start;
+  align-items:flex-start;
+  padding:0 14px;
+}
+.user-card-avatar{
+  position:relative;
+  z-index:5;
+  width:78px;
+  height:78px;
+  flex-basis:78px;
+  margin-top:-39px;
+  border:4px solid var(--surface);
+  box-shadow:0 9px 22px rgba(25,54,69,.18);
+}
+.user-card-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 28%;
+}
+.user-card-identity{
+  padding-top:7px;
+}
+.user-card-badges{
+  padding-top:1px;
+}
+.user-card-badges>span{
+  width:100%;
+  justify-content:flex-start;
+  font-size:9px;
+}
+.user-card-icon-action.whatsapp{
+  color:#168b58;
+}
+.user-card-icon-action.whatsapp:hover{
+  border-color:#9eddbb;
+  color:#087941;
+  background:#f1fbf5;
+}
+.user-card-icon-action.status-toggle.deactivate{
+  color:#ad791c;
+}
+.user-card-icon-action.status-toggle.deactivate:hover{
+  border-color:#ebcf91;
+  color:#8c5d08;
+  background:#fff9eb;
+}
+.user-card-icon-action.status-toggle.activate{
+  color:#258059;
+}
+.user-card-icon-action.status-toggle.activate:hover{
+  border-color:#a8d9c1;
+  color:#176d47;
+  background:#f1faf5;
+}
+
+/* Suppliers: rounded-square commercial logo overlaps its own banner. */
+.supplier-card-banner{
+  height:72px;
+}
+.supplier-card-logo-row{
+  position:relative;
+  z-index:4;
+  min-height:44px;
+  align-items:flex-start;
+  padding:0 13px;
+}
+.supplier-card-logo{
+  position:relative;
+  z-index:5;
+  width:74px;
+  height:74px;
+  flex-basis:74px;
+  margin-top:-37px;
+  border:4px solid var(--surface);
+  border-radius:17px;
+  box-shadow:0 9px 22px rgba(25,54,69,.16);
+}
+.supplier-card-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  transform:scale(1.1);
+  transform-origin:center;
+}
+.supplier-card-type{
+  max-width:calc(100% - 84px);
+  margin-top:7px;
+  margin-bottom:0;
+  font-size:9px;
+}
+.supplier-card-copy-v2{
+  padding-top:6px;
+}
+.supplier-card-metrics-v2 small,
+.user-card-metrics small{
+  font-size:8.8px;
+}
+.supplier-card-contact-v2 b{
+  font-size:9.5px;
+}
+
+/* Keep the directory between four and five cards on desktop, then degrade cleanly. */
+@media(min-width:1680px){
+  .user-role-grid.user-compact-profile-grid,
+  .supplier-profile-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+}
+@media(max-width:1260px){
+  .user-role-grid.user-compact-profile-grid,
+  .supplier-profile-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:920px){
+  .user-role-grid.user-compact-profile-grid,
+  .supplier-profile-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:620px){
+  .user-role-grid.user-compact-profile-grid,
+  .supplier-profile-grid{
+    grid-template-columns:1fr;
+  }
+}

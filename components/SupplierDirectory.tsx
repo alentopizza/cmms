@@ -18,7 +18,7 @@ import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
 
 export type SupplierDirectoryItem={
-  id:string;organization_id:string;organization_name:string;organization_country:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
+  id:string;organization_id:string;organization_name:string;organization_country:string|null;code:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
   country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:"materials"|"services"|"both";
   service_category:string|null;contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;
   capability_codes:string[];capability_labels:string[];specialty_codes:string[];specialty_labels:string[];
@@ -456,7 +456,7 @@ export default function SupplierDirectory({
         <div className="entity-panel supplier-tab-toolbar">
           <div><h3><span className="entity-section-icon"><UiIcon name="asset"/></span>Inventario del proveedor</h3><p className="entity-panel-copy">Crea, importa, edita y consulta los artículos suministrados por este proveedor. El Kardex permanece centralizado en Inventario.</p></div>
           <div className="supplier-tab-actions">
-            {canInventoryWrite&&<BulkImportModal entity="inventory" supplierId={selected.id} compact label="Importar"/>}
+            {canInventoryWrite&&<BulkImportModal entity="inventory" supplierId={selected.id} supplierName={selected.name} supplierTaxId={selected.tax_id||""} supplierCode={selected.code||""} compact label="Importar"/>}
             <Link className="button secondary" href={"/dashboard/inventory"}><UiIcon name="asset" size={15}/> Abrir inventario</Link>
           </div>
         </div>

@@ -20,7 +20,8 @@ export type UiIconName =
   | "phone"
   | "activity"
   | "clock"
-  | "check";
+  | "check"
+  | "power";
 
 export default function UiIcon({
   name,
@@ -65,5 +66,6 @@ export default function UiIcon({
   if (name === "phone") return <svg {...common}><path d="M7 4.5 9.5 8l-1.7 1.8c1 2.1 2.5 3.6 4.6 4.6l1.8-1.7 3.3 2.6c-.8 2.2-2.4 3.6-4.4 3.1-4.7-1.1-8.5-4.9-9.6-9.6C3 6.8 4.5 5.2 7 4.5Z"/></svg>;
   if (name === "clock") return <svg {...common}><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>;
   if (name === "check") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>;
+  if (name === "power") return <svg {...common}><path d="M12 3.5v8"/><path d="M7.2 6.7a7.3 7.3 0 1 0 9.6 0"/></svg>;
   return <svg {...common}><path d="M4 17.5V12M9.3 17.5V8.5M14.7 17.5V5M20 17.5V10.5"/></svg>;
 }

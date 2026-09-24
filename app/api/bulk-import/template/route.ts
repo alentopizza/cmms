@@ -193,7 +193,7 @@ export async function GET(request:Request){
   fit(providers);
 
   const warehousesSheet=workbook.addWorksheet("BODEGAS",{views:[{showGridLines:false}]});
-  addSheetHeader(warehousesSheet,["CODIGO_BODEGA","BODEGA","TIPO","SEDE","UBICACION","UBICACION_DETALLE","RESPONSABLE","CAPACIDAD","ESTADO","OBSERVACIONES"]);
+  addSheetHeader(warehousesSheet,["CODIGO_BODEGA","BODEGA","TIPO","SEDE","SUBUBICACION","UBICACION_DETALLE","RESPONSABLE","CAPACIDAD","ESTADO","OBSERVACIONES"]);
   for(const warehouse of warehouses.rows)warehousesSheet.addRow([
     warehouse.code,warehouse.name,warehouse.type,warehouse.site_name||"",warehouse.location_name||"",warehouse.location_detail||"",
     warehouse.responsible||"",warehouse.capacity?Number(warehouse.capacity):"",warehouse.active?"ACTIVA":"INACTIVA",warehouse.notes||"",

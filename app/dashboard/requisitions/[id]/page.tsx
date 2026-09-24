@@ -41,6 +41,8 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
   const currency=countryDefinition(req.organization_country)?.currency||"USD";
   const total=items.rows.reduce((sum,item)=>sum+Number(item.quantity_requested)*Number(item.unit_cost_estimated),0);
   const format=(value:number)=>new Intl.NumberFormat("es-CO",{style:"currency",currency,maximumFractionDigits:2}).format(value);
+  const canWrite=can(session,"requisitions.write");
+  const canEditItems=canWrite&&!["fulfilled","closed","cancelled"].includes(req.status);
 
   return <>
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
@@ -57,7 +59,10 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     </header>
 
     {feedback.updated&&<div className="notice success section">Requisición actualizada correctamente.</div>}
-    {feedback.error&&<div className="notice error section">Revisa el estado o fecha requerida.</div>}
+    {feedback.error==="items"&&<div className="notice error section">Revisa cantidades y costos. La cantidad solicitada no puede ser menor que lo ya recibido.</div>}
+    {feedback.error==="received"&&<div className="notice error section">No puedes retirar un ítem que ya tiene unidades recibidas.</div>}
+    {feedback.error==="empty"&&<div className="notice error section">La requisición debe conservar al menos un ítem.</div>}
+    {feedback.error&& !["items","received","empty"].includes(feedback.error)&&<div className="notice error section">Revisa el estado o fecha requerida.</div>}
 
     <section className="requisition-sheet card section">
       <div className="requisition-sheet-header">
@@ -81,16 +86,31 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
       {req.notes&&<div className="requisition-sheet-notes"><span>Observaciones</span><p>{req.notes}</p></div>}
     </section>
 
-    {can(session,"requisitions.write")&&<section className="card section">
-      <div className="section-heading"><div><span className="eyebrow">Flujo</span><h2>Actualizar requisición</h2><p className="muted">La requisición no modifica existencias automáticamente; la recepción de inventario se registra por separado.</p></div></div>
-      <form className="form-grid" method="post" action={"/api/requisitions/"+req.id}>
+    {canWrite&&<section className="card section">
+      <div className="section-heading"><div><span className="eyebrow">Edición y flujo</span><h2>Actualizar requisición</h2><p className="muted">Puedes ajustar cantidades y costos mientras la requisición siga abierta. El Kardex se modifica únicamente al registrar la recepción o salida en Inventario.</p></div></div>
+      <form className="form-grid requisition-edit-form" method="post" action={"/api/requisitions/"+req.id}>
         <div className="field"><label>Estado</label><select name="status" defaultValue={req.status}>
           <option value="draft">Borrador</option><option value="sent">Enviada</option><option value="approved">Aprobada</option><option value="rejected">Rechazada</option>
           <option value="partial">Parcialmente atendida</option><option value="fulfilled">Atendida</option><option value="closed">Cerrada</option><option value="cancelled">Cancelada</option>
         </select></div>
         <div className="field"><label>Fecha requerida</label><input type="date" name="needed_by" defaultValue={req.needed_by||""}/></div>
+
+        <div className="form-span-2 requisition-edit-items">
+          <div className="requisition-edit-items-head"><strong>Ítems solicitados</strong><span>{canEditItems?"Cantidades y costos editables; marca Retirar para quitar un ítem sin recepción.":"Los ítems están bloqueados por el estado actual."}</span></div>
+          <div className="requisition-edit-table">
+            <div className="requisition-edit-row head"><span>SKU / insumo</span><span>Cantidad</span><span>Recibido</span><span>Costo estimado</span><span>Retirar</span></div>
+            {items.rows.map(item=><div className="requisition-edit-row" key={item.id}>
+              <span><strong>{item.sku}</strong><small>{item.description}</small></span>
+              <input name={"qty_"+item.id} type="number" min={Math.max(.001,Number(item.quantity_received)||.001)} step="0.001" defaultValue={item.quantity_requested} disabled={!canEditItems}/>
+              <span>{item.quantity_received} {item.unit}</span>
+              <input name={"cost_"+item.id} type="number" min="0" step="0.01" defaultValue={item.unit_cost_estimated} disabled={!canEditItems}/>
+              <label className="requisition-remove-check"><input type="checkbox" name="remove_item" value={item.id} disabled={!canEditItems||Number(item.quantity_received)>0}/><span>Retirar</span></label>
+            </div>)}
+          </div>
+        </div>
+
         <div className="field form-span-2"><label>Observaciones</label><textarea name="notes" rows={3} defaultValue={req.notes||""}/></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar estado</button></div>
+        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar requisición</button></div>
       </form>
     </section>}
   </>;

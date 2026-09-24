@@ -202,9 +202,9 @@ async function platformTrend(filters:DashboardFilters){
   const subscriptionParams:unknown[]=[window.start,window.end];
   const subscriptionStatus=filters.activityStatus!=="all"?" AND "+appendValue(subscriptionParams,"s.status",filters.activityStatus):"";
   const [companies,subscriptions,leads]=await Promise.all([
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',o.created_at),'YYYY-MM') month,count(*)::text count FROM organizations o WHERE o.created_at >= $1::date AND o.created_at < $2::date AND "+companyStatus+" GROUP BY 1 ORDER BY 1",companyParams),
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',s.created_at),'YYYY-MM') month,count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE s.created_at >= $1::date AND s.created_at < $2::date"+subscriptionStatus+" GROUP BY 1 ORDER BY 1",subscriptionParams),
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',created_at),'YYYY-MM') month,count(*)::text count FROM sales_leads WHERE created_at >= $1::date AND created_at < $2::date GROUP BY 1 ORDER BY 1",[window.start,window.end]),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',o.created_at),'YYYY-MM') AS "month",count(*)::text count FROM organizations o WHERE o.created_at >= $1::date AND o.created_at < $2::date AND "+companyStatus+" GROUP BY 1 ORDER BY 1",companyParams),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',s.created_at),'YYYY-MM') AS "month",count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE s.created_at >= $1::date AND s.created_at < $2::date"+subscriptionStatus+" GROUP BY 1 ORDER BY 1",subscriptionParams),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',created_at),'YYYY-MM') AS "month",count(*)::text count FROM sales_leads WHERE created_at >= $1::date AND created_at < $2::date GROUP BY 1 ORDER BY 1",[window.start,window.end]),
   ]);
   return {
     labels:window.labels,
@@ -385,7 +385,7 @@ async function operationTrend(session:Session,filters:DashboardFilters){
     guardedDashboard(
       "operation-trend-created",
       ()=>query<{month:string;count:string}>(
-        "SELECT to_char(date_trunc('month',w.created_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+createdWhere+
+        "SELECT to_char(date_trunc('month',w.created_at),'YYYY-MM') AS "month",count(*)::text count FROM work_orders w WHERE "+createdWhere+
         " AND w.created_at >= $"+createdStart+"::date AND w.created_at < $"+String(createdStart+1)+"::date GROUP BY 1 ORDER BY 1",
         createdParams,
       ),
@@ -394,7 +394,7 @@ async function operationTrend(session:Session,filters:DashboardFilters){
     guardedDashboard(
       "operation-trend-completed",
       ()=>query<{month:string;count:string}>(
-        "SELECT to_char(date_trunc('month',w.completed_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+completedWhere+
+        "SELECT to_char(date_trunc('month',w.completed_at),'YYYY-MM') AS "month",count(*)::text count FROM work_orders w WHERE "+completedWhere+
         " AND w.status='completed' AND w.completed_at >= $"+completedStart+"::date AND w.completed_at < $"+String(completedStart+1)+"::date GROUP BY 1 ORDER BY 1",
         completedParams,
       ),
@@ -650,7 +650,7 @@ async function fieldTrend(session:Session,filters:DashboardFilters){
   const start=params.length+1;
   params.push(window.start,window.end);
   const rows=await query<{month:string;completed:string;active:string}>(
-    "SELECT to_char(date_trunc('month',COALESCE(t.completed_at,t.started_at,w.updated_at)),'YYYY-MM') month,"+
+    "SELECT to_char(date_trunc('month',COALESCE(t.completed_at,t.started_at,w.updated_at)),'YYYY-MM') AS "month","+
     "count(*) FILTER(WHERE t.status='completed')::text completed,"+
     "count(*) FILTER(WHERE t.status IN ('pending','in_progress'))::text active "+
     "FROM work_order_tasks t JOIN work_orders w ON w.id=t.work_order_id WHERE "+base.predicate+
@@ -785,8 +785,8 @@ async function requesterTrend(session:Session,filters:DashboardFilters){
   const completedParams=[...base.params,window.start,window.end];
   const completedStart=completedParams.length-1;
   const [created,completed]=await Promise.all([
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',w.requested_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+base.where+" AND w.requested_at >= $"+createdStart+"::date AND w.requested_at < $"+String(createdStart+1)+"::date GROUP BY 1 ORDER BY 1",createdParams),
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',w.completed_at),'YYYY-MM') month,count(*)::text count FROM work_orders w WHERE "+base.where+" AND w.status='completed' AND w.completed_at >= $"+completedStart+"::date AND w.completed_at < $"+String(completedStart+1)+"::date GROUP BY 1 ORDER BY 1",completedParams),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',w.requested_at),'YYYY-MM') AS "month",count(*)::text count FROM work_orders w WHERE "+base.where+" AND w.requested_at >= $"+createdStart+"::date AND w.requested_at < $"+String(createdStart+1)+"::date GROUP BY 1 ORDER BY 1",createdParams),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',w.completed_at),'YYYY-MM') AS "month",count(*)::text count FROM work_orders w WHERE "+base.where+" AND w.status='completed' AND w.completed_at >= $"+completedStart+"::date AND w.completed_at < $"+String(completedStart+1)+"::date GROUP BY 1 ORDER BY 1",completedParams),
   ]);
   return {
     labels:window.labels,

@@ -303,9 +303,19 @@ Before production hardening, reinforce this development workflow with the approv
 - requisition PDF/XLSX/Word exports include returned quantities and DEV history;
 - migration 035 and dedicated PostgreSQL smoke regression.
 
-### Next procurement/inventory work
+### Recently completed procurement document reconciliation phase
 
-- advanced document reconciliation against invoice, delivery note/remission and purchase-order evidence.
+- immutable purchase-order, delivery-note/remission, invoice, credit-note and other procurement evidence linked to each requisition;
+- document lines reconciled against requested quantities/estimated values, linked physical receipts or linked Supplier returns according to document type;
+- separate automatic match state and human review state;
+- append-only physical-evidence links that reopen review when new evidence arrives;
+- verified, exception-accepted, disputed and voided audit paths without modifying Kardex;
+- document status surfaced in Requisitions, Supplier profiles and exports;
+- migration 036 and dedicated PostgreSQL smoke regression.
+
+### Next cross-module work
+
+- global review of business logic, end-to-end flows and visual consistency across the CMMS, incorporating the next product changes defined with the user.
 
 
 ## Recently completed role-dashboard analytics slice

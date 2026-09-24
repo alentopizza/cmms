@@ -1,5 +1,16 @@
 # Changelog
 
+
+## 2026-09-24 — User operational statistics dashboard
+
+### Changed
+
+- Replaced the flat User **Estadísticas** grid with the approved dashboard-style composition inspired by the supplied reference while preserving the Desweb visual language.
+- User statistics now use real CMMS data instead of mock values: active Work Orders, pending/completed Activities, Attendance hours, current shift state, Reaction connectivity and biometric state.
+- Added a seven-day Attendance progress chart, today's field-time ring, execution-compliance card, upcoming Activity agenda and compact pending-Activity list.
+- User statistics remain descriptive operational evidence. They are not employee rankings, automated performance scores or employment-decision outputs.
+- The new dashboard is responsive and keeps operational text above the product's readability floor.
+
 ## 2026-09-24 — Supplier directory density and typography
 
 ### Changed

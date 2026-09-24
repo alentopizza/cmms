@@ -44,6 +44,22 @@ export function LoadingCard(){
   </div>;
 }
 
+export function LoadingTable({rows=4}:{rows?:number}){
+  return <div className="ds-loading-table" aria-label="Cargando tabla">
+    <div className="ds-loading-table-row ds-loading-table-head"><Skeleton width="34%" height={12}/><Skeleton width="24%" height={12}/><Skeleton width="20%" height={12}/></div>
+    {Array.from({length:rows},(_,index)=><div className="ds-loading-table-row" key={index}>
+      <Skeleton width="58%" height={14}/><Skeleton width="42%" height={14}/><Skeleton width="66%" height={14}/>
+    </div>)}
+  </div>;
+}
+
+export function LoadingPage({label="Cargando contenido"}:{label?:string}){
+  return <div className="ds-loading-page" role="status">
+    <Spinner label={label} size="lg"/>
+    <div><Skeleton width="38%" height={28} radius="lg"/><Skeleton height={120} radius="lg"/><Skeleton height={120} radius="lg"/></div>
+  </div>;
+}
+
 export function EmptyStateAction({children,onClick}:{children:ReactNode;onClick?:()=>void}){
   return <Button variant="secondary" onClick={onClick}>{children}</Button>;
 }

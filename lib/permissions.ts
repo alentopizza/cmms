@@ -27,7 +27,8 @@ export type Permission =
   | "inventory.read"
   | "inventory.write"
   | "requisitions.read"
-  | "requisitions.write";
+  | "requisitions.write"
+  | "requisitions.approve";
 
 export const ROLE_LABELS: Record<OrganizationRole, string> = {
   admin: "Administrador de empresa",
@@ -56,8 +57,8 @@ export const SUPERADMIN_DESCRIPTION =
   "Administra clientes y la operación global de Desweb. Puede crear empresas, asignar planes y administrar usuarios de cliente, pero no puede crear otros Superadministradores ni modificar al Propietario Desweb.";
 
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
-  admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write"],
-  manager: ["locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write"],
+  admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve"],
+  manager: ["locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve"],
   technician: ["attendance.self","reaction.track","assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
   requester: ["work_orders.read","work_orders.write","requisitions.read","requisitions.write"],
   viewer: ["assets.read","work_orders.read","maintenance.read","inventory.read","requisitions.read"],

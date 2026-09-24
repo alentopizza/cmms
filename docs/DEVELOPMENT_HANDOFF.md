@@ -315,3 +315,22 @@ Primary files for this checkpoint:
 - `app/dashboard/suppliers/page.tsx`;
 - `components/SupplierDirectory.tsx`;
 - `app/api/suppliers/*`.
+
+
+## 14. Active checkpoint — Dashboard recovery, PhoneField and Crews (2026-09-24)
+
+### Dashboard resilience
+`app/dashboard/page.tsx` now isolates failures in role-specific analytical queries. After authentication resolves, exceptions from platform/operation/field/requester analytics are logged and render an authorized recovery panel instead of Next.js' generic full-page server error. Do not remove this boundary when extending KPI queries.
+
+### PhoneField
+`nationalPhonePart()` distinguishes explicit E.164 values (leading `+`) from legacy national-only values. For E.164 values it strips the configured Country calling code immediately, even when only one national digit has been typed. This prevents the controlled User edit form from injecting `57`/other Country prefixes back into the national-number input.
+
+### Crews
+Crew composition now includes roles:
+- `manager` → displayed as Supervisor;
+- `technician`;
+- `external`.
+
+The leader is an explicit selection from eligible personnel, is automatically part of `crew_members`, and does not need a special role. Candidate and server validation require the same Organization and access to the selected Site.
+
+The current Crew directory is leader-forward: leader photo/contact panel, team identity, activity counters and member roster. Creation uses `components/CrewCreateForm.tsx` for visual leader/member selection.

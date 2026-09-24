@@ -36,58 +36,6 @@ export default async function UsersPage() {
                             FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.check_in_at>=now()-interval '30 days'),0)::float8 attendance_hours_30d,
                   EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
                   EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
-                  COALESCE((
-                    SELECT ROUND((SUM(EXTRACT(EPOCH FROM (
-                      LEAST(COALESCE(ats.check_out_at,now()),current_date+interval '1 day')
-                      - GREATEST(ats.check_in_at,current_date::timestamp)
-                    )))/3600)::numeric,1)::float8
-                    FROM attendance_shifts ats
-                    WHERE ats.user_id=u.id
-                      AND ats.check_in_at<current_date+interval '1 day'
-                      AND COALESCE(ats.check_out_at,now())>=current_date
-                  ),0)::float8 attendance_hours_today,
-                  (SELECT ats.check_in_at::text FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open' ORDER BY ats.check_in_at DESC LIMIT 1) open_shift_started_at,
-                  (SELECT count(*)::int FROM activity_execution_events aee WHERE aee.user_id=u.id AND aee.event_type='completed' AND aee.occurred_at>=now()-interval '7 days') completed_activities_7d,
-                  (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress') AND wt.due_date<current_date) overdue_activities,
-                  COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object('date',daily.day::text,'hours',daily.hours) ORDER BY daily.day)
-                    FROM (
-                      SELECT gs::date day,
-                             COALESCE((
-                               SELECT ROUND((SUM(EXTRACT(EPOCH FROM (
-                                 LEAST(COALESCE(ats.check_out_at,now()),gs::date+interval '1 day')
-                                 - GREATEST(ats.check_in_at,gs::date::timestamp)
-                               )))/3600)::numeric,1)::float8
-                               FROM attendance_shifts ats
-                               WHERE ats.user_id=u.id
-                                 AND ats.check_in_at<gs::date+interval '1 day'
-                                 AND COALESCE(ats.check_out_at,now())>=gs::date
-                             ),0)::float8 hours
-                      FROM generate_series(current_date-6,current_date,interval '1 day') gs
-                    ) daily
-                  ),'[]'::jsonb) attendance_daily_7d,
-                  COALESCE((
-                    SELECT jsonb_agg(activity.payload ORDER BY activity.due_date NULLS LAST,activity.number)
-                    FROM (
-                      SELECT wt.due_date,w.number,
-                             jsonb_build_object(
-                               'id',wt.id,
-                               'work_order_id',w.id,
-                               'order_number',w.number::text,
-                               'order_title',w.title,
-                               'description',wt.description,
-                               'status',wt.status,
-                               'due_date',wt.due_date::text,
-                               'site_name',s.name
-                             ) payload
-                      FROM work_order_tasks wt
-                      JOIN work_orders w ON w.id=wt.work_order_id
-                      JOIN sites s ON s.id=w.site_id
-                      WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress')
-                      ORDER BY wt.due_date NULLS LAST,w.number
-                      LIMIT 8
-                    ) activity
-                  ),'[]'::jsonb) upcoming_activities,
                   membership.organization_id,membership.organization_name,membership.role,membership.external_supplier_id,membership.external_supplier_name,
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
@@ -143,58 +91,6 @@ export default async function UsersPage() {
                             FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.check_in_at>=now()-interval '30 days'),0)::float8 attendance_hours_30d,
                   EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
                   EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
-                  COALESCE((
-                    SELECT ROUND((SUM(EXTRACT(EPOCH FROM (
-                      LEAST(COALESCE(ats.check_out_at,now()),current_date+interval '1 day')
-                      - GREATEST(ats.check_in_at,current_date::timestamp)
-                    )))/3600)::numeric,1)::float8
-                    FROM attendance_shifts ats
-                    WHERE ats.user_id=u.id
-                      AND ats.check_in_at<current_date+interval '1 day'
-                      AND COALESCE(ats.check_out_at,now())>=current_date
-                  ),0)::float8 attendance_hours_today,
-                  (SELECT ats.check_in_at::text FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open' ORDER BY ats.check_in_at DESC LIMIT 1) open_shift_started_at,
-                  (SELECT count(*)::int FROM activity_execution_events aee WHERE aee.user_id=u.id AND aee.event_type='completed' AND aee.occurred_at>=now()-interval '7 days') completed_activities_7d,
-                  (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress') AND wt.due_date<current_date) overdue_activities,
-                  COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object('date',daily.day::text,'hours',daily.hours) ORDER BY daily.day)
-                    FROM (
-                      SELECT gs::date day,
-                             COALESCE((
-                               SELECT ROUND((SUM(EXTRACT(EPOCH FROM (
-                                 LEAST(COALESCE(ats.check_out_at,now()),gs::date+interval '1 day')
-                                 - GREATEST(ats.check_in_at,gs::date::timestamp)
-                               )))/3600)::numeric,1)::float8
-                               FROM attendance_shifts ats
-                               WHERE ats.user_id=u.id
-                                 AND ats.check_in_at<gs::date+interval '1 day'
-                                 AND COALESCE(ats.check_out_at,now())>=gs::date
-                             ),0)::float8 hours
-                      FROM generate_series(current_date-6,current_date,interval '1 day') gs
-                    ) daily
-                  ),'[]'::jsonb) attendance_daily_7d,
-                  COALESCE((
-                    SELECT jsonb_agg(activity.payload ORDER BY activity.due_date NULLS LAST,activity.number)
-                    FROM (
-                      SELECT wt.due_date,w.number,
-                             jsonb_build_object(
-                               'id',wt.id,
-                               'work_order_id',w.id,
-                               'order_number',w.number::text,
-                               'order_title',w.title,
-                               'description',wt.description,
-                               'status',wt.status,
-                               'due_date',wt.due_date::text,
-                               'site_name',s.name
-                             ) payload
-                      FROM work_order_tasks wt
-                      JOIN work_orders w ON w.id=wt.work_order_id
-                      JOIN sites s ON s.id=w.site_id
-                      WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress')
-                      ORDER BY wt.due_date NULLS LAST,w.number
-                      LIMIT 8
-                    ) activity
-                  ),'[]'::jsonb) upcoming_activities,
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE((
                     SELECT array_agg(oms.site_id::text ORDER BY site.name)

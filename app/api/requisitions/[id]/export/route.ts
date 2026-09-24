@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { countryDefinition } from "@/lib/international-catalog";
+import { loadProcurementReconciliation,procurementDocumentTypeLabel,procurementMatchLabel,procurementReviewLabel,type ProcurementDocumentSummary,type ProcurementDocumentLine } from "@/lib/procurement-reconciliation";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -63,10 +64,11 @@ async function load(id:string,session:NonNullable<Awaited<ReturnType<typeof getS
      ORDER BY sr.returned_at DESC,sr.number DESC,ri.sku`,
     [id],
   );
-  return {req:req.rows[0],items:items.rows,returns:returns.rows};
+  const reconciliation=can(session,"requisitions.reconcile")?await loadProcurementReconciliation(id):{documents:[] as ProcurementDocumentSummary[],lines:[] as ProcurementDocumentLine[],events:[]};
+  return {req:req.rows[0],items:items.rows,returns:returns.rows,reconciliation};
 }
 
-async function pdf(req:Req,items:Item[],returns:ReturnLine[],currency:string){
+async function pdf(req:Req,items:Item[],returns:ReturnLine[],documents:ProcurementDocumentSummary[],currency:string){
   const doc=await PDFDocument.create();
   const regular=await doc.embedFont(StandardFonts.Helvetica);
   const bold=await doc.embedFont(StandardFonts.HelveticaBold);
@@ -134,7 +136,7 @@ async function pdf(req:Req,items:Item[],returns:ReturnLine[],currency:string){
   return Buffer.from(await doc.save());
 }
 
-async function xlsx(req:Req,items:Item[],returns:ReturnLine[],currency:string){
+async function xlsx(req:Req,items:Item[],returns:ReturnLine[],documents:ProcurementDocumentSummary[],documentLines:ProcurementDocumentLine[],currency:string){
   const wb=new ExcelJS.Workbook();wb.creator="Desweb CMMS";
   const sh=wb.addWorksheet("Requisición",{views:[{showGridLines:false}]});
   sh.columns=[{width:18},{width:38},{width:12},{width:12},{width:12},{width:12},{width:14},{width:18},{width:18},{width:28}];
@@ -168,7 +170,7 @@ async function xlsx(req:Req,items:Item[],returns:ReturnLine[],currency:string){
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
 
-function word(req:Req,items:Item[],returns:ReturnLine[],currency:string){
+function word(req:Req,items:Item[],returns:ReturnLine[],documents:ProcurementDocumentSummary[],currency:string){
   let grand=0;
   const rows=items.map(item=>{
     const qty=Number(item.quantity_requested||0),received=Number(item.quantity_received||0),returned=Number(item.quantity_returned||0),pending=Math.max(0,qty-received),cost=Number(item.unit_cost_estimated||0),subtotal=qty*cost;grand+=subtotal;

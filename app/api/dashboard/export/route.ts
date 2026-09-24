@@ -7,6 +7,8 @@ import { roleLabel } from "@/lib/permissions";
 import {
   appendCompanyStatus,
   appendPeriod,
+  appendPriorityFilter,
+  appendSiteFilter,
   appendValue,
   parseDashboardFilters,
   type DashboardFilterInput,
@@ -529,8 +531,10 @@ async function operationRows(session:NonNullable<Awaited<ReturnType<typeof getSe
   const params=[...sc.params];
   const period=appendPeriod(params,"w.created_at",filters);
   const status=filters.activityStatus!=="all" ? " AND "+appendValue(params,"w.status",filters.activityStatus) : "";
+  const site=appendSiteFilter(params,"w.site_id",filters);
+  const priority=appendPriorityFilter(params,"w.priority",filters);
   const result=await query<{created_at:string;number:string;title:string;status:string;priority:string;asset:string|null;site:string;cost:string;downtime:string}>(
-    "SELECT w.created_at::text,w.number::text,w.title,w.status,w.priority,a.name asset,s.name site,(w.labor_cost+w.parts_cost+w.external_cost)::text cost,w.downtime_minutes::text downtime FROM work_orders w JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id WHERE "+sc.sql+" AND "+period+status+" ORDER BY w.created_at DESC LIMIT 2000",
+    "SELECT w.created_at::text,w.number::text,w.title,w.status,w.priority,a.name asset,s.name site,(w.labor_cost+w.parts_cost+w.external_cost)::text cost,w.downtime_minutes::text downtime FROM work_orders w JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id WHERE "+sc.sql+" AND "+period+status+site+priority+" ORDER BY w.created_at DESC LIMIT 2000",
     params,
   );
   return result.rows.map(row=>({
@@ -542,31 +546,48 @@ async function operationRows(session:NonNullable<Awaited<ReturnType<typeof getSe
 async function fieldRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,filters:ReturnType<typeof parseDashboardFilters>){
   if(!session.userId||!session.organizationId) return [];
   const provider=session.role==="provider",sid=session.externalSupplierId,org=session.organizationId,uid=session.userId;
-  const pred=provider&&sid
+  let pred=provider&&sid
     ? "t.organization_id=$1 AND t.service_supplier_id=$2"
     : "t.organization_id=$1 AND (t.assigned_to=$2 OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.crew_id=t.crew_id AND cm.user_id=$2))";
   const params=provider&&sid?[org,sid] as unknown[]:[org,uid] as unknown[];
+  if(!session.accessAllSites){
+    const index=params.length+1;
+    params.push(session.siteIds);
+    pred+=" AND w.site_id=ANY($"+index+"::uuid[])";
+  }
+  const site=appendSiteFilter(params,"w.site_id",filters);
+  const priority=appendPriorityFilter(params,"w.priority",filters);
   const period=appendPeriod(params,"COALESCE(t.completed_at,t.started_at,w.updated_at)",filters);
   const status=filters.activityStatus!=="all" ? " AND "+appendValue(params,"t.status",filters.activityStatus) : "";
-  const result=await query<{date:string;description:string;status:string;number:string;title:string}>(
-    "SELECT COALESCE(t.completed_at,t.started_at,w.updated_at)::text date,t.description,t.status,w.number::text,w.title FROM work_order_tasks t JOIN work_orders w ON w.id=t.work_order_id WHERE "+pred+" AND "+period+status+" ORDER BY COALESCE(t.completed_at,t.started_at,w.updated_at) DESC LIMIT 2000",
+  const result=await query<{date:string;description:string;status:string;number:string;title:string;site:string;priority:string}>(
+    "SELECT COALESCE(t.completed_at,t.started_at,w.updated_at)::text date,t.description,t.status,w.number::text,w.title,s.name site,w.priority FROM work_order_tasks t JOIN work_orders w ON w.id=t.work_order_id JOIN sites s ON s.id=w.site_id WHERE "+pred+site+priority+" AND "+period+status+" ORDER BY COALESCE(t.completed_at,t.started_at,w.updated_at) DESC LIMIT 2000",
     params,
   );
   return result.rows.map(row=>({
-    type:"Actividad",date:safeDate(row.date),reference:"#"+row.number,subject:row.description,status:row.status,detail:row.title,value:"",
+    type:"Actividad",date:safeDate(row.date),reference:"#"+row.number,subject:row.description,status:row.status,
+    detail:[row.title,row.site,"Prioridad "+row.priority].join(" · "),value:"",
   }));
 }
 async function requesterRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,filters:ReturnType<typeof parseDashboardFilters>){
   if(!session.userId||!session.organizationId) return [];
   const params:unknown[]=[session.organizationId,session.userId];
-  const period=appendPeriod(params,"requested_at",filters);
-  const status=filters.activityStatus!=="all" ? " AND "+appendValue(params,"status",filters.activityStatus) : "";
-  const result=await query<{requested_at:string;number:string;title:string;status:string;priority:string}>(
-    "SELECT requested_at::text,number::text,title,status,priority FROM work_orders WHERE organization_id=$1 AND requested_by=$2 AND "+period+status+" ORDER BY requested_at DESC LIMIT 2000",
+  let where="w.organization_id=$1 AND w.requested_by=$2";
+  if(!session.accessAllSites){
+    const index=params.length+1;
+    params.push(session.siteIds);
+    where+=" AND w.site_id=ANY($"+index+"::uuid[])";
+  }
+  where+=appendSiteFilter(params,"w.site_id",filters);
+  where+=appendPriorityFilter(params,"w.priority",filters);
+  const period=appendPeriod(params,"w.requested_at",filters);
+  const status=filters.activityStatus!=="all" ? " AND "+appendValue(params,"w.status",filters.activityStatus) : "";
+  const result=await query<{requested_at:string;number:string;title:string;status:string;priority:string;site:string}>(
+    "SELECT w.requested_at::text,w.number::text,w.title,w.status,w.priority,s.name site FROM work_orders w JOIN sites s ON s.id=w.site_id WHERE "+where+" AND "+period+status+" ORDER BY w.requested_at DESC LIMIT 2000",
     params,
   );
   return result.rows.map(row=>({
-    type:"Solicitud",date:safeDate(row.requested_at),reference:"#"+row.number,subject:row.title,status:row.status,detail:"Prioridad "+row.priority,value:"",
+    type:"Solicitud",date:safeDate(row.requested_at),reference:"#"+row.number,subject:row.title,status:row.status,
+    detail:[row.site,"Prioridad "+row.priority].join(" · "),value:"",
   }));
 }
 
@@ -582,6 +603,9 @@ export async function GET(request:Request){
     to:url.searchParams.get("to")||undefined,
     company_status:url.searchParams.get("company_status")||undefined,
     activity_status:url.searchParams.get("activity_status")||undefined,
+    site_id:url.searchParams.get("site_id")||undefined,
+    priority:url.searchParams.get("priority")||undefined,
+    compare:url.searchParams.get("compare")||undefined,
   };
   const filters=parseDashboardFilters(input);
 
@@ -606,7 +630,9 @@ export async function GET(request:Request){
   const filterDescription=[
     filters.companyStatus!=="all"?"Empresa: "+filters.companyStatus:"",
     filters.activityStatus!=="all"?"Estado: "+filters.activityStatus:"",
-  ].filter(Boolean).join(" · ")||"Sin filtros de estado";
+    filters.siteId?"Sede: "+filters.siteId:"",
+    filters.priority!=="all"?"Prioridad: "+filters.priority:"",
+  ].filter(Boolean).join(" · ")||"Sin filtros adicionales";
   const branding=await getReportBranding(session);
   if(format==="xlsx"){
     const bytes=await excelReport(roleLabel(session),filters.label,filterDescription,rows,branding);

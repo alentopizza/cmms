@@ -7,6 +7,7 @@ import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { canCreateInventoryItem } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { stableCode } from "@/lib/import-workbook";
+import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
 
 export async function POST(request:Request) {
   const session=await getSession();
@@ -34,6 +35,9 @@ export async function POST(request:Request) {
   const returnTo=String(form.get("return_to")||"");
   const base=safeDashboardReturn(returnTo,"/dashboard/inventory");
   const target=(suffix:string)=>publicUrl(appendFeedback(base,suffix),request.url);
+  let image=null;
+  try{ image=await readImageUpload(form,"image"); }
+  catch(error){ return NextResponse.redirect(target("?error="+encodeURIComponent(imageUploadMessage(error)||"image")),303); }
 
   if(!siteId||!locationId||!supplierId||!sku||!name) return NextResponse.redirect(target("?error=required"),303);
   if(!canAccessSite(session,siteId)) return new NextResponse("Forbidden",{status:403});
@@ -87,10 +91,10 @@ export async function POST(request:Request) {
     const item=await client.query<{id:string}>(
       `INSERT INTO inventory_items(
          organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,sku,name,description,presentation,
-         unit,quantity,min_quantity,max_quantity,unit_cost,storage_location
-       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,$12,$13,$14,$15)
+         unit,quantity,min_quantity,max_quantity,unit_cost,storage_location,image_data,image_mime_type,image_file_name
+       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,$12,$13,$14,$15,$16,$17,$18)
        RETURNING id`,
-      [organizationId,siteId,locationId,supplierId,categoryId,warehouseId,sku,name,description||null,presentation||null,unit,minQuantity,maxQuantity,unitCost,warehouseName],
+      [organizationId,siteId,locationId,supplierId,categoryId,warehouseId,sku,name,description||null,presentation||null,unit,minQuantity,maxQuantity,unitCost,warehouseName,image?.data||null,image?.mime||null,image?"inventory-image":null],
     );
     await client.query(
       `INSERT INTO inventory_stock_levels(organization_id,item_id,warehouse_id,quantity,min_quantity,max_quantity)

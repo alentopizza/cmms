@@ -14,10 +14,11 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import MultiSelectDropdown, { type MultiSelectOption } from "@/components/MultiSelectDropdown";
 import BulkImportModal from "@/components/BulkImportModal";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
-import { countryName } from "@/lib/international-catalog";
+import { countryDefinition, countryName } from "@/lib/international-catalog";
+import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
 
 export type SupplierDirectoryItem={
-  id:string;organization_id:string;organization_name:string;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
+  id:string;organization_id:string;organization_name:string;organization_country:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
   country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:"materials"|"services"|"both";
   service_category:string|null;contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;
   capability_codes:string[];capability_labels:string[];specialty_codes:string[];specialty_labels:string[];
@@ -50,6 +51,18 @@ function typeLabel(type:SupplierDirectoryItem["supplier_type"]){
 function initials(value:string){return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase()||"P";}
 function statusLabel(status:string){return ({draft:"Borrador",sent:"Enviada",approved:"Aprobada",rejected:"Rechazada",partial:"Parcial",fulfilled:"Atendida",closed:"Cerrada",cancelled:"Cancelada"} as Record<string,string>)[status]||status;}
 function approvalLabel(status:string){return ({not_required:"No requerida",pending:"Pendiente",approved:"Aprobada",rejected:"Rechazada"} as Record<string,string>)[status]||status;}
+
+function pct(value:number|null,digits=1){return value==null?"Sin muestra":new Intl.NumberFormat("es-CO",{maximumFractionDigits:digits,minimumFractionDigits:digits}).format(value)+"%";}
+function days(value:number|null){return value==null?"Sin muestra":new Intl.NumberFormat("es-CO",{maximumFractionDigits:1,minimumFractionDigits:1}).format(value)+" días";}
+function varianceCopy(value:number|null){
+  if(value==null)return "Sin costo estimado comparable";
+  if(Math.abs(value)<0.05)return "En línea con el estimado";
+  return value>0?"Sobre el costo estimado":"Por debajo del costo estimado";
+}
+function monthLabel(value:string){
+  const [year,month]=value.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-CO",{month:"short",year:"2-digit"}).format(new Date(year,month-1,1));
+}
 
 function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;documents:SupplierDocument[]}){
   const active=documents.filter(doc=>!doc.archived_at);
@@ -94,13 +107,16 @@ function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;
 }
 
 export default function SupplierDirectory({
-  suppliers,activities,items,requisitions,documents,capabilityOptions,specialtyOptions,inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses,canInventoryWrite,initialSelectedId="",initialTab="general",
+  suppliers,activities,items,requisitions,documents,commercialAnalytics,commercialTrends,commercialRequisitions,capabilityOptions,specialtyOptions,inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses,canInventoryWrite,initialSelectedId="",initialTab="general",
 }:{
   suppliers:SupplierDirectoryItem[];
   activities:SupplierActivity[];
   items:RequisitionSelectableItem[];
   requisitions:SupplierRequisition[];
   documents:SupplierDocument[];
+  commercialAnalytics:SupplierCommercialAnalytics[];
+  commercialTrends:SupplierCommercialTrend[];
+  commercialRequisitions:SupplierRequisitionPerformance[];
   capabilityOptions:MultiSelectOption[];
   specialtyOptions:MultiSelectOption[];
   inventorySites:InventorySiteOption[];
@@ -125,6 +141,9 @@ export default function SupplierDirectory({
   const selectedActiveItems=useMemo(()=>selectedItems.filter(item=>item.active!==false),[selectedItems]);
   const selectedReqs=useMemo(()=>requisitions.filter(item=>item.supplier_id===selectedId),[requisitions,selectedId]);
   const selectedDocs=useMemo(()=>documents.filter(item=>item.supplier_id===selectedId),[documents,selectedId]);
+  const selectedCommercial=commercialAnalytics.find(item=>item.supplier_id===selectedId)||null;
+  const selectedCommercialTrend=useMemo(()=>commercialTrends.filter(item=>item.supplier_id===selectedId),[commercialTrends,selectedId]);
+  const selectedCommercialReqs=useMemo(()=>commercialRequisitions.filter(item=>item.supplier_id===selectedId),[commercialRequisitions,selectedId]);
 
   function open(id:string,tab="general",edit=false){
     setSelectedId(id);
@@ -312,12 +331,79 @@ export default function SupplierDirectory({
     initialTab={preferredTab}
     tabs={[
       {id:"general",label:"Información general",content:general},
-      {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack"><div className="entity-stat-grid">
-        <div className="entity-stat-card"><small>Actividades totales</small><strong>{selectedActivities.length}</strong><span>{activeActivities} activas</span></div>
-        <div className="entity-stat-card"><small>Suministros asociados</small><strong>{selectedActiveItems.length}</strong><span>{selectedItems.length-selectedActiveItems.length} inactivos conservados</span></div>
-        <div className="entity-stat-card"><small>Requisiciones</small><strong>{selectedReqs.length}</strong><span>{openReqs} abiertas</span></div>
-        <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
-      </div></div>},
+      {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack supplier-commercial-analytics">
+        <div className="entity-stat-grid">
+          <div className="entity-stat-card"><small>Actividades totales</small><strong>{selectedActivities.length}</strong><span>{activeActivities} activas</span></div>
+          <div className="entity-stat-card"><small>Suministros asociados</small><strong>{selectedActiveItems.length}</strong><span>{selectedItems.length-selectedActiveItems.length} inactivos conservados</span></div>
+          <div className="entity-stat-card"><small>Requisiciones</small><strong>{selectedReqs.length}</strong><span>{openReqs} abiertas</span></div>
+          <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
+        </div>
+
+        <div className="entity-panel supplier-commercial-panel">
+          <div className="entity-panel-heading-row">
+            <div>
+              <h3><span className="entity-section-icon"><UiIcon name="chart"/></span>Desempeño comercial · últimos 12 meses</h3>
+              <p className="entity-panel-copy">Indicadores calculados con recepciones físicas enlazadas a requisiciones. No son una calificación del proveedor: muestran evidencia operativa disponible y el tamaño de la muestra.</p>
+            </div>
+            <span className="supplier-analytics-sample">{selectedCommercial?.received_requisitions||0} requisiciones con recepción</span>
+          </div>
+          {selectedCommercial&&selectedCommercial.received_requisitions>0?<>
+            <div className="supplier-commercial-kpi-grid">
+              <article>
+                <span>Tiempo a primera recepción</span>
+                <strong>{days(selectedCommercial.average_lead_time_days)}</strong>
+                <small>Desde envío/creación hasta la primera entrada física · muestra {selectedCommercial.received_requisitions}</small>
+              </article>
+              <article>
+                <span>Cumplimiento de cantidad</span>
+                <strong>{pct(selectedCommercial.quantity_fulfillment_pct)}</strong>
+                <small>{selectedCommercial.completed_requisitions} completas · {selectedCommercial.partial_requisitions} parciales</small>
+              </article>
+              <article>
+                <span>Completas dentro de fecha</span>
+                <strong>{pct(selectedCommercial.on_time_complete_pct)}</strong>
+                <small>{selectedCommercial.on_time_sample?selectedCommercial.on_time_sample+" requisiciones completas con fecha requerida":"Sin requisiciones completas con fecha requerida"}</small>
+              </article>
+              <article>
+                <span>Variación ponderada de costo</span>
+                <strong className={selectedCommercial.price_variance_pct!=null&&selectedCommercial.price_variance_pct>0?"variance-up":selectedCommercial.price_variance_pct!=null&&selectedCommercial.price_variance_pct<0?"variance-down":""}>{pct(selectedCommercial.price_variance_pct)}</strong>
+                <small>{varianceCopy(selectedCommercial.price_variance_pct)} · {selectedCommercial.price_sample_lines} líneas comparables</small>
+              </article>
+            </div>
+            <div className="supplier-commercial-value-strip">
+              <div><span>Valor estimado de lo recibido</span><strong>{new Intl.NumberFormat("es-CO",{style:"currency",currency:countryDefinition(selected.organization_country)?.currency||"USD",maximumFractionDigits:0}).format(selectedCommercial.estimated_received_value)}</strong></div>
+              <div><span>Valor real recibido</span><strong>{new Intl.NumberFormat("es-CO",{style:"currency",currency:countryDefinition(selected.organization_country)?.currency||"USD",maximumFractionDigits:0}).format(selectedCommercial.actual_received_value)}</strong></div>
+              <div><span>Última recepción</span><strong>{selectedCommercial.latest_receipt_at?new Date(selectedCommercial.latest_receipt_at).toLocaleDateString("es-CO"):"—"}</strong></div>
+            </div>
+          </>:<div className="location-detail-empty">Aún no hay suficiente historial físico enlazado a requisiciones para calcular desempeño comercial.</div>}
+        </div>
+
+        {selectedCommercialTrend.length>0&&<div className="entity-panel supplier-commercial-trend-panel">
+          <div className="entity-panel-heading-row"><div><h3>Evolución de recepciones</h3><p className="entity-panel-copy">Lectura mensual de las requisiciones cuya primera recepción ocurrió en cada mes.</p></div></div>
+          <div className="supplier-commercial-trend">
+            {selectedCommercialTrend.map(point=><article key={point.month}>
+              <div><strong>{monthLabel(point.month)}</strong><span>{point.received_requisitions} req.</span></div>
+              <div className="supplier-commercial-trend-metric"><span>Cantidad</span><strong>{pct(point.quantity_fulfillment_pct,0)}</strong><i><b style={{width:Math.max(0,Math.min(100,point.quantity_fulfillment_pct||0))+"%"}}/></i></div>
+              <div><span>Lead time</span><strong>{days(point.average_lead_time_days)}</strong></div>
+              <div><span>Variación costo</span><strong>{pct(point.price_variance_pct)}</strong></div>
+            </article>)}
+          </div>
+        </div>}
+
+        <div className="entity-panel supplier-commercial-history">
+          <div className="entity-panel-heading-row"><div><h3>Base reciente del indicador</h3><p className="entity-panel-copy">Últimas requisiciones con recepción para revisar de dónde salen los KPIs.</p></div></div>
+          {selectedCommercialReqs.length?<div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Requisición</th><th>Recepción</th><th>Lead time</th><th>Cantidad</th><th>Costo</th><th>Fecha requerida</th></tr></thead><tbody>
+            {selectedCommercialReqs.map(row=><tr key={row.requisition_id}>
+              <td><Link className="kardex-requisition-link" href={"/dashboard/requisitions/"+row.requisition_id}>REQ-{row.number.padStart(6,"0")}</Link><small className="table-subline">{statusLabel(row.status)}</small></td>
+              <td>{row.first_receipt_at?new Date(row.first_receipt_at).toLocaleDateString("es-CO"):"—"}<small className="table-subline">{row.completed?"Completa":"Parcial"}</small></td>
+              <td>{days(row.lead_time_days)}</td>
+              <td><strong>{pct(row.quantity_fulfillment_pct)}</strong><small className="table-subline">{row.received_quantity.toLocaleString("es-CO")} / {row.requested_quantity.toLocaleString("es-CO")}</small></td>
+              <td><strong>{pct(row.price_variance_pct)}</strong><small className="table-subline">{varianceCopy(row.price_variance_pct)}</small></td>
+              <td>{row.needed_by?new Date(row.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}{row.completed_on_time!=null?<small className="table-subline">{row.completed_on_time?"Completada a tiempo":"Completada después de fecha"}</small>:null}</td>
+            </tr>)}
+          </tbody></table></div>:<div className="location-detail-empty">No hay requisiciones con recepción para mostrar.</div>}
+        </div>
+      </div>},
       {id:"documents",label:"Documentos",content:<SupplierDocuments supplier={selected} documents={selectedDocs}/>},
       {id:"financial",label:"Información financiera",content:financialEditing
         ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>

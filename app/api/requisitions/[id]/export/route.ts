@@ -182,6 +182,27 @@ async function xlsx(req:Req,items:Item[],returns:ReturnLine[],documents:Procurem
       lineItem.document_number||"",lineItem.warehouse||"",lineItem.source_receipt_at,
     ]);
   }
+  if(documents.length){
+    const ds=wb.addWorksheet("Conciliación",{views:[{state:"frozen",ySplit:1,showGridLines:false}]});
+    ds.columns=[{width:22},{width:22},{width:18},{width:20},{width:14},{width:16},{width:16},{width:16},{width:16},{width:18},{width:30}];
+    ds.addRow(["Tipo","Número","Conciliación","Revisión","Cant. doc","Cant. esperada","Dif. cantidad","Valor doc","Valor esperado","Dif. valor","Archivo"]);
+    ds.getRow(1).font={bold:true,color:{argb:"FFFFFF"}};ds.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"293644"}};
+    for(const document of documents)ds.addRow([
+      procurementDocumentTypeLabel(document.document_type),document.document_number,procurementMatchLabel(document.match_state),
+      document.voided_at?"Anulado":procurementReviewLabel(document.review_status),Number(document.document_quantity),
+      document.expected_quantity??"",document.quantity_difference??"",Number(document.document_value),document.expected_value??"",
+      document.value_difference??"",document.file_name,
+    ]);
+    const ls=wb.addWorksheet("Líneas conciliadas",{views:[{state:"frozen",ySplit:1,showGridLines:false}]});
+    ls.columns=[{width:20},{width:18},{width:34},{width:12},{width:14},{width:16},{width:16},{width:16},{width:16},{width:18}];
+    ls.addRow(["Documento","SKU","Artículo","Unidad","Cant. doc","Cant. esperada","Dif. cantidad","Valor doc","Valor esperado","Estado"]);
+    ls.getRow(1).font={bold:true,color:{argb:"FFFFFF"}};ls.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"293644"}};
+    for(const line of documentLines){
+      const document=documents.find(item=>item.id===line.document_id);
+      if(!document)continue;
+      ls.addRow([document.document_number,line.sku,line.description,line.unit,Number(line.quantity),line.expected_quantity??"",line.quantity_difference??"",Number(line.line_total),line.expected_value??"",line.match_state]);
+    }
+  }
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
 

@@ -292,6 +292,31 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["reacción","gps","seguimiento","trayecto","técnico","contingencia"],
   },
   {
+    id:"inventory-kardex",
+    title:"Inventario, bodegas y Kardex",
+    summary:"Carga, importa, mueve y exporta existencias con trazabilidad por proveedor y bodega.",
+    icon:"▤",
+    module:"Inventario",
+    roles:["all","platform_owner","superadmin","admin","manager","viewer"],
+    href:"/dashboard/inventory",
+    steps:[
+      "El módulo muestra valor total, productos en stock, stock bajo y sin stock, además de tarjetas por artículo y los últimos movimientos de Kardex.",
+      "Usa Nuevo producto para crear un artículo con proveedor, sede, sububicación, categoría, bodega, mínimos, máximos, costo y existencia inicial. La existencia inicial se registra como una Entrada de Kardex.",
+      "Usa Importar para descargar primero la plantilla contextual de la empresa. Incluye Catálogos, Bodegas, Inventario y Kardex.",
+      "Al cargar un Excel el sistema valida todas las filas antes de guardar: muestra errores y advertencias, y solo habilita Confirmar importación cuando no quedan errores bloqueantes.",
+      "La importación reconoce también el formato demo con hojas Productos, Bodegas y Kardex; las filas declaradas como Servicios tercerizados se omiten porque no representan existencias.",
+      "En Kardex puedes registrar Entrada, Salida, Ajuste positivo, Ajuste negativo, Devolución y Traslado. Los traslados requieren bodega origen y destino diferentes.",
+      "Abre Ver detalles en un producto para editar su ficha, consultar existencias por bodega y revisar todo su historial de movimientos.",
+      "Usa Exportar para descargar la base de Inventario en Excel, CSV o PDF.",
+    ],
+    notes:[
+      "El sistema impide movimientos que dejen existencias negativas.",
+      "Una requisición no modifica stock. El saldo cambia únicamente mediante movimientos de Inventario/Kardex.",
+      "El SKU identifica el artículo dentro de la empresa y debe mantenerse estable en importaciones sucesivas.",
+    ],
+    keywords:["inventario","kardex","bodega","stock","importar","excel","csv","movimientos","repuestos"],
+  },
+  {
     id:"assets-mobile",
     title:"Consultar activos",
     summary:"Búsqueda, filtros y vista optimizada en celular.",
@@ -302,7 +327,9 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "Busca por código, activo, empresa, ubicación o proveedor.",
       "Usa el filtro de estado cuando necesites reducir el listado.",
-      "En celular cada activo aparece como una tarjeta compacta con ubicación, proveedor, estado y criticidad.",
+      "Cada activo aparece como una tarjeta visual con código, ubicación, proveedor, estado, criticidad y fabricante/modelo; el diseño se adapta a celular.",
+      "Usa Importar para descargar una plantilla Excel contextual, validar la carga y crear o actualizar activos por Código.",
+      "Usa Exportar para descargar la base de Activos en Excel, CSV o PDF.",
       "Toca la tarjeta para abrir la ficha completa del activo.",
     ],
     keywords:["activos","equipos","móvil","criticidad","proveedor"],
@@ -339,15 +366,15 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La eliminación definitiva del proveedor usa la ventana de seguridad propia de Desweb; si existe historial operativo, el sistema bloquea el borrado para preservar trazabilidad.",
       "Abre una tarjeta para cambiar la misma pantalla a la ficha del proveedor; el detalle no utiliza un popup.",
       "Si es proveedor de Servicios o Mixto, consulta Actividades para ver las actividades de OT asignadas directamente a ese proveedor.",
-      "Si es proveedor de Materiales/Suministros o Mixto, consulta Inventarios / suministros para ver los artículos que nos provee.",
+      "Si es proveedor de Materiales/Suministros o Mixto, Inventarios / suministros es operativo: puedes crear, importar, editar, desactivar y abrir el Kardex de sus artículos sin salir de la ficha.",
       "En Documentos puedes cargar, descargar, archivar y restaurar documentación comercial, tributaria, contractual, certificaciones, catálogos y cotizaciones.",
       "En Información financiera se muestra primero un resumen de solo lectura con el número de cuenta enmascarado. Usa Editar para modificar banco, cuenta, titular, moneda, plazo, correo y observaciones; después de guardar vuelve automáticamente al resumen.",
-      "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente.",
+      "Desde Requisiciones selecciona los insumos del proveedor, define cantidades y genera una requisición independiente; el historial permite abrir y exportar cada requisición.",
       "Usa el único botón Exportar de la cabecera para descargar la ficha del proveedor en PDF, Excel o Word compatible.",
     ],
     notes:[
       "Eliminar un proveedor con historial de inventario, actividades o requisiciones está bloqueado para conservar trazabilidad. Desactívalo cuando deba conservarse el historial.",
-      "Actividades e Inventarios son proyecciones de sus módulos de origen; no se asignan de nuevo dentro de la ficha del proveedor.",
+      "Actividades sigue siendo una proyección de Órdenes; Inventarios / suministros y Requisiciones sí permiten operar directamente dentro de la ficha del proveedor.",
     ],
     keywords:["proveedor","servicios","suministros","documentos","logo","ficha","exportar"],
   },
@@ -365,6 +392,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Desde Inventario puedes seleccionar insumos de varios proveedores y escribir la cantidad requerida para cada uno.",
       "Si la selección incluye varios proveedores, el sistema divide automáticamente la solicitud y crea una requisición independiente por proveedor.",
       "Consulta cada requisición para revisar proveedor, solicitante, destino, cantidades, costos estimados, fecha requerida y observaciones.",
+      "Mientras siga abierta puedes editar cantidades y costos estimados; también puedes retirar ítems que todavía no tengan recepción registrada.",
       "Actualiza el estado entre Borrador, Enviada, Aprobada, Rechazada, Parcialmente atendida, Atendida, Cerrada o Cancelada según el flujo real.",
       "Exporta la requisición en PDF, Excel o Word compatible para compartirla o tramitarla fuera del sistema.",
     ],
@@ -397,6 +425,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Inventario, Kardex e importación masiva",
+    summary:"Inventario y Activos incorporan plantillas Excel contextualizadas, validación previa, importación masiva y exportes; Proveedores permite operar suministros y Requisiciones permite editar cantidades/costos antes del cierre.",
+    roles:["all","platform_owner","superadmin","admin","manager","viewer"],
+  },
   {
     date:"2026-09-24",
     title:"Ficha de proveedor sin duplicados",

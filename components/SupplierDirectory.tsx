@@ -407,6 +407,11 @@ export default function SupplierDirectory({
               <div className="field form-span-2"><label>Descripción</label><input name="description" defaultValue={item.description||""}/></div>
               <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar</button></div>
             </form></details>}
+            {canInventoryWrite&&<form method="post" action={"/api/inventory/"+item.id} onSubmit={event=>{if(!window.confirm("¿Desactivar este suministro? Permanecerá en el histórico y su Kardex no se eliminará."))event.preventDefault();}}>
+              <input type="hidden" name="intent" value="deactivate"/>
+              <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+              <button className="button secondary danger-text" type="submit"><UiIcon name="power" size={14}/> Desactivar</button>
+            </form>}
           </div>
         </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor. Puedes crearlos o importarlos desde aquí.</div>}</div>
       </div>}]:[]),

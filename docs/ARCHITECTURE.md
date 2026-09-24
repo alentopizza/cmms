@@ -464,3 +464,56 @@ Role-specific dashboard queries provide:
 `components/DashboardAnalytics.tsx` is presentation-only. It receives already-scoped aggregates and renders KPI deltas, evidence sparklines, monthly line charts, role context and summary tiles. It does not fetch or authorize data.
 
 Dashboard exports remain a separate authenticated server route, but Site, Priority, status and period filters are parsed by the same filter module and re-applied to the same role scope. Comparison ranges are visual analytical context; exports contain the selected current-period dataset rather than duplicating both periods.
+
+
+## Conditional directory facets and standardized dossier data
+
+### Shared directory facet layer
+
+`components/ModuleHeader.tsx` supports declarative facets through `facets=[{key,label,allLabel}]`. Directory records expose already-authorized values with:
+
+- `data-filter-<key>`;
+- `data-filter-<key>-label`;
+- multiple facet values separated by `|`.
+
+The client derives available facet choices from the records that were already returned by the server. A facet is rendered only when its current authorized/contextual dataset has more than one useful option. Facets cascade: selecting Company narrows the available Site/Supplier/etc. choices, while search and status filtering also participate in option derivation.
+
+This layer is presentation-only. It **must never be used as authorization**. Server queries continue to enforce platform role, Organization, Site, assignee/provider/requester and permission scope before any facet metadata reaches the browser.
+
+Current usage includes Companies, Locations, Users, Suppliers, Assets, Inventory, Work Orders, Maintenance, Crews and Requisitions.
+
+### Supplier classification catalogs
+
+Migration `029_supplier_catalog_user_dossier_financial.sql` adds:
+
+- `supplier_capability_catalog`;
+- `supplier_specialty_catalog`;
+- `supplier_capabilities`;
+- `supplier_specialties`.
+
+Catalog tables use stable machine codes and human labels. Supplier forms submit repeated codes through the reusable `MultiSelectDropdown`; server routes validate every code against PostgreSQL before persisting the junction rows.
+
+The legacy `suppliers.supplier_type` column remains a compatibility projection:
+- Materials selected only → `materials`;
+- one or more non-material capabilities and no Materials → `services`;
+- Materials plus any non-material capability → `both`.
+
+This preserves existing Inventory and service-assignment rules while new screens and future imports/exports use the normalized multi-value catalogs.
+
+The old free-text `service_category` remains a compatibility/read fallback. When a Supplier is saved through the new form it is synchronized to the labels of the standardized specialties.
+
+### User personnel dossier
+
+`user_documents` stores organization-scoped personnel files with a controlled category code, lifecycle metadata, archive state and authenticated PostgreSQL file bytes. Access remains behind `users.manage`; tenant administrators cannot retrieve a document belonging to another Organization.
+
+`user_emergency_contacts` stores one structured emergency/reference contact per User and Organization, including a controlled relationship code. This contact is an administrative record, not an authentication or authorization input.
+
+### Supplier financial profile
+
+`supplier_financial_profiles` stores Supplier payment-preparation information separately from the Supplier identity record. It includes bank/account fields, account holder, currency, payment terms and payment-contact notes.
+
+Supplier financial data:
+- is tenant scoped through the Supplier's Organization;
+- requires `suppliers.manage`;
+- is not used to execute bank transfers;
+- is masked in the normal read summary while the authorized edit form can manage the stored value.

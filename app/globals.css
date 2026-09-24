@@ -13260,3 +13260,28 @@ html[data-theme="dark"] .supplier-requisition-progress:before{background:#2d3a41
   .supplier-supply-image{width:54px;height:54px}
   .supplier-supply-state-stack{grid-column:1/-1;grid-template-columns:auto auto;justify-content:start}
 }
+
+
+/* Bulk import audit history */
+.bulk-import-history{display:grid;gap:10px;margin-top:12px;padding-top:14px;border-top:1px solid var(--border)}
+.bulk-import-history-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-end}
+.bulk-import-history-head>div{display:grid;gap:2px}
+.bulk-import-history-head strong{font-size:11px;color:var(--brand-dark)}
+.bulk-import-history-head span{font-size:8px;color:var(--text-soft)}
+.bulk-import-history-list{display:grid;gap:7px;max-height:210px;overflow:auto;padding-right:3px}
+.bulk-import-history-list article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+.bulk-import-history-list article>div:nth-child(2){display:grid;gap:2px;min-width:0}
+.bulk-import-history-list article>div:nth-child(2) strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bulk-import-history-list article>div:nth-child(2) small{font-size:7.5px;color:var(--text-soft)}
+.bulk-import-history-state{padding:4px 7px;border-radius:999px;background:#eef1f2;color:#65737c;font-size:7px;font-weight:850}
+.bulk-import-history-state.committed{background:#def7e9;color:#16835a}
+.bulk-import-history-state.rejected{background:#ffe3e5;color:#bd313b}
+.bulk-import-history-counts{display:flex;gap:7px;align-items:center}
+.bulk-import-history-counts span{font-size:7.5px;color:var(--text-soft);white-space:nowrap}
+.bulk-import-history-counts b{color:var(--text)}
+.bulk-import-history-empty{padding:10px;border:1px dashed var(--border);border-radius:10px;color:var(--text-soft);font-size:8.5px;text-align:center}
+html[data-theme="dark"] .bulk-import-history-head strong{color:var(--text)}
+@media(max-width:680px){
+  .bulk-import-history-list article{grid-template-columns:auto minmax(0,1fr)}
+  .bulk-import-history-counts{grid-column:1/-1}
+}

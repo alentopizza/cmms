@@ -11,7 +11,7 @@ import RequisitionBuilder from "@/components/RequisitionBuilder";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
 
-type Item={id:string;organization_id:string;supplier_id:string|null;supplier_type:string|null;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
+type Item={id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;supplier_type:string|null;sku:string;name:string;company:string;site:string|null;location:string|null;supplier:string|null;quantity:string;min_quantity:string;unit:string;unit_cost:string;storage_location:string|null};
 type Site={id:string;label:string};
 type Location={id:string;label:string};
 type Supplier={id:string;name:string;supplier_type:string};
@@ -30,16 +30,16 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
 
   const [items,sites,locations,suppliers]=await Promise.all([
     superadmin
-      ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+      ? query<Item>(`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                      LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                      WHERE i.active=true ORDER BY i.name LIMIT 300`)
       : session.accessAllSites
-        ? query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        ? query<Item>(`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 ORDER BY i.name LIMIT 300`,[orgId])
-        : query<Item>(`SELECT i.id,i.organization_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
+        : query<Item>(`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,p.supplier_type,i.sku,i.name,o.name company,s.name site,l.name location,p.name supplier,i.quantity::text,i.min_quantity::text,i.unit,i.unit_cost::text,i.storage_location
                        FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
                        LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
                        WHERE i.active=true AND i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))
@@ -71,7 +71,12 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       count={items.rowCount || 0}
       countLabel="artículos"
       searchPlaceholder="Buscar SKU, artículo, ubicación o proveedor"
-      filters={[{value:"all",label:"Todos"}]}
+      filters={[{value:"all",label:"Todos"},{value:"low",label:"Bajo mínimo"},{value:"ok",label:"Existencia suficiente"}]}
+      facets={[
+        {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
+        {key:"site",label:"Sede",allLabel:"Todas las sedes"},
+        {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
+      ]}
       action={<div className="module-header-action-group">
         {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
         {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el repuesto o material, su proveedor y su ubicación física." triggerLabel="Agregar" icon="▤">
@@ -131,7 +136,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           const quantity=Number(i.quantity||0);
           const minimum=Number(i.min_quantity||0);
           const low=quantity<=minimum;
-          return <article key={i.id} className="inventory-mobile-card" data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}>
+          return <article key={i.id} className="inventory-mobile-card" data-module-record data-status={low?"low":"ok"} data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}
+            data-filter-organization={i.organization_id} data-filter-organization-label={i.company}
+            data-filter-site={i.site_id||""} data-filter-site-label={i.site||""}
+            data-filter-supplier={i.supplier_id||""} data-filter-supplier-label={i.supplier||""}>
             <div className="inventory-mobile-main">
               <div className="inventory-mobile-icon" aria-hidden="true">▤</div>
               <div className="inventory-mobile-copy">
@@ -161,7 +169,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       </div>
 
       <table className="table inventory-directory-table"><thead><tr><th>SKU</th><th>Artículo</th><th>Ubicación</th><th>Proveedor</th><th>Existencia</th><th>Mínimo</th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
-        {items.rows.map(i=><tr key={i.id} data-module-record data-status="all" data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
+        {items.rows.map(i=><tr key={i.id} data-module-record data-status={Number(i.quantity||0)<=Number(i.min_quantity||0)?"low":"ok"} data-search={[i.sku,i.name,i.company,i.site,i.location,i.supplier,i.storage_location].filter(Boolean).join(" ")}
+          data-filter-organization={i.organization_id} data-filter-organization-label={i.company}
+          data-filter-site={i.site_id||""} data-filter-site-label={i.site||""}
+          data-filter-supplier={i.supplier_id||""} data-filter-supplier-label={i.supplier||""}><td>{i.sku}</td><td><strong>{i.name}</strong><small className="table-subline">{i.company}</small></td><td>{i.site||"Sin sede"}{i.location?" · "+i.location:""}</td><td>{i.supplier||"Sin proveedor"}</td><td>{i.quantity} {i.unit}</td><td>{i.min_quantity} {i.unit}</td>{owner&&<td><OwnerRecordActions table="inventory_items" id={i.id} label={i.name} fields={[
           {name:"sku",label:"SKU",value:i.sku},
           {name:"name",label:"Nombre",value:i.name},
           {name:"unit",label:"Unidad",value:i.unit},

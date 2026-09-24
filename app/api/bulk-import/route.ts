@@ -115,6 +115,12 @@ const KARDEX_ALIASES={
   sourceUser:["Usuario"],
   notes:["Observaciones"],
 };
+const PROVIDER_ALIASES={
+  supplierId:["PROVEEDOR_ID","Proveedor ID","ID proveedor"],
+  taxId:["NIT_PROVEEDOR","NIT proveedor","NIT"],
+  code:["CODIGO_PROVEEDOR","Código proveedor","Codigo proveedor"],
+  name:["PROVEEDOR","Proveedor","Nombre proveedor"],
+};
 const ASSET_ALIASES={
   code:["Código *","Codigo *","Código","Codigo","SKU"],
   name:["Nombre *","Nombre","Activo","Nombre activo"],
@@ -416,7 +422,8 @@ function assetValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<
     if(!site)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.site)?"Sede no encontrada.":"Falta Sede y no existe una única sede para inferirla.");
     const location=site?resolveLocation(catalog.locations,site.id,textValue(row.values.location)):null;
     if(site&&!location)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.location)?"Sububicación no encontrada dentro de la sede.":"Falta Sububicación.");
-    const supplier=resolveSupplier(catalog.suppliers,textValue(row.values.supplier));
+    const supplierResolution=resolveImportSupplier(catalog.suppliers,{name:textValue(row.values.supplier)});
+    const supplier=supplierResolution.supplier;
     if(!supplier)issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado.");
     const status=assetStatus(textValue(row.values.status)||"Operativo");
     if(!status)issue(issues,sheetName,row.rowNumber,"error","Estado inválido.");

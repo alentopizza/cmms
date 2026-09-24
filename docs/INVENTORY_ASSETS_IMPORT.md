@@ -213,3 +213,12 @@ Reglas vigentes:
 La migración relacionada es `033_requisition_inventory_receipts.sql`.
 
 CI ejecuta `scripts/requisition-receipt-smoke.mjs`, que verifica recepción parcial, recepción final, actualización de stock, cantidades recibidas, estado y enlaces de trazabilidad.
+
+
+## Import audit and supplier-scoped operation
+
+The import modal now shows the 12 most recent import batches for the active company/module, including file name, state, imported rows, warnings, errors, user and timestamp.
+
+Supplier-profile imports derive the tenant from the selected Supplier for platform operators. This prevents a Platform Owner/Superadministrator from having to switch company context just to download a supplier template or import supplier inventory, while tenant users remain restricted to their own organization.
+
+Inactive supplier inventory remains visible in the supplier profile, can be reactivated, and is excluded from new requisition selection until active again. Supplier inventory create/edit forms also support product images.

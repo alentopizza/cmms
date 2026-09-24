@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-09-24 — Fase 4 de abastecimiento: devoluciones a proveedor
+
+### Added
+
+- Flujo de **Devolución a proveedor** dentro de la requisición, disponible cuando existen recepciones físicas.
+- Nueva migración `035_supplier_returns.sql`.
+- Nuevas entidades `supplier_returns` y `supplier_return_items` con folio DEV, motivo, resolución esperada, documento, fecha, usuario y líneas.
+- Nuevo movimiento Kardex `supplier_return`, explícitamente separado del movimiento `return` existente.
+- Vínculos de Kardex hacia DEV, requisición, ítem y recepción origen.
+- Historial DEV dentro de la requisición con cantidad, bodega, motivo, resolución, documento y usuario.
+- La ficha de Proveedor muestra devoluciones y cantidades devueltas; su exportación también incluye el resumen.
+- Exportes PDF/XLSX/Word de requisición incluyen cantidad devuelta e historial DEV.
+- Exportes del Kardex incluyen DEV proveedor y recepción origen.
+- Nuevo smoke test `scripts/supplier-return-smoke.mjs` incorporado a CI.
+
+### Inventory and traceability integrity
+
+- `return` continúa siendo una devolución **hacia Inventario** y aumenta stock.
+- `supplier_return` representa material enviado **al proveedor** y disminuye stock.
+- La recepción original no se elimina ni se reduce; `quantity_received` conserva el histórico bruto recibido.
+- La cantidad retornable se calcula por recepción como cantidad recibida menos devoluciones DEV previas.
+- El servidor bloquea concurrentemente las recepciones origen para evitar consumir dos veces el mismo saldo retornable.
+- PostgreSQL valida que la recepción origen pertenezca al mismo ítem, requisición y empresa.
+- El movimiento es rechazado si la bodega quedaría con stock negativo.
+- DEV y sus líneas son inmutables después de publicarse.
+
+### Commercial follow-up
+
+- La devolución registra resolución esperada: Reposición, Nota crédito u Otra.
+- Fase 4 no reabre automáticamente la requisición ni ejecuta conciliación financiera/documental; ese cierre queda para la fase posterior.
+
 ## 2026-09-24 — Fase 3 de abastecimiento: KPIs comerciales de proveedores
 
 ### Added

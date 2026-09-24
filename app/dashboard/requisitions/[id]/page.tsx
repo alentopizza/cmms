@@ -100,13 +100,15 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
     {feedback.error==="items"&&<div className="notice error section">Revisa cantidades y costos. La cantidad solicitada no puede ser menor que lo ya recibido.</div>}
     {feedback.error==="received"&&<div className="notice error section">No puedes retirar un ítem que ya tiene unidades recibidas.</div>}
     {feedback.error==="empty"&&<div className="notice error section">La requisición debe conservar al menos un ítem.</div>}
+    {feedback.error==="fulfillment"&&<div className="notice error section">No puedes marcar la requisición como Atendida mientras existan cantidades pendientes por recibir.</div>}
+    {feedback.error==="status_locked"&&<div className="notice error section">El estado actual está cerrado para retrocesos. Una requisición Atendida solo puede mantenerse Atendida o pasar a Cerrada.</div>}
     {feedback.error==="receive_locked"&&<div className="notice error section">El estado actual no permite registrar nuevas recepciones.</div>}
     {feedback.error==="receive_empty"&&<div className="notice error section">Ingresa una cantidad a recibir en al menos un ítem.</div>}
     {feedback.error==="receive_over"&&<div className="notice error section">La cantidad recibida no puede superar el saldo pendiente de la requisición.</div>}
     {feedback.error==="receive_item"&&<div className="notice error section">Uno de los ítems ya no está enlazado a un artículo activo de Inventario.</div>}
     {feedback.error==="receive_warehouse"&&<div className="notice error section">Selecciona una bodega activa y válida para cada ítem recibido.</div>}
     {feedback.error&&feedback.error.startsWith("receive_")&&!["receive_locked","receive_empty","receive_over","receive_item","receive_warehouse"].includes(feedback.error)&&<div className="notice error section">No fue posible registrar la recepción. Revisa cantidades, costos, fechas y bodegas.</div>}
-    {feedback.error&& !["items","received","empty"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&<div className="notice error section">Revisa el estado o fecha requerida.</div>}
+    {feedback.error&& !["items","received","empty","fulfillment","status_locked"].includes(feedback.error)&&!feedback.error.startsWith("receive")&&<div className="notice error section">Revisa el estado o fecha requerida.</div>}
 
     <section className="requisition-sheet card section">
       <div className="requisition-sheet-header">

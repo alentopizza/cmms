@@ -199,7 +199,7 @@ La preferencia de locale ya se persiste, pero eso **no significa que toda la int
 
 Las migraciones son inmutables y actualmente llegan al menos hasta:
 
-- `035_supplier_returns.sql`.
+- `036_procurement_document_reconciliation.sql`.
 
 Ante un cambio de esquema:
 
@@ -261,9 +261,20 @@ La **Fase 4 de abastecimiento** también está implementada:
 - exportes de Requisición y Kardex incluyen DEV y recepción origen;
 - smoke test PostgreSQL específico incorporado a CI.
 
-Pendientes para fases posteriores:
+La **Fase 5 de abastecimiento** también está implementada:
 
-- conciliación documental avanzada contra factura/remisión/orden de compra.
+- documentos comerciales inmutables de Orden de compra, Remisión/entrega, Factura, Nota crédito y Otros;
+- líneas documentales asociadas a los SKUs de la requisición;
+- Remisiones/Facturas vinculables a recepciones físicas y Notas crédito vinculables a DEV de proveedor;
+- conciliación automática de cantidad/valor con estados Coincide, Con diferencia, Pendiente de evidencia, Informativo y Anulado;
+- revisión humana separada: Pendiente, Verificado, Excepción aceptada y En disputa;
+- nueva evidencia reabre la revisión a Pendiente;
+- descarga/vista previa segura, anulación con motivo y eventos de auditoría;
+- visibilidad resumida en Requisiciones y Proveedor;
+- exportes de requisición con conciliación cuando el usuario tiene `requisitions.reconcile`;
+- smoke test PostgreSQL específico incorporado a CI.
+
+Con las Fases 1–5 de abastecimiento completadas, el siguiente trabajo acordado es una revisión global de lógica, flujo y visual del sistema, junto con los próximos cambios de producto definidos por el usuario.
 
 No ejecutar automáticamente esta lista por estar en el roadmap: cada nueva implementación debe partir del requerimiento actual del producto.
 
@@ -530,3 +541,24 @@ Implementation contract:
 - DEV rows are immutable; correction requires a future compensating/documented flow rather than deleting history;
 - expected resolution is captured as replacement, credit note or other, but Phase 4 does not auto-reopen the requisition or perform document reconciliation;
 - regression coverage: `scripts/supplier-return-smoke.mjs`.
+
+
+## 21. Procurement document reconciliation checkpoint — 2026-09-24
+
+Implementation contract:
+
+- `requisitions.reconcile` is restricted to tenant Admin/Manager and platform operators;
+- Site-limited users may reconcile only when their scope covers every requisition item;
+- `POST /api/requisitions/[id]/documents` records immutable document/file/line evidence;
+- `POST /api/requisitions/[id]/documents/[documentId]` appends evidence, reviews or voids while locking the document row;
+- `GET /api/requisitions/[id]/documents/[documentId]` serves private evidence with authenticated scope checks;
+- receipt links are valid only for Delivery note/Remission and Invoice;
+- Supplier-return links are valid only for Credit note;
+- Purchase order reconciles against requested requisition quantity/value;
+- Delivery note reconciles quantity against linked receipts;
+- Invoice reconciles quantity/value against linked receipts;
+- Credit note reconciles quantity/value against linked DEV records;
+- evidence inserts reopen review to Pending at PostgreSQL level;
+- document match tolerance is 0.001 quantity and 0.01 value;
+- document/review actions never change Kardex or `quantity_received`;
+- regression coverage: `scripts/procurement-reconciliation-smoke.mjs`.

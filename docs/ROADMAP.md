@@ -330,8 +330,8 @@ Before production hardening, reinforce this development workflow with the approv
 
 The next cross-module program is the progressive visual/UX migration defined in `docs/DESIGN_MIGRATION_PLAN.md`.
 
-- **Phase 0 — Governance/documentation:** Design System V2, UI Kit contract, migration plan, branding/ADR/contributor rules.
-- **Phase 1 — Foundations:** CSS tokens, semantic aliases, typography, spacing, radius, shadows, motion, icon-system decision, initial `/ui-kit` structure.
+- **Phase 0 — Governance/documentation:** completed.
+- **Phase 1 — Foundations:** implemented with runtime CSS tokens, semantic dark mapping, typography/spacing/radius/shadows/motion, `UiIcon` bridge, baseline audit, initial `/ui-kit` Foundations catalog and CI smoke.
 - **Phase 2 — UI Core primitives:** Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload.
 - **Phase 3 — Global shell/navigation:** Sidebar, header, responsive navigation, account actions and ModuleNavigation while preserving RBAC/preferences.
 - **Phase 4 — Shared Data UI:** Search, filters, DataTable, pagination, row/bulk actions, KPI, charts, timeline and progress.
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 1 — Foundations + technical UI Kit structure.**
+**Phase 2 — UI Core primitives.**
 
-Before implementation, audit `app/globals.css`, reusable components, hardcoded colors, duplicated primitives and `UiIcon`. Do not start module-by-module redesign before this foundation exists.
+Build the reusable interaction layer on top of the Phase 1 foundations: Button/IconButton/SplitButton, form controls, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, feedback/loading/empty states, Avatar and FileUpload. Reuse/adapt existing components before creating replacements.
 
 
 ## Recently completed role-dashboard analytics slice

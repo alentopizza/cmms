@@ -133,6 +133,21 @@ async function pdf(req:Req,items:Item[],returns:ReturnLine[],documents:Procureme
       y-=15;
     }
   }
+  if(documents.length){
+    if(y<140){page=doc.addPage(pageSize);drawHeader();y=785;}
+    page.drawText("CONCILIACIÓN DOCUMENTAL",{x:38,y,size:10,font:bold,color:teal});y-=18;
+    for(const document of documents){
+      if(y<75){page=doc.addPage(pageSize);drawHeader();y=785;}
+      const state=procurementMatchLabel(document.match_state)+" · "+(document.voided_at?"Anulado":procurementReviewLabel(document.review_status));
+      page.drawText((procurementDocumentTypeLabel(document.document_type)+" · "+document.document_number).slice(0,62),{x:38,y,size:7.4,font:bold,color:dark});
+      page.drawText(state.slice(0,44),{x:330,y,size:6.8,font:bold,color:document.match_state==="difference"?rgb(.65,.28,.22):teal});
+      y-=12;
+      const qty="Doc "+Number(document.document_quantity).toLocaleString("es-CO")+" / Esperado "+(document.expected_quantity===null?"—":document.expected_quantity.toLocaleString("es-CO"));
+      const val="Dif. valor "+(document.value_difference===null?"—":money(document.value_difference,document.currency_code||currency));
+      page.drawText((qty+" · "+val).slice(0,92),{x:38,y,size:6.6,font:regular,color:soft});
+      y-=15;
+    }
+  }
   return Buffer.from(await doc.save());
 }
 

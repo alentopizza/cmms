@@ -239,9 +239,19 @@ La **Fase 2 de abastecimiento** también está implementada:
 - historial de eventos requested/amended/approved/rejected/reopened y audit log general;
 - estado de aprobación visible en Requisiciones, Proveedor y exportes.
 
+La **Fase 3 de abastecimiento** también está implementada:
+
+- KPIs comerciales de proveedor basados en recepciones físicas de requisiciones durante los últimos 12 meses;
+- lead time promedio desde Enviada/creación hasta primera recepción;
+- cumplimiento ponderado de cantidad;
+- porcentaje de requisiciones completas dentro de `needed_by`;
+- variación ponderada entre costo real recibido y costo estimado para las mismas cantidades;
+- tendencia mensual de seis meses y tabla de requisiciones recientes como evidencia;
+- paridad de los KPIs en la exportación PDF/XLSX/Word de la ficha del proveedor;
+- smoke test PostgreSQL específico incorporado a CI.
+
 Pendientes para fases posteriores:
 
-- KPIs comerciales de proveedor cuando exista historial suficiente;
 - devoluciones a proveedor vinculadas a requisición/recepción;
 - conciliación documental avanzada contra factura/remisión/orden de compra.
 
@@ -470,3 +480,24 @@ Regression:
 - Supplier-profile item create/edit uses multipart forms so the same authenticated product-image pipeline as Inventory is preserved.
 - Supplier-scoped bulk imports and template downloads resolve `organization_id` from the Supplier for platform-level sessions. Tenant sessions must still match their own organization.
 - `/api/bulk-import/history` exposes only organization-scoped recent import batches and is used by `BulkImportModal` as the user-visible import audit trail.
+
+
+## 19. Supplier commercial analytics checkpoint — 2026-09-24
+
+Supplier Statistics now has a procurement-performance layer implemented in `lib/supplier-analytics.ts`.
+
+Implementation contract:
+
+- the analytical source is requisition-linked physical `receipt` transactions, not UI status counters;
+- the summary window is the last 12 months based on first receipt date;
+- lead time = `COALESCE(sent_at,created_at)` to first receipt;
+- quantity fulfillment = received/requested, capped at 100%;
+- on-time completion only includes fully received requisitions with `needed_by`, using last receipt as completion date;
+- price variance compares actual receipt value against estimated value for those exact received quantities;
+- all KPI surfaces expose sample size or an insufficient-history state;
+- no composite Supplier score/ranking is generated;
+- Supplier profile export reuses the same server-side function;
+- six-month trends must keep the PostgreSQL alias `AS "month"` quoted;
+- regression coverage: `scripts/supplier-analytics-smoke.mjs`.
+
+This checkpoint intentionally avoids a new analytics persistence table. The existing requisition and Kardex history remains authoritative.

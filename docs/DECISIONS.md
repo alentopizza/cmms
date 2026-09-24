@@ -463,3 +463,24 @@ Requisition statuses alone cannot represent real lead time, partial receipt cost
 - on-time completion excludes requisitions without a required date and incomplete requisitions;
 - screen and Supplier profile export share one calculation source;
 - no new analytics table is introduced in Phase 3.
+
+## ADR — Supplier returns are immutable outbound events linked to physical receipts
+
+**Status:** Accepted — 2026-09-24.
+
+### Decision
+
+A Supplier return is represented by an immutable DEV header/line plus a dedicated outbound `supplier_return` Kardex movement. It must reference the physical receipt that made the quantity eligible for return.
+
+### Why
+
+Reversing or decrementing the original receipt would destroy procurement history and make lead-time/receiving evidence ambiguous. Reusing the existing `return` movement would also invert current stock semantics because that movement is inbound.
+
+### Consequences
+
+- gross receiving evidence remains stable;
+- returned quantity is derived from DEV lines rather than rewriting `quantity_received`;
+- `supplier_return` decreases stock while `return` continues to increase stock;
+- posted DEV records are immutable;
+- replacement/credit expectations are captured but do not yet change requisition fulfillment or financial reconciliation;
+- future document reconciliation can link credit notes/replacements to the DEV without reconstructing history.

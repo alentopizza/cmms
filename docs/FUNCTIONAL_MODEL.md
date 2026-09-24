@@ -766,7 +766,7 @@ A Company can configure one procurement approval rule:
 
 The rule also defines the authorized role scope (`admin_only` or `admin_manager`) and whether requester self-approval is allowed. Self-approval is disabled by default.
 
-For requisitions that require approval:
+Approval lifecycle:
 
 1. creation snapshots the Company policy and places approval in `pending`;
 2. the receipt action is unavailable and is also rejected server-side;
@@ -776,7 +776,7 @@ For requisitions that require approval:
 6. if a requisition initially below a stored threshold is amended until it reaches that threshold, it enters approval automatically;
 7. once a requisition has required approval, lowering the amount does not remove that governance requirement;
 8. a later change to requested quantity, estimated unit cost or required date after a decision reopens approval;
-7. historical receipt/Kardex records remain untouched;
-8. every approval transition remains visible in the requisition audit timeline.
+9. historical receipt/Kardex records remain untouched;
+10. every approval transition remains visible in the requisition audit timeline.
 
 `approved` and `rejected` are decision states, not ordinary status values that a user may assign from the generic lifecycle selector.

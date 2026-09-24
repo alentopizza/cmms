@@ -100,6 +100,7 @@ export default function SupplierDirectory({
 }){
   const [selectedId,setSelectedId]=useState(initialSelectedId);
   const [editing,setEditing]=useState(false);
+  const [financialEditing,setFinancialEditing]=useState(false);
   const router=useRouter();
   const [preferredTab,setPreferredTab]=useState(initialTab||"general");
   const [deleteCandidate,setDeleteCandidate]=useState<SupplierDirectoryItem|null>(null);
@@ -112,7 +113,11 @@ export default function SupplierDirectory({
   const selectedDocs=useMemo(()=>documents.filter(item=>item.supplier_id===selectedId),[documents,selectedId]);
 
   function open(id:string,tab="general",edit=false){
-    setSelectedId(id);setPreferredTab(tab);setEditing(edit);window.scrollTo({top:0,behavior:"smooth"});
+    setSelectedId(id);
+    setPreferredTab(tab);
+    setEditing(edit);
+    setFinancialEditing(false);
+    window.scrollTo({top:0,behavior:"smooth"});
   }
 
   async function confirmSupplierDelete(){
@@ -285,7 +290,7 @@ export default function SupplierDirectory({
       {selected.phone&&<a href={"https://wa.me/"+selected.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer"><UiIcon name="whatsapp"/> WhatsApp</a>}
     </>}
     toolbarActions={<>
-      <button className="button secondary entity-action-button" type="button" onClick={()=>{setEditing(value=>!value);setPreferredTab("general");}}><UiIcon name="edit"/><span>{editing?"Cancelar edición":"Editar"}</span></button>
+      <button className="button secondary entity-action-button" type="button" onClick={()=>{setFinancialEditing(false);setEditing(value=>!value);setPreferredTab("general");}}><UiIcon name="edit"/><span>{editing?"Cancelar edición":"Editar"}</span></button>
       {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<button className="button secondary entity-action-button entity-action-wide" type="button" onClick={()=>setPreferredTab("requisitions")}><UiIcon name="plus"/><span>Nueva requisición</span></button>}
       <ProfileExportMenu entity="supplier" id={selected.id}/>
       <button className="button danger-secondary entity-action-button" type="button" onClick={()=>setDeleteCandidate(selected)}><UiIcon name="trash"/><span>Eliminar</span></button>
@@ -300,22 +305,8 @@ export default function SupplierDirectory({
         <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
       </div></div>},
       {id:"documents",label:"Documentos",content:<SupplierDocuments supplier={selected} documents={selectedDocs}/>},
-      {id:"financial",label:"Información financiera",content:<div className="entity-section-stack">
-        <div className="entity-panel">
-          <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos para pagos</h3>
-          <p className="entity-panel-copy">Información administrativa usada para preparar pagos al proveedor. El número de cuenta se muestra enmascarado fuera del formulario.</p>
-          <div className="entity-info-grid">
-            <div className="entity-info-field"><span>Banco</span><strong>{selected.bank_name||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{selected.account_type==="savings"?"Ahorros":selected.account_type==="checking"?"Corriente":selected.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Número de cuenta</span><strong>{selected.account_number?("•••• "+selected.account_number.slice(-4)):"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Titular</span><strong>{selected.account_holder||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Identificación titular</span><strong>{selected.account_holder_tax_id||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Moneda</span><strong>{selected.currency_code||"COP"}</strong></div>
-            <div className="entity-info-field"><span>Plazo de pago</span><strong>{selected.payment_terms_days!=null?selected.payment_terms_days+" días":"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Correo de pagos</span><strong>{selected.payment_email||"Sin registrar"}</strong></div>
-          </div>
-        </div>
-        <form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>
+      {id:"financial",label:"Información financiera",content:financialEditing
+        ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>
           <input type="hidden" name="intent" value="financial"/>
           <div className="field"><label>Banco</label><input name="bank_name" defaultValue={selected.bank_name||""} placeholder="Ej. Bancolombia"/></div>
           <div className="field"><label>Tipo de cuenta</label><select name="account_type" defaultValue={selected.account_type||""}><option value="">Selecciona</option><option value="savings">Ahorros</option><option value="checking">Corriente</option><option value="other">Otra</option></select></div>
@@ -326,9 +317,31 @@ export default function SupplierDirectory({
           <div className="field"><label>Plazo de pago (días)</label><input name="payment_terms_days" type="number" min="0" max="365" defaultValue={selected.payment_terms_days??""}/></div>
           <div className="field"><label>Correo para pagos</label><input name="payment_email" type="email" defaultValue={selected.payment_email||""}/></div>
           <div className="field form-span-2"><label>Observaciones de pago</label><textarea name="payment_notes" rows={3} defaultValue={selected.payment_notes||""} placeholder="Condiciones, referencia, instrucciones administrativas."/></div>
-          <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar información financiera</button></div>
+          <div className="form-span-2 form-actions">
+            <button className="button secondary" type="button" onClick={()=>setFinancialEditing(false)}>Cancelar</button>
+            <button className="button" type="submit">Guardar información financiera</button>
+          </div>
         </form>
-      </div>},
+        :<div className="entity-panel">
+          <div className="entity-panel-heading-row">
+            <div>
+              <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos para pagos</h3>
+              <p className="entity-panel-copy">Información administrativa usada para preparar pagos al proveedor. El número de cuenta se muestra enmascarado.</p>
+            </div>
+            <button className="button secondary entity-financial-edit-button" type="button" onClick={()=>setFinancialEditing(true)}><UiIcon name="edit" size={15}/> Editar</button>
+          </div>
+          <div className="entity-info-grid entity-financial-summary">
+            <div className="entity-info-field"><span>Banco</span><strong>{selected.bank_name||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{selected.account_type==="savings"?"Ahorros":selected.account_type==="checking"?"Corriente":selected.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Número de cuenta</span><strong>{selected.account_number?("•••• "+selected.account_number.slice(-4)):"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Titular</span><strong>{selected.account_holder||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Identificación titular</span><strong>{selected.account_holder_tax_id||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Moneda</span><strong>{selected.currency_code||"COP"}</strong></div>
+            <div className="entity-info-field"><span>Plazo de pago</span><strong>{selected.payment_terms_days!=null?selected.payment_terms_days+" días":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Correo de pagos</span><strong>{selected.payment_email||"Sin registrar"}</strong></div>
+            <div className="entity-info-field entity-financial-notes"><span>Observaciones</span><strong>{selected.payment_notes||"Sin observaciones"}</strong></div>
+          </div>
+        </div>},
 
       ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:<div className="supplier-activity-list">
         {selectedActivities.length?selectedActivities.map(activity=><article className="supplier-activity-row" key={activity.id}>
@@ -350,7 +363,6 @@ export default function SupplierDirectory({
           <span>REQ-{req.number.padStart(6,"0")}</span><strong>{statusLabel(req.status)}</strong><small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}</small><UiIcon name="chevron-right" size={14}/>
         </Link>)}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}</div>
       </div>},
-      {id:"life",label:"Hoja de vida",content:<div className="entity-panel supplier-life-card"><UiIcon name="file" size={34}/><div><h3>Hoja de vida del proveedor</h3><p>Consolida identidad comercial, contacto, indicadores, actividades, suministros y requisiciones.</p></div><ProfileExportMenu entity="supplier" id={selected.id}/></div>},
     ]}
   />
   {deleteError&&<div className="notice error section">{deleteError}</div>}

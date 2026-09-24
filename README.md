@@ -6,7 +6,8 @@ Sistema multiempresa de gestión de mantenimiento para activos, sedes y equipos.
 
 Para entender el estado actual y continuar el desarrollo sin empezar de cero:
 
-- `AGENTS.md` — instrucciones y contexto para IAs y colaboradores.
+- `AGENTS.md` — instrucciones e invariantes para IAs y colaboradores.
+- `docs/DEVELOPMENT_HANDOFF.md` — checkpoint operativo actual para retomar el desarrollo sin depender del historial del chat.
 - `docs/PROJECT_CONTEXT.md` — visión del producto y estado actual.
 - `docs/ARCHITECTURE.md` — arquitectura, estructura y modelo de datos.
 - `docs/DECISIONS.md` — decisiones técnicas y de producto.

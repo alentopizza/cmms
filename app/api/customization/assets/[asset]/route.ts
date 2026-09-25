@@ -48,7 +48,8 @@ export async function GET(
   return new NextResponse(new Uint8Array(row.data), {
     headers: {
       "Content-Type": row.mime_type,
-      "Cache-Control": "no-store",
+      "Cache-Control": "public, max-age=300",
+      "Content-Length": String(row.data.length),
       "X-Content-Type-Options": "nosniff",
     },
   });

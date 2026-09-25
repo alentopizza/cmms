@@ -269,13 +269,13 @@ Status: accepted.
 A live facial template proves continuity with a previously enrolled face, but self-enrollment alone cannot prove that the first enrolled face belongs to the account holder. Therefore Desweb CMMS uses supervised initial enrollment.
 
 Rules:
-- an authorized company Admin or Manager selects the user and enrollment site;
+- an authorized company Admin/Manager selects the user and enrollment site, or an authorized Platform Owner/Superadmin does so inside an explicitly selected customer-organization context;
 - the person must be physically present;
 - the supervisor uses the profile photo/account record only as a human identity aid;
 - the supervisor explicitly confirms identity and consent;
 - the browser captures a live face with liveness/anti-spoof checks;
 - only the numeric embedding is persisted, encrypted at rest;
-- the server records supervisor, site, method and timestamp;
+- the server records supervisor, site, method and timestamp; when the bootstrap Platform Owner has no persistent user row, the biometric audit metadata records platform role/email while `actor_user_id` remains null;
 - existing legacy self-enrolled templates are not trusted for attendance until supervised reenrollment;
 - users cannot self-replace or self-revoke their biometric template;
 - revocation removes the usable encrypted template while preserving non-biometric audit metadata.
@@ -563,3 +563,20 @@ The project will not adopt a big-bang redesign. Migration follows `docs/DESIGN_M
 - legacy styles may coexist temporarily with V2 via controlled compatibility aliases;
 - replacement of icon infrastructure or introduction of a third-party UI/CSS framework requires a separate ADR;
 - each module migration includes responsive/accessibility review and documentation synchronization.
+
+
+## ADR-038 — Platform attendance administration uses an explicit company context
+
+Status: accepted.
+
+Platform Owner and Superadministrator are global identities and may not have a tenant organization in their session. Attendance configuration, biometric enrollment, contingency review and reports are tenant-scoped data, so a global operator must explicitly select the customer organization before those administrative surfaces become active.
+
+Rules:
+- tenant users continue to derive organization scope exclusively from their authenticated membership; client-supplied organization IDs cannot override it;
+- platform operators select an active organization in `/dashboard/attendance`;
+- the selected organization is carried to policy and supervised-biometric mutations, but every mutation revalidates organization, user and Site relations server-side;
+- selecting a user from `/dashboard/users` may deep-link to Attendance with organization + user context, but the receiving server still validates both;
+- platform context is presentation/orchestration state, never an authorization substitute;
+- no cross-company attendance report or biometric management view is created by this context selector.
+
+This allows Desweb platform operators to support customer onboarding without weakening tenant isolation or creating a second attendance model.

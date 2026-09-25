@@ -58,9 +58,9 @@ for(const marker of [
   "Desplazamiento",
   "Contingencias usadas",
   "No constituye ranking",
-  'format:"xlsx"',
-  'format:"csv"',
-  'format:"pdf"',
+  'exportHref(report,"xlsx")',
+  'exportHref(report,"csv")',
+  'exportHref(report,"pdf")',
 ]){
   if(!ui.includes(marker))throw new Error("Attendance Phase 5 UI missing "+marker);
 }

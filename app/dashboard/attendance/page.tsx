@@ -7,12 +7,13 @@ import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/l
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import AttendanceMovement, { type AttendanceMovementSegment } from "@/components/AttendanceMovement";
-import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
+import BiometricEnrollmentAdmin from "@/components/BiometricEnrollmentAdmin";
+import SelfBiometricEnrollment from "@/components/SelfBiometricEnrollment";
 import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import AttendanceOperationalReport from "@/components/AttendanceOperationalReport";
 import AttendanceSetupWorkspace, { type AttendanceSetupStep } from "@/components/AttendanceSetupWorkspace";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
-import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
+import { DEFAULT_ATTENDANCE_POLICY, DEFAULT_BIOMETRIC_NOTICE_BODY, DEFAULT_BIOMETRIC_NOTICE_TITLE, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
@@ -49,6 +50,18 @@ type EnrollmentPerson={
   role:OrganizationRole;
   has_avatar:boolean;
   biometric_status:"verified"|"legacy"|"revoked"|"missing";
+  request_id:string|null;
+  request_status:"pending"|"approved"|"rejected"|"cancelled"|"expired"|null;
+  request_site_name:string|null;
+  request_requested_at:string|null;
+  request_review_note:string|null;
+};
+
+type BiometricPolicyVersion={
+  id:string;
+  version:number;
+  title:string;
+  body:string;
 };
 
 type SelfSchedule={
@@ -114,6 +127,22 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
   const policy:Policy=policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
 
+  const biometricNotice=organizationId
+    ? await query<BiometricPolicyVersion>(
+        `SELECT id,version,title,body
+         FROM attendance_biometric_policy_versions
+         WHERE organization_id=$1 AND active=true
+         ORDER BY version DESC LIMIT 1`,
+        [organizationId],
+      )
+    : {rows:[]} as {rows:BiometricPolicyVersion[]};
+  const currentBiometricNotice=biometricNotice.rows[0]||{
+    id:"",
+    version:0,
+    title:DEFAULT_BIOMETRIC_NOTICE_TITLE,
+    body:DEFAULT_BIOMETRIC_NOTICE_BODY,
+  };
+
   const sites=organizationId
     ? session.accessAllSites
       ? await query<Site>(
@@ -135,7 +164,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
          WHERE user_id=$1 AND organization_id=$2
            AND revoked_at IS NULL
            AND encrypted_embedding IS NOT NULL
-           AND enrollment_method='supervised_camera'
+           AND enrollment_method IN ('supervised_camera','self_camera_approved')
            AND identity_verified_at IS NOT NULL`,
         [session.userId,organizationId],
       )
@@ -278,13 +307,23 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
              u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
              CASE
                WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
-               WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+               WHEN bp.enrollment_method IN ('supervised_camera','self_camera_approved') AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
                WHEN bp.user_id IS NOT NULL THEN 'legacy'
                ELSE 'missing'
-             END biometric_status
+             END biometric_status,
+             request.id::text request_id,request.status request_status,request_site.name request_site_name,
+             request.requested_at::text request_requested_at,request.review_note request_review_note
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           LEFT JOIN LATERAL (
+             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note
+             FROM biometric_enrollment_requests enrollment
+             WHERE enrollment.organization_id=om.organization_id AND enrollment.user_id=om.user_id
+             ORDER BY enrollment.requested_at DESC
+             LIMIT 1
+           ) request ON true
+           LEFT JOIN sites request_site ON request_site.id=request.site_id
            WHERE om.organization_id=$1
              AND u.active=true
              AND om.role IN ('admin','manager','technician','provider','external')
@@ -296,13 +335,24 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
              u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
              CASE
                WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
-               WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+               WHEN bp.enrollment_method IN ('supervised_camera','self_camera_approved') AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
                WHEN bp.user_id IS NOT NULL THEN 'legacy'
                ELSE 'missing'
-             END biometric_status
+             END biometric_status,
+             request.id::text request_id,request.status request_status,request_site.name request_site_name,
+             request.requested_at::text request_requested_at,request.review_note request_review_note
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           LEFT JOIN LATERAL (
+             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note
+             FROM biometric_enrollment_requests enrollment
+             WHERE enrollment.organization_id=om.organization_id AND enrollment.user_id=om.user_id
+               AND enrollment.site_id=ANY($2::uuid[])
+             ORDER BY enrollment.requested_at DESC
+             LIMIT 1
+           ) request ON true
+           LEFT JOIN sites request_site ON request_site.id=request.site_id
            WHERE om.organization_id=$1
              AND u.active=true
              AND om.role IN ('admin','manager','technician','provider','external')
@@ -332,6 +382,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const geofencedSites=sites.rows.filter(site=>site.latitude!==null&&site.longitude!==null&&site.geofence_radius_m>0).length;
   const controlledPeople=enrollmentPeople.rows.filter(person=>policy.enabled_roles.includes(person.role));
   const verifiedControlled=controlledPeople.filter(person=>person.biometric_status==="verified").length;
+  const pendingControlled=controlledPeople.filter(person=>person.biometric_status!=="verified"&&person.request_status==="pending").length;
   const generalComplete=Boolean(organizationId);
   const sitesComplete=sites.rows.length>0&&(!policy.require_geolocation||geofencedSites===sites.rows.length);
   const enrollmentComplete=!policy.require_face||(controlledPeople.length>0&&verifiedControlled===controlledPeople.length);
@@ -368,9 +419,9 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     },
     {
       id:"3",label:"Enrolamiento",description:"Biometría",
-      progressLabel:"3. Enrolamiento supervisado",
+      progressLabel:"3. Enrolamiento y aprobación",
       progressDescription:policy.require_face
-        ? verifiedControlled+"/"+controlledPeople.length+" persona(s) controlada(s) verificadas"
+        ? verifiedControlled+"/"+controlledPeople.length+" verificadas · "+pendingControlled+" pendiente(s)"
         :"Biometría no requerida por la política",
       completed:enrollmentComplete,href:attendanceHref({step:"3"}),
     },
@@ -391,7 +442,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const setupTitles:Record<string,{title:string;description:string;icon:"settings"|"location"|"user"|"attendance"|"report"}>={
     "1":{title:"Configuración general",description:"Define y revisa la información base y los parámetros principales del módulo de asistencia.",icon:"settings"},
     "2":{title:"Sedes habilitadas",description:"Define dónde se permite registrar presencia y configura las geocercas existentes.",icon:"location"},
-    "3":{title:"Enrolamiento supervisado",description:"Registra y valida la biometría facial de los usuarios controlados.",icon:"user"},
+    "3":{title:"Enrolamiento biométrico",description:"Controla cobertura, solicitudes iniciadas desde el celular y la aprobación única de identidad.",icon:"user"},
     "4":{title:"Política de asistencia",description:"Define reglas, verificaciones y roles sujetos al control de asistencia.",icon:"attendance"},
     "5":{title:"Resumen y confirmación",description:"Revisa la configuración vigente antes de continuar a la operación diaria.",icon:"report"},
   };
@@ -449,7 +500,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     </div>,
 
     "3":<div className="attendance-setup-embedded">
-      <SupervisedBiometricEnrollment
+      <BiometricEnrollmentAdmin
+        organizationId={organizationId||""}
         people={enrollmentPeople.rows}
         sites={sites.rows.map(site=>({
           id:site.id,
@@ -460,7 +512,6 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           geofenceRadius:site.geofence_radius_m,
         }))}
         livenessThreshold={policy.liveness_threshold}
-        organizationId={organizationId||""}
         initialUserId={feedback.user_id||""}
       />
     </div>,
@@ -478,6 +529,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           <div className="field"><label>Coincidencia facial mínima</label><input name="face_similarity_threshold" type="number" step="0.01" min="0.30" max="0.95" defaultValue={policy.face_similarity_threshold}/></div>
           <div className="field"><label>Presencia real mínima</label><input name="liveness_threshold" type="number" step="0.01" min="0.30" max="0.99" defaultValue={policy.liveness_threshold}/></div>
           <div className="field form-span-2"><label>Roles controlados</label><div className="attendance-role-grid">{(["technician","external","provider","manager","admin"] as OrganizationRole[]).map(role=><label key={role}><input type="checkbox" name="enabled_roles" value={role} defaultChecked={policy.enabled_roles.includes(role)}/><span>{ROLE_LABELS[role]}</span></label>)}</div></div>
+          <div className="field form-span-2"><label>Política biométrica · título</label><input name="biometric_notice_title" maxLength={180} defaultValue={currentBiometricNotice.title}/><small>Versión vigente: {currentBiometricNotice.version||"se publicará al guardar"}</small></div>
+          <div className="field form-span-2"><label>Política biométrica · texto que leerá el empleado</label><textarea name="biometric_notice_body" rows={8} minLength={80} maxLength={12000} defaultValue={currentBiometricNotice.body}/><small>Cambiar este contenido publica una nueva versión; las aceptaciones anteriores conservan la versión que fue consentida.</small></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar política</button></div>
         </form>
       </section>
@@ -488,7 +541,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       <div className="attendance-setup-summary-grid">
         <article><span className={generalComplete?"success":"pending"}><UiIcon name={generalComplete?"check":"info"} size={15}/></span><div><strong>Configuración general</strong><small>{generalComplete?organizationName:"Empresa pendiente"}</small></div></article>
         <article><span className={sitesComplete?"success":"pending"}><UiIcon name={sitesComplete?"check":"location"} size={15}/></span><div><strong>Sedes</strong><small>{sites.rows.length} visible(s) · {geofencedSites} con geocerca</small></div></article>
-        <article><span className={enrollmentComplete?"success":"pending"}><UiIcon name={enrollmentComplete?"check":"user"} size={15}/></span><div><strong>Enrolamiento</strong><small>{policy.require_face?verifiedControlled+"/"+controlledPeople.length+" controlados verificados":"Biometría no requerida"}</small></div></article>
+        <article><span className={enrollmentComplete?"success":"pending"}><UiIcon name={enrollmentComplete?"check":"user"} size={15}/></span><div><strong>Enrolamiento</strong><small>{policy.require_face?verifiedControlled+"/"+controlledPeople.length+" verificados · "+pendingControlled+" pendiente(s)":"Biometría no requerida"}</small></div></article>
         <article><span className={policyComplete?"success":"pending"}><UiIcon name={policyComplete?"check":"attendance"} size={15}/></span><div><strong>Política</strong><small>{policyComplete?(policy.enabled?"Activa y guardada":"Guardada e inactiva"):"Valores predeterminados sin guardar"}</small></div></article>
         <article><span className={contingencyReview.rows.length===0?"success":"warning"}><UiIcon name={contingencyReview.rows.length===0?"check":"warning"} size={15}/></span><div><strong>Contingencias pendientes</strong><small>{contingencyReview.rows.length?contingencyReview.rows.length+" por revisar":"Sin solicitudes pendientes"}</small></div></article>
       </div>
@@ -554,6 +607,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
     {feedback.saved==="policy"&&<Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert>}
     {feedback.error==="roles"&&<Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert>}
+    {feedback.error==="biometric_notice"&&<Alert variant="danger" title="Revisa la política biométrica">El título y el texto de consentimiento deben tener contenido suficiente antes de publicarse.</Alert>}
 
     {globalOperator&&!organizationId&&<EmptyState icon="info" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/>}
 
@@ -573,7 +627,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         :activeStep==="2"
           ?"Las coordenadas y radios continúan administrándose desde la ficha de cada sede; Asistencia solo refleja su estado."
           :activeStep==="3"
-            ?"El enrolamiento conserva la cámara, GPS y validación presencial actuales. No se creó un flujo biométrico paralelo."
+            ?"El empleado inicia el enrolamiento desde su celular. Aquí solo revisas excepciones y apruebas la identidad una vez; el flujo asistido anterior queda disponible como recuperación."
             :activeStep==="4"
               ?"Guardar mantiene las mismas validaciones y el mismo endpoint de política; esta pantalla solo reorganiza la experiencia."
               :"Contingencias, expediente y estadísticas están disponibles en Operación y reportes, separadas de la configuración."}
@@ -606,20 +660,28 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
             </section>
 
             <section className="section">
-              <AttendanceCapture
-                sites={sites.rows.map(site=>({
-                  id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
-                  geofenceRadius:site.geofence_radius_m,geofenceConfigured:site.latitude!==null&&site.longitude!==null,
-                }))}
-                enrolled={Boolean(enrolled.rowCount)}
-                openShift={openShift.rows[0]||null}
-                requireFace={policy.require_face}
-                requireGeolocation={policy.require_geolocation}
-                maxLocationAccuracy={policy.max_location_accuracy_m}
-                livenessThreshold={policy.liveness_threshold}
-                preferredSiteId={selfScheduleRow?.base_site_id||null}
-                inTransit={Boolean(selfOpenShift?.in_transit)}
-              />
+              {policy.require_face&&!enrolled.rowCount
+                ?<SelfBiometricEnrollment
+                  sites={sites.rows.map(site=>({
+                    id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
+                    geofenceRadius:site.geofence_radius_m,geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+                  }))}
+                  preferredSiteId={selfScheduleRow?.base_site_id||null}
+                />
+                :<AttendanceCapture
+                  sites={sites.rows.map(site=>({
+                    id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
+                    geofenceRadius:site.geofence_radius_m,geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+                  }))}
+                  enrolled={Boolean(enrolled.rowCount)}
+                  openShift={openShift.rows[0]||null}
+                  requireFace={policy.require_face}
+                  requireGeolocation={policy.require_geolocation}
+                  maxLocationAccuracy={policy.max_location_accuracy_m}
+                  livenessThreshold={policy.liveness_threshold}
+                  preferredSiteId={selfScheduleRow?.base_site_id||null}
+                  inTransit={Boolean(selfOpenShift?.in_transit)}
+                />}
             </section>
 
             {selfOpenShift&&selfMovement&&<AttendanceMovement

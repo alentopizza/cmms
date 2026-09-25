@@ -104,7 +104,7 @@ La administración de Asistencia ya no depende de que una identidad de plataform
 - `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
 - El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
 - La pestaña **Asistencia** del perfil de Usuario enlaza al módulo con `organization_id` + `user_id`; el enrolamiento abre con la persona enfocada.
-- No se cambió `attendance_shifts`: la asignación de horarios individuales y los desplazamientos multi-sede pertenecen a las fases siguientes.
+- Fase 1 no cambió `attendance_shifts`. Fase 2 añadió la planificación individual en `user_attendance_schedules`; `attendance_shifts` continúa representando hechos reales y el desplazamiento multi-sede sigue reservado para una fase posterior.
 
 Archivos clave:
 

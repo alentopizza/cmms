@@ -619,3 +619,27 @@ Rules:
 - canonical mutations remain in their existing endpoints: schedules in `/api/attendance/schedules`, biometrics in supervised enrollment/revocation routes, and contingency review in its dedicated route.
 
 This preserves a single source of truth while making attendance evidence understandable and auditable from User and Attendance workflows.
+
+
+## ADR-041 — Multi-Site attendance uses ordered jornada segments
+
+Status: accepted.
+
+A field worker may begin one jornada at one Site, travel to one or more other authorized Sites, execute work there and finish the same jornada at a different Site. Attendance must preserve that as one continuous workday rather than fabricating multiple check-in/check-out pairs.
+
+Rules:
+- `attendance_shifts` remains the single attendance record for the jornada;
+- `attendance_shifts.site_id` is the origin Site and `check_out_site_id` records the final Site when the jornada closes;
+- migration `039_attendance_shift_segments.sql` introduces ordered `attendance_shift_segments` with exactly one open segment per shift;
+- a `site` segment represents presence at one Site; a `travel` segment represents movement from one authorized Site to another;
+- departure closes the current Site segment and opens a Travel segment; arrival closes that Travel segment and opens a Site segment at the destination;
+- the field user must register arrival before another departure or final checkout;
+- when the Attendance policy requires geolocation, departure validates the origin geofence and arrival validates the destination geofence;
+- an optional destination Activity is accepted only after server-side validation that it belongs to the destination Site and is assigned to the user directly, through a Crew, or through the user's service Supplier;
+- Activity execution evidence links to the currently open Site segment, not to the jornada origin;
+- a recent active Reaction session may be correlated to a Travel segment, but Reaction remains an independent live-tracking system and cannot establish Attendance departure, arrival or current Site;
+- limited supervisors only receive a Travel segment when both endpoints are inside their authorized Site scope;
+- the existing attendance contingency workflow continues to authorize check-in/check-out only. Travel departure/arrival follows the regular location validation policy;
+- biometric identity is not recaptured on every inter-Site movement. Check-in/check-out retain their configured biometric verification, while movement continuity is tied to the authenticated open jornada.
+
+This model preserves one auditable workday while making origin, destination, on-Site stays, travel time and optional Reaction route evidence independently traceable.

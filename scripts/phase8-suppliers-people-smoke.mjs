@@ -26,7 +26,7 @@ for(const marker of ["phase8-suppliers","<Alert","iconName=\"supplier\"","icon=\
   if(!supplierPage.includes(marker))throw new Error("Suppliers Phase 8 contract missing "+marker);
 }
 const supplierDir=fs.readFileSync("components/SupplierDirectory.tsx","utf8");
-for(const marker of ["phase8-supplier-directory","<SupplierCard","<Badge","<StatTiles","<EmptyState","ds-data-table","supplier-card-primary-action-v3","supplier-card-quick-action-v3","data-tooltip=\"Editar proveedor\"","data-tooltip=\"Crear requisición\"","data-tooltip=\"Contactar por WhatsApp\"","data-tooltip=\"Eliminar proveedor\""]){
+for(const marker of ["phase8-supplier-directory","<SupplierCard","<CollectionView","<Badge","<StatTiles","<EmptyState","ds-data-table","supplier-card-primary-action-v3","supplier-card-quick-action-v3","data-tooltip=\"Editar proveedor\"","data-tooltip=\"Crear requisición\"","data-tooltip=\"Contactar por WhatsApp\"","data-tooltip=\"Eliminar proveedor\""]){
   if(!supplierDir.includes(marker))throw new Error("SupplierDirectory Phase 8 migration missing "+marker);
 }
 for(const marker of ['icon:"activity"','icon:"inventory"','icon:"requisition"','email={s.email||null}','location={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||null}']){
@@ -38,7 +38,7 @@ if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Es
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
-for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Gestionar enrolamiento","<UserAttendanceAuditCenter","Abrir en Asistencia"]){
+for(const marker of ["phase8-users","<UserCard","<CollectionView","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Gestionar enrolamiento","<UserAttendanceAuditCenter","Abrir en Asistencia"]){
   if(!users.includes(marker))throw new Error("Users Phase 8 migration missing "+marker);
 }
 for(const glyph of [">×<",">◎<"])if(users.includes(glyph))throw new Error("Users still contain legacy glyph "+glyph);
@@ -56,7 +56,7 @@ for(const marker of ["phase8-crews","<CrewDirectory","<Alert","<KpiCard","iconNa
   if(!crews.includes(marker))throw new Error("Crews Phase 8 migration missing "+marker);
 }
 const crewDirectory=fs.readFileSync("components/CrewDirectory.tsx","utf8");
-for(const marker of ["<CrewCard","<EmptyState","<StaticDataTable","Vista cuadrícula","Vista listado"]){
+for(const marker of ["<CrewCard","<EmptyState","<StaticDataTable","<ViewModeToggle","Vista de cuadrillas"]){
   if(!crewDirectory.includes(marker))throw new Error("CrewDirectory Phase 8 presentation missing "+marker);
 }
 if(crews.includes("♕")||crews.includes('className={"status-badge')||crewDirectory.includes("♕"))throw new Error("Crews still use legacy leader/status glyphs");

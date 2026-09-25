@@ -643,3 +643,31 @@ Rules:
 - biometric identity is not recaptured on every inter-Site movement. Check-in/check-out retain their configured biometric verification, while movement continuity is tied to the authenticated open jornada.
 
 This model preserves one auditable workday while making origin, destination, on-Site stays, travel time and optional Reaction route evidence independently traceable.
+
+
+## ADR-042 — Attendance Phase 5 reporting is a scoped composite read model
+
+Status: accepted.
+
+Attendance reporting must compare expected work planning with real operational evidence without creating a second ledger, worker score or performance-ranking system.
+
+Rules:
+- `lib/attendance-report.ts` composes `user_attendance_schedules`, `attendance_shifts`, `attendance_shift_segments`, `activity_execution_events`, `attendance_contingency_requests` and correlated Reaction samples;
+- `/api/attendance/report` is the only Phase 5 report boundary for screen JSON and XLSX/CSV/PDF exports;
+- the endpoint requires `attendance.reports`;
+- tenant Organization scope comes from the authenticated membership; Platform Owner/Superadmin must explicitly select the Organization;
+- browser period/person/Site filters may only narrow the server-authorized dataset;
+- a Site-limited supervisor receives a multi-Site shift only when the origin, final Site and every Site/Travel segment endpoint are all within authorized Site scope. Partial journey disclosure is prohibited;
+- the report accepts up to 366 days per query so a full year can be reviewed without turning the endpoint into an unrestricted historical dump;
+- scheduled minutes are derived from the effective-dated individual schedule for each local date;
+- scheduled-vs-actual variance is computed only for enabled scheduled days;
+- real attendance on days without an enabled schedule is displayed separately as unplanned recorded time, not silently included in scheduled variance;
+- open shifts contribute elapsed minutes up to the report request time and remain explicitly marked open;
+- on-Site and travel duration are derived from ordered Phase 4 segments;
+- activity and contingency evidence remain descriptive supporting facts;
+- Reaction contributes only route-sample evidence already correlated to a Travel segment and does not become Attendance authority;
+- screen data and all export formats use the same composed dataset and filters;
+- biometric embeddings and raw facial/liveness scores remain outside report output;
+- no metric from this report may be converted into an automatic ranking, disciplinary score or employment decision.
+
+This closes the planned Attendance operational track with auditable planning-vs-reality reporting while preserving the authority and privacy boundaries established in Phases 1–4.

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-24 — Rediseño visual de la tarjeta real de Proveedores
+
+- Se rediseñó el `SupplierCard` existente de Business UI; no se creó una tarjeta paralela ni se modificó el modelo de datos.
+- La tarjeta organiza ahora estado y tipo, identidad/logo, ubicación/especialidad, contacto disponible, métricas y acciones en bloques visuales inspirados en la referencia aprobada.
+- Estado conserva exclusivamente los valores reales actuales **Activo / Inactivo**.
+- Los campos opcionales ausentes dejan de mostrar placeholders artificiales en el directorio; simplemente se omiten.
+- Se mantienen las métricas reales del directorio: actividades abiertas, suministros activos y requisiciones abiertas.
+- Las métricas incorporan iconos canónicos `UiIcon` y siguen calculándose desde las colecciones ya cargadas desde PostgreSQL.
+- Se preservan las acciones existentes: Ver ficha, Editar, Crear requisición para proveedores de materiales/mixtos, WhatsApp cuando existe teléfono y Eliminar.
+- Las acciones compactas incorporan tooltips descriptivos y accesibles sin alterar el layout.
+- El botón **Ver ficha** pasa a ser la acción visual primaria manteniendo el mismo evento `open(s.id)` y la misma ficha en página.
+- La tarjeta usa el logo real de `/api/suppliers/[id]/logo` y conserva iniciales como fallback.
+- El CSS canónico vive en `app/business-ui.css`; `app/phase8-modules.css` solo controla la densidad del directorio.
+- La nueva composición usa dos tarjetas por fila en escritorio estándar, tres únicamente en pantallas muy amplias y una en anchos reducidos para preservar legibilidad.
+
+
 ## 2026-09-24 — Gestión contextual de Ubicaciones, Documentos y Técnicos en Empresa
 
 - Las pestañas **Ubicaciones**, **Documentos** y **Técnicos** del perfil rápido de Empresa aprovechan ahora el área de trabajo completa con datos reales del ERP.

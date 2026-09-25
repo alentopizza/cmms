@@ -106,14 +106,20 @@ Archivos clave:
 
 ### Densidad responsive aprobada
 
-Para directorios compactos de Usuarios y Proveedores:
+Los directorios de Usuarios y Proveedores ya no comparten la misma densidad porque la tarjeta comercial de Proveedor incorpora más jerarquía e información visible.
 
+**Usuarios**
 - escritorio estándar: 4 tarjetas por fila;
 - escritorio muy ancho: 5 tarjetas por fila si la legibilidad se mantiene;
-- anchos menores: 3 / 2 / 1;
-- no ganar columnas sacrificando tipografía o acciones.
+- anchos menores: 3 / 2 / 1.
 
-Las dos entidades comparten densidad, no lenguaje visual.
+**Proveedores**
+- escritorio estándar/laptop: 2 tarjetas por fila;
+- escritorio muy ancho: 3 tarjetas por fila;
+- tablet y móvil: 1 tarjeta por fila;
+- la prioridad es conservar logo, identidad, datos comerciales, métricas y acciones sin truncamientos agresivos.
+
+Las dos entidades comparten Design System, no composición ni densidad.
 
 ## 5. Invariantes que no deben romperse
 
@@ -1073,3 +1079,13 @@ The Company quick profile now treats Locations, Documents and Technicians as rea
 - EntityProfileWorkspace tabs may expose an optional contextual `action` rendered at the far right of the tab row.
 - Contextual create/edit/archive/restore operations use safe `return_to` values so the Company quick profile and active tab reopen after the server redirect.
 - `app/document-workspace.css` owns the split 40/60 document manager layout and must remain token-only.
+
+
+### SupplierCard V3 — visual-only contract
+
+- Canonical component remains `SupplierCard` in `components/business-ui/BusinessCards.tsx`.
+- The directory still sources Supplier identity from `suppliers`, service activity from `work_order_tasks.service_supplier_id`, supplies from `inventory_items.supplier_id`, and requisitions from `supplier_requisitions.supplier_id`.
+- No new persistence, endpoint, permission or route was introduced for the redesign.
+- Optional card fields must be omitted when absent; do not add “Sin …” display values only to fill layout space.
+- Current Supplier status is boolean and therefore the directory renders only Activo/Inactivo.
+- Card quick actions must remain the already-authorized actions supplied by `SupplierDirectory`.

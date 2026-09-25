@@ -189,18 +189,19 @@ export default function SupplierDirectory({
           key={s.id}
           name={s.name}
           subtitle={s.legal_name||s.organization_name}
-          location={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}
-          specialty={(s.specialty_labels||[]).join(" · ")||s.service_category||"Especialidad sin registrar"}
+          location={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||null}
+          specialty={(s.specialty_labels||[]).join(" · ")||s.service_category||null}
           type={(s.capability_labels||[]).join(" · ")||typeLabel(s.supplier_type)}
           status={s.active?"active":"inactive"}
           logoSrc={s.has_logo?"/api/suppliers/"+s.id+"/logo":null}
           fallback={initials(s.name)}
-          contact={s.contact_name||"Sin contacto"}
-          phone={s.phone||"Sin teléfono"}
+          contact={s.contact_name||null}
+          phone={s.phone||null}
+          email={s.email||null}
           metrics={[
-            {label:"Actividades",value:supplierActivities},
-            {label:"Suministros",value:supplierItems},
-            {label:"Requisiciones",value:supplierReqs},
+            {label:"Actividades",value:supplierActivities,icon:"activity"},
+            {label:"Suministros",value:supplierItems,icon:"inventory"},
+            {label:"Requisiciones",value:supplierReqs,icon:"requisition"},
           ]}
           onOpen={()=>open(s.id)}
           recordProps={{
@@ -212,11 +213,13 @@ export default function SupplierDirectory({
             "data-filter-country":s.country_code||"","data-filter-country-label":countryName(s.country_code)||s.country_code||"",
           }}
           actions={<>
-            <button className="supplier-card-primary-action" type="button" onClick={()=>open(s.id)}><UiIcon name="file" size={14}/> Ver ficha</button>
-            <button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor"><UiIcon name="edit" size={14}/></button>
-            {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición"><UiIcon name="plus" size={14}/></button>}
-            {s.phone&&<a className="supplier-card-icon-action" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
-            <button type="button" className="supplier-card-icon-action danger" title="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={14}/></button>
+            <button className="supplier-card-primary-action-v3" type="button" onClick={()=>open(s.id)}>
+              <UiIcon name="file" size={16}/><span>Ver ficha</span><UiIcon name="chevron-right" size={16}/>
+            </button>
+            <button className="supplier-card-quick-action-v3" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor" data-tooltip="Editar proveedor" aria-label="Editar proveedor"><UiIcon name="edit" size={16}/></button>
+            {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="supplier-card-quick-action-v3" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición" data-tooltip="Crear requisición" aria-label="Crear requisición"><UiIcon name="plus" size={16}/></button>}
+            {s.phone&&<a className="supplier-card-quick-action-v3" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Contactar por WhatsApp" data-tooltip="Contactar por WhatsApp" aria-label="Contactar por WhatsApp"><UiIcon name="whatsapp" size={16}/></a>}
+            <button type="button" className="supplier-card-quick-action-v3 danger" title="Eliminar proveedor" data-tooltip="Eliminar proveedor" aria-label="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={16}/></button>
           </>}
         />;
       })}</div>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}

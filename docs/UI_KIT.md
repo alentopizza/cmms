@@ -446,15 +446,20 @@ Prioridades: Baja, Media, Alta, Crítica.
 
 ### SupplierCard
 
-- logo;
-- nombre;
-- NIT;
-- tipo;
-- categoría;
-- contacto;
-- teléfono;
-- correo;
-- estado.
+La tarjeta canónica de Proveedor conserva la lógica del directorio y organiza únicamente datos reales disponibles:
+
+- estado real Activo/Inactivo;
+- tipo/capacidades del proveedor;
+- logo real o iniciales como fallback;
+- nombre y razón social/contexto empresarial;
+- ubicación cuando existe;
+- especialidad/categoría cuando existe;
+- contacto, teléfono y correo cuando existen;
+- métricas reales de Actividades, Suministros y Requisiciones;
+- acción primaria **Ver ficha**;
+- acciones existentes de Editar, Crear requisición cuando aplica, WhatsApp cuando existe teléfono y Eliminar.
+
+Los campos opcionales ausentes se omiten: Business UI no inventa placeholders para completar la composición. La tarjeta usa `UiIcon`, `Badge`, tokens semánticos, tooltips y adaptación responsive.
 
 Debe respetar el patrón comercial existente y no convertirse en una copia de UserCard.
 

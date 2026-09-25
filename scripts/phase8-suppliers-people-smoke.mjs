@@ -20,8 +20,14 @@ for(const marker of ["phase8-suppliers","<Alert","iconName=\"supplier\"","icon=\
   if(!supplierPage.includes(marker))throw new Error("Suppliers Phase 8 contract missing "+marker);
 }
 const supplierDir=fs.readFileSync("components/SupplierDirectory.tsx","utf8");
-for(const marker of ["phase8-supplier-directory","<SupplierCard","<Badge","<StatTiles","<EmptyState","ds-data-table"]){
+for(const marker of ["phase8-supplier-directory","<SupplierCard","<Badge","<StatTiles","<EmptyState","ds-data-table","supplier-card-primary-action-v3","supplier-card-quick-action-v3","data-tooltip=\"Editar proveedor\"","data-tooltip=\"Crear requisición\"","data-tooltip=\"Contactar por WhatsApp\"","data-tooltip=\"Eliminar proveedor\""]){
   if(!supplierDir.includes(marker))throw new Error("SupplierDirectory Phase 8 migration missing "+marker);
+}
+for(const marker of ['icon:"activity"','icon:"inventory"','icon:"requisition"','email={s.email||null}','location={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||null}']){
+  if(!supplierDir.includes(marker))throw new Error("Supplier directory real-data card contract missing "+marker);
+}
+if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Especialidad sin registrar"')||supplierDir.includes('"Sin contacto"')||supplierDir.includes('"Sin teléfono"')){
+  throw new Error("Supplier directory must omit unavailable card fields instead of inventing placeholders");
 }
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
@@ -32,6 +38,9 @@ for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState",
 for(const glyph of [">×<",">◎<"])if(users.includes(glyph))throw new Error("Users still contain legacy glyph "+glyph);
 
 const cards=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
+for(const marker of ["supplier-directory-card-v3","supplier-card-topbar-v3","supplier-card-identity-v3","supplier-card-metrics-v3","supplier-card-actions-v3"]){
+  if(!cards.includes(marker))throw new Error("SupplierCard V3 composition missing "+marker);
+}
 if(!cards.includes('export function CrewCard'))throw new Error("Business UI missing CrewCard");
 const preview=fs.readFileSync("components/business-ui/BusinessCardsPreview.tsx","utf8");
 if(!preview.includes("<CrewCard"))throw new Error("/ui-kit Business UI preview does not expose CrewCard");
@@ -80,7 +89,7 @@ for(const marker of ["supplier:\"supplier\"","crew:\"crew\"","attendance:\"atten
 }
 
 const css=fs.readFileSync("app/phase8-modules.css","utf8");
-for(const selector of [".phase8-suppliers",".phase8-users",".phase8-crews",".phase8-attendance",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
+for(const selector of [".phase8-suppliers",".phase8-users",".phase8-crews",".phase8-attendance",".phase8-supplier-directory .supplier-profile-grid",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 8 CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 8 CSS must use Design Tokens only");

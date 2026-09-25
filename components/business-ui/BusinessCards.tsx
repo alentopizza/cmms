@@ -143,20 +143,45 @@ export function WorkOrderCard({
 }
 
 export function SupplierCard({
-  name,subtitle,location,specialty,type,status,logoSrc,fallback,contact,phone,metrics,onOpen,actions,recordProps,
+  name,subtitle,location,specialty,type,status,logoSrc,fallback,contact,phone,email,metrics,onOpen,actions,recordProps,
 }:{
-  name:string;subtitle:string;location:string;specialty:string;type:string;status:"active"|"inactive";logoSrc?:string|null;fallback:string;
-  contact:string;phone:string;metrics:Array<{label:string;value:ReactNode}>;onOpen:()=>void;actions?:ReactNode;recordProps?:RecordProps;
+  name:string;subtitle:string;location?:string|null;specialty?:string|null;type:string;status:"active"|"inactive";logoSrc?:string|null;fallback:string;
+  contact?:string|null;phone?:string|null;email?:string|null;
+  metrics:Array<{label:string;value:ReactNode;icon?:UiIconName}>;onOpen:()=>void;actions?:ReactNode;recordProps?:RecordProps;
 }){
-  return <BusinessCardShell domain="supplier" className={"supplier-directory-card-v2 "+(status==="active"?"":"inactive")} recordProps={recordProps}>
-    <button type="button" className="supplier-card-open ds-business-open" onClick={onOpen} aria-label={"Abrir ficha de "+name}>
-      <span className="supplier-card-banner ds-business-banner" aria-hidden="true"><Badge variant={status==="active"?"success":"neutral"}>{status==="active"?"Activo":"Inactivo"}</Badge></span>
-      <span className="supplier-card-logo-row"><span className="supplier-card-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt="" />:<b>{fallback}</b>}</span><span className="supplier-card-type">{type}</span></span>
-      <span className="supplier-card-copy-v2 ds-business-copy"><strong>{name}</strong><span>{subtitle}</span><small>{location}</small><em>{specialty}</em></span>
-      <span className="supplier-card-contact-v2"><span><UiIcon name="user" size={12}/><b>{contact}</b></span><span><UiIcon name="phone" size={12}/><b>{phone}</b></span></span>
-      <BusinessMetricStrip className="supplier-card-metrics-v2" items={metrics}/>
+  const hasContact=Boolean(contact||phone||email);
+  return <BusinessCardShell domain="supplier" className={"supplier-directory-card-v3 "+(status==="active"?"":"inactive")} recordProps={recordProps}>
+    <button type="button" className="supplier-card-open-v3 ds-business-open" onClick={onOpen} aria-label={"Abrir ficha de "+name}>
+      <span className="supplier-card-topbar-v3">
+        <Badge variant={status==="active"?"success":"neutral"}>{status==="active"?"Activo":"Inactivo"}</Badge>
+        <span className="supplier-card-type-v3" title={type}><UiIcon name="supplier" size={15}/><span>{type}</span></span>
+      </span>
+
+      <span className="supplier-card-identity-v3">
+        <span className="supplier-card-logo-v3 ds-business-logo">{logoSrc?<img src={logoSrc} alt="" />:<b>{fallback}</b>}</span>
+        <span className="supplier-card-copy-v3 ds-business-copy">
+          <strong>{name}</strong>
+          {subtitle&&<span>{subtitle}</span>}
+          {(location||specialty)&&<span className="supplier-card-detail-list-v3">
+            {location&&<span title={location}><UiIcon name="location" size={15}/><b>{location}</b></span>}
+            {specialty&&<span title={specialty}><UiIcon name="maintenance" size={15}/><b>{specialty}</b></span>}
+          </span>}
+          {hasContact&&<span className="supplier-card-contact-group-v3">
+            {contact&&<span title={contact}><UiIcon name="user" size={15}/><b>{contact}</b></span>}
+            {phone&&<span title={phone}><UiIcon name="phone" size={15}/><b>{phone}</b></span>}
+            {email&&<span title={email}><UiIcon name="mail" size={15}/><b>{email}</b></span>}
+          </span>}
+        </span>
+      </span>
+
+      <span className="supplier-card-metrics-v3">
+        {metrics.map(item=><span key={item.label}>
+          <span className="supplier-card-metric-icon-v3" aria-hidden="true"><UiIcon name={item.icon||"activity"} size={20}/></span>
+          <span><strong>{item.value}</strong><small>{item.label}</small></span>
+        </span>)}
+      </span>
     </button>
-    {actions&&<div className="supplier-card-actions-v2 ds-business-actions">{actions}</div>}
+    {actions&&<div className="supplier-card-actions-v3 ds-business-actions">{actions}</div>}
   </BusinessCardShell>;
 }
 

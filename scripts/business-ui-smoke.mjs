@@ -17,9 +17,12 @@ for(const symbol of [
 for(const legacyGlyph of [">↻<",">✓<",">◇<",">⌁<"]){
   if(cards.includes(legacyGlyph))throw new Error("Business UI reintroduced Unicode navigation/domain glyph "+legacyGlyph);
 }
+for(const marker of ["supplier-directory-card-v3","supplier-card-type-v3","supplier-card-logo-v3","supplier-card-metrics-v3"]){
+  if(!cards.includes(marker))throw new Error("Business UI SupplierCard V3 missing "+marker);
+}
 
 const css=fs.readFileSync("app/business-ui.css","utf8");
-for(const selector of [".ds-business-card",".ds-business-asset",".ds-business-inventory",".ds-business-supplier",".ds-business-location",".ds-business-user"]){
+for(const selector of [".ds-business-card",".ds-business-asset",".ds-business-inventory",".ds-business-supplier",".ds-business-location",".ds-business-user",".supplier-directory-card-v3",".supplier-card-primary-action-v3",".supplier-card-quick-action-v3"]){
   if(!css.includes(selector))throw new Error("Business UI CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Business UI CSS must use Design Tokens instead of hardcoded hex colors");

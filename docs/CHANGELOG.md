@@ -7,7 +7,7 @@
 - Empresas usa exclusivamente el logo real existente o iniciales; Proveedores usa su logo; Usuarios su avatar; Activos e Inventario su imagen principal; Leads usa iniciales porque el modelo actual no expone una imagen relacionada.
 - Cuadrillas conserva su tabla existente, pero la primera columna ahora usa la foto/avatar del líder como identidad principal; la columna Líder mantiene nombre y rol sin duplicar la foto.
 - Ubicaciones conserva su estructura aprobada y cambia únicamente **Ver ubicación** a acción rápida compacta.
-- Órdenes y Rutinas amplían sus SELECT existentes con `asset_id` y `asset_has_image`; usan la imagen real del activo/equipo cuando existe y el icono de Orden/Rutina como fallback. No se creó una consulta adicional.
+- Órdenes y Rutinas amplían sus SELECT existentes con `asset_id` y `asset_has_image`; usan la imagen real del activo/equipo cuando existe **y el rol tiene `assets.read`**, y el icono de Orden/Rutina como fallback en los demás casos. No se creó una consulta adicional.
 - Las acciones rápidas del listado reutilizan únicamente operaciones ya existentes por módulo: abrir ficha/detalle, editar, requisición, WhatsApp, activar/desactivar, eliminar, actividades, proveedor, correo o acciones Owner según corresponda.
 - La cuadrícula no fue modificada. `CollectionView`, búsqueda, filtros, estado, paginación, selección, RBAC y fuentes de datos permanecen compartidos entre ambas representaciones.
 - `scripts/view-mode-toggle-smoke.mjs` protege ahora identidad visual, listas reales y acciones rápidas por módulo.

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import UiIcon from "@/components/UiIcon";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import { CrewCard } from "@/components/business-ui";
-import { Search } from "@/components/ui-kit/DataControls";
+import { Search, ViewModeToggle } from "@/components/ui-kit/DataControls";
 import { Select } from "@/components/ui-kit/FormControls";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
@@ -157,10 +157,7 @@ export default function CrewDirectory({
           {value:"inactive",label:"Inactivas"},
         ]}
       />
-      <div className="crew-directory-view-toggle-v2" role="group" aria-label="Vista de cuadrillas">
-        <button type="button" className={view==="grid"?"active":""} aria-pressed={view==="grid"} onClick={()=>setView("grid")} title="Vista cuadrícula" data-tooltip="Vista cuadrícula"><UiIcon name="dashboard" size={17}/></button>
-        <button type="button" className={view==="list"?"active":""} aria-pressed={view==="list"} onClick={()=>setView("list")} title="Vista listado" data-tooltip="Vista listado"><UiIcon name="menu" size={17}/></button>
-      </div>
+      <ViewModeToggle value={view} onChange={setView} label="Vista de cuadrillas"/>
     </div>
 
     <div className="crew-directory-result-meta-v2">

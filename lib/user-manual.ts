@@ -172,7 +172,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
-      "En la pestaña Asistencia puedes administrar la jornada individual por vigencias y también usar Administrar biometría / Enrolar biometría inicial para abrir el módulo Asistencia con la empresa y el usuario ya seleccionados.",
+      "En la pestaña Asistencia puedes abrir el expediente individual con Resumen, Jornada, Marcaciones, Biometría, Contingencias y Trazabilidad; la jornada se administra por vigencias y el enrolamiento biométrico sigue usando el flujo supervisado del módulo Asistencia.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
@@ -227,7 +227,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"◷",
     module:"Asistencia",
     roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance#schedule",
+    href:"/dashboard/attendance#attendance-audit",
     steps:[
       "Un Administrador, Manager, Propietario Desweb o Superadministrador abre Asistencia y selecciona la persona. En la ficha de Usuario también puede administrar la misma jornada desde la pestaña Asistencia.",
       "Selecciona la sede base y la fecha desde la cual entra en vigencia el horario. La fecha final es opcional.",
@@ -243,6 +243,32 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La sede base de jornada no reemplaza el alcance de sedes del usuario ni la asignación de actividades.",
     ],
     keywords:["jornada","horario","turno","vigencia","sede base","asistencia","programado"],
+  },
+  {
+    id:"attendance-audit-dossier",
+    title:"Expediente individual de asistencia",
+    summary:"Cómo revisar jornada programada, marcaciones, biometría, contingencias y trazabilidad de una persona.",
+    icon:"▤",
+    module:"Asistencia",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+    href:"/dashboard/attendance#attendance-audit",
+    steps:[
+      "Abre Asistencia y, si eres Propietario Desweb o Superadministrador, selecciona primero la empresa. Después elige la persona que deseas revisar.",
+      "En Resumen consulta jornadas, horas reales, actividades finalizadas, contingencias, estado biométrico, jornada vigente y presencia actual.",
+      "En Jornada administra la misma línea de tiempo de horarios individuales: no existe un editor paralelo.",
+      "En Marcaciones revisa cada entrada/salida con sede, duración, modo estándar o contingencia, precisión/distancia GPS y actividades finalizadas vinculadas.",
+      "En Biometría revisa estado actual y eventos de enrolamiento, reenrolamiento o revocación. Para modificar la plantilla usa el flujo supervisado de biometría.",
+      "En Contingencias revisa motivo, estado, notas y tiempos de aprobación/uso de las excepciones registradas.",
+      "En Trazabilidad consulta una secuencia cronológica que combina marcaciones, eventos biométricos, contingencias y cambios administrativos de jornada.",
+      "Puedes cambiar el periodo entre 30 días, 90 días, 12 meses o todo el historial visible.",
+    ],
+    notes:[
+      "El expediente es una vista de auditoría sobre registros existentes; no crea un segundo historial de asistencia.",
+      "Si tu cuenta está limitada a determinadas sedes, solo verás personas y evidencia dentro de ese alcance.",
+      "El expediente no muestra la plantilla facial cifrada ni scores crudos de similitud/liveness.",
+      "La información es descriptiva para revisión humana; no constituye una calificación automática del trabajador.",
+    ],
+    keywords:["expediente","auditoría","asistencia","marcaciones","biometría","contingencia","trazabilidad","jornada"],
   },
   {
     id:"field-presence",
@@ -507,6 +533,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Expediente individual de Asistencia",
+    summary:"Usuarios y Asistencia incorporan una vista consolidada por persona con jornada, marcaciones, ciclo biométrico, contingencias y trazabilidad, respetando empresa y alcance de sedes.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-25",
     title:"Jornadas individuales por vigencia",

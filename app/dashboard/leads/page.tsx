@@ -9,6 +9,7 @@ import PhoneField from "@/components/PhoneField";
 import { CountrySelect } from "@/components/InternationalFields";
 import { countryName } from "@/lib/international-catalog";
 import { getCustomizationSummary } from "@/lib/customization";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 
 type Lead = {
   id:string;
@@ -96,7 +97,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
 
     <section className="section leads-directory">
       {leads.rowCount===0 ? <div className="card empty-state"><span className="eyebrow">Sin oportunidades</span><h2>Aún no hay leads registrados</h2><p>Cuando alguien solicite contacto desde la landing aparecerá aquí.</p></div> :
-        leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" ")}>
+        <CollectionView storageKey="leads" label="Vista de leads" grid={<div className="grid leads-directory-grid" data-collection-grid>{leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" ")}>
           <div className="lead-card-head">
             <div><strong>{lead.full_name}</strong><span>{lead.company_name}</span></div>
             <span className={`lead-status lead-status-${lead.status}`}>{lead.status}</span>
@@ -136,7 +137,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               ]},
             ]}
           />}
-        </article>)}
+        </article>)}</div>}/>} 
     </section>
   </>;
 }

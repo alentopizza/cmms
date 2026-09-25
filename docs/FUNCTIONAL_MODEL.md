@@ -144,6 +144,40 @@ The original shift Site remains the jornada origin and the checkout Site preserv
 
 Attendance departure/arrival and Reaction tracking are intentionally different evidence. Reaction may show the technician moving toward an Attendance destination, but its samples do not create or complete a travel segment automatically. The existing contingency process covers check-in/check-out; movement departure/arrival uses regular geolocation validation when the policy requires it.
 
+### Biometric enrollment at scale
+
+The default first-time biometric flow is initiated by the authenticated worker from Attendance on their mobile device. It is **not** an automatic self-approval.
+
+Employee flow:
+1. open Attendance before the first biometric shift;
+2. press **Leer política**, read the active version and confirm that it was understood;
+3. explicitly authorize biometric treatment and camera/precise-location use;
+4. choose an authorized Site and press **Verificar sede**;
+5. once geofence/accuracy are valid, activate the front camera;
+6. complete two randomized active-liveness gestures (including a blink);
+7. complete the existing liveness/anti-spoof face capture and send the request;
+8. remain in **Pendiente de aprobación única** until an authorized manager confirms identity.
+
+Manager flow:
+- Enrolamiento shows counts for controlled workers, verified biometrics, pending approvals and records requiring attention;
+- the manager works the pending exception queue rather than opening every employee record;
+- a pending card compares the ordinary profile photo with a temporary live enrollment preview and shows Site/request time;
+- **Aprobar identidad** activates the encrypted template once; **Rechazar** requires a review reason;
+- after either decision the temporary preview and request template are removed;
+- the prior camera-operated supervised flow remains available only as **Enrolamiento asistido excepcional**.
+
+Daily operation after approval:
+- the worker does not wait for another administrator;
+- check-in/check-out uses the authenticated account, configured geofence/GPS accuracy, live camera, 1:1 similarity and liveness/anti-spoof thresholds;
+- an approved self-service template is operationally equivalent to a supervised verified template for daily Attendance;
+- revocation makes the template unusable and a new approved enrollment/recovery is required.
+
+Audit:
+- the accepted policy version and consent timestamp are retained;
+- request/approval/rejection/expiry events are retained;
+- Site, location accuracy/distance, liveness method, reviewer, review time and note are visible to authorized auditors;
+- the temporary preview is not historical evidence after decision/expiry and raw embeddings/scores are never shown in the dossier.
+
 Authorized Attendance supervisors now have a **reporting workspace** that compares expected and real evidence without modifying either source.
 
 The report supports:

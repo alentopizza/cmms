@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-25 — Asistencia operativa Fase 5: reporte programado vs. real
+
+- Se reemplazó el antiguo bloque fijo de estadísticas de 30 días por un reporte operativo filtrable dentro de Asistencia.
+- `lib/attendance-report.ts` compone jornadas programadas, marcaciones reales, segmentos en sede/desplazamiento, actividades, contingencias y evidencia Reacción sin crear una tabla paralela.
+- El reporte admite periodos de hasta 366 días y filtros por persona y sede relacionada, siempre dentro del alcance autorizado.
+- La diferencia programado/real se calcula solo sobre días con jornada individual activa; las horas reales en días no programados se muestran separadamente.
+- Se muestran horas programadas, horas reales, tiempo en sede, tiempo de desplazamiento, jornadas multi-sede, actividades en/fuera de jornada, contingencias y muestras Reacción.
+- Se distinguen días programados sin marcación y días con asistencia no programada como evidencia descriptiva para revisión humana, sin convertirlos en calificación laboral.
+- Supervisores limitados por sedes no reciben trayectos parciales: una jornada multi-sede solo aparece si origen, sede final y todos los segmentos están dentro de su alcance.
+- `GET /api/attendance/report` genera JSON, XLSX, CSV y PDF a partir del mismo dataset y filtros autorizados.
+- Excel incluye Resumen, Personas, Detalle diario y Metadatos; CSV conserva el detalle diario completo y PDF ofrece una vista ejecutiva con marca autorizada.
+- El Centro de Reportes enlaza directamente a `/dashboard/attendance#attendance-report` y ya no duplica lógica SQL de Asistencia.
+- Se añadió `scripts/attendance-reporting-smoke.mjs` y su ejecución en CI.
+
 ## 2026-09-25 — Asistencia operativa Fase 4: desplazamientos multi-sede
 
 - Una jornada puede iniciar en una sede, desplazarse por otras sedes autorizadas y finalizar en una sede diferente sin crear múltiples turnos de asistencia.

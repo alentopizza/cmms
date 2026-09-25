@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `5778a2784fdb61d9caa76c85321f690e659f8020`
+> Base revisada para esta entrega: `0e83956fa454752c33eb66c31ec9e1c88bf67c06`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -67,7 +67,38 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-### Asistencia operativa · Fase 4
+### Asistencia operativa · Fase 5
+
+Asistencia ya dispone de un reporte programado vs. real construido sobre la evidencia autoritativa de Fases 1–4.
+
+- `lib/attendance-report.ts` es el read model único del reporte y trabaja en una transacción repeatable-read de solo lectura.
+- Combina `user_attendance_schedules`, `attendance_shifts`, `attendance_shift_segments`, actividades completadas, contingencias y muestras Reacción correlacionadas.
+- El periodo predeterminado es 30 días y cada consulta admite hasta 366 días.
+- La UI permite filtrar por fecha, persona y sede relacionada sin ampliar scope.
+- La diferencia programado/real se calcula únicamente sobre días con jornada individual habilitada.
+- El tiempo real de días no programados se separa como tiempo registrado no programado.
+- Se muestran horas en sede y desplazamiento de forma independiente, además de origen/final, jornadas multi-sede, actividades, contingencias y evidencia Reacción.
+- Un supervisor limitado por sedes no recibe una jornada multi-sede parcialmente visible: todo el trayecto debe estar dentro de su scope.
+- `GET /api/attendance/report` sirve JSON, Excel real XLSX, CSV UTF-8 y PDF usando el mismo dataset autorizado.
+- El PDF conserva identidad Desweb o white-label Pro según la configuración permitida.
+- `components/AttendanceOperationalReport.tsx` sustituyó el antiguo bloque SQL fijo de estadísticas de 30 días.
+- El Centro de Reportes enlaza directamente a `/dashboard/attendance#attendance-report`.
+- El reporte deja explícito que diferencias horarias, días sin marcación, tiempo no programado, viajes, actividades y contingencias son evidencia descriptiva y no una calificación laboral.
+- `scripts/attendance-reporting-smoke.mjs` cubre contratos estáticos y el aislamiento de jornadas multi-sede por Site scope.
+
+Archivos clave:
+
+- `lib/attendance-report.ts`
+- `app/api/attendance/report/route.ts`
+- `components/AttendanceOperationalReport.tsx`
+- `app/dashboard/attendance/page.tsx`
+- `app/dashboard/reports/page.tsx`
+- `app/phase8-modules.css`
+- `scripts/attendance-reporting-smoke.mjs`
+
+El track planificado de **Asistencia operativa Fases 1–5 queda completo**. No asumir una Fase 6 automática; futuros cambios de Asistencia se tratan como mejoras funcionales nuevas.
+
+### Asistencia operativa · Fase 4 (base anterior)
 
 La misma jornada puede desplazarse entre varias sedes autorizadas sin cerrarse y abrirse de nuevo.
 

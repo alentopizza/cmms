@@ -144,6 +144,35 @@ The original shift Site remains the jornada origin and the checkout Site preserv
 
 Attendance departure/arrival and Reaction tracking are intentionally different evidence. Reaction may show the technician moving toward an Attendance destination, but its samples do not create or complete a travel segment automatically. The existing contingency process covers check-in/check-out; movement departure/arrival uses regular geolocation validation when the policy requires it.
 
+Authorized Attendance supervisors now have a **reporting workspace** that compares expected and real evidence without modifying either source.
+
+The report supports:
+- date range up to 366 days;
+- optional person filter;
+- optional related-Site filter;
+- programmed hours from the effective individual schedule;
+- real hours from attendance shifts;
+- Site time and Travel time from ordered segments;
+- origin → final Site and visible Sites visited;
+- jornadas and multi-Site jornadas;
+- completed Activities inside/outside a shift;
+- contingency requests, used contingencies and contingency-based markings;
+- Reaction route-sample counts correlated to Travel segments.
+
+Scheduled-vs-real difference is calculated only when that local date has an **enabled individual schedule**. If real attendance exists on a non-programmed day, the system shows it separately as recorded unplanned time. A day with a programmed schedule but no visible attendance marking is also surfaced separately for human review.
+
+These facts do not explain causes by themselves. The CMMS must not infer vacation, incapacity, permission, misconduct, productivity or employment fitness from a time difference. The reporting UI explicitly describes this limitation.
+
+A Site-limited Admin/Manager receives only complete journeys. If a multi-Site shift crosses any Site outside the supervisor's scope, that shift is omitted from the report instead of revealing a partial origin/destination path.
+
+The same filtered dataset drives:
+- the interactive report inside Attendance;
+- Excel with summary/person/daily sheets;
+- CSV daily detail;
+- branded PDF executive report.
+
+The central **Reportes** module links to this Attendance reporting workspace rather than duplicating Attendance SQL.
+
 The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
 
 - active assigned Work Orders;

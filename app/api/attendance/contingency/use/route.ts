@@ -100,20 +100,49 @@ export async function POST(request:Request){
       );
       shiftId=inserted.rows[0].id;
       at=inserted.rows[0].check_in_at;
+      await client.query(
+        `INSERT INTO attendance_shift_segments(
+           organization_id,attendance_shift_id,user_id,sequence,segment_type,site_id,
+           started_at,start_latitude,start_longitude,start_accuracy_m,start_distance_m
+         ) VALUES($1,$2,$3,1,'site',$4,now(),$5,$6,$7,$8)`,
+        [session.organizationId,shiftId,session.userId,auth.site_id,latitude,longitude,safeAccuracy,distance],
+      );
     }else{
-      if(!open.rowCount||open.rows[0].site_id!==auth.site_id){
+      if(!open.rowCount){
         await client.query("ROLLBACK");
         return NextResponse.json({message:"No hay una jornada abierta válida para esta contingencia de salida."},{status:409});
       }
       shiftId=open.rows[0].id;
+      const segment=await client.query<{id:string;segment_type:"site"|"travel";site_id:string|null}>(
+        `SELECT id,segment_type,site_id
+         FROM attendance_shift_segments
+         WHERE attendance_shift_id=$1 AND ended_at IS NULL
+         FOR UPDATE`,
+        [shiftId],
+      );
+      const current=segment.rows[0];
+      if(!current||current.segment_type==="travel"){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"Registra primero la llegada del desplazamiento antes de usar una contingencia de salida."},{status:409});
+      }
+      if(current.site_id!==auth.site_id){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"La autorización de salida no corresponde a la sede donde te encuentras actualmente."},{status:409});
+      }
       const closed=await client.query<{check_out_at:string}>(
         `UPDATE attendance_shifts SET
-           status='closed',check_out_at=now(),
-           check_out_latitude=$1,check_out_longitude=$2,check_out_accuracy_m=$3,check_out_distance_m=$4,
-           check_out_verification_mode='contingency',check_out_contingency_id=$5,updated_at=now()
-         WHERE id=$6
+           status='closed',check_out_at=now(),check_out_site_id=$1,
+           check_out_latitude=$2,check_out_longitude=$3,check_out_accuracy_m=$4,check_out_distance_m=$5,
+           check_out_verification_mode='contingency',check_out_contingency_id=$6,updated_at=now()
+         WHERE id=$7
          RETURNING check_out_at::text`,
-        [latitude,longitude,safeAccuracy,distance,auth.id,shiftId],
+        [auth.site_id,latitude,longitude,safeAccuracy,distance,auth.id,shiftId],
+      );
+      await client.query(
+        `UPDATE attendance_shift_segments SET
+           ended_at=now(),end_latitude=$1,end_longitude=$2,end_accuracy_m=$3,end_distance_m=$4
+         WHERE id=$5`,
+        [latitude,longitude,safeAccuracy,distance,current.id],
       );
       at=closed.rows[0].check_out_at;
     }

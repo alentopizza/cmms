@@ -71,7 +71,7 @@ const visualListContracts=[
   ["app/dashboard/work-orders/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","Ver actividades"],
   ["app/dashboard/maintenance/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","ListQuickActions"],
   ["app/dashboard/inventory/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
-  ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","Enviar correo"],
+  ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","SOURCE_LABELS","updated_at","Enviar correo"],
 ];
 for(const [file,...markers] of visualListContracts){
   const source=fs.readFileSync(file,"utf8");

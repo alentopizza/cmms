@@ -11,6 +11,7 @@ const required=[
   "components/ui-kit/CollectionIdentity.tsx",
   "components/ReactionMap.tsx",
   "app/dashboard/users/UserManagement.tsx",
+  "app/dashboard/users/page.tsx",
   "app/dashboard/companies/CompanyDirectory.tsx",
   "components/SupplierDirectory.tsx",
   "components/LocationDirectory.tsx",
@@ -73,6 +74,17 @@ for(const marker of [
 
 const loading=fs.readFileSync("app/dashboard/loading.tsx","utf8");
 if(!loading.includes("<LoadingPage")||!loading.includes('label="Cargando módulo"'))throw new Error("Dashboard route loading boundary missing");
+
+const usersPage=fs.readFileSync("app/dashboard/users/page.tsx","utf8");
+for(const marker of [
+  "LEFT JOIN LATERAL (",
+  "array_agg(oms.site_id::text ORDER BY site.name) site_ids",
+  "array_agg(site.name ORDER BY site.name) site_names",
+  "site_scope ON true",
+]){
+  if(!usersPage.includes(marker))throw new Error("Users site aggregation performance contract missing "+marker);
+}
+if((usersPage.match(/SELECT array_agg\(oms\.site_id::text ORDER BY site\.name\)/g)||[]).length>0)throw new Error("Users must not scan site membership twice per row");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
 for(const marker of [

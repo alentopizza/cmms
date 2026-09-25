@@ -336,8 +336,8 @@ export async function PATCH(request:Request){
     const siteError=validateSiteScope(session,person,sites,payload.baseSiteId,payload.source,payload.sourceSiteId);
     if(siteError){await client.query("ROLLBACK");return NextResponse.json({message:siteError},{status:422});}
 
-    const target=await client.query<{effective_from:string}>(
-      `SELECT effective_from::text FROM user_attendance_schedules
+    const target=await client.query<{effective_from:string;base_site_id:string}>(
+      `SELECT effective_from::text,base_site_id::text FROM user_attendance_schedules
        WHERE id=$1 AND organization_id=$2 AND user_id=$3 FOR UPDATE`,
       [scheduleId,organizationId,userId],
     );
@@ -405,8 +405,9 @@ export async function DELETE(request:Request){
     const context=await loadContext(client,session,organizationId,userId);
     if("error" in context){await client.query("ROLLBACK");return context.error;}
     const today=organizationLocalDate(context.organization.timezone);
-    const target=await client.query<{effective_from:string}>(
-      `SELECT effective_from::text FROM user_attendance_schedules
+    const target=await client.query<{effective_from:string;base_site_id:string}>(
+      `SELECT effective_from::text,base_site_id::text
+       FROM user_attendance_schedules
        WHERE id=$1 AND organization_id=$2 AND user_id=$3 FOR UPDATE`,
       [scheduleId,organizationId,userId],
     );
@@ -416,7 +417,11 @@ export async function DELETE(request:Request){
       return NextResponse.json({message:"Solo una vigencia futura puede eliminarse. Las jornadas iniciadas permanecen como historial."},{status:409});
     }
     await client.query("DELETE FROM user_attendance_schedules WHERE id=$1",[scheduleId]);
-    await audit(client,session,organizationId,"attendance_schedule_deleted",scheduleId,{user_id:userId,effective_from:target.rows[0].effective_from});
+    await audit(client,session,organizationId,"attendance_schedule_deleted",scheduleId,{
+      user_id:userId,
+      base_site_id:target.rows[0].base_site_id,
+      effective_from:target.rows[0].effective_from,
+    });
     await client.query("COMMIT");
     return NextResponse.json({deleted:true,message:"Vigencia futura eliminada."});
   }catch(error){

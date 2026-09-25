@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-25 — Asistencia operativa Fase 3: expediente individual y auditoría
+
+- Se añadió un expediente individual de Asistencia reutilizable desde Usuarios y desde el módulo Asistencia.
+- El expediente organiza Resumen, Jornada, Marcaciones, Biometría, Contingencias y Trazabilidad en pestañas independientes.
+- La nueva API de auditoría es de solo lectura y compone las fuentes autoritativas existentes; no se creó una segunda tabla de historial.
+- Marcaciones muestra sede, duración, modo estándar/contingencia, precisión/distancia GPS y actividades finalizadas vinculadas a la jornada.
+- Biometría expone estado y ciclo supervisado de enrolamiento/reenrolamiento/revocación sin devolver embeddings ni scores faciales/liveness crudos.
+- Contingencias conserva motivo, estado, revisión, aprobación/uso y notas.
+- Trazabilidad fusiona cronológicamente marcaciones, eventos biométricos, contingencias y cambios administrativos de jornada.
+- Los supervisores tenant con alcance parcial solo pueden seleccionar personas y recibir evidencia de sus sedes autorizadas.
+- La eliminación futura de una vigencia de jornada ahora conserva `base_site_id` en el evento de auditoría para mantener el filtrado por sede.
+- Se añadió `scripts/attendance-audit-smoke.mjs` y ejecución obligatoria en CI.
+- No se modificó la autoridad de `attendance_shifts`, enrolamiento biométrico ni revisión de contingencias; desplazamientos multi-sede permanecen para Fase 4.
+
 ## 2026-09-25 — Asistencia operativa Fase 2: jornadas individuales
 
 - Se añadió `user_attendance_schedules` como línea de tiempo versionada de jornada esperada por persona.

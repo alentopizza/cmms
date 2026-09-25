@@ -116,6 +116,18 @@ Template reuse is a copy operation, not live inheritance. Once saved, the User s
 
 The field user's Attendance screen shows today's expected hours and uses the schedule's base Site as the initial Site suggestion when possible. This planning record never blocks a valid attendance event outside the expected window; actual presence is preserved for later scheduled-vs-actual analysis.
 
+
+Authorized attendance supervisors also have a consolidated **attendance dossier** per person. The dossier is available from the User profile and Attendance module and is organized into Summary, Jornada, Marcaciones, Biometría, Contingencias and Trazabilidad.
+
+It is a read/composition surface over the existing sources of truth:
+- Jornada embeds the same versioned schedule administration from Phase 2;
+- Marcaciones shows actual attendance shifts, Site, duration, standard/contingency verification mode, GPS accuracy/distance and linked completed Activity count;
+- Biometría shows current verified/legacy/revoked state and supervised lifecycle events without exposing stored face embeddings or raw matching/liveness scores;
+- Contingencias shows exception reason, status, review, approval/use timestamps and notes;
+- Trazabilidad merges these operational/admin events chronologically for human review.
+
+The dossier never changes authorization by itself. Tenant supervisors with limited Site scope only receive matching evidence and matching people; Platform Owner/Superadmin continue to require an explicit Company context. Existing schedule, biometric and contingency mutation routes remain authoritative.
+
 The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
 
 - active assigned Work Orders;

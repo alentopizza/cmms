@@ -251,6 +251,95 @@
 :is(.phase8-attendance,.phase8-users) .attendance-schedule-row small{color:var(--color-text-muted);font-size:9px}
 :is(.phase8-attendance,.phase8-users) .attendance-schedule-row-actions{display:flex;gap:var(--space-2);flex-wrap:wrap}
 
+/* Attendance Phase 3 — per-user administration and audit ------------------ */
+:is(.phase8-attendance,.phase8-users) .attendance-audit-center{
+  display:grid;gap:var(--space-4);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-head>div:first-child{display:grid;gap:3px;min-width:0}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-head h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h3)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-head p{margin:0;color:var(--color-text-muted)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-person{max-width:560px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-loading{display:flex;justify-content:center;padding:var(--space-5)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-summary{display:grid;gap:var(--space-4)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-overview-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-overview-card{
+  display:grid;align-content:start;gap:var(--space-3);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-overview-card p{margin:0;color:var(--color-text-secondary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-overview-card>small{color:var(--color-text-muted)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-overview-card :is(.ds-button,.button){justify-self:start}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-card-head{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-2);align-items:center
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-card-head>div{display:grid;gap:2px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-card-head span{color:var(--color-text-muted);font-size:9px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-card-head strong{color:var(--color-text-primary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-card-icon{
+  width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-lg);
+  background:var(--color-surface-teal);color:var(--color-brand-secondary)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-next{
+  padding:var(--space-2);border-radius:var(--radius-md);background:var(--color-info-surface);color:var(--color-info-text)!important
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-recent,
+:is(.phase8-attendance,.phase8-users) .attendance-audit-timeline{
+  display:grid;gap:var(--space-3);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-list{display:grid;gap:var(--space-3)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record{
+  display:grid;gap:var(--space-3);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-head>div{display:grid;gap:2px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-head strong{color:var(--color-text-primary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-head span{color:var(--color-text-muted);font-size:9px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid>div{
+  display:grid;gap:2px;padding:var(--space-2);border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-lg);background:var(--color-surface)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid span,
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid small{color:var(--color-text-muted);font-size:8px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid strong{color:var(--color-text-primary);font-size:10px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-record>p{margin:0;color:var(--color-text-secondary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-note{color:var(--color-text-muted)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:var(--space-4)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state{
+  display:grid;align-content:start;gap:var(--space-3);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state h3{margin:2px 0;color:var(--color-text-primary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state p{margin:0;color:var(--color-text-secondary)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state>.ds-badge{justify-self:start}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dl{display:grid;gap:var(--space-2);margin:0}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dl>div{
+  display:grid;grid-template-columns:minmax(110px,.7fr) minmax(0,1.3fr);gap:var(--space-2);
+  padding-bottom:var(--space-2);border-bottom:1px solid var(--color-border-subtle)
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dt{color:var(--color-text-muted);font-size:9px}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dd{margin:0;color:var(--color-text-primary);font-weight:var(--font-weight-semibold)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state .button{
+  display:inline-flex;align-items:center;gap:var(--space-2);justify-self:start;text-decoration:none
+}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-center>.ds-tabs-wrap{min-width:0}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-center .ds-tab-panel{padding-top:var(--space-4)}
+:is(.phase8-attendance,.phase8-users) .attendance-audit-center .attendance-schedule-admin{box-shadow:none}
+
 /* Phase 1 — attendance administration context ----------------------------- */
 .phase8-attendance .attendance-admin-context{
   display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,520px);gap:var(--space-4);align-items:end;
@@ -298,6 +387,10 @@
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-context{grid-template-columns:1fr}
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-template{grid-template-columns:1fr}
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-template>div:last-child{justify-content:flex-start}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-overview-grid{grid-template-columns:1fr}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-biometric{grid-template-columns:1fr}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .phase8-users .user-ops-kpis,.phase8-users .entity-stat-grid.ds-stat-tiles,.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .phase8-attendance .attendance-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -317,6 +410,13 @@
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-row{grid-template-columns:1fr}
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-current-icon{display:none}
   :is(.phase8-attendance,.phase8-users) .attendance-schedule-form-head{align-items:stretch;flex-direction:column}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-head{align-items:stretch;flex-direction:column}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-kpis,
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid{grid-template-columns:1fr}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-record-head{align-items:stretch;flex-direction:column}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-card-head{grid-template-columns:auto minmax(0,1fr)}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-card-head>.ds-badge{grid-column:1/-1;justify-self:start}
+  :is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dl>div{grid-template-columns:1fr}
   .phase8-attendance .attendance-presence-status>.ds-badge{grid-column:1/-1;justify-self:start}
   .phase8-crews .ds-crew-leader{grid-template-columns:1fr}
   .phase8-crews .crew-leader-actions{display:flex;justify-content:flex-start}

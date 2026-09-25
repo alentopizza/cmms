@@ -590,6 +590,24 @@ The field Attendance view shows the current expected workday and prefers the con
 Multi-Site travel segments inside one jornada remain deferred to a later functional phase; the current `attendance_shifts` start/end model is unchanged in Phase 2.
 
 
+### Per-user attendance administration and audit
+
+**Asistencia operativa — Fase 3** adds a consolidated individual attendance dossier without adding a parallel attendance ledger.
+
+The shared `UserAttendanceAuditCenter` is available from the User **Asistencia** tab and the canonical Attendance module. It combines:
+- current/upcoming individual schedule and the existing schedule editor;
+- real attendance shifts with Site, duration, validation mode and GPS evidence;
+- biometric status plus supervised enrollment/reenrollment/revocation lifecycle;
+- contingency history and review evidence;
+- a chronological timeline that combines attendance, biometric, contingency and schedule-administration events.
+
+`/api/attendance/users/[id]/audit` is read-only and revalidates `attendance.manage`, Organization context, target membership/role and Site scope. A limited tenant supervisor only receives records from authorized Sites, and the Attendance person selector is filtered by the same scope.
+
+Biometric audit output is intentionally minimized: lifecycle/status and permitted Site/supervisor attribution are visible, while encrypted face embeddings and raw similarity/liveness scores are not exposed.
+
+Phase 3 does not change `attendance_shifts`, biometric mutation authority or contingency decisions. Multi-Site movement inside one open workday remains the next separate functional problem for Phase 4.
+
+
 ### Mobile field shell phase 4A
 
 Field mobile navigation now reserves four primary operational destinations (Dashboard, Orders, Attendance and Assets). **Más** is a bottom sheet for secondary authorized modules and account/system actions instead of reopening the full duplicate navigation drawer. The shell reserves safe-area-aware bottom space, and the Assets directory switches from the wide desktop table to compact mobile cards.

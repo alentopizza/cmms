@@ -67,7 +67,34 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-### Asistencia operativa · Fase 2
+### Asistencia operativa · Fase 3
+
+La administración de Asistencia ya dispone de un expediente individual consolidado por persona.
+
+- `components/UserAttendanceAuditCenter.tsx` se reutiliza en la pestaña Asistencia del Usuario y en `/dashboard/attendance`.
+- Pestañas: Resumen, Jornada, Marcaciones, Biometría, Contingencias y Trazabilidad.
+- Jornada reutiliza `UserAttendanceScheduleAdmin`; no existe un segundo editor.
+- `/api/attendance/users/[id]/audit` es un read model de solo lectura sobre las tablas autoritativas existentes.
+- El endpoint requiere `attendance.manage`, contexto de Organización y vuelve a aplicar scope de Sites.
+- Un Manager/Admin con alcance parcial no recibe personas ni eventos exclusivos de otras sedes.
+- Marcaciones conservan evidencia GPS y modo de validación estándar/contingencia.
+- El expediente biométrico muestra lifecycle y atribución permitida, pero no embeddings ni scores faciales/liveness crudos.
+- La timeline combina marcaciones, ciclo biométrico, contingencias y cambios de jornada para revisión humana.
+- La mutación de borrado de jornada futura ahora incluye `base_site_id` en `audit_log` para que la auditoría limitada por sede sea consistente.
+- No hubo migración de datos en Fase 3; el objetivo fue componer evidencia existente sin duplicarla.
+- Fase 4 queda como siguiente paso: desplazamientos multi-sede dentro de una misma jornada.
+
+Archivos clave:
+
+- `app/api/attendance/users/[id]/audit/route.ts`
+- `components/UserAttendanceAuditCenter.tsx`
+- `components/UserAttendanceScheduleAdmin.tsx`
+- `app/dashboard/attendance/page.tsx`
+- `app/dashboard/users/UserManagement.tsx`
+- `app/api/attendance/schedules/route.ts`
+- `scripts/attendance-audit-smoke.mjs`
+
+### Asistencia operativa · Fase 2 (base anterior)
 
 La jornada esperada ya se administra por persona como una línea de tiempo efectiva, separada de los marcajes reales.
 

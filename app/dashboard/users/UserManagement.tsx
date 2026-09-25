@@ -17,7 +17,7 @@ import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
-import UserAttendanceScheduleAdmin from "@/components/UserAttendanceScheduleAdmin";
+import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -172,7 +172,7 @@ function attendanceAdminHref(user:ManagedUser){
   return `/dashboard/attendance?${params.toString()}#biometric`;
 }
 
-function attendanceScheduleEligible(user:ManagedUser){
+function attendanceAuditEligible(user:ManagedUser){
   return user.platform_role==="user"
     && Boolean(user.role&&["admin","manager","technician","provider","external"].includes(user.role));
 }
@@ -756,18 +756,18 @@ export default function UserManagement({
                   <div>
                     <span className="eyebrow">Administración contextual</span>
                     <h3>Control de asistencia y biometría</h3>
-                    <p className="entity-panel-copy">Abre Asistencia con la empresa y esta persona ya seleccionadas. Desde allí puedes revisar la política, geocercas y realizar el enrolamiento facial supervisado sin volver a buscar al usuario.</p>
+                    <p className="entity-panel-copy">El expediente individual consolida jornada programada, biometría, marcaciones, contingencias y trazabilidad. El módulo Asistencia conserva la gestión supervisada de biometría, política y geocercas.</p>
                   </div>
                   <Badge variant={selectedUser.biometric_status==="verified"?"success":selectedUser.biometric_status==="revoked"?"danger":selectedUser.biometric_status==="legacy"?"warning":"neutral"} icon="attendance">{biometricStatusLabel(selectedUser.biometric_status)}</Badge>
                 </div>
                 {selectedUser.organization_id
                   ?<div className="user-attendance-admin-actions">
                     <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Enrolar biometría inicial"}</Link>
-                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}#schedule`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
+                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}#attendance-audit`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
               </div>
-              {selectedUser.organization_id&&attendanceScheduleEligible(selectedUser)&&<UserAttendanceScheduleAdmin
+              {selectedUser.organization_id&&attendanceAuditEligible(selectedUser)&&<UserAttendanceAuditCenter
                 key={selectedUser.id}
                 organizationId={selectedUser.organization_id}
                 people={[{id:selectedUser.id,full_name:selectedUser.full_name,role:roleName(roleKey(selectedUser))}]}

@@ -91,3 +91,4 @@ jobs:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
           APP_ADMIN_PASSWORD: ci-password
           AUTH_SECRET: ci-secret-not-for-production
+      - run: node scripts/performance-build-report.mjs

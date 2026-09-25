@@ -99,10 +99,17 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
 
     if(session.userId){
       const shift=await client.query<{id:string}>(
-        `SELECT id FROM attendance_shifts
-         WHERE user_id=$1 AND organization_id=$2 AND site_id=$3 AND status='open'
-           AND check_in_at<=now()
-         ORDER BY check_in_at DESC LIMIT 1`,
+        `SELECT s.id
+         FROM attendance_shifts s
+         JOIN attendance_shift_segments segment
+           ON segment.attendance_shift_id=s.id
+          AND segment.ended_at IS NULL
+          AND segment.segment_type='site'
+          AND segment.site_id=$3
+         WHERE s.user_id=$1 AND s.organization_id=$2 AND s.status='open'
+           AND s.check_in_at<=now()
+         ORDER BY s.check_in_at DESC
+         LIMIT 1`,
         [session.userId,organizationId,siteId],
       );
       const eventType=status==="in_progress" ? "started" : status==="completed" ? "completed" : "status_update";

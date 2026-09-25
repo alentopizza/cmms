@@ -130,8 +130,8 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Enrollment administration is exception-based: show verified/pending/attention coverage and review only pending identity requests. Do not require routine human review of already verified workers or turn coverage states into personnel rankings.
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
-- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, supervised biometrics, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
-- Bootstrap Platform Owner has no database user row; supervised enrollment/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
+- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, biometric request review/recovery, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
+- Bootstrap Platform Owner has no database user row; biometric approval/recovery/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
 - Individual attendance schedules are effective-dated expected-work evidence. Never overwrite a started/past schedule retroactively; create a later vigencia instead.
 - Company/Site schedules may seed an individual schedule only as a copied snapshot. Later Company/Site schedule changes must not silently rewrite a person's historical or future individual schedule.

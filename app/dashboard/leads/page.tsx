@@ -10,6 +10,9 @@ import { CountrySelect } from "@/components/InternationalFields";
 import { countryName } from "@/lib/international-catalog";
 import { getCustomizationSummary } from "@/lib/customization";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import UiIcon from "@/components/UiIcon";
 
 type Lead = {
   id:string;
@@ -23,6 +26,10 @@ type Lead = {
   status:"new"|"contacted"|"qualified"|"closed"|"discarded";
   created_at:string;
 };
+
+function initials(value:string){
+  return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase()||"L";
+}
 
 const INTEREST_LABELS:Record<string,string>={
   demo:"Demostración",
@@ -137,7 +144,66 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               ]},
             ]}
           />}
-        </article>)}</div>}/>} 
+        </article>)}</div>} list={<StaticDataTable
+          className="lead-directory-list"
+          caption="Listado de leads"
+          columns={[
+            {key:"lead",label:"Lead",width:"30%"},
+            {key:"status",label:"Estado"},
+            {key:"interest",label:"Origen / interés"},
+            {key:"contact",label:"Contacto"},
+            {key:"country",label:"País"},
+            {key:"date",label:"Fecha"},
+            {key:"followup",label:"Seguimiento"},
+            {key:"actions",label:"Acciones",align:"end"},
+          ]}
+          rows={leads.rows.map(lead=>({
+            id:lead.id,
+            recordProps:{
+              "data-module-record":true,
+              "data-status":lead.status,
+              "data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" "),
+            },
+            cells:{
+              lead:<EntityIdentityCell fallback={initials(lead.full_name)} icon="lead" variant="avatar" title={lead.full_name} subtitle={lead.company_name} meta={lead.email}/>,
+              status:<span className={"lead-status lead-status-"+lead.status}>{lead.status}</span>,
+              interest:INTEREST_LABELS[lead.interest]||lead.interest,
+              contact:lead.phone||lead.email,
+              country:countryName(lead.country_code)||"Sin registrar",
+              date:new Date(lead.created_at).toLocaleDateString("es-CO"),
+              followup:<form className="lead-status-form lead-status-form-compact" method="post" action={"/api/leads/"+lead.id+"/status"}>
+                <label><span className="ds-visually-hidden">Estado de seguimiento</span>
+                  <select name="status" defaultValue={lead.status}>
+                    <option value="new">Nuevo</option>
+                    <option value="contacted">Contactado</option>
+                    <option value="qualified">Calificado</option>
+                    <option value="closed">Cerrado</option>
+                    <option value="discarded">Descartado</option>
+                  </select>
+                </label>
+                <button className="ds-list-action" type="submit" title="Actualizar estado" data-tooltip="Actualizar estado" aria-label={"Actualizar estado de "+lead.full_name}><UiIcon name="check" size={15}/></button>
+              </form>,
+              actions:<ListQuickActions>
+                <a className="ds-list-action" href={"mailto:"+lead.email} title="Enviar correo" data-tooltip="Enviar correo" aria-label={"Enviar correo a "+lead.full_name}><UiIcon name="mail" size={15}/></a>
+                {owner&&<OwnerRecordActions
+                  table="sales_leads"
+                  id={lead.id}
+                  label={lead.full_name}
+                  fields={[
+                    {name:"full_name",label:"Nombre",value:lead.full_name},
+                    {name:"company_name",label:"Empresa",value:lead.company_name},
+                    {name:"email",label:"Correo",value:lead.email},
+                    {name:"phone",label:"Teléfono",value:lead.phone||""},
+                    {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea"},
+                    {name:"status",label:"Estado",value:lead.status,type:"select",options:[
+                      {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
+                    ]},
+                  ]}
+                />}
+              </ListQuickActions>,
+            },
+          }))}
+        />}/>} 
     </section>
   </>;
 }

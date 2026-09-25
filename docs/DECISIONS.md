@@ -563,3 +563,31 @@ The project will not adopt a big-bang redesign. Migration follows `docs/DESIGN_M
 - legacy styles may coexist temporarily with V2 via controlled compatibility aliases;
 - replacement of icon infrastructure or introduction of a third-party UI/CSS framework requires a separate ADR;
 - each module migration includes responsive/accessibility review and documentation synchronization.
+
+
+## ADR-038 — Attendance schedules and intra-shift displacements are separate evidence layers
+
+**Status:** Accepted — 2026-09-24.
+
+### Context
+
+A field technician can begin work at one authorized Site, travel during the same working day and finish at another Site. The original attendance model stored one Site on the shift and therefore forced check-out at the same Site where check-in occurred. The product also lacked a per-user weekly schedule even though Company/Site business hours already existed.
+
+### Decision
+
+- Introduce `user_attendance_schedules` as the planned weekly schedule for an individual. It is distinct from Company/Site `business_schedule`, which describes operating hours of a place/business.
+- Snapshot the active user schedule onto a shift at check-in so later schedule edits do not rewrite historical attendance evidence.
+- Preserve `attendance_shifts.site_id` as the immutable origin Site.
+- Add `attendance_shifts.current_site_id` as the last confirmed operating Site and `check_out_site_id` as the Site where the shift actually ended.
+- Introduce immutable-style `attendance_displacements` evidence for explicit origin → destination movement. Departure and arrival are separate events with timestamps and available GPS/geofence evidence.
+- A Site transition becomes authoritative only after arrival is validated at the destination. Check-out is permitted at the current confirmed Site and blocked while a displacement remains in transit.
+- Attendance displacement events do not create continuous tracking. Reaction remains the operational connected-session tracking subsystem.
+- User schedules are descriptive/planning evidence. They do not by themselves make automated disciplinary, payroll or employment decisions.
+
+### Consequences
+
+- A shift can legitimately start and end at different Sites while retaining the full path of confirmed Site changes.
+- The original Site remains query-compatible for existing reports while new reporting can distinguish origin, current/final Site and travel periods.
+- Administrators can configure schedules and supervised biometrics from the User profile or Attendance workspace using the same server-authoritative data.
+- Platform operators must explicitly select the customer Organization when administering Attendance; server routes revalidate that target Organization and Site scope.
+- Future payroll/overtime rules, if introduced, require a separate product decision and must not be inferred automatically from planned schedules or displacement duration.

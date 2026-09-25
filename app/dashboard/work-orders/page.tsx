@@ -12,6 +12,7 @@ import { WorkOrderCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
 
 type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
@@ -170,7 +171,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
       <KpiCard label="Completadas" value={String(completedOrders)} hint="en el conjunto visible" icon="check" tone="success"/>
     </MetricGrid>
     <section className="section work-order-directory-section">
-      <div className="work-order-mobile-list">
+      <CollectionView storageKey="work-orders" label="Vista de órdenes" grid={<div className="work-order-mobile-list" data-collection-grid>
         {orders.rows.map(w=><WorkOrderCard
           key={w.id}
           id={w.id}
@@ -198,8 +199,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
             ]},
           ]}/>:undefined}
         />)}
-      </div>
-      <StaticDataTable
+      </div>} list={<StaticDataTable
         className="work-order-directory-table"
         caption="Órdenes de trabajo visibles"
         columns={[
@@ -229,6 +229,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           ]}/>}:{})
         }}))}
         empty={(providerOnly||externalOnly||creationGate.ready)?<EmptyState icon="file" title="No hay órdenes disponibles" description={providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"La jerarquía está lista. Usa Agregar para crear la primera orden."}/>:undefined}
-      /></section>
+      />}/>
+    </section>
   </div>;
 }

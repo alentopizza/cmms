@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-25 — Documentos de Empresa · previsualización, gestión y visor completo
+
+- La pestaña **Documentos** conserva `CompanyDocumentWorkspace` y los endpoints/documentos existentes; no se creó una pantalla, servicio ni fuente de datos paralela.
+- El workspace diferencia tres niveles: selección de fila para previsualización contextual, tabla para gestión y **Ver documento** para abrir un visor amplio en el `Modal` oficial del UI Kit.
+- La misma composición `DocumentViewer` se reutiliza en modo contextual y modal; PDF/imágenes conservan zoom, ajuste, rotación disponible, descarga e impresión.
+- **Compartir documento** fue retirado del toolbar, filas y código exclusivo asociado sin alterar permisos generales ni servicios documentales compartidos.
+- La tabla reduce las acciones visibles a **Ver / Descargar / Más acciones**; Descargar no cambia selección y Más acciones conserva el Drawer existente de edición, archivo/restauración y eliminación autorizada.
+- El split de escritorio pasa a aproximadamente **40% previsualización / 60% listado**; en anchos intermedios usa **45% / 55%** y por debajo de 900 px mantiene Listado → Previsualización.
+- El modal conserva el documento seleccionado, filtros y estado del listado al cerrarse; usa cierre X/Escape y gestión de foco del componente `Modal` existente.
+- No hubo cambios de base de datos, endpoints, consultas, RBAC ni permisos.
+- `scripts/company-documents-fullwidth-smoke.mjs` protege ahora el split, reutilización del visor, modal y retirada completa de Compartir.
 ## 2026-09-25 — Rediseño aprobado del directorio de Cuadrillas
 
 - La vista principal de Cuadrillas adopta el layout aprobado sin crear una página, servicio, endpoint ni modelo paralelo.

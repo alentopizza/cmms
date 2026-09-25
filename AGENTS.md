@@ -127,6 +127,11 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, supervised biometrics, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
 - Bootstrap Platform Owner has no database user row; supervised enrollment/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
+- Individual attendance schedules are effective-dated expected-work evidence. Never overwrite a started/past schedule retroactively; create a later vigencia instead.
+- Company/Site schedules may seed an individual schedule only as a copied snapshot. Later Company/Site schedule changes must not silently rewrite a person's historical or future individual schedule.
+- A scheduled base Site must belong to the target Organization, be available to the target user, and remain inside the supervising tenant user's Site scope. Platform operators still require explicit Organization context.
+- Schedule ranges for one user must not overlap. Serialize timeline mutations server-side so concurrent requests cannot create conflicting vigencias.
+- Scheduled hours are descriptive/planning data, not an attendance authorization gate. Do not block a valid real check-in/check-out merely because it occurs outside the scheduled window; preserve the real event for later scheduled-vs-actual reporting.
 
 
 ## Company enterprise-profile invariants

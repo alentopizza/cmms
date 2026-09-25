@@ -599,7 +599,7 @@ export default function UserManagement({
               <Badge variant={user.active?"success":"neutral"} className="user-card-status">{user.active?"Activo":"Inactivo"}</Badge>
             </span>
             <span className="user-card-avatar-row">
-              <span className="user-card-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</span>
+              <span className="user-card-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" loading="lazy" decoding="async" /> : initials(user.full_name)}</span>
             </span>
             <span className="user-card-identity">
               <strong>{user.full_name}</strong>

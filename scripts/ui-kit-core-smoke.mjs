@@ -24,7 +24,7 @@ for(const symbol of [
   "Button","IconButton","SplitButton","Input","SearchInput","NumberInput","CurrencyInput","PasswordInput",
   "Textarea","Select","Checkbox","Radio","Switch","MultiSelect","SearchSelect","AsyncSelect","Badge",
   "StatusIndicator","Card","Avatar","Alert","Toast","EmptyState","Spinner","Skeleton","LoadingCard",
-  "LoadingTable","LoadingPage","Tabs","Pills","SegmentedControl","Breadcrumb","ModuleNavigation",
+  "LoadingTable","LoadingPage","Tabs","Pills","SegmentedControl","Breadcrumb","ModuleNavigation","Stepper",
   "Modal","Drawer","Tooltip","Dropdown","FileUpload",
 ]){
   if(!barrel.includes(symbol))throw new Error("UI Kit barrel does not export "+symbol);
@@ -37,7 +37,7 @@ for(const [file,source] of componentSources){
 }
 
 const coreCss=fs.readFileSync("app/ui-kit-core.css","utf8");
-for(const selector of [".ds-button",".ds-input",".ds-card",".ds-modal",".ds-drawer",".ds-tabs",".ds-alert",".ds-file-upload"]){
+for(const selector of [".ds-button",".ds-input",".ds-card",".ds-modal",".ds-drawer",".ds-tabs",".ds-stepper",".ds-alert",".ds-file-upload"]){
   if(!coreCss.includes(selector))throw new Error("Missing UI Core style selector "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(coreCss))throw new Error("UI Core CSS must consume Design Tokens instead of hardcoded hex colors");

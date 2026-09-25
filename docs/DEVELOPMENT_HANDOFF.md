@@ -67,6 +67,26 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
+### Listados · identidad visual compacta y acciones rápidas
+
+El patrón Cuadrícula/Listado conserva ahora la identidad visual de la entidad también en modo Lista.
+
+- `components/ui-kit/CollectionIdentity.tsx` es el primitive oficial para primera columna y acciones compactas.
+- Listado debe usar filas ERP densas; no volver a convertir tarjetas de grid en tarjetas apiladas de ancho completo cuando la entidad requiera identidad visual.
+- Empresas: logo de organización.
+- Proveedores: logo de proveedor.
+- Usuarios: avatar/foto.
+- Cuadrillas: avatar/foto del líder.
+- Activos: imagen principal.
+- Órdenes: imagen del activo relacionado si existe; si no, icono Work Order.
+- Rutinas: imagen del activo/equipo relacionado si existe; si no, icono Maintenance.
+- Inventario: imagen del producto/material.
+- Leads: iniciales/placeholder actual mientras el modelo no provea foto/logo relacionado.
+- Ubicaciones mantiene la tabla aprobada y no exige imagen.
+- Acciones rápidas reutilizan únicamente las acciones reales y permisos ya existentes en cada módulo.
+- Órdenes/Rutinas solo extendieron sus SELECT actuales con metadatos de imagen del activo; no hay query, endpoint ni servicio paralelo.
+- `scripts/view-mode-toggle-smoke.mjs` protege este contrato.
+
 ### Directorios · patrón global Cuadrícula / Listado
 
 Se estableció un patrón común de presentación para los directorios principales sin modificar sus fuentes autoritativas ni crear consultas paralelas.

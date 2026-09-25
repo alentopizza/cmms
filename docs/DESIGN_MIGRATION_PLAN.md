@@ -87,6 +87,8 @@ Validación:
 
 ## Fase 3 — Shell y navegación global
 
+**Estado: implementada.**
+
 Migrar:
 
 - application shell;
@@ -287,4 +289,10 @@ The UI Core component contract is now available from `components/ui-kit/index.ts
 
 Existing high-value wrappers were absorbed instead of duplicated. No API/DB/RBAC/business-flow changes were introduced.
 
-**Next implementation phase: Phase 3 — Shell and global navigation.**
+**Phase 3 completion checkpoint — 2026-09-24**
+
+Phase 3 is implemented. The authenticated shell now consumes the V2 token layer through `app/shell-v2.css`, global navigation uses the canonical `UiIcon` SVG vocabulary, the contextual header includes every primary module (including Requisitions), account actions use UI Kit Avatar/iconography, and mobile drawer/field navigation preserves the existing role-aware behavior.
+
+RBAC, routes, white-label action tokens, sidebar ordering/collapse persistence and light/dark/system theme behavior are unchanged.
+
+**Next implementation phase: Phase 4 — Shared Data UI.**

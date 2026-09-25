@@ -760,3 +760,35 @@ Phase 3 — global shell/navigation migration. Preserve:
 - current routes/RBAC;
 - account/config/help behavior;
 - Organization branding and light/dark/system theme.
+
+
+## 27. DESWEB global shell Phase 3 checkpoint — 2026-09-24
+
+Phase 3 is implemented on top of Foundations + UI Core.
+
+### Runtime files
+
+- `app/shell-v2.css`: scoped V2 shell/navigation override;
+- `components/DashboardSidebar.tsx`: reorderable/collapsible desktop Sidebar, mobile drawer and field-role bottom navigation;
+- `components/DashboardChrome.tsx`: contextual section identity, Help/Settings and account menu;
+- `components/DashboardNavigation.tsx`: typed `UiIcon` navigation contract;
+- `components/UiIcon.tsx`: expanded official shell icon set;
+- `scripts/shell-v2-smoke.mjs`: Phase 3 CI contract.
+
+### Preserved invariants
+
+- RBAC and route visibility remain server-authoritative;
+- Sidebar order/collapse persistence is unchanged;
+- bootstrap/local-storage fallback is unchanged;
+- Organization white-label semantic action colors are preserved;
+- Technician/External field navigation remains bottom-nav + More;
+- broad roles remain drawer-based on mobile;
+- light/dark/system preferences remain unchanged.
+
+### Corrected during migration
+
+Requisitions now has explicit contextual Header metadata instead of falling back to the generic product identity.
+
+### Next
+
+Phase 4 — Shared Data UI: Search, filters, DataTable, pagination, row/bulk actions, KPI, chart palette, timeline and progress. Do not begin module-by-module visual migration before these shared patterns are established.

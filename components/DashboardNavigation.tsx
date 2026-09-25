@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 
 export type DashboardNavItem = {
-  icon: string;
+  icon: UiIconName;
   label: string;
   href: string;
 };
@@ -27,7 +28,7 @@ export function SidebarNavigation({ items }: { items: DashboardNavItem[] }) {
         className={active ? "active" : ""}
         aria-current={active ? "page" : undefined}
       >
-        <span className="nav-icon">{item.icon}</span>
+        <span className="nav-icon"><UiIcon name={item.icon} size={17}/></span>
         <span>{item.label}</span>
       </Link>;
     })}

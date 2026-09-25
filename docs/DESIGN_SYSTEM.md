@@ -572,3 +572,24 @@ New modules must consume the official primitives from `@/components/ui-kit`; the
 UI Core uses semantic/adaptive tokens for light and dark themes, visible focus states, responsive layouts and reduced-motion behavior. The implementation intentionally contains no local hexadecimal palette values.
 
 Legacy wrappers may preserve existing APIs while delegating to UI Core during migration.
+
+
+## 28. Global shell/navigation runtime — Phase 3
+
+The authenticated shell is now a Design System V2 consumer.
+
+Canonical implementation:
+- `app/shell-v2.css` for token-driven global shell styling;
+- `components/DashboardSidebar.tsx` for desktop/mobile role-aware navigation behavior;
+- `components/DashboardChrome.tsx` for contextual header/account actions;
+- `components/UiIcon.tsx` for the official outline SVG icon vocabulary.
+
+Rules:
+- shell styles use semantic tokens, not local hex palettes;
+- Organization white-label continues through `--color-action-primary` and `--color-action-accent`;
+- all global interactive controls require visible focus;
+- responsive drawer and field bottom navigation are first-class layouts;
+- reduced-motion behavior is mandatory;
+- module authorization and user navigation preferences remain unchanged by visual migration.
+
+Phase 4 begins shared Data UI; it must build on this shell rather than invent module-local header/filter systems.

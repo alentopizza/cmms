@@ -656,3 +656,25 @@ Legacy compatibility wrappers now delegate to UI Kit without changing their publ
 The live `/ui-kit` page now documents Foundations plus Buttons, Forms, Cards/Status, Navigation, Overlays and Feedback using the real components.
 
 DataTable/Pagination/Search-Filter/KPI/Timeline/Progress remain Phase 4. ERP-specific Business UI remains Phase 5.
+
+
+## 28. Phase 3 shell/navigation implementation status
+
+**Status: implemented.**
+
+The authenticated application shell now uses the V2 token layer through `app/shell-v2.css`. Phase 3 intentionally scopes styling under `.desweb-shell-v2` so legacy module interiors can continue their progressive migration without a global rewrite.
+
+Implemented shell contracts:
+
+- sidebar uses canonical `UiIcon` SVG icons instead of module Unicode glyphs;
+- contextual header, Help, Settings and account actions use the same icon vocabulary;
+- account identity consumes the official UI Kit `Avatar`;
+- Requisitions has explicit contextual-header metadata;
+- desktop collapse and user-defined module ordering remain persisted exactly as before;
+- role-aware mobile drawer and Technician/External bottom navigation remain intact;
+- Organization white-label continues through semantic action tokens;
+- visible keyboard focus and reduced-motion behavior are part of the shell stylesheet;
+- `ModuleNavigation` now exposes `aria-current` and supports nested-route active state;
+- CI runs `scripts/shell-v2-smoke.mjs`.
+
+Phase 4 owns Search/Filter/DataTable/KPI/timeline/progress standardization. Phase 3 does not migrate internal module content.

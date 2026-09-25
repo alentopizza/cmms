@@ -839,3 +839,14 @@ High-value legacy components were converted to compatibility wrappers so existin
 No application business logic, DB schema, API contract or authorization rule changes as part of this phase.
 
 The next visual program step is Phase 3: migrate the global application shell/sidebar/header/mobile navigation to the V2 UI grammar while preserving user ordering, collapse preferences, RBAC, Personalization and theme behavior.
+
+
+### DESWEB V2 global shell/navigation — Phase 3 implemented (2026-09-24)
+
+The authenticated ERP shell has moved to the Design System V2 grammar without changing operational authorization or routing.
+
+The V2 shell is a scoped compatibility layer in `app/shell-v2.css`, loaded after Design Tokens and UI Core. It normalizes desktop Sidebar, contextual Header/account controls, responsive drawer and field-role bottom navigation while legacy module interiors continue to migrate by phase.
+
+Global module/navigation glyphs now use the canonical `UiIcon` SVG system. Sidebar order/collapse persistence, RBAC filtering, Organization white-label action tokens and light/dark/system preferences remain authoritative and unchanged. Requisitions now has an explicit contextual-header identity instead of falling back to the generic product title.
+
+Next visual step: Phase 4 Shared Data UI.

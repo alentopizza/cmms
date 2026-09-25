@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 3: shell y navegación global
+
+### Changed
+
+- Migrated the authenticated application shell to a scoped V2 token-driven stylesheet loaded after UI Core.
+- Replaced legacy Unicode module glyphs in Sidebar, contextual Header, mobile navigation and account actions with the canonical `UiIcon` SVG system.
+- Preserved user-orderable/collapsible Sidebar behavior, RBAC filtering, routes, Organization white-label action tokens and light/dark/system theme preferences.
+- Kept role-aware responsive behavior: drawer navigation for broad roles and bottom navigation + More sheet for field roles.
+- Updated account identity to use the official UI Kit Avatar.
+- Added explicit Requisitions metadata to the contextual Header.
+- Improved `ModuleNavigation` nested-route active semantics and `aria-current`.
+- Added visible focus/reduced-motion contracts to the Phase 3 shell layer.
+
+### Validation
+
+- Added `scripts/shell-v2-smoke.mjs` and CI coverage for V2 shell load order, icon migration, Requisitions context metadata, token-only shell CSS, focus, responsive and reduced-motion requirements.
+
+
 ## 2026-09-24 — DESWEB UI Kit · Fase 2 UI Core
 
 ### Added

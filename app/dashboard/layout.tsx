@@ -15,21 +15,21 @@ export const dynamic = "force-dynamic";
 type NavItem = DashboardNavItem & { id: string; permission?: Permission; anyPermissions?: Permission[] };
 
 const navItems: NavItem[] = [
-  { id: "dashboard", icon: "▦", label: "Dashboard", href: "/dashboard" },
-  { id: "companies", icon: "◫", label: "Empresas", href: "/dashboard/companies", permission: "companies.manage" },
-  { id: "leads", icon: "✦", label: "Leads", href: "/dashboard/leads", permission: "leads.manage" },
-  { id: "locations", icon: "⌂", label: "Ubicaciones", href: "/dashboard/locations", permission: "locations.manage" },
-  { id: "suppliers", icon: "▣", label: "Proveedores", href: "/dashboard/suppliers", permission: "suppliers.manage" },
-  { id: "users", icon: "◎", label: "Usuarios", href: "/dashboard/users", permission: "users.manage" },
-  { id: "crews", icon: "◉", label: "Cuadrillas", href: "/dashboard/crews", permission: "crews.manage" },
-  { id: "attendance", icon: "◌", label: "Asistencia", href: "/dashboard/attendance", anyPermissions: ["attendance.self","attendance.manage","attendance.reports"] },
-  { id: "reaction", icon: "⌖", label: "Reacción", href: "/dashboard/reaction", permission: "reaction.view" },
-  { id: "assets", icon: "◇", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },
-  { id: "work_orders", icon: "✓", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
-  { id: "maintenance", icon: "↻", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
-  { id: "inventory", icon: "▤", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
-  { id: "requisitions", icon: "▧", label: "Requisiciones", href: "/dashboard/requisitions", permission: "requisitions.read" },
-  { id: "help", icon: "?", label: "Manual / Ayuda", href: "/dashboard/help" },
+  { id: "dashboard", icon: "dashboard", label: "Dashboard", href: "/dashboard" },
+  { id: "companies", icon: "company", label: "Empresas", href: "/dashboard/companies", permission: "companies.manage" },
+  { id: "leads", icon: "lead", label: "Leads", href: "/dashboard/leads", permission: "leads.manage" },
+  { id: "locations", icon: "location", label: "Ubicaciones", href: "/dashboard/locations", permission: "locations.manage" },
+  { id: "suppliers", icon: "supplier", label: "Proveedores", href: "/dashboard/suppliers", permission: "suppliers.manage" },
+  { id: "users", icon: "user", label: "Usuarios", href: "/dashboard/users", permission: "users.manage" },
+  { id: "crews", icon: "crew", label: "Cuadrillas", href: "/dashboard/crews", permission: "crews.manage" },
+  { id: "attendance", icon: "attendance", label: "Asistencia", href: "/dashboard/attendance", anyPermissions: ["attendance.self","attendance.manage","attendance.reports"] },
+  { id: "reaction", icon: "reaction", label: "Reacción", href: "/dashboard/reaction", permission: "reaction.view" },
+  { id: "assets", icon: "asset", label: "Activos", href: "/dashboard/assets", permission: "assets.read" },
+  { id: "work_orders", icon: "work-order", label: "Órdenes", href: "/dashboard/work-orders", permission: "work_orders.read" },
+  { id: "maintenance", icon: "maintenance", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
+  { id: "inventory", icon: "inventory", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
+  { id: "requisitions", icon: "requisition", label: "Requisiciones", href: "/dashboard/requisitions", permission: "requisitions.read" },
+  { id: "help", icon: "help", label: "Manual / Ayuda", href: "/dashboard/help" },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -88,7 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? "field"
     : "drawer";
 
-  return <div className={"shell mobile-nav-" + mobileNavigationMode} style={shellStyle}>
+  return <div className={"shell desweb-shell-v2 mobile-nav-" + mobileNavigationMode} style={shellStyle}>
     {can(session,"reaction.track") && <TechnicianLocationTracker userName={session.fullName} />}
     <DashboardSidebar
       items={navigationItems}

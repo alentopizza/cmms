@@ -3,34 +3,37 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { Avatar } from "@/components/ui-kit/Avatar";
 
 type Section = {
   label: string;
   eyebrow: string;
-  icon: string;
+  icon: UiIconName;
 };
 
 const sections: Array<{ match: (pathname: string) => boolean; section: Section }> = [
-  { match: pathname => pathname === "/dashboard", section: { label: "Dashboard", eyebrow: "Indicadores", icon: "▦" } },
-  { match: pathname => pathname.startsWith("/dashboard/companies"), section: { label: "Empresas", eyebrow: "Administración", icon: "◫" } },
-  { match: pathname => pathname.startsWith("/dashboard/leads"), section: { label: "Leads", eyebrow: "Comercial", icon: "✦" } },
-  { match: pathname => pathname.startsWith("/dashboard/locations"), section: { label: "Ubicaciones", eyebrow: "Estructura física", icon: "⌂" } },
-  { match: pathname => pathname.startsWith("/dashboard/suppliers"), section: { label: "Proveedores", eyebrow: "Abastecimiento y terceros", icon: "▣" } },
-  { match: pathname => pathname.startsWith("/dashboard/users"), section: { label: "Usuarios y roles", eyebrow: "Control de acceso", icon: "◎" } },
-  { match: pathname => pathname.startsWith("/dashboard/crews"), section: { label: "Cuadrillas", eyebrow: "Ejecución operativa", icon: "◉" } },
-  { match: pathname => pathname.startsWith("/dashboard/attendance"), section: { label: "Asistencia", eyebrow: "Operación en campo", icon: "◌" } },
-  { match: pathname => pathname.startsWith("/dashboard/reaction"), section: { label: "Reacción", eyebrow: "Coordinación de contingencias", icon: "⌖" } },
-  { match: pathname => pathname.startsWith("/dashboard/assets"), section: { label: "Activos y equipos", eyebrow: "Gestión de activos", icon: "◇" } },
-  { match: pathname => pathname.startsWith("/dashboard/work-orders"), section: { label: "Órdenes de trabajo", eyebrow: "Operación", icon: "✓" } },
-  { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "↻" } },
-  { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "▤" } },
-  { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "⚙" } },
-  { match: pathname => pathname.startsWith("/dashboard/preferences"), section: { label: "Mi configuración", eyebrow: "Cuenta", icon: "◐" } },
-  { match: pathname => pathname.startsWith("/dashboard/help"), section: { label: "Manual / Ayuda", eyebrow: "Centro de ayuda", icon: "?" } },
+  { match: pathname => pathname === "/dashboard", section: { label: "Dashboard", eyebrow: "Indicadores", icon: "dashboard" } },
+  { match: pathname => pathname.startsWith("/dashboard/companies"), section: { label: "Empresas", eyebrow: "Administración", icon: "company" } },
+  { match: pathname => pathname.startsWith("/dashboard/leads"), section: { label: "Leads", eyebrow: "Comercial", icon: "lead" } },
+  { match: pathname => pathname.startsWith("/dashboard/locations"), section: { label: "Ubicaciones", eyebrow: "Estructura física", icon: "location" } },
+  { match: pathname => pathname.startsWith("/dashboard/suppliers"), section: { label: "Proveedores", eyebrow: "Abastecimiento y terceros", icon: "supplier" } },
+  { match: pathname => pathname.startsWith("/dashboard/users"), section: { label: "Usuarios y roles", eyebrow: "Control de acceso", icon: "user" } },
+  { match: pathname => pathname.startsWith("/dashboard/crews"), section: { label: "Cuadrillas", eyebrow: "Ejecución operativa", icon: "crew" } },
+  { match: pathname => pathname.startsWith("/dashboard/attendance"), section: { label: "Asistencia", eyebrow: "Operación en campo", icon: "attendance" } },
+  { match: pathname => pathname.startsWith("/dashboard/reaction"), section: { label: "Reacción", eyebrow: "Coordinación de contingencias", icon: "reaction" } },
+  { match: pathname => pathname.startsWith("/dashboard/assets"), section: { label: "Activos y equipos", eyebrow: "Gestión de activos", icon: "asset" } },
+  { match: pathname => pathname.startsWith("/dashboard/work-orders"), section: { label: "Órdenes de trabajo", eyebrow: "Operación", icon: "work-order" } },
+  { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "maintenance" } },
+  { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "inventory" } },
+  { match: pathname => pathname.startsWith("/dashboard/requisitions"), section: { label: "Requisiciones", eyebrow: "Abastecimiento", icon: "requisition" } },
+  { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "settings" } },
+  { match: pathname => pathname.startsWith("/dashboard/preferences"), section: { label: "Mi configuración", eyebrow: "Cuenta", icon: "preferences" } },
+  { match: pathname => pathname.startsWith("/dashboard/help"), section: { label: "Manual / Ayuda", eyebrow: "Centro de ayuda", icon: "help" } },
 ];
 
 function currentSection(pathname: string) {
-  return sections.find(item => item.match(pathname))?.section || { label: "Desweb CMMS", eyebrow: "Plataforma", icon: "D" };
+  return sections.find(item => item.match(pathname))?.section || { label: "Desweb CMMS", eyebrow: "Plataforma", icon: "dashboard" };
 }
 
 export function CurrentSectionHeader({
@@ -53,7 +56,7 @@ export function CurrentSectionHeader({
   return <header className="context-header">
     <div id="context-header-mobile-nav" className="context-header-mobile-nav-slot" />
     <div className="context-header-left">
-      <div className="context-header-icon" aria-hidden="true">{section.icon}</div>
+      <div className="context-header-icon" aria-hidden="true"><UiIcon name={section.icon} size={19}/></div>
       <div className="context-header-copy">
         <span>{contextualEyebrow}</span>
         <strong>{section.label}</strong>
@@ -62,8 +65,8 @@ export function CurrentSectionHeader({
     </div>
     <div id="context-header-tools" className="context-header-tools-slot" />
     <div className="context-header-account-zone">
-      <Link className="context-header-utility" href="/dashboard/help" title="Manual / Ayuda" aria-label="Manual / Ayuda">?</Link>
-      {canConfigure && <Link className="context-header-utility" href="/dashboard/settings" title="Configuración" aria-label="Configuración">⚙</Link>}
+      <Link className="context-header-utility" href="/dashboard/help" title="Manual / Ayuda" aria-label="Manual / Ayuda"><UiIcon name="help" size={17}/></Link>
+      {canConfigure && <Link className="context-header-utility" href="/dashboard/settings" title="Configuración" aria-label="Configuración"><UiIcon name="settings" size={17}/></Link>}
       <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} placement="header" avatarSrc={avatarSrc} />
     </div>
   </header>;
@@ -112,20 +115,20 @@ export function SidebarAccountMenu({
         <small>{role}</small>
       </div>
       <Link role="menuitem" href="/dashboard/preferences" onClick={() => setOpen(false)}>
-        <span className="account-menu-icon">◐</span>
+        <span className="account-menu-icon"><UiIcon name="preferences" size={17}/></span>
         <span><strong>Mi configuración</strong><small>Apariencia y preferencias personales</small></span>
       </Link>
       <Link role="menuitem" href="/dashboard/help" onClick={() => setOpen(false)}>
-        <span className="account-menu-icon">?</span>
+        <span className="account-menu-icon"><UiIcon name="help" size={17}/></span>
         <span><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></span>
       </Link>
       {canConfigure && <Link role="menuitem" href="/dashboard/settings" onClick={() => setOpen(false)}>
-        <span className="account-menu-icon">⚙</span>
+        <span className="account-menu-icon"><UiIcon name="settings" size={17}/></span>
         <span><strong>Configuración</strong><small>Cuenta, empresa y plataforma</small></span>
       </Link>}
       <form method="post" action="/api/auth/logout">
         <button type="submit" role="menuitem">
-          <span className="account-menu-icon">↪</span>
+          <span className="account-menu-icon"><UiIcon name="logout" size={17}/></span>
           <span><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></span>
         </button>
       </form>
@@ -139,12 +142,12 @@ export function SidebarAccountMenu({
       aria-haspopup="menu"
       title={collapsed ? fullName + " · " + role : undefined}
     >
-      <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}>{avatarSrc ? <img src={avatarSrc} alt="" /> : initials}</span>
+      <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}><Avatar src={avatarSrc} initials={initials} size="sm"/></span>
       {!collapsed && <span className={placement === "header" ? "header-account-copy" : "sidebar-account-copy"}>
         <strong>{fullName}</strong>
         <small>{role}</small>
       </span>}
-      {!collapsed && <span className={placement === "header" ? "header-account-chevron" : "sidebar-account-chevron"} aria-hidden="true">{open ? "⌃" : "⌄"}</span>}
+      {!collapsed && <span className={placement === "header" ? "header-account-chevron" : "sidebar-account-chevron"} aria-hidden="true"><UiIcon name={open ? "chevron-up" : "chevron-down"} size={14}/></span>}
     </button>
   </div>;
 }

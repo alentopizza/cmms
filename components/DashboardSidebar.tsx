@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
+import UiIcon from "@/components/UiIcon";
 
 export type ReorderableNavItem = DashboardNavItem & { id: string };
 
@@ -229,7 +230,7 @@ export default function DashboardSidebar({
             aria-current={active ? "page" : undefined}
             onClick={() => setMobileOpen(false)}
           >
-            <span className="field-mobile-nav-icon">{item.icon}</span>
+            <span className="field-mobile-nav-icon"><UiIcon name={item.icon} size={19}/></span>
             <small>{item.label}</small>
           </Link>;
         })}
@@ -241,7 +242,7 @@ export default function DashboardSidebar({
           aria-controls="field-mobile-more-sheet"
           aria-label="Abrir opciones y módulos secundarios"
         >
-          <span className="field-mobile-nav-icon">•••</span>
+          <span className="field-mobile-nav-icon"><UiIcon name="more" size={19}/></span>
           <small>Más</small>
         </button>
       </div>
@@ -259,7 +260,7 @@ export default function DashboardSidebar({
         <header className="field-mobile-more-head">
           <div className="field-mobile-more-avatar">{fullName.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase() || "U"}</div>
           <div><strong>{fullName}</strong><small>{role}</small></div>
-          <button type="button" onClick={()=>setMobileMoreOpen(false)} aria-label="Cerrar">×</button>
+          <button type="button" onClick={()=>setMobileMoreOpen(false)} aria-label="Cerrar"><UiIcon name="x" size={18}/></button>
         </header>
 
         {mobileSecondaryItems.length > 0 && <div className="field-mobile-more-section">
@@ -268,7 +269,7 @@ export default function DashboardSidebar({
             {mobileSecondaryItems.map(item=>{
               const active=isActive(pathname,item.href);
               return <Link key={item.id} href={item.href} className={"field-mobile-more-action"+(active?" active":"")} onClick={()=>setMobileMoreOpen(false)}>
-                <span>{item.icon}</span><strong>{item.label}</strong>
+                <span><UiIcon name={item.icon} size={18}/></span><strong>{item.label}</strong>
               </Link>;
             })}
           </div>
@@ -278,17 +279,17 @@ export default function DashboardSidebar({
           <span className="field-mobile-more-label">Cuenta y sistema</span>
           <div className="field-mobile-more-account">
             <Link href="/dashboard/preferences" onClick={()=>setMobileMoreOpen(false)}>
-              <span>◐</span><div><strong>Mi configuración</strong><small>Apariencia y preferencias personales</small></div>
+              <span><UiIcon name="preferences" size={18}/></span><div><strong>Mi configuración</strong><small>Apariencia y preferencias personales</small></div>
             </Link>
             <Link href="/dashboard/help" onClick={()=>setMobileMoreOpen(false)}>
-              <span>?</span><div><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></div>
+              <span><UiIcon name="help" size={18}/></span><div><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></div>
             </Link>
             {canConfigure && <Link href="/dashboard/settings" onClick={()=>setMobileMoreOpen(false)}>
-              <span>⚙</span><div><strong>Configuración</strong><small>Empresa, cuenta y preferencias</small></div>
+              <span><UiIcon name="settings" size={18}/></span><div><strong>Configuración</strong><small>Empresa, cuenta y preferencias</small></div>
             </Link>}
             <form method="post" action="/api/auth/logout">
               <button type="submit">
-                <span>↪</span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
+                <span><UiIcon name="logout" size={18}/></span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
               </button>
             </form>
           </div>
@@ -319,7 +320,7 @@ export default function DashboardSidebar({
           onClick={handleSidebarControl}
           aria-label={mobileOpen ? "Cerrar navegación" : collapsed ? "Expandir menú" : "Contraer menú"}
         >
-          <span aria-hidden="true">{mobileOpen ? "×" : collapsed ? "›" : "‹"}</span>
+          <UiIcon name={mobileOpen ? "x" : collapsed ? "chevron-right" : "chevron-left"} size={18}/>
         </button>
       </div>
 
@@ -339,11 +340,11 @@ export default function DashboardSidebar({
           title={organizing ? "Finalizar organización" : "Organizar módulos"}
           aria-pressed={organizing}
         >
-          <span aria-hidden="true">↕</span>
+          <UiIcon name="reorder" size={15}/>
           <span className="smart-sidebar-tool-label">{organizing ? "Listo" : "Organizar"}</span>
         </button>
         {organizing && <button className="smart-sidebar-tool" type="button" onClick={resetOrder} title="Restaurar orden original">
-          <span aria-hidden="true">↺</span>
+          <UiIcon name="reset" size={15}/>
           <span className="smart-sidebar-tool-label">Restaurar</span>
         </button>}
       </div>
@@ -383,14 +384,14 @@ export default function DashboardSidebar({
                 setMobileOpen(false);
               }}
             >
-              <span className="smart-sidebar-icon">{item.icon}</span>
+              <span className="smart-sidebar-icon"><UiIcon name={item.icon} size={18}/></span>
               <span className="smart-sidebar-label">{item.label}</span>
-              {organizing && <span className="smart-sidebar-drag" aria-hidden="true">⋮⋮</span>}
+              {organizing && <span className="smart-sidebar-drag" aria-hidden="true"><UiIcon name="reorder" size={14}/></span>}
             </Link>
 
             {organizing && <div className="smart-sidebar-reorder-buttons" aria-label={"Mover " + item.label}>
-              <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0} aria-label={"Subir " + item.label}>↑</button>
-              <button type="button" onClick={() => moveItem(item.id, 1)} disabled={index === orderedItems.length - 1} aria-label={"Bajar " + item.label}>↓</button>
+              <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0} aria-label={"Subir " + item.label}><UiIcon name="chevron-up" size={12}/></button>
+              <button type="button" onClick={() => moveItem(item.id, 1)} disabled={index === orderedItems.length - 1} aria-label={"Bajar " + item.label}><UiIcon name="chevron-down" size={12}/></button>
             </div>}
           </div>;
         })}

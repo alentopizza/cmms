@@ -663,3 +663,18 @@ Overlay primitives own client-only focus/Escape behavior; they do not own author
 Existing module-facing components can remain as compatibility wrappers while migration proceeds. A wrapper must preserve its public API while delegating visual/interaction behavior to the UI Kit.
 
 The UI Core smoke test rejects hardcoded hex colors in the official primitive implementation and verifies the expected accessibility/compatibility contract.
+
+
+### Global shell runtime layer — Phase 3
+
+The authenticated ERP shell now follows this frontend stack:
+
+`globals.css (legacy) → design-tokens.css → ui-kit-core.css → shell-v2.css`.
+
+`app/shell-v2.css` is intentionally scoped by `.desweb-shell-v2`. It owns only global shell/navigation presentation: desktop Sidebar, contextual Header/account controls, responsive drawer and field-role bottom navigation. Module interiors remain under their existing styles until their scheduled migration phases.
+
+Navigation authorization and ordering remain outside the visual layer. `app/dashboard/layout.tsx` continues to filter module access through RBAC before passing visible items to the client Sidebar. Saved Sidebar order/collapse state remains presentation-only and cannot grant access.
+
+Organization white-label colors continue to override semantic action tokens at the authenticated shell boundary. The shell does not hardcode tenant colors.
+
+`UiIcon` is the single global SVG icon vocabulary for shell/navigation. Do not reintroduce Unicode module glyphs or a second icon library.

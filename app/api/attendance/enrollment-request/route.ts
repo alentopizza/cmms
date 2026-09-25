@@ -190,7 +190,7 @@ export async function POST(request:Request){
     }
 
     const account=await client.query<{has_avatar:boolean}>(
-      "SELECT (avatar_data IS NOT NULL) has_avatar FROM users WHERE id=$1 AND active=true",
+      "SELECT (avatar_data IS NOT NULL) has_avatar FROM users WHERE id=$1 AND active=true FOR UPDATE",
       [session.userId],
     );
     if(!account.rows[0]?.has_avatar){

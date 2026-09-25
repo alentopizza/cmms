@@ -981,3 +981,42 @@ Client camera/GPS code is capture UX, not the authorization boundary.
 ### Next
 
 Phase 9 — Maintenance + Work Orders + Activities/Reaction.
+
+
+## 33. DESWEB Phase 9 checkpoint — Maintenance operation
+
+Phase 9 is implemented.
+
+### Runtime additions
+
+- `components/maintenance-ui/OperationStatus.tsx`;
+- `app/phase9-modules.css`;
+- `scripts/phase9-maintenance-operation-smoke.mjs`.
+
+### State-machine boundary
+
+Do not move Work Order or Activity transition validation into Badge/Progress/Timeline components. Those components display persisted state; the existing API remains authoritative.
+
+### Due-date/progress boundary
+
+Activity overdue flags are visual derivations from the persisted due date. Do not persist a new "overdue" task status merely for presentation.
+
+Activity completion ProgressBar is descriptive completion ratio and is not an SLA/performance score.
+
+### Reaction boundary
+
+Reaction uses client-side filters over an authorized snapshot and the official Drawer for detail. Preserve:
+- snapshot endpoint authorization;
+- connected tracking sessions;
+- live/paused telemetry semantics;
+- route-point collection;
+- Google Maps overlays;
+- organization/Site filtering boundaries.
+
+### Directory metadata fix
+
+Provider/external Work Order directory SELECTs now include the organization/Site/type columns already in their authorized Work Order rows. Keep the existing Supplier/user assignment predicates intact.
+
+### Next
+
+Phase 10 — Reports + Settings + final legacy/accessibility/responsive audit.

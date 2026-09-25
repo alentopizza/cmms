@@ -5,10 +5,18 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Button } from "@/components/ui-kit/Button";
+import { Card } from "@/components/ui-kit/Card";
+import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import { ProgressBar, StepProgress, Timeline } from "@/components/ui-kit/TimelineProgress";
+import { ActivityStatusBadge, PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
+import { Badge } from "@/components/ui-kit/Badge";
+import UiIcon from "@/components/UiIcon";
 
 type Order={
   id:string;organization_id:string;site_id:string;number:string;title:string;description:string|null;
-  status:string;priority:string;type:string;asset_name:string;asset_code:string;company_name:string;site_name:string;timezone:string;
+  status:string;priority:string;type:string;asset_name:string;asset_code:string;company_name:string;site_name:string;timezone:string;requested_at:string;
 };
 type Activity={
   id:string;description:string;status:string;completed:boolean;assigned_name:string|null;crew_name:string|null;
@@ -27,7 +35,7 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   const [{id},feedback]=await Promise.all([params,searchParams]);
 
   const orderResult=await query<Order>(
-    `SELECT w.id,w.organization_id,w.site_id,w.number::text,w.title,w.description,w.status,w.priority,w.type,
+    `SELECT w.id,w.organization_id,w.site_id,w.number::text,w.title,w.description,w.status,w.priority,w.type,w.requested_at::text,
             a.name asset_name,a.code asset_code,o.name company_name,s.name site_name,o.timezone
      FROM work_orders w
      JOIN organizations o ON o.id=w.organization_id
@@ -123,23 +131,64 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   const message=feedback.error==="sequence" ? "Primero completa activos y personal ejecutor antes de crear actividades."
     : feedback.error==="executor" ? "Selecciona un único responsable: persona, cuadrilla o proveedor de servicios."
     : feedback.error ? "No fue posible completar la acción." : "";
+  const totalActivities=activities.rows.length;
+  const completedActivities=activities.rows.filter(activity=>activity.status==="completed").length;
+  const inProgressActivities=activities.rows.filter(activity=>activity.status==="in_progress").length;
+  const pendingActivities=activities.rows.filter(activity=>activity.status==="pending").length;
+  const completionPercent=totalActivities?Math.round(completedActivities/totalActivities*100):0;
+  const today=new Intl.DateTimeFormat("en-CA",{timeZone:order.timezone,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  const overdueActivities=activities.rows.filter(activity=>activity.due_date&&activity.due_date<today&&!["completed","cancelled"].includes(activity.status)).length;
+  const phaseIndex=order.status==="open"?0:order.status==="assigned"?1:["in_progress","paused"].includes(order.status)?2:order.status==="completed"?3:0;
+  const processSteps=["Solicitud","Asignación","Ejecución","Cierre"].map((label,index)=>({
+    id:String(index+1),label,
+    description:index===0?"OT registrada":index===1?"Responsable definido":index===2?"Actividades en campo":"Orden completada",
+    status:(order.status==="completed"||index<phaseIndex?"complete":index===phaseIndex?"current":"upcoming") as "complete"|"current"|"upcoming",
+  }));
+  const timelineItems=[
+    {id:"request",title:"OT registrada",description:order.title,meta:new Date(order.requested_at).toLocaleString("es-CO"),icon:"work-order" as const,tone:"brand" as const},
+    ...activities.rows.flatMap(activity=>{
+      const events=[];
+      if(activity.started_at)events.push({id:activity.id+"-start",title:"Actividad iniciada",description:activity.description,meta:new Date(activity.started_at).toLocaleString("es-CO"),icon:"activity" as const,tone:"info" as const});
+      if(activity.completed_at)events.push({id:activity.id+"-complete",title:"Actividad completada",description:activity.description,meta:new Date(activity.completed_at).toLocaleString("es-CO"),icon:"check" as const,tone:"success" as const});
+      return events;
+    }),
+  ];
 
-  return <>
+  return <div className="phase9-work-order-detail">
     <header className="page-header">
       <div><Link className="back-link" href="/dashboard/work-orders">← Órdenes de trabajo</Link><span className="eyebrow">OT #{order.number}</span><h1 className="page-title">{order.title}</h1><p className="muted">{order.company_name} · {order.site_name} · {order.asset_code} {order.asset_name}</p></div>
-      <span className="status">{order.status}</span>
+      <div className="phase9-order-head-badges"><PriorityBadge priority={order.priority}/><WorkOrderStatusBadge status={order.status}/></div>
     </header>
 
-    {feedback.created && <div className="notice success section">Actividad creada correctamente.</div>}
-    {feedback.updated && <div className="notice success section">Actividad actualizada.</div>}
-    {message && <div className="notice error section">{message}</div>}
+    {(feedback.created||feedback.updated)&&<div className="section phase9-feedback-stack">
+      {feedback.created&&<Alert variant="success" title="Actividad creada">Actividad creada correctamente.</Alert>}
+      {feedback.updated&&<Alert variant="success" title="Actividad actualizada">La ejecución de la actividad quedó actualizada.</Alert>}
+    </div>}
+    {message&&<div className="section"><Alert variant="danger" title="No fue posible completar la acción">{message}</Alert></div>}
 
-    <section className="card section work-order-overview">
-      <div><span>Tipo</span><strong>{order.type}</strong></div><div><span>Prioridad</span><strong>{order.priority}</strong></div><div><span>Estado</span><strong>{order.status}</strong></div><div><span>Actividades</span><strong>{activities.rowCount}</strong></div>
+    <MetricGrid className="section phase9-kpi-grid">
+      <KpiCard label="Actividades" value={String(totalActivities)} hint="trabajo definido" icon="activity"/>
+      <KpiCard label="En ejecución" value={String(inProgressActivities)} hint="actividades iniciadas" icon="clock" tone={inProgressActivities?"info":"default"}/>
+      <KpiCard label="Completadas" value={String(completedActivities)} hint={completionPercent+"% del total"} icon="check" tone="success"/>
+      <KpiCard label="Vencidas" value={String(overdueActivities)} hint="compromiso superado" icon="warning" tone={overdueActivities?"danger":"success"}/>
+    </MetricGrid>
+
+    <section className="section phase9-order-process-grid">
+      <Card header={<div><span className="eyebrow">Flujo de OT</span><h2>Estado del proceso</h2></div>}>
+        <StepProgress steps={processSteps}/>
+      </Card>
+      <Card header={<div><span className="eyebrow">Avance</span><h2>Ejecución de actividades</h2></div>}>
+        <ProgressBar value={completedActivities} max={Math.max(totalActivities,1)} tone={completionPercent>=100?"success":overdueActivities?"warning":"brand"} label="Actividades completadas" caption={pendingActivities+" pendientes · "+inProgressActivities+" en ejecución"}/>
+        <div className="phase9-order-facts">
+          <span><small>Tipo</small><strong>{order.type}</strong></span>
+          <span><small>Activo</small><strong>{order.asset_code} · {order.asset_name}</strong></span>
+          <span><small>Sede</small><strong>{order.site_name}</strong></span>
+        </div>
+      </Card>
     </section>
 
     {canManage && <section className="card section setup-flow-card">
-      <div className="setup-flow-head"><div><span className="eyebrow">Secuencia obligatoria</span><h2>Actividades con ejecutor definido</h2></div><span className={"setup-flow-state "+(gate.ready?"ready":"blocked")}>{gate.ready?"Habilitado":"Paso pendiente"}</span></div>
+      <div className="setup-flow-head"><div><span className="eyebrow">Secuencia obligatoria</span><h2>Actividades con ejecutor definido</h2></div><Badge variant={gate.ready?"success":"warning"}>{gate.ready?"Habilitado":"Paso pendiente"}</Badge></div>
       <div className="setup-flow-steps"><span className="done"><b>1</b> Empresa</span><span className="done"><b>2</b> Estructura</span><span className="done"><b>3</b> Proveedor</span><span className="done"><b>4</b> Activo</span><span className={gate.ready?"done":""}><b>5</b> Personal</span><span className={gate.ready?"active":""}><b>6</b> Actividad</span></div>
       {!gate.ready && gate.href && <Link className="button secondary" href={gate.href}>{gate.action}</Link>}
     </section>}
@@ -154,24 +203,41 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
         <div className="field"><label>Proveedor de servicios</label><select name="service_supplier_id"><option value="">Sin proveedor</option>{suppliers.rows.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
         <div className="field"><label>Fecha compromiso *</label><input type="date" name="due_date" required defaultValue={new Intl.DateTimeFormat("en-CA",{timeZone:order.timezone,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}/></div>
         <div className="field"><label>Notas iniciales</label><input name="notes" placeholder="Indicaciones, alcance o condición de seguridad"/></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Crear actividad</button></div>
+        <div className="form-span-2 form-actions"><Button type="submit" iconLeft="plus">Crear actividad</Button></div>
       </form>
     </section>}
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Ejecución</span><h2>Actividades de la orden</h2></div></div>
-      {activities.rowCount ? <div className="activity-grid">{activities.rows.map((activity,index)=><article className="card activity-card" key={activity.id}>
-        <div className="activity-card-head"><span className="activity-number">{String(index+1).padStart(2,"0")}</span><div><strong>{activity.description}</strong><span>{activity.assigned_name || activity.crew_name || activity.supplier_name || "Sin responsable"}</span></div><span className={"activity-status activity-status-"+activity.status}>{activity.status}</span></div>
-        {activity.notes && <p>{activity.notes}</p>}
-        <div className="activity-meta"><span>Compromiso: {activity.due_date?new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}</span><span>Inicio: {activity.started_at?new Date(activity.started_at).toLocaleString("es-CO"):"Pendiente"}</span><span>Fin: {activity.completed_at?new Date(activity.completed_at).toLocaleString("es-CO"):"Pendiente"}</span></div>
-        {canExecute && <form className="activity-update-form" method="post" action={"/api/work-orders/"+order.id+"/activities"}>
-          <input type="hidden" name="intent" value="update"/><input type="hidden" name="activity_id" value={activity.id}/>
-          <select name="status" defaultValue={activity.status}><option value="pending">Pendiente</option><option value="in_progress">En ejecución</option><option value="completed">Completada</option><option value="cancelled">Cancelada</option></select>
-          <input name="notes" defaultValue={activity.notes||""} placeholder="Observación de ejecución"/>
-          <button className="button secondary" type="submit">Actualizar</button>
-        </form>}
-        {owner&&<div className="owner-inline-row"><OwnerDeleteButton table="work_order_tasks" id={activity.id} label={activity.description} /></div>}
-      </article>)}</div> : <div className="card empty-state"><strong>Aún no hay actividades.</strong><span>Define el trabajo, el responsable y luego registra su ejecución.</span></div>}
+      {activities.rowCount ? <div className="activity-grid phase9-activity-grid">{activities.rows.map((activity,index)=>{
+        const overdue=Boolean(activity.due_date&&activity.due_date<today&&!["completed","cancelled"].includes(activity.status));
+        return <Card className={"activity-card phase9-activity-card"+(overdue?" overdue":"")} key={activity.id}>
+          <div className="activity-card-head">
+            <span className="activity-number">{String(index+1).padStart(2,"0")}</span>
+            <div><strong>{activity.description}</strong><span>{activity.assigned_name || activity.crew_name || activity.supplier_name || "Sin responsable"}</span></div>
+            <div className="phase9-activity-status">{overdue&&<Badge variant="danger" icon="warning">Vencida</Badge>}<ActivityStatusBadge status={activity.status}/></div>
+          </div>
+          {activity.notes&&<p>{activity.notes}</p>}
+          <div className="activity-meta">
+            <span><UiIcon name="clock" size={13}/> Compromiso: {activity.due_date?new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}</span>
+            <span><UiIcon name="activity" size={13}/> Inicio: {activity.started_at?new Date(activity.started_at).toLocaleString("es-CO"):"Pendiente"}</span>
+            <span><UiIcon name="check" size={13}/> Fin: {activity.completed_at?new Date(activity.completed_at).toLocaleString("es-CO"):"Pendiente"}</span>
+          </div>
+          {canExecute&&<form className="activity-update-form" method="post" action={"/api/work-orders/"+order.id+"/activities"}>
+            <input type="hidden" name="intent" value="update"/><input type="hidden" name="activity_id" value={activity.id}/>
+            <label><span className="sr-only">Estado de {activity.description}</span><select name="status" defaultValue={activity.status}><option value="pending">Pendiente</option><option value="in_progress">En ejecución</option><option value="completed">Completada</option><option value="cancelled">Cancelada</option></select></label>
+            <input name="notes" defaultValue={activity.notes||""} placeholder="Observación de ejecución"/>
+            <Button type="submit" variant="secondary" iconLeft="check">Actualizar</Button>
+          </form>}
+          {owner&&<div className="owner-inline-row"><OwnerDeleteButton table="work_order_tasks" id={activity.id} label={activity.description}/></div>}
+        </Card>;
+      })}</div>:<EmptyState icon="file" title="Aún no hay actividades" description="Define el trabajo, el responsable y luego registra su ejecución."/>}
     </section>
-  </>;
+
+    <section className="section">
+      <Card header={<div><span className="eyebrow">Trazabilidad</span><h2>Timeline de la orden</h2></div>}>
+        <Timeline items={timelineItems} label={"Historial de OT "+order.number}/>
+      </Card>
+    </section>
+  </div>;
 }

@@ -10,9 +10,9 @@ export default async function ReactionPage(){
   if(!session)redirect("/login");
   if(!can(session,"reaction.view"))redirect("/dashboard");
 
-  return <>
+  return <div className="phase9-reaction">
     <section className="reaction-workspace section">
       <ReactionMap />
     </section>
-  </>;
+  </div>;
 }

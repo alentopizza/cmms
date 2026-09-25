@@ -707,3 +707,22 @@ Attendance:
 StaticDataTable may receive `recordProps` only for presentation/filter metadata; authorization must never depend on client-side filtering.
 
 Phase 8 CSS must remain scoped under `.phase8-suppliers`, `.phase8-supplier-directory`, `.phase8-users`, `.phase8-crews` and `.phase8-attendance`.
+
+
+## 34. Maintenance operation contract — Phase 9
+
+Operational state presentation must use the canonical helpers in `components/maintenance-ui/OperationStatus.tsx`:
+- WorkOrderStatusBadge;
+- ActivityStatusBadge;
+- PriorityBadge.
+
+Rules:
+- display helpers never decide whether a transition is allowed;
+- overdue presentation is derived from an existing Activity due date and current date, never persisted as a replacement status;
+- ProgressBar represents Activity completion ratio, not an SLA score;
+- Timeline represents recorded lifecycle events only;
+- Reaction contextual detail uses Drawer rather than private modal implementations;
+- field/mobile layouts keep Business UI cards while desktop dense directories use Shared Data UI tables;
+- Reaction filters may narrow already-authorized snapshot data in the client, but snapshot authorization remains server-side.
+
+Phase 9 CSS must stay scoped to `.phase9-maintenance`, `.phase9-work-orders`, `.phase9-work-order-detail` and `.phase9-reaction`.

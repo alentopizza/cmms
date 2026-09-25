@@ -49,7 +49,7 @@ export default async function UiKitPage(){
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 8.</strong> Proveedores, Usuarios, Cuadrillas y Asistencia ya consumen Business UI, feedback/estados V2, métricas y tablas compartidas, preservando expedientes, biometría, geocercas, privacidad y relaciones de compras.
+        <strong>Fase 9.</strong> Mantenimiento, Órdenes de Trabajo, Actividades y Reacción ya comparten gramática oficial de estado/prioridad, KPI, Timeline/Progress, detalle contextual en Drawer y experiencia responsive de campo.
       </div>
 
       <FoundationPreview/>

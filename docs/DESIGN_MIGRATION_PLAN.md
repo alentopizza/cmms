@@ -256,6 +256,8 @@ No database schema, attendance policy, biometric threshold, API, RBAC, privacy b
 
 ## Fase 9 — Operación de mantenimiento
 
+**Estado: implementada.**
+
 Migrar:
 
 - Mantenimiento;
@@ -271,6 +273,22 @@ Prioridad:
 - progress;
 - drawers/contextual detail;
 - mobile field usability.
+
+**Phase 9 completion checkpoint — 2026-09-24**
+
+Phase 9 is implemented end-to-end for Maintenance, Work Orders, Activities and the shared operational surfaces in Reaction.
+
+Maintenance now combines MaintenanceCard mobile records with V2 KPI and a server-rendered StaticDataTable, plus canonical feedback/state presentation.
+
+Work Orders now use a shared operation status/priority grammar across directory cards, desktop tables and detail. The detail surface adds descriptive process StepProgress, activity completion ProgressBar, due-date risk, execution cards and an event Timeline without changing server-authoritative state transitions.
+
+Reaction now consumes Search, Select, Button, Badge, EmptyState and the official Drawer for contextual company/Site/technician/activity detail. Live tracking sessions, Google Maps overlays, routes, telemetry state and snapshot filtering remain unchanged.
+
+Provider/external Work Order directory queries now return the same already-authorized organization/Site/type metadata required by ModuleHeader facets; this fixes presentation metadata only and does not widen visibility.
+
+No database schema, API contract, task/Work Order state machine, assignment rule, due-date authority, tracking-session behavior, RBAC or tenant/Site scope changes were introduced.
+
+**Next implementation phase: Phase 10 — Reports, Settings and final audit.**
 
 ## Fase 10 — Reportes, Configuración y cierre
 

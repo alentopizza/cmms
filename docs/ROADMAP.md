@@ -339,16 +339,16 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 6 — Dashboard + Companies + Locations:** implemented end-to-end on V2, including SSR data tables, dashboard controls, CompanyCard, SubLocationCard, profile metrics, location filters and scoped module styling.
 - **Phase 7 — Assets + Inventory:** implemented end-to-end, including approved secondary navigation, derived Asset catalogs, Inventory reports/settings, V2 KPI/status/table surfaces, Bulk Import integration and Kardex migration while preserving stock authority.
 - **Phase 8 — Suppliers + Users + Crews + Attendance:** implemented end-to-end, including Supplier/User profile preservation, dedicated CrewCard, V2 operational user statistics and Attendance/biometric/geofence/contingency surfaces.
-- **Phase 9 — Maintenance + Work Orders + Activities/Reaction where shared patterns apply.**
+- **Phase 9 — Maintenance + Work Orders + Activities/Reaction:** implemented end-to-end with shared state/priority grammar, KPI, StaticDataTable, StepProgress/Progress/Timeline, Activity execution cards and Reaction Drawer/contextual-detail migration.
 - **Phase 10 — Reports + Settings + final legacy CSS/accessibility/responsive audit.**
 
 Each phase must remain deployable, preserve business logic, update documentation/manual as needed and merge only after CI/build/regressions pass.
 
 ### Immediate next phase
 
-**Phase 9 — Maintenance + Work Orders + Activities/Reaction.**
+**Phase 10 — Reports + Settings + final audit.**
 
-Migrate the maintenance operation end-to-end with special focus on state/priority grammar, timelines and progress, contextual detail, responsive field use and shared patterns in Reaction. Preserve Work Order/task state machines, technician assignment, SLA/due-date logic, tracking sessions, mobile field workflows, RBAC and server-authoritative transitions.
+Migrate Reports, Settings, Personalization-compatible remaining surfaces and close the V2 program with the planned legacy CSS/hex/duplicate-component, accessibility, responsive, reduced-motion, contrast, performance and icon-consistency audits.
 
 
 ## Recently completed role-dashboard analytics slice

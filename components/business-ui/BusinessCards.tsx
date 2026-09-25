@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { HTMLAttributes, ReactNode } from "react";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
 import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
 
 export type BusinessDomain="asset"|"inventory"|"maintenance"|"work-order"|"supplier"|"company"|"location"|"user"|"crew";
@@ -118,14 +119,6 @@ export function MaintenanceCard({
   </BusinessCardShell>;
 }
 
-function workOrderTone(status:string):BadgeVariant{
-  if(status==="completed")return "success";
-  if(status==="cancelled")return "neutral";
-  if(status==="paused")return "warning";
-  if(status==="in_progress"||status==="assigned")return "info";
-  return "brand";
-}
-
 export function WorkOrderCard({
   id,number,title,asset,company,priority,status,actions,recordProps,
 }:{
@@ -139,10 +132,10 @@ export function WorkOrderCard({
     </Link>
     <BusinessMetaGrid className="work-order-mobile-meta" items={[
       {label:"Empresa",value:company},
-      {label:"Prioridad",value:priority},
+      {label:"Prioridad",value:<PriorityBadge priority={priority}/>},
     ]}/>
     <div className="work-order-mobile-footer ds-business-actions">
-      <Badge variant={workOrderTone(status)}>{status.replaceAll("_"," ")}</Badge>
+      <WorkOrderStatusBadge status={status}/>
       <Link className="text-button" href={"/dashboard/work-orders/"+id}>Ver actividades →</Link>
       {actions}
     </div>

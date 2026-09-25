@@ -933,3 +933,20 @@ Attendance remains privacy-sensitive and server-authoritative. Existing biometri
 No DB schema, API, RBAC, biometric threshold, geofence rule or tenant/Site scope changed.
 
 Next visual migration: Phase 9 Maintenance + Work Orders + Activities/Reaction.
+
+
+### DESWEB V2 maintenance-operation block — Phase 9 implemented (2026-09-24)
+
+Maintenance, Work Orders, Activities and Reaction are migrated end-to-end to the V2 presentation stack.
+
+Work Order and Activity states remain server-authoritative. Phase 9 adds a shared display grammar only; forms continue posting to the established APIs and no client component determines a valid transition.
+
+Work Order detail now exposes descriptive process progression, completion ratio, due-date risk and event timeline from existing authoritative dates. No new SLA model or inferred business deadline was added.
+
+Reaction now uses the official Drawer for contextual detail and shared filters/status patterns while retaining the current Google Maps snapshot/tracking architecture. Technician tracking sessions and route points are unchanged.
+
+Provider/external Work Order queries now include organization/Site/type presentation metadata already inside their authorized result scope, fixing directory facets without widening access.
+
+No DB schema, API, RBAC, assignment, task-state, tracking or tenant/Site scope change was introduced.
+
+Next visual step: Phase 10 Reports + Settings + final V2 audit.

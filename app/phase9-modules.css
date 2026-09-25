@@ -1,0 +1,168 @@
+/* ==========================================================================
+   DESWEB V2 — Phase 9 maintenance operation
+   Maintenance + Work Orders + Activities + Reaction.
+   Scoped token-only migration layer.
+   ========================================================================== */
+
+.phase9-maintenance,.phase9-work-orders,.phase9-work-order-detail,.phase9-reaction{display:grid;gap:var(--space-4)}
+.phase9-feedback-stack{display:grid;gap:var(--space-2)}
+.phase9-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.phase9-maintenance .maintenance-directory-section,.phase9-work-orders .work-order-directory-section{display:grid;gap:var(--space-3)}
+.phase9-maintenance .maintenance-mobile-list,.phase9-work-orders .work-order-mobile-list{display:none}
+.phase9-maintenance .ds-data-table-shell,.phase9-work-orders .ds-data-table-shell{box-shadow:var(--shadow-xs)}
+.phase9-maintenance-note{margin-top:0}
+
+/* Work order detail -------------------------------------------------------- */
+.phase9-work-order-detail .page-header{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);
+  padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase9-work-order-detail .page-header h1{margin:var(--space-1) 0;color:var(--color-text-primary)}
+.phase9-order-head-badges{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;justify-content:flex-end}
+.phase9-order-process-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-4)}
+.phase9-order-process-grid .ds-card{height:100%}
+.phase9-order-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2);margin-top:var(--space-4)}
+.phase9-order-facts>span{display:grid;gap:2px;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.phase9-order-facts small{color:var(--color-text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:var(--font-weight-bold)}
+.phase9-order-facts strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}
+.phase9-work-order-detail .setup-flow-card,.phase9-work-order-detail>.card{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase9-work-order-detail .setup-flow-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+.phase9-work-order-detail .setup-flow-steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--space-2);margin:var(--space-3) 0}
+.phase9-work-order-detail .setup-flow-steps>span{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);align-items:center;padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-text-muted);font-size:9px}
+.phase9-work-order-detail .setup-flow-steps>span b{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--color-surface);color:var(--color-text-muted)}
+.phase9-work-order-detail .setup-flow-steps>span.done{border-color:var(--color-success-border);background:var(--color-success-surface);color:var(--color-success-text)}
+.phase9-work-order-detail .setup-flow-steps>span.active{border-color:var(--color-border-active);background:var(--color-surface-teal);color:var(--color-brand-secondary)}
+.phase9-activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.phase9-activity-card{min-width:0}
+.phase9-activity-card.overdue{border-color:var(--color-danger-border)}
+.phase9-activity-card .ds-card-content{display:grid;gap:var(--space-3)}
+.phase9-activity-card .activity-card-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-3);align-items:start}
+.phase9-activity-card .activity-number{width:38px;height:38px;display:grid;place-items:center;border-radius:var(--radius-xl);background:var(--color-surface-teal);color:var(--color-brand-secondary);font-weight:var(--font-weight-bold)}
+.phase9-activity-card .activity-card-head>div:nth-child(2){display:grid;gap:2px}
+.phase9-activity-card .activity-card-head strong{color:var(--color-text-primary);font-size:var(--font-size-body)}
+.phase9-activity-card .activity-card-head>div:nth-child(2)>span{color:var(--color-text-muted);font-size:9px}
+.phase9-activity-status{display:flex;gap:var(--space-1);align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.phase9-activity-card>p,.phase9-activity-card .ds-card-content>p{margin:0;color:var(--color-text-secondary);font-size:var(--font-size-body-sm);line-height:var(--line-height-body)}
+.phase9-activity-card .activity-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.phase9-activity-card .activity-meta>span{display:flex;align-items:center;gap:var(--space-1);padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-text-muted);font-size:9px}
+.phase9-activity-card .activity-update-form{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(180px,1.5fr) auto;gap:var(--space-2);align-items:center}
+.phase9-activity-card .activity-update-form select,.phase9-activity-card .activity-update-form input,
+.phase9-work-order-detail .field select,.phase9-work-order-detail .field input{
+  min-height:40px;padding:0 var(--space-2);border:1px solid var(--color-border-default);border-radius:var(--radius-md);
+  background:var(--color-surface);color:var(--color-text-primary);font:inherit
+}
+.phase9-work-order-detail .ds-timeline{margin:0}
+
+/* Reaction ----------------------------------------------------------------- */
+.phase9-reaction .reaction-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:var(--space-4);min-height:calc(100vh - 170px)}
+.phase9-reaction .reaction-map-stage,.phase9-reaction .reaction-side-panel{
+  min-width:0;border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs);overflow:hidden
+}
+.phase9-reaction .reaction-map-stage{display:grid;grid-template-rows:auto auto minmax(460px,1fr)}
+.phase9-reaction .reaction-filter-bar{display:grid;grid-template-columns:minmax(250px,1.5fr) repeat(4,minmax(130px,.7fr)) auto;gap:var(--space-2);align-items:end;padding:var(--space-3);border-bottom:1px solid var(--color-border-subtle);background:var(--color-surface)}
+.phase9-reaction .reaction-global-search{position:relative;min-width:0}
+.phase9-reaction .reaction-global-search .ds-search{width:100%}
+.phase9-reaction .reaction-search-results{
+  position:absolute;left:0;right:0;top:calc(100% + var(--space-1));z-index:40;display:grid;gap:2px;padding:var(--space-2);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface);box-shadow:var(--shadow-md)
+}
+.phase9-reaction .reaction-search-results button{display:grid;gap:2px;padding:var(--space-2);border:0;border-radius:var(--radius-lg);background:transparent;color:var(--color-text-secondary);text-align:left;cursor:pointer}
+.phase9-reaction .reaction-search-results button:hover{background:var(--color-surface-soft)}
+.phase9-reaction .reaction-search-results button>span,.phase9-reaction .reaction-search-results small,.phase9-reaction .reaction-search-empty{color:var(--color-text-muted);font-size:9px}
+.phase9-reaction .reaction-filter-reset{align-self:end;white-space:nowrap}
+.phase9-reaction .reaction-map-status{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--color-border-subtle);background:var(--color-surface-soft);color:var(--color-text-muted);font-size:9px}
+.phase9-reaction .reaction-map-status>span{width:8px;height:8px;border-radius:50%;background:var(--color-text-disabled)}
+.phase9-reaction .reaction-map-status>span.live{background:var(--color-success-500)}
+.phase9-reaction .reaction-map-status strong{color:var(--color-text-primary);font-size:10px}
+.phase9-reaction .reaction-google-map{min-height:460px}
+.phase9-reaction .reaction-side-panel{display:grid;grid-template-rows:auto auto auto minmax(0,1fr)}
+.phase9-reaction .reaction-alert-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);padding:var(--space-4);border-bottom:1px solid var(--color-border-subtle)}
+.phase9-reaction .reaction-alert-panel-head>div{display:grid;gap:2px}.phase9-reaction .reaction-alert-panel-head>div>strong{color:var(--color-text-primary);font-size:var(--font-size-body-lg)}.phase9-reaction .reaction-alert-panel-head small{color:var(--color-text-muted);font-size:9px}
+.phase9-reaction .reaction-alert-filters{display:grid;grid-template-columns:1fr;gap:var(--space-2);padding:var(--space-3);border-bottom:1px solid var(--color-border-subtle)}
+.phase9-reaction .reaction-alert-filters label{display:grid;gap:var(--space-1);color:var(--color-text-muted);font-size:9px}
+.phase9-reaction .reaction-alert-filters input{min-height:40px;padding:0 var(--space-2);border:1px solid var(--color-border-default);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text-primary);font:inherit}
+.phase9-reaction .reaction-scope-alert{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-2);align-items:center;padding:var(--space-2) var(--space-3);background:var(--color-info-surface);color:var(--color-info-text)}
+.phase9-reaction .reaction-scope-alert>span{font-size:8px;text-transform:uppercase;font-weight:var(--font-weight-bold)}.phase9-reaction .reaction-scope-alert strong{font-size:9px}
+.phase9-reaction .reaction-alert-list{display:grid;align-content:start;gap:var(--space-2);padding:var(--space-3);overflow:auto}
+.phase9-reaction .reaction-alert-card{display:grid;gap:var(--space-2);width:100%;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface);color:var(--color-text-secondary);text-align:left;cursor:pointer}
+.phase9-reaction .reaction-alert-card:hover{border-color:var(--color-border-default);background:var(--color-surface-soft)}
+.phase9-reaction .reaction-alert-card.state-overdue{border-left:3px solid var(--color-danger-500)}
+.phase9-reaction .reaction-alert-card.state-today{border-left:3px solid var(--color-warning-500)}
+.phase9-reaction .reaction-alert-card-top,.phase9-reaction .reaction-alert-meta,.phase9-reaction .reaction-alert-location{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);flex-wrap:wrap}
+.phase9-reaction .reaction-alert-card>strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}
+.phase9-reaction .reaction-alert-card>small,.phase9-reaction .reaction-alert-meta,.phase9-reaction .reaction-alert-location{color:var(--color-text-muted);font-size:8px}
+.phase9-reaction .reaction-alert-meta .ds-badge{margin-left:auto}
+.phase9-reaction .reaction-alert-empty .ds-empty-state{min-height:180px}
+
+/* Reaction drawer content */
+.ds-drawer .reaction-detail-body{display:grid;gap:var(--space-4)}
+.ds-drawer .reaction-entity-summary{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center}
+.ds-drawer .reaction-entity-image{width:70px;height:70px;display:grid;place-items:center;overflow:hidden;border-radius:var(--radius-2xl);background:var(--color-surface-teal);color:var(--color-brand-secondary);font-weight:var(--font-weight-bold)}
+.ds-drawer .reaction-entity-image.portrait{border-radius:50%}.ds-drawer .reaction-entity-image img{width:100%;height:100%;object-fit:contain}.ds-drawer .reaction-entity-image.portrait img{object-fit:cover}
+.ds-drawer .reaction-entity-summary>div:last-child{display:grid;justify-items:start;gap:var(--space-1)}
+.ds-drawer .reaction-entity-summary strong{color:var(--color-text-primary);font-size:var(--font-size-h4)}.ds-drawer .reaction-entity-summary small{color:var(--color-text-muted)}
+.ds-drawer .reaction-detail-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.ds-drawer .reaction-detail-facts>div,.ds-drawer .reaction-detail-facts>button{display:grid;gap:2px;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);color:var(--color-text-secondary);text-align:left}
+.ds-drawer .reaction-detail-facts>button{cursor:pointer}.ds-drawer .reaction-detail-facts>button:hover{background:var(--color-surface-teal)}
+.ds-drawer .reaction-detail-facts span{color:var(--color-text-muted);font-size:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:var(--font-weight-bold)}
+.ds-drawer .reaction-detail-facts strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}
+.ds-drawer .reaction-contact-actions{display:flex;gap:var(--space-2)}
+.ds-drawer .reaction-contact-actions a{display:flex;align-items:center;gap:var(--space-2);min-height:38px;padding:0 var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-brand-secondary)}
+.ds-drawer .reaction-detail-pending{display:grid;gap:var(--space-3)}
+.ds-drawer .reaction-detail-section-title{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+.ds-drawer .reaction-detail-section-title>div{display:grid;gap:2px}.ds-drawer .reaction-detail-section-title strong{color:var(--color-text-primary)}
+.ds-drawer .reaction-detail-activity-list,.ds-drawer .reaction-related-technicians{display:grid;gap:var(--space-2)}
+.ds-drawer .reaction-detail-activity-list>button,.ds-drawer .reaction-related-technicians>button{display:grid;gap:var(--space-2);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);color:var(--color-text-secondary);text-align:left;cursor:pointer}
+.ds-drawer .reaction-detail-activity-list>button:hover,.ds-drawer .reaction-related-technicians>button:hover{background:var(--color-surface-teal)}
+.ds-drawer .reaction-detail-activity-list small{color:var(--color-text-muted);font-size:9px}.ds-drawer .reaction-detail-activity-list>button>div{display:flex;gap:var(--space-2);flex-wrap:wrap;color:var(--color-text-muted);font-size:8px}
+.ds-drawer .reaction-activity-detail-hero{display:flex;justify-content:space-between;gap:var(--space-3);align-items:flex-start;padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border-subtle)}
+.ds-drawer .reaction-activity-detail-hero h3{margin:var(--space-2) 0 var(--space-1);color:var(--color-text-primary);font-size:var(--font-size-h3)}.ds-drawer .reaction-activity-detail-hero p{margin:0;color:var(--color-text-muted)}
+.ds-drawer .reaction-detail-notes{padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.ds-drawer .reaction-detail-notes>span{color:var(--color-text-muted);font-size:8px;font-weight:var(--font-weight-bold);text-transform:uppercase}.ds-drawer .reaction-detail-notes p{margin:var(--space-1) 0 0;color:var(--color-text-secondary)}
+.ds-drawer .reaction-related-technicians>button{grid-template-columns:auto minmax(0,1fr);align-items:center}
+.ds-drawer .reaction-mini-avatar{width:42px;height:42px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:var(--color-surface-teal);color:var(--color-brand-secondary);font-weight:var(--font-weight-bold)}.ds-drawer .reaction-mini-avatar img{width:100%;height:100%;object-fit:cover}
+.ds-drawer .reaction-related-technicians>button>div:last-child{display:grid;gap:2px}.ds-drawer .reaction-related-technicians small{color:var(--color-text-muted);font-size:9px}
+.ds-drawer .reaction-detail-actions{display:flex;justify-content:flex-end}
+
+/* Accessibility and responsive ------------------------------------------- */
+.phase9-maintenance button:focus-visible,.phase9-maintenance a:focus-visible,
+.phase9-work-orders button:focus-visible,.phase9-work-orders a:focus-visible,
+.phase9-work-order-detail button:focus-visible,.phase9-work-order-detail a:focus-visible,
+.phase9-reaction button:focus-visible,.phase9-reaction a:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--color-focus-ring) 42%,transparent);outline-offset:2px
+}
+@media(max-width:1280px){
+  .phase9-reaction .reaction-workspace{grid-template-columns:1fr}
+  .phase9-reaction .reaction-side-panel{max-height:520px}
+  .phase9-reaction .reaction-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .phase9-reaction .reaction-global-search{grid-column:1/-1}
+}
+@media(max-width:1000px){
+  .phase9-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase9-order-process-grid,.phase9-activity-grid{grid-template-columns:1fr}
+  .phase9-work-order-detail .setup-flow-steps{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .phase9-maintenance .maintenance-mobile-list,.phase9-work-orders .work-order-mobile-list{display:grid;gap:var(--space-3)}
+  .phase9-maintenance .maintenance-directory-table,.phase9-work-orders .work-order-directory-table{display:none}
+  .phase9-kpi-grid{grid-template-columns:1fr}
+  .phase9-work-order-detail .page-header{flex-direction:column}
+  .phase9-order-head-badges{justify-content:flex-start}
+  .phase9-order-facts,.phase9-activity-card .activity-meta{grid-template-columns:1fr}
+  .phase9-activity-card .activity-card-head{grid-template-columns:auto minmax(0,1fr)}
+  .phase9-activity-status{grid-column:1/-1;justify-content:flex-start}
+  .phase9-activity-card .activity-update-form{grid-template-columns:1fr}
+  .phase9-work-order-detail .setup-flow-steps{grid-template-columns:1fr}
+  .phase9-reaction .reaction-filter-bar{grid-template-columns:1fr}
+  .phase9-reaction .reaction-global-search{grid-column:auto}
+  .phase9-reaction .reaction-map-stage{grid-template-rows:auto auto minmax(360px,1fr)}
+  .phase9-reaction .reaction-google-map{min-height:360px}
+  .ds-drawer .reaction-detail-facts{grid-template-columns:1fr}
+  .ds-drawer .reaction-activity-detail-hero{flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  .phase9-maintenance *,.phase9-work-orders *,.phase9-work-order-detail *,.phase9-reaction *{scroll-behavior:auto!important}
+}

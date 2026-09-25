@@ -820,3 +820,30 @@ Attendance:
 `StaticDataTable` now accepts optional `recordProps` on rows. This enables ModuleHeader search/facet metadata on SSR rows without converting authoritative server data into a client table.
 
 `app/phase8-modules.css` is token-only and scoped to Suppliers, Users, Crews and Attendance.
+
+
+## 34. Phase 9 — Maintenance operation
+
+**Status: implemented.**
+
+Shared operation grammar:
+- `components/maintenance-ui/OperationStatus.tsx` is the canonical label/tone layer for Work Order state, Activity state and Priority;
+- `WorkOrderCard` consumes the same PriorityBadge/WorkOrderStatusBadge as directory/detail surfaces;
+- Maintenance and Work Order desktop directories use StaticDataTable while their mobile Business UI cards remain available for field layouts.
+
+Work Order detail:
+- KpiCard/MetricGrid for activity/risk summary;
+- StepProgress for descriptive OT process state;
+- ProgressBar for completed Activity ratio;
+- Timeline for request/start/completion events;
+- ActivityStatusBadge and due-date risk Badge on execution cards;
+- EmptyState/Alert/Button for field interaction feedback.
+
+Reaction:
+- Search/Select/Button replace private filter controls where shared primitives apply;
+- operational alerts use the shared Activity/Priority badge grammar;
+- contextual detail now uses the official Drawer with focus management/Escape behavior;
+- company/Site/technician/activity facts and communication actions retain their existing semantics;
+- Google Maps, technician routes, live/paused telemetry and snapshot logic are unchanged.
+
+Phase 9 styles live in `app/phase9-modules.css` and are scoped to Maintenance, Work Orders, Work Order Detail and Reaction.

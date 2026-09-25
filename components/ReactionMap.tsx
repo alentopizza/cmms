@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import UiIcon from "@/components/UiIcon";
+import { Button } from "@/components/ui-kit/Button";
+import { Search } from "@/components/ui-kit/DataControls";
+import { Select } from "@/components/ui-kit/FormControls";
+import { Badge } from "@/components/ui-kit/Badge";
+import { EmptyState } from "@/components/ui-kit/Feedback";
+import { Drawer } from "@/components/ui-kit/Overlay";
+import { ActivityStatusBadge, PriorityBadge } from "@/components/maintenance-ui/OperationStatus";
 
 type BusinessHours={days:number[];openTime:string;closeTime:string;schedule:Array<{day:number;enabled:boolean;openTime:string;closeTime:string}>};
 type CompanyPoint={
@@ -161,9 +169,6 @@ function priorityLabel(value:string){
   return value==="urgent"?"Urgente":value==="high"?"Alta":value==="medium"?"Media":"Baja";
 }
 
-function statusLabel(value:string){
-  return value==="in_progress"?"En progreso":"Pendiente";
-}
 
 function normalizeSearch(value:string){
   return value
@@ -203,7 +208,6 @@ export default function ReactionMap(){
   const [dateFilter,setDateFilter]=useState<DateFilter>("today_overdue");
   const [customDate,setCustomDate]=useState(localDateKey(new Date()));
   const [search,setSearch]=useState("");
-  const [searchFocused,setSearchFocused]=useState(false);
   const [detail,setDetail]=useState<DetailSelection>(null);
 
   useEffect(()=>{
@@ -552,18 +556,9 @@ export default function ReactionMap(){
     <div className="reaction-map-stage">
       <div className="reaction-filter-bar" aria-label="Filtros del mapa de Reacción">
         <div className="reaction-global-search">
-          <span aria-hidden="true">⌕</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="Buscar técnico, empresa, sede, correo, teléfono, dirección…"
-            onChange={event=>setSearch(event.target.value)}
-            onFocus={()=>setSearchFocused(true)}
-            onBlur={()=>window.setTimeout(()=>setSearchFocused(false),150)}
-          />
-          {search&&<button type="button" onClick={()=>setSearch("")} aria-label="Limpiar búsqueda">×</button>}
-          {searchFocused&&search&&<div className="reaction-search-results">
-            {searchResults.map(result=><button key={result.kind+result.id} type="button" onMouseDown={event=>event.preventDefault()} onClick={()=>chooseSearchResult(result)}>
+          <Search value={search} onValueChange={setSearch} placeholder="Buscar técnico, empresa, sede, correo, teléfono, dirección…" ariaLabel="Buscar en Reacción"/>
+          {search&&<div className="reaction-search-results">
+            {searchResults.map(result=><button key={result.kind+result.id} type="button" onClick={()=>chooseSearchResult(result)}>
               <span>{result.kind==="company"?"Empresa":result.kind==="site"?"Sede":"Técnico"}</span>
               <strong>{result.title}</strong>
               <small>{result.subtitle}</small>
@@ -572,51 +567,11 @@ export default function ReactionMap(){
           </div>}
         </div>
 
-        <label className="reaction-filter-select">
-          <span>Empresa</span>
-          <select value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");setTechnicianId("");}}>
-            <option value="">Todas</option>
-            {snapshot.companies.map(company=><option key={company.id} value={company.id}>{company.name}</option>)}
-          </select>
-        </label>
-
-        <label className="reaction-filter-select">
-          <span>Sede</span>
-          <select value={siteId} onChange={event=>setSiteId(event.target.value)}>
-            <option value="">Todas</option>
-            {filteredSites.map(site=><option key={site.id} value={site.id}>{site.name}</option>)}
-          </select>
-        </label>
-
-        <label className="reaction-filter-select">
-          <span>Técnico</span>
-          <select value={technicianId} onChange={event=>setTechnicianId(event.target.value)}>
-            <option value="">Todos</option>
-            {filteredTechnicians.map(tech=><option key={tech.userId} value={tech.userId}>{tech.fullName}</option>)}
-          </select>
-        </label>
-
-        <label className="reaction-filter-select">
-          <span>Horario</span>
-          <select value={hoursFilter} onChange={event=>setHoursFilter(event.target.value as HoursFilter)}>
-            <option value="all">Todos</option>
-            <option value="open">Abiertos</option>
-            <option value="closed">Cerrados</option>
-          </select>
-        </label>
-        <button
-          className={`reaction-filter-reset ${hasActiveFilters?"has-filters":""}`}
-          type="button"
-          onClick={resetFilters}
-          disabled={!hasActiveFilters}
-          aria-disabled={!hasActiveFilters}
-          title={hasActiveFilters
-            ? "Borrar todos los filtros activos"
-            : "No hay filtros activos para borrar"}
-        >
-          <span>↺</span>
-          <strong>Borrar filtros</strong>
-        </button>
+        <Select label="Empresa" value={companyId} onChange={event=>{setCompanyId(event.target.value);setSiteId("");setTechnicianId("");}} placeholder="" options={[{value:"",label:"Todas"},...snapshot.companies.map(company=>({value:company.id,label:company.name}))]}/>
+        <Select label="Sede" value={siteId} onChange={event=>setSiteId(event.target.value)} placeholder="" options={[{value:"",label:"Todas"},...filteredSites.map(site=>({value:site.id,label:site.name}))]}/>
+        <Select label="Técnico" value={technicianId} onChange={event=>setTechnicianId(event.target.value)} placeholder="" options={[{value:"",label:"Todos"},...filteredTechnicians.map(tech=>({value:tech.userId,label:tech.fullName}))]}/>
+        <Select label="Horario" value={hoursFilter} onChange={event=>setHoursFilter(event.target.value as HoursFilter)} placeholder="" options={[{value:"all",label:"Todos"},{value:"open",label:"Abiertos"},{value:"closed",label:"Cerrados"}]}/>
+        <Button className={`reaction-filter-reset ${hasActiveFilters?"has-filters":""}`} variant="ghost" size="sm" onClick={resetFilters} disabled={!hasActiveFilters} iconLeft="reset">Borrar filtros</Button>
       </div>
 
       <div className="reaction-map-status">
@@ -635,21 +590,14 @@ export default function ReactionMap(){
           <strong>Actividades pendientes</strong>
           <small>{scopeLabel}</small>
         </div>
-        <b>{filteredActivities.length}</b>
+        <Badge variant={filteredActivities.length?"warning":"success"}>{filteredActivities.length}</Badge>
       </header>
 
       <div className="reaction-alert-filters">
-        <label>
-          <span>Fecha</span>
-          <select value={dateFilter} onChange={event=>setDateFilter(event.target.value as DateFilter)}>
-            <option value="today_overdue">Hoy y retrasadas</option>
-            <option value="today">Solo hoy</option>
-            <option value="overdue">Solo retrasadas</option>
-            <option value="tomorrow">Mañana</option>
-            <option value="week">Esta semana</option>
-            <option value="custom">Fecha específica</option>
-          </select>
-        </label>
+        <Select label="Fecha" value={dateFilter} onChange={event=>setDateFilter(event.target.value as DateFilter)} placeholder="" options={[
+          {value:"today_overdue",label:"Hoy y retrasadas"},{value:"today",label:"Solo hoy"},{value:"overdue",label:"Solo retrasadas"},
+          {value:"tomorrow",label:"Mañana"},{value:"week",label:"Esta semana"},{value:"custom",label:"Fecha específica"},
+        ]}/>
         {dateFilter==="custom"&&<label>
           <span>Día</span>
           <input type="date" value={customDate} onChange={event=>setCustomDate(event.target.value)} />
@@ -659,7 +607,7 @@ export default function ReactionMap(){
       {(companyId||siteId||technicianId)&&<div className="reaction-scope-alert">
         <span>Filtro activo</span>
         <strong>{scopeLabel}</strong>
-        <button type="button" onClick={()=>{setCompanyId("");setSiteId("");setTechnicianId("");}}>Ver todo</button>
+        <Button type="button" variant="ghost" size="sm" onClick={()=>{setCompanyId("");setSiteId("");setTechnicianId("");}}>Ver todo</Button>
       </div>}
 
       <div className="reaction-alert-list">
@@ -670,8 +618,8 @@ export default function ReactionMap(){
           onClick={()=>setDetail({kind:"activity",id:activity.id})}
         >
           <div className="reaction-alert-card-top">
-            <span>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</span>
-            <b>{priorityLabel(activity.priority)}</b>
+            <Badge variant={activity.dateState==="overdue"?"danger":activity.dateState==="today"?"warning":"info"}>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</Badge>
+            <PriorityBadge priority={activity.priority}/>
           </div>
           <strong>{activity.description}</strong>
           <small>OT #{activity.workOrderNumber} · {activity.workOrderTitle}</small>
@@ -682,29 +630,20 @@ export default function ReactionMap(){
           <div className="reaction-alert-meta">
             <span>{activity.responsible}</span>
             <span>{formatDate(activity.operationalDate)}</span>
-            <span>{statusLabel(activity.status)}</span>
+            <ActivityStatusBadge status={activity.status}/>
           </div>
         </button>)}
 
-        {!filteredActivities.length&&<div className="reaction-alert-empty">
-          <span>✓</span>
-          <strong>Sin alertas para este filtro</strong>
-          <p>No hay actividades pendientes que coincidan con empresa, sede y fecha seleccionadas.</p>
-        </div>}
+        {!filteredActivities.length&&<EmptyState icon="file" title="Sin alertas para este filtro" description="No hay actividades pendientes que coincidan con empresa, sede y fecha seleccionadas."/>}
       </div>
     </aside>
 
-    {detail&&<div className="reaction-detail-backdrop" role="presentation" onMouseDown={event=>{if(event.currentTarget===event.target)setDetail(null);}}>
-      <section className="reaction-detail-modal" role="dialog" aria-modal="true" aria-label="Detalle operativo">
-        <header className="reaction-detail-head">
-          <div>
-            <span className="eyebrow">Reacción · detalle operativo</span>
-            <strong>
-              {detailCompany?.name||detailSite?.name||detailTechnician?.fullName||detailActivity?.description||"Detalle"}
-            </strong>
-          </div>
-          <button type="button" onClick={()=>setDetail(null)} aria-label="Cerrar">×</button>
-        </header>
+    <Drawer
+      open={Boolean(detail)}
+      onClose={()=>setDetail(null)}
+      title={detailCompany?.name||detailSite?.name||detailTechnician?.fullName||detailActivity?.description||"Detalle operativo"}
+      description="Reacción · detalle operativo"
+    >
 
         {detailCompany&&<EntityDetail
           imageUrl={detailCompany.logoUrl}
@@ -770,8 +709,7 @@ export default function ReactionMap(){
           technicians={snapshot.technicians}
           onEntity={(kind,id)=>setDetail({kind,id} as DetailSelection)}
         />}
-      </section>
-    </div>}
+    </Drawer>
   </>;
 }
 
@@ -790,7 +728,7 @@ function EntityDetail({
       <div>
         <strong>{title}</strong>
         {subtitle&&<small>{subtitle}</small>}
-        <span className={`reaction-detail-badge tone-${badgeTone}`}>{badge}</span>
+        <Badge variant={badgeTone}>{badge}</Badge>
       </div>
     </div>
 
@@ -799,8 +737,8 @@ function EntityDetail({
     </div>
 
     {phone&&<div className="reaction-contact-actions">
-      <a href={"https://wa.me/"+phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir conversación en WhatsApp" data-tooltip="WhatsApp"><i>W</i><span>WhatsApp</span></a>
-      <a href={"tel:"+phone} title="Iniciar llamada telefónica" data-tooltip="Llamar"><i>☎</i><span>Llamar</span></a>
+      <a href={"https://wa.me/"+phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir conversación en WhatsApp" data-tooltip="WhatsApp"><UiIcon name="whatsapp" size={16}/><span>WhatsApp</span></a>
+      <a href={"tel:"+phone} title="Iniciar llamada telefónica" data-tooltip="Llamar"><UiIcon name="phone" size={16}/><span>Llamar</span></a>
     </div>}
 
     <PendingActivitiesSection activities={activities} onActivity={onActivity}/>
@@ -811,16 +749,16 @@ function PendingActivitiesSection({activities,onActivity}:{activities:ActivityAl
   return <section className="reaction-detail-pending">
     <div className="reaction-detail-section-title">
       <div><span className="eyebrow">Pendientes</span><strong>Todas las actividades pendientes</strong></div>
-      <b>{activities.length}</b>
+      <Badge variant={activities.length?"warning":"success"}>{activities.length}</Badge>
     </div>
     <div className="reaction-detail-activity-list">
       {activities.map(activity=><button key={activity.id} type="button" onClick={()=>onActivity(activity.id)}>
-        <span className={`reaction-detail-activity-state state-${activity.dateState}`}>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</span>
+        <Badge variant={activity.dateState==="overdue"?"danger":activity.dateState==="today"?"warning":"info"}>{activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}</Badge>
         <strong>{activity.description}</strong>
         <small>OT #{activity.workOrderNumber} · {activity.siteName}</small>
         <div><span>{activity.responsible}</span><span>{formatDate(activity.operationalDate)}</span><span>{priorityLabel(activity.priority)}</span></div>
       </button>)}
-      {!activities.length&&<div className="reaction-detail-empty">No hay actividades pendientes relacionadas.</div>}
+      {!activities.length&&<EmptyState icon="file" title="Sin actividades pendientes" description="No hay actividades pendientes relacionadas."/>}
     </div>
   </section>;
 }
@@ -842,13 +780,13 @@ function ActivityDetail({
   return <div className="reaction-detail-body">
     <div className="reaction-activity-detail-hero">
       <div>
-        <span className={`reaction-detail-activity-state state-${activity.dateState}`}>
+        <Badge variant={activity.dateState==="overdue"?"danger":activity.dateState==="today"?"warning":"info"}>
           {activity.dateState==="overdue"?"Retrasada":activity.dateState==="today"?"Hoy":"Programada"}
-        </span>
+        </Badge>
         <h3>{activity.description}</h3>
         <p>OT #{activity.workOrderNumber} · {activity.workOrderTitle}</p>
       </div>
-      <span className={`reaction-priority priority-${activity.priority}`}>{priorityLabel(activity.priority)}</span>
+      <PriorityBadge priority={activity.priority}/>
     </div>
 
     <div className="reaction-detail-facts">
@@ -856,7 +794,7 @@ function ActivityDetail({
       <button type="button" onClick={()=>onEntity("site",activity.siteId)}><span>Sede</span><strong>{activity.siteName}</strong></button>
       <div><span>Activo</span><strong>{activity.assetName||"Sin activo"}</strong></div>
       <div><span>Fecha compromiso</span><strong>{formatDate(activity.operationalDate)}</strong></div>
-      <div><span>Estado</span><strong>{statusLabel(activity.status)}</strong></div>
+      <div><span>Estado</span><ActivityStatusBadge status={activity.status}/></div>
       <div><span>Tipo OT</span><strong>{activity.workOrderType}</strong></div>
       <div><span>Responsable</span><strong>{activity.responsible}</strong></div>
       <div><span>Asignación</span><strong>{activity.assignedUserName?"Técnico":activity.crewName?"Cuadrilla":activity.supplierName?"Proveedor":"Sin asignar"}</strong></div>
@@ -867,20 +805,20 @@ function ActivityDetail({
     <section className="reaction-detail-pending">
       <div className="reaction-detail-section-title">
         <div><span className="eyebrow">Personal relacionado</span><strong>Técnicos conectados asignados</strong></div>
-        <b>{relatedTechnicians.length}</b>
+        <Badge variant={relatedTechnicians.length?"info":"neutral"}>{relatedTechnicians.length}</Badge>
       </div>
       <div className="reaction-related-technicians">
         {relatedTechnicians.map(tech=><button key={tech.userId} type="button" onClick={()=>onEntity("technician",tech.userId)}>
           <div className="reaction-mini-avatar">{tech.avatarUrl?<img src={tech.avatarUrl} alt=""/>:<span>{initials(tech.fullName)}</span>}</div>
           <div><strong>{tech.fullName}</strong><small>{tech.telemetryState==="live"?"GPS en vivo":"GPS pausado"} · {tech.organizationName}</small></div>
         </button>)}
-        {!relatedTechnicians.length&&<div className="reaction-detail-empty">
-          {activity.crewName
+        {!relatedTechnicians.length&&<EmptyState icon="user" title="Sin técnicos conectados" description={
+          activity.crewName
             ? `La actividad está asignada a la cuadrilla ${activity.crewName}, pero no hay integrantes conectados en Reacción.`
             : activity.supplierName
               ? `Asignada al proveedor ${activity.supplierName}.`
-              : "No hay técnico conectado relacionado con esta actividad."}
-        </div>}
+              : "No hay técnico conectado relacionado con esta actividad."
+        }/>}
       </div>
     </section>
 

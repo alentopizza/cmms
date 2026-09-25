@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 9: Maintenance operation
+
+### Added
+
+- Canonical Work Order/Activity/Priority presentation grammar in `components/maintenance-ui/OperationStatus.tsx`.
+- Work Order detail StepProgress, ProgressBar and Timeline composition.
+- Token-only `app/phase9-modules.css`.
+- `scripts/phase9-maintenance-operation-smoke.mjs` and CI coverage.
+
+### Maintenance
+
+- Added V2 KPI for visible, active, overdue and upcoming routines.
+- Migrated desktop routine directory to StaticDataTable.
+- Migrated feedback/prerequisite iconography to V2 while retaining MaintenanceCard mobile records.
+
+### Work Orders + Activities
+
+- Added shared state/priority Badges across Business UI, desktop directory and detail.
+- Added V2 KPI for active, in-progress, urgent and completed orders.
+- Migrated desktop directory to StaticDataTable.
+- Added descriptive process steps, activity completion progress, due-date risk and event Timeline.
+- Migrated Activity execution cards to Card/Badge/Button/EmptyState patterns.
+- Preserved Work Order/Activity POST APIs and server-authoritative transitions.
+
+### Reaction
+
+- Migrated global search and filters to Search/Select/Button.
+- Migrated alert/date/priority/activity states to shared Badge grammar.
+- Replaced the private contextual modal with the official Drawer.
+- Replaced remaining Unicode interaction/contact glyphs with UiIcon.
+- Preserved Maps overlays, technician routes, snapshot cadence and tracking-session semantics.
+
+### Scoped metadata fix
+
+- Provider/external Work Order directory queries now return organization, Site and type metadata already within the authorized query so ModuleHeader facets render correctly.
+
+### Integrity
+
+- No database, API-contract, state-machine, assignment, tracking, RBAC or tenant/Site-scope changes.
+
+### Next
+
+- Phase 10: Reports + Settings + final V2 audit.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 8: Suppliers + People + Attendance
 
 ### Added

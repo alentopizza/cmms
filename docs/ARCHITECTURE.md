@@ -776,3 +776,22 @@ Phase 8 keeps domain identity separate while consolidating presentation:
 Attendance capture still performs device GPS/camera acquisition in the client because browsers require it, but authoritative validation and persistence remain in the existing APIs. Phase 8 did not alter similarity/liveness thresholds, geofence rules, encrypted biometric storage, policy semantics or contingency authorization.
 
 `app/phase8-modules.css` is loaded after Phase 7 and before shell overrides and is scoped to the four migrated domains.
+
+
+### Maintenance operation V2 block — Phase 9
+
+Phase 9 keeps operational authority in the existing server routes while consolidating presentation.
+
+`components/maintenance-ui/OperationStatus.tsx` is presentation-only. It maps existing Work Order/Activity/Priority values to human-readable labels and semantic Badge tones; it does not validate or transition state.
+
+Work Order detail reads existing request/activity dates to compose:
+- descriptive StepProgress;
+- completed-activity ProgressBar;
+- due-date risk;
+- Timeline events for request, Activity start and Activity completion.
+
+The existing `/api/work-orders/[id]/activities` route remains the state-transition authority.
+
+Reaction remains a client map because Google Maps, browser interaction and live snapshot refresh require it. Its contextual entity/activity detail now uses the UI Core Drawer. The Drawer changes focus/keyboard/overlay behavior only; tracking sessions, route points, snapshot authorization and Maps overlays remain unchanged.
+
+Provider/external Work Order list queries include organization/Site/type columns needed by presentation facets, but retain their existing assignment/Supplier predicates and Site-scope predicates.

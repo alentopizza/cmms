@@ -161,7 +161,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     {error&&<div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
-      icon="▤" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
+      icon="inventory" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
       href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}
     />}
 

@@ -33,7 +33,7 @@ if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Es
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
-for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Enrolar biometría inicial","Configurar asistencia"]){
+for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Enrolar biometría inicial","<UserAttendanceScheduleAdmin","Abrir en Asistencia"]){
   if(!users.includes(marker))throw new Error("Users Phase 8 migration missing "+marker);
 }
 for(const glyph of [">×<",">◎<"])if(users.includes(glyph))throw new Error("Users still contain legacy glyph "+glyph);

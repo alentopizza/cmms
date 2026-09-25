@@ -26,10 +26,7 @@ CREATE TABLE IF NOT EXISTS user_attendance_schedules (
   CONSTRAINT user_attendance_schedules_source_check
     CHECK (schedule_source IN ('organization','site','custom')),
   CONSTRAINT user_attendance_schedules_source_site_check
-    CHECK (
-      (schedule_source='site' AND source_site_id IS NOT NULL)
-      OR (schedule_source<>'site' AND source_site_id IS NULL)
-    ),
+    CHECK (schedule_source='site' OR source_site_id IS NULL),
   CONSTRAINT user_attendance_schedules_date_check
     CHECK (effective_until IS NULL OR effective_until >= effective_from),
   CONSTRAINT user_attendance_schedules_json_check

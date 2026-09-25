@@ -707,6 +707,7 @@ Phase 4 owns Search/Filter/DataTable/KPI/timeline/progress standardization. Phas
 Canonical runtime:
 
 - `components/ui-kit/DataControls.tsx` — Search, FilterPanel, FilterGroup, ViewModeToggle y CollectionView;
+- `components/ui-kit/CollectionIdentity.tsx` — EntityIdentityCell y ListQuickActions para filas ERP compactas con logo/avatar/thumbnail/icono y acciones contextualizadas;
 - `components/ui-kit/DataTable.tsx` — sortable DataTable, row actions, bulk selection/actions and Pagination;
 - `components/ui-kit/Metrics.tsx` — KpiCard, MetricGrid and StatTiles;
 - `components/ui-kit/Charts.tsx` — LineChart using only `--chart-1` through `--chart-10`;
@@ -719,7 +720,9 @@ Compatibility migrations:
 - `ModuleHeader` keeps the existing `data-module-record` filtering contract but delegates Search/filter controls to Shared Data UI.
 - `ViewModeToggle` is the official grid/list switch. Active state uses the semantic brand action color and inverse icon; inactive state remains neutral. The default host is `module-view-mode-tools`, rendered inside the same `ModuleHeader` row as Search/Filter/actions; `CollectionView` resolves that portal host even when it mounts later.
 - `CollectionView` owns presentation mode only. It receives the already-authorized collection presentation, does not fetch data, persists the user's module preference in browser storage and emits `cmms:view-mode-change` so `ModuleHeader` reapplies the existing search/facet state after a view switch. When separate grid/list renderers exist, both panes remain mounted and only the inactive pane is hidden so local selection/sort/pagination state can survive the switch; `ModuleHeader` filters/counts only the active pane.
-- Modules with an existing table (for example Work Orders, Maintenance and Crews) pass the existing card and table surfaces as grid/list slots. Modules that only have cards reuse the same card collection and switch to a one-column list layout through `data-collection-grid`; do not create a parallel service or query only to satisfy list mode.
+- Modules with an existing table pass their existing card and table surfaces as grid/list slots. Directories with entity identity now use `StaticDataTable` + `EntityIdentityCell` for List mode rather than stretching grid cards into one column. Grid remains unchanged and both modes consume the same authorized collection.
+- `EntityIdentityCell` must use the entity’s real primary visual resource when available (company/supplier logo, user/crew leader avatar, asset/inventory image, related asset image) and existing initials/icon fallback otherwise. Do not generate or borrow imagery.
+- `ListQuickActions` groups only actions already supported by the module; the visual migration must not invent CRUD or bypass permissions.
 - The shared pattern is wired into Companies, Locations, Suppliers, Users, Crews, Assets, Work Orders, Maintenance, Inventory and Leads. Crews mounts `CollectionView` into its local toolbar via `toolbarTargetId`; Locations additionally uses `StaticDataTable` as its approved explicit list view.
 - `DashboardAnalytics` keeps its current exported API while delegating KPI and trend rendering to `KpiCard`, `MetricGrid`, `StatTiles` and `LineChart`.
 

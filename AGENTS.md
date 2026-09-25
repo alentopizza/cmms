@@ -132,6 +132,9 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - A scheduled base Site must belong to the target Organization, be available to the target user, and remain inside the supervising tenant user's Site scope. Platform operators still require explicit Organization context.
 - Schedule ranges for one user must not overlap. Serialize timeline mutations server-side so concurrent requests cannot create conflicting vigencias.
 - Scheduled hours are descriptive/planning data, not an attendance authorization gate. Do not block a valid real check-in/check-out merely because it occurs outside the scheduled window; preserve the real event for later scheduled-vs-actual reporting.
+- The per-user Attendance audit center is a read model over existing authoritative sources: `attendance_shifts`, `user_attendance_schedules`, `user_biometric_profiles`/`biometric_enrollment_events`, `attendance_contingency_requests` and attendance-related `audit_log` rows. Do not create a parallel summary/history table for this surface.
+- Attendance audit reads require `attendance.manage`, explicit Organization context for platform operators, and server-side Site scoping. A limited supervisor must not receive person options, shift evidence, contingencies, biometric event Site details or schedule-audit rows outside its authorized Sites.
+- Minimize biometric audit output. The administrative history may expose lifecycle/status and supervisor/site attribution, but must not expose stored embeddings or raw facial similarity/liveness scores merely for display.
 
 
 ## Company enterprise-profile invariants

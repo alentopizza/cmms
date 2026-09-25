@@ -93,13 +93,30 @@ type BiometricProfile={
 
 type BiometricEvent={
   id:string;
-  event_type:"enrolled"|"reenrolled"|"revoked";
+  event_type:"requested"|"approved"|"rejected"|"expired"|"enrolled"|"reenrolled"|"revoked";
   enrollment_method:string|null;
   occurred_at:string;
   site_name:string|null;
   actor_name:string;
   actor_platform_role:string|null;
   reason:string|null;
+};
+
+type BiometricRequest={
+  id:string;
+  status:"pending"|"approved"|"rejected"|"cancelled"|"expired";
+  site_id:string;
+  site_name:string;
+  requested_at:string;
+  consented_at:string;
+  reviewed_at:string|null;
+  review_note:string|null;
+  accuracy_m:number;
+  distance_m:number;
+  liveness_method:string;
+  policy_version:number;
+  policy_title:string;
+  reviewed_by_name:string|null;
 };
 
 type Contingency={
@@ -150,6 +167,7 @@ type AuditData={
   upcomingSchedule:AuditSchedule|null;
   biometric:BiometricProfile;
   biometricEvents:BiometricEvent[];
+  biometricRequests:BiometricRequest[];
   shifts:AuditShift[];
   segments:AuditSegment[];
   contingencies:Contingency[];
@@ -229,6 +247,24 @@ function modeLabel(mode:string|null){
   return mode==="contingency"?"Contingencia":"Validación estándar";
 }
 
+function biometricEventLabel(event:BiometricEvent["event_type"]){
+  if(event==="requested")return "Solicitud biométrica enviada";
+  if(event==="approved")return "Identidad biométrica aprobada";
+  if(event==="rejected")return "Solicitud biométrica rechazada";
+  if(event==="expired")return "Solicitud biométrica expirada";
+  if(event==="enrolled")return "Enrolamiento supervisado";
+  if(event==="reenrolled")return "Reenrolamiento supervisado";
+  return "Biometría revocada";
+}
+
+function biometricEventTone(event:BiometricEvent["event_type"]):"brand"|"success"|"warning"|"danger"|"info"|"neutral"{
+  if(event==="approved"||event==="enrolled"||event==="reenrolled")return "success";
+  if(event==="requested")return "warning";
+  if(event==="rejected"||event==="revoked")return "danger";
+  if(event==="expired")return "info";
+  return "neutral";
+}
+
 function scheduleSource(item:AuditSchedule){
   if(item.schedule_source==="organization")return "Plantilla de empresa";
   if(item.schedule_source==="site")return item.source_site_name?"Plantilla de "+item.source_site_name:"Plantilla de sede";
@@ -297,7 +333,7 @@ export default function UserAttendanceAuditCenter({
   },[organizationId,userId,period]);
 
   const selectedPerson=useMemo(()=>people.find(person=>person.id===userId)||null,[people,userId]);
-  const attendanceHref=userId?"/dashboard/attendance?organization_id="+encodeURIComponent(organizationId)+"&user_id="+encodeURIComponent(userId):"/dashboard/attendance";
+  const attendanceHref=userId?"/dashboard/attendance?organization_id="+encodeURIComponent(organizationId)+"&user_id="+encodeURIComponent(userId)+"&view=setup&step=3":"/dashboard/attendance?view=setup&step=3";
 
   const combinedTimeline=useMemo<TimelineItem[]>(()=>{
     if(!data)return [];
@@ -358,16 +394,15 @@ export default function UserAttendanceAuditCenter({
     }
 
     for(const event of data.biometricEvents){
-      const label=event.event_type==="enrolled"?"Biometría enrolada":event.event_type==="reenrolled"?"Biometría reenrolada":"Biometría revocada";
       items.push({
         at:event.occurred_at,
         item:{
           id:"bio-"+event.id,
-          title:label,
+          title:biometricEventLabel(event.event_type),
           description:[event.site_name,event.actor_name,event.reason].filter(Boolean).join(" · "),
           meta:fmt(event.occurred_at),
           icon:"user",
-          tone:event.event_type==="revoked"?"danger":"brand",
+          tone:biometricEventTone(event.event_type),
         },
       });
     }
@@ -505,7 +540,7 @@ export default function UserAttendanceAuditCenter({
 
   const biometricContent=data?<div className="attendance-audit-biometric">
     <article className="attendance-audit-biometric-state">
-      <div><span className="eyebrow">Estado actual</span><h3>{biometricLabel(data.biometric.status)}</h3><p>La foto de perfil no es la plantilla biométrica. El estado se deriva del enrolamiento facial supervisado y su revocación.</p></div>
+      <div><span className="eyebrow">Estado actual</span><h3>{biometricLabel(data.biometric.status)}</h3><p>La foto de perfil no es la plantilla biométrica. El estado se deriva de un enrolamiento supervisado o de una solicitud móvil aprobada una sola vez.</p></div>
       <Badge variant={biometricVariant(data.biometric.status)} icon="attendance">{data.biometric.status==="verified"?"Activa":data.biometric.status==="legacy"?"Legada":data.biometric.status==="revoked"?"Revocada":"Sin enrolar"}</Badge>
       <dl>
         <div><dt>Enrolado</dt><dd>{fmt(data.biometric.enrolled_at)}</dd></div>
@@ -515,17 +550,35 @@ export default function UserAttendanceAuditCenter({
         <div><dt>Supervisor</dt><dd>{data.biometric.enrolled_by_name||"—"}</dd></div>
         {data.biometric.revoked_at&&<div><dt>Revocada</dt><dd>{fmt(data.biometric.revoked_at)}{data.biometric.revoked_by_name?" · "+data.biometric.revoked_by_name:""}{data.biometric.revoked_reason?" · "+data.biometric.revoked_reason:""}</dd></div>}
       </dl>
-      <Link className="button" href={attendanceHref+"#biometric"}><UiIcon name="user" size={14}/>{data.biometric.status==="verified"?"Administrar / reenrolar":"Abrir enrolamiento supervisado"}</Link>
+      <Link className="button" href={attendanceHref+"#biometric"}><UiIcon name="user" size={14}/>{data.biometric.status==="verified"?"Administrar / reenrolar":"Abrir gestión de enrolamiento"}</Link>
     </article>
+    <div className="attendance-audit-recent">
+      <div className="section-heading compact"><div><span className="eyebrow">Solicitudes y consentimiento</span><h3>Auditoría de enrolamiento</h3></div></div>
+      {data.biometricRequests.length?<div className="attendance-audit-list">
+        {data.biometricRequests.map(request=><article className="attendance-audit-record" key={request.id}>
+          <div className="attendance-audit-record-head">
+            <div><strong>{request.site_name} · política v{request.policy_version}</strong><span>Solicitada {fmt(request.requested_at)}</span></div>
+            <Badge variant={request.status==="approved"?"success":request.status==="pending"?"warning":request.status==="rejected"?"danger":"neutral"}>{request.status==="approved"?"Aprobada":request.status==="pending"?"Pendiente":request.status==="rejected"?"Rechazada":request.status==="expired"?"Expirada":request.status}</Badge>
+          </div>
+          <div className="attendance-audit-record-grid">
+            <div><span>Consentimiento</span><strong>{fmt(request.consented_at)}</strong><small>{request.policy_title}</small></div>
+            <div><span>Ubicación enrolamiento</span><strong>GPS ±{Math.round(request.accuracy_m)} m</strong><small>a {Math.round(request.distance_m)} m del punto de sede</small></div>
+            <div><span>Prueba de vida</span><strong>{request.liveness_method==="active_challenge_v1"?"Reto activo + antispoof":"Validación biométrica"}</strong></div>
+            <div><span>Revisión</span><strong>{request.reviewed_by_name||"Sin revisar"}</strong><small>{fmt(request.reviewed_at)}</small></div>
+          </div>
+          {request.review_note&&<p className="attendance-audit-note">Nota de revisión: {request.review_note}</p>}
+        </article>)}
+      </div>:<EmptyState icon="file" title="Sin solicitudes de enrolamiento" description="No existen solicitudes móviles visibles en el periodo seleccionado."/>}
+    </div>
     <div className="attendance-audit-recent">
       <div className="section-heading compact"><div><span className="eyebrow">Cadena de identidad</span><h3>Eventos biométricos</h3></div></div>
       {data.biometricEvents.length?<Timeline items={data.biometricEvents.map(event=>({
         id:event.id,
-        title:event.event_type==="enrolled"?"Enrolamiento supervisado":event.event_type==="reenrolled"?"Reenrolamiento supervisado":"Revocación biométrica",
+        title:biometricEventLabel(event.event_type),
         description:[event.site_name,event.actor_name,event.reason].filter(Boolean).join(" · "),
         meta:fmt(event.occurred_at),
         icon:"user",
-        tone:event.event_type==="revoked"?"danger":"brand",
+        tone:biometricEventTone(event.event_type),
       }))} label="Historial biométrico"/>:<EmptyState icon="file" title="Sin eventos biométricos" description="No hay eventos biométricos visibles en el periodo seleccionado."/>}
     </div>
   </div>:null;

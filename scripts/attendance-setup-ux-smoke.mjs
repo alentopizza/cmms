@@ -11,6 +11,8 @@ const required=[
   "components/AttendanceContingency.tsx",
   "components/UserAttendanceAuditCenter.tsx",
   "components/AttendanceOperationalReport.tsx",
+  "app/dashboard/users/UserManagement.tsx",
+  "app/dashboard/reports/page.tsx",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Attendance setup UX missing "+file);
 
@@ -87,6 +89,16 @@ for(const marker of ["return_step",'target.searchParams.set("view", "setup")',"a
 const enrollment=fs.readFileSync("components/SupervisedBiometricEnrollment.tsx","utf8");
 for(const marker of ["Activar cámara y enrolar","Verificar presencia en la sede","identityChecked","consent"]){
   if(!enrollment.includes(marker))throw new Error("Existing biometric enrollment flow changed unexpectedly: "+marker);
+}
+
+const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
+for(const marker of ['params.set("view","setup")','params.set("step","3")',"view=operation#attendance-audit"]){
+  if(!users.includes(marker))throw new Error("User → Attendance deep link missing "+marker);
+}
+
+const reports=fs.readFileSync("app/dashboard/reports/page.tsx","utf8");
+if(!reports.includes("/dashboard/attendance?view=operation#attendance-report")){
+  throw new Error("Reports → Attendance operational report deep link is not targeting the operation view");
 }
 
 console.log("Attendance five-step setup UX checks passed.");

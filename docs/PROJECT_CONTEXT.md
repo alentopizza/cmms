@@ -631,7 +631,44 @@ The Phase 3 attendance dossier now includes a **Desplazamientos** tab, travel KP
 
 The current contingency workflow remains for check-in/check-out. Travel departure/arrival uses the normal location validation path when geolocation is required.
 
-Phase 5 remains focused on scheduled-vs-actual reporting and richer multi-Site summaries using the evidence now captured by Phases 2–4.
+### Attendance operational reporting
+
+**Asistencia operativa — Fase 5** closes the planned operational track with a scoped reporting read model over the evidence produced by Phases 1–4.
+
+`lib/attendance-report.ts` composes, inside one repeatable-read transaction:
+- effective-dated individual schedules;
+- real attendance shifts;
+- ordered Site/Travel segments;
+- completed Activity execution events;
+- attendance contingency requests and contingency-based markings;
+- Reaction samples correlated to visible Travel segments.
+
+The report compares **programmed vs. real** work time by local date. Scheduled minutes come only from an enabled individual schedule on that date. The difference shown by the report is calculated only on those scheduled days. Real attendance on a non-programmed day is kept separately as **tiempo registrado no programado** instead of being mixed into the scheduled variance.
+
+The report exposes descriptive evidence such as:
+- programmed days and hours;
+- real field hours;
+- time in Site segments;
+- time in Travel segments;
+- origin and final Site;
+- multi-Site jornada count;
+- completed Activities inside/outside a shift;
+- contingency requests/uses and contingency-based markings;
+- Reaction sample count correlated to Travel segments;
+- programmed days without a visible marking;
+- days with real attendance but no enabled individual schedule.
+
+Those values are operational facts for human review. They are not worker scores, rankings, disciplinary conclusions or automated employment decisions.
+
+`/api/attendance/report` is the single Phase 5 boundary for on-screen JSON plus XLSX, CSV and PDF. All formats are generated from the same scoped dataset and filters. Pro white-label tenants retain the approved report-branding behavior.
+
+Platform Owner/Superadmin must explicitly select the Organization before reporting. Tenant Admin/Manager sessions remain bound to their authenticated Organization and Site scope. A Site-limited supervisor does **not** receive a partial multi-Site journey: a shift is visible only when origin, final Site and every Site/Travel endpoint remain inside the authorized Site set.
+
+The report accepts a maximum 366-day window. Open shifts contribute elapsed time up to the request moment and remain visibly marked as open/provisional evidence.
+
+The canonical Attendance screen now embeds this report and the central Reportes module deep-links directly to it. The previous duplicated fixed 30-day Attendance aggregation has been removed.
+
+The planned Attendance operational track (Phases 1–5) is now functionally complete. Future Attendance work should be treated as incremental product enhancement rather than an automatic Phase 6 migration.
 
 
 ### Mobile field shell phase 4A

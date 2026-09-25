@@ -169,6 +169,8 @@ function attendanceAdminHref(user:ManagedUser){
   const params=new URLSearchParams();
   if(user.organization_id)params.set("organization_id",user.organization_id);
   params.set("user_id",user.id);
+  params.set("view","setup");
+  params.set("step","3");
   return `/dashboard/attendance?${params.toString()}#biometric`;
 }
 
@@ -763,7 +765,7 @@ export default function UserManagement({
                 {selectedUser.organization_id
                   ?<div className="user-attendance-admin-actions">
                     <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Enrolar biometría inicial"}</Link>
-                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}#attendance-audit`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
+                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}&view=operation#attendance-audit`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
               </div>

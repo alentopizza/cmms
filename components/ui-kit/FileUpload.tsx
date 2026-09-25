@@ -45,6 +45,34 @@ function typeLabel(accept:string){
   return [...new Set(values)].join(", ");
 }
 
+async function optimizeImageUpload(file:File){
+  if(!file.type.startsWith("image/")||typeof createImageBitmap!=="function")return file;
+  try{
+    const bitmap=await createImageBitmap(file);
+    const maxDimension=1600;
+    const scale=Math.min(1,maxDimension/Math.max(bitmap.width,bitmap.height));
+    const width=Math.max(1,Math.round(bitmap.width*scale));
+    const height=Math.max(1,Math.round(bitmap.height*scale));
+    const shouldOptimize=scale<1||file.size>900*1024;
+    if(!shouldOptimize){bitmap.close();return file;}
+    const canvas=document.createElement("canvas");
+    canvas.width=width;
+    canvas.height=height;
+    const context=canvas.getContext("2d");
+    if(!context){bitmap.close();return file;}
+    context.imageSmoothingEnabled=true;
+    context.imageSmoothingQuality="high";
+    context.drawImage(bitmap,0,0,width,height);
+    bitmap.close();
+    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/webp",0.82));
+    if(!blob||blob.size>=file.size)return file;
+    const base=file.name.replace(/\.[^.]+$/,"")||"imagen";
+    return new File([blob],base+".webp",{type:"image/webp",lastModified:file.lastModified});
+  }catch{
+    return file;
+  }
+}
+
 export function FileUpload({
   name,id,label,description,accept,maxSizeMb,required=false,disabled=false,kind="file",compact=false,
   existingFileName,existingPreviewUrl,buttonLabel="Seleccionar archivo",onFileChange,
@@ -56,6 +84,7 @@ export function FileUpload({
   const [dragging,setDragging]=useState(false);
   const [error,setError]=useState("");
   const [preview,setPreview]=useState("");
+  const [processing,setProcessing]=useState(false);
 
   useEffect(()=>{
     if(!selected||!selected.type.startsWith("image/")){setPreview("");return;}
@@ -65,20 +94,24 @@ export function FileUpload({
   },[selected]);
 
   function resetNative(){if(inputRef.current)inputRef.current.value="";}
-  function apply(file:File|null,assign=false){
+  async function apply(file:File|null,assign=false){
     setError("");
     if(!file){setSelected(null);resetNative();onFileChange?.(null);return;}
     if(!acceptsFile(file,accept)){setSelected(null);resetNative();setError(`Formato no permitido. Usa: ${typeLabel(accept)||"un formato compatible"}.`);onFileChange?.(null);return;}
     if(file.size>maxSizeMb*1024*1024){setSelected(null);resetNative();setError(`El archivo supera el máximo permitido de ${maxSizeMb} MB.`);onFileChange?.(null);return;}
-    if(assign&&inputRef.current){
+    setProcessing(kind==="image");
+    const prepared=kind==="image"?await optimizeImageUpload(file):file;
+    setProcessing(false);
+    if(prepared.size>maxSizeMb*1024*1024){setSelected(null);resetNative();setError(`El archivo supera el máximo permitido de ${maxSizeMb} MB.`);onFileChange?.(null);return;}
+    if((assign||prepared!==file)&&inputRef.current){
       const transfer=new DataTransfer();
-      transfer.items.add(file);
+      transfer.items.add(prepared);
       inputRef.current.files=transfer.files;
     }
-    setSelected(file);onFileChange?.(file);
+    setSelected(prepared);onFileChange?.(prepared);
   }
   function drop(event:React.DragEvent<HTMLDivElement>){
-    event.preventDefault();setDragging(false);if(disabled)return;apply(event.dataTransfer.files?.[0]||null,true);
+    event.preventDefault();setDragging(false);if(disabled)return;void apply(event.dataTransfer.files?.[0]||null,true);
   }
 
   const savedName=selected?.name||existingFileName||"";
@@ -92,8 +125,8 @@ export function FileUpload({
       tabIndex={disabled?-1:0}
       aria-disabled={disabled}
       aria-describedby={inputId+"-help"}
-      onClick={()=>!disabled&&inputRef.current?.click()}
-      onKeyDown={event=>{if(!disabled&&(event.key==="Enter"||event.key===" ")){event.preventDefault();inputRef.current?.click();}}}
+      onClick={()=>!disabled&&!processing&&inputRef.current?.click()}
+      onKeyDown={event=>{if(!disabled&&!processing&&(event.key==="Enter"||event.key===" ")){event.preventDefault();inputRef.current?.click();}}}
       onDragEnter={event=>{event.preventDefault();if(!disabled)setDragging(true);}}
       onDragOver={event=>event.preventDefault()}
       onDragLeave={event=>{if(event.currentTarget===event.target)setDragging(false);}}
@@ -108,7 +141,7 @@ export function FileUpload({
         accept={accept}
         required={required}
         disabled={disabled}
-        onChange={event=>apply(event.target.files?.[0]||null)}
+        onChange={event=>{void apply(event.target.files?.[0]||null);}}
       />
 
       <span className={["ds-file-upload-preview",previewUrl?"has-preview":""].filter(Boolean).join(" ")} aria-hidden="true">
@@ -118,7 +151,7 @@ export function FileUpload({
       <div className="ds-file-upload-copy">
         <span>{required?"Archivo obligatorio":"Archivo opcional"}</span>
         <strong>{label}{required?" *":""}</strong>
-        <p>{selected?"Archivo reconocido y listo para guardar.":existingFileName?"Archivo guardado. Puedes reemplazarlo.":"Arrastra y suelta aquí o selecciona desde tu equipo."}</p>
+        <p>{processing?"Optimizando imagen antes de subir…":selected?"Archivo reconocido y listo para guardar.":existingFileName?"Archivo guardado. Puedes reemplazarlo.":"Arrastra y suelta aquí o selecciona desde tu equipo."}</p>
         <div className="ds-file-upload-meta" id={inputId+"-help"}>
           {selected?<><span>{selected.name}</span><span>{bytesLabel(selected.size)}</span></>
             :existingFileName?<span>Actual: {existingFileName}</span>
@@ -132,8 +165,8 @@ export function FileUpload({
       </div>
 
       <div className="ds-file-upload-actions">
-        <span>{selected?"Cambiar archivo":buttonLabel}</span>
-        {selected&&<button type="button" onClick={event=>{event.stopPropagation();apply(null);}}>Quitar</button>}
+        <span>{processing?"Procesando…":selected?"Cambiar archivo":buttonLabel}</span>
+        {selected&&!processing&&<button type="button" onClick={event=>{event.stopPropagation();void apply(null);}}>Quitar</button>}
       </div>
     </div>
     {error&&<small className="ds-field-feedback" role="alert"><UiIcon name="error" size={13}/><span>{error}</span></small>}

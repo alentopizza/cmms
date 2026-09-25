@@ -55,7 +55,7 @@ for(const marker of ["phase8-crews","<CrewCard","<Alert","<EmptyState","iconName
 if(crews.includes("♕")||crews.includes('className={"status-badge'))throw new Error("Crews still use legacy leader/status glyphs");
 
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
-for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","attendance-admin-context","organization_id","initialUserId"]){
+for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","<AttendanceSetupWorkspace","attendance-redesign-head","organization_id","initialUserId"]){
   if(!attendance.includes(marker))throw new Error("Attendance Phase 8 orchestration missing "+marker);
 }
 const attendanceReport=fs.readFileSync("components/AttendanceOperationalReport.tsx","utf8");

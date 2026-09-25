@@ -671,3 +671,27 @@ Rules:
 - no metric from this report may be converted into an automatic ranking, disciplinary score or employment decision.
 
 This closes the planned Attendance operational track with auditable planning-vs-reality reporting while preserving the authority and privacy boundaries established in Phases 1–4.
+
+
+## ADR-043 — Attendance administration is one five-step setup plus a separate operational view
+
+Status: accepted.
+
+The Attendance module had accumulated company context, field presence, biometric enrollment, policy, Site geofences, contingency supervision, per-user audit and reporting in one vertically long page. The approved UX reorganizes those same capabilities without changing their authorities.
+
+Rules:
+- `/dashboard/attendance` remains the single module route;
+- administrative setup uses `step=1..5` for Configuración, Sedes, Enrolamiento, Política and Resumen;
+- `Stepper` is a reusable UI Core navigation primitive; it owns presentation/accessibility only, not completion rules;
+- `AttendanceSetupWorkspace` composes the active step, Previous/Next controls, progress summary and responsive layout;
+- Configuración shows the currently effective values but is read-only so Policy remains the only editable policy implementation;
+- Sedes reads the already-authorized Site/geofence data and links to the canonical Location editor rather than introducing a second geofence editor;
+- Enrolamiento embeds the existing `SupervisedBiometricEnrollment` component unchanged in authority;
+- Política posts to the existing `/api/attendance/policy` endpoint. The endpoint may preserve validated navigation state after redirect, but its business validation and persistence contract remain unchanged;
+- Resumen is derived presentation state and does not create a new “finalize setup” database mutation;
+- daily field presence, inter-Site movement, self contingency, per-user Attendance dossier, supervisor contingency review and Phase 5 reporting are grouped under `view=operation`;
+- existing deep links from Users and Reports must explicitly target setup/enrollment or operational audit/report surfaces;
+- Platform Owner/Superadmin Organization context remains explicit and server-authoritative across both views;
+- setup completeness is guidance only. It must not replace or broaden backend authorization, policy validation, biometric verification, geofence validation or operational eligibility.
+
+This decision reduces configuration scroll and clarifies responsibility while preserving one source of truth for every Attendance capability.

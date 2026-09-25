@@ -151,6 +151,13 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Open shifts may contribute elapsed minutes up to `now()` and must remain visibly marked as open/provisional evidence rather than presented as a finalized closed duration.
 - Report output may show biometric verification mode or contingency linkage already present on attendance events, but must not expose encrypted embeddings or raw similarity/liveness scores.
 - Report differences, missing programmed-day markings, unplanned attendance, travel time, activities and contingencies are descriptive facts. Do not convert them into automatic worker ranking, disciplinary scoring or employment decisions.
+- Attendance administration uses one five-step setup experience: Configuración → Sedes → Enrolamiento → Política → Resumen. Keep it inside `/dashboard/attendance`; do not split it into five independent pages or duplicate business logic.
+- The setup Stepper and the side progress panel must derive from the same server-computed step state. Stepper links use `step=1..5`; Platform Owner/Superadmin must preserve explicit `organization_id` context across navigation.
+- Configuración is a read-only overview of the current policy values; Política remains the single editable attendance-policy form. Do not create a second policy mutation or duplicate controls just to match a mockup.
+- Sedes reuses the canonical Site/geofence data and editor. Enrolamiento reuses `SupervisedBiometricEnrollment`, existing camera/GPS/consent logic and current enrollment endpoints.
+- Presence capture, movement, self contingency, per-user audit, supervisor contingency review and operational reporting belong to the secondary `view=operation` surface. They must remain available and must not be hidden under the setup scroll.
+- Attendance deep links must target their intended surface: enrollment → `view=setup&step=3`, audit/report → `view=operation`. Preserve user/organization query context when present.
+- Setup progress is descriptive UI state, not a new server gate. Existing backend validations and authorization remain authoritative; do not block legitimate Attendance operations merely because a setup step appears incomplete.
 
 
 ## Company enterprise-profile invariants

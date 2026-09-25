@@ -9,7 +9,7 @@ import { Badge, StatusIndicator } from "@/components/ui-kit/Badge";
 import { Card } from "@/components/ui-kit/Card";
 import { Avatar } from "@/components/ui-kit/Avatar";
 import { Alert, Toast, EmptyState, EmptyStateAction, Spinner, Skeleton, LoadingCard, LoadingTable } from "@/components/ui-kit/Feedback";
-import { Breadcrumb, ModuleNavigation, Pills, SegmentedControl, Tabs } from "@/components/ui-kit/Navigation";
+import { Breadcrumb, ModuleNavigation, Pills, SegmentedControl, Stepper, Tabs } from "@/components/ui-kit/Navigation";
 import { Modal, Drawer } from "@/components/ui-kit/Overlay";
 import { Dropdown, Tooltip } from "@/components/ui-kit/TooltipDropdown";
 import { FileUpload } from "@/components/ui-kit/FileUpload";
@@ -131,6 +131,16 @@ export function CorePrimitivesPreview(){
       </div>
       <Breadcrumb items={[{label:"Inicio",href:"/dashboard"},{label:"Activos",href:"/dashboard/assets"},{label:"Activo TR-SIE-2500"}]}/>
       <ModuleNavigation activeHref="/dashboard/assets" items={[{label:"Lista de activos",href:"/dashboard/assets"},{label:"Tipos",href:"/dashboard/assets"},{label:"Categorías",href:"/dashboard/assets"},{label:"Mantenimientos",href:"/dashboard/maintenance"}]}/>
+      <Stepper
+        activeId="sites"
+        items={[
+          {id:"general",label:"Configuración",description:"Datos generales",completed:true,href:"#navigation"},
+          {id:"sites",label:"Sedes",description:"Geocercas",href:"#navigation"},
+          {id:"enrollment",label:"Enrolamiento",description:"Biometría",href:"#navigation"},
+          {id:"policy",label:"Política",description:"Reglas y roles",href:"#navigation"},
+          {id:"summary",label:"Resumen",description:"Confirmación",href:"#navigation"},
+        ]}
+      />
       <Tabs items={[{id:"general",label:"Información general",content:<p>Contenido de la pestaña activa.</p>},{id:"history",label:"Historial",content:<p>Historial del registro.</p>},{id:"disabled",label:"Deshabilitada",disabled:true}]}/>
       <Pills items={[{id:"all",label:"Todos"},{id:"active",label:"Activos"},{id:"inactive",label:"Inactivos"}]}/>
       <SegmentedControl value={segment} onChange={setSegment} items={[{value:"grid",label:"Tarjetas"},{value:"table",label:"Tabla"}]}/>

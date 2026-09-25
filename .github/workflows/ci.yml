@@ -75,6 +75,7 @@ jobs:
       - run: node scripts/attendance-reporting-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/attendance-setup-ux-smoke.mjs
       - run: node scripts/phase9-maintenance-operation-smoke.mjs
       - run: node scripts/phase10-final-smoke.mjs
       - run: node scripts/design-system-final-audit.mjs

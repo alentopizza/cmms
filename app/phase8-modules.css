@@ -176,6 +176,173 @@
 .phase8-attendance .biometric-supervisor-camera{padding:var(--space-3)}
 .phase8-attendance .biometric-enrollment-location-check{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
 
+/* Attendance setup redesign — five-step configuration workspace ------------ */
+.phase8-attendance.attendance-redesign{display:grid;gap:var(--space-4)}
+.phase8-attendance .attendance-redesign-head{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);
+  padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-redesign-title{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.phase8-attendance .attendance-redesign-title-icon{
+  width:42px;height:42px;display:grid;place-items:center;flex:0 0 42px;border-radius:50%;
+  border:1px solid var(--color-border-subtle);background:var(--color-surface-soft);color:var(--color-brand-secondary)
+}
+.phase8-attendance .attendance-redesign-title h1{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h2)}
+.phase8-attendance .attendance-redesign-title p{margin:2px 0 0;color:var(--color-text-muted)}
+.phase8-attendance .attendance-redesign-company{flex:0 1 520px}
+.phase8-attendance .attendance-company-form{
+  display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:var(--space-2);align-items:end
+}
+.phase8-attendance .attendance-company-form .field{margin:0}
+.phase8-attendance .attendance-company-form .button{
+  min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2)
+}
+.phase8-attendance .attendance-company-readonly{
+  display:grid;gap:2px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-lg);background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-company-readonly span{color:var(--color-text-muted);font-size:var(--font-size-body-sm)}
+.phase8-attendance .attendance-company-readonly strong{color:var(--color-text-primary)}
+.phase8-attendance.attendance-redesign>.ds-module-nav{justify-self:start}
+
+.phase8-attendance .attendance-setup-workspace{display:grid;gap:var(--space-4);min-width:0}
+.phase8-attendance .attendance-setup-layout{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:var(--space-4);align-items:start
+}
+.phase8-attendance .attendance-setup-main,
+.phase8-attendance .attendance-setup-progress{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-setup-main{min-width:0;overflow:hidden}
+.phase8-attendance .attendance-setup-step-head{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center;
+  padding:var(--space-4);border-bottom:1px solid var(--color-border-subtle)
+}
+.phase8-attendance .attendance-setup-step-icon{
+  width:44px;height:44px;display:grid;place-items:center;border-radius:var(--radius-xl);
+  background:var(--color-surface-teal);color:var(--color-brand-secondary)
+}
+.phase8-attendance .attendance-setup-step-head h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h3)}
+.phase8-attendance .attendance-setup-step-head p{margin:3px 0 0;color:var(--color-text-muted)}
+.phase8-attendance .attendance-setup-step-body{padding:var(--space-4)}
+.phase8-attendance .attendance-setup-sections{display:grid;gap:var(--space-4)}
+.phase8-attendance .attendance-setup-group{display:grid;gap:var(--space-3)}
+.phase8-attendance .attendance-setup-group+.attendance-setup-group{
+  padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle)
+}
+.phase8-attendance .attendance-setup-group-head{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-2);align-items:center;color:var(--color-brand-secondary)
+}
+.phase8-attendance .attendance-setup-group-head>div{display:grid;gap:2px}
+.phase8-attendance .attendance-setup-group-head strong{color:var(--color-text-primary)}
+.phase8-attendance .attendance-setup-group-head small{color:var(--color-text-muted)}
+.phase8-attendance .attendance-setup-fields{display:grid;gap:var(--space-3)}
+.phase8-attendance .attendance-setup-fields.two-columns{grid-template-columns:repeat(2,minmax(0,1fr))}
+.phase8-attendance .attendance-setup-role-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)
+}
+.phase8-attendance .attendance-setup-role-grid>div{
+  min-height:42px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);align-items:center;
+  padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-text-muted)
+}
+.phase8-attendance .attendance-setup-role-grid>div>span{
+  width:20px;height:20px;display:grid;place-items:center;border:1px solid var(--color-border-default);
+  border-radius:var(--radius-sm);background:var(--color-surface)
+}
+.phase8-attendance .attendance-setup-role-grid>div.is-enabled{color:var(--color-text-primary);border-color:var(--color-border-active)}
+.phase8-attendance .attendance-setup-role-grid>div.is-enabled>span{
+  border-color:var(--color-action-primary);background:var(--color-action-primary);color:var(--color-text-inverse)
+}
+.phase8-attendance .attendance-setup-role-grid strong{font-size:var(--font-size-body-sm);font-weight:var(--font-weight-medium)}
+.phase8-attendance .attendance-policy-form{margin-top:var(--space-1)}
+.phase8-attendance .attendance-setup-embedded>.card.section,
+.phase8-attendance .attendance-setup-embedded>.section{
+  margin:0;border:0;box-shadow:none;padding:0
+}
+.phase8-attendance .attendance-setup-embedded .biometric-supervisor-card>.section-heading{display:none}
+.phase8-attendance .attendance-setup-embedded .biometric-supervisor-grid{margin-top:0}
+
+.phase8-attendance .attendance-setup-actions{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);
+  padding:var(--space-3) var(--space-4);border-top:1px solid var(--color-border-subtle);background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-setup-actions>div{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.phase8-attendance .attendance-setup-actions .is-disabled{pointer-events:none;opacity:.45}
+
+.phase8-attendance .attendance-setup-progress{
+  position:sticky;top:var(--space-4);display:grid;gap:var(--space-4);padding:var(--space-4)
+}
+.phase8-attendance .attendance-setup-progress-head{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center
+}
+.phase8-attendance .attendance-setup-progress-head h3{margin:3px 0;color:var(--color-text-primary);font-size:var(--font-size-h4)}
+.phase8-attendance .attendance-setup-progress-head p{margin:0;color:var(--color-text-muted);font-size:var(--font-size-body-sm)}
+.phase8-attendance .attendance-setup-progress-ring{display:grid;place-items:center}
+.phase8-attendance .attendance-setup-progress-ring>*{grid-area:1/1}
+.phase8-attendance .attendance-setup-progress-ring .ds-circular-progress>div{display:none}
+.phase8-attendance .attendance-setup-progress-ring>strong{color:var(--color-text-primary);font-size:var(--font-size-body-lg)}
+.phase8-attendance .attendance-setup-tip{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);align-items:start;
+  padding:var(--space-3);border:1px solid var(--color-info-border);border-radius:var(--radius-xl);
+  background:var(--color-info-surface);color:var(--color-info-text)
+}
+.phase8-attendance .attendance-setup-tip>div{display:grid;gap:3px}
+.phase8-attendance .attendance-setup-tip>div>div{color:var(--color-text-secondary);font-size:var(--font-size-body-sm);line-height:var(--line-height-body)}
+
+.phase8-attendance .attendance-setup-summary-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)
+}
+.phase8-attendance .attendance-setup-summary-grid article{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center;
+  padding:var(--space-3);border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-setup-summary-grid article>span{
+  width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-lg);
+  background:var(--color-surface);color:var(--color-text-muted)
+}
+.phase8-attendance .attendance-setup-summary-grid article>span.success{background:var(--color-success-surface);color:var(--color-success-text)}
+.phase8-attendance .attendance-setup-summary-grid article>span.warning{background:var(--color-warning-surface);color:var(--color-warning-text)}
+.phase8-attendance .attendance-setup-summary-grid article>div{display:grid;gap:2px}
+.phase8-attendance .attendance-setup-summary-grid strong{color:var(--color-text-primary)}
+.phase8-attendance .attendance-setup-summary-grid small{color:var(--color-text-muted)}
+.phase8-attendance .attendance-setup-summary-actions{display:flex;justify-content:flex-end;gap:var(--space-2);flex-wrap:wrap}
+
+.phase8-attendance .attendance-operation-head{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);
+  padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-operation-head h2{margin:2px 0;color:var(--color-text-primary);font-size:var(--font-size-h3)}
+.phase8-attendance .attendance-operation-head p{margin:0;color:var(--color-text-muted)}
+
+@media(max-width:1100px){
+  .phase8-attendance .attendance-setup-layout{grid-template-columns:minmax(0,1fr) minmax(260px,300px)}
+  .phase8-attendance .attendance-setup-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:880px){
+  .phase8-attendance .attendance-redesign-head{align-items:stretch;flex-direction:column}
+  .phase8-attendance .attendance-redesign-company{flex-basis:auto}
+  .phase8-attendance .attendance-setup-layout{grid-template-columns:1fr}
+  .phase8-attendance .attendance-setup-progress{position:static}
+  .phase8-attendance .attendance-setup-progress .ds-step-progress{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .phase8-attendance .attendance-company-form,
+  .phase8-attendance .attendance-setup-fields.two-columns,
+  .phase8-attendance .attendance-setup-role-grid,
+  .phase8-attendance .attendance-setup-summary-grid{grid-template-columns:1fr}
+  .phase8-attendance .attendance-redesign-title h1{font-size:var(--font-size-h3)}
+  .phase8-attendance .attendance-setup-actions{align-items:stretch;flex-direction:column-reverse}
+  .phase8-attendance .attendance-setup-actions>div{display:grid;grid-template-columns:1fr 1fr}
+  .phase8-attendance .attendance-setup-actions>a{width:100%}
+  .phase8-attendance .attendance-setup-progress .ds-step-progress{grid-template-columns:1fr}
+  .phase8-attendance .attendance-operation-head{align-items:flex-start;flex-direction:column}
+}
+
 /* Attendance Phase 2 — individual scheduled workdays ---------------------- */
 .phase8-attendance .attendance-scheduled-workday{
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-3);align-items:center;

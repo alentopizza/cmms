@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import UiIcon from "@/components/UiIcon";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -9,11 +10,13 @@ import AttendanceMovement, { type AttendanceMovementSegment } from "@/components
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import AttendanceOperationalReport from "@/components/AttendanceOperationalReport";
+import AttendanceSetupWorkspace, { type AttendanceSetupStep } from "@/components/AttendanceSetupWorkspace";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
+import { ModuleNavigation } from "@/components/ui-kit/Navigation";
 import { attendanceOrganizationId } from "@/lib/attendance-context";
 import { attendanceScheduleWeeklyHours, scheduleDayForDate } from "@/lib/attendance-schedules";
 import type { BusinessDaySchedule } from "@/lib/business-hours";
@@ -79,7 +82,7 @@ type SelfDestinationTask={
 
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
 
-export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string;organization_id?:string;user_id?:string}>}) {
+export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string;organization_id?:string;user_id?:string;view?:string;step?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   const globalOperator=isPlatformOperator(session);
@@ -323,76 +326,290 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const selfOpenShift=openShift.rows[0]||null;
   const selfMovement=selfMovementSegment.rows[0]||null;
 
-  return <div className="phase8-attendance">
+  const organizationName=selectedOrganization?.name||session.organizationName||"Empresa";
+  const activeView=canManage&&feedback.view==="operation"?"operation":"setup";
+  const activeStep=["1","2","3","4","5"].includes(feedback.step||"")?feedback.step!:"1";
+  const geofencedSites=sites.rows.filter(site=>site.latitude!==null&&site.longitude!==null&&site.geofence_radius_m>0).length;
+  const controlledPeople=enrollmentPeople.rows.filter(person=>policy.enabled_roles.includes(person.role));
+  const verifiedControlled=controlledPeople.filter(person=>person.biometric_status==="verified").length;
+  const generalComplete=Boolean(organizationId);
+  const sitesComplete=sites.rows.length>0&&(!policy.require_geolocation||geofencedSites===sites.rows.length);
+  const enrollmentComplete=!policy.require_face||(controlledPeople.length>0&&verifiedControlled===controlledPeople.length);
+  const policyComplete=Boolean(policyResult.rows[0]);
+  const summaryComplete=generalComplete&&sitesComplete&&enrollmentComplete&&policyComplete;
+
+  function attendanceHref({view="setup",step,userId}:{view?:"setup"|"operation";step?:string;userId?:string}={}){
+    const params=new URLSearchParams();
+    if(globalOperator&&organizationId)params.set("organization_id",organizationId);
+    const targetUserId=userId||feedback.user_id;
+    if(targetUserId)params.set("user_id",targetUserId);
+    params.set("view",view);
+    if(view==="setup"&&step)params.set("step",step);
+    const query=params.toString();
+    return "/dashboard/attendance"+(query?"?"+query:"");
+  }
+
+  const setupSteps:AttendanceSetupStep[]=[
+    {
+      id:"1",label:"Configuración",description:"Datos generales",
+      progressLabel:"1. Configuración general",
+      progressDescription:generalComplete?"Empresa y contexto definidos":"Selecciona la empresa a administrar",
+      completed:generalComplete,href:attendanceHref({step:"1"}),
+    },
+    {
+      id:"2",label:"Sedes",description:"Geocercas",
+      progressLabel:"2. Sedes habilitadas",
+      progressDescription:sites.rows.length
+        ? policy.require_geolocation
+          ? geofencedSites+"/"+sites.rows.length+" con geocerca"
+          : sites.rows.length+" sede(s) visible(s) · GPS no obligatorio"
+        :"Sin sedes visibles",
+      completed:sitesComplete,href:attendanceHref({step:"2"}),
+    },
+    {
+      id:"3",label:"Enrolamiento",description:"Biometría",
+      progressLabel:"3. Enrolamiento supervisado",
+      progressDescription:policy.require_face
+        ? verifiedControlled+"/"+controlledPeople.length+" persona(s) controlada(s) verificadas"
+        :"Biometría no requerida por la política",
+      completed:enrollmentComplete,href:attendanceHref({step:"3"}),
+    },
+    {
+      id:"4",label:"Política",description:"Reglas y roles",
+      progressLabel:"4. Política de asistencia",
+      progressDescription:policyComplete?"Reglas guardadas":"Usando valores predeterminados hasta guardar",
+      completed:policyComplete,href:attendanceHref({step:"4"}),
+    },
+    {
+      id:"5",label:"Resumen",description:"Confirmación",
+      progressLabel:"5. Resumen y confirmación",
+      progressDescription:summaryComplete?"Configuración lista para operación":"Revisa los pasos pendientes",
+      completed:summaryComplete,href:attendanceHref({step:"5"}),
+    },
+  ];
+
+  const setupTitles:Record<string,{title:string;description:string;icon:"settings"|"location"|"user"|"attendance"|"report"}>={
+    "1":{title:"Configuración general",description:"Define y revisa la información base y los parámetros principales del módulo de asistencia.",icon:"settings"},
+    "2":{title:"Sedes habilitadas",description:"Define dónde se permite registrar presencia y configura las geocercas existentes.",icon:"location"},
+    "3":{title:"Enrolamiento supervisado",description:"Registra y valida la biometría facial de los usuarios controlados.",icon:"user"},
+    "4":{title:"Política de asistencia",description:"Define reglas, verificaciones y roles sujetos al control de asistencia.",icon:"attendance"},
+    "5":{title:"Resumen y confirmación",description:"Revisa la configuración vigente antes de continuar a la operación diaria.",icon:"report"},
+  };
+
+  const setupStepContent:Record<string,ReactNode>={
+    "1":<div className="attendance-setup-sections">
+      <section className="attendance-setup-group">
+        <div className="attendance-setup-group-head"><UiIcon name="company" size={17}/><div><strong>Información de la empresa</strong><small>Contexto sobre el que se aplican las reglas de asistencia.</small></div></div>
+        <div className="attendance-setup-fields two-columns">
+          <div className="field"><label>Empresa</label><input value={organizationName} readOnly/></div>
+          <div className="field"><label>Estado del módulo</label><input value={policy.enabled?"Activado":"Desactivado"} readOnly/></div>
+        </div>
+      </section>
+
+      <section className="attendance-setup-group">
+        <div className="attendance-setup-group-head"><UiIcon name="settings" size={17}/><div><strong>Parámetros de asistencia</strong><small>Vista actual de las reglas; se editan en el paso Política.</small></div></div>
+        <div className="attendance-setup-fields two-columns">
+          <div className="field"><label>Biometría facial</label><input value={policy.require_face?"Obligatoria":"No requerida"} readOnly/></div>
+          <div className="field"><label>Geolocalización</label><input value={policy.require_geolocation?"Obligatoria":"No requerida"} readOnly/></div>
+          <div className="field"><label>Precisión GPS máxima (m)</label><input value={String(policy.max_location_accuracy_m)} readOnly/></div>
+          <div className="field"><label>Coincidencia facial mínima</label><input value={String(policy.face_similarity_threshold)} readOnly/></div>
+          <div className="field"><label>Presencia real mínima</label><input value={String(policy.liveness_threshold)} readOnly/></div>
+        </div>
+      </section>
+
+      <section className="attendance-setup-group">
+        <div className="attendance-setup-group-head"><UiIcon name="crew" size={17}/><div><strong>Roles controlados</strong><small>Solo se muestran los roles reales soportados por la política actual.</small></div></div>
+        <div className="attendance-setup-role-grid">
+          {(["technician","external","provider","manager","admin"] as OrganizationRole[]).map(role=><div key={role} className={policy.enabled_roles.includes(role)?"is-enabled":""}>
+            <span aria-hidden="true">{policy.enabled_roles.includes(role)?<UiIcon name="check" size={13}/>:null}</span>
+            <strong>{ROLE_LABELS[role]}</strong>
+          </div>)}
+        </div>
+      </section>
+
+      <Alert variant="info" title="Una sola fuente de configuración">Este paso resume la configuración real. Para modificar estos valores utiliza el paso Política; no existe un segundo formulario ni una configuración paralela.</Alert>
+    </div>,
+
+    "2":<div className="attendance-setup-sections">
+      <section className="attendance-setup-group">
+        <div className="attendance-setup-group-head"><UiIcon name="location" size={17}/><div><strong>Sedes y geocercas</strong><small>{geofencedSites} de {sites.rows.length} sede(s) visible(s) tienen geocerca configurada.</small></div></div>
+        {sites.rows.length===0
+          ?<EmptyState icon="info" title="No hay sedes disponibles" description="Crea o habilita una sede dentro de la empresa antes de configurar el control por ubicación."/>
+          :<div className="attendance-site-grid">
+            {sites.rows.map(site=><article className="card attendance-site-card" key={site.id}>
+              <div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div>
+              <Badge variant={site.latitude!==null&&site.longitude!==null?"success":"warning"} icon={site.latitude!==null&&site.longitude!==null?"check":"warning"}>
+                {site.latitude!==null&&site.longitude!==null?site.geofence_radius_m+" m":"Sin geocerca"}
+              </Badge>
+              <Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar sede <UiIcon name="chevron-right" size={13}/></Link>
+            </article>)}
+          </div>}
+      </section>
+      {policy.require_geolocation&&sites.rows.length>0&&geofencedSites<sites.rows.length&&<Alert variant="warning" title="Geocercas pendientes">La política exige geolocalización. Completa coordenadas y radio en las sedes pendientes antes de considerar terminada esta configuración.</Alert>}
+    </div>,
+
+    "3":<div className="attendance-setup-embedded">
+      <SupervisedBiometricEnrollment
+        people={enrollmentPeople.rows}
+        sites={sites.rows.map(site=>({
+          id:site.id,
+          name:site.name,
+          city:site.city,
+          latitude:site.latitude,
+          longitude:site.longitude,
+          geofenceRadius:site.geofence_radius_m,
+        }))}
+        livenessThreshold={policy.liveness_threshold}
+        organizationId={organizationId||""}
+        initialUserId={feedback.user_id||""}
+      />
+    </div>,
+
+    "4":<div className="attendance-setup-sections">
+      <section className="attendance-setup-group">
+        <div className="attendance-setup-group-head"><UiIcon name="attendance" size={17}/><div><strong>Control de asistencia</strong><small>Estos son los campos existentes y el único formulario que modifica la política.</small></div><Badge variant={policy.enabled?"success":"neutral"}>{policy.enabled?"Activo":"Inactivo"}</Badge></div>
+        <form method="post" action="/api/attendance/policy" className="form-grid attendance-policy-form">
+          <input type="hidden" name="organization_id" value={organizationId||""}/>
+          <input type="hidden" name="return_step" value="4"/>
+          <div className="field"><label>Estado</label><select name="enabled" defaultValue={String(policy.enabled)}><option value="true">Activado</option><option value="false">Desactivado</option></select></div>
+          <div className="field"><label>Biometría facial</label><select name="require_face" defaultValue={String(policy.require_face)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
+          <div className="field"><label>Geolocalización</label><select name="require_geolocation" defaultValue={String(policy.require_geolocation)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
+          <div className="field"><label>Precisión GPS máxima (m)</label><input name="max_location_accuracy_m" type="number" min="10" max="1000" defaultValue={policy.max_location_accuracy_m}/></div>
+          <div className="field"><label>Coincidencia facial mínima</label><input name="face_similarity_threshold" type="number" step="0.01" min="0.30" max="0.95" defaultValue={policy.face_similarity_threshold}/></div>
+          <div className="field"><label>Presencia real mínima</label><input name="liveness_threshold" type="number" step="0.01" min="0.30" max="0.99" defaultValue={policy.liveness_threshold}/></div>
+          <div className="field form-span-2"><label>Roles controlados</label><div className="attendance-role-grid">{(["technician","external","provider","manager","admin"] as OrganizationRole[]).map(role=><label key={role}><input type="checkbox" name="enabled_roles" value={role} defaultChecked={policy.enabled_roles.includes(role)}/><span>{ROLE_LABELS[role]}</span></label>)}</div></div>
+          <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar política</button></div>
+        </form>
+      </section>
+      <Alert variant="info" title="La configuración no califica trabajadores">Estas reglas determinan qué evidencia debe validar el registro de presencia; no generan puntajes laborales ni decisiones automáticas.</Alert>
+    </div>,
+
+    "5":<div className="attendance-setup-sections">
+      <div className="attendance-setup-summary-grid">
+        <article><span className={generalComplete?"success":"pending"}><UiIcon name={generalComplete?"check":"info"} size={15}/></span><div><strong>Configuración general</strong><small>{generalComplete?organizationName:"Empresa pendiente"}</small></div></article>
+        <article><span className={sitesComplete?"success":"pending"}><UiIcon name={sitesComplete?"check":"location"} size={15}/></span><div><strong>Sedes</strong><small>{sites.rows.length} visible(s) · {geofencedSites} con geocerca</small></div></article>
+        <article><span className={enrollmentComplete?"success":"pending"}><UiIcon name={enrollmentComplete?"check":"user"} size={15}/></span><div><strong>Enrolamiento</strong><small>{policy.require_face?verifiedControlled+"/"+controlledPeople.length+" controlados verificados":"Biometría no requerida"}</small></div></article>
+        <article><span className={policyComplete?"success":"pending"}><UiIcon name={policyComplete?"check":"attendance"} size={15}/></span><div><strong>Política</strong><small>{policyComplete?(policy.enabled?"Activa y guardada":"Guardada e inactiva"):"Valores predeterminados sin guardar"}</small></div></article>
+        <article><span className={contingencyReview.rows.length===0?"success":"warning"}><UiIcon name={contingencyReview.rows.length===0?"check":"warning"} size={15}/></span><div><strong>Contingencias pendientes</strong><small>{contingencyReview.rows.length?contingencyReview.rows.length+" por revisar":"Sin solicitudes pendientes"}</small></div></article>
+      </div>
+      {summaryComplete
+        ?<Alert variant="success" title="Configuración lista">Los componentes necesarios están configurados con la información disponible actualmente. Puedes continuar a Operación y reportes.</Alert>
+        :<Alert variant="warning" title="Configuración parcial">Puedes seguir operando según los permisos y reglas actuales, pero el panel identifica pasos que todavía requieren revisión.</Alert>}
+      <div className="attendance-setup-summary-actions">
+        <Link className="ds-button ds-button-secondary ds-button-md" href={attendanceHref({step:"4"})}>Revisar política</Link>
+        <Link className="ds-button ds-button-primary ds-button-md" href={attendanceHref({view:"operation"})}>Ir a operación y reportes <UiIcon name="chevron-right" size={15}/></Link>
+      </div>
+    </div>,
+  };
+
+  const currentSetup=setupTitles[activeStep]||setupTitles["1"];
+  const previousStep=Number(activeStep)>1?String(Number(activeStep)-1):null;
+  const nextStep=Number(activeStep)<5?String(Number(activeStep)+1):null;
+
+  return <div className="phase8-attendance attendance-redesign">
     <ModuleHeader
       eyebrow="Operación en campo"
-      title="Presencia y actividades"
-      description="Valida presencia física en sitio con GPS y rostro en vivo. La jornada puede iniciar aunque todavía no existan actividades asignadas."
+      title="Asistencia"
+      description="Administración de la operación en campo"
       count={canReports?enrollmentPeople.rows.length:1}
       countLabel={canReports?"personas":"sesión"}
       searchPlaceholder="Buscar persona o rol en el reporte de asistencia"
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
     />
-    {globalOperator&&<section className="section attendance-admin-context">
-      <div className="attendance-admin-context-copy">
-        <span className="eyebrow">Contexto administrativo</span>
-        <h2>{selectedOrganization?selectedOrganization.name:"Selecciona una empresa"}</h2>
-        <p>{selectedOrganization
-          ?"Políticas, enrolamiento biométrico, geocercas, contingencias y reportes quedan limitados a esta empresa."
-          :"El Propietario y Superadministrador deben elegir la empresa antes de modificar la asistencia."}</p>
+
+    {canManage&&<section className="attendance-redesign-head">
+      <div className="attendance-redesign-title">
+        <span className="attendance-redesign-title-icon" aria-hidden="true"><UiIcon name="attendance" size={20}/></span>
+        <div><h1>Asistencia</h1><p>Administración de la operación en campo</p></div>
       </div>
-      <form method="get" action="/dashboard/attendance" className="attendance-admin-context-form">
-        <div className="field">
-          <label htmlFor="attendance-organization">Empresa *</label>
-          <select id="attendance-organization" name="organization_id" defaultValue={organizationId||""} required>
-            <option value="">Selecciona empresa</option>
-            {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </div>
-        {feedback.user_id&&<input type="hidden" name="user_id" value={feedback.user_id}/>} 
-        <button className="button" type="submit">Administrar empresa</button>
-      </form>
+
+      <div className="attendance-redesign-company">
+        {globalOperator
+          ?<form method="get" action="/dashboard/attendance" className="attendance-company-form">
+            <input type="hidden" name="view" value={activeView}/>
+            {activeView==="setup"&&<input type="hidden" name="step" value={activeStep}/>}
+            <div className="field">
+              <label htmlFor="attendance-organization">Empresa *</label>
+              <select id="attendance-organization" name="organization_id" defaultValue={organizationId||""} required>
+                <option value="">Selecciona empresa</option>
+                {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </div>
+            <button className="button" type="submit"><UiIcon name="reorder" size={15}/>Cambiar empresa</button>
+          </form>
+          :<div className="attendance-company-readonly"><span>Empresa</span><strong>{organizationName}</strong></div>}
+      </div>
     </section>}
-    <section className="section phase8-attendance-summary-head">
-      <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>{selectedOrganization?`Administrando ${selectedOrganization.name}. `:""}Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
-      <Badge variant={policy.enabled?"success":"neutral"} icon="attendance">{policy.enabled?"Control activo":"Control inactivo"}</Badge>
-    </section>
 
-    {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}
-    {feedback.error==="roles" && <div className="section"><Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert></div>}
+    {canManage&&organizationId&&<ModuleNavigation
+      activeHref={activeView==="setup"?attendanceHref({view:"setup",step:activeStep}):attendanceHref({view:"operation"})}
+      exact
+      label="Secciones de Asistencia"
+      items={[
+        {label:"Configuración",href:attendanceHref({view:"setup",step:activeStep})},
+        {label:"Operación y reportes",href:attendanceHref({view:"operation"})},
+      ]}
+    />}
 
-    {globalOperator&&!organizationId&&<section className="section"><EmptyState icon="info" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/></section>}
+    {feedback.saved==="policy"&&<Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert>}
+    {feedback.error==="roles"&&<Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert>}
 
-    {canSelf && organizationId && <>
-      {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
-        ? <section className="section"><EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/></section>
-        : <>
+    {globalOperator&&!organizationId&&<EmptyState icon="info" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/>}
+
+    {canManage&&organizationId&&activeView==="setup"&&<AttendanceSetupWorkspace
+      steps={setupSteps}
+      activeId={activeStep}
+      title={currentSetup.title}
+      description={currentSetup.description}
+      icon={currentSetup.icon}
+      content={setupStepContent[activeStep]}
+      previousHref={previousStep?attendanceHref({step:previousStep}):null}
+      nextHref={nextStep?attendanceHref({step:nextStep}):attendanceHref({view:"operation"})}
+      nextLabel={activeStep==="5"?"Ir a operación":"Siguiente"}
+      cancelHref="/dashboard"
+      tip={activeStep==="1"
+        ?"Los parámetros se muestran aquí como resumen. Su edición permanece en un único formulario dentro de Política."
+        :activeStep==="2"
+          ?"Las coordenadas y radios continúan administrándose desde la ficha de cada sede; Asistencia solo refleja su estado."
+          :activeStep==="3"
+            ?"El enrolamiento conserva la cámara, GPS y validación presencial actuales. No se creó un flujo biométrico paralelo."
+            :activeStep==="4"
+              ?"Guardar mantiene las mismas validaciones y el mismo endpoint de política; esta pantalla solo reorganiza la experiencia."
+              :"Contingencias, expediente y estadísticas están disponibles en Operación y reportes, separadas de la configuración."}
+    />}
+
+    {(!canManage||activeView==="operation")&&<>
+      {canManage&&organizationId&&<section className="attendance-operation-head">
+        <div><span className="eyebrow">Operación diaria</span><h2>Presencia, supervisión y reportes</h2><p>La configuración queda separada de las tareas operativas para reducir scroll y mantener el foco.</p></div>
+        <Badge variant={policy.enabled?"success":"neutral"} icon="attendance">{policy.enabled?"Control activo":"Control inactivo"}</Badge>
+      </section>}
+
+      {canSelf&&organizationId&&<>
+        {!policy.enabled||!attendanceRoleEnabled(session,policy.enabled_roles)
+          ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/>
+          :<>
             <section className="section attendance-scheduled-workday">
               <div className="attendance-scheduled-workday-icon"><UiIcon name="clock" size={20}/></div>
               <div>
                 <span className="eyebrow">Jornada programada</span>
                 <strong>{selfScheduleRow
-                  ? selfScheduledDay?.enabled
-                    ? selfScheduledDay.openTime+" – "+selfScheduledDay.closeTime
-                    : "Hoy no está programado como día laborable"
-                  : "Sin jornada individual configurada"}</strong>
+                  ?selfScheduledDay?.enabled
+                    ?selfScheduledDay.openTime+" – "+selfScheduledDay.closeTime
+                    :"Hoy no está programado como día laborable"
+                  :"Sin jornada individual configurada"}</strong>
                 <small>{selfScheduleRow
-                  ? selfScheduleRow.base_site_name+" · "+attendanceScheduleWeeklyHours(selfScheduleRow.business_schedule).toFixed(1)+" h/semana · "+selfScheduleRow.timezone
-                  : "El marcaje sigue disponible según la política de asistencia; un administrador puede asignar tu jornada individual."}</small>
+                  ?selfScheduleRow.base_site_name+" · "+attendanceScheduleWeeklyHours(selfScheduleRow.business_schedule).toFixed(1)+" h/semana · "+selfScheduleRow.timezone
+                  :"El marcaje sigue disponible según la política de asistencia; un administrador puede asignar tu jornada individual."}</small>
               </div>
               <Badge variant={selfScheduleRow&&selfScheduledDay?.enabled?"success":"neutral"}>{selfScheduleRow&&selfScheduledDay?.enabled?"Programado":"Informativo"}</Badge>
             </section>
+
             <section className="section">
               <AttendanceCapture
                 sites={sites.rows.map(site=>({
-                  id:site.id,
-                  name:site.name,
-                  city:site.city,
-                  latitude:site.latitude,
-                  longitude:site.longitude,
-                  geofenceRadius:site.geofence_radius_m,
-                  geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+                  id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
+                  geofenceRadius:site.geofence_radius_m,geofenceConfigured:site.latitude!==null&&site.longitude!==null,
                 }))}
                 enrolled={Boolean(enrolled.rowCount)}
                 openShift={openShift.rows[0]||null}
@@ -404,80 +621,38 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                 inTransit={Boolean(selfOpenShift?.in_transit)}
               />
             </section>
+
             {selfOpenShift&&selfMovement&&<AttendanceMovement
               currentSegment={selfMovement}
               sites={sites.rows.map(site=>({
-                id:site.id,
-                name:site.name,
-                city:site.city,
-                latitude:site.latitude,
-                longitude:site.longitude,
-                geofenceRadius:site.geofence_radius_m,
-                geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+                id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
+                geofenceRadius:site.geofence_radius_m,geofenceConfigured:site.latitude!==null&&site.longitude!==null,
               }))}
               tasks={selfDestinationTasks.rows}
               requireGeolocation={policy.require_geolocation}
               maxLocationAccuracy={policy.max_location_accuracy_m}
             />}
-            {Boolean(enrolled.rowCount) && !selfOpenShift?.in_transit && <AttendanceContingencySelf
+
+            {Boolean(enrolled.rowCount)&&!selfOpenShift?.in_transit&&<AttendanceContingencySelf
               sites={sites.rows.map(site=>({
-                id:site.id,
-                name:site.name,
-                city:site.city,
-                latitude:site.latitude,
-                longitude:site.longitude,
+                id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,
                 geofenceRadius:site.geofence_radius_m,
               }))}
               openShift={selfOpenShift?{site_id:selfOpenShift.site_id,site_name:selfOpenShift.site_name}:null}
               initialRequest={selfContingency.rows[0]||null}
             />}
-          </>
-      }
+          </>}
+      </>}
+
+      {canManage&&organizationId&&<UserAttendanceAuditCenter
+        organizationId={organizationId}
+        people={enrollmentPeople.rows.map(person=>({id:person.id,full_name:person.full_name,role:ROLE_LABELS[person.role]}))}
+        initialUserId={feedback.user_id||""}
+      />}
+
+      {canManage&&organizationId&&<AttendanceContingencyReview requests={contingencyReview.rows} organizationId={organizationId}/>}
+
+      {canReports&&organizationId&&<AttendanceOperationalReport organizationId={organizationId}/>}
     </>}
-
-    {canManage && organizationId && <UserAttendanceAuditCenter
-      organizationId={organizationId}
-      people={enrollmentPeople.rows.map(person=>({id:person.id,full_name:person.full_name,role:ROLE_LABELS[person.role]}))}
-      initialUserId={feedback.user_id||""}
-    />}
-
-    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} organizationId={organizationId} />}
-
-    {canManage && organizationId && <SupervisedBiometricEnrollment
-      people={enrollmentPeople.rows}
-      sites={sites.rows.map(site=>({
-        id:site.id,
-        name:site.name,
-        city:site.city,
-        latitude:site.latitude,
-        longitude:site.longitude,
-        geofenceRadius:site.geofence_radius_m,
-      }))}
-      livenessThreshold={policy.liveness_threshold}
-      organizationId={organizationId}
-      initialUserId={feedback.user_id||""}
-    />}
-
-    {canManage && organizationId && <section className="card section">
-      <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><Badge variant={policy.enabled?"success":"neutral"}>{policy.enabled?"Activo":"Inactivo"}</Badge></div>
-      <form method="post" action="/api/attendance/policy" className="form-grid">
-        <input type="hidden" name="organization_id" value={organizationId}/>
-        <div className="field"><label>Estado</label><select name="enabled" defaultValue={String(policy.enabled)}><option value="true">Activado</option><option value="false">Desactivado</option></select></div>
-        <div className="field"><label>Biometría facial</label><select name="require_face" defaultValue={String(policy.require_face)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
-        <div className="field"><label>Geolocalización</label><select name="require_geolocation" defaultValue={String(policy.require_geolocation)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
-        <div className="field"><label>Precisión GPS máxima (m)</label><input name="max_location_accuracy_m" type="number" min="10" max="1000" defaultValue={policy.max_location_accuracy_m}/></div>
-        <div className="field"><label>Coincidencia facial mínima</label><input name="face_similarity_threshold" type="number" step="0.01" min="0.30" max="0.95" defaultValue={policy.face_similarity_threshold}/></div>
-        <div className="field"><label>Presencia real mínima</label><input name="liveness_threshold" type="number" step="0.01" min="0.30" max="0.99" defaultValue={policy.liveness_threshold}/></div>
-        <div className="field form-span-2"><label>Roles controlados</label><div className="attendance-role-grid">{(["technician","external","provider","manager","admin"] as OrganizationRole[]).map(role=><label key={role}><input type="checkbox" name="enabled_roles" value={role} defaultChecked={policy.enabled_roles.includes(role)}/><span>{ROLE_LABELS[role]}</span></label>)}</div></div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar política</button></div>
-      </form>
-    </section>}
-
-    {canManage && organizationId && <section className="section">
-      <div className="section-heading"><div><span className="eyebrow">Geocercas</span><h2>Sedes habilitadas</h2><p className="muted">Cada sede debe tener coordenadas y radio antes de exigir geolocalización.</p></div></div>
-      <div className="attendance-site-grid">{sites.rows.map(site=><article className="card attendance-site-card" key={site.id}><div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div><Badge variant={site.latitude!==null&&site.longitude!==null?"success":"warning"}>{site.latitude!==null&&site.longitude!==null ? site.geofence_radius_m+" m":"Sin geocerca"}</Badge><Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar →</Link></article>)}</div>
-    </section>}
-
-    {canReports && organizationId && <AttendanceOperationalReport organizationId={organizationId}/>}
   </div>;
 }

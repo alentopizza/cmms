@@ -5,6 +5,7 @@ import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/l
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
+import UserAttendanceScheduleAdmin from "@/components/UserAttendanceScheduleAdmin";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -13,6 +14,8 @@ import { Badge } from "@/components/ui-kit/Badge";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { attendanceOrganizationId } from "@/lib/attendance-context";
+import { attendanceScheduleWeeklyHours, scheduleDayForDate } from "@/lib/attendance-schedules";
+import type { BusinessDaySchedule } from "@/lib/business-hours";
 
 type OrganizationOption={id:string;name:string};
 
@@ -56,6 +59,17 @@ type ReportRow={
   last_check_in:string|null;
   open_now:boolean;
   contingency_events:number;
+};
+
+type SelfSchedule={
+  id:string;
+  base_site_id:string;
+  base_site_name:string;
+  business_schedule:BusinessDaySchedule[];
+  timezone:string;
+  effective_from:string;
+  effective_until:string|null;
+  local_date:string;
 };
 
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
@@ -127,6 +141,22 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         [session.userId],
       )
     : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
+
+  const selfSchedule=canSelf && session.userId && organizationId
+    ? await query<SelfSchedule>(
+        `SELECT uas.id,uas.base_site_id,s.name base_site_name,uas.business_schedule,uas.timezone,
+                uas.effective_from::text,uas.effective_until::text,
+                ((CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)::text local_date
+         FROM user_attendance_schedules uas
+         JOIN sites s ON s.id=uas.base_site_id
+         WHERE uas.organization_id=$1 AND uas.user_id=$2
+           AND uas.effective_from <= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date
+           AND (uas.effective_until IS NULL OR uas.effective_until >= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)
+         ORDER BY uas.effective_from DESC
+         LIMIT 1`,
+        [organizationId,session.userId],
+      )
+    : {rows:[]} as {rows:SelfSchedule[]};
 
   const selfContingency=canSelf && session.userId && organizationId
     ? await query<ContingencyRequestView>(
@@ -294,6 +324,11 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const totalHours=reports.rows.reduce((sum,row)=>sum+Number(row.field_hours||0),0);
   const completedInShift=reports.rows.reduce((sum,row)=>sum+row.completed_in_shift,0);
 
+  const selfScheduleRow=selfSchedule.rows[0]||null;
+  const selfScheduledDay=selfScheduleRow
+    ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date,selfScheduleRow.timezone)
+    : null;
+
   return <div className="phase8-attendance">
     <ModuleHeader
       eyebrow="Operación en campo"
@@ -339,6 +374,21 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
         ? <section className="section"><EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/></section>
         : <>
+            <section className="section attendance-scheduled-workday">
+              <div className="attendance-scheduled-workday-icon"><UiIcon name="clock" size={20}/></div>
+              <div>
+                <span className="eyebrow">Jornada programada</span>
+                <strong>{selfScheduleRow
+                  ? selfScheduledDay?.enabled
+                    ? selfScheduledDay.openTime+" – "+selfScheduledDay.closeTime
+                    : "Hoy no está programado como día laborable"
+                  : "Sin jornada individual configurada"}</strong>
+                <small>{selfScheduleRow
+                  ? selfScheduleRow.base_site_name+" · "+attendanceScheduleWeeklyHours(selfScheduleRow.business_schedule).toFixed(1)+" h/semana · "+selfScheduleRow.timezone
+                  : "El marcaje sigue disponible según la política de asistencia; un administrador puede asignar tu jornada individual."}</small>
+              </div>
+              <Badge variant={selfScheduleRow&&selfScheduledDay?.enabled?"success":"neutral"}>{selfScheduleRow&&selfScheduledDay?.enabled?"Programado":"Informativo"}</Badge>
+            </section>
             <section className="section">
               <AttendanceCapture
                 sites={sites.rows.map(site=>({
@@ -356,6 +406,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                 requireGeolocation={policy.require_geolocation}
                 maxLocationAccuracy={policy.max_location_accuracy_m}
                 livenessThreshold={policy.liveness_threshold}
+                preferredSiteId={selfScheduleRow?.base_site_id||null}
               />
             </section>
             {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
@@ -373,6 +424,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           </>
       }
     </>}
+
+    {canManage && organizationId && <UserAttendanceScheduleAdmin
+      organizationId={organizationId}
+      people={enrollmentPeople.rows.map(person=>({id:person.id,full_name:person.full_name,role:ROLE_LABELS[person.role]}))}
+      initialUserId={feedback.user_id||""}
+    />}
 
     {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} organizationId={organizationId} />}
 

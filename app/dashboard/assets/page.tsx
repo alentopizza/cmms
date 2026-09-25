@@ -16,6 +16,10 @@ import AssetCatalogOverview, { type AssetCategorySummary, type AssetMaintenanceS
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import { Badge } from "@/components/ui-kit/Badge";
+import UiIcon from "@/components/UiIcon";
 
 type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean};
 type Site={id:string;organization_id:string;label:string};
@@ -200,7 +204,55 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
             {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
           ]}/>}
         </>}
-      />)}</div>}/>:<EmptyState icon="asset" title="Aún no hay activos" description="Usa Agregar activo o Importar para comenzar."/>}
+      />)}</div>} list={<StaticDataTable
+        className="asset-directory-list"
+        caption="Listado de activos"
+        columns={[
+          {key:"asset",label:"Activo",width:"30%"},
+          {key:"status",label:"Estado"},
+          {key:"category",label:"Tipo / categoría"},
+          {key:"location",label:"Ubicación"},
+          {key:"criticality",label:"Criticidad"},
+          {key:"supplier",label:"Proveedor"},
+          {key:"actions",label:"Acciones",align:"end"},
+        ]}
+        rows={assets.rows.map(a=>({
+          id:a.id,
+          recordProps:{
+            "data-module-record":true,"data-status":a.status,
+            "data-search":[a.code,a.name,a.company,a.site,a.location,a.category,a.supplier,a.status,a.criticality,a.manufacturer,a.model].filter(Boolean).join(" "),
+            "data-filter-organization":a.organization_id,"data-filter-organization-label":a.company,
+            "data-filter-site":a.site_id,"data-filter-site-label":a.site,
+            "data-filter-criticality":a.criticality,"data-filter-criticality-label":criticalityLabel(a.criticality),
+            "data-filter-category":a.category_id||"","data-filter-category-label":a.category||"",
+            "data-filter-supplier":a.supplier_id||"","data-filter-supplier-label":a.supplier||"",
+          },
+          cells:{
+            asset:<EntityIdentityCell
+              imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
+              imageAlt={a.has_image?"Imagen de "+a.name:""}
+              icon="asset"
+              variant="thumbnail"
+              title={a.name}
+              subtitle={a.code}
+              meta={[a.manufacturer,a.model].filter(Boolean).join(" · ")||null}
+            />,
+            status:<Badge variant={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}>{statusLabel(a.status)}</Badge>,
+            category:a.category||"Sin categoría",
+            location:[a.site,a.location].filter(Boolean).join(" · "),
+            criticality:criticalityLabel(a.criticality),
+            supplier:a.supplier||"Sin proveedor",
+            actions:<ListQuickActions>
+              <Link className="ds-list-action primary" href={"/dashboard/assets/"+a.id} title="Ver detalles" data-tooltip="Ver detalles" aria-label={"Ver detalles de "+a.name}><UiIcon name="eye" size={16}/></Link>
+              {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+                {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
+                {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
+                {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
+              ]}/>}
+            </ListQuickActions>,
+          },
+        }))}
+      />}/>:<EmptyState icon="asset" title="Aún no hay activos" description="Usa Agregar activo o Importar para comenzar."/>}
     </section>
     <AssetCatalogOverview
       assets={assets.rows}

@@ -357,3 +357,7 @@
   .ds-list-identity{min-width:170px}
   .ds-list-identity-media{width:40px;height:40px;flex-basis:40px}
 }
+
+.ds-static-data-table .lead-status-form-compact{display:inline-flex;align-items:center;justify-content:flex-start;gap:var(--space-1)}
+.ds-static-data-table .lead-status-form-compact label{display:block}
+.ds-static-data-table .lead-status-form-compact select{min-width:118px;max-width:150px;padding:6px 28px 6px 8px}

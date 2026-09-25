@@ -110,8 +110,11 @@ export async function GET(
            COALESCE((
              SELECT count(*)::int
              FROM activity_execution_events e
+             JOIN work_order_tasks task ON task.id=e.task_id
+             JOIN work_orders work_order ON work_order.id=task.work_order_id
              WHERE e.organization_id=$1 AND e.user_id=$2 AND e.event_type='completed'
                AND ($3::int IS NULL OR e.occurred_at>=now()-($3::int*interval '1 day'))
+               AND ($4::uuid[] IS NULL OR work_order.site_id=ANY($4::uuid[]))
            ),0)::int completed_activities,
            COALESCE((
              SELECT count(*)::int

@@ -202,7 +202,7 @@ export async function GET(request:Request){
       })),
       today:organizationLocalDate(organization.timezone),
       schedules:visibleSchedules,
-      hiddenScheduleCount:schedules.rowCount-visibleSchedules.length,
+      hiddenScheduleCount:schedules.rows.length-visibleSchedules.length,
     });
   }finally{
     client.release();

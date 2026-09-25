@@ -45,6 +45,7 @@ export default function EntityProfileWorkspace({
   tabs,
   initialTab,
   fullWidthTabIds = [],
+  onTabChange,
 }: {
   eyebrow: string;
   headingLabel?: string;
@@ -64,6 +65,7 @@ export default function EntityProfileWorkspace({
   tabs: EntityProfileTab[];
   initialTab?: string;
   fullWidthTabIds?: string[];
+  onTabChange?: (tabId:string)=>void;
 }) {
   const available = useMemo(() => tabs.filter(tab => Boolean(tab.content)), [tabs]);
   const firstTab = initialTab && available.some(tab => tab.id === initialTab)
@@ -140,7 +142,7 @@ export default function EntityProfileWorkspace({
               type="button"
               className={active?.id === tab.id ? "active" : ""}
               aria-pressed={active?.id === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {setActiveTab(tab.id);onTabChange?.(tab.id);}}
             >
               {tab.label}
             </button>)}

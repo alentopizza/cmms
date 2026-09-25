@@ -56,7 +56,7 @@ for(const marker of ["phase8-crews","<CrewDirectory","<Alert","<KpiCard","iconNa
   if(!crews.includes(marker))throw new Error("Crews Phase 8 migration missing "+marker);
 }
 const crewDirectory=fs.readFileSync("components/CrewDirectory.tsx","utf8");
-for(const marker of ["<CrewCard","<EmptyState","<StaticDataTable","<ViewModeToggle","Vista de cuadrillas"]){
+for(const marker of ["<CrewCard","<EmptyState","<StaticDataTable","<CollectionView","storageKey=\"crews\"","Vista de cuadrillas"]){
   if(!crewDirectory.includes(marker))throw new Error("CrewDirectory Phase 8 presentation missing "+marker);
 }
 if(crews.includes("♕")||crews.includes('className={"status-badge')||crewDirectory.includes("♕"))throw new Error("Crews still use legacy leader/status glyphs");

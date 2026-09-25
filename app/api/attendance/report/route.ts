@@ -45,6 +45,12 @@ function varianceLabel(minutes:number|null){
   return prefix+(minutes/60).toFixed(2)+" h";
 }
 
+function pdfText(value:unknown){
+  return String(value??"")
+    .replaceAll("→","->")
+    .replace(/[^\x20-\x7E\u00A0-\u00FF\u20AC\u2013\u2014\u2018\u2019\u201C\u201D]/g,"?");
+}
+
 function routeLabel(row:AttendanceReportDailyRow){
   const origin=row.originSites.join(" / ");
   const final=row.finalSites.join(" / ");
@@ -308,7 +314,7 @@ async function pdfReport(report:AttendanceOperationalReport,branding:Branding){
       const width=logo.width*scale,height=logo.height*scale;
       page.drawImage(logo,{x:(pageSize[0]-width)/2,y:pageSize[1]-50,width,height});
     }else{
-      const label=branding.brandName;
+      const label=pdfText(branding.brandName);
       const width=bold.widthOfTextAtSize(label,20);
       page.drawText(label,{x:(pageSize[0]-width)/2,y:pageSize[1]-42,size:20,font:bold,color:secondary});
     }
@@ -333,7 +339,7 @@ async function pdfReport(report:AttendanceOperationalReport,branding:Branding){
 
   header();
   page.drawText("REPORTE OPERATIVO DE ASISTENCIA",{x:42,y,size:17,font:bold,color:secondary});
-  page.drawText(report.organization.name,{x:42,y:y-19,size:10,font:bold,color:primary});
+  page.drawText(pdfText(report.organization.name),{x:42,y:y-19,size:10,font:bold,color:primary});
   page.drawText("Periodo: "+dateLabel(report.filters.from)+" – "+dateLabel(report.filters.to),{x:42,y:y-35,size:8,font:regular,color:dark});
   page.drawText("Generado: "+new Date().toLocaleString("es-CO"),{x:610,y:y-35,size:7,font:regular,color:soft});
   y-=62;
@@ -375,7 +381,7 @@ async function pdfReport(report:AttendanceOperationalReport,branding:Branding){
       headers.forEach((header,index)=>page.drawText(header,{x:xs[index],y,size:6.8,font:bold,color:secondary}));
       y-=12;
     }
-    page.drawText(person.fullName.slice(0,34),{x:42,y,size:7,font:regular,color:dark});
+    page.drawText(pdfText(person.fullName).slice(0,34),{x:42,y,size:7,font:regular,color:dark});
     const values=[
       hours(person.scheduledMinutes),hours(person.actualMinutes),varianceLabel(person.varianceMinutes),
       hours(person.onSiteMinutes),hours(person.travelMinutes),String(person.shifts),String(person.multiSiteShifts),
@@ -389,7 +395,7 @@ async function pdfReport(report:AttendanceOperationalReport,branding:Branding){
   page.drawText("DETALLE DIARIO",{x:42,y,size:11,font:bold,color:secondary});
   page.drawText("Primeras 120 filas del periodo; Excel/CSV conservan el detalle completo.",{x:42,y:y-13,size:7,font:regular,color:soft});
   y-=31;
-  const detailHeaders=["Fecha","Persona","Programación","Real","Dif.","Ruta","Viaje","Act."];
+  const detailHeaders=["Fecha","Persona","Programación","Real","Dif.","Origen-final","Viaje","Act."];
   const dx=[42,94,245,420,466,520,690,752];
   detailHeaders.forEach((header,index)=>page.drawText(header,{x:dx[index],y,size:6.6,font:bold,color:secondary}));
   y-=12;
@@ -401,11 +407,11 @@ async function pdfReport(report:AttendanceOperationalReport,branding:Branding){
       y-=12;
     }
     page.drawText(dateLabel(row.date).slice(0,10),{x:42,y,size:6.4,font:regular,color:dark});
-    page.drawText(row.fullName.slice(0,24),{x:94,y,size:6.4,font:regular,color:dark});
-    page.drawText(scheduleLabel(row).slice(0,28),{x:245,y,size:6.4,font:regular,color:dark});
+    page.drawText(pdfText(row.fullName).slice(0,24),{x:94,y,size:6.4,font:regular,color:dark});
+    page.drawText(pdfText(scheduleLabel(row)).slice(0,28),{x:245,y,size:6.4,font:regular,color:dark});
     page.drawText(hours(row.actualMinutes),{x:420,y,size:6.4,font:regular,color:dark});
     page.drawText(varianceLabel(row.varianceMinutes),{x:466,y,size:6.4,font:regular,color:dark});
-    page.drawText(routeLabel(row).slice(0,27),{x:520,y,size:6.4,font:regular,color:dark});
+    page.drawText(pdfText(routeLabel(row)).slice(0,27),{x:520,y,size:6.4,font:regular,color:dark});
     page.drawText(hours(row.travelMinutes),{x:690,y,size:6.4,font:regular,color:dark});
     page.drawText(String(row.completedInShift),{x:752,y,size:6.4,font:regular,color:dark});
     y-=13;

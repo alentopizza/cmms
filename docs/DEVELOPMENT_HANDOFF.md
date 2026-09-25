@@ -73,7 +73,7 @@ Se estableció un patrón común de presentación para los directorios principal
 
 - `components/ui-kit/DataControls.tsx` expone `ViewModeToggle` y `CollectionView`.
 - `ViewModeToggle` es el selector visual oficial para **Vista cuadrícula** / **Vista listado**; no crear selectores equivalentes privados por módulo.
-- `CollectionView` cambia únicamente la presentación de una colección ya cargada. No consulta APIs, no duplica servicios y conserva la preferencia por módulo en `localStorage`.
+- `CollectionView` cambia únicamente la presentación de una colección ya cargada. No consulta APIs, no duplica servicios y conserva la preferencia por módulo en `localStorage`. Cuando hay renderizadores grid/list diferentes, ambos panes permanecen montados y solo se oculta el inactivo para preservar estado interno; `ModuleHeader` ignora el pane oculto al contar/filtrar.
 - Cuando cambia el modo, `CollectionView` emite `cmms:view-mode-change`; `ModuleHeader` usa esa señal para reaplicar búsqueda, estado y facetas sobre la representación recién montada.
 - Empresas, Ubicaciones, Proveedores, Usuarios, Activos, Inventario y Leads reutilizan su colección de tarjetas y adoptan una disposición de una columna en modo listado cuando no existía una tabla autoritativa.
 - Ubicaciones añade una lista explícita con `StaticDataTable` sobre la misma colección de Sites: Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción para abrir la ficha.

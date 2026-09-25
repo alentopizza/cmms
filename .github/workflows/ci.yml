@@ -59,6 +59,7 @@ jobs:
       - run: node scripts/ui-kit-core-smoke.mjs
       - run: node scripts/shell-v2-smoke.mjs
       - run: node scripts/data-ui-smoke.mjs
+      - run: node scripts/view-mode-toggle-smoke.mjs
       - run: node scripts/business-ui-smoke.mjs
       - run: node scripts/phase6-modules-smoke.mjs
       - run: node scripts/company-documents-fullwidth-smoke.mjs

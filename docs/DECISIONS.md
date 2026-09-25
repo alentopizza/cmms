@@ -600,3 +600,22 @@ Rules:
 - the scheduled-vs-actual interpretation belongs to descriptive reporting and human review, not automatic employment scoring.
 
 This keeps expected work time auditable while preserving actual field evidence and avoiding silent historical changes when Company/Site hours are edited.
+
+
+## ADR-040 — Attendance audit is a scoped composite read model
+
+Status: accepted.
+
+The per-user attendance administration/audit surface must explain a person's operational evidence without creating a second attendance ledger.
+
+Rules:
+- the audit center composes existing authoritative sources: `attendance_shifts`, `user_attendance_schedules`, `user_biometric_profiles` + `biometric_enrollment_events`, `attendance_contingency_requests` and attendance-related `audit_log` events;
+- no new summary/history table is introduced for Phase 3;
+- `/api/attendance/users/[id]/audit` is read-only and requires `attendance.manage`;
+- tenant Organization scope comes from the authenticated membership; Platform Owner/Superadmin must carry the explicit Organization context from ADR-038;
+- a tenant supervisor with limited Sites only receives evidence from those Sites and only sees target people whose operational scope intersects that supervisor scope;
+- current biometric lifecycle may be shown, but raw encrypted embeddings and facial similarity/liveness scores are not part of the audit response;
+- the combined timeline is descriptive evidence for human review and must not become an automated worker score or disciplinary decision engine;
+- canonical mutations remain in their existing endpoints: schedules in `/api/attendance/schedules`, biometrics in supervised enrollment/revocation routes, and contingency review in its dedicated route.
+
+This preserves a single source of truth while making attendance evidence understandable and auditable from User and Attendance workflows.

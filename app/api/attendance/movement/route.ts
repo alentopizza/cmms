@@ -255,6 +255,7 @@ export async function POST(request:Request){
       const tracking=await client.query<{id:string}>(
         `SELECT id FROM technician_tracking_sessions
          WHERE organization_id=$1 AND user_id=$2 AND status='active'
+           AND last_seen_at>now()-interval '30 minutes'
          ORDER BY connected_at DESC LIMIT 1`,
         [session.organizationId,session.userId],
       );

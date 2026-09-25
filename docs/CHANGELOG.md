@@ -4,7 +4,7 @@
 
 - Se incorporaron `ViewModeToggle` y `CollectionView` al Shared Data UI como patrón oficial para alternar entre **Vista cuadrícula** y **Vista listado**.
 - El selector cambia únicamente la presentación de la colección ya cargada: no crea endpoints, consultas, servicios ni fuentes de estado paralelas.
-- `CollectionView` conserva la preferencia visual por módulo en el navegador y notifica a `ModuleHeader` para reaplicar búsqueda, estado y facetas después de cambiar de vista.
+- `CollectionView` conserva la preferencia visual por módulo en el navegador y notifica a `ModuleHeader` para reaplicar búsqueda, estado y facetas después de cambiar de vista. Cuando existen dos renderizadores distintos, ambos permanecen montados y solo se oculta el inactivo para conservar selección, ordenamiento o paginación local.
 - Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes de trabajo, Rutinas/Mantenimiento, Inventario y Leads ya consumen el patrón compartido.
 - Ubicaciones conserva sus tarjetas aprobadas en cuadrícula y añade una vista listado real con Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción **Ver ubicación** sobre la misma colección.
 - Cuadrillas deja de mantener estado/selector visual privado y usa `CollectionView`; el `ViewModeToggle` compartido se monta dentro de su toolbar local y conserva sus filtros y ambas presentaciones existentes.

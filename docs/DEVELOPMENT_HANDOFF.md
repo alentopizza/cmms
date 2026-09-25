@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `a497a784939d3dbf5ede7ecc2ba9b6fcf8494e3e`
+> Base revisada para esta entrega: `5778a2784fdb61d9caa76c85321f690e659f8020`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -67,7 +67,41 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-### Asistencia operativa · Fase 3
+### Asistencia operativa · Fase 4
+
+La misma jornada puede desplazarse entre varias sedes autorizadas sin cerrarse y abrirse de nuevo.
+
+- Migración `039_attendance_shift_segments.sql`: añade `attendance_shifts.check_out_site_id` y la línea ordenada `attendance_shift_segments`.
+- `attendance_shifts.site_id` conserva la sede de origen; `check_out_site_id` conserva la sede final.
+- Solo existe un segmento abierto por jornada: `site` cuando la persona está en una sede y `travel` cuando está desplazándose.
+- `POST /api/attendance/movement` gestiona `start_travel` y `arrive` con validación server-side de jornada, política, sedes, alcance, GPS/geocerca y actividad destino opcional.
+- Cuando GPS es obligatorio, la salida valida la geocerca de origen y la llegada la geocerca destino.
+- El usuario no puede cerrar la jornada ni iniciar otro traslado hasta registrar llegada.
+- Check-in/check-out normal y por contingencia ya crean/cierran el segmento de sede correspondiente; checkout usa la sede actual, no la sede origen.
+- Ejecutar una Actividad utiliza el segmento `site` actual para decidir si está dentro de la misma jornada.
+- Reacción sigue siendo un sistema separado: si existe una sesión reciente se correlaciona con el tramo de viaje y sus muestras GPS sirven como evidencia del trayecto.
+- Reacción muestra el destino activo del técnico en tránsito, sin convertir sus muestras en eventos de Asistencia.
+- El expediente individual incorpora KPI, pestaña **Desplazamientos**, origen → sede final y eventos de viaje/llegada en Trazabilidad.
+- Para un supervisor limitado por sedes, un tramo Travel solo se expone cuando ambos extremos están en su alcance.
+- La contingencia existente continúa siendo solo check-in/check-out; los eventos de salida/llegada del traslado usan la validación normal de ubicación.
+- `scripts/attendance-displacement-smoke.mjs` cubre integridad de segmentos, origen/final, autoridad backend, UI, auditoría y correlación con Reacción.
+
+Archivos clave:
+
+- `db/migrations/039_attendance_shift_segments.sql`
+- `app/api/attendance/movement/route.ts`
+- `components/AttendanceMovement.tsx`
+- `app/api/attendance/clock/route.ts`
+- `app/api/attendance/contingency/route.ts`
+- `app/api/attendance/contingency/use/route.ts`
+- `app/api/work-orders/[id]/activities/route.ts`
+- `app/api/attendance/users/[id]/audit/route.ts`
+- `components/UserAttendanceAuditCenter.tsx`
+- `app/api/reaction/snapshot/route.ts`
+- `components/ReactionMap.tsx`
+- `scripts/attendance-displacement-smoke.mjs`
+
+### Asistencia operativa · Fase 3 (base anterior)
 
 La administración de Asistencia ya dispone de un expediente individual consolidado por persona.
 
@@ -82,7 +116,7 @@ La administración de Asistencia ya dispone de un expediente individual consolid
 - La timeline combina marcaciones, ciclo biométrico, contingencias y cambios de jornada para revisión humana.
 - La mutación de borrado de jornada futura ahora incluye `base_site_id` en `audit_log` para que la auditoría limitada por sede sea consistente.
 - No hubo migración de datos en Fase 3; el objetivo fue componer evidencia existente sin duplicarla.
-- Fase 4 queda como siguiente paso: desplazamientos multi-sede dentro de una misma jornada.
+- Fase 4 implementa el desplazamiento multi-sede mediante segmentos ordenados sobre la misma jornada.
 
 Archivos clave:
 
@@ -108,7 +142,7 @@ La jornada esperada ya se administra por persona como una línea de tiempo efect
 - `UserAttendanceScheduleAdmin` se reutiliza en la ficha de Usuario y en el módulo Asistencia.
 - El usuario de campo ve su jornada esperada del día y `AttendanceCapture` prefiere la sede base como selección inicial.
 - El horario programado es planificación/evidencia comparativa: **no bloquea** un check-in/check-out válido fuera de horario.
-- Fase 3 queda como siguiente paso: administración/auditoría consolidada por persona. Los desplazamientos multi-sede siguen reservados para Fase 4.
+- Fase 3 añadió el expediente consolidado y Fase 4 incorporó desplazamientos multi-sede sobre la misma jornada.
 
 Archivos clave:
 
@@ -131,7 +165,7 @@ La administración de Asistencia ya no depende de que una identidad de plataform
 - `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
 - El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
 - La pestaña **Asistencia** del perfil de Usuario enlaza al módulo con `organization_id` + `user_id`; el enrolamiento abre con la persona enfocada.
-- Fase 1 no cambió `attendance_shifts`. Fase 2 añadió la planificación individual en `user_attendance_schedules`; `attendance_shifts` continúa representando hechos reales y el desplazamiento multi-sede sigue reservado para una fase posterior.
+- Fase 1 no cambió `attendance_shifts`. Fase 2 añadió planificación individual, Fase 3 el expediente consolidado y Fase 4 añadió segmentos multi-sede manteniendo un único `attendance_shift` por jornada.
 
 Archivos clave:
 

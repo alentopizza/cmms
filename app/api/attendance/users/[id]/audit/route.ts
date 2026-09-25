@@ -90,6 +90,7 @@ export async function GET(
     const [
       summary,
       shifts,
+      segments,
       biometricProfile,
       biometricEvents,
       contingencies,
@@ -104,6 +105,7 @@ export async function GET(
         open_now:boolean;
         completed_activities:number;
         contingencies:number;
+        travels:number;
       }>(
         `SELECT
            count(*)::int shifts,
@@ -126,7 +128,18 @@ export async function GET(
              WHERE c.organization_id=$1 AND c.user_id=$2
                AND ($3::int IS NULL OR c.requested_at>=now()-($3::int*interval '1 day'))
                AND ($4::uuid[] IS NULL OR c.site_id=ANY($4::uuid[]))
-           ),0)::int contingencies
+           ),0)::int contingencies,
+           COALESCE((
+             SELECT count(*)::int
+             FROM attendance_shift_segments segment
+             WHERE segment.organization_id=$1 AND segment.user_id=$2
+               AND segment.segment_type='travel'
+               AND ($3::int IS NULL OR segment.started_at>=now()-($3::int*interval '1 day'))
+               AND (
+                 $4::uuid[] IS NULL
+                 OR (segment.from_site_id=ANY($4::uuid[]) AND segment.to_site_id=ANY($4::uuid[]))
+               )
+           ),0)::int travels
          FROM attendance_shifts s
          WHERE s.organization_id=$1 AND s.user_id=$2
            AND ($3::int IS NULL OR s.check_in_at>=now()-($3::int*interval '1 day'))
@@ -140,18 +153,75 @@ export async function GET(
                 s.check_in_accuracy_m,s.check_out_accuracy_m,
                 s.check_in_distance_m,s.check_out_distance_m,
                 s.check_in_contingency_id,s.check_out_contingency_id,
+                CASE WHEN $4::uuid[] IS NULL OR s.check_out_site_id IS NULL OR s.check_out_site_id=ANY($4::uuid[])
+                     THEN checkout_site.name ELSE NULL END check_out_site_name,
                 round(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))/60.0::numeric,1)::text duration_minutes,
                 COALESCE((
-                  SELECT count(*)::int FROM activity_execution_events e
+                  SELECT count(*)::int
+                  FROM activity_execution_events e
+                  JOIN work_order_tasks task ON task.id=e.task_id
+                  JOIN work_orders work_order ON work_order.id=task.work_order_id
                   WHERE e.attendance_shift_id=s.id AND e.event_type='completed'
-                ),0)::int completed_activities
+                    AND ($4::uuid[] IS NULL OR work_order.site_id=ANY($4::uuid[]))
+                ),0)::int completed_activities,
+                COALESCE((
+                  SELECT count(*)::int FROM attendance_shift_segments travel
+                  WHERE travel.attendance_shift_id=s.id AND travel.segment_type='travel'
+                    AND ($4::uuid[] IS NULL OR (travel.from_site_id=ANY($4::uuid[]) AND travel.to_site_id=ANY($4::uuid[])))
+                ),0)::int travel_count
          FROM attendance_shifts s
          JOIN sites site ON site.id=s.site_id
+         LEFT JOIN sites checkout_site ON checkout_site.id=s.check_out_site_id
          WHERE s.organization_id=$1 AND s.user_id=$2
            AND ($3::int IS NULL OR s.check_in_at>=now()-($3::int*interval '1 day'))
            AND ($4::uuid[] IS NULL OR s.site_id=ANY($4::uuid[]))
          ORDER BY s.check_in_at DESC
          LIMIT 160`,
+        [...paramsBase],
+      ),
+      client.query(
+        `SELECT segment.id::text,segment.attendance_shift_id::text,segment.sequence,segment.segment_type,
+                segment.site_id::text,site.name site_name,
+                segment.from_site_id::text,from_site.name from_site_name,
+                segment.to_site_id::text,to_site.name to_site_name,
+                segment.destination_task_id::text,
+                CASE WHEN task.id IS NOT NULL
+                     THEN 'OT #'||work_order.number::text||' · '||task.description
+                     ELSE NULL END destination_task_label,
+                segment.tracking_session_id::text,
+                segment.started_at::text,segment.ended_at::text,segment.notes,
+                segment.start_accuracy_m,segment.start_distance_m,
+                segment.end_accuracy_m,segment.end_distance_m,
+                COALESCE((
+                  SELECT count(*)::int
+                  FROM technician_location_samples sample
+                  WHERE sample.attendance_shift_id=segment.attendance_shift_id
+                    AND sample.source='connected_app'
+                    AND sample.recorded_at>=segment.started_at
+                    AND sample.recorded_at<=COALESCE(segment.ended_at,now())
+                ),0)::int reaction_sample_count
+         FROM attendance_shift_segments segment
+         JOIN attendance_shifts shift ON shift.id=segment.attendance_shift_id
+         LEFT JOIN sites site ON site.id=segment.site_id
+         LEFT JOIN sites from_site ON from_site.id=segment.from_site_id
+         LEFT JOIN sites to_site ON to_site.id=segment.to_site_id
+         LEFT JOIN work_order_tasks task ON task.id=segment.destination_task_id
+         LEFT JOIN work_orders work_order ON work_order.id=task.work_order_id
+         WHERE segment.organization_id=$1 AND segment.user_id=$2
+           AND ($3::int IS NULL OR segment.started_at>=now()-($3::int*interval '1 day'))
+           AND (
+             $4::uuid[] IS NULL
+             OR (
+               segment.segment_type='site' AND segment.site_id=ANY($4::uuid[])
+             )
+             OR (
+               segment.segment_type='travel'
+               AND segment.from_site_id=ANY($4::uuid[])
+               AND segment.to_site_id=ANY($4::uuid[])
+             )
+           )
+         ORDER BY segment.started_at DESC
+         LIMIT 320`,
         [...paramsBase],
       ),
       client.query(
@@ -276,13 +346,14 @@ export async function GET(
       scope:{limited:scope!==null,siteIds:scope||[]},
       summary:summary.rows[0]||{
         shifts:0,field_hours:"0",standard_check_ins:0,contingency_check_ins:0,
-        open_now:false,completed_activities:0,contingencies:0,
+        open_now:false,completed_activities:0,contingencies:0,travels:0,
       },
       currentSchedule,
       upcomingSchedule,
       biometric:biometricProfile.rows[0]||{status:"missing"},
       biometricEvents:biometricEvents.rows,
       shifts:shifts.rows,
+      segments:segments.rows,
       contingencies:contingencies.rows,
       scheduleAudit:scheduleAudit.rows,
     });

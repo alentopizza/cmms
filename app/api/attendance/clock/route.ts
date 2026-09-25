@@ -166,6 +166,13 @@ export async function POST(request: Request) {
          Number.isFinite(live)?live:null,Number.isFinite(real)?real:null],
       );
       await client.query(
+        `INSERT INTO attendance_shift_segments(
+           organization_id,attendance_shift_id,user_id,sequence,segment_type,site_id,
+           started_at,start_latitude,start_longitude,start_accuracy_m,start_distance_m
+         ) VALUES($1,$2,$3,1,'site',$4,now(),$5,$6,$7,$8)`,
+        [session.organizationId,inserted.rows[0].id,session.userId,siteId,latitude,longitude,accuracy,distance],
+      );
+      await client.query(
         "UPDATE user_biometric_profiles SET last_verified_at=now(),updated_at=now() WHERE user_id=$1",
         [session.userId],
       );
@@ -177,19 +184,42 @@ export async function POST(request: Request) {
       await client.query("ROLLBACK");
       return NextResponse.json({ message: "No tienes una jornada abierta para registrar salida." }, { status: 409 });
     }
-    if (openResult.rows[0].site_id !== siteId) {
+
+    const currentSegment=await client.query<{id:string;segment_type:"site"|"travel";site_id:string|null}>(
+      `SELECT id,segment_type,site_id
+       FROM attendance_shift_segments
+       WHERE attendance_shift_id=$1 AND ended_at IS NULL
+       FOR UPDATE`,
+      [openResult.rows[0].id],
+    );
+    const segment=currentSegment.rows[0];
+    if(!segment){
       await client.query("ROLLBACK");
-      return NextResponse.json({ message: "La salida debe registrarse en la misma sede donde inició la jornada." }, { status: 422 });
+      return NextResponse.json({message:"La jornada no tiene un tramo activo. Actualiza la pantalla antes de registrar salida."},{status:409});
+    }
+    if(segment.segment_type==="travel"){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"Estás en desplazamiento. Registra la llegada a la sede de destino antes de finalizar la jornada."},{status:409});
+    }
+    if(segment.site_id!==siteId){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"La salida debe registrarse en la sede donde te encuentras actualmente."},{status:422});
     }
 
     const closed = await client.query<{check_out_at:string}>(
       `UPDATE attendance_shifts SET
-         status='closed',check_out_at=now(),
-         check_out_latitude=$1,check_out_longitude=$2,check_out_accuracy_m=$3,check_out_distance_m=$4,
-         check_out_face_similarity=$5,check_out_liveness=$6,check_out_antispoof=$7,updated_at=now()
-       WHERE id=$8
+         status='closed',check_out_at=now(),check_out_site_id=$1,
+         check_out_latitude=$2,check_out_longitude=$3,check_out_accuracy_m=$4,check_out_distance_m=$5,
+         check_out_face_similarity=$6,check_out_liveness=$7,check_out_antispoof=$8,updated_at=now()
+       WHERE id=$9
        RETURNING check_out_at::text`,
-      [latitude,longitude,accuracy,distance,similarity,Number.isFinite(live)?live:null,Number.isFinite(real)?real:null,openResult.rows[0].id],
+      [siteId,latitude,longitude,accuracy,distance,similarity,Number.isFinite(live)?live:null,Number.isFinite(real)?real:null,openResult.rows[0].id],
+    );
+    await client.query(
+      `UPDATE attendance_shift_segments SET
+         ended_at=now(),end_latitude=$1,end_longitude=$2,end_accuracy_m=$3,end_distance_m=$4
+       WHERE id=$5`,
+      [latitude,longitude,accuracy,distance,segment.id],
     );
     await client.query(
       "UPDATE user_biometric_profiles SET last_verified_at=now(),updated_at=now() WHERE user_id=$1",

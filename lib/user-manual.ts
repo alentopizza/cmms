@@ -172,7 +172,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
-      "En la pestaña Asistencia puedes abrir el expediente individual con Resumen, Jornada, Marcaciones, Biometría, Contingencias y Trazabilidad; la jornada se administra por vigencias y el enrolamiento biométrico sigue usando el flujo supervisado del módulo Asistencia.",
+      "En la pestaña Asistencia puedes abrir el expediente individual con Resumen, Jornada, Marcaciones, Desplazamientos, Biometría, Contingencias y Trazabilidad; la jornada se administra por vigencias y el enrolamiento biométrico sigue usando el flujo supervisado del módulo Asistencia.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
@@ -247,7 +247,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
   {
     id:"attendance-audit-dossier",
     title:"Expediente individual de asistencia",
-    summary:"Cómo revisar jornada programada, marcaciones, biometría, contingencias y trazabilidad de una persona.",
+    summary:"Cómo revisar jornada programada, marcaciones, desplazamientos, biometría, contingencias y trazabilidad de una persona.",
     icon:"▤",
     module:"Asistencia",
     roles:["all","platform_owner","superadmin","admin","manager"],
@@ -256,10 +256,11 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Abre Asistencia y, si eres Propietario Desweb o Superadministrador, selecciona primero la empresa. Después elige la persona que deseas revisar.",
       "En Resumen consulta jornadas, horas reales, actividades finalizadas, contingencias, estado biométrico, jornada vigente y presencia actual.",
       "En Jornada administra la misma línea de tiempo de horarios individuales: no existe un editor paralelo.",
-      "En Marcaciones revisa cada entrada/salida con sede, duración, modo estándar o contingencia, precisión/distancia GPS y actividades finalizadas vinculadas.",
+      "En Marcaciones revisa cada entrada/salida con sede de origen/final, duración, modo estándar o contingencia, precisión/distancia GPS, actividades finalizadas y cantidad de desplazamientos.",
+      "En Desplazamientos revisa cada tramo entre sedes, duración, actividad destino, evidencia GPS de salida/llegada y muestras de ruta correlacionadas con Reacción.",
       "En Biometría revisa estado actual y eventos de enrolamiento, reenrolamiento o revocación. Para modificar la plantilla usa el flujo supervisado de biometría.",
       "En Contingencias revisa motivo, estado, notas y tiempos de aprobación/uso de las excepciones registradas.",
-      "En Trazabilidad consulta una secuencia cronológica que combina marcaciones, eventos biométricos, contingencias y cambios administrativos de jornada.",
+      "En Trazabilidad consulta una secuencia cronológica que combina marcaciones, salidas/llegadas de desplazamientos, eventos biométricos, contingencias y cambios administrativos de jornada.",
       "Puedes cambiar el periodo entre 30 días, 90 días, 12 meses o todo el historial visible.",
     ],
     notes:[
@@ -268,7 +269,33 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "El expediente no muestra la plantilla facial cifrada ni scores crudos de similitud/liveness.",
       "La información es descriptiva para revisión humana; no constituye una calificación automática del trabajador.",
     ],
-    keywords:["expediente","auditoría","asistencia","marcaciones","biometría","contingencia","trazabilidad","jornada"],
+    keywords:["expediente","auditoría","asistencia","marcaciones","desplazamientos","biometría","contingencia","trazabilidad","jornada"],
+  },
+  {
+    id:"attendance-multi-site-displacement",
+    title:"Desplazarse entre sedes sin cerrar la jornada",
+    summary:"Cómo salir de una sede, viajar a otra ubicación autorizada y continuar la misma jornada.",
+    icon:"↝",
+    module:"Asistencia",
+    roles:["all","admin","manager","technician","provider","external"],
+    href:"/dashboard/attendance",
+    steps:[
+      "Inicia la jornada normalmente en la sede de origen. Debes tener una jornada abierta antes de registrar un desplazamiento.",
+      "En Desplazamientos selecciona una sede de destino diferente y, si corresponde, una actividad que tengas asignada en esa sede.",
+      "Pulsa Iniciar desplazamiento mientras todavía estás en la sede de origen. Si la empresa exige ubicación, el sistema valida GPS y geocerca antes de registrar la salida.",
+      "La jornada continúa abierta con estado En tránsito. No puedes marcar salida final ni iniciar otro traslado hasta registrar la llegada.",
+      "Si Reacción está conectado, el trayecto GPS puede quedar correlacionado con este desplazamiento; Asistencia sigue siendo quien registra oficialmente salida y llegada.",
+      "Al llegar a la sede destino pulsa Registrar llegada. Cuando GPS es obligatorio, debes estar dentro de la geocerca configurada de esa sede.",
+      "Después de la llegada, la sede destino pasa a ser la ubicación actual de la jornada. Las actividades realizadas allí pueden vincularse a la misma jornada.",
+      "Puedes repetir el proceso hacia otra sede autorizada o finalizar la jornada desde la sede donde te encuentras.",
+    ],
+    notes:[
+      "La jornada no se divide en varias asistencias: conserva una sede de origen, los tramos intermedios y una sede final.",
+      "Una sede sin geocerca no puede ser destino cuando la política de asistencia exige geolocalización.",
+      "Seleccionar una actividad destino es opcional, pero el servidor solo acepta actividades realmente asignadas y pertenecientes a esa sede.",
+      "Una contingencia de salida pendiente o aprobada de la sede anterior se cancela al iniciar un desplazamiento. El flujo excepcional actual cubre entrada/salida, no salida/llegada de un traslado.",
+    ],
+    keywords:["desplazamiento","viaje","sede","ruta","llegada","salida","jornada","reacción"],
   },
   {
     id:"field-presence",
@@ -284,7 +311,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Si la ubicación es válida, activa la cámara y verifica tu rostro contra la plantilla supervisada.",
       "Selecciona Iniciar actividades. Quedarás En sitio y disponible.",
       "No necesitas tener una OT o actividad asignada en ese momento; las actividades posteriores pueden relacionarse con la jornada abierta.",
-      "Al finalizar tu presencia pulsa Marcar salida / Finalizar jornada y repite las validaciones requeridas.",
+      "Si debes atender otra sede, usa Desplazamientos: registra salida del origen y llegada al destino sin cerrar la jornada.",
+      "Al finalizar tu presencia pulsa Marcar salida / Finalizar jornada desde la sede actual y repite las validaciones requeridas.",
     ],
     notes:["Asistencia sigue validando entrada/salida de forma explícita. Si el usuario es Técnico, el módulo Reacción mantiene además seguimiento GPS operativo mientras la sesión del panel permanezca conectada."],
 
@@ -328,7 +356,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Cerrar sesión detiene y cierra la sesión de seguimiento.",
     ],
     notes:[
-      "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia.",
+      "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia. Cuando existe un desplazamiento de Asistencia activo, Reacción puede mostrar la sede destino y correlacionar el trayecto sin convertirse en la autoridad de salida/llegada.",
       "Reacción mantiene Empresas y Sedes visibles y permite filtrar por Empresa, Sede, Técnico y Horario desde una sola barra.",
       "Puedes buscar técnicos, empresas y sedes por nombre y por información relacionada como correo, teléfono, dirección, ciudad o identificación disponible. El botón Borrar filtros restablece el mapa y el panel a su vista operativa inicial.",
       "El selector Empresa limita el mapa y las sedes disponibles. Al hacer clic en una empresa, sede o técnico se abre su ficha encima de Reacción sin abandonar la pantalla.",
@@ -533,6 +561,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Desplazamientos multi-sede dentro de una jornada",
+    summary:"Asistencia permite salir de una sede, viajar y registrar llegada en otra sin cerrar la jornada; conserva origen, destino, GPS, actividad opcional y correlación con Reacción.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
+  },
   {
     date:"2026-09-25",
     title:"Expediente individual de Asistencia",

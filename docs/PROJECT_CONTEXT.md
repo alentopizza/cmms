@@ -605,7 +605,33 @@ The shared `UserAttendanceAuditCenter` is available from the User **Asistencia**
 
 Biometric audit output is intentionally minimized: lifecycle/status and permitted Site/supervisor attribution are visible, while encrypted face embeddings and raw similarity/liveness scores are not exposed.
 
-Phase 3 does not change `attendance_shifts`, biometric mutation authority or contingency decisions. Multi-Site movement inside one open workday remains the next separate functional problem for Phase 4.
+Phase 3 does not change biometric mutation authority or contingency decisions.
+
+### Multi-Site attendance displacement
+
+**Asistencia operativa — Fase 4** allows one open jornada to move through multiple authorized Sites without closing and reopening Attendance.
+
+Migration `039_attendance_shift_segments.sql` adds:
+- `attendance_shifts.check_out_site_id` so the shift keeps its origin Site while also preserving the final checkout Site;
+- ordered `attendance_shift_segments` with one open segment per shift;
+- `site` segments for time spent at a physical Site;
+- `travel` segments for movement between `from_site_id` and `to_site_id`;
+- optional destination Activity and Reaction tracking-session correlation;
+- departure/arrival GPS accuracy and geofence-distance evidence.
+
+The field flow is explicit: check in at the origin, start a displacement while still at that Site, optionally associate an assigned Activity at the destination, register arrival at the destination, then continue work. The cycle can repeat multiple times before final checkout. Checkout is validated against the **current Site segment**, not the origin Site.
+
+When geolocation is required by policy, departure validates the origin geofence and arrival validates the destination geofence. A destination lacking a geofence cannot be selected for that geolocated movement. The user cannot start another travel leg or close the jornada while a Travel segment is open.
+
+Activity execution now links to the same `attendance_shift` when the open Site segment matches the Work Order Site, so work performed after a displacement remains part of the original jornada.
+
+Reaction remains separate from Attendance. If a recent Reaction session is active when travel begins/arrives, the Travel segment stores that session identifier and the audit dossier can count connected-app route samples during the segment. Attendance still owns departure/arrival and current-Site state; Reaction supplies continuous route evidence only when connected. Reacción also surfaces the active destination for a tracked technician.
+
+The Phase 3 attendance dossier now includes a **Desplazamientos** tab, travel KPI, origin → final Site presentation and travel events in the consolidated timeline. Limited tenant supervisors only receive Travel segments when both endpoints are inside their authorized Site scope.
+
+The current contingency workflow remains for check-in/check-out. Travel departure/arrival uses the normal location validation path when geolocation is required.
+
+Phase 5 remains focused on scheduled-vs-actual reporting and richer multi-Site summaries using the evidence now captured by Phases 2–4.
 
 
 ### Mobile field shell phase 4A

@@ -27,6 +27,7 @@ type Props = {
   maxLocationAccuracy: number;
   livenessThreshold: number;
   preferredSiteId?: string | null;
+  inTransit?: boolean;
 };
 
 type GpsFix = {
@@ -72,6 +73,7 @@ export default function AttendanceCapture({
   maxLocationAccuracy,
   livenessThreshold,
   preferredSiteId=null,
+  inTransit=false,
 }:Props) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const streamRef=useRef<MediaStream|null>(null);
@@ -297,16 +299,20 @@ export default function AttendanceCapture({
       : phase==="face"?"Verificando rostro en vivo…"
       : phase==="saving"?"Confirmando presencia…"
       :"Validando…"
-    : openShift?"Marcar salida / Finalizar jornada":"Iniciar actividades";
+    : openShift
+      ? inTransit?"Registra llegada antes de finalizar":"Marcar salida / Finalizar jornada"
+      :"Iniciar actividades";
 
   return <div className="attendance-presence-workspace">
     <section className={"attendance-presence-status "+(openShift?"active":"")}>
       <div className="attendance-presence-status-icon" aria-hidden="true"><UiIcon name={openShift?"check":"attendance"} size={22}/></div>
       <div>
         <span className="eyebrow">Estado de presencia</span>
-        <h2>{openShift?"En sitio y disponible":"Listo para iniciar en sitio"}</h2>
+        <h2>{openShift?inTransit?"Jornada abierta · en desplazamiento":"En sitio y disponible":"Listo para iniciar en sitio"}</h2>
         <p>{openShift
-          ? `Presencia validada en ${openShift.site_name}. La jornada no depende de tener actividades asignadas.`
+          ? inTransit
+            ? "La jornada continúa abierta mientras te desplazas. Registra la llegada a la sede de destino antes de marcar salida."
+            : `Presencia validada en ${openShift.site_name}. La jornada no depende de tener actividades asignadas.`
           : "Puedes iniciar tu presencia biométrica aunque todavía no tengas órdenes o actividades asignadas."}</p>
       </div>
       <Badge variant={openShift?"success":"neutral"} icon="attendance">{openShift?"Jornada abierta":"Sin jornada"}</Badge>
@@ -353,8 +359,8 @@ export default function AttendanceCapture({
           </div>
           <Button className="attendance-start-button" variant="secondary" disabled iconLeft="attendance">Enrolamiento requerido</Button>
         </> : <>
-          <span className="eyebrow">{openShift?"Cierre de jornada":"Inicio de jornada"}</span>
-          <h2>{openShift?"Jornada abierta · debes marcar salida al terminar":"Verifica tu presencia"}</h2>
+          <span className="eyebrow">{openShift?inTransit?"Desplazamiento activo":"Cierre de jornada":"Inicio de jornada"}</span>
+          <h2>{openShift?inTransit?"Debes registrar llegada antes de cerrar la jornada":"Jornada abierta · debes marcar salida al terminar":"Verifica tu presencia"}</h2>
 
           {openShift
             ? <div className="attendance-open-shift"><span>Inicio validado</span><strong>{new Date(openShift.check_in_at).toLocaleString("es-CO")}</strong><small>{openShift.site_name} · disponible para recibir actividades</small></div>
@@ -375,7 +381,14 @@ export default function AttendanceCapture({
           </div>
 
           {requireGeolocation&&!openShift&&<Button className="attendance-location-check" variant="secondary" disabled={busy} onClick={verifyLocation} iconLeft="location">Verificar ubicación</Button>}
-          <Button className={"attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} variant={openShift?"danger":"primary"} loading={busy} disabled={!busy&&(!siteId&&configuredSites.length===0)} onClick={()=>clock(openShift?"check_out":"check_in")} iconLeft="attendance">{activityLabel}</Button>
+          <Button
+            className={"attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")}
+            variant={openShift?"danger":"primary"}
+            loading={busy}
+            disabled={Boolean(openShift&&inTransit)||(!busy&&(!siteId&&configuredSites.length===0))}
+            onClick={()=>clock(openShift?"check_out":"check_in")}
+            iconLeft="attendance"
+          >{activityLabel}</Button>
 
           {requireFace&&enrolled&&!openShift&&<small className="attendance-biometric-note">Tu biometría fue verificada por un supervisor. La revocación o reenrolamiento también requiere supervisión.</small>}
         </>}

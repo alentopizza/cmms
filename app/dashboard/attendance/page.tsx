@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
+import AttendanceMovement, { type AttendanceMovementSegment } from "@/components/AttendanceMovement";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
@@ -73,6 +74,24 @@ type SelfSchedule={
   local_date:string;
 };
 
+type SelfOpenShift={
+  id:string;
+  site_id:string;
+  site_name:string;
+  origin_site_id:string;
+  origin_site_name:string;
+  check_in_at:string;
+  in_transit:boolean;
+};
+
+type SelfDestinationTask={
+  id:string;
+  site_id:string;
+  site_name:string;
+  label:string;
+  status:string;
+};
+
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
 
 export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string;organization_id?:string;user_id?:string}>}) {
@@ -134,14 +153,25 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       )
     : {rowCount:0};
 
-  const openShift=canSelf && session.userId
-    ? await query<{id:string;site_id:string;site_name:string;check_in_at:string}>(
-        `SELECT a.id,a.site_id,s.name site_name,a.check_in_at::text
-         FROM attendance_shifts a JOIN sites s ON s.id=a.site_id
-         WHERE a.user_id=$1 AND a.status='open' LIMIT 1`,
-        [session.userId],
+  const openShift=canSelf && session.userId && organizationId
+    ? await query<SelfOpenShift>(
+        `SELECT a.id,
+                COALESCE(segment.site_id,segment.from_site_id,a.site_id)::text site_id,
+                COALESCE(current_site.name,from_site.name,origin.name) site_name,
+                a.site_id::text origin_site_id,origin.name origin_site_name,
+                a.check_in_at::text,
+                COALESCE(segment.segment_type='travel',false) in_transit
+         FROM attendance_shifts a
+         JOIN sites origin ON origin.id=a.site_id
+         LEFT JOIN attendance_shift_segments segment
+           ON segment.attendance_shift_id=a.id AND segment.ended_at IS NULL
+         LEFT JOIN sites current_site ON current_site.id=segment.site_id
+         LEFT JOIN sites from_site ON from_site.id=segment.from_site_id
+         WHERE a.organization_id=$2 AND a.user_id=$1 AND a.status='open'
+         LIMIT 1`,
+        [session.userId,organizationId],
       )
-    : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
+    : {rows:[]} as {rows:SelfOpenShift[]};
 
   const selfSchedule=canSelf && session.userId && organizationId
     ? await query<SelfSchedule>(
@@ -158,6 +188,55 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         [organizationId,session.userId],
       )
     : {rows:[]} as {rows:SelfSchedule[]};
+
+  const selfMovementSegment=canSelf && openShift.rows[0]
+    ? await query<AttendanceMovementSegment>(
+        `SELECT segment.id::text,segment.segment_type,
+                segment.site_id::text,current_site.name site_name,
+                segment.from_site_id::text,from_site.name from_site_name,
+                segment.to_site_id::text,to_site.name to_site_name,
+                segment.destination_task_id::text,
+                CASE WHEN task.id IS NOT NULL
+                     THEN 'OT #'||work_order.number::text||' · '||task.description
+                     ELSE NULL END destination_task_label,
+                segment.tracking_session_id::text,
+                segment.started_at::text
+         FROM attendance_shift_segments segment
+         LEFT JOIN sites current_site ON current_site.id=segment.site_id
+         LEFT JOIN sites from_site ON from_site.id=segment.from_site_id
+         LEFT JOIN sites to_site ON to_site.id=segment.to_site_id
+         LEFT JOIN work_order_tasks task ON task.id=segment.destination_task_id
+         LEFT JOIN work_orders work_order ON work_order.id=task.work_order_id
+         WHERE segment.attendance_shift_id=$1 AND segment.ended_at IS NULL
+         LIMIT 1`,
+        [openShift.rows[0].id],
+      )
+    : {rows:[]} as {rows:AttendanceMovementSegment[]};
+
+  const selfDestinationTasks=canSelf && session.userId && organizationId && openShift.rows[0]
+    ? await query<SelfDestinationTask>(
+        `SELECT task.id::text,work_order.site_id::text,site.name site_name,
+                'OT #'||work_order.number::text||' · '||task.description label,task.status
+         FROM work_order_tasks task
+         JOIN work_orders work_order ON work_order.id=task.work_order_id
+         JOIN sites site ON site.id=work_order.site_id
+         WHERE task.organization_id=$1
+           AND task.status IN ('pending','in_progress')
+           AND COALESCE(task.completed,false)=false
+           AND work_order.status NOT IN ('completed','cancelled')
+           AND ($3::boolean OR work_order.site_id=ANY($4::uuid[]))
+           AND (
+             task.assigned_to=$2
+             OR EXISTS(
+               SELECT 1 FROM crew_members member
+               WHERE member.organization_id=$1 AND member.crew_id=task.crew_id AND member.user_id=$2
+             )
+             OR ($5::uuid IS NOT NULL AND task.service_supplier_id=$5::uuid)
+           )
+         ORDER BY site.name,work_order.number,task.sort_order`,
+        [organizationId,session.userId,session.accessAllSites,session.siteIds,session.externalSupplierId],
+      )
+    : {rows:[]} as {rows:SelfDestinationTask[]};
 
   const selfContingency=canSelf && session.userId && organizationId
     ? await query<ContingencyRequestView>(
@@ -356,6 +435,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const selfScheduledDay=selfScheduleRow
     ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date)
     : null;
+  const selfOpenShift=openShift.rows[0]||null;
+  const selfMovement=selfMovementSegment.rows[0]||null;
 
   return <div className="phase8-attendance">
     <ModuleHeader
@@ -435,18 +516,34 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                 maxLocationAccuracy={policy.max_location_accuracy_m}
                 livenessThreshold={policy.liveness_threshold}
                 preferredSiteId={selfScheduleRow?.base_site_id||null}
+                inTransit={Boolean(selfOpenShift?.in_transit)}
               />
             </section>
-            {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
+            {selfOpenShift&&selfMovement&&<AttendanceMovement
+              currentSegment={selfMovement}
               sites={sites.rows.map(site=>({
-        id:site.id,
-        name:site.name,
-        city:site.city,
-        latitude:site.latitude,
-        longitude:site.longitude,
-        geofenceRadius:site.geofence_radius_m,
-      }))}
-              openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
+                id:site.id,
+                name:site.name,
+                city:site.city,
+                latitude:site.latitude,
+                longitude:site.longitude,
+                geofenceRadius:site.geofence_radius_m,
+                geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+              }))}
+              tasks={selfDestinationTasks.rows}
+              requireGeolocation={policy.require_geolocation}
+              maxLocationAccuracy={policy.max_location_accuracy_m}
+            />}
+            {Boolean(enrolled.rowCount) && !selfOpenShift?.in_transit && <AttendanceContingencySelf
+              sites={sites.rows.map(site=>({
+                id:site.id,
+                name:site.name,
+                city:site.city,
+                latitude:site.latitude,
+                longitude:site.longitude,
+                geofenceRadius:site.geofence_radius_m,
+              }))}
+              openShift={selfOpenShift?{site_id:selfOpenShift.site_id,site_name:selfOpenShift.site_name}:null}
               initialRequest={selfContingency.rows[0]||null}
             />}
           </>

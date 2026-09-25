@@ -90,14 +90,34 @@ export async function POST(request:Request){
       return NextResponse.json({message:"La sede seleccionada no está disponible."},{status:422});
     }
 
-    const open=await client.query("SELECT id,site_id FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE",[session.userId]);
+    const open=await client.query<{id:string}>(
+      "SELECT id FROM attendance_shifts WHERE user_id=$1 AND organization_id=$2 AND status='open' FOR UPDATE",
+      [session.userId,session.organizationId],
+    );
     if(action==="check_in"&&open.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"Ya tienes una jornada abierta."},{status:409});
     }
-    if(action==="check_out"&&(!open.rowCount||open.rows[0].site_id!==siteId)){
-      await client.query("ROLLBACK");
-      return NextResponse.json({message:"La contingencia de salida debe corresponder a tu jornada abierta y a la misma sede."},{status:409});
+    if(action==="check_out"){
+      if(!open.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"No tienes una jornada abierta para solicitar contingencia de salida."},{status:409});
+      }
+      const segment=await client.query<{segment_type:"site"|"travel";site_id:string|null}>(
+        `SELECT segment_type,site_id
+         FROM attendance_shift_segments
+         WHERE attendance_shift_id=$1 AND ended_at IS NULL
+         FOR UPDATE`,
+        [open.rows[0].id],
+      );
+      if(!segment.rowCount||segment.rows[0].segment_type==="travel"){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"Registra primero la llegada del desplazamiento antes de solicitar una salida por contingencia."},{status:409});
+      }
+      if(segment.rows[0].site_id!==siteId){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"La contingencia de salida debe corresponder a la sede donde estás actualmente."},{status:409});
+      }
     }
 
     const existing=await client.query(

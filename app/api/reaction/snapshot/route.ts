@@ -21,6 +21,7 @@ type TechRow={
   tracking_session_id:string;user_id:string;full_name:string;email:string;phone:string|null;role:string;
   organization_id:string;organization_name:string;organization_country:string;latitude:number;longitude:number;accuracy_m:number|null;
   last_seen_at:string;has_avatar:boolean;live:boolean;crew_ids:string[];
+  travel_destination_site_id:string|null;travel_destination_site_name:string|null;travel_started_at:string|null;
 };
 type SampleRow={tracking_session_id:string;latitude:number;longitude:number;recorded_at:string};
 type ActivityRow={
@@ -119,6 +120,9 @@ export async function GET(){
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
                 (ts.last_seen_at > now()-interval '2 minutes') live,
                 (u.avatar_data IS NOT NULL) has_avatar,
+                travel.to_site_id::text travel_destination_site_id,
+                travel.to_site_name travel_destination_site_name,
+                travel.started_at travel_started_at,
                 COALESCE((
                   SELECT array_agg(cm.crew_id::text ORDER BY cm.crew_id::text)
                   FROM crew_members cm
@@ -128,6 +132,20 @@ export async function GET(){
          JOIN users u ON u.id=ts.user_id
          JOIN organization_members om ON om.user_id=u.id AND om.organization_id=ts.organization_id
          JOIN organizations o ON o.id=ts.organization_id
+         LEFT JOIN LATERAL (
+           SELECT segment.to_site_id,destination.name to_site_name,segment.started_at::text
+           FROM attendance_shifts shift
+           JOIN attendance_shift_segments segment
+             ON segment.attendance_shift_id=shift.id
+            AND segment.segment_type='travel'
+            AND segment.ended_at IS NULL
+           JOIN sites destination ON destination.id=segment.to_site_id
+           WHERE shift.organization_id=ts.organization_id
+             AND shift.user_id=u.id
+             AND shift.status='open'
+           ORDER BY segment.started_at DESC
+           LIMIT 1
+         ) travel ON true
          WHERE ts.status='active' AND om.role='technician'
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
            AND ts.last_seen_at > now()-interval '30 minutes'
@@ -139,6 +157,9 @@ export async function GET(){
                 ts.last_accuracy_m accuracy_m,ts.last_seen_at::text,
                 (ts.last_seen_at > now()-interval '2 minutes') live,
                 (u.avatar_data IS NOT NULL) has_avatar,
+                CASE WHEN $2::boolean OR travel.to_site_id=ANY($3::uuid[]) THEN travel.to_site_id::text ELSE NULL END travel_destination_site_id,
+                CASE WHEN $2::boolean OR travel.to_site_id=ANY($3::uuid[]) THEN travel.to_site_name ELSE NULL END travel_destination_site_name,
+                CASE WHEN $2::boolean OR travel.to_site_id=ANY($3::uuid[]) THEN travel.started_at ELSE NULL END travel_started_at,
                 COALESCE((
                   SELECT array_agg(cm.crew_id::text ORDER BY cm.crew_id::text)
                   FROM crew_members cm
@@ -148,11 +169,25 @@ export async function GET(){
          JOIN users u ON u.id=ts.user_id
          JOIN organization_members om ON om.user_id=u.id AND om.organization_id=ts.organization_id
          JOIN organizations o ON o.id=ts.organization_id
+         LEFT JOIN LATERAL (
+           SELECT segment.to_site_id,destination.name to_site_name,segment.started_at::text
+           FROM attendance_shifts shift
+           JOIN attendance_shift_segments segment
+             ON segment.attendance_shift_id=shift.id
+            AND segment.segment_type='travel'
+            AND segment.ended_at IS NULL
+           JOIN sites destination ON destination.id=segment.to_site_id
+           WHERE shift.organization_id=ts.organization_id
+             AND shift.user_id=u.id
+             AND shift.status='open'
+           ORDER BY segment.started_at DESC
+           LIMIT 1
+         ) travel ON true
          WHERE ts.status='active' AND ts.organization_id=$1 AND om.role='technician'
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
            AND ts.last_seen_at > now()-interval '30 minutes'
          ORDER BY ts.last_seen_at DESC`,
-    global?[]:[organizationId],
+    global?[]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
   const activities=await query<ActivityRow>(
@@ -328,6 +363,9 @@ export async function GET(){
       accuracy:tech.accuracy_m===null?null:Number(tech.accuracy_m),
       lastSeenAt:tech.last_seen_at,
       telemetryState:tech.live?"live":"paused",
+      travelDestinationSiteId:tech.travel_destination_site_id,
+      travelDestinationSiteName:tech.travel_destination_site_name,
+      travelStartedAt:tech.travel_started_at,
       avatarUrl:tech.has_avatar?`/api/users/${tech.user_id}/avatar`:null,
       route:routes[tech.tracking_session_id]||[],
     })),

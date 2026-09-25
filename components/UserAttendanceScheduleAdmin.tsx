@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import UiIcon from "@/components/UiIcon";
@@ -84,7 +84,7 @@ export default function UserAttendanceScheduleAdmin({
   useEffect(()=>{
     const next=lockedUserId||initialUserId||people[0]?.id||"";
     setUserId(next);
-  },[lockedUserId,initialUserId,people]);
+  },[lockedUserId,initialUserId,people[0]?.id]);
 
   useEffect(()=>{
     if(!userId){setData(null);return;}
@@ -169,7 +169,7 @@ export default function UserAttendanceScheduleAdmin({
     if(successMessage)setMessage(successMessage);
   }
 
-  async function save(event:React.FormEvent){
+  async function save(event:FormEvent){
     event.preventDefault();
     if(!data||!formRef.current)return;
     const formData=new FormData(formRef.current);

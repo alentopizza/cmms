@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base funcional validada para esta entrega: `8952e5d42a041894fb122b2a37d566f0833cdf13`
+> Base funcional validada para esta entrega: `1d1aa9a2536215c60dc09a4b109c0275c605583f`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 

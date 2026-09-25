@@ -434,7 +434,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       <section className="attendance-setup-group">
         <div className="attendance-setup-group-head"><UiIcon name="location" size={17}/><div><strong>Sedes y geocercas</strong><small>{geofencedSites} de {sites.rows.length} sede(s) visible(s) tienen geocerca configurada.</small></div></div>
         {sites.rows.length===0
-          ?<EmptyState icon="location" title="No hay sedes disponibles" description="Crea o habilita una sede dentro de la empresa antes de configurar el control por ubicación."/>
+          ?<EmptyState icon="info" title="No hay sedes disponibles" description="Crea o habilita una sede dentro de la empresa antes de configurar el control por ubicación."/>
           :<div className="attendance-site-grid">
             {sites.rows.map(site=><article className="card attendance-site-card" key={site.id}>
               <div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div>

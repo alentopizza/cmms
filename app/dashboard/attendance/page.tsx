@@ -333,7 +333,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}
     {feedback.error==="roles" && <div className="section"><Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert></div>}
 
-    {globalOperator&&!organizationId&&<section className="section"><EmptyState icon="company" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/></section>}
+    {globalOperator&&!organizationId&&<section className="section"><EmptyState icon="info" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/></section>}
 
     {canSelf && organizationId && <>
       {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)

@@ -87,7 +87,9 @@ This roadmap is directional and should be updated as priorities change.
 - **Phase 2 — implemented:** versioned individual work schedules by person with day-specific hours, effective dates, base Site, timezone snapshot and controlled copy from Company/Site schedules. Started history is immutable and schedule planning does not block real attendance.
 - **Phase 3 — implemented:** consolidated per-user attendance dossier across schedule planning, real shifts, biometric lifecycle, contingencies and administrative timeline, with Organization/Site-scoped read authorization and biometric data minimization.
 - **Phase 4 — implemented:** ordered multi-Site Site/Travel segments inside one attendance shift, explicit departure/arrival evidence, optional destination Activity, final checkout Site, current-Site Activity linkage and optional Reaction route correlation.
-- **Phase 5 — next:** reports for scheduled vs actual jornada, origin/final Sites, travel duration, on-Site duration, field hours, activities, contingencies and supporting evidence.
+- **Phase 5 — implemented:** scoped scheduled-vs-actual reporting with person/Site/period filters, on-Site vs Travel duration, origin/final Sites, Activity/contingency/Reaction evidence and XLSX/CSV/PDF exports from the same authorized dataset.
+
+The planned Attendance operational track (Phases 1–5) is complete. Future Attendance changes are incremental enhancements, not an automatic Phase 6.
 
 Attendance and Reaction remain separate authorities: Attendance proves presence, current Site and working-time movement events; Reaction supplies live operational route telemetry when the field session is connected.
 

@@ -19,6 +19,7 @@ import CompanyDocumentCreateModal from "@/components/CompanyDocumentCreateModal"
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-document-catalog";
 import { Badge } from "@/components/ui-kit/Badge";
 import { EmptyState } from "@/components/ui-kit/Feedback";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
@@ -302,7 +303,7 @@ export default function CompanyDirectory({
   const selectedReturnTo=selected?"/dashboard/companies?company="+encodeURIComponent(selected.id):"/dashboard/companies";
 
   return <div className="phase6-company-directory">
-    {!selected&&<div className="company-card-grid company-card-grid-compact">
+    {!selected&&<CollectionView storageKey="companies" label="Vista de empresas" grid={<div className="company-card-grid company-card-grid-compact" data-collection-grid>
       {companies.map(company => {
         const resources: Array<{
           kind: ResourceKind;
@@ -342,7 +343,7 @@ export default function CompanyDirectory({
           }}
         />;
       })}
-    </div>}
+    </div>}/>} 
 
     <ConfirmDialog
       open={confirmation === "edit"}

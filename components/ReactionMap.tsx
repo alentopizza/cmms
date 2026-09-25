@@ -26,6 +26,7 @@ type TechnicianPoint={
   trackingSessionId:string;userId:string;fullName:string;email:string;phone:string|null;country:string;role:string;
   organizationId:string;organizationName:string;crewIds:string[];
   lat:number;lng:number;accuracy:number|null;lastSeenAt:string;telemetryState:"live"|"paused";avatarUrl:string|null;
+  travelDestinationSiteId:string|null;travelDestinationSiteName:string|null;travelStartedAt:string|null;
   route:Array<{lat:number;lng:number;at:string}>;
 };
 type ActivityAlert={
@@ -370,7 +371,7 @@ export default function ReactionMap(){
           const marker=new google.maps.marker.AdvancedMarkerElement({
             map,
             position:{lat:tech.lat,lng:tech.lng},
-            title:`${tech.fullName} · ${tech.organizationName} · ${tech.telemetryState==="live"?"GPS en vivo":"GPS pausado · última ubicación conocida"}`,
+            title:`${tech.fullName} · ${tech.organizationName} · ${tech.telemetryState==="live"?"GPS en vivo":"GPS pausado · última ubicación conocida"}${tech.travelDestinationSiteName?" · En ruta a "+tech.travelDestinationSiteName:""}`,
             content:markerContent("technician",tech.avatarUrl,tech.fullName,undefined,tech.telemetryState),
             zIndex:40,
           });
@@ -454,7 +455,7 @@ export default function ReactionMap(){
       }));
 
     const technicians=snapshot.technicians
-      .filter(tech=>includesSearch(query,[tech.fullName,tech.email,tech.phone,tech.organizationName,tech.role]))
+      .filter(tech=>includesSearch(query,[tech.fullName,tech.email,tech.phone,tech.organizationName,tech.role,tech.travelDestinationSiteName]))
       .map(tech=>({
         kind:"technician" as const,id:tech.userId,title:tech.fullName,
         subtitle:`${tech.organizationName} · ${tech.email}`,
@@ -479,7 +480,7 @@ export default function ReactionMap(){
       technicians:snapshot.technicians.filter(item=>
         (!companyId||item.organizationId===companyId)
         &&(!technicianId||item.userId===technicianId)
-        &&includesSearch(query,[item.fullName,item.email,item.phone,item.organizationName,item.role])
+        &&includesSearch(query,[item.fullName,item.email,item.phone,item.organizationName,item.role,item.travelDestinationSiteName])
       ).length,
     };
   },[snapshot,hoursFilter,companyId,siteId,technicianId,search]);
@@ -697,6 +698,8 @@ export default function ReactionMap(){
             ["Precisión GPS",detailTechnician.accuracy===null?"Sin dato":`${Math.round(detailTechnician.accuracy)} m`],
             ["Último GPS",new Date(detailTechnician.lastSeenAt).toLocaleString("es-CO")],
             ["Ruta reciente",`${detailTechnician.route.length} puntos`],
+            ["Desplazamiento",detailTechnician.travelDestinationSiteName?"En ruta a "+detailTechnician.travelDestinationSiteName:"Sin desplazamiento activo"],
+            ["Inicio trayecto",detailTechnician.travelStartedAt?new Date(detailTechnician.travelStartedAt).toLocaleString("es-CO"):"—"],
           ]}
           activities={pendingForTechnician(detailTechnician)}
           onActivity={id=>setDetail({kind:"activity",id})}

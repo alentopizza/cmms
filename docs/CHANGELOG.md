@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-25 — Asistencia operativa Fase 4: desplazamientos multi-sede
+
+- Una jornada puede iniciar en una sede, desplazarse por otras sedes autorizadas y finalizar en una sede diferente sin crear múltiples turnos de asistencia.
+- Migración `039_attendance_shift_segments.sql` añade `check_out_site_id` y segmentos ordenados `site` / `travel` con una sola sección abierta por jornada.
+- Check-in normal y por contingencia crean el primer tramo de sede; checkout normal y por contingencia cierran la sede actual y conservan la sede final.
+- El flujo de campo incorpora **Desplazamientos**: seleccionar destino, actividad opcional asignada, registrar salida del origen y registrar llegada al destino.
+- Con geolocalización obligatoria, la salida valida la geocerca del origen y la llegada la del destino; una sede sin geocerca no puede usarse como destino en ese modo.
+- Mientras existe un tramo `travel`, la jornada permanece abierta pero no puede cerrarse ni iniciar otro desplazamiento hasta registrar la llegada.
+- Las actividades ejecutadas se vinculan contra el tramo de sede actualmente abierto, por lo que el trabajo posterior al traslado sigue perteneciendo a la jornada original.
+- Una sesión reciente de Reacción puede quedar correlacionada con el desplazamiento; sus muestras GPS sirven como evidencia de trayecto sin convertirse en autoridad de Asistencia.
+- Reacción muestra el destino activo del técnico cuando está en tránsito y el expediente individual incorpora KPI, pestaña y eventos de desplazamiento.
+- Los supervisores con alcance parcial solo reciben un tramo de viaje cuando origen y destino están dentro de sus sedes autorizadas.
+- Iniciar un traslado cancela contingencias de salida pendientes/aprobadas de la sede anterior para evitar autorizaciones obsoletas.
+- El flujo de contingencia continúa cubriendo check-in/check-out; salida/llegada del desplazamiento utiliza la validación normal de ubicación cuando la política exige GPS.
+- Se añadió `attendance-displacement-smoke.mjs` y ejecución dedicada en CI para integridad del modelo, autoridad del backend, UI, auditoría y correlación con Reacción.
+
 ## 2026-09-25 — Asistencia operativa Fase 3: expediente individual y auditoría
 
 - Se añadió un expediente individual de Asistencia reutilizable desde Usuarios y desde el módulo Asistencia.

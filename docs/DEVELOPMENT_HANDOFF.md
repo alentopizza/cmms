@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `bcbab131874f9097af1ac9e1dbccbd86bf892214`
+> Base revisada para esta entrega: `c4d0ff0331e13f406f241d0563368bdcca611137`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -84,29 +84,32 @@ El directorio de Cuadrillas fue rediseñado sobre las mismas consultas, creació
 - `scripts/crew-directory-redesign-smoke.mjs` protege densidad, ausencia de foto hero, datos reales, grid/list y responsive.
 - No hubo cambios de DB, endpoints, RBAC ni reglas de creación/membresía.
 
-### Empresa · Documentos a ancho completo
+### Empresa · Documentos · previsualización, gestión y visor completo
 
-La pestaña **Documentos** del perfil in-page de Empresa usa una excepción visual específica para liberar espacio al visor y al listado sin rehacer la ficha.
+La pestaña **Documentos** del perfil in-page de Empresa mantiene el modo a ancho completo y evoluciona la experiencia documental sin duplicar arquitectura.
 
-- `EntityProfileWorkspace` admite `fullWidthTabIds`; solo la tab activa declarada adopta el modo ancho.
-- `CompanyDirectory` declara exclusivamente `documents` como tab de ancho completo.
-- Cuando Documentos está activa, la tarjeta lateral de identidad/estadísticas/acciones rápidas deja de renderizarse visualmente y el content-card ocupa ambas columnas.
-- El header global del módulo no cambia y el header independiente **Empresa / ...** permanece intacto.
-- La misma barra de tabs existente ocupa todo el ancho inmediatamente debajo del header de Empresa.
-- `CompanyDocumentWorkspace` sigue siendo el único visor/listado; conserva selección de fila, visor PDF/imagen, filtros, tabla, archivo/restauración y acciones.
-- En escritorio el visor/listado aprovecha el ancho con un split aproximadamente 50/50; en anchos intermedios se ajusta y por debajo de 900 px mantiene la disposición vertical existente.
-- Información general, Estadísticas, Ubicaciones, Técnicos y cualquier otra tab conservan el sidebar empresarial normal.
-- No hubo cambios de DB, endpoints, permisos, servicios ni datos.
-- `scripts/company-documents-fullwidth-smoke.mjs` protege que la excepción siga limitada a Documentos y que el workspace documental existente no sea reemplazado.
+- `EntityProfileWorkspace` continúa usando `fullWidthTabIds={["documents"]}`; solo Documentos oculta temporalmente la tarjeta lateral interna.
+- `CompanyDocumentWorkspace` sigue siendo la única superficie documental y conserva la misma colección, filtros, selección, tabla, endpoints, archivo/restauración y permisos.
+- Clic en una fila = selección + previsualización contextual izquierda. No abre modal.
+- **Ver documento** = selecciona la fila y abre el `Modal` oficial del UI Kit con visor ampliado.
+- **Descargar documento** desde la tabla usa el endpoint existente directamente y no cambia selección ni abre modal.
+- **Más acciones** mantiene el Drawer existente para edición de metadatos/archivo, archivar/restaurar y eliminación autorizada.
+- La misma composición interna `DocumentViewer` se reutiliza para la previsualización y el modal; no existe un segundo visor PDF/imagen.
+- Toolbar: controles de visualización a la izquierda; Descargar/Imprimir/Más acciones a la derecha.
+- La acción **Compartir documento** y su estado/handlers/CSS exclusivos fueron retirados completamente de esta experiencia.
+- Desktop: aproximadamente 40% previsualización / 60% listado. Intermedio: 45% / 55%. Por debajo de 900 px: Listado → Previsualización.
+- El modal conserva filtros, selección y previsualización al cerrarse y hereda X, Escape, foco y restauración de foco del UI Kit.
+- No hubo cambios de DB, endpoints, consultas, servicios documentales, RBAC ni permisos.
+- `scripts/company-documents-fullwidth-smoke.mjs` protege full-width, split, modal, reutilización del visor y ausencia de Compartir.
 
 Archivos clave:
 
+- `components/CompanyDocumentWorkspace.tsx`
 - `components/EntityProfileWorkspace.tsx`
 - `app/dashboard/companies/CompanyDirectory.tsx`
-- `app/business-ui.css`
+- `app/document-workspace.css`
 - `app/phase6-modules.css`
 - `scripts/company-documents-fullwidth-smoke.mjs`
-
 ### Enrolamiento biométrico móvil · aprobación humana única
 
 El flujo biométrico inicial ya no exige que un supervisor opere la cámara de cada empleado. El trabajador inicia una solicitud desde su propio móvil y un administrador valida la identidad una sola vez.

@@ -62,6 +62,7 @@ jobs:
       - run: node scripts/business-ui-smoke.mjs
       - run: node scripts/phase6-modules-smoke.mjs
       - run: node scripts/phase7-assets-inventory-smoke.mjs
+      - run: node scripts/attendance-scheduling-displacement-smoke.mjs
       - run: node scripts/phase8-suppliers-people-smoke.mjs
       - run: node scripts/phase9-maintenance-operation-smoke.mjs
       - run: node scripts/phase10-final-smoke.mjs

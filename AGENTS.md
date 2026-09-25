@@ -125,6 +125,11 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
+- User attendance schedules are planning/reference records distinct from Company/Site `business_schedule`; changing a schedule must not rewrite historical shifts.
+- An attendance shift preserves its original check-in Site. `current_site_id` may change only after an explicit, server-validated displacement arrival; check-out belongs to the current confirmed Site.
+- Attendance displacements are explicit origin/departure/destination/arrival events with GPS/geofence evidence. They are not continuous tracking and must not replace or duplicate Reaction tracking sessions.
+- Never close a standard shift while an attendance displacement is still `in_transit`.
+- Platform operators configuring Attendance for a customer must explicitly target an Organization; every policy, schedule, biometric and Site mutation must revalidate that Organization server-side.
 
 
 ## Company enterprise-profile invariants

@@ -100,7 +100,8 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     if(session.userId){
       const shift=await client.query<{id:string}>(
         `SELECT id FROM attendance_shifts
-         WHERE user_id=$1 AND organization_id=$2 AND site_id=$3 AND status='open'
+         WHERE user_id=$1 AND organization_id=$2
+           AND COALESCE(current_site_id,site_id)=$3 AND status='open'
            AND check_in_at<=now()
          ORDER BY check_in_at DESC LIMIT 1`,
         [session.userId,organizationId,siteId],

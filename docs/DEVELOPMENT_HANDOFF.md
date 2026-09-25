@@ -2,8 +2,8 @@
 
 > Última revisión: 2026-09-24  
 > Repositorio: `alentopizza/cmms`  
-> Rama de trabajo/despliegue: `main`  
-> HEAD revisado antes de crear este handoff: `c32037e638eb6f1c1d83bfd68f8a54c939f3ba99`
+> Rama de despliegue: `main`  
+> Checkpoint de implementación revisado: `feat/attendance-schedules-displacements` sobre baseline `a497a784939d3dbf5ede7ecc2ba9b6fcf8494e3e`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -67,7 +67,33 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-La última tanda de cambios del 24 de septiembre de 2026 se concentró en **Usuarios y Proveedores**.
+La última tanda de cambios del 24 de septiembre de 2026 se concentró en **Asistencia, Usuarios y Proveedores**.
+
+### Asistencia y jornada multi-sede
+
+- `user_attendance_schedules` asigna una jornada semanal de referencia por usuario/empresa; se configura desde Asistencia o desde la pestaña Asistencia de la ficha de Usuario.
+- El horario individual no sustituye `business_schedule` de Empresa/Sede y no genera decisiones laborales automáticas.
+- El check-in guarda un snapshot del horario vigente para proteger la lectura histórica.
+- `attendance_shifts.site_id` sigue siendo la sede de origen; `current_site_id` es la sede operativa confirmada y `check_out_site_id` conserva la sede real de salida.
+- `attendance_displacements` registra desplazamientos explícitos entre sedes con salida/llegada y evidencia GPS/geocerca.
+- El técnico puede iniciar una jornada en una sede, confirmar llegada a otras sedes durante la jornada y finalizar en la última ubicación confirmada.
+- Una jornada no puede cerrarse mientras exista un desplazamiento `in_transit`.
+- Reacción continúa siendo el tracking operativo conectado; los desplazamientos de Asistencia no añaden seguimiento continuo.
+- Propietario Desweb/Superadmin seleccionan explícitamente la empresa que desean administrar dentro de Asistencia. Las APIs vuelven a validar ese alcance.
+- El enrolamiento biométrico supervisado se puede lanzar desde la ficha del Usuario y desde Asistencia; mantiene presencia física, geocerca, consentimiento, liveness y cifrado.
+
+Archivos clave:
+
+- `db/migrations/038_attendance_schedules_displacements.sql`
+- `app/api/attendance/schedules/route.ts`
+- `app/api/attendance/displacements/route.ts`
+- `app/api/attendance/clock/route.ts`
+- `components/AttendanceScheduleEditor.tsx`
+- `components/AttendanceCapture.tsx`
+- `components/SupervisedBiometricEnrollment.tsx`
+- `app/dashboard/attendance/page.tsx`
+- `app/dashboard/users/UserManagement.tsx`
+
 
 ### Usuarios
 

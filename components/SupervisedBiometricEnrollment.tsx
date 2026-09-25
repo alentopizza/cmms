@@ -54,10 +54,12 @@ export default function SupervisedBiometricEnrollment({
   people,
   sites,
   livenessThreshold,
+  organizationId,
 }:{
   people:Person[];
   sites:Site[];
   livenessThreshold:number;
+  organizationId?:string;
 }) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const streamRef=useRef<MediaStream|null>(null);
@@ -164,6 +166,7 @@ export default function SupervisedBiometricEnrollment({
         method:"POST",
         headers:{"content-type":"application/json"},
         body:JSON.stringify({
+          organizationId,
           userId:selected.id,
           siteId,
           embedding:face.embedding,
@@ -198,7 +201,7 @@ export default function SupervisedBiometricEnrollment({
       const response=await fetch("/api/attendance/enrollment-supervised",{
         method:"DELETE",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({userId:selected.id,reason:"Revocación administrativa desde Asistencia"}),
+        body:JSON.stringify({organizationId,userId:selected.id,reason:"Revocación administrativa desde Asistencia"}),
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.message||"No fue posible revocar la biometría.");

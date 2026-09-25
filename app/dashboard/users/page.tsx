@@ -3,9 +3,10 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import UserManagement, { type ManagedUser, type ManagedUserDocument, type ManagedEmergencyContact } from "./UserManagement";
+import type { AttendanceScheduleView } from "@/components/AttendanceScheduleEditor";
 
 type Organization = { id: string; name: string; country: string };
-type Site = { id: string; organization_id: string; name: string; organization_name: string };
+type Site = { id: string; organization_id: string; name: string; organization_name: string; city:string|null; latitude:number|null; longitude:number|null; geofence_radius_m:number };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
 // ── Authorized user directory data and related scope options ────────────────
@@ -128,19 +129,19 @@ export default async function UsersPage() {
       : query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.id=$1`, [session.organizationId]),
     isGlobalOperator
       ? query<Site>(
-          `SELECT s.id,s.organization_id,s.name,o.name organization_name
+          `SELECT s.id,s.organization_id,s.name,o.name organization_name,s.city,s.latitude,s.longitude,s.geofence_radius_m
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.active=true AND o.active=true ORDER BY o.name,s.name`,
         )
       : session.accessAllSites
         ? query<Site>(
-            `SELECT s.id,s.organization_id,s.name,o.name organization_name
+            `SELECT s.id,s.organization_id,s.name,o.name organization_name,s.city,s.latitude,s.longitude,s.geofence_radius_m
              FROM sites s JOIN organizations o ON o.id=s.organization_id
              WHERE s.active=true AND s.organization_id=$1 ORDER BY s.name`,
             [session.organizationId],
           )
         : query<Site>(
-            `SELECT s.id,s.organization_id,s.name,o.name organization_name
+            `SELECT s.id,s.organization_id,s.name,o.name organization_name,s.city,s.latitude,s.longitude,s.geofence_radius_m
              FROM sites s JOIN organizations o ON o.id=s.organization_id
              WHERE s.active=true AND s.organization_id=$1 AND s.id = ANY($2::uuid[])
              ORDER BY s.name`,
@@ -184,6 +185,26 @@ export default async function UsersPage() {
         ),
   ]);
 
+  const attendanceSchedules=isGlobalOperator
+    ? await query<AttendanceScheduleView>(
+        `SELECT id,organization_id,user_id,name,weekly_schedule,grace_before_minutes,grace_after_minutes,active,updated_at::text
+         FROM user_attendance_schedules ORDER BY updated_at DESC`,
+      )
+    : await query<AttendanceScheduleView>(
+        `SELECT id,organization_id,user_id,name,weekly_schedule,grace_before_minutes,grace_after_minutes,active,updated_at::text
+         FROM user_attendance_schedules WHERE organization_id=$1 ORDER BY updated_at DESC`,
+        [session.organizationId],
+      );
+
+  const attendancePolicies=isGlobalOperator
+    ? await query<{organization_id:string;liveness_threshold:number}>(
+        "SELECT organization_id,liveness_threshold FROM organization_attendance_policies",
+      )
+    : await query<{organization_id:string;liveness_threshold:number}>(
+        "SELECT organization_id,liveness_threshold FROM organization_attendance_policies WHERE organization_id=$1",
+        [session.organizationId],
+      );
+
   return <>
     <UserManagement
       users={users.rows}
@@ -196,6 +217,9 @@ export default async function UsersPage() {
       serviceSuppliers={serviceSuppliers.rows}
       documents={documents.rows}
       emergencyContacts={emergencyContacts.rows}
+      attendanceSchedules={attendanceSchedules.rows}
+      attendancePolicies={attendancePolicies.rows}
+      canManageAttendance={can(session,"attendance.manage")}
     />
   </>;
 }

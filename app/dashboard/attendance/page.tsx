@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
+import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
@@ -12,6 +12,7 @@ import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import AttendanceScheduleEditor, { type AttendanceScheduleView } from "@/components/AttendanceScheduleEditor";
 
 type Policy={
   enabled:boolean;
@@ -31,6 +32,8 @@ type Site={
   longitude:number|null;
   geofence_radius_m:number;
 };
+
+type OrganizationOption={id:string;name:string};
 
 type EnrollmentPerson={
   id:string;
@@ -57,7 +60,7 @@ type ReportRow={
 
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
 
-export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string}>}) {
+export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string;organization?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   const canSelf=can(session,"attendance.self");
@@ -66,7 +69,17 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   if(!canSelf && !canManage && !canReports) redirect("/dashboard");
 
   const feedback=await searchParams;
-  const organizationId=session.organizationId;
+  const selfOrganizationId=session.organizationId;
+  const globalOperator=isPlatformOperator(session);
+  const organizationOptions=globalOperator
+    ? await query<OrganizationOption>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
+    : selfOrganizationId
+      ? await query<OrganizationOption>("SELECT id,name FROM organizations WHERE id=$1",[selfOrganizationId])
+      : {rows:[]} as {rows:OrganizationOption[]};
+  const requestedOrganization=typeof feedback.organization==="string"?feedback.organization:"";
+  const organizationId=globalOperator
+    ? (organizationOptions.rows.some(item=>item.id===requestedOrganization)?requestedOrganization:organizationOptions.rows[0]?.id||null)
+    : selfOrganizationId;
 
   const policyResult=organizationId
     ? await query<Policy>(
@@ -93,7 +106,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         )
     : {rows:[]} as {rows:Site[]};
 
-  const enrolled=canSelf && session.userId && organizationId
+  const enrolled=canSelf && session.userId && selfOrganizationId
     ? await query(
         `SELECT 1
          FROM user_biometric_profiles
@@ -102,20 +115,38 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
            AND encrypted_embedding IS NOT NULL
            AND enrollment_method='supervised_camera'
            AND identity_verified_at IS NOT NULL`,
-        [session.userId,organizationId],
+        [session.userId,selfOrganizationId],
       )
     : {rowCount:0};
 
-  const openShift=canSelf && session.userId
-    ? await query<{id:string;site_id:string;site_name:string;check_in_at:string}>(
-        `SELECT a.id,a.site_id,s.name site_name,a.check_in_at::text
-         FROM attendance_shifts a JOIN sites s ON s.id=a.site_id
-         WHERE a.user_id=$1 AND a.status='open' LIMIT 1`,
-        [session.userId],
+  const openShift=canSelf && session.userId && selfOrganizationId
+    ? await query<{id:string;site_id:string;site_name:string;current_site_id:string;current_site_name:string;check_in_at:string}>(
+        `SELECT a.id,a.site_id::text,origin.name site_name,
+                COALESCE(a.current_site_id,a.site_id)::text current_site_id,
+                current_site.name current_site_name,a.check_in_at::text
+         FROM attendance_shifts a
+         JOIN sites origin ON origin.id=a.site_id
+         JOIN sites current_site ON current_site.id=COALESCE(a.current_site_id,a.site_id)
+         WHERE a.user_id=$1 AND a.organization_id=$2 AND a.status='open'
+         LIMIT 1`,
+        [session.userId,selfOrganizationId],
       )
-    : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;check_in_at:string}>};
+    : {rows:[]} as {rows:Array<{id:string;site_id:string;site_name:string;current_site_id:string;current_site_name:string;check_in_at:string}>};
 
-  const selfContingency=canSelf && session.userId && organizationId
+  const openDisplacement=openShift.rows[0]
+    ? await query<{id:string;from_site_id:string;to_site_id:string;from_site_name:string;to_site_name:string;departed_at:string;status:"in_transit"}>(
+        `SELECT d.id,d.from_site_id::text,d.to_site_id::text,origin.name from_site_name,destination.name to_site_name,
+                d.departed_at::text,'in_transit'::text status
+         FROM attendance_displacements d
+         JOIN sites origin ON origin.id=d.from_site_id
+         JOIN sites destination ON destination.id=d.to_site_id
+         WHERE d.attendance_shift_id=$1 AND d.status='in_transit'
+         LIMIT 1`,
+        [openShift.rows[0].id],
+      )
+    : {rows:[]} as {rows:Array<{id:string;from_site_id:string;to_site_id:string;from_site_name:string;to_site_name:string;departed_at:string;status:"in_transit"}>};
+
+  const selfContingency=canSelf && session.userId && selfOrganizationId
     ? await query<ContingencyRequestView>(
         `SELECT r.id,r.site_id,s.name site_name,r.action,r.reason_code,r.details,r.status,
                 r.requested_at::text,r.approved_until::text,r.review_note
@@ -126,7 +157,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
            AND (r.status<>'approved' OR r.approved_until>now())
          ORDER BY r.requested_at DESC
          LIMIT 1`,
-        [session.userId,organizationId],
+        [session.userId,selfOrganizationId],
       )
     : {rows:[]} as {rows:ContingencyRequestView[]};
 
@@ -180,6 +211,16 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         [organizationId],
       )
     : {rows:[]} as {rows:EnrollmentPerson[]};
+
+  const schedules=canManage && organizationId
+    ? await query<AttendanceScheduleView>(
+        `SELECT id,organization_id,user_id,name,weekly_schedule,grace_before_minutes,grace_after_minutes,active,updated_at::text
+         FROM user_attendance_schedules
+         WHERE organization_id=$1
+         ORDER BY updated_at DESC`,
+        [organizationId],
+      )
+    : {rows:[]} as {rows:AttendanceScheduleView[]};
 
   const reports=canReports
     ? session.platformRole!=="user"
@@ -293,6 +334,13 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
     />
+    {globalOperator&&organizationOptions.rows.length>0&&<section className="section attendance-organization-scope">
+      <form method="get" className="attendance-organization-form">
+        <div><span className="eyebrow">Empresa administrada</span><h2>Configurar asistencia por empresa</h2><p className="muted">El alcance de política, horarios, biometría y geocercas se aplica únicamente a la empresa seleccionada.</p></div>
+        <div className="field"><label>Empresa</label><select name="organization" defaultValue={organizationId||""}>{organizationOptions.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+        <button className="button secondary" type="submit">Cambiar empresa</button>
+      </form>
+    </section>}
     <section className="section phase8-attendance-summary-head">
       <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
       <Badge variant={activeNow>0?"success":"neutral"} icon="attendance">{activeNow} en campo</Badge>
@@ -301,7 +349,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}
     {feedback.error==="roles" && <div className="section"><Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert></div>}
 
-    {canSelf && organizationId && <>
+    {canSelf && selfOrganizationId && <>
       {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
         ? <section className="section"><EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/></section>
         : <>
@@ -318,6 +366,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                 }))}
                 enrolled={Boolean(enrolled.rowCount)}
                 openShift={openShift.rows[0]||null}
+                openDisplacement={openDisplacement.rows[0]||null}
                 requireFace={policy.require_face}
                 requireGeolocation={policy.require_geolocation}
                 maxLocationAccuracy={policy.max_location_accuracy_m}
@@ -333,7 +382,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         longitude:site.longitude,
         geofenceRadius:site.geofence_radius_m,
       }))}
-              openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
+              openShift={openShift.rows[0]?{site_id:openShift.rows[0].current_site_id,site_name:openShift.rows[0].current_site_name}:null}
               initialRequest={selfContingency.rows[0]||null}
             />}
           </>
@@ -341,6 +390,14 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     </>}
 
     {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} />}
+
+    {canManage && organizationId && <section className="section">
+      <AttendanceScheduleEditor
+        organizationId={organizationId}
+        people={enrollmentPeople.rows.map(person=>({id:person.id,full_name:person.full_name,role:ROLE_LABELS[person.role]}))}
+        schedules={schedules.rows}
+      />
+    </section>}
 
     {canManage && organizationId && <SupervisedBiometricEnrollment
       people={enrollmentPeople.rows}
@@ -353,11 +410,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         geofenceRadius:site.geofence_radius_m,
       }))}
       livenessThreshold={policy.liveness_threshold}
+      organizationId={organizationId}
     />}
 
     {canManage && organizationId && <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><Badge variant={policy.enabled?"success":"neutral"}>{policy.enabled?"Activo":"Inactivo"}</Badge></div>
-      <form method="post" action="/api/attendance/policy" className="form-grid">
+      <form method="post" action="/api/attendance/policy" className="form-grid"><input type="hidden" name="organization_id" value={organizationId}/>
         <div className="field"><label>Estado</label><select name="enabled" defaultValue={String(policy.enabled)}><option value="true">Activado</option><option value="false">Desactivado</option></select></div>
         <div className="field"><label>Biometría facial</label><select name="require_face" defaultValue={String(policy.require_face)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
         <div className="field"><label>Geolocalización</label><select name="require_geolocation" defaultValue={String(policy.require_geolocation)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>

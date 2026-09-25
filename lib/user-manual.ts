@@ -172,6 +172,8 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
+      "En la pestaña Asistencia, un responsable autorizado puede asignar la jornada semanal del usuario y realizar el enrolamiento biométrico supervisado sin salir de su ficha.",
+      "La jornada semanal permite definir días activos, hora de inicio/fin, descanso y tolerancias. Es una referencia de planificación; no reemplaza el horario de la Empresa/Sede ni genera decisiones laborales automáticas.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
@@ -206,7 +208,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/attendance",
     steps:[
       "El usuario debe existir y tener foto de perfil.",
-      "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento; puede ser la sede principal o cualquier otra sede autorizada.",
+      "Un Administrador o Manager inicia el enrolamiento desde Asistencia o desde la pestaña Asistencia de la ficha del Usuario, y selecciona una sede autorizada.",
       "El supervisor pulsa Verificar presencia en la sede. El GPS debe estar dentro de la geocerca antes de habilitar la cámara.",
       "La persona debe estar físicamente presente; el supervisor confirma visualmente su identidad.",
       "La persona acepta el tratamiento de su plantilla facial.",
@@ -231,11 +233,14 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Abre Asistencia desde el celular.",
       "El sistema obtiene una ubicación GPS precisa y valida la geocerca de la sede.",
       "Si la ubicación es válida, activa la cámara y verifica tu rostro contra la plantilla supervisada.",
-      "Selecciona Iniciar actividades. Quedarás En sitio y disponible.",
+      "Selecciona Iniciar actividades. Quedarás En sitio y disponible; esa sede queda registrada como origen de la jornada.",
       "No necesitas tener una OT o actividad asignada en ese momento; las actividades posteriores pueden relacionarse con la jornada abierta.",
-      "Al finalizar tu presencia pulsa Marcar salida / Finalizar jornada y repite las validaciones requeridas.",
+      "Si debes ir a otra sede durante la misma jornada, selecciona el destino y pulsa Iniciar desplazamiento mientras todavía estás en la sede actual.",
+      "Al llegar al destino pulsa Registrar llegada. El servidor valida la geocerca y esa sede pasa a ser tu ubicación operativa actual.",
+      "Puedes repetir el desplazamiento hacia otra sede si el trabajo lo requiere. No necesitas cerrar y volver a abrir la jornada.",
+      "Al finalizar pulsa Marcar salida / Finalizar jornada desde la última sede cuya llegada confirmaste. No se puede cerrar mientras exista un desplazamiento en tránsito.",
     ],
-    notes:["Asistencia sigue validando entrada/salida de forma explícita. Si el usuario es Técnico, el módulo Reacción mantiene además seguimiento GPS operativo mientras la sesión del panel permanezca conectada."],
+    notes:["Asistencia valida entrada, desplazamientos y salida mediante eventos explícitos. El módulo Reacción mantiene aparte el seguimiento GPS operativo mientras la sesión del panel permanezca conectada; un desplazamiento de Asistencia no activa tracking continuo."],
 
     keywords:["asistencia","jornada","presencia","iniciar actividades","gps"],
   },
@@ -482,6 +487,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Jornadas por usuario y desplazamientos entre sedes",
+    summary:"Asistencia permite asignar horarios semanales, enrolar biometría desde la ficha del usuario y registrar salida/llegada entre sedes para terminar la jornada en una ubicación distinta a la de inicio.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
+  },
   {
     date:"2026-09-24",
     title:"Centro de reportes y cierre visual V2",

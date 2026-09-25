@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-24 — Jornadas individuales, enrolamiento accesible y desplazamientos en Asistencia
+
+- Se añadió `user_attendance_schedules` para asignar a cada persona una jornada semanal de referencia con días activos, hora de inicio/fin, descanso y tolerancias.
+- La ficha **Usuario → Asistencia** permite administrar la jornada del usuario y ejecutar el enrolamiento biométrico supervisado sin abandonar su perfil.
+- El módulo **Asistencia** permite a Propietario Desweb/Superadministrador seleccionar explícitamente una empresa para administrar política, jornadas, biometría y geocercas; el alcance se vuelve a validar en servidor.
+- El enrolamiento biométrico continúa siendo presencial, supervisado, 1:1 y con GPS dentro de una sede autorizada. La foto de perfil sigue siendo únicamente una ayuda de identificación humana.
+- Una jornada conserva la sede original de entrada y ahora mantiene además una **ubicación operativa actual**.
+- Se añadió `attendance_displacements` para registrar de forma explícita y auditable **origen → destino**, hora de salida, hora de llegada y evidencia GPS/geocerca.
+- El técnico puede iniciar su jornada en una sede, registrar uno o varios desplazamientos y finalizar en la sede actual después de confirmar la llegada.
+- Una salida ya no está obligada a ocurrir en la sede original; debe ocurrir en la última ubicación operativa confirmada y no puede cerrar una jornada mientras exista un desplazamiento en tránsito.
+- La jornada activa guarda un snapshot de la programación vigente para que cambios posteriores de horario no reescriban evidencia histórica.
+- Los horarios individuales son referencia de planificación y trazabilidad; no generan rankings ni decisiones laborales automáticas.
+- Reacción sigue siendo el sistema de seguimiento operativo conectado. Los desplazamientos de Asistencia son eventos explícitos y no introducen tracking continuo adicional.
+- Se añadieron validaciones smoke y estilos V2 token-only para las nuevas superficies.
+
 ## 2026-09-24 — Rediseño visual de la tarjeta real de Proveedores
 
 - Se rediseñó el `SupplierCard` existente de Business UI; no se creó una tarjeta paralela ni se modificó el modelo de datos.

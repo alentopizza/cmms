@@ -76,8 +76,9 @@ export async function POST(request:Request){
       ? haversineMeters(latitude,longitude,site.latitude,site.longitude)
       : null;
 
-    const open=await client.query<{id:string;site_id:string}>(
-      "SELECT id,site_id FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE",
+    const open=await client.query<{id:string;site_id:string;current_site_id:string}>(
+      `SELECT id,site_id::text,COALESCE(current_site_id,site_id)::text current_site_id
+       FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE`,
       [session.userId],
     );
 
@@ -89,31 +90,59 @@ export async function POST(request:Request){
         await client.query("ROLLBACK");
         return NextResponse.json({message:"Ya tienes una jornada abierta."},{status:409});
       }
+      const scheduleResult=await client.query<{
+        id:string;name:string;weekly_schedule:unknown;grace_before_minutes:number;grace_after_minutes:number;
+      }>(
+        `SELECT id,name,weekly_schedule,grace_before_minutes,grace_after_minutes
+         FROM user_attendance_schedules
+         WHERE organization_id=$1 AND user_id=$2 AND active=true
+           AND (effective_from IS NULL OR effective_from<=CURRENT_DATE)
+           AND (effective_until IS NULL OR effective_until>=CURRENT_DATE)
+         LIMIT 1`,
+        [session.organizationId,session.userId],
+      );
+      const schedule=scheduleResult.rows[0]||null;
+      const scheduleSnapshot=schedule?{
+        name:schedule.name,
+        weekly_schedule:schedule.weekly_schedule,
+        grace_before_minutes:schedule.grace_before_minutes,
+        grace_after_minutes:schedule.grace_after_minutes,
+      }:null;
       const inserted=await client.query<{id:string;check_in_at:string}>(
         `INSERT INTO attendance_shifts(
-           organization_id,user_id,site_id,status,
+           organization_id,user_id,site_id,current_site_id,status,
+           attendance_schedule_id,schedule_snapshot,
            check_in_latitude,check_in_longitude,check_in_accuracy_m,check_in_distance_m,
            check_in_verification_mode,check_in_contingency_id
-         ) VALUES($1,$2,$3,'open',$4,$5,$6,$7,'contingency',$8)
+         ) VALUES($1,$2,$3,$3,'open',$4,$5::jsonb,$6,$7,$8,$9,'contingency',$10)
          RETURNING id,check_in_at::text`,
-        [session.organizationId,session.userId,auth.site_id,latitude,longitude,safeAccuracy,distance,auth.id],
+        [session.organizationId,session.userId,auth.site_id,schedule?.id||null,JSON.stringify(scheduleSnapshot),
+         latitude,longitude,safeAccuracy,distance,auth.id],
       );
       shiftId=inserted.rows[0].id;
       at=inserted.rows[0].check_in_at;
     }else{
-      if(!open.rowCount||open.rows[0].site_id!==auth.site_id){
+      if(!open.rowCount||open.rows[0].current_site_id!==auth.site_id){
         await client.query("ROLLBACK");
-        return NextResponse.json({message:"No hay una jornada abierta válida para esta contingencia de salida."},{status:409});
+        return NextResponse.json({message:"No hay una jornada abierta en esta ubicación para la contingencia de salida."},{status:409});
+      }
+      const pendingMovement=await client.query(
+        "SELECT 1 FROM attendance_displacements WHERE attendance_shift_id=$1 AND status='in_transit'",
+        [open.rows[0].id],
+      );
+      if(pendingMovement.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"Primero debe resolverse el desplazamiento en curso antes de finalizar la jornada."},{status:409});
       }
       shiftId=open.rows[0].id;
       const closed=await client.query<{check_out_at:string}>(
         `UPDATE attendance_shifts SET
-           status='closed',check_out_at=now(),
-           check_out_latitude=$1,check_out_longitude=$2,check_out_accuracy_m=$3,check_out_distance_m=$4,
-           check_out_verification_mode='contingency',check_out_contingency_id=$5,updated_at=now()
-         WHERE id=$6
+           status='closed',check_out_at=now(),check_out_site_id=$1,current_site_id=$1,
+           check_out_latitude=$2,check_out_longitude=$3,check_out_accuracy_m=$4,check_out_distance_m=$5,
+           check_out_verification_mode='contingency',check_out_contingency_id=$6,updated_at=now()
+         WHERE id=$7
          RETURNING check_out_at::text`,
-        [latitude,longitude,safeAccuracy,distance,auth.id,shiftId],
+        [auth.site_id,latitude,longitude,safeAccuracy,distance,auth.id,shiftId],
       );
       at=closed.rows[0].check_out_at;
     }

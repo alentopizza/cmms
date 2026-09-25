@@ -571,6 +571,19 @@ Field mobile navigation now reserves four primary operational destinations (Dash
 Attendance now includes an audited exceptional path for operational failures after supervised biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without active supervised biometric enrollment.
 
 
+### Attendance scheduling and displacement phase
+
+Attendance administration now works from both **Asistencia** and the **Asistencia** tab inside a User/Technician profile. Administrators can assign a weekly individual schedule and perform the existing supervised biometric enrollment without navigating to a disconnected management surface.
+
+Platform Owner/Superadministrator can select an active customer Organization inside `/dashboard/attendance`; policy, schedule, biometric and geofence administration are then resolved for that explicit Organization on the server. Platform scope is not treated as tenant membership.
+
+Individual schedules are stored in `user_attendance_schedules` and are distinct from Company/Site business hours. An active schedule is snapshotted at check-in so later edits do not mutate historical attendance evidence.
+
+Field shifts now support explicit **desplazamientos**. The original Site remains the shift origin, while a separate current Site advances only after the technician records departure and then validates arrival inside the destination geofence. A shift may therefore begin in one Site and end in another, while preserving origin, destination, departure/arrival time and GPS evidence for every confirmed movement.
+
+Attendance displacement does not turn Attendance into a continuous tracker. Reaction remains the connected-session telemetry system for live operational coordination.
+
+
 ### Hybrid role-aware user manual
 
 The product now has one shared user-manual content source rendered in two contexts: public `/manual` for general product understanding and authenticated `/dashboard/help` for role-prioritized guidance. Users may switch to **Toda la plataforma** to understand broader product scope, while actual panel visibility/actions remain controlled by normal RBAC. Field mobile navigation exposes Manual/Ayuda from **Más**.

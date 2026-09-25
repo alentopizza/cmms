@@ -272,6 +272,25 @@ Client sequence for check-in/out is:
 This sequencing reduces unnecessary camera use while preserving server authority. Task assignment is deliberately absent from the check-in preconditions. Later `activity_execution_events` correlate work against the open shift when tasks are started/completed.
 
 
+### Per-user attendance schedule and multi-site shift model
+
+Migration `038_attendance_schedules_displacements.sql` adds a planning/evidence layer without replacing Site operating hours or Reaction tracking.
+
+- `user_attendance_schedules` stores one current weekly plan per Organization/User with seven day entries, start/end time, break minutes and grace values.
+- `/api/attendance/schedules` is the server-authoritative mutation boundary. It requires `attendance.manage`, resolves the target Organization explicitly for platform operators, validates membership and the full weekly schedule, and records an audit event.
+- At check-in, `/api/attendance/clock` snapshots the active schedule into `attendance_shifts.schedule_snapshot` and links `attendance_schedule_id`. Historical shifts therefore remain interpretable after a later schedule edit.
+- `attendance_shifts.site_id` remains the immutable check-in/origin Site. `current_site_id` represents the last Site whose arrival was confirmed and `check_out_site_id` records the actual closing Site.
+- `attendance_displacements` stores explicit movement evidence between Sites. A movement starts only after origin GPS/geofence validation and changes `current_site_id` only after destination arrival passes the same server-side location boundary.
+- Only one displacement may be `in_transit` for an open shift. Standard check-out is rejected until that movement is completed.
+- Facial verification remains required only by the existing check-in/check-out policy. Displacement departure/arrival validates the authenticated user's authorized Site scope and GPS/geofence evidence; it does not create a second biometric identity event.
+
+`components/AttendanceScheduleEditor.tsx` is shared by the Attendance workspace and the User profile. `AttendanceCapture.tsx` owns the field workflow for start → optional displacement(s) → end, while the APIs remain authoritative.
+
+For Platform Owner/Superadministrator, `/dashboard/attendance` exposes an explicit Organization selector. That selector scopes policy, schedule, supervised enrollment and geofence management; it does not convert the platform session into a tenant session.
+
+Attendance displacement is deliberately not continuous tracking. `technician_tracking_sessions` and Reaction location samples continue to own connected operational telemetry.
+
+
 ### Attendance policy defaults
 
 `lib/attendance-policy.ts` is the shared source for fallback attendance policy behavior and role evaluation. Missing policy rows resolve to an enabled default instead of silently disabling the feature. Migration `017_attendance_policy_defaults.sql` backfills only organizations with no policy row, preserving explicit tenant choices. Organization creation also inserts the default policy transactionally.

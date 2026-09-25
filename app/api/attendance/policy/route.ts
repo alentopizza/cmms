@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { resolveAttendanceOrganization } from "@/lib/attendance-scope";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 
@@ -7,10 +8,12 @@ const ROLE_SET = new Set(["admin","manager","technician","provider","external"])
 
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session || !session.organizationId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
   if (!can(session, "attendance.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   const form = await request.formData();
+  const organizationId=resolveAttendanceOrganization(session,form.get("organization_id"));
+  if(!organizationId)return new NextResponse("Forbidden",{status:403});
   const enabled = form.get("enabled") === "true";
   const requireFace = form.get("require_face") === "true";
   const requireGeolocation = form.get("require_geolocation") === "true";
@@ -20,7 +23,7 @@ export async function POST(request: Request) {
   const roles = form.getAll("enabled_roles").map(String).filter(role => ROLE_SET.has(role));
 
   if (!roles.length) {
-    return NextResponse.redirect(new URL("/dashboard/attendance?error=roles", request.url), 303);
+    return NextResponse.redirect(new URL(`/dashboard/attendance?error=roles&organization=${organizationId}`, request.url), 303);
   }
 
   await query(
@@ -38,8 +41,8 @@ export async function POST(request: Request) {
                    liveness_threshold=EXCLUDED.liveness_threshold,
                    updated_by=EXCLUDED.updated_by,
                    updated_at=now()`,
-    [session.organizationId,enabled,roles,requireFace,requireGeolocation,maxAccuracy,faceThreshold,livenessThreshold,session.userId],
+    [organizationId,enabled,roles,requireFace,requireGeolocation,maxAccuracy,faceThreshold,livenessThreshold,session.userId||null],
   );
 
-  return NextResponse.redirect(new URL("/dashboard/attendance?saved=policy", request.url), 303);
+  return NextResponse.redirect(new URL(`/dashboard/attendance?saved=policy&organization=${organizationId}`, request.url), 303);
 }

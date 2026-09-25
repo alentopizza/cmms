@@ -61,6 +61,9 @@ This roadmap is directional and should be updated as priorities change.
 - role-aware mobile navigation foundation: drawer for broad roles and bottom navigation for field roles
 - role-aware dashboard filters and executive exports in Excel (.xlsx), CSV and branded PDF
 - optional field attendance with 1:1 facial verification, geofencing and execution correlation
+- per-user weekly attendance schedules with historical shift snapshotting
+- audited intra-shift Site displacements so a field day can start and finish at different authorized Sites
+- attendance administration from both User profile and Attendance, including explicit customer-Organization targeting for platform operators
 - Reaction live-operations foundation with connected-technician tracking, recent routes, Company/Site markers, search, scoped filters and pending-activity alerts
 - flexible seven-day Company/Site operating schedules consumed by Reaction open/closed state
 - country-aware Company/Site/User phone capture with call and WhatsApp shortcuts

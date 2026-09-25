@@ -18,10 +18,30 @@ type Site = {
   geofenceConfigured:boolean;
 };
 
+type OpenShift={
+  id:string;
+  site_id:string;
+  site_name:string;
+  current_site_id:string;
+  current_site_name:string;
+  check_in_at:string;
+};
+
+type OpenDisplacement={
+  id:string;
+  from_site_id:string;
+  to_site_id:string;
+  from_site_name:string;
+  to_site_name:string;
+  departed_at:string;
+  status:"in_transit";
+};
+
 type Props = {
   sites: Site[];
   enrolled: boolean;
-  openShift: { id:string; site_id:string; site_name:string; check_in_at:string } | null;
+  openShift: OpenShift | null;
+  openDisplacement: OpenDisplacement | null;
   requireFace: boolean;
   requireGeolocation: boolean;
   maxLocationAccuracy: number;
@@ -35,7 +55,7 @@ type GpsFix = {
   checkedAt:number;
 };
 
-type Phase = "idle"|"gps"|"face"|"saving";
+type Phase = "idle"|"gps"|"face"|"saving"|"movement";
 
 function haversineMeters(lat1:number,lon1:number,lat2:number,lon2:number) {
   const r=6371000;
@@ -61,11 +81,14 @@ function rawPosition() {
 }
 
 // ── Field presence state machine: GPS → live face → shift persistence ───────
+// Displacements are explicit shift events. They update the operational current
+// site only after GPS-confirmed arrival; the original check-in site is preserved.
 
 export default function AttendanceCapture({
   sites,
   enrolled:initialEnrolled,
   openShift:initialOpenShift,
+  openDisplacement:initialOpenDisplacement,
   requireFace,
   requireGeolocation,
   maxLocationAccuracy,
@@ -81,13 +104,19 @@ export default function AttendanceCapture({
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
   const enrolled=initialEnrolled;
-  const [openShift,setOpenShift]=useState(initialOpenShift);
-  const [siteId,setSiteId]=useState(initialOpenShift?.site_id || sites[0]?.id || "");
+  const [openShift,setOpenShift]=useState<OpenShift|null>(initialOpenShift);
+  const [openDisplacement,setOpenDisplacement]=useState<OpenDisplacement|null>(initialOpenDisplacement);
+  const [siteId,setSiteId]=useState(initialOpenShift?.current_site_id || initialOpenShift?.site_id || sites[0]?.id || "");
+  const [destinationSiteId,setDestinationSiteId]=useState("");
   const [gps,setGps]=useState<GpsFix|null>(null);
   const [geoPermission,setGeoPermission]=useState<"unknown"|"prompt"|"granted"|"denied">("unknown");
 
   const selectedSite=useMemo(()=>sites.find(site=>site.id===siteId)||null,[sites,siteId]);
   const configuredSites=useMemo(()=>sites.filter(site=>site.geofenceConfigured&&site.latitude!==null&&site.longitude!==null),[sites]);
+  const displacementDestinations=useMemo(
+    ()=>sites.filter(site=>site.id!==(openShift?.current_site_id||openShift?.site_id)),
+    [sites,openShift],
+  );
   const distance=useMemo(()=>{
     if(!gps||!selectedSite||selectedSite.latitude===null||selectedSite.longitude===null)return null;
     return haversineMeters(gps.latitude,gps.longitude,selectedSite.latitude,selectedSite.longitude);
@@ -153,22 +182,20 @@ export default function AttendanceCapture({
     });
   }
 
-  function chooseNearestSite(fix:GpsFix,preferredId:string){
+  function chooseSite(fix:GpsFix,preferredId:string,forcePreferred=false){
     const ranked=configuredSites.map(site=>({
       site,
       distance:haversineMeters(fix.latitude,fix.longitude,Number(site.latitude),Number(site.longitude)),
     })).sort((a,b)=>a.distance-b.distance);
-    const preferred=ranked.find(item=>item.site.id===preferredId);
+    const preferred=ranked.find(item=>item.site.id===preferredId)||null;
     const nearest=ranked[0]||null;
-    if(openShift){
-      return ranked.find(item=>item.site.id===openShift.site_id)||preferred||nearest;
-    }
+    if(forcePreferred)return preferred;
     if(preferred&&preferred.distance<=preferred.site.geofenceRadius)return preferred;
     if(nearest&&nearest.distance<=nearest.site.geofenceRadius)return nearest;
     return preferred||nearest;
   }
 
-  async function acquireLocation(preferredId=siteId){
+  async function acquireLocation(preferredId=siteId,forcePreferred=false){
     setPhase("gps");
     setError("");
     const result=await rawPosition();
@@ -181,9 +208,22 @@ export default function AttendanceCapture({
     setGps(fix);
     setGeoPermission("granted");
 
-    const assessment=chooseNearestSite(fix,preferredId);
-    if(assessment&&!openShift)setSiteId(assessment.site.id);
+    const assessment=chooseSite(fix,preferredId,forcePreferred);
+    if(assessment&&!openShift&&!forcePreferred)setSiteId(assessment.site.id);
     return{fix,assessment};
+  }
+
+  async function verifiedFix(targetSiteId:string,forcePreferred=true){
+    if(!requireGeolocation)return {fix:null,assessment:null};
+    const location=await acquireLocation(targetSiteId,forcePreferred);
+    if(!location.assessment)throw new Error("La sede seleccionada no tiene una geocerca utilizable dentro de tu alcance.");
+    if(location.fix.accuracy>maxLocationAccuracy){
+      throw new Error(`La precisión GPS actual es de ${Math.round(location.fix.accuracy)} m. Se requieren ${maxLocationAccuracy} m o menos.`);
+    }
+    if(location.assessment.distance>location.assessment.site.geofenceRadius){
+      throw new Error(`Estás a ${Math.round(location.assessment.distance)} m de ${location.assessment.site.name}. El radio permitido es ${location.assessment.site.geofenceRadius} m.`);
+    }
+    return location;
   }
 
   async function verifyLocation(){
@@ -193,7 +233,7 @@ export default function AttendanceCapture({
     }
     setBusy(true);setError("");setMessage("");
     try{
-      const{fix,assessment}=await acquireLocation();
+      const{fix,assessment}=await acquireLocation(siteId,false);
       if(!assessment)throw new Error("No hay una sede con geocerca configurada dentro de tu alcance.");
       if(fix.accuracy>maxLocationAccuracy){
         throw new Error(`La precisión GPS actual es de ${Math.round(fix.accuracy)} m. Se requieren ${maxLocationAccuracy} m o menos.`);
@@ -203,39 +243,40 @@ export default function AttendanceCapture({
       }
       setMessage(`Ubicación validada en ${assessment.site.name}. Ya puedes continuar con la verificación facial.`);
     }catch(cause){
-      const geoCode=typeof cause==="object"&&cause!==null&&"code" in cause?Number((cause as{code?:unknown}).code):null;
-      if(geoCode===1){
-        setGeoPermission("denied");
-        setError("La ubicación está bloqueada. Activa el permiso de ubicación precisa del navegador para iniciar actividades.");
-      }else if(geoCode===2||geoCode===3){
-        setError("No fue posible obtener una ubicación precisa. Activa el GPS y vuelve a intentarlo.");
-      }else{
-        setError(cause instanceof Error?cause.message:"No fue posible validar tu ubicación.");
-      }
+      handleLocationError(cause);
     }finally{
       setPhase("idle");setBusy(false);
     }
   }
 
+  function handleLocationError(cause:unknown){
+    const geoCode=typeof cause==="object"&&cause!==null&&"code" in cause?Number((cause as{code?:unknown}).code):null;
+    if(geoCode===1){
+      setGeoPermission("denied");
+      setError("La ubicación está bloqueada. Activa el permiso de ubicación precisa del navegador para continuar.");
+    }else if(geoCode===2||geoCode===3){
+      setError("No fue posible obtener una ubicación precisa. Activa el GPS y vuelve a intentarlo.");
+    }else{
+      setError(cause instanceof Error?cause.message:"No fue posible validar tu ubicación.");
+    }
+  }
+
   async function clock(action:"check_in"|"check_out"){
-    if(!siteId&&!requireGeolocation){setError("Selecciona una sede.");return;}
+    const currentSiteId=openShift?.current_site_id||openShift?.site_id||siteId;
+    const requestedSiteId=action==="check_out"?currentSiteId:siteId;
+    if(!requestedSiteId){setError("Selecciona una sede.");return;}
     if(requireFace&&!enrolled){setError("Completa primero tu enrolamiento facial presencial.");return;}
+    if(action==="check_out"&&openDisplacement){setError("Registra primero la llegada del desplazamiento en curso.");return;}
 
     setBusy(true);setError("");setMessage("");
-    let targetSiteId=siteId;
+    let targetSiteId=requestedSiteId;
     let fix:GpsFix|null=null;
     try{
       if(requireGeolocation){
-        const location=await acquireLocation(siteId);
-        if(!location.assessment)throw new Error("No hay una sede con geocerca configurada dentro de tu alcance.");
+        const location=await verifiedFix(requestedSiteId,action==="check_out");
+        if(!location.assessment||!location.fix)throw new Error("No fue posible validar la sede.");
         targetSiteId=location.assessment.site.id;
         fix=location.fix;
-        if(fix.accuracy>maxLocationAccuracy){
-          throw new Error(`La precisión GPS actual es de ${Math.round(fix.accuracy)} m. Se requieren ${maxLocationAccuracy} m o menos.`);
-        }
-        if(location.assessment.distance>location.assessment.site.geofenceRadius){
-          throw new Error(`Estás fuera de rango: ${Math.round(location.assessment.distance)} m del punto registrado; se permiten ${location.assessment.site.geofenceRadius} m.`);
-        }
       }
 
       const targetSite=sites.find(site=>site.id===targetSiteId);
@@ -265,27 +306,67 @@ export default function AttendanceCapture({
 
       if(action==="check_in"){
         setSiteId(targetSiteId);
-        const nextShift={id:data.shiftId,site_id:targetSiteId,site_name:data.site,check_in_at:data.at};
+        const nextShift:OpenShift={
+          id:data.shiftId,site_id:targetSiteId,site_name:data.site,
+          current_site_id:data.currentSiteId||targetSiteId,current_site_name:data.currentSite||data.site,check_in_at:data.at,
+        };
         setOpenShift(nextShift);
         window.dispatchEvent(new CustomEvent("attendance:shift-changed",{detail:{action:"check_in",shift:nextShift}}));
-        setMessage("Actividades iniciadas. Tu presencia en sitio quedó validada; puedes permanecer disponible aunque aún no tengas tareas asignadas.");
+        setMessage("Jornada iniciada. Tu presencia en sitio quedó validada y los desplazamientos posteriores podrán registrarse entre sedes.");
       }else{
         setOpenShift(null);
+        setOpenDisplacement(null);
+        setDestinationSiteId("");
         window.dispatchEvent(new CustomEvent("attendance:shift-changed",{detail:{action:"check_out",shift:null}}));
-        setMessage("Actividades finalizadas y salida validada correctamente.");
+        setMessage("Jornada finalizada y salida validada correctamente.");
       }
     }catch(cause){
-      const geoCode=typeof cause==="object"&&cause!==null&&"code" in cause?Number((cause as{code?:unknown}).code):null;
-      if(geoCode===1){
-        setGeoPermission("denied");
-        setError("La ubicación está bloqueada. Activa el permiso de ubicación precisa para continuar.");
-      }else if(geoCode===2||geoCode===3){
-        setError("No fue posible obtener tu ubicación. Activa el GPS y autoriza la ubicación precisa.");
-      }else{
-        setError(cause instanceof Error?cause.message:"No fue posible validar tu presencia.");
-      }
+      handleLocationError(cause);
     }finally{
       stopCamera();
+      setPhase("idle");setBusy(false);
+    }
+  }
+
+  async function movement(action:"start"|"arrive"){
+    if(!openShift){setError("Debes iniciar una jornada antes de registrar un desplazamiento.");return;}
+    const targetSiteId=action==="start"?destinationSiteId:openDisplacement?.to_site_id||"";
+    const originSiteId=openShift.current_site_id||openShift.site_id;
+    if(action==="start"&&!targetSiteId){setError("Selecciona la sede de destino.");return;}
+
+    setBusy(true);setPhase("movement");setError("");setMessage("");
+    try{
+      const verificationSiteId=action==="start"?originSiteId:targetSiteId;
+      const location=requireGeolocation?await verifiedFix(verificationSiteId,true):{fix:null,assessment:null};
+      const response=await fetch("/api/attendance/displacements",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({
+          action,
+          destinationSiteId:action==="start"?targetSiteId:undefined,
+          latitude:location.fix?.latitude,
+          longitude:location.fix?.longitude,
+          accuracy:location.fix?.accuracy,
+        }),
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.message||"No fue posible registrar el desplazamiento.");
+
+      if(action==="start"){
+        setOpenDisplacement(data.displacement);
+        setMessage(`Desplazamiento iniciado hacia ${data.displacement.to_site_name}. Registra la llegada cuando estés dentro de la geocerca de destino.`);
+      }else{
+        const currentId=data.currentSite.id;
+        setOpenShift(previous=>previous?{...previous,current_site_id:currentId,current_site_name:data.currentSite.name}:previous);
+        setSiteId(currentId);
+        setOpenDisplacement(null);
+        setDestinationSiteId("");
+        setGps(null);
+        setMessage(`Llegada registrada en ${data.currentSite.name}. Esta sede es ahora tu ubicación operativa y puedes finalizar aquí la jornada.`);
+      }
+    }catch(cause){
+      handleLocationError(cause);
+    }finally{
       setPhase("idle");setBusy(false);
     }
   }
@@ -294,6 +375,7 @@ export default function AttendanceCapture({
     ? phase==="gps"?"Validando ubicación…"
       : phase==="face"?"Verificando rostro en vivo…"
       : phase==="saving"?"Confirmando presencia…"
+      : phase==="movement"?"Registrando desplazamiento…"
       :"Validando…"
     : openShift?"Marcar salida / Finalizar jornada":"Iniciar actividades";
 
@@ -302,12 +384,14 @@ export default function AttendanceCapture({
       <div className="attendance-presence-status-icon" aria-hidden="true"><UiIcon name={openShift?"check":"attendance"} size={22}/></div>
       <div>
         <span className="eyebrow">Estado de presencia</span>
-        <h2>{openShift?"En sitio y disponible":"Listo para iniciar en sitio"}</h2>
+        <h2>{openShift?(openDisplacement?"En desplazamiento":"En sitio y disponible"):"Listo para iniciar en sitio"}</h2>
         <p>{openShift
-          ? `Presencia validada en ${openShift.site_name}. La jornada no depende de tener actividades asignadas.`
+          ? openDisplacement
+            ? `Trayecto activo: ${openDisplacement.from_site_name} → ${openDisplacement.to_site_name}.`
+            : `Ubicación operativa actual: ${openShift.current_site_name}. La jornada inició en ${openShift.site_name}.`
           : "Puedes iniciar tu presencia biométrica aunque todavía no tengas órdenes o actividades asignadas."}</p>
       </div>
-      <Badge variant={openShift?"success":"neutral"} icon="attendance">{openShift?"Jornada abierta":"Sin jornada"}</Badge>
+      <Badge variant={openDisplacement?"info":openShift?"success":"neutral"} icon="attendance">{openDisplacement?"En tránsito":openShift?"Jornada abierta":"Sin jornada"}</Badge>
     </section>
 
     <div className="attendance-presence-grid">
@@ -344,7 +428,7 @@ export default function AttendanceCapture({
         {!enrolled&&requireFace ? <>
           <span className="eyebrow">Biometría pendiente</span>
           <h2>Requiere enrolamiento supervisado</h2>
-          <p>Tu identidad facial todavía no está verificada. Un Administrador o Manager debe enrolarte presencialmente desde este módulo antes de que puedas iniciar actividades.</p>
+          <p>Tu identidad facial todavía no está verificada. Un Administrador o Manager debe enrolarte presencialmente desde este módulo o desde tu ficha de Usuario.</p>
           <div className="attendance-no-assignment-note">
             <span aria-hidden="true"><UiIcon name="info" size={16}/></span>
             <p><strong>La foto de perfil no sustituye este paso.</strong><small>El supervisor confirma tu identidad y la cámara genera una plantilla facial cifrada con prueba de vida.</small></p>
@@ -352,14 +436,14 @@ export default function AttendanceCapture({
           <Button className="attendance-start-button" variant="secondary" disabled iconLeft="attendance">Enrolamiento requerido</Button>
         </> : <>
           <span className="eyebrow">{openShift?"Cierre de jornada":"Inicio de jornada"}</span>
-          <h2>{openShift?"Jornada abierta · debes marcar salida al terminar":"Verifica tu presencia"}</h2>
+          <h2>{openShift?"Jornada abierta · finaliza desde tu ubicación operativa actual":"Verifica tu presencia"}</h2>
 
           {openShift
-            ? <div className="attendance-open-shift"><span>Inicio validado</span><strong>{new Date(openShift.check_in_at).toLocaleString("es-CO")}</strong><small>{openShift.site_name} · disponible para recibir actividades</small></div>
+            ? <div className="attendance-open-shift"><span>Inicio validado</span><strong>{new Date(openShift.check_in_at).toLocaleString("es-CO")}</strong><small>{openShift.site_name} · actual: {openShift.current_site_name}</small></div>
             : <div className="attendance-no-assignment-note"><span aria-hidden="true"><UiIcon name="info" size={16}/></span><p><strong>No necesitas una actividad asignada para iniciar.</strong><small>El registro confirma que estás presencialmente en la sede. Las actividades que recibas después quedarán relacionadas con esta jornada.</small></p></div>}
 
           <div className="field">
-            <label>Sede *</label>
+            <label>{openShift?"Sede operativa actual":"Sede *"}</label>
             <select value={siteId} onChange={event=>{setSiteId(event.target.value);setGps(null);}} disabled={Boolean(openShift)}>
               <option value="">Selecciona sede</option>
               {sites.map(site=><option key={site.id} value={site.id}>{site.name}{site.city?" · "+site.city:""}{requireGeolocation&&!site.geofenceConfigured?" · Sin geocerca":""}</option>)}
@@ -369,19 +453,38 @@ export default function AttendanceCapture({
           <div className="attendance-validation-steps">
             <div className={gps&&accuracyOk&&insideRange?"done":phase==="gps"?"current":""}><span>1</span><p><strong>Ubicación</strong><small>{gps?insideRange&&accuracyOk?"Dentro de geocerca":"Requiere revisión":"GPS preciso"}</small></p></div>
             <div className={enrolled?"done":phase==="face"?"current":""}><span>2</span><p><strong>Rostro</strong><small>{enrolled?"Biometría enrolada":"Cámara presencial"}</small></p></div>
-            <div className={openShift?"done":phase==="saving"?"current":""}><span>3</span><p><strong>Presencia</strong><small>{openShift?"En sitio":"Abrir jornada"}</small></p></div>
+            <div className={openShift?"done":phase==="saving"?"current":""}><span>3</span><p><strong>Presencia</strong><small>{openShift?"En jornada":"Abrir jornada"}</small></p></div>
           </div>
 
           {requireGeolocation&&!openShift&&<Button className="attendance-location-check" variant="secondary" disabled={busy} onClick={verifyLocation} iconLeft="location">Verificar ubicación</Button>}
-          <Button className={"attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} variant={openShift?"danger":"primary"} loading={busy} disabled={!busy&&(!siteId&&configuredSites.length===0)} onClick={()=>clock(openShift?"check_out":"check_in")} iconLeft="attendance">{activityLabel}</Button>
+          <Button className={"attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} variant={openShift?"danger":"primary"} loading={busy} disabled={!busy&&((!siteId&&configuredSites.length===0)||Boolean(openDisplacement))} onClick={()=>clock(openShift?"check_out":"check_in")} iconLeft="attendance">{activityLabel}</Button>
 
           {requireFace&&enrolled&&!openShift&&<small className="attendance-biometric-note">Tu biometría fue verificada por un supervisor. La revocación o reenrolamiento también requiere supervisión.</small>}
         </>}
-
         {message&&<Alert variant="success" title="Validación completada">{message}</Alert>}
-        {error&&<Alert variant="danger" title="No fue posible validar la presencia">{error}</Alert>}
+        {error&&<Alert variant="danger" title="No fue posible completar la operación">{error}</Alert>}
       </section>
     </div>
+
+    {openShift&&<section className="attendance-displacement-card">
+      <div className="section-heading">
+        <div><span className="eyebrow">Desplazamientos</span><h3>Cambio de ubicación durante la jornada</h3><p className="muted">Registra la salida de una sede y confirma la llegada a la siguiente. El inicio original de la jornada no se modifica.</p></div>
+        <Badge variant={openDisplacement?"info":"neutral"} icon="map">{openDisplacement?"En tránsito":"Sin trayecto activo"}</Badge>
+      </div>
+      {openDisplacement
+        ? <div className="attendance-displacement-active">
+            <div><span>Origen</span><strong>{openDisplacement.from_site_name}</strong></div>
+            <span className="attendance-displacement-arrow" aria-hidden="true"><UiIcon name="map" size={20}/></span>
+            <div><span>Destino</span><strong>{openDisplacement.to_site_name}</strong></div>
+            <small>Salida: {new Date(openDisplacement.departed_at).toLocaleString("es-CO")}</small>
+            <Button iconLeft="location" loading={busy} onClick={()=>movement("arrive")}>Registrar llegada</Button>
+          </div>
+        : <div className="attendance-displacement-start">
+            <div className="field"><label>Destino *</label><select value={destinationSiteId} onChange={event=>setDestinationSiteId(event.target.value)}><option value="">Selecciona sede de destino</option>{displacementDestinations.map(site=><option value={site.id} key={site.id}>{site.name}{site.city?" · "+site.city:""}</option>)}</select></div>
+            <div className="attendance-displacement-origin"><span>Origen actual</span><strong>{openShift.current_site_name}</strong><small>Se validará GPS antes de iniciar el trayecto.</small></div>
+            <Button variant="secondary" iconLeft="map" loading={busy} disabled={!destinationSiteId} onClick={()=>movement("start")}>Iniciar desplazamiento</Button>
+          </div>}
+    </section>}
 
     <section className={"attendance-camera-card attendance-presence-camera "+(cameraReady||phase==="face"?"visible":"")}>
       <div className="attendance-camera-stage">

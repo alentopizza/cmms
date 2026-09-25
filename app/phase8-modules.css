@@ -251,6 +251,46 @@
 :is(.phase8-attendance,.phase8-users) .attendance-schedule-row small{color:var(--color-text-muted);font-size:9px}
 :is(.phase8-attendance,.phase8-users) .attendance-schedule-row-actions{display:flex;gap:var(--space-2);flex-wrap:wrap}
 
+/* Attendance Phase 5 — scheduled vs actual operational reporting ----------- */
+.phase8-attendance .attendance-operational-report{
+  display:grid;gap:var(--space-4);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-report-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4)
+}
+.phase8-attendance .attendance-report-head>div:first-child{display:grid;gap:3px;min-width:0}
+.phase8-attendance .attendance-report-head h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h3)}
+.phase8-attendance .attendance-report-head p{margin:0;color:var(--color-text-muted);max-width:840px}
+.phase8-attendance .attendance-report-filters{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:var(--space-3);align-items:end;
+  padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);
+  background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-report-filter-actions{display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap}
+.phase8-attendance .attendance-report-loading{display:flex;justify-content:center;padding:var(--space-6)}
+.phase8-attendance .attendance-report-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.phase8-attendance .attendance-report-context-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)
+}
+.phase8-attendance .attendance-report-context-grid>article{
+  display:grid;gap:4px;padding:var(--space-3);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-report-context-grid span,
+.phase8-attendance .attendance-report-context-grid small{color:var(--color-text-muted)}
+.phase8-attendance .attendance-report-context-grid span{font-size:9px;font-weight:var(--font-weight-semibold)}
+.phase8-attendance .attendance-report-context-grid strong{color:var(--color-text-primary);font-size:var(--font-size-h3)}
+.phase8-attendance .attendance-report-table{min-width:1120px}
+.phase8-attendance .attendance-report-people-table{min-width:1180px}
+.phase8-attendance .attendance-report-daily-table{min-width:1320px}
+.phase8-attendance .attendance-report-person-cell{display:grid;gap:2px}
+.phase8-attendance .attendance-report-person-cell small{color:var(--color-text-muted)}
+.phase8-attendance .attendance-report-evidence-cell{display:flex;gap:var(--space-1);align-items:center;flex-wrap:wrap}
+.phase8-attendance .attendance-report-export{flex:0 0 auto}
+.phase8-attendance .attendance-report-daily{display:grid;gap:var(--space-3)}
+
 /* Attendance Phase 4 — multi-Site jornada displacement -------------------- */
 .phase8-attendance .attendance-movement-card{
   display:grid;gap:var(--space-4);padding:var(--space-4);
@@ -429,6 +469,10 @@
   :is(.phase8-attendance,.phase8-users) .attendance-audit-record-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .phase8-attendance .attendance-movement-form{grid-template-columns:1fr}
   .phase8-attendance .attendance-movement-evidence{grid-template-columns:1fr}
+  .phase8-attendance .attendance-report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase8-attendance .attendance-report-filter-actions{grid-column:1/-1}
+  .phase8-attendance .attendance-report-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase8-attendance .attendance-report-context-grid{grid-template-columns:1fr}
   .phase8-users .user-ops-kpis,.phase8-users .entity-stat-grid.ds-stat-tiles,.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .phase8-attendance .attendance-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -457,6 +501,11 @@
   :is(.phase8-attendance,.phase8-users) .attendance-audit-biometric-state dl>div{grid-template-columns:1fr}
   .phase8-attendance .attendance-movement-status{grid-template-columns:auto minmax(0,1fr)}
   .phase8-attendance .attendance-movement-status>.ds-badge{grid-column:1/-1;justify-self:start}
+  .phase8-attendance .attendance-report-head{align-items:stretch;flex-direction:column}
+  .phase8-attendance .attendance-report-export{align-self:flex-start}
+  .phase8-attendance .attendance-report-filters{grid-template-columns:1fr}
+  .phase8-attendance .attendance-report-filter-actions{grid-column:auto;display:grid;grid-template-columns:1fr}
+  .phase8-attendance .attendance-report-kpis{grid-template-columns:1fr}
   .phase8-attendance .attendance-presence-status>.ds-badge{grid-column:1/-1;justify-self:start}
   .phase8-crews .ds-crew-leader{grid-template-columns:1fr}
   .phase8-crews .crew-leader-actions{display:flex;justify-content:flex-start}

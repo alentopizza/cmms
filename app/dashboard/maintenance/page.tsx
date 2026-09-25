@@ -26,6 +26,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   if (!can(session, "maintenance.read")) redirect("/dashboard");
   const feedback=await searchParams;
   const canWrite=can(session,"maintenance.write");
+  const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
   const creationGate=await getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
 
@@ -152,8 +153,8 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
         },cells:{
           plan:<EntityIdentityCell
-            imageSrc={p.asset_has_image?"/api/assets/"+p.asset_id+"/image":null}
-            imageAlt={p.asset_has_image?"Imagen de "+p.asset:""}
+            imageSrc={canReadAssets&&p.asset_has_image?"/api/assets/"+p.asset_id+"/image":null}
+            imageAlt={canReadAssets&&p.asset_has_image?"Imagen de "+p.asset:""}
             icon="maintenance"
             variant="thumbnail"
             title={p.name}

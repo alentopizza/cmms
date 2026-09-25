@@ -4,7 +4,7 @@
 
 - El modo **Listado** deja de representar Empresas, Proveedores, Usuarios, Activos, Inventario y Leads como tarjetas de una sola columna; ahora utiliza `StaticDataTable` sobre la misma colección ya cargada.
 - Se añadió `EntityIdentityCell` como primitive compartido: miniatura compacta de 40–44 px, nombre principal jerárquico e información secundaria. Soporta logo, avatar, thumbnail e icono/placeholder sin generar imágenes.
-- Empresas usa exclusivamente el logo real existente o iniciales; Proveedores usa su logo; Usuarios su avatar; Activos e Inventario su imagen principal; Leads usa iniciales porque el modelo actual no expone una imagen relacionada.
+- Empresas usa exclusivamente el logo real existente o iniciales; Proveedores usa su logo; Usuarios su avatar; Activos e Inventario su imagen principal; Leads usa iniciales porque el modelo actual no expone una imagen relacionada. Leads reutiliza además `source` y `updated_at` ya existentes para mostrar Origen y Última actividad; no se inventó un Responsable porque el esquema no lo contiene.
 - Cuadrillas conserva su tabla existente, pero la primera columna ahora usa la foto/avatar del líder como identidad principal; la columna Líder mantiene nombre y rol sin duplicar la foto.
 - Ubicaciones conserva su estructura aprobada y cambia únicamente **Ver ubicación** a acción rápida compacta.
 - Órdenes y Rutinas amplían sus SELECT existentes con `asset_id` y `asset_has_image`; usan la imagen real del activo/equipo cuando existe **y el rol tiene `assets.read`**, y el icono de Orden/Rutina como fallback en los demás casos. No se creó una consulta adicional.

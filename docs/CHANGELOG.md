@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-25 — Rediseño UX de Asistencia en cinco pasos
+
+- La administración de Asistencia se reorganizó en un flujo interno de **Configuración, Sedes, Enrolamiento, Política y Resumen** sin crear cinco páginas ni una implementación paralela.
+- Se añadió `Stepper` como primitive reusable del UI Kit con estados activo/completado/pendiente, navegación accesible y scroll horizontal responsive.
+- `AttendanceSetupWorkspace` muestra un único paso a la vez, Anterior/Siguiente, progreso circular y estado sincronizado de los cinco pasos.
+- Configuración resume empresa, estado, parámetros y roles reales en modo lectura; la edición permanece exclusivamente en Política.
+- Sedes reutiliza las geocercas existentes y enlaza a la ficha canónica de cada ubicación.
+- Enrolamiento conserva `SupervisedBiometricEnrollment`, cámara, GPS, consentimiento y endpoints existentes.
+- Política conserva el mismo formulario y endpoint; únicamente se preserva el paso de retorno tras guardar o validar errores.
+- Resumen deriva su estado de datos actuales y no introduce una segunda mutación de “confirmación”.
+- Presencia diaria, desplazamientos, expediente, contingencias y reporte Fase 5 pasan a la vista secundaria **Operación y reportes**, evitando que queden debajo de toda la configuración.
+- Se corrigieron deep links desde Usuarios y Reportes para abrir directamente Enrolamiento, Expediente o Reporte en la vista correspondiente.
+- No se modificaron modelos de base de datos, RBAC, biometría, GPS/geocercas, jornadas, contingencias ni cálculos del reporte.
+- Se añadió `scripts/attendance-setup-ux-smoke.mjs` y ejecución obligatoria en CI.
+
 ## 2026-09-25 — Asistencia operativa Fase 5: reporte programado vs. real
 
 - Se reemplazó el antiguo bloque fijo de estadísticas de 30 días por un reporte operativo filtrable dentro de Asistencia.
@@ -11,7 +26,7 @@
 - Supervisores limitados por sedes no reciben trayectos parciales: una jornada multi-sede solo aparece si origen, sede final y todos los segmentos están dentro de su alcance.
 - `GET /api/attendance/report` genera JSON, XLSX, CSV y PDF a partir del mismo dataset y filtros autorizados.
 - Excel incluye Resumen, Personas, Detalle diario y Metadatos; CSV conserva el detalle diario completo y PDF ofrece una vista ejecutiva con marca autorizada.
-- El Centro de Reportes enlaza directamente a `/dashboard/attendance#attendance-report` y ya no duplica lógica SQL de Asistencia.
+- El Centro de Reportes enlaza directamente a `/dashboard/attendance?view=operation#attendance-report` y ya no duplica lógica SQL de Asistencia.
 - Se añadió `scripts/attendance-reporting-smoke.mjs` y su ejecución en CI.
 
 ## 2026-09-25 — Asistencia operativa Fase 4: desplazamientos multi-sede

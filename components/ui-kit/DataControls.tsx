@@ -149,7 +149,7 @@ export function CollectionView({
   label="Vista de la colección",
   defaultMode="grid",
   className="",
-  toolbarTargetId="context-header-tools",
+  toolbarTargetId="module-view-mode-tools",
 }:{
   grid:ReactNode;
   list?:ReactNode;
@@ -163,11 +163,23 @@ export function CollectionView({
   const [toolbarHost,setToolbarHost]=useState<HTMLElement|null>(null);
 
   useEffect(()=>{
-    setToolbarHost(document.getElementById(toolbarTargetId));
+    let observer:MutationObserver|null=null;
+    const resolveToolbarHost=()=>{
+      const host=document.getElementById(toolbarTargetId);
+      if(!host)return false;
+      setToolbarHost(host);
+      observer?.disconnect();
+      return true;
+    };
+    if(!resolveToolbarHost()){
+      observer=new MutationObserver(resolveToolbarHost);
+      observer.observe(document.body,{childList:true,subtree:true});
+    }
     try{
       const saved=window.localStorage.getItem("cmms:view-mode:"+storageKey);
       if(saved==="grid"||saved==="list")setMode(saved);
     }catch{}
+    return()=>observer?.disconnect();
   },[storageKey,toolbarTargetId]);
 
   useEffect(()=>{

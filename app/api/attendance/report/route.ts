@@ -79,8 +79,7 @@ function csvReport(report:AttendanceOperationalReport){
     row.completedInShift,row.completedOutsideShift,row.contingencyRequests,row.contingencyUsed,row.contingencyMarkings,
     row.reactionSamples,row.openNow?"Sí":"No",
   ]);
-  return "﻿"+[headers,...rows].map(row=>row.map(csvCell).join(",")).join("
-");
+  return "\uFEFF"+[headers,...rows].map(row=>row.map(csvCell).join(",")).join("\r\n");
 }
 
 function validHex(value:string|null|undefined,fallback:string){

@@ -242,7 +242,7 @@ export async function POST(request:Request){
          organization_id,user_id,site_id,policy_version_id,status,
          encrypted_embedding,encrypted_preview,preview_mime,preview_expires_at,
          consented_at,latitude,longitude,accuracy_m,distance_m,liveness_method,challenge_evidence
-       ) VALUES($1,$2,$3,$4,'pending',$5,$6,$7,now()+interval '24 hours',now(),$8,$9,$10,$11,'active_challenge_v1',$12::jsonb)
+       ) VALUES($1,$2,$3,$4,'pending',$5,$6,$7,now()+interval '72 hours',now(),$8,$9,$10,$11,'active_challenge_v1',$12::jsonb)
        RETURNING id::text,requested_at::text`,
       [
         session.organizationId,session.userId,siteId,policyVersionId,

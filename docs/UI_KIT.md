@@ -299,9 +299,24 @@ No reemplaza el patrón de perfil en página cuando ese patrón ya es contractua
 - Pills;
 - SegmentedControl;
 - ModuleNavigation;
-- Breadcrumb.
+- Breadcrumb;
+- Stepper.
 
-Estados: default, hover, active, disabled.
+Estados: default, hover, active, completed, pending, disabled cuando aplique.
+
+### Stepper
+
+`Stepper` representa procesos configurables de varios pasos dentro de una misma experiencia. Cada paso recibe `id`, label, descripción, estado completado y un destino opcional.
+
+Reglas:
+
+- el paso activo usa `aria-current="step"`;
+- completado comunica check + texto, nunca solo color;
+- pendiente conserva numeración y estilo neutro;
+- puede usar links para permitir navegación no rígida y preservar back/forward;
+- en mobile mantiene scroll horizontal propio sin provocar overflow de toda la página;
+- no contiene lógica de negocio ni decide si un paso puede considerarse completo;
+- el progreso lateral o resumen debe consumir el mismo estado, no mantener una segunda fuente de navegación.
 
 ### ModuleNavigation
 
@@ -629,7 +644,7 @@ Implemented primitives:
 - `Card` variants: basic, elevated, interactive, selected, warning, error;
 - `Modal`, `Drawer`;
 - `Tooltip`, `Dropdown`;
-- `Tabs`, `Pills`, `SegmentedControl`, `Breadcrumb`, `ModuleNavigation`;
+- `Tabs`, `Pills`, `SegmentedControl`, `Breadcrumb`, `ModuleNavigation`, `Stepper`;
 - `Alert`, `Toast`, `EmptyState`;
 - `Spinner`, `Skeleton`, `LoadingCard`, `LoadingTable`, `LoadingPage`;
 - `Avatar`;
@@ -658,7 +673,7 @@ Legacy compatibility wrappers now delegate to UI Kit without changing their publ
 - `MultiSelectDropdown` → `MultiSelect`;
 - `FileDropzone` → `FileUpload`.
 
-The live `/ui-kit` page now documents Foundations plus Buttons, Forms, Cards/Status, Navigation, Overlays and Feedback using the real components.
+The live `/ui-kit` page now documents Foundations plus Buttons, Forms, Cards/Status, Navigation (including Stepper), Overlays and Feedback using the real components.
 
 DataTable/Pagination/Search-Filter/KPI/Timeline/Progress are implemented in Phase 4. ERP-specific Business UI is implemented in Phase 5.
 

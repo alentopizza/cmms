@@ -13,6 +13,8 @@ import { Timeline, type TimelineItem } from "@/components/ui-kit/TimelineProgres
 import { attendanceScheduleWeeklyHours } from "@/lib/attendance-schedules";
 import type { BusinessDaySchedule } from "@/lib/business-hours";
 
+// ── Scoped audit read-model contracts ────────────────────────────────────
+
 type Person={id:string;full_name:string;role:string};
 
 type AuditSchedule={
@@ -143,6 +145,8 @@ const REASON_LABELS:Record<string,string>={
   other:"Otro",
 };
 
+// ── Presentation helpers: never reinterpret evidence as a worker score ───
+
 function fmt(value:string|null|undefined){
   if(!value)return "—";
   const date=new Date(value);
@@ -221,6 +225,8 @@ function auditActionTone(action:string):"brand"|"success"|"warning"|"danger"|"in
   if(action==="attendance_schedule_deleted")return "danger";
   return "neutral";
 }
+
+// ── Client orchestration: selection/period only; authorization stays server-side ──
 
 export default function UserAttendanceAuditCenter({
   organizationId,

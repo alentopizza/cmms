@@ -30,6 +30,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"work_orders.write");
+  const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
   const creationGate=await getCreationGateForScope("work_order",session.organizationId,superadmin);
   const requesterOnly=session.role==="requester" && session.userId;
@@ -221,8 +222,8 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           "data-filter-type":w.type,"data-filter-type-label":w.type,
         },cells:{
           order:<EntityIdentityCell
-            imageSrc={w.asset_id&&w.asset_has_image?"/api/assets/"+w.asset_id+"/image":null}
-            imageAlt={w.asset_id&&w.asset_has_image?"Imagen de "+w.asset:""}
+            imageSrc={canReadAssets&&w.asset_id&&w.asset_has_image?"/api/assets/"+w.asset_id+"/image":null}
+            imageAlt={canReadAssets&&w.asset_id&&w.asset_has_image?"Imagen de "+w.asset:""}
             icon="work-order"
             variant="thumbnail"
             title={"OT #"+w.number}

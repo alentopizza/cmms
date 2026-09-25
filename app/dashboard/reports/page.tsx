@@ -103,9 +103,9 @@ export default async function ReportsPage(){
           <p>Exporta los movimientos que ya alimentan la trazabilidad del Kardex sin recalcular stock en el cliente.</p>
           <ModuleExportMenu entity="kardex"/>
         </Card>}
-        {canAttendanceReports&&<Card className="phase10-report-card" header={<div className="phase10-report-card-head"><UiIcon name="attendance" size={20}/><div><strong>Asistencia</strong><small>Reporte descriptivo</small></div></div>}>
-          <p>Consulta jornadas, horas registradas, actividades en turno y contingencias desde el módulo autorizado.</p>
-          <Link className="ds-button ds-button-secondary ds-button-md phase10-link-button" href="/dashboard/attendance"><UiIcon name="chevron-right" size={16}/>Abrir asistencia</Link>
+        {canAttendanceReports&&<Card className="phase10-report-card" header={<div className="phase10-report-card-head"><UiIcon name="attendance" size={20}/><div><strong>Asistencia</strong><small>Programado vs. real · multi-sede</small></div></div>}>
+          <p>Compara jornada programada con presencia real, separa tiempo en sede y desplazamiento, y conserva actividades, contingencias y evidencia Reacción.</p>
+          <Link className="ds-button ds-button-secondary ds-button-md phase10-link-button" href="/dashboard/attendance#attendance-report"><UiIcon name="report" size={16}/>Abrir reporte de asistencia</Link>
         </Card>}
       </div>
     </section>

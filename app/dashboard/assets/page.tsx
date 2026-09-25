@@ -15,6 +15,7 @@ import AssetSubnav from "@/components/AssetSubnav";
 import AssetCatalogOverview, { type AssetCategorySummary, type AssetMaintenanceSummary, type AssetHistorySummary, type AssetDocumentSummary } from "@/components/AssetCatalogOverview";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 
 type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean};
 type Site={id:string;organization_id:string;label:string};
@@ -169,7 +170,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
 
     <section className="section phase7-anchor" id="asset-list">
       <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
-      {assets.rows.length?<div className="asset-modern-grid">{assets.rows.map(a=><AssetCard
+      {assets.rows.length?<CollectionView storageKey="assets" label="Vista de activos" grid={<div className="asset-modern-grid" data-collection-grid>{assets.rows.map(a=><AssetCard
         key={a.id}
         name={a.name}
         code={a.code}
@@ -199,7 +200,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
             {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
           ]}/>}
         </>}
-      />)}</div>:<EmptyState icon="asset" title="Aún no hay activos" description="Usa Agregar activo o Importar para comenzar."/>}
+      />)}</div>}/>:<EmptyState icon="asset" title="Aún no hay activos" description="Usa Agregar activo o Importar para comenzar."/>}
     </section>
     <AssetCatalogOverview
       assets={assets.rows}

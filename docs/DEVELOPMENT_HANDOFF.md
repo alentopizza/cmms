@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `0e83956fa454752c33eb66c31ec9e1c88bf67c06`
+> Base revisada para esta entrega: `45076f7020609dd15bceb4d3c7a9518727d77c0e`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -67,6 +67,39 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
+### Asistencia · rediseño administrativo de cinco pasos
+
+La administración de Asistencia ya no apila configuración, sedes, enrolamiento, contingencias y reportes en una sola página larga.
+
+- `app/dashboard/attendance/page.tsx` conserva todas las consultas y componentes autoritativos, pero presenta la configuración mediante `step=1..5`.
+- Los pasos son **Configuración**, **Sedes**, **Enrolamiento**, **Política** y **Resumen**.
+- `components/ui-kit/Navigation.tsx` incorpora el primitive reusable `Stepper`; está documentado y visible en `/ui-kit`.
+- `components/AttendanceSetupWorkspace.tsx` compone Stepper, contenido activo, Anterior/Siguiente, progreso circular y `StepProgress`.
+- El paso Configuración es una lectura de los valores reales; no duplica el formulario editable.
+- Sedes reutiliza los Sites/geocercas existentes y dirige la edición a la ficha canónica de Ubicación.
+- Enrolamiento reutiliza `SupervisedBiometricEnrollment`; no existe cámara, plantilla o endpoint biométrico nuevo.
+- Política continúa siendo el único formulario que publica a `/api/attendance/policy`.
+- El endpoint de Política solo conserva `view=setup&step=4` después de guardar/error para no sacar al usuario del flujo.
+- Resumen no crea una mutación de “finalización”; muestra el estado derivado de empresa, sedes, enrolamiento, política y contingencias.
+- `view=operation` mantiene presencia diaria, desplazamientos, contingencia propia, expediente individual, cola de contingencias y reporte Fase 5.
+- Los deep links Usuario → enrolamiento, Usuario → expediente y Reportes → Asistencia apuntan explícitamente a la vista correcta.
+- Desktop usa contenido + panel lateral; tablet/mobile apilan el progreso y el Stepper tiene scroll horizontal propio.
+- `scripts/attendance-setup-ux-smoke.mjs` protege reutilización, navegación, responsive y ausencia de duplicaciones.
+
+Archivos clave:
+
+- `app/dashboard/attendance/page.tsx`
+- `components/AttendanceSetupWorkspace.tsx`
+- `components/ui-kit/Navigation.tsx`
+- `app/ui-kit-core.css`
+- `app/phase8-modules.css`
+- `app/api/attendance/policy/route.ts`
+- `app/dashboard/users/UserManagement.tsx`
+- `app/dashboard/reports/page.tsx`
+- `scripts/attendance-setup-ux-smoke.mjs`
+
+No hubo migración de base de datos ni cambio de reglas de negocio para este rediseño.
+
 ### Asistencia operativa · Fase 5
 
 Asistencia ya dispone de un reporte programado vs. real construido sobre la evidencia autoritativa de Fases 1–4.
@@ -82,7 +115,7 @@ Asistencia ya dispone de un reporte programado vs. real construido sobre la evid
 - `GET /api/attendance/report` sirve JSON, Excel real XLSX, CSV UTF-8 y PDF usando el mismo dataset autorizado.
 - El PDF conserva identidad Desweb o white-label Pro según la configuración permitida.
 - `components/AttendanceOperationalReport.tsx` sustituyó el antiguo bloque SQL fijo de estadísticas de 30 días.
-- El Centro de Reportes enlaza directamente a `/dashboard/attendance#attendance-report`.
+- El Centro de Reportes enlaza directamente a `/dashboard/attendance?view=operation#attendance-report`.
 - El reporte deja explícito que diferencias horarias, días sin marcación, tiempo no programado, viajes, actividades y contingencias son evidencia descriptiva y no una calificación laboral.
 - `scripts/attendance-reporting-smoke.mjs` cubre contratos estáticos y el aislamiento de jornadas multi-sede por Site scope.
 

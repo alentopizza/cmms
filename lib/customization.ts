@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { query } from "@/lib/db";
 
 type CustomizationRow = {
@@ -30,7 +31,7 @@ export type CustomizationSummary = {
   updatedAt: string | null;
 };
 
-export async function getCustomizationSummary(): Promise<CustomizationSummary> {
+async function resolveCustomizationSummary(): Promise<CustomizationSummary> {
   try {
     const result = await query<CustomizationRow>(`
       SELECT
@@ -84,6 +85,8 @@ export async function getCustomizationSummary(): Promise<CustomizationSummary> {
     };
   }
 }
+
+export const getCustomizationSummary = cache(resolveCustomizationSummary);
 
 export function logoOnLightSrc(summary: CustomizationSummary) {
   return summary.hasLogoOnLight

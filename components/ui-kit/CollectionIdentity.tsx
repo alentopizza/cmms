@@ -22,7 +22,7 @@ export function EntityIdentityCell({
 }){
   return <span className="ds-list-identity">
     <span className={"ds-list-identity-media "+variant} aria-hidden={!imageAlt}>
-      {imageSrc?<img src={imageSrc} alt={imageAlt}/>:fallback?<b>{fallback}</b>:<UiIcon name={icon} size={20}/>}
+      {imageSrc?<img src={imageSrc} alt={imageAlt} loading="lazy" decoding="async" width={44} height={44}/>:fallback?<b>{fallback}</b>:<UiIcon name={icon} size={20}/>}
     </span>
     <span className="ds-list-identity-copy">
       <strong>{title}</strong>

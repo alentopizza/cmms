@@ -85,6 +85,8 @@ export async function GET(
 
     const paramsBase=[organizationId,userId,days,scope] as const;
 
+    // Each source remains authoritative on its own. The API only composes a
+    // scoped dossier and intentionally does not persist aggregate audit state.
     const [
       summary,
       shifts,

@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `c4d0ff0331e13f406f241d0563368bdcca611137`
+> Base revisada antes de este handoff: `b7252924f3ce1e7350a2a2948734a8b3e140dd9f`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -66,6 +66,35 @@ El repositorio ya contiene, entre otros:
 Las relaciones operativas importantes deben seguir usando sus fuentes autoritativas actuales; no crear tablas paralelas para “simplificar” vistas.
 
 ## 4. Trabajo más reciente en `main`
+
+### Directorios · patrón global Cuadrícula / Listado
+
+Se estableció un patrón común de presentación para los directorios principales sin modificar sus fuentes autoritativas ni crear consultas paralelas.
+
+- `components/ui-kit/DataControls.tsx` expone `ViewModeToggle` y `CollectionView`.
+- `ViewModeToggle` es el selector visual oficial para **Vista cuadrícula** / **Vista listado**; no crear selectores equivalentes privados por módulo.
+- `CollectionView` cambia únicamente la presentación de una colección ya cargada. No consulta APIs, no duplica servicios y conserva la preferencia por módulo en `localStorage`.
+- Cuando cambia el modo, `CollectionView` emite `cmms:view-mode-change`; `ModuleHeader` usa esa señal para reaplicar búsqueda, estado y facetas sobre la representación recién montada.
+- Empresas, Ubicaciones, Proveedores, Usuarios, Activos, Inventario y Leads reutilizan su colección de tarjetas y adoptan una disposición de una columna en modo listado cuando no existía una tabla autoritativa.
+- Ubicaciones añade una lista explícita con `StaticDataTable` sobre la misma colección de Sites: Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción para abrir la ficha.
+- Cuadrillas reutiliza `ViewModeToggle` con su grid y `StaticDataTable` existentes.
+- Órdenes de trabajo y Rutinas/Mantenimiento reutilizan sus tarjetas y tablas existentes; el modo elegido por el usuario reemplaza el antiguo switch automático desktop/mobile.
+- La búsqueda/filtros de `ModuleHeader` continúan funcionando sobre `data-module-record`; cambiar de vista no amplía alcance ni vuelve a consultar datos.
+- `scripts/view-mode-toggle-smoke.mjs` protege la implementación transversal y CI lo ejecuta junto con los smokes por fase.
+- No hubo cambios de DB, endpoints, RBAC, permisos ni modelos de dominio.
+
+Módulos cubiertos:
+
+- Empresas
+- Ubicaciones
+- Proveedores
+- Usuarios
+- Cuadrillas
+- Activos
+- Órdenes de trabajo
+- Rutinas / Mantenimiento
+- Inventario
+- Leads
 
 ### Cuadrillas · directorio UX/UI aprobado
 

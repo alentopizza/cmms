@@ -90,12 +90,12 @@ export async function POST(request:Request){
       return NextResponse.json({message:"La sede seleccionada no está disponible."},{status:422});
     }
 
-    const open=await client.query("SELECT id,site_id FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE",[session.userId]);
+    const open=await client.query("SELECT id,site_id,COALESCE(current_site_id,site_id) current_site_id FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE",[session.userId]);
     if(action==="check_in"&&open.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"Ya tienes una jornada abierta."},{status:409});
     }
-    if(action==="check_out"&&(!open.rowCount||open.rows[0].site_id!==siteId)){
+    if(action==="check_out"&&(!open.rowCount||open.rows[0].current_site_id!==siteId)){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"La contingencia de salida debe corresponder a tu jornada abierta y a la misma sede."},{status:409});
     }

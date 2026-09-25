@@ -96,7 +96,7 @@ for(const marker of [
 if(/#[0-9a-fA-F]{3,8}\b/.test(moduleCss))throw new Error("Phase 8 module CSS must remain token-only");
 
 const policy=fs.readFileSync("app/api/attendance/policy/route.ts","utf8");
-for(const marker of ["return_step",'target.searchParams.set("view", "setup")',"attendanceOrganizationId"]){
+for(const marker of ["return_step",'target.searchParams.set("view","setup")',"attendanceOrganizationId"]){
   if(!policy.includes(marker))throw new Error("Attendance policy setup-navigation integration missing "+marker);
 }
 

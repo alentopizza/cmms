@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
 import { UserCard } from "@/components/business-ui";
 import { Alert, EmptyState, Spinner } from "@/components/ui-kit/Feedback";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { Button } from "@/components/ui-kit/Button";
@@ -573,7 +574,7 @@ export default function UserManagement({
         <small>Los accesos se limitan por empresa, rol y sedes autorizadas.</small>
       </div>
 
-      <div className="user-role-grid user-compact-profile-grid">
+      <CollectionView storageKey="users" label="Vista de usuarios" grid={<div className="user-role-grid user-compact-profile-grid" data-collection-grid>
         {users.map(user => <UserCard
           key={user.id}
           className={"user-directory-profile-card "+(user.active ? "" : "user-role-card-inactive")}
@@ -624,7 +625,7 @@ export default function UserManagement({
             </>}
           </div>
         </UserCard>)}
-      </div>
+      </div>}/>
     </section>)}
 
     {selectedUser&&<section className="section entity-page-detail">

@@ -36,6 +36,47 @@ export function Pills(props:Parameters<typeof Tabs>[0]){
   return <div className="ds-pills"><Tabs {...props}/></div>;
 }
 
+export type StepperItem={
+  id:string;
+  label:string;
+  description?:string;
+  completed?:boolean;
+  href?:string;
+  disabled?:boolean;
+};
+
+export function Stepper({
+  items,
+  activeId,
+  label="Progreso",
+}:{
+  items:StepperItem[];
+  activeId:string;
+  label?:string;
+}){
+  return <nav className="ds-stepper" aria-label={label}>
+    {items.map((item,index)=>{
+      const active=item.id===activeId;
+      const state=active?"active":item.completed?"completed":"pending";
+      const content=<>
+        <span className="ds-stepper-marker" aria-hidden="true">
+          {item.completed&&!active?<UiIcon name="check" size={15}/>:index+1}
+        </span>
+        <span className="ds-stepper-copy">
+          <strong>{item.label}</strong>
+          {item.description&&<small>{item.description}</small>}
+        </span>
+      </>;
+
+      return <span key={item.id} className={["ds-stepper-item","is-"+state,item.disabled?"is-disabled":""].filter(Boolean).join(" ")}>
+        {item.href&&!item.disabled
+          ?<Link href={item.href} aria-current={active?"step":undefined}>{content}</Link>
+          :<span aria-current={active?"step":undefined} aria-disabled={item.disabled||undefined}>{content}</span>}
+      </span>;
+    })}
+  </nav>;
+}
+
 export function SegmentedControl({items,value,onChange,label="Opciones"}:{items:Array<{value:string;label:string;disabled?:boolean}>;value:string;onChange:(value:string)=>void;label?:string}){
   return <div className="ds-segmented" role="group" aria-label={label}>
     {items.map(item=><button

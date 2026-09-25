@@ -486,6 +486,7 @@ export const MANUAL_CHANGES:ManualChange[] = [
     date:"2026-09-24",
     title:"Centro de reportes y cierre visual V2",
     summary:"Reportes centraliza exportaciones existentes y Configuración/Personalización adoptan la gramática final del Design System V2 sin cambiar permisos ni fuentes de datos.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
   },
   {
     date:"2026-09-24",

@@ -277,31 +277,31 @@ This sequencing reduces unnecessary camera use while preserving server authority
 `lib/attendance-policy.ts` is the shared source for fallback attendance policy behavior and role evaluation. Missing policy rows resolve to an enabled default instead of silently disabling the feature. Migration `017_attendance_policy_defaults.sql` backfills only organizations with no policy row, preserving explicit tenant choices. Organization creation also inserts the default policy transactionally.
 
 
-### Supervised enrollment trust boundary
+### Biometric enrollment trust boundary
 
-Migration `018_supervised_biometric_enrollment.sql` extends biometric profiles with supervisor/site/method/verification/revocation metadata and adds `biometric_enrollment_events`.
+Migration `018_supervised_biometric_enrollment.sql` established supervisor/site/method/verification/revocation metadata and `biometric_enrollment_events`. Migration `040_biometric_self_enrollment_approval.sql` extends that chain with employee-initiated requests, versioned consent and one-time approval.
 
 Browser responsibilities:
 - `lib/client-biometric.ts` loads Human and creates normalized live embeddings;
-- `SupervisedBiometricEnrollment.tsx` collects supervisor identity confirmation, subject consent and live camera evidence;
-- `AttendanceCapture.tsx` only verifies already supervised users.
+- `SelfBiometricEnrollment.tsx` collects the employee's policy acknowledgement, explicit consent, Site/GPS evidence and active liveness challenge from the authenticated user's own device;
+- `SupervisedBiometricEnrollment.tsx` remains the assisted recovery/support capture path;
+- `AttendanceCapture.tsx` only performs routine verification for already approved biometric profiles.
 
 Server responsibilities:
-- `/api/attendance/enrollment-supervised` rechecks attendance-management permission, tenant membership, controlled role, supervisor site access and liveness threshold before storing a template;
-- Supervised enrollment also requires the supervisor device to provide a precise GPS fix inside the selected site's configured geofence;
-- `/api/attendance/clock` accepts only active `supervised_camera` profiles with `identity_verified_at`;
-- the legacy self-enrollment route rejects mutations.
+- `/api/attendance/enrollment-request` rechecks the field user's Organization, attendance role, Site scope, active consent-policy version, GPS accuracy/geofence, embedding shape and liveness threshold before storing a pending request;
+- `/api/attendance/enrollment-requests/[id]` rechecks `attendance.manage`, explicit Organization context and Site scope before the one-time human approval/rejection;
+- `/api/attendance/enrollment-requests/[id]/preview` exposes only a pending, unexpired, encrypted transient preview to an authorized manager;
+- `/api/attendance/enrollment-supervised` remains valid for exceptional assisted recovery and still rechecks attendance-management permission, controlled role, Site scope, GPS/geofence and liveness;
+- `/api/attendance/clock` accepts only an active verified profile with method `supervised_camera` or `self_camera_approved`; legacy self-enrollment remains invalid.
 
-Platform administration adds an explicit organization-context layer without changing the attendance data model:
-
+Platform administration preserves explicit Organization context:
 - `lib/attendance-context.ts` resolves tenant scope from the authenticated membership for customer users and accepts an explicit organization identifier only for Platform Owner/Superadmin;
-- `/dashboard/attendance?organization_id=...` activates policy, Site/geofence, contingency, report and supervised-enrollment administration for exactly that organization;
-- `/dashboard/users` may add `user_id` when linking into Attendance so the enrollment UI focuses the selected person;
-- policy and biometric mutation routes revalidate the organization and its user/Site relations server-side instead of trusting the query string;
-- the bootstrap Platform Owner has no persistent `users.id`; biometric events therefore allow `actor_user_id=NULL` while preserving platform role/email in event metadata.
+- `/dashboard/attendance?organization_id=...` activates policy, Site/geofence, contingency, reporting and biometric-administration surfaces for exactly that organization;
+- `/dashboard/users` may add `user_id` when linking into the Enrolamiento step so the administration surface focuses the selected person;
+- every biometric/policy mutation revalidates Organization and user/Site relations server-side instead of trusting query parameters;
+- the bootstrap Platform Owner may have no persistent `users.id`; biometric events therefore allow `actor_user_id=NULL` while preserving platform role/email in event metadata.
 
 This context is administrative orchestration, not cross-tenant aggregation and not an authorization source.
-
 
 ### Individual attendance schedule timeline
 
@@ -433,7 +433,7 @@ Migration `019_attendance_contingency.sql` adds `attendance_contingency_requests
 
 Normal attendance remains the preferred path. Contingency is isolated into separate endpoints:
 
-- `POST /api/attendance/contingency`: creates a pending exception request only for an authenticated user with active supervised biometric enrollment and a valid site/action context.
+- `POST /api/attendance/contingency`: creates a pending exception request only for an authenticated user with active verified biometric enrollment and a valid site/action context.
 - `PATCH /api/attendance/contingency/[id]`: attendance manager approves/rejects a pending request, respecting supervisor site scope.
 - `POST /api/attendance/contingency/use`: consumes an approved, unexpired request once and marks the resulting attendance event as `contingency`.
 
@@ -901,7 +901,7 @@ Phase 8 keeps domain identity separate while consolidating presentation:
 - Suppliers remain commercial third parties with SupplierCard, requisition/procurement/inventory/document/financial relations.
 - Users remain people/accounts with UserCard, role/Site scope, personnel dossier, emergency contact and optional Supplier relation.
 - Crews compose Users through CrewCard without replacing member roles or access scopes.
-- Attendance remains an independent privacy-sensitive subsystem over Users/Sites with supervised biometric enrollment, geofences and contingency approval.
+- Attendance remains an independent privacy-sensitive subsystem over Users/Sites with approved biometric identity, geofences and contingency approval.
 
 `StaticDataTable.recordProps` lets SSR tables expose `data-module-record` and facet metadata directly on table rows. This keeps ModuleHeader client filtering presentational while source rows and authorization remain server-side.
 

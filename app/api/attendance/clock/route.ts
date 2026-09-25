@@ -16,6 +16,8 @@ type Policy = {
 };
 
 // ── Server-authoritative presence verification ──────────────────────────────
+// The original site remains immutable evidence of where a shift began. During
+// the shift, current_site_id advances only through an audited displacement.
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -144,8 +146,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const openResult = await client.query<{id:string;site_id:string}>(
-      "SELECT id,site_id FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE",
+    const openResult = await client.query<{id:string;site_id:string;current_site_id:string}>(
+      `SELECT id,site_id::text,COALESCE(current_site_id,site_id)::text current_site_id
+       FROM attendance_shifts WHERE user_id=$1 AND status='open' FOR UPDATE`,
       [session.userId],
     );
 
@@ -155,41 +158,74 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: "Ya tienes una jornada abierta." }, { status: 409 });
       }
 
+      const scheduleResult=await client.query<{
+        id:string;name:string;weekly_schedule:unknown;grace_before_minutes:number;grace_after_minutes:number;
+      }>(
+        `SELECT id,name,weekly_schedule,grace_before_minutes,grace_after_minutes
+         FROM user_attendance_schedules
+         WHERE organization_id=$1 AND user_id=$2 AND active=true
+           AND (effective_from IS NULL OR effective_from<=CURRENT_DATE)
+           AND (effective_until IS NULL OR effective_until>=CURRENT_DATE)
+         LIMIT 1`,
+        [session.organizationId,session.userId],
+      );
+      const schedule=scheduleResult.rows[0]||null;
+      const snapshot=schedule?{
+        name:schedule.name,
+        weekly_schedule:schedule.weekly_schedule,
+        grace_before_minutes:schedule.grace_before_minutes,
+        grace_after_minutes:schedule.grace_after_minutes,
+      }:null;
+
       const inserted = await client.query<{id:string;check_in_at:string}>(
         `INSERT INTO attendance_shifts(
-           organization_id,user_id,site_id,status,
+           organization_id,user_id,site_id,current_site_id,status,
+           attendance_schedule_id,schedule_snapshot,
            check_in_latitude,check_in_longitude,check_in_accuracy_m,check_in_distance_m,
            check_in_face_similarity,check_in_liveness,check_in_antispoof
-         ) VALUES($1,$2,$3,'open',$4,$5,$6,$7,$8,$9,$10)
+         ) VALUES($1,$2,$3,$3,'open',$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12)
          RETURNING id,check_in_at::text`,
-        [session.organizationId,session.userId,siteId,latitude,longitude,accuracy,distance,similarity,
-         Number.isFinite(live)?live:null,Number.isFinite(real)?real:null],
+        [session.organizationId,session.userId,siteId,schedule?.id||null,JSON.stringify(snapshot),
+         latitude,longitude,accuracy,distance,similarity,Number.isFinite(live)?live:null,Number.isFinite(real)?real:null],
       );
       await client.query(
         "UPDATE user_biometric_profiles SET last_verified_at=now(),updated_at=now() WHERE user_id=$1",
         [session.userId],
       );
       await client.query("COMMIT");
-      return NextResponse.json({ action:"check_in", shiftId:inserted.rows[0].id, at:inserted.rows[0].check_in_at, site:site.name });
+      return NextResponse.json({
+        action:"check_in",shiftId:inserted.rows[0].id,at:inserted.rows[0].check_in_at,
+        site:site.name,currentSiteId:siteId,currentSite:site.name,
+      });
     }
 
     if (!openResult.rowCount) {
       await client.query("ROLLBACK");
       return NextResponse.json({ message: "No tienes una jornada abierta para registrar salida." }, { status: 409 });
     }
-    if (openResult.rows[0].site_id !== siteId) {
+    const pendingMovement=await client.query(
+      "SELECT 1 FROM attendance_displacements WHERE attendance_shift_id=$1 AND status='in_transit'",
+      [openResult.rows[0].id],
+    );
+    if(pendingMovement.rowCount){
       await client.query("ROLLBACK");
-      return NextResponse.json({ message: "La salida debe registrarse en la misma sede donde inició la jornada." }, { status: 422 });
+      return NextResponse.json({ message: "Primero registra la llegada del desplazamiento en curso antes de finalizar la jornada." }, { status: 409 });
+    }
+    if (openResult.rows[0].current_site_id !== siteId) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({
+        message: "La salida debe registrarse en tu ubicación operativa actual. Si cambiaste de sede, registra primero el desplazamiento y la llegada.",
+      }, { status: 422 });
     }
 
     const closed = await client.query<{check_out_at:string}>(
       `UPDATE attendance_shifts SET
-         status='closed',check_out_at=now(),
-         check_out_latitude=$1,check_out_longitude=$2,check_out_accuracy_m=$3,check_out_distance_m=$4,
-         check_out_face_similarity=$5,check_out_liveness=$6,check_out_antispoof=$7,updated_at=now()
-       WHERE id=$8
+         status='closed',check_out_at=now(),check_out_site_id=$1,current_site_id=$1,
+         check_out_latitude=$2,check_out_longitude=$3,check_out_accuracy_m=$4,check_out_distance_m=$5,
+         check_out_face_similarity=$6,check_out_liveness=$7,check_out_antispoof=$8,updated_at=now()
+       WHERE id=$9
        RETURNING check_out_at::text`,
-      [latitude,longitude,accuracy,distance,similarity,Number.isFinite(live)?live:null,Number.isFinite(real)?real:null,openResult.rows[0].id],
+      [siteId,latitude,longitude,accuracy,distance,similarity,Number.isFinite(live)?live:null,Number.isFinite(real)?real:null,openResult.rows[0].id],
     );
     await client.query(
       "UPDATE user_biometric_profiles SET last_verified_at=now(),updated_at=now() WHERE user_id=$1",

@@ -6,7 +6,7 @@ import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/l
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
-import UserAttendanceScheduleAdmin from "@/components/UserAttendanceScheduleAdmin";
+import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -426,7 +426,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       }
     </>}
 
-    {canManage && organizationId && <UserAttendanceScheduleAdmin
+    {canManage && organizationId && <UserAttendanceAuditCenter
       organizationId={organizationId}
       people={enrollmentPeople.rows.map(person=>({id:person.id,full_name:person.full_name,role:ROLE_LABELS[person.role]}))}
       initialUserId={feedback.user_id||""}

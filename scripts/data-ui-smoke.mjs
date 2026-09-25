@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const requiredFiles=[
   "components/ui-kit/DataControls.tsx",
+  "components/ui-kit/CollectionIdentity.tsx",
   "components/ui-kit/DataTable.tsx",
   "components/ui-kit/Metrics.tsx",
   "components/ui-kit/Charts.tsx",
@@ -15,7 +16,7 @@ for(const file of requiredFiles){
 
 const barrel=fs.readFileSync("components/ui-kit/index.ts","utf8");
 for(const symbol of [
-  "Search","FilterPanel","FilterGroup","ViewModeToggle","CollectionView","DataTable","Pagination","RowActions",
+  "Search","FilterPanel","FilterGroup","ViewModeToggle","CollectionView","EntityIdentityCell","ListQuickActions","DataTable","Pagination","RowActions",
   "KpiCard","MetricGrid","StatTiles","LineChart","ProgressBar","CircularProgress","Timeline","StepProgress","DataPatternsPreview",
 ]){
   if(!barrel.includes(symbol))throw new Error("Shared Data UI barrel does not export "+symbol);

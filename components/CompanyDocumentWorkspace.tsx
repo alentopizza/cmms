@@ -74,6 +74,11 @@ function DocumentViewer({
   mode?:"context"|"modal";
   onMore?:()=>void;
 }){
+  const [zoom,setZoom]=useState(100);
+  const [fit,setFit]=useState(true);
+  const [rotation,setRotation]=useState(0);
+  const [previewLoading,setPreviewLoading]=useState(false);
+  const [previewError,setPreviewError]=useState(false);
 
   useEffect(()=>{
     setZoom(100);

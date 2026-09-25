@@ -19,7 +19,7 @@ for(const marker of ["user_attendance_schedules","effective_from","effective_unt
 }
 
 const route=fs.readFileSync("app/api/attendance/schedules/route.ts","utf8");
-for(const marker of ["attendanceOrganizationId","rangesOverlap","FOR UPDATE","attendance_schedule_created","attendance_schedule_updated","attendance_schedule_deleted","canAccessSite"]){
+for(const marker of ["attendanceOrganizationId","rangesOverlap","FOR UPDATE","pg_advisory_xact_lock","attendance_schedule_created","attendance_schedule_updated","attendance_schedule_deleted","canAccessSite"]){
   if(!route.includes(marker))throw new Error("Attendance schedule API guard missing "+marker);
 }
 if(!route.includes("Una nueva vigencia no puede iniciar en una fecha pasada"))throw new Error("Attendance schedule history immutability guard missing");

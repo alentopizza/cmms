@@ -67,6 +67,23 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
+### Cuadrillas · directorio UX/UI aprobado
+
+El directorio de Cuadrillas fue rediseñado sobre las mismas consultas, creación y acciones existentes.
+
+- `app/dashboard/crews/page.tsx` sigue siendo la única página y mantiene las consultas autorizadas por Organization/Site.
+- `components/CrewDirectory.tsx` consume la colección ya resuelta por el servidor y añade búsqueda, sede, estado y selector grid/list sin duplicar servicios.
+- `CrewCard` existente en Business UI fue modificado; no se creó una tarjeta paralela.
+- La fotografía grande del líder fue eliminada deliberadamente. La identidad del líder queda compacta con avatar existente/fallback.
+- Grid: 3 columnas desktop, 2 tablet, 1 mobile.
+- Lista: Cuadrilla, Estado, Sede, Líder, Integrantes, Actividades, Completadas y Acciones.
+- Métricas reales: registradas, activas e inactivas.
+- No existe estado `paused`/En pausa ni disciplina en el schema actual de Crews; no inventar esos valores para igualar mocks futuros.
+- No existe ruta de detalle de Cuadrilla; no añadir botón “Ver cuadrilla” hasta que haya una navegación autoritativa aprobada.
+- Contactos reutilizan teléfono/email existentes. Owner edit/delete permanece en `OwnerRecordActions`.
+- `scripts/crew-directory-redesign-smoke.mjs` protege densidad, ausencia de foto hero, datos reales, grid/list y responsive.
+- No hubo cambios de DB, endpoints, RBAC ni reglas de creación/membresía.
+
 ### Empresa · Documentos a ancho completo
 
 La pestaña **Documentos** del perfil in-page de Empresa usa una excepción visual específica para liberar espacio al visor y al listado sin rehacer la ficha.

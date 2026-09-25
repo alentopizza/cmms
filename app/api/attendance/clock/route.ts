@@ -123,13 +123,13 @@ export async function POST(request: Request) {
          WHERE user_id=$1 AND organization_id=$2
            AND revoked_at IS NULL
            AND encrypted_embedding IS NOT NULL
-           AND enrollment_method='supervised_camera'
+           AND enrollment_method IN ('supervised_camera','self_camera_approved')
            AND identity_verified_at IS NOT NULL`,
         [session.userId, session.organizationId],
       );
       if (!profileResult.rowCount) {
         await client.query("ROLLBACK");
-        return NextResponse.json({ message: "Tu biometría debe ser enrolada y verificada presencialmente por un Administrador o Manager." }, { status: 409 });
+        return NextResponse.json({ message: "Tu biometría debe estar enrolada y aprobada antes de registrar presencia." }, { status: 409 });
       }
 
       const enrolled = decryptEmbedding(profileResult.rows[0].encrypted_embedding);

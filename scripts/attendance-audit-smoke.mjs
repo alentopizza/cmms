@@ -21,13 +21,15 @@ for(const marker of [
   "$4::text[] IS NULL",
   "attendance_shifts",
   "biometric_enrollment_events",
+  "biometric_enrollment_requests",
+  "attendance_biometric_policy_versions",
   "attendance_contingency_requests",
   "user_attendance_schedules",
   "audit_log",
 ]){
   if(!route.includes(marker))throw new Error("Attendance Phase 3 audit route missing "+marker);
 }
-for(const sensitive of ["check_in_face_similarity","check_out_face_similarity","check_in_liveness","check_out_liveness"]){
+for(const sensitive of ["check_in_face_similarity","check_out_face_similarity","check_in_liveness","check_out_liveness","encrypted_preview","request.encrypted_embedding"]){
   if(route.includes(sensitive))throw new Error("Attendance audit route should not expose biometric score "+sensitive);
 }
 
@@ -41,6 +43,7 @@ for(const marker of [
   "<UserAttendanceScheduleAdmin",
   "Marcaciones",
   "Biometría",
+  "Auditoría de enrolamiento",
   "Contingencias",
   "Trazabilidad",
 ]){

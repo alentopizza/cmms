@@ -10,6 +10,8 @@ const required=[
   "components/AttendanceCapture.tsx",
   "components/AttendanceContingency.tsx",
   "components/SupervisedBiometricEnrollment.tsx",
+  "components/SelfBiometricEnrollment.tsx",
+  "components/BiometricEnrollmentAdmin.tsx",
   "components/UserStatisticsDashboard.tsx",
   "components/UserAttendanceAuditCenter.tsx",
   "components/AttendanceOperationalReport.tsx",
@@ -35,7 +37,7 @@ if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Es
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
-for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Enrolar biometría inicial","<UserAttendanceAuditCenter","Abrir en Asistencia"]){
+for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Gestionar enrolamiento","<UserAttendanceAuditCenter","Abrir en Asistencia"]){
   if(!users.includes(marker))throw new Error("Users Phase 8 migration missing "+marker);
 }
 for(const glyph of [">×<",">◎<"])if(users.includes(glyph))throw new Error("Users still contain legacy glyph "+glyph);
@@ -55,7 +57,7 @@ for(const marker of ["phase8-crews","<CrewCard","<Alert","<EmptyState","iconName
 if(crews.includes("♕")||crews.includes('className={"status-badge'))throw new Error("Crews still use legacy leader/status glyphs");
 
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
-for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","<AttendanceSetupWorkspace","attendance-redesign-head","organization_id","initialUserId"]){
+for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","<AttendanceSetupWorkspace","<BiometricEnrollmentAdmin","<SelfBiometricEnrollment","attendance-redesign-head","organization_id","initialUserId"]){
   if(!attendance.includes(marker))throw new Error("Attendance Phase 8 orchestration missing "+marker);
 }
 const attendanceReport=fs.readFileSync("components/AttendanceOperationalReport.tsx","utf8");
@@ -101,6 +103,14 @@ if(contingencyReviewRoute.includes("if(!session?.userId||!session.organizationId
 const biometric=fs.readFileSync("components/SupervisedBiometricEnrollment.tsx","utf8");
 for(const marker of ["<UiIcon","<Badge","<Alert","<Button","organizationId","initialUserId","id=\"biometric\""]){
   if(!biometric.includes(marker))throw new Error("SupervisedBiometricEnrollment missing V2/admin primitive "+marker);
+}
+const selfBiometric=fs.readFileSync("components/SelfBiometricEnrollment.tsx","utf8");
+for(const marker of ["<Modal","<Badge","<Alert","<Button","Prueba de vida activa"]){
+  if(!selfBiometric.includes(marker))throw new Error("SelfBiometricEnrollment missing V2/mobile primitive "+marker);
+}
+const biometricAdmin=fs.readFileSync("components/BiometricEnrollmentAdmin.tsx","utf8");
+for(const marker of ["<MetricGrid","<KpiCard","<Badge","<Alert","<Button"]){
+  if(!biometricAdmin.includes(marker))throw new Error("BiometricEnrollmentAdmin missing V2/admin primitive "+marker);
 }
 for(const glyph of ["⌖","◎"])if(biometric.includes(glyph))throw new Error("Biometric enrollment still contains legacy glyph "+glyph);
 

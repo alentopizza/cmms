@@ -83,13 +83,15 @@ This roadmap is directional and should be updated as priorities change.
 
 ### Attendance operational track
 
-- **Phase 1 — implemented:** explicit Company context for Platform Owner/Superadmin in Attendance, server-scoped policy/biometric administration, and User → Attendance contextual deep-link with the person focused for supervised enrollment.
+- **Phase 1 — implemented:** explicit Company context for Platform Owner/Superadmin in Attendance, server-scoped policy/biometric administration, and User → Attendance contextual deep-link. The later biometric enhancement adds employee-initiated mobile requests with one-time human approval and keeps assisted enrollment as recovery.
 - **Phase 2 — implemented:** versioned individual work schedules by person with day-specific hours, effective dates, base Site, timezone snapshot and controlled copy from Company/Site schedules. Started history is immutable and schedule planning does not block real attendance.
 - **Phase 3 — implemented:** consolidated per-user attendance dossier across schedule planning, real shifts, biometric lifecycle, contingencies and administrative timeline, with Organization/Site-scoped read authorization and biometric data minimization.
 - **Phase 4 — implemented:** ordered multi-Site Site/Travel segments inside one attendance shift, explicit departure/arrival evidence, optional destination Activity, final checkout Site, current-Site Activity linkage and optional Reaction route correlation.
 - **Phase 5 — implemented:** scoped scheduled-vs-actual reporting with person/Site/period filters, on-Site vs Travel duration, origin/final Sites, Activity/contingency/Reaction evidence and XLSX/CSV/PDF exports from the same authorized dataset.
 
 The planned Attendance operational track (Phases 1–5) is complete. Future Attendance changes are incremental enhancements, not an automatic Phase 6.
+
+Implemented incremental enhancement: scalable biometric onboarding with versioned consent, active liveness challenge, one-time identity approval, exception-based coverage monitoring and audit history.
 
 Attendance and Reaction remain separate authorities: Attendance proves presence, current Site and working-time movement events; Reaction supplies live operational route telemetry when the field session is connected.
 

@@ -7,6 +7,7 @@ import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
 import { getPlanByCode } from "@/lib/billing";
 import { BusinessHoursValidationError, readBusinessHours } from "@/lib/business-hours";
 import { isSupportedCountry, isSupportedLocale, isTaxIdTypeForCountry } from "@/lib/international-catalog";
+import { DEFAULT_BIOMETRIC_NOTICE_BODY, DEFAULT_BIOMETRIC_NOTICE_TITLE } from "@/lib/attendance-policy";
 
 function slugify(value: string) {
   return value
@@ -149,6 +150,13 @@ export async function POST(request: Request) {
            max_location_accuracy_m,face_similarity_threshold,liveness_threshold,updated_at
          ) VALUES($1,true,ARRAY['admin','manager','technician','provider','external']::text[],true,true,120,0.55,0.60,now())`,
         [organizationId],
+      );
+
+      await client.query(
+        `INSERT INTO attendance_biometric_policy_versions(
+           organization_id,version,title,body,active,published_by
+         ) VALUES($1,1,$2,$3,true,$4)`,
+        [organizationId,DEFAULT_BIOMETRIC_NOTICE_TITLE,DEFAULT_BIOMETRIC_NOTICE_BODY,session.userId],
       );
 
       await client.query(

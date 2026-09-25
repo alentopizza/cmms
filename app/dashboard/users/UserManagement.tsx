@@ -758,13 +758,13 @@ export default function UserManagement({
                   <div>
                     <span className="eyebrow">Administración contextual</span>
                     <h3>Control de asistencia y biometría</h3>
-                    <p className="entity-panel-copy">El expediente individual consolida jornada programada, biometría, marcaciones, contingencias y trazabilidad. El módulo Asistencia conserva la gestión supervisada de biometría, política y geocercas.</p>
+                    <p className="entity-panel-copy">El expediente individual consolida jornada programada, biometría, marcaciones, contingencias y trazabilidad. En Asistencia puedes revisar cobertura biométrica, aprobar solicitudes iniciales una sola vez y gestionar revocaciones o recuperación.</p>
                   </div>
                   <Badge variant={selectedUser.biometric_status==="verified"?"success":selectedUser.biometric_status==="revoked"?"danger":selectedUser.biometric_status==="legacy"?"warning":"neutral"} icon="attendance">{biometricStatusLabel(selectedUser.biometric_status)}</Badge>
                 </div>
                 {selectedUser.organization_id
                   ?<div className="user-attendance-admin-actions">
-                    <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Enrolar biometría inicial"}</Link>
+                    <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Gestionar enrolamiento"}</Link>
                     <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}&view=operation#attendance-audit`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}

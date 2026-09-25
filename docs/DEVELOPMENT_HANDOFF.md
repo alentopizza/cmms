@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `45076f7020609dd15bceb4d3c7a9518727d77c0e`
+> Base revisada para esta entrega: `65122cbe592d739630bf1494957322948cefb8b6`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -51,7 +51,7 @@ El repositorio ya contiene, entre otros:
 - Usuarios, roles y alcance por empresa/sede.
 - Cuadrillas.
 - Asistencia facial 1:1 con geocerca.
-- Enrolamiento biométrico supervisado.
+- Enrolamiento biométrico móvil con aprobación única y recuperación asistida excepcional.
 - Contingencia de asistencia.
 - Reacción: mapa de sedes/técnicos, sesiones de tracking y trayecto reciente.
 - Horarios flexibles por día.
@@ -67,6 +67,42 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
+### Enrolamiento biométrico móvil · aprobación humana única
+
+El flujo biométrico inicial ya no exige que un supervisor opere la cámara de cada empleado. El trabajador inicia una solicitud desde su propio móvil y un administrador valida la identidad una sola vez.
+
+- Migración `040_biometric_self_enrollment_approval.sql` añade políticas biométricas versionadas y solicitudes de enrolamiento auditables.
+- `SelfBiometricEnrollment.tsx` implementa Política → Consentimiento → Geocerca → reto activo → captura → solicitud pendiente.
+- La política biométrica se publica/versiona desde el formulario canónico de Política de Asistencia; cada solicitud conserva exactamente la versión aceptada.
+- El reto activo usa un par aleatorio de gestos e incluye siempre parpadeo; sigue complementado por liveness/anti-spoof del motor Human.
+- El backend vuelve a validar empresa, rol, sede, GPS, geocerca, embedding y umbrales; los gestos del navegador son evidencia complementaria, no autoridad única.
+- La solicitud pendiente conserva temporalmente plantilla y vista previa **cifradas**. La vista previa expira como máximo a las 72 horas.
+- `BiometricEnrollmentAdmin.tsx` muestra cobertura: verificados, pendientes y requieren atención, y solo exige trabajo humano sobre las solicitudes pendientes.
+- Aprobar una solicitud crea/actualiza `user_biometric_profiles` con `self_camera_approved` y elimina plantilla/vista previa temporales.
+- Rechazar o expirar elimina igualmente los payloads biométricos temporales.
+- La vista previa solo puede consultarse mientras está pendiente, con `attendance.manage`, empresa explícita y alcance de sede, y se sirve `private, no-store`.
+- El flujo anterior `SupervisedBiometricEnrollment` queda como **Enrolamiento asistido excepcional** para soporte/recuperación.
+- `/api/attendance/clock` acepta perfiles `supervised_camera` y `self_camera_approved`; una vez aprobada la identidad, entrada/salida diaria sigue automática y no crea cola administrativa.
+- El expediente individual añade auditoría de solicitud, versión aceptada, consentimiento, sede/GPS, método de liveness, aprobador y decisión; no muestra embedding, preview ni scores crudos.
+- Usuarios enlaza a **Gestionar enrolamiento** en lugar de sugerir que el administrador debe capturar inicialmente a cada persona.
+- `scripts/biometric-enrollment-approval-smoke.mjs` protege esquema, privacidad, límites de confianza, UI y compatibilidad con marcación diaria.
+
+Archivos clave:
+
+- `db/migrations/040_biometric_self_enrollment_approval.sql`
+- `app/api/attendance/enrollment-request/route.ts`
+- `app/api/attendance/enrollment-requests/[id]/route.ts`
+- `app/api/attendance/enrollment-requests/[id]/preview/route.ts`
+- `components/SelfBiometricEnrollment.tsx`
+- `components/BiometricEnrollmentAdmin.tsx`
+- `components/SupervisedBiometricEnrollment.tsx`
+- `lib/client-biometric.ts`
+- `lib/biometric.ts`
+- `app/api/attendance/clock/route.ts`
+- `app/api/attendance/users/[id]/audit/route.ts`
+
+Regla operativa: **la aprobación humana establece identidad una vez; la marcación diaria valida presencia automáticamente**.
+
 ### Asistencia · rediseño administrativo de cinco pasos
 
 La administración de Asistencia ya no apila configuración, sedes, enrolamiento, contingencias y reportes en una sola página larga.
@@ -77,7 +113,7 @@ La administración de Asistencia ya no apila configuración, sedes, enrolamiento
 - `components/AttendanceSetupWorkspace.tsx` compone Stepper, contenido activo, Anterior/Siguiente, progreso circular y `StepProgress`.
 - El paso Configuración es una lectura de los valores reales; no duplica el formulario editable.
 - Sedes reutiliza los Sites/geocercas existentes y dirige la edición a la ficha canónica de Ubicación.
-- Enrolamiento reutiliza `SupervisedBiometricEnrollment`; no existe cámara, plantilla o endpoint biométrico nuevo.
+- El rediseño visual reutilizó inicialmente `SupervisedBiometricEnrollment`; la evolución actual usa `SelfBiometricEnrollment` + `BiometricEnrollmentAdmin` y conserva el componente supervisor solo como fallback.
 - Política continúa siendo el único formulario que publica a `/api/attendance/policy`.
 - El endpoint de Política solo conserva `view=setup&step=4` después de guardar/error para no sacar al usuario del flujo.
 - Resumen no crea una mutación de “finalización”; muestra el estado derivado de empresa, sedes, enrolamiento, política y contingencias.
@@ -224,7 +260,7 @@ Archivos clave:
 La administración de Asistencia ya no depende de que una identidad de plataforma tenga `organizationId` en su sesión.
 
 - Propietario Desweb y Superadministrador seleccionan explícitamente la empresa en `/dashboard/attendance`.
-- Una vez seleccionada, política, geocercas, contingencias, reportes y enrolamiento supervisado se limitan a esa empresa.
+- Una vez seleccionada, política, geocercas, contingencias, reportes y gestión/aprobación biométrica se limitan a esa empresa.
 - `lib/attendance-context.ts` garantiza que un usuario tenant nunca pueda sustituir su organización mediante query/form data.
 - `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
 - El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
@@ -318,7 +354,7 @@ Empresa, Ubicación, Sububicación, Usuario/Técnico y Proveedor usan ficha **en
 ### Biometría y ubicación
 
 - Asistencia facial = verificación 1:1 del usuario autenticado.
-- Enrolamiento inicial = supervisado.
+- Enrolamiento inicial = solicitud móvil del empleado + una aprobación humana; el flujo supervisado queda como recuperación excepcional.
 - Foto de perfil ≠ plantilla biométrica.
 - Geolocalización de Asistencia se valida en servidor.
 - Reacción es tracking operativo separado de Asistencia.
@@ -1148,7 +1184,7 @@ Crew leader selection is explicit and visual only. The leader remains a User wit
 ### Attendance/privacy boundary
 
 Do not weaken:
-- supervised biometric enrollment;
+- approved biometric enrollment;
 - user consent;
 - encrypted facial embedding storage;
 - liveness/similarity validation;

@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/passwords";
 import { COOKIE_NAME, userSessionToken } from "@/lib/auth";
 import { publicUrl } from "@/lib/urls";
 import { isSupportedCountry, isSupportedLocale, timezonesForCountry } from "@/lib/international-catalog";
+import { DEFAULT_BIOMETRIC_NOTICE_BODY, DEFAULT_BIOMETRIC_NOTICE_TITLE } from "@/lib/attendance-policy";
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 
@@ -123,6 +124,13 @@ export async function POST(request: Request) {
       `INSERT INTO organization_members(organization_id,user_id,role,site_id,access_all_sites)
        VALUES($1,$2,'admin',NULL,true)`,
       [organizationId, userId],
+    );
+
+    await client.query(
+      `INSERT INTO attendance_biometric_policy_versions(
+         organization_id,version,title,body,active,published_by
+       ) VALUES($1,1,$2,$3,true,$4)`,
+      [organizationId,DEFAULT_BIOMETRIC_NOTICE_TITLE,DEFAULT_BIOMETRIC_NOTICE_BODY,userId],
     );
 
     await client.query(

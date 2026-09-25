@@ -556,9 +556,9 @@ The client validates GPS/geofence first, then activates live facial verification
 Attendance is operational by default for organizations that have never configured a policy. The default self-service role set is Admin, Manager, Technician, Provider and External collaborator, matching roles that have `attendance.self`. Explicitly disabled policies remain disabled. Existing organizations without a policy are backfilled by migration `017_attendance_policy_defaults.sql`; new organizations receive the policy during onboarding.
 
 
-### Supervised biometric identity chain
+### Biometric identity chain
 
-Biometric identity now has a supervised chain of trust. Initial/renewed enrollment is performed by an attendance manager with the user physically present. Existing self-enrolled profiles are treated as legacy and cannot authorize attendance until reenrolled. The system records the supervising user, site, enrollment method and verification time. Revocation nulls the usable encrypted embedding and keeps an audit event/metadata record.
+Biometric identity has a governed chain of trust. The default initial/renewed flow is an authenticated employee request from their own mobile device followed by one authorized human approval; the request itself never activates Attendance identity. The assisted supervisor-operated camera flow remains available for recovery/support. Existing legacy self-enrolled profiles remain non-authoritative until an approved reenrollment occurs. The system records consent version, Site, enrollment method, request/review lifecycle and verification time. Revocation nulls the usable encrypted embedding and preserves audit metadata.
 
 ### Attendance administration context
 
@@ -597,7 +597,7 @@ Multi-Site travel segments inside one jornada remain deferred to a later functio
 The shared `UserAttendanceAuditCenter` is available from the User **Asistencia** tab and the canonical Attendance module. It combines:
 - current/upcoming individual schedule and the existing schedule editor;
 - real attendance shifts with Site, duration, validation mode and GPS evidence;
-- biometric status plus supervised enrollment/reenrollment/revocation lifecycle;
+- biometric status plus request/approval/assisted-recovery/reenrollment/revocation lifecycle;
 - contingency history and review evidence;
 - a chronological timeline that combines attendance, biometric, contingency and schedule-administration events.
 
@@ -676,7 +676,7 @@ The administrative surface of **Asistencia** is reorganized as one five-step set
 
 1. **Configuración** — read-only overview of Organization, module state, current verification parameters and real controlled roles;
 2. **Sedes** — the existing Site/geofence state with links back to the canonical Site editor;
-3. **Enrolamiento** — the existing supervised biometric component, camera, GPS presence verification and consent flow;
+3. **Enrolamiento** — employee-initiated mobile enrollment requests, biometric coverage/status and one-time human identity approval; the prior supervised capture remains an exceptional recovery path;
 4. **Política** — the single editable `/api/attendance/policy` form;
 5. **Resumen** — descriptive readiness summary using current Organization/Site/enrollment/policy/contingency evidence.
 
@@ -684,9 +684,40 @@ The shared UI Core `Stepper` provides active/completed/pending presentation. The
 
 **Operación y reportes** is a secondary view selected by `view=operation`. It keeps the existing field presence flow, multi-Site movement, self contingency, per-user audit dossier, supervisor contingency queue and Phase 5 report. This prevents those operational surfaces from being hidden while removing them from the configuration scroll.
 
-No database model, attendance authorization, facial verification, GPS/geofence calculation, schedule authority, contingency rule or report calculation changed for this UX reorganization. The policy endpoint only preserves validated setup-navigation state after save/error so the user returns to the same step.
+The original five-step UX reorganization did not change business authority. The later biometric enrollment enhancement adds migration `040_biometric_self_enrollment_approval.sql` while preserving Attendance authorization, daily facial verification, geofence calculations, schedule authority, contingency rules and report calculations.
 
 Deep links from Users and Reportes explicitly target the correct setup or operational view.
+
+### Mobile biometric enrollment with one-time approval
+
+Initial biometric activation now scales through an **employee-initiated request + one-time human identity decision** rather than requiring a supervisor to operate the camera for every worker.
+
+The normal first-time flow is:
+
+1. the authenticated field user opens Attendance from their own mobile device;
+2. reads the currently active, versioned biometric notice;
+3. explicitly accepts biometric treatment plus camera/location use;
+4. selects an authorized Site and proves presence inside its geofence;
+5. completes a randomized active-liveness challenge (blink plus one head/turn movement);
+6. the same capture also passes the existing Human liveness/anti-spoof checks and produces a face embedding;
+7. the server stores a **pending** request only after revalidating Organization, role, Site, GPS accuracy, geofence and liveness thresholds;
+8. an authorized Admin/Manager (or explicitly contextualized platform operator) compares the profile photo with a short-lived encrypted live preview and approves or rejects identity once;
+9. approval moves the encrypted template into the active biometric profile; the pending template and preview are deleted;
+10. later check-in/check-out uses the existing automatic 1:1 face + liveness/anti-spoof + GPS/geofence flow without daily human approval.
+
+Migration `040_biometric_self_enrollment_approval.sql` adds:
+- `attendance_biometric_policy_versions` for immutable consent-version references;
+- `biometric_enrollment_requests` for pending/review lifecycle and location/liveness metadata;
+- `self_camera_approved` as a verified enrollment method;
+- request/approval/rejection/expiry enrollment events.
+
+The transient enrollment preview is encrypted at rest, private/no-store, visible only to an authorized Attendance manager while the request is `pending`, and expires after at most 72 hours. Approval, rejection or expiry clears both preview and temporary request embedding. A photograph is **not** copied into `user_biometric_profiles`.
+
+The Enrolamiento step is now an exception-oriented control center: verified coverage, pending approvals and workers requiring attention are visible at a glance; only pending requests require a human decision. The previous `SupervisedBiometricEnrollment` remains available as an assisted recovery/support path.
+
+The per-user Attendance dossier also includes enrollment-request audit evidence: accepted policy version, consent time, Site, GPS accuracy/distance, liveness method, reviewer and decision timestamps/notes. It deliberately omits the encrypted template, transient preview and raw facial similarity/liveness scores.
+
+Active gesture challenges are client-originated supplemental anti-spoof evidence. Server authority still comes from authenticated identity, policy/role/Site validation, GPS/geofence validation, embedding validation and the configured Human liveness/anti-spoof thresholds.
 
 
 ### Mobile field shell phase 4A
@@ -696,7 +727,7 @@ Field mobile navigation now reserves four primary operational destinations (Dash
 
 ### Attendance contingency phase 4B
 
-Attendance now includes an audited exceptional path for operational failures after supervised biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without active supervised biometric enrollment.
+Attendance now includes an audited exceptional path for operational failures after verified biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without an active verified biometric enrollment.
 
 
 ### Hybrid role-aware user manual
@@ -706,7 +737,7 @@ The product now has one shared user-manual content source rendered in two contex
 
 ### Current location provider
 
-Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.
+Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains a 1:1 Human-based pipeline against an approved biometric profile; it is deliberately independent from the map provider.
 
 
 ### Company quick-edit contact persistence
@@ -1056,7 +1087,7 @@ Supplier and User remain intentionally different visual entities. Supplier is a 
 
 Crews now consume a dedicated CrewCard while keeping actual member roles and explicit leader selection.
 
-Attendance remains privacy-sensitive and server-authoritative. Existing biometric profiles, supervised enrollment, liveness checks, GPS accuracy, Site geofences, contingency approvals and attendance policies were not relaxed or moved into presentation logic. Reporting remains descriptive and is not an automated worker ranking.
+Attendance remains privacy-sensitive and server-authoritative. Biometric profiles, governed enrollment/approval, liveness checks, GPS accuracy, Site geofences, contingency approvals and attendance policies remain outside presentation-only authority. Reporting remains descriptive and is not an automated worker ranking.
 
 No DB schema, API, RBAC, biometric threshold, geofence rule or tenant/Site scope changed.
 

@@ -29,6 +29,10 @@ export const DEFAULT_ATTENDANCE_POLICY: AttendancePolicy = {
   liveness_threshold:0.60,
 };
 
+export const DEFAULT_BIOMETRIC_NOTICE_TITLE="Autorización para tratamiento de datos biométricos";
+
+export const DEFAULT_BIOMETRIC_NOTICE_BODY="La organización utiliza una plantilla matemática derivada de una captura facial en vivo para validar identidad y presencia dentro del módulo de Asistencia. La captura de enrolamiento se procesa para generar la plantilla biométrica y no se conserva como fotografía permanente. El sistema puede usar geolocalización, geocerca, prueba de vida y mecanismos anti-suplantación durante el enrolamiento y las marcaciones. La plantilla se almacena cifrada y se utiliza únicamente para los fines de control de presencia configurados por la organización. Puedes solicitar información, revocación o reenrolamiento a los responsables autorizados de tu organización. Al continuar confirmas que pudiste leer esta información y autorizas expresamente el tratamiento descrito.";
+
 export function attendanceRoleEnabled(
   session: Pick<AuthSession,"platformRole"|"role">,
   enabledRoles:string[],

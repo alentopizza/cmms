@@ -185,7 +185,7 @@ export default function SupervisedBiometricEnrollment({
       if(!response.ok)throw new Error(data.message||"No fue posible completar el enrolamiento.");
 
       setStatusByUser(previous=>({...previous,[selected.id]:"verified"}));
-      setMessage(`Biometría verificada para ${selected.full_name}. El usuario ya puede validar presencia en campo.`);
+      setMessage(`Biometría verificada para ${selected.full_name}. El usuario ya puede realizar marcaciones automáticas de presencia.`);
       setConsent(false);
       setIdentityChecked(false);
     }catch(cause){
@@ -219,9 +219,9 @@ export default function SupervisedBiometricEnrollment({
   return <section id="biometric" className="card section biometric-supervisor-card">
     <div className="section-heading">
       <div>
-        <span className="eyebrow">Identidad biométrica</span>
-        <h2>Enrolamiento supervisado</h2>
-        <p className="muted">El responsable verifica a la persona físicamente presente, confirma su identidad y registra el rostro en vivo. No se admite autoenrolamiento.</p>
+        <span className="eyebrow">Recuperación biométrica</span>
+        <h2>Enrolamiento asistido excepcional</h2>
+        <p className="muted">Úsalo para soporte, recuperación o cuando la persona no pueda completar la solicitud desde su propio dispositivo. El flujo normal es iniciado por el empleado y aprobado una sola vez desde la bandeja.</p>
       </div>
     </div>
 

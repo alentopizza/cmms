@@ -93,6 +93,7 @@ export async function GET(
       segments,
       biometricProfile,
       biometricEvents,
+      biometricRequests,
       contingencies,
       schedules,
       scheduleAudit,
@@ -237,7 +238,7 @@ export async function GET(
                      THEN revoker.full_name ELSE NULL END revoked_by_name,
                 CASE
                   WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
-                  WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+                  WHEN bp.enrollment_method IN ('supervised_camera','self_camera_approved') AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
                   WHEN bp.user_id IS NOT NULL THEN 'legacy'
                   ELSE 'missing'
                 END status
@@ -262,6 +263,23 @@ export async function GET(
            AND ($3::int IS NULL OR e.occurred_at>=now()-($3::int*interval '1 day'))
            AND ($4::uuid[] IS NULL OR e.site_id IS NULL OR e.site_id=ANY($4::uuid[]))
          ORDER BY e.occurred_at DESC
+         LIMIT 120`,
+        [...paramsBase],
+      ),
+      client.query(
+        `SELECT request.id::text,request.status,request.site_id::text,site.name site_name,
+                request.requested_at::text,request.consented_at::text,request.reviewed_at::text,
+                request.review_note,request.accuracy_m,request.distance_m,request.liveness_method,
+                policy.version policy_version,policy.title policy_title,
+                COALESCE(reviewer.full_name,CASE WHEN request.reviewed_by IS NULL THEN NULL ELSE 'Usuario' END) reviewed_by_name
+         FROM biometric_enrollment_requests request
+         JOIN sites site ON site.id=request.site_id
+         JOIN attendance_biometric_policy_versions policy ON policy.id=request.policy_version_id
+         LEFT JOIN users reviewer ON reviewer.id=request.reviewed_by
+         WHERE request.organization_id=$1 AND request.user_id=$2
+           AND ($3::int IS NULL OR request.requested_at>=now()-($3::int*interval '1 day'))
+           AND ($4::uuid[] IS NULL OR request.site_id=ANY($4::uuid[]))
+         ORDER BY request.requested_at DESC
          LIMIT 120`,
         [...paramsBase],
       ),
@@ -352,6 +370,7 @@ export async function GET(
       upcomingSchedule,
       biometric:biometricProfile.rows[0]||{status:"missing"},
       biometricEvents:biometricEvents.rows,
+      biometricRequests:biometricRequests.rows,
       shifts:shifts.rows,
       segments:segments.rows,
       contingencies:contingencies.rows,

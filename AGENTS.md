@@ -116,16 +116,22 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 ## Biometric attendance invariants
 
 - Facial attendance is 1:1 verification of the authenticated account, never company-wide biometric identification.
-- Initial facial enrollment must be supervised with the person physically present. A tenant Admin/Manager may supervise within its authorized organization/Site scope; Platform Owner/Superadmin may supervise only after explicitly selecting the target organization in the Attendance administration context. Self-enrollment is prohibited.
-- Uploaded profile photos are human identity aids only and must never become the biometric reference template.
-- Legacy self-enrolled templates are not considered verified and require supervised reenrollment before attendance use.
-- Biometric revocation must preserve audit metadata while making the encrypted template unusable.
-- Do not persist enrollment/check-in photographs unless a future explicitly approved privacy design requires it.
-- Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
+- A field user may initiate the initial facial-enrollment **request** from their own authenticated mobile session, but a self-request never activates biometric identity by itself. One human approval by an authorized tenant Admin/Manager or explicitly contextualized Platform Owner/Superadmin is required before the template can be used for Attendance.
+- Human approval belongs to initial enrollment or a later reenrollment after revocation. Normal daily check-in/check-out must not enter an administrative approval queue once the biometric profile is verified.
+- Employee-initiated enrollment must require the active versioned biometric notice, explicit consent, camera/location authorization, an authorized Site, server-revalidated GPS accuracy/geofence and liveness/anti-spoof thresholds. Client gesture/challenge evidence is supplemental evidence and must never replace server-side validation.
+- Uploaded profile photos are human identity aids only and must never become the biometric reference template. They may be shown beside the short-lived enrollment preview to support the one-time human identity decision.
+- Legacy self-enrolled templates are not considered verified and require an approved reenrollment or the exceptional supervised recovery flow before Attendance use.
+- Biometric consent is versioned in `attendance_biometric_policy_versions`. Every employee-initiated request must retain the exact accepted policy-version reference and consent timestamp for later audit.
+- A pending request may retain an encrypted enrollment preview only long enough for the one-time identity decision (currently up to 72 hours). The preview must be private/no-store, Site-scoped, unavailable outside `pending`, and deleted on approval, rejection or expiry. Do not copy it into the permanent biometric profile.
+- The encrypted temporary embedding inside a pending request must also be deleted after approval, rejection or expiry. On approval the only operational template is the encrypted copy in `user_biometric_profiles`.
+- Biometric revocation must preserve audit metadata while making the permanent encrypted template unusable. The prior supervised-camera workflow remains an exceptional recovery/support path, not the mass-enrollment default.
+- Do not persist enrollment/check-in photographs as permanent evidence. Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
+- Site-limited supervisors must not receive enrollment requests or transient previews from Sites outside their authorized scope.
+- Enrollment administration is exception-based: show verified/pending/attention coverage and review only pending identity requests. Do not require routine human review of already verified workers or turn coverage states into personnel rankings.
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
-- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, supervised biometrics, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
-- Bootstrap Platform Owner has no database user row; supervised enrollment/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
+- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, biometric request review/recovery, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
+- Bootstrap Platform Owner has no database user row; biometric approval/recovery/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
 - Individual attendance schedules are effective-dated expected-work evidence. Never overwrite a started/past schedule retroactively; create a later vigencia instead.
 - Company/Site schedules may seed an individual schedule only as a copied snapshot. Later Company/Site schedule changes must not silently rewrite a person's historical or future individual schedule.
@@ -154,7 +160,7 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Attendance administration uses one five-step setup experience: Configuración → Sedes → Enrolamiento → Política → Resumen. Keep it inside `/dashboard/attendance`; do not split it into five independent pages or duplicate business logic.
 - The setup Stepper and the side progress panel must derive from the same server-computed step state. Stepper links use `step=1..5`; Platform Owner/Superadmin must preserve explicit `organization_id` context across navigation.
 - Configuración is a read-only overview of the current policy values; Política remains the single editable attendance-policy form. Do not create a second policy mutation or duplicate controls just to match a mockup.
-- Sedes reuses the canonical Site/geofence data and editor. Enrolamiento reuses `SupervisedBiometricEnrollment`, existing camera/GPS/consent logic and current enrollment endpoints.
+- Sedes reuses the canonical Site/geofence data and editor. Enrolamiento uses employee-initiated `SelfBiometricEnrollment` plus the exception-based `BiometricEnrollmentAdmin`; `SupervisedBiometricEnrollment` remains only as the assisted recovery fallback.
 - Presence capture, movement, self contingency, per-user audit, supervisor contingency review and operational reporting belong to the secondary `view=operation` surface. They must remain available and must not be hidden under the setup scroll.
 - Attendance deep links must target their intended surface: enrollment → `view=setup&step=3`, audit/report → `view=operation`. Preserve user/organization query context when present.
 - Setup progress is descriptive UI state, not a new server gate. Existing backend validations and authorization remain authoritative; do not block legitimate Attendance operations merely because a setup step appears incomplete.

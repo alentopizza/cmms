@@ -105,7 +105,7 @@ For **Sububicación**, the same profile geometry uses the Sub-location reference
 
 For **Técnico/Usuario**, the identity column uses the profile photo and Company/role scope. The right panel may show identity/access information, descriptive execution statistics, Attendance/biometric state and Reaction connection context. These statistics are operational evidence only and must not become automatic worker ranking or employment decisions.
 
-The User **Asistencia** tab is also an administrative gateway for authorized supervisors. It exposes current shift state, recent field hours, biometric status, Reaction connection and the user's Company/Site scope. From that tab, an authorized administrator can open the canonical Attendance module with the Company and person preselected for policy/geofence review or supervised biometric enrollment. The User profile does not duplicate biometric capture or attendance policy logic.
+The User **Asistencia** tab is also an administrative gateway for authorized supervisors. It exposes current shift state, recent field hours, biometric status, Reaction connection and the user's Company/Site scope. From that tab, an authorized administrator can open the canonical Attendance module with the Company and person preselected for policy/geofence review or biometric enrollment administration. The User profile does not duplicate biometric capture or attendance policy logic.
 
 For global Platform Owner/Superadmin identities, Attendance requires an explicit Company context before tenant-scoped controls appear. Tenant Admin/Manager sessions continue to use their authenticated Company automatically. Server mutation routes always revalidate the Company, target User and Site; query-string context only reduces navigation/reselection work.
 
@@ -143,6 +143,40 @@ A field jornada may now span multiple Sites without creating multiple attendance
 The original shift Site remains the jornada origin and the checkout Site preserves the final location. Supervisors see the same evidence inside the attendance dossier through the **Desplazamientos** tab, origin → final Site labels and the chronological timeline.
 
 Attendance departure/arrival and Reaction tracking are intentionally different evidence. Reaction may show the technician moving toward an Attendance destination, but its samples do not create or complete a travel segment automatically. The existing contingency process covers check-in/check-out; movement departure/arrival uses regular geolocation validation when the policy requires it.
+
+### Biometric enrollment at scale
+
+The default first-time biometric flow is initiated by the authenticated worker from Attendance on their mobile device. It is **not** an automatic self-approval.
+
+Employee flow:
+1. open Attendance before the first biometric shift;
+2. press **Leer política**, read the active version and confirm that it was understood;
+3. explicitly authorize biometric treatment and camera/precise-location use;
+4. choose an authorized Site and press **Verificar sede**;
+5. once geofence/accuracy are valid, activate the front camera;
+6. complete two randomized active-liveness gestures (including a blink);
+7. complete the existing liveness/anti-spoof face capture and send the request;
+8. remain in **Pendiente de aprobación única** until an authorized manager confirms identity.
+
+Manager flow:
+- Enrolamiento shows counts for controlled workers, verified biometrics, pending approvals and records requiring attention;
+- the manager works the pending exception queue rather than opening every employee record;
+- a pending card compares the ordinary profile photo with a temporary live enrollment preview and shows Site/request time;
+- **Aprobar identidad** activates the encrypted template once; **Rechazar** requires a review reason;
+- after either decision the temporary preview and request template are removed;
+- the prior camera-operated supervised flow remains available only as **Enrolamiento asistido excepcional**.
+
+Daily operation after approval:
+- the worker does not wait for another administrator;
+- check-in/check-out uses the authenticated account, configured geofence/GPS accuracy, live camera, 1:1 similarity and liveness/anti-spoof thresholds;
+- an approved self-service template is operationally equivalent to a supervised verified template for daily Attendance;
+- revocation makes the template unusable and a new approved enrollment/recovery is required.
+
+Audit:
+- the accepted policy version and consent timestamp are retained;
+- request/approval/rejection/expiry events are retained;
+- Site, location accuracy/distance, liveness method, reviewer, review time and note are visible to authorized auditors;
+- the temporary preview is not historical evidence after decision/expiry and raw embeddings/scores are never shown in the dossier.
 
 Authorized Attendance supervisors now have a **reporting workspace** that compares expected and real evidence without modifying either source.
 
@@ -335,20 +369,24 @@ Before a principal site can participate in geofenced attendance, its physical po
 New principal sites and the initial site created during company onboarding require this configuration. Legacy sites without coordinates may still be viewed, but must be completed on their next edit. The browser map is an administrative configuration aid; attendance acceptance is always recalculated server-side from the device GPS coordinates and stored site geofence.
 
 
-### Supervised biometric enrollment
+### Biometric enrollment and identity approval
 
 Before facial attendance can be used for an account:
 
-1. the user record exists and has a profile photo for human identity checking;
-2. an authorized attendance manager selects the user and an authorized site;
-3. the subject is physically present;
-4. the supervisor confirms that the present person matches the selected account;
-5. the subject gives biometric consent;
-6. the camera captures multiple live samples and passes liveness/anti-spoof checks;
-7. the server stores an encrypted template and supervisor/site/method/time metadata;
-8. the user becomes eligible for 1:1 attendance verification.
+1. the user record exists and has a profile photo used only as a human identity aid;
+2. the authenticated user opens Attendance on their own mobile device and reads the active versioned biometric notice;
+3. the user explicitly accepts biometric treatment and camera/location use;
+4. the user selects an authorized Site and validates GPS/geofence presence;
+5. the front camera runs a randomized active-liveness challenge plus the existing liveness/anti-spoof capture;
+6. the server validates Organization, controlled role, Site scope, active policy version, GPS accuracy/geofence, embedding shape and configured liveness thresholds;
+7. a pending enrollment request is created; it is **not** yet an active biometric identity;
+8. an authorized Attendance manager compares the ordinary profile photo with the temporary live preview and approves or rejects the request once;
+9. approval stores the encrypted template as `self_camera_approved` and clears temporary request biometric payloads;
+10. the user becomes eligible for automatic 1:1 attendance verification on future check-in/check-out.
 
-Self-enrollment and self-revocation are not valid identity-establishment paths. Legacy self-enrolled templates require supervised reenrollment.
+The assisted supervisor-operated camera workflow remains available for exceptional recovery/support. Legacy self-enrolled templates are not valid until replaced through an approved request or assisted recovery.
+
+Self-request and self-revocation are not identity-establishment decisions: the employee may capture/request, but only an authorized manager can approve identity or revoke the active profile.
 
 ### Presence before assignment
 
@@ -365,7 +403,7 @@ After these checks the user is considered **in site / available**. Activities ma
 
 ### Attendance contingency
 
-Contingency is available only after the user has a valid supervised biometric identity.
+Contingency is available only after the user has a valid verified biometric identity.
 
 1. Normal attendance fails or cannot be completed for an operational reason.
 2. The user selects the affected check-in/check-out event, site and reason, and describes the incident.

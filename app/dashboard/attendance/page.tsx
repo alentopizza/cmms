@@ -116,95 +116,97 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     ? organizations.rows.find(item=>item.id===organizationId)||null
     : null;
 
-  const policyResult=organizationId
-    ? await query<Policy>(
-        `SELECT enabled,enabled_roles,require_face,require_geolocation,max_location_accuracy_m,
-                face_similarity_threshold,liveness_threshold
-         FROM organization_attendance_policies WHERE organization_id=$1`,
-        [organizationId],
-      )
-    : {rows:[]} as {rows:Policy[]};
+  const [policyResult,biometricNotice,sites,enrolled,openShift,selfSchedule]=await Promise.all([
+    organizationId
+      ? query<Policy>(
+          `SELECT enabled,enabled_roles,require_face,require_geolocation,max_location_accuracy_m,
+                  face_similarity_threshold,liveness_threshold
+           FROM organization_attendance_policies WHERE organization_id=$1`,
+          [organizationId],
+        )
+      : Promise.resolve({rows:[]} as {rows:Policy[]}),
+
+    organizationId
+      ? query<BiometricPolicyVersion>(
+          `SELECT id,version,title,body
+           FROM attendance_biometric_policy_versions
+           WHERE organization_id=$1 AND active=true
+           ORDER BY version DESC LIMIT 1`,
+          [organizationId],
+        )
+      : Promise.resolve({rows:[]} as {rows:BiometricPolicyVersion[]}),
+
+    organizationId
+      ? session.accessAllSites
+        ? query<Site>(
+            `SELECT id,name,city,latitude,longitude,geofence_radius_m
+             FROM sites WHERE organization_id=$1 AND active=true ORDER BY name`,
+            [organizationId],
+          )
+        : query<Site>(
+            `SELECT id,name,city,latitude,longitude,geofence_radius_m
+             FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name`,
+            [organizationId,session.siteIds],
+          )
+      : Promise.resolve({rows:[]} as {rows:Site[]}),
+
+    canSelf && session.userId && organizationId
+      ? query(
+          `SELECT 1
+           FROM user_biometric_profiles
+           WHERE user_id=$1 AND organization_id=$2
+             AND revoked_at IS NULL
+             AND encrypted_embedding IS NOT NULL
+             AND enrollment_method IN ('supervised_camera','self_camera_approved')
+             AND identity_verified_at IS NOT NULL`,
+          [session.userId,organizationId],
+        )
+      : Promise.resolve({rowCount:0}),
+
+    canSelf && session.userId && organizationId
+      ? query<SelfOpenShift>(
+          `SELECT a.id,
+                  COALESCE(segment.site_id,segment.from_site_id,a.site_id)::text site_id,
+                  COALESCE(current_site.name,from_site.name,origin.name) site_name,
+                  a.site_id::text origin_site_id,origin.name origin_site_name,
+                  a.check_in_at::text,
+                  COALESCE(segment.segment_type='travel',false) in_transit
+           FROM attendance_shifts a
+           JOIN sites origin ON origin.id=a.site_id
+           LEFT JOIN attendance_shift_segments segment
+             ON segment.attendance_shift_id=a.id AND segment.ended_at IS NULL
+           LEFT JOIN sites current_site ON current_site.id=segment.site_id
+           LEFT JOIN sites from_site ON from_site.id=segment.from_site_id
+           WHERE a.organization_id=$2 AND a.user_id=$1 AND a.status='open'
+           LIMIT 1`,
+          [session.userId,organizationId],
+        )
+      : Promise.resolve({rows:[]} as {rows:SelfOpenShift[]}),
+
+    canSelf && session.userId && organizationId
+      ? query<SelfSchedule>(
+          `SELECT uas.id,uas.base_site_id,s.name base_site_name,uas.business_schedule,uas.timezone,
+                  uas.effective_from::text,uas.effective_until::text,
+                  ((CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)::text local_date
+           FROM user_attendance_schedules uas
+           JOIN sites s ON s.id=uas.base_site_id
+           WHERE uas.organization_id=$1 AND uas.user_id=$2
+             AND uas.effective_from <= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date
+             AND (uas.effective_until IS NULL OR uas.effective_until >= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)
+           ORDER BY uas.effective_from DESC
+           LIMIT 1`,
+          [organizationId,session.userId],
+        )
+      : Promise.resolve({rows:[]} as {rows:SelfSchedule[]}),
+  ]);
 
   const policy:Policy=policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
-
-  const biometricNotice=organizationId
-    ? await query<BiometricPolicyVersion>(
-        `SELECT id,version,title,body
-         FROM attendance_biometric_policy_versions
-         WHERE organization_id=$1 AND active=true
-         ORDER BY version DESC LIMIT 1`,
-        [organizationId],
-      )
-    : {rows:[]} as {rows:BiometricPolicyVersion[]};
   const currentBiometricNotice=biometricNotice.rows[0]||{
     id:"",
     version:0,
     title:DEFAULT_BIOMETRIC_NOTICE_TITLE,
     body:DEFAULT_BIOMETRIC_NOTICE_BODY,
   };
-
-  const sites=organizationId
-    ? session.accessAllSites
-      ? await query<Site>(
-          `SELECT id,name,city,latitude,longitude,geofence_radius_m
-           FROM sites WHERE organization_id=$1 AND active=true ORDER BY name`,
-          [organizationId],
-        )
-      : await query<Site>(
-          `SELECT id,name,city,latitude,longitude,geofence_radius_m
-           FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name`,
-          [organizationId,session.siteIds],
-        )
-    : {rows:[]} as {rows:Site[]};
-
-  const enrolled=canSelf && session.userId && organizationId
-    ? await query(
-        `SELECT 1
-         FROM user_biometric_profiles
-         WHERE user_id=$1 AND organization_id=$2
-           AND revoked_at IS NULL
-           AND encrypted_embedding IS NOT NULL
-           AND enrollment_method IN ('supervised_camera','self_camera_approved')
-           AND identity_verified_at IS NOT NULL`,
-        [session.userId,organizationId],
-      )
-    : {rowCount:0};
-
-  const openShift=canSelf && session.userId && organizationId
-    ? await query<SelfOpenShift>(
-        `SELECT a.id,
-                COALESCE(segment.site_id,segment.from_site_id,a.site_id)::text site_id,
-                COALESCE(current_site.name,from_site.name,origin.name) site_name,
-                a.site_id::text origin_site_id,origin.name origin_site_name,
-                a.check_in_at::text,
-                COALESCE(segment.segment_type='travel',false) in_transit
-         FROM attendance_shifts a
-         JOIN sites origin ON origin.id=a.site_id
-         LEFT JOIN attendance_shift_segments segment
-           ON segment.attendance_shift_id=a.id AND segment.ended_at IS NULL
-         LEFT JOIN sites current_site ON current_site.id=segment.site_id
-         LEFT JOIN sites from_site ON from_site.id=segment.from_site_id
-         WHERE a.organization_id=$2 AND a.user_id=$1 AND a.status='open'
-         LIMIT 1`,
-        [session.userId,organizationId],
-      )
-    : {rows:[]} as {rows:SelfOpenShift[]};
-
-  const selfSchedule=canSelf && session.userId && organizationId
-    ? await query<SelfSchedule>(
-        `SELECT uas.id,uas.base_site_id,s.name base_site_name,uas.business_schedule,uas.timezone,
-                uas.effective_from::text,uas.effective_until::text,
-                ((CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)::text local_date
-         FROM user_attendance_schedules uas
-         JOIN sites s ON s.id=uas.base_site_id
-         WHERE uas.organization_id=$1 AND uas.user_id=$2
-           AND uas.effective_from <= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date
-           AND (uas.effective_until IS NULL OR uas.effective_until >= (CURRENT_TIMESTAMP AT TIME ZONE uas.timezone)::date)
-         ORDER BY uas.effective_from DESC
-         LIMIT 1`,
-        [organizationId,session.userId],
-      )
-    : {rows:[]} as {rows:SelfSchedule[]};
 
   const selfMovementSegment=canSelf && openShift.rows[0]
     ? await query<AttendanceMovementSegment>(

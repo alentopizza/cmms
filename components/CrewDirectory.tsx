@@ -9,6 +9,7 @@ import { Select } from "@/components/ui-kit/FormControls";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell } from "@/components/ui-kit/CollectionIdentity";
 
 export type CrewDirectoryMember={
   id:string;
@@ -228,10 +229,10 @@ export default function CrewDirectory({
             "data-filter-site-label":crew.siteName||"",
           },
           cells:{
-            crew:<span className="crew-list-primary-v2"><span className="crew-directory-icon-v2"><UiIcon name="crew" size={17}/></span><span><strong>{crew.name}</strong><small>{crew.organizationName}</small></span></span>,
+            crew:<EntityIdentityCell imageSrc={crew.leaderUserId&&crew.leaderHasAvatar?"/api/users/"+crew.leaderUserId+"/avatar":null} imageAlt={crew.leaderHasAvatar&&crew.leaderName?"Foto de "+crew.leaderName:""} fallback={initials(crew.leaderName||crew.name)} icon="crew" variant="avatar" title={crew.name} subtitle={crew.organizationName} meta={crew.siteName||null}/>,
             status:<Badge variant={crew.active?"success":"danger"}>{crew.active?"Activa":"Inactiva"}</Badge>,
             site:crew.siteName||"—",
-            leader:<span className="crew-list-leader-v2"><span className="crew-directory-member-avatar-v2">{crew.leaderUserId&&crew.leaderHasAvatar?<img src={"/api/users/"+crew.leaderUserId+"/avatar"} alt=""/>:<b>{initials(crew.leaderName||crew.name)}</b>}</span><span><strong>{crew.leaderName||"Sin asignar"}</strong><small>{crew.leaderRole}</small></span></span>,
+            leader:<span className="crew-list-leader-v2"><span><strong>{crew.leaderName||"Sin asignar"}</strong><small>{crew.leaderRole}</small></span></span>,
             members:crew.memberCount,
             activities:crew.activeActivityCount,
             completed:crew.completedActivityCount,

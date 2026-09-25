@@ -282,11 +282,12 @@ export async function POST(request:Request){
         ],
       );
 
-      await client.query(
+      const cancelledCheckout=await client.query<{id:string}>(
         `UPDATE attendance_contingency_requests
          SET status='cancelled',updated_at=now()
          WHERE organization_id=$1 AND user_id=$2 AND action='check_out'
-           AND status IN ('pending','approved')`,
+           AND status IN ('pending','approved')
+         RETURNING id`,
         [session.organizationId,session.userId],
       );
 
@@ -296,6 +297,7 @@ export async function POST(request:Request){
         to_site_id:toSiteId,
         destination_task_id:destinationTaskId,
         tracking_session_id:tracking.rows[0]?.id||null,
+        cancelled_checkout_contingency_ids:cancelledCheckout.rows.map(item=>item.id),
       });
 
       await client.query("COMMIT");

@@ -30,13 +30,16 @@ export async function POST(
 
     const result=await client.query<{
       id:string;organization_id:string;user_id:string;site_id:string;policy_version_id:string;
-      encrypted_embedding:Buffer|null;consented_at:string;status:string;full_name:string;
+      encrypted_embedding:Buffer|null;has_preview:boolean;consented_at:string;status:string;full_name:string;
     }>(
       `SELECT request.id::text,request.organization_id::text,request.user_id::text,request.site_id::text,
-              request.policy_version_id::text,request.encrypted_embedding,request.consented_at::text,
+              request.policy_version_id::text,request.encrypted_embedding,
+              (request.encrypted_preview IS NOT NULL) has_preview,request.consented_at::text,
               request.status,user_account.full_name
        FROM biometric_enrollment_requests request
-       JOIN users user_account ON user_account.id=request.user_id
+       JOIN users user_account ON user_account.id=request.user_id AND user_account.active=true
+       JOIN organization_members membership
+         ON membership.organization_id=request.organization_id AND membership.user_id=request.user_id
        WHERE request.id=$1 AND request.organization_id=$2
        FOR UPDATE`,
       [id,organizationId],
@@ -96,9 +99,9 @@ export async function POST(
       return NextResponse.json({status:"rejected",message:"Solicitud rechazada. La evidencia biométrica temporal fue eliminada."});
     }
 
-    if(!enrollment.encrypted_embedding){
+    if(!enrollment.encrypted_embedding||!enrollment.has_preview){
       await client.query("ROLLBACK");
-      return NextResponse.json({message:"La solicitud ya no conserva una plantilla temporal válida."},{status:409});
+      return NextResponse.json({message:"La solicitud ya no conserva evidencia temporal suficiente para aprobar identidad."},{status:409});
     }
 
     await client.query(

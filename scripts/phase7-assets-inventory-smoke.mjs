@@ -28,7 +28,7 @@ for(const label of ["Resumen","Productos","Categorías","Almacenes","Entradas","
 if(!inventoryNav.includes("ModuleNavigation"))throw new Error("Inventory navigation must consume official ModuleNavigation");
 
 const assets=fs.readFileSync("app/dashboard/assets/page.tsx","utf8");
-for(const marker of ["phase7-assets","<AssetSubnav","<MetricGrid","<KpiCard","<AssetCard","<AssetCatalogOverview"]){
+for(const marker of ["phase7-assets","<AssetSubnav","<MetricGrid","<KpiCard","<CollectionView","<AssetCard","<AssetCatalogOverview"]){
   if(!assets.includes(marker))throw new Error("Assets Phase 7 contract missing "+marker);
 }
 const assetCatalog=fs.readFileSync("components/AssetCatalogOverview.tsx","utf8");
@@ -37,7 +37,7 @@ for(const marker of ["asset-types","asset-categories","asset-brands","asset-mode
 }
 
 const inventory=fs.readFileSync("app/dashboard/inventory/page.tsx","utf8");
-for(const marker of ["phase7-inventory","<InventorySubnav","<MetricGrid","<KpiCard","<InventoryCard","inventory-reports","inventory-settings"]){
+for(const marker of ["phase7-inventory","<InventorySubnav","<MetricGrid","<KpiCard","<CollectionView","<InventoryCard","inventory-reports","inventory-settings"]){
   if(!inventory.includes(marker))throw new Error("Inventory Phase 7 contract missing "+marker);
 }
 for(const glyph of ["×","▤"])if(inventory.includes(glyph))throw new Error("Inventory summary still contains legacy glyph "+glyph);

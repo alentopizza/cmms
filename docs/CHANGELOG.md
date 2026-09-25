@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-25 — Rediseño aprobado del directorio de Cuadrillas
+
+- La vista principal de Cuadrillas adopta el layout aprobado sin crear una página, servicio, endpoint ni modelo paralelo.
+- El header global y sus filtros continúan usando `ModuleHeader`; la acción de creación existente se presenta ahora como **Nueva cuadrilla** en el encabezado local.
+- Se muestran métricas reales de cuadrillas registradas, activas e inactivas. No se inventa el estado **En pausa** porque el modelo actual de `crews` solo expone `active`.
+- Se añadió `CrewDirectory` sobre la misma colección server-side para búsqueda por cuadrilla/líder/sede/descripción, filtro por sede/estado y cambio entre cuadrícula y listado.
+- No se añadió filtro de disciplina porque Cuadrillas no posee actualmente ese dato.
+- La cuadrícula usa 3 columnas en desktop, 2 en tablet y 1 en mobile.
+- `CrewCard` fue rediseñada sobre el componente Business UI existente: se eliminó la fotografía grande, el líder queda compacto, la descripción real se trunca a dos líneas, las métricas conservan valores reales y los integrantes se muestran como avatares compactos con +N.
+- WhatsApp, llamada y correo del líder siguen usando los datos actuales y muestran tooltips; las acciones de Propietario Desweb conservan edición/eliminación mediante el mecanismo existente.
+- La vista listado reutiliza exactamente la misma colección y muestra cuadrilla, estado, sede, líder, integrantes, actividades, completadas y acciones.
+- No se creó una navegación de detalle porque el repositorio no posee actualmente una ruta de detalle de Cuadrilla.
+- Se añadió `scripts/crew-directory-redesign-smoke.mjs` y ejecución obligatoria en CI.
+
 ## 2026-09-25 — Documentos de Empresa a ancho completo
 
 - La pestaña **Documentos** del perfil de Empresa oculta únicamente el sidebar interno de identidad/estadísticas/acciones rápidas mientras esa tab está activa.

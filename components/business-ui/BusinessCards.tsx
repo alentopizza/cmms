@@ -253,32 +253,62 @@ export function SubLocationCard({
 }
 
 export function CrewCard({
-  name,organization,site,active,leaderName,leaderRole,leaderPhotoSrc,fallback,metrics,leaderActions,roster,actions,recordProps,
+  name,organization,site,active,leaderName,leaderRole,leaderPhotoSrc,fallback,description,metrics,members=[],leaderActions,menuActions,actions,recordProps,
 }:{
   name:string;organization:string;site?:string|null;active:boolean;leaderName:string;leaderRole:string;leaderPhotoSrc?:string|null;fallback:string;
-  metrics:Array<{label:string;value:ReactNode;icon?:UiIconName}>;leaderActions?:ReactNode;roster?:ReactNode;actions?:ReactNode;recordProps?:RecordProps;
+  description?:string|null;
+  metrics:Array<{label:string;value:ReactNode;icon?:UiIconName}>;
+  members?:Array<{id:string;name:string;role:string;photoSrc?:string|null;fallback:string}>;
+  leaderActions?:ReactNode;menuActions?:ReactNode;actions?:ReactNode;recordProps?:RecordProps;
 }){
-  return <BusinessCardShell domain="crew" className={"crew-showcase-card ds-crew-card "+(active?"":"inactive")} recordProps={recordProps}>
-    <div className="crew-leader-hero ds-crew-leader">
-      <div className="crew-leader-photo ds-crew-leader-photo">
-        {leaderPhotoSrc?<img src={leaderPhotoSrc} alt={"Foto de "+leaderName}/>:<span>{fallback}</span>}
-        <div className="crew-leader-shade"/>
-        <Badge variant="brand" icon="crew" className="crew-leader-badge">Líder</Badge>
-        <div className="crew-leader-identity"><strong>{leaderName}</strong><small>{leaderRole}</small></div>
-      </div>
-      {leaderActions&&<div className="crew-leader-actions ds-business-actions">{leaderActions}</div>}
+  const visibleMembers=members.slice(0,3);
+  const hiddenMembers=Math.max(0,members.length-visibleMembers.length);
+  return <BusinessCardShell domain="crew" className={"crew-directory-card-v2 "+(active?"":"inactive")} recordProps={recordProps}>
+    <header className="crew-directory-head-v2">
+      <span className="crew-directory-icon-v2" aria-hidden="true"><UiIcon name="crew" size={19}/></span>
+      <span className="crew-directory-title-v2">
+        <strong>{name}</strong>
+        {site&&<small><UiIcon name="location" size={13}/>{site}</small>}
+      </span>
+      <Badge variant={active?"success":"danger"}>{active?"Activa":"Inactiva"}</Badge>
+      {menuActions&&<div className="crew-directory-menu-v2">{menuActions}</div>}
+    </header>
+
+    <div className="crew-directory-leader-v2">
+      <span className="crew-directory-leader-avatar-v2">
+        {leaderPhotoSrc?<img src={leaderPhotoSrc} alt={"Foto de "+leaderName}/>:<b>{fallback}</b>}
+      </span>
+      <span className="crew-directory-leader-copy-v2">
+        <strong><UiIcon name="user" size={13}/>{leaderName}</strong>
+        <small>{leaderRole}</small>
+      </span>
     </div>
-    <div className="crew-showcase-main">
-      <header className="crew-showcase-head">
-        <div><span className="eyebrow">Cuadrilla</span><h3>{name}</h3><p>{organization}{site?" · "+site:""}</p></div>
-        <Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge>
-      </header>
-      <div className="crew-showcase-metrics ds-crew-metrics">
-        {metrics.map(item=><div key={item.label}>{item.icon&&<UiIcon name={item.icon} size={18}/>}<span><strong>{item.value}</strong><small>{item.label}</small></span></div>)}
-      </div>
-      {roster}
-      {actions&&<div className="crew-showcase-owner-actions ds-business-actions">{actions}</div>}
+
+    <div className="crew-directory-description-v2" title={description||undefined}>
+      {description||<span aria-hidden="true">&nbsp;</span>}
     </div>
+
+    <div className="crew-directory-metrics-v2">
+      {metrics.map(item=><div key={item.label}>
+        <span aria-hidden="true">{item.icon&&<UiIcon name={item.icon} size={16}/>}</span>
+        <strong>{item.value}</strong>
+        <small>{item.label}</small>
+      </div>)}
+    </div>
+
+    <footer className="crew-directory-footer-v2">
+      <div className="crew-directory-members-v2" aria-label={members.length+" integrantes"}>
+        {visibleMembers.map(member=><span
+          className="crew-directory-member-avatar-v2"
+          key={member.id}
+          title={member.name+" · "+member.role}
+          data-tooltip={member.name+" · "+member.role}
+        >{member.photoSrc?<img src={member.photoSrc} alt=""/>:<b>{member.fallback}</b>}</span>)}
+        {hiddenMembers>0&&<span className="crew-directory-member-more-v2" title={hiddenMembers+" integrantes adicionales"}>+{hiddenMembers}</span>}
+      </div>
+      {(leaderActions||actions)&&<div className="crew-directory-actions-v2 ds-business-actions">{leaderActions}{actions}</div>}
+    </footer>
+    <small className="crew-directory-org-v2">{organization}</small>
   </BusinessCardShell>;
 }
 

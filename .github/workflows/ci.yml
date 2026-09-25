@@ -64,6 +64,7 @@ jobs:
       - run: node scripts/company-documents-fullwidth-smoke.mjs
       - run: node scripts/phase7-assets-inventory-smoke.mjs
       - run: node scripts/phase8-suppliers-people-smoke.mjs
+      - run: node scripts/crew-directory-redesign-smoke.mjs
       - run: node scripts/attendance-schedule-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

@@ -6,6 +6,7 @@ const required=[
   "app/dashboard/users/UserManagement.tsx",
   "app/dashboard/crews/page.tsx",
   "components/CrewCreateForm.tsx",
+  "components/CrewDirectory.tsx",
   "app/dashboard/attendance/page.tsx",
   "components/AttendanceCapture.tsx",
   "components/AttendanceContingency.tsx",
@@ -51,10 +52,14 @@ const preview=fs.readFileSync("components/business-ui/BusinessCardsPreview.tsx",
 if(!preview.includes("<CrewCard"))throw new Error("/ui-kit Business UI preview does not expose CrewCard");
 if(!cards.includes('"crew"'))throw new Error("Business UI missing crew domain");
 const crews=fs.readFileSync("app/dashboard/crews/page.tsx","utf8");
-for(const marker of ["phase8-crews","<CrewCard","<Alert","<EmptyState","iconName=\"crew\"","icon=\"crew\""]){
+for(const marker of ["phase8-crews","<CrewDirectory","<Alert","<KpiCard","iconName=\"crew\"","icon=\"crew\""]){
   if(!crews.includes(marker))throw new Error("Crews Phase 8 migration missing "+marker);
 }
-if(crews.includes("♕")||crews.includes('className={"status-badge'))throw new Error("Crews still use legacy leader/status glyphs");
+const crewDirectory=fs.readFileSync("components/CrewDirectory.tsx","utf8");
+for(const marker of ["<CrewCard","<EmptyState","<StaticDataTable","Vista cuadrícula","Vista listado"]){
+  if(!crewDirectory.includes(marker))throw new Error("CrewDirectory Phase 8 presentation missing "+marker);
+}
+if(crews.includes("♕")||crews.includes('className={"status-badge')||crewDirectory.includes("♕"))throw new Error("Crews still use legacy leader/status glyphs");
 
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
 for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","<AttendanceSetupWorkspace","<BiometricEnrollmentAdmin","<SelfBiometricEnrollment","attendance-redesign-head","organization_id","initialUserId"]){

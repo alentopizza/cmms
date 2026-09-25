@@ -53,7 +53,7 @@ export function AssetCard({
 }){
   return <BusinessCardShell domain="asset" className="asset-modern-card" recordProps={recordProps}>
     <div className={"asset-modern-visual ds-business-visual"+(imageSrc?" has-image":"")}>
-      {imageSrc?<img src={imageSrc} alt="" />:<UiIcon name="asset" size={48}/>}
+      {imageSrc?<img src={imageSrc} alt="" loading="lazy" decoding="async" />:<UiIcon name="asset" size={48}/>}
       <Badge variant={statusTone} className="ds-business-status">{status}</Badge>
     </div>
     <div className="asset-modern-copy ds-business-copy">
@@ -80,7 +80,7 @@ export function InventoryCard({
   const progressMax=Math.max(max,min,quantity,1);
   return <BusinessCardShell domain="inventory" className={"inventory-product-card"+(active?"":" inactive")} recordProps={recordProps}>
     <div className="inventory-product-card-head ds-business-head">
-      <span className={"inventory-product-visual ds-business-thumbnail"+(imageSrc?" has-image":"")}>{imageSrc?<img src={imageSrc} alt="" />:<UiIcon name="inventory" size={32}/>}</span>
+      <span className={"inventory-product-visual ds-business-thumbnail"+(imageSrc?" has-image":"")}>{imageSrc?<img src={imageSrc} alt="" loading="lazy" decoding="async" />:<UiIcon name="inventory" size={32}/>}</span>
       <div>
         <div className="inventory-product-state-row"><Badge variant={statusTone}>{status}</Badge>{!active&&<Badge variant="neutral">Inactivo</Badge>}</div>
         <small>SKU: {sku}</small><h3>{name}</h3><p>{category} · {presentation}</p>
@@ -158,7 +158,7 @@ export function SupplierCard({
       </span>
 
       <span className="supplier-card-identity-v3">
-        <span className="supplier-card-logo-v3 ds-business-logo">{logoSrc?<img src={logoSrc} alt="" />:<b>{fallback}</b>}</span>
+        <span className="supplier-card-logo-v3 ds-business-logo">{logoSrc?<img src={logoSrc} alt="" loading="lazy" decoding="async" />:<b>{fallback}</b>}</span>
         <span className="supplier-card-copy-v3 ds-business-copy">
           <strong>{name}</strong>
           {subtitle&&<span>{subtitle}</span>}
@@ -195,8 +195,8 @@ export function CompanyCard({
 }){
   return <BusinessCardShell domain="company" className="company-visual-card company-visual-card-v2 company-compact-card" recordProps={recordProps}>
     <button className="company-card-button company-card-main-action ds-business-open" type="button" onClick={onOpen} aria-label={"Ver detalle de "+name}>
-      <div className={"company-card-cover ds-business-banner"+(coverSrc?"":" company-card-cover-fallback")}>{coverSrc&&<img src={coverSrc} alt="" />}<span className="ds-company-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
-      <div className="company-card-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+name}/>:<span>{fallback}</span>}</div>
+      <div className={"company-card-cover ds-business-banner"+(coverSrc?"":" company-card-cover-fallback")}>{coverSrc&&<img src={coverSrc} alt="" loading="lazy" decoding="async" />}<span className="ds-company-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
+      <div className="company-card-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+name} loading="lazy" decoding="async"/>:<span>{fallback}</span>}</div>
       <div className="company-card-content company-card-content-compact ds-business-copy">
         <div className="company-card-heading-row company-card-heading-centered"><h3>{name}</h3><Badge variant="brand">{plan}</Badge></div>
         <small className="company-card-location-compact">{location}</small>
@@ -229,8 +229,8 @@ export function LocationCard({
 }){
   return <BusinessCardShell domain="location" className="site-visual-card site-compact-card" recordProps={recordProps}>
     <button className="site-visual-card-button site-card-main-action ds-business-open" type="button" onClick={onOpen}>
-      <div className={"site-visual-cover ds-business-banner"+(coverSrc?"":" fallback")}>{coverSrc&&<img src={coverSrc} alt="" />}<span className="ds-location-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
-      <div className="site-company-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+organization}/>:<span>{fallback}</span>}</div>
+      <div className={"site-visual-cover ds-business-banner"+(coverSrc?"":" fallback")}>{coverSrc&&<img src={coverSrc} alt="" loading="lazy" decoding="async" />}<span className="ds-location-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
+      <div className="site-company-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+organization} loading="lazy" decoding="async"/>:<span>{fallback}</span>}</div>
       <div className="site-visual-content site-visual-content-compact ds-business-copy"><h3>{name}</h3><p><span>{organization}</span><span>{location}</span><span>{address}</span></p></div>
     </button>
     {resources}
@@ -245,8 +245,8 @@ export function SubLocationCard({
 }){
   return <BusinessCardShell domain="location" className="sublocation-visual-card ds-sublocation-card" recordProps={recordProps}>
     <button type="button" className="ds-business-open" onClick={onOpen} aria-label={"Abrir sububicación "+name}>
-      <div className={"sublocation-visual-photo ds-business-banner"+(imageSrc?"":" fallback")}>{imageSrc&&<img src={imageSrc} alt="" />}</div>
-      <div className="sublocation-mini-logo ds-business-logo">{organizationLogoSrc?<img src={organizationLogoSrc} alt="" />:<span>{fallback}</span>}</div>
+      <div className={"sublocation-visual-photo ds-business-banner"+(imageSrc?"":" fallback")}>{imageSrc&&<img src={imageSrc} alt="" loading="lazy" decoding="async" />}</div>
+      <div className="sublocation-mini-logo ds-business-logo">{organizationLogoSrc?<img src={organizationLogoSrc} alt="" loading="lazy" decoding="async" />:<span>{fallback}</span>}</div>
       <strong>{name}</strong><small>{type} · {assetCount} activos</small>
     </button>
   </BusinessCardShell>;
@@ -276,7 +276,7 @@ export function CrewCard({
 
     <div className="crew-directory-leader-v2">
       <span className="crew-directory-leader-avatar-v2">
-        {leaderPhotoSrc?<img src={leaderPhotoSrc} alt={"Foto de "+leaderName}/>:<b>{fallback}</b>}
+        {leaderPhotoSrc?<img src={leaderPhotoSrc} alt={"Foto de "+leaderName} loading="lazy" decoding="async"/>:<b>{fallback}</b>}
       </span>
       <span className="crew-directory-leader-copy-v2">
         <strong><UiIcon name="user" size={13}/>{leaderName}</strong>
@@ -303,7 +303,7 @@ export function CrewCard({
           key={member.id}
           title={member.name+" · "+member.role}
           data-tooltip={member.name+" · "+member.role}
-        >{member.photoSrc?<img src={member.photoSrc} alt=""/>:<b>{member.fallback}</b>}</span>)}
+        >{member.photoSrc?<img src={member.photoSrc} alt="" loading="lazy" decoding="async"/>:<b>{member.fallback}</b>}</span>)}
         {hiddenMembers>0&&<span className="crew-directory-member-more-v2" title={hiddenMembers+" integrantes adicionales"}>+{hiddenMembers}</span>}
       </div>
       {(leaderActions||actions)&&<div className="crew-directory-actions-v2 ds-business-actions">{leaderActions}{actions}</div>}

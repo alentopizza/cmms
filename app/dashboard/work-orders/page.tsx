@@ -26,6 +26,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const feedback=await searchParams;
   if(!session) redirect("/login");
   if(!can(session,"work_orders.read")) redirect("/dashboard");
+  const activeSession=session;
 
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
@@ -44,21 +45,21 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
        FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
        ORDER BY w.requested_at DESC LIMIT 200`);
   }else if(requesterOnly){
-    return session.accessAllSites
+    return activeSession.accessAllSites
       ? query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId])
+          [orgId,activeSession.userId])
       : query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id=ANY($3::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId,session.siteIds]);
+          [orgId,activeSession.userId,activeSession.siteIds]);
   }else if(providerOnly){
-    const supplierId=session.externalSupplierId;
-    return session.accessAllSites
+    const supplierId=activeSession.externalSupplierId;
+    return activeSession.accessAllSites
       ? query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
@@ -74,9 +75,9 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
              w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,supplierId,session.siteIds]);
+          [orgId,supplierId,activeSession.siteIds]);
   }else if(externalOnly){
-    return session.accessAllSites
+    return activeSession.accessAllSites
       ? query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
@@ -86,7 +87,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
              ))
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId])
+          [orgId,activeSession.userId])
       : query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
@@ -96,9 +97,9 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
              ))
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
-          [orgId,session.userId,session.siteIds]);
+          [orgId,activeSession.userId,activeSession.siteIds]);
   }else{
-    return session.accessAllSites
+    return activeSession.accessAllSites
       ? query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
@@ -107,7 +108,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
-           ORDER BY w.requested_at DESC LIMIT 200`,[orgId,session.siteIds]);
+           ORDER BY w.requested_at DESC LIMIT 200`,[orgId,activeSession.siteIds]);
   }
   }
 

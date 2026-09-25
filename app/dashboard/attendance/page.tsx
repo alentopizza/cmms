@@ -543,7 +543,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     </section>}
 
     {canManage&&organizationId&&<ModuleNavigation
-      activeHref={attendanceHref({view:activeView})}
+      activeHref={activeView==="setup"?attendanceHref({view:"setup",step:activeStep}):attendanceHref({view:"operation"})}
       exact
       label="Secciones de Asistencia"
       items={[

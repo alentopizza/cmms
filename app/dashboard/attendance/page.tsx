@@ -208,8 +208,9 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     body:DEFAULT_BIOMETRIC_NOTICE_BODY,
   };
 
-  const selfMovementSegment=canSelf && openShift.rows[0]
-    ? await query<AttendanceMovementSegment>(
+  const [selfMovementSegment,selfDestinationTasks]=await Promise.all([
+    canSelf && openShift.rows[0]
+    ? query<AttendanceMovementSegment>(
         `SELECT segment.id::text,segment.segment_type,
                 segment.site_id::text,current_site.name site_name,
                 segment.from_site_id::text,from_site.name from_site_name,
@@ -230,10 +231,9 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
          LIMIT 1`,
         [openShift.rows[0].id],
       )
-    : {rows:[]} as {rows:AttendanceMovementSegment[]};
-
-  const selfDestinationTasks=canSelf && session.userId && organizationId && openShift.rows[0]
-    ? await query<SelfDestinationTask>(
+    : {rows:[]} as {rows:AttendanceMovementSegment[]},
+    canSelf && session.userId && organizationId && openShift.rows[0]
+    ? query<SelfDestinationTask>(
         `SELECT task.id::text,work_order.site_id::text,site.name site_name,
                 'OT #'||work_order.number::text||' · '||task.description label,task.status
          FROM work_order_tasks task
@@ -255,7 +255,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
          ORDER BY site.name,work_order.number,task.sort_order`,
         [organizationId,session.userId,session.accessAllSites,session.siteIds,session.externalSupplierId],
       )
-    : {rows:[]} as {rows:SelfDestinationTask[]};
+    : {rows:[]} as {rows:SelfDestinationTask[]},
+  ]);
 
   const selfContingency=canSelf && session.userId && organizationId
     ? await query<ContingencyRequestView>(

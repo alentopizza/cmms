@@ -26,6 +26,8 @@ for(const marker of [
   "export function CollectionView",
   "cmms:view-mode:",
   "cmms:view-mode-change",
+  'toolbarTargetId="module-view-mode-tools"',
+  "MutationObserver",
   'name="dashboard"',
   'name="menu"',
 ]){
@@ -38,7 +40,7 @@ for(const marker of ['data-view-pane="grid"','data-view-pane="list"','hidden={mo
 }
 
 const moduleHeader=fs.readFileSync("components/ModuleHeader.tsx","utf8");
-for(const marker of ["cmms:view-mode-change","viewRevision",'querySelectorAll<HTMLElement>("[data-module-record]")','closest<HTMLElement>("[data-view-pane]")']){
+for(const marker of ["cmms:view-mode-change","viewRevision",'id="module-view-mode-tools"','querySelectorAll<HTMLElement>("[data-module-record]")','closest<HTMLElement>("[data-view-pane]")']){
   if(!moduleHeader.includes(marker))throw new Error("ModuleHeader view-mode integration missing "+marker);
 }
 
@@ -83,7 +85,7 @@ for(const marker of [".ds-collection-view.is-grid .maintenance-mobile-list",".ds
 }
 
 const coreCss=fs.readFileSync("app/ui-kit-core.css","utf8");
-for(const marker of [".ds-view-mode-toggle",".ds-collection-view.is-list [data-collection-grid]","background:var(--color-brand-secondary)","color:var(--color-text-inverse)"]){
+for(const marker of [".ds-view-mode-toggle",".module-page-tools .module-view-mode-tools",".ds-collection-view.is-list [data-collection-grid]","background:var(--color-brand-secondary)","color:var(--color-text-inverse)"]){
   if(!coreCss.includes(marker))throw new Error("Shared view-mode styling missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(coreCss))throw new Error("UI Kit core CSS must remain token-only");

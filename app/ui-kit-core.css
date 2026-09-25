@@ -318,11 +318,14 @@
 .ds-collection-view{min-width:0}
 .ds-collection-view.is-list [data-collection-grid]{grid-template-columns:1fr!important}
 .ds-collection-view.is-list [data-collection-grid]>*{min-width:0}
-.module-page-tools .ds-view-mode-toggle{order:2;flex:0 0 auto}
+.module-page-tools .module-view-mode-tools{order:2;flex:0 0 auto;display:flex;align-items:center}
 .module-page-tools .module-add-action{order:3}
 .module-page-tools .module-visible-count{order:4}
 @media(max-width:700px){
   .ds-view-mode-toggle button{width:32px;height:32px}
+  .module-page-tools .module-view-mode-tools{width:100%}
+  .module-page-tools .module-view-mode-tools .ds-view-mode-toggle{width:100%}
+  .module-page-tools .module-view-mode-tools .ds-view-mode-toggle button{width:50%}
 }
 @media(prefers-reduced-motion:reduce){
   .ds-view-mode-toggle button{transition-duration:.01ms!important}

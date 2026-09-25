@@ -16,6 +16,14 @@ export type FaceCapture = {
   real:number;
 };
 
+export type ActiveLivenessChallengeCode="blink"|"turn_left"|"turn_right"|"head_up"|"head_down";
+
+export type ActiveLivenessEvidence={
+  code:ActiveLivenessChallengeCode;
+  label:string;
+  completedAt:string;
+};
+
 declare global {
   interface Window {
     Human?: any;
@@ -77,11 +85,107 @@ export async function loadBiometricEngine() {
     hand:{enabled:false},
     object:{enabled:false},
     segmentation:{enabled:false},
-    gesture:{enabled:false},
+    gesture:{enabled:true},
     cacheSensitivity:0,
   });
   await human.load();
   return human;
+}
+
+// ── Active enrollment liveness challenge ───────────────────────────────────
+
+const ACTIVE_LIVENESS_LABELS:Record<ActiveLivenessChallengeCode,string>={
+  blink:"Parpadea una vez",
+  turn_left:"Gira el rostro ligeramente a tu izquierda",
+  turn_right:"Gira el rostro ligeramente a tu derecha",
+  head_up:"Levanta ligeramente el rostro",
+  head_down:"Baja ligeramente el rostro",
+};
+
+function gestureStrings(result:any){
+  const raw=Array.isArray(result?.gesture)?result.gesture:[];
+  return raw.map((item:any)=>String(item?.gesture||"").toLowerCase());
+}
+
+function challengeMatched(code:ActiveLivenessChallengeCode,gestures:string[]){
+  if(code==="blink")return gestures.some(item=>item==="blink left eye"||item==="blink right eye");
+  if(code==="turn_left")return gestures.includes("facing left");
+  if(code==="turn_right")return gestures.includes("facing right");
+  if(code==="head_up")return gestures.includes("head up");
+  return gestures.includes("head down");
+}
+
+export function createActiveLivenessChallenge():ActiveLivenessChallengeCode[]{
+  const turns:ActiveLivenessChallengeCode[]=["turn_left","turn_right","head_up","head_down"];
+  const turn=turns[Math.floor(Math.random()*turns.length)]||"turn_left";
+  return Math.random()>.5?["blink",turn]:[turn,"blink"];
+}
+
+export async function runActiveLivenessChallenge({
+  human,
+  video,
+  challenge,
+  onStep,
+  timeoutMs=9000,
+}:{
+  human:any;
+  video:HTMLVideoElement;
+  challenge:ActiveLivenessChallengeCode[];
+  onStep?:(input:{index:number;code:ActiveLivenessChallengeCode;label:string;status:"waiting"|"done"})=>void;
+  timeoutMs?:number;
+}):Promise<ActiveLivenessEvidence[]>{
+  const evidence:ActiveLivenessEvidence[]=[];
+
+  for(let index=0;index<challenge.length;index+=1){
+    const code=challenge[index];
+    const label=ACTIVE_LIVENESS_LABELS[code];
+    onStep?.({index,code,label,status:"waiting"});
+    const deadline=Date.now()+timeoutMs;
+    let matched=false;
+
+    while(Date.now()<deadline){
+      const result=await human.detect(video);
+      if(result.face?.length!==1){
+        await new Promise(resolve=>setTimeout(resolve,180));
+        continue;
+      }
+      if(challengeMatched(code,gestureStrings(result))){
+        matched=true;
+        break;
+      }
+      await new Promise(resolve=>setTimeout(resolve,180));
+    }
+
+    if(!matched)throw new Error("No se pudo completar la prueba de vida: "+label.toLowerCase()+". Intenta de nuevo.");
+    evidence.push({code,label,completedAt:new Date().toISOString()});
+    onStep?.({index,code,label,status:"done"});
+    await new Promise(resolve=>setTimeout(resolve,450));
+  }
+
+  // Return to a frontal pose before generating the enrollment descriptor.
+  const centerDeadline=Date.now()+5000;
+  while(Date.now()<centerDeadline){
+    const result=await human.detect(video);
+    if(result.face?.length===1&&gestureStrings(result).includes("facing center"))return evidence;
+    await new Promise(resolve=>setTimeout(resolve,180));
+  }
+
+  throw new Error("Mira nuevamente de frente a la cámara para finalizar el enrolamiento.");
+}
+
+export function captureEnrollmentPreview(video:HTMLVideoElement){
+  const canvas=document.createElement("canvas");
+  const sourceWidth=video.videoWidth||720;
+  const sourceHeight=video.videoHeight||720;
+  const side=Math.min(sourceWidth,sourceHeight);
+  canvas.width=360;
+  canvas.height=360;
+  const sx=Math.max(0,(sourceWidth-side)/2);
+  const sy=Math.max(0,(sourceHeight-side)/2);
+  const context=canvas.getContext("2d");
+  if(!context)throw new Error("No fue posible preparar la vista previa del enrolamiento.");
+  context.drawImage(video,sx,sy,side,side,0,0,360,360);
+  return canvas.toDataURL("image/jpeg",0.72);
 }
 
 // ── Live face capture ────────────────────────────────────────────────────────

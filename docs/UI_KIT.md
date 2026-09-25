@@ -720,7 +720,7 @@ Compatibility migrations:
 - `ViewModeToggle` is the official grid/list switch. Active state uses the semantic brand action color and inverse icon; inactive state remains neutral.
 - `CollectionView` owns presentation mode only. It receives the already-authorized collection presentation, does not fetch data, persists the user's module preference in browser storage and emits `cmms:view-mode-change` so `ModuleHeader` reapplies the existing search/facet state after a view switch.
 - Modules with an existing table (for example Work Orders, Maintenance and Crews) pass the existing card and table surfaces as grid/list slots. Modules that only have cards reuse the same card collection and switch to a one-column list layout through `data-collection-grid`; do not create a parallel service or query only to satisfy list mode.
-- The shared pattern is wired into Companies, Locations, Suppliers, Users, Crews, Assets, Work Orders, Maintenance, Inventory and Leads. Locations additionally uses `StaticDataTable` as its approved explicit list view.
+- The shared pattern is wired into Companies, Locations, Suppliers, Users, Crews, Assets, Work Orders, Maintenance, Inventory and Leads. Crews mounts `CollectionView` into its local toolbar via `toolbarTargetId`; Locations additionally uses `StaticDataTable` as its approved explicit list view.
 - `DashboardAnalytics` keeps its current exported API while delegating KPI and trend rendering to `KpiCard`, `MetricGrid`, `StatTiles` and `LineChart`.
 
 Data authorization rule:

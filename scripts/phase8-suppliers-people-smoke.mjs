@@ -11,6 +11,7 @@ const required=[
   "components/AttendanceContingency.tsx",
   "components/SupervisedBiometricEnrollment.tsx",
   "components/UserStatisticsDashboard.tsx",
+  "lib/attendance-context.ts",
   "app/phase8-modules.css",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Phase 8 file: "+file);
@@ -32,7 +33,7 @@ if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Es
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
-for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button"]){
+for(const marker of ["phase8-users","<UserCard","<Badge","<Alert","<EmptyState","<StatTiles","<Button","attendanceAdminHref","Enrolar biometría inicial","Configurar asistencia"]){
   if(!users.includes(marker))throw new Error("Users Phase 8 migration missing "+marker);
 }
 for(const glyph of [">×<",">◎<"])if(users.includes(glyph))throw new Error("Users still contain legacy glyph "+glyph);
@@ -52,10 +53,25 @@ for(const marker of ["phase8-crews","<CrewCard","<Alert","<EmptyState","iconName
 if(crews.includes("♕")||crews.includes('className={"status-badge'))throw new Error("Crews still use legacy leader/status glyphs");
 
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
-for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<KpiCard","<StaticDataTable","recordProps"]){
+for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<KpiCard","<StaticDataTable","recordProps","attendance-admin-context","organization_id","initialUserId"]){
   if(!attendance.includes(marker))throw new Error("Attendance Phase 8 orchestration missing "+marker);
 }
 if(attendance.includes('className="table attendance-report-table"'))throw new Error("Attendance report still uses legacy table grammar");
+
+
+const attendanceContext=fs.readFileSync("lib/attendance-context.ts","utf8");
+for(const marker of ["session.platformRole===\"user\"","UUID.test(candidate)"]){
+  if(!attendanceContext.includes(marker))throw new Error("Attendance organization context guard missing "+marker);
+}
+const attendancePolicy=fs.readFileSync("app/api/attendance/policy/route.ts","utf8");
+for(const marker of ["attendanceOrganizationId","organization_id","SELECT 1 FROM organizations WHERE id=$1 AND active=true"]){
+  if(!attendancePolicy.includes(marker))throw new Error("Attendance policy platform context missing "+marker);
+}
+const supervisedRoute=fs.readFileSync("app/api/attendance/enrollment-supervised/route.ts","utf8");
+for(const marker of ["attendanceOrganizationId","organizationId","actor_platform_role","actor_email"]){
+  if(!supervisedRoute.includes(marker))throw new Error("Supervised biometric platform context missing "+marker);
+}
+if(supervisedRoute.includes("if(!session?.userId||!session.organizationId)"))throw new Error("Supervised enrollment still blocks authorized platform attendance managers");
 
 const capture=fs.readFileSync("components/AttendanceCapture.tsx","utf8");
 for(const marker of ["<UiIcon","<Badge","<Alert","<Button"]){
@@ -69,8 +85,8 @@ for(const marker of ["<UiIcon","<Badge","<Alert","<EmptyState","<Button"]){
 }
 if(contingency.includes("window.alert"))throw new Error("AttendanceContingency still uses native alert feedback");
 const biometric=fs.readFileSync("components/SupervisedBiometricEnrollment.tsx","utf8");
-for(const marker of ["<UiIcon","<Badge","<Alert","<Button"]){
-  if(!biometric.includes(marker))throw new Error("SupervisedBiometricEnrollment missing V2 primitive "+marker);
+for(const marker of ["<UiIcon","<Badge","<Alert","<Button","organizationId","initialUserId","id=\"biometric\""]){
+  if(!biometric.includes(marker))throw new Error("SupervisedBiometricEnrollment missing V2/admin primitive "+marker);
 }
 for(const glyph of ["⌖","◎"])if(biometric.includes(glyph))throw new Error("Biometric enrollment still contains legacy glyph "+glyph);
 
@@ -89,7 +105,7 @@ for(const marker of ["supplier:\"supplier\"","crew:\"crew\"","attendance:\"atten
 }
 
 const css=fs.readFileSync("app/phase8-modules.css","utf8");
-for(const selector of [".phase8-suppliers",".phase8-users",".phase8-crews",".phase8-attendance",".phase8-supplier-directory .supplier-profile-grid",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
+for(const selector of [".phase8-suppliers",".phase8-users",".phase8-crews",".phase8-attendance",".phase8-supplier-directory .supplier-profile-grid",".attendance-admin-context",".user-attendance-admin-panel",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 8 CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 8 CSS must use Design Tokens only");

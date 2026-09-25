@@ -272,25 +272,31 @@ export default function UserAttendanceAuditCenter({
 
   const combinedTimeline=useMemo<TimelineItem[]>(()=>{
     if(!data)return [];
-    const items:TimelineItem[]=[];
+    const items:Array<{at:string;item:TimelineItem}>=[];
 
     for(const shift of data.shifts){
       items.push({
-        id:"shift-in-"+shift.id,
-        title:"Entrada · "+shift.site_name,
-        description:modeLabel(shift.check_in_verification_mode)+" · "+(shift.completed_activities||0)+" actividad(es) finalizada(s) en la jornada",
-        meta:fmt(shift.check_in_at),
-        icon:"attendance",
-        tone:shift.check_in_verification_mode==="contingency"?"warning":"success",
+        at:shift.check_in_at,
+        item:{
+          id:"shift-in-"+shift.id,
+          title:"Entrada · "+shift.site_name,
+          description:modeLabel(shift.check_in_verification_mode)+" · "+(shift.completed_activities||0)+" actividad(es) finalizada(s) en la jornada",
+          meta:fmt(shift.check_in_at),
+          icon:"attendance",
+          tone:shift.check_in_verification_mode==="contingency"?"warning":"success",
+        },
       });
       if(shift.check_out_at){
         items.push({
-          id:"shift-out-"+shift.id,
-          title:"Salida · "+shift.site_name,
-          description:modeLabel(shift.check_out_verification_mode)+" · duración "+durationLabel(shift.duration_minutes),
-          meta:fmt(shift.check_out_at),
-          icon:"clock",
-          tone:shift.check_out_verification_mode==="contingency"?"warning":"info",
+          at:shift.check_out_at,
+          item:{
+            id:"shift-out-"+shift.id,
+            title:"Salida · "+shift.site_name,
+            description:modeLabel(shift.check_out_verification_mode)+" · duración "+durationLabel(shift.duration_minutes),
+            meta:fmt(shift.check_out_at),
+            icon:"clock",
+            tone:shift.check_out_verification_mode==="contingency"?"warning":"info",
+          },
         });
       }
     }
@@ -298,40 +304,50 @@ export default function UserAttendanceAuditCenter({
     for(const event of data.biometricEvents){
       const label=event.event_type==="enrolled"?"Biometría enrolada":event.event_type==="reenrolled"?"Biometría reenrolada":"Biometría revocada";
       items.push({
-        id:"bio-"+event.id,
-        title:label,
-        description:[event.site_name,event.actor_name,event.reason].filter(Boolean).join(" · "),
-        meta:fmt(event.occurred_at),
-        icon:"user",
-        tone:event.event_type==="revoked"?"danger":"brand",
+        at:event.occurred_at,
+        item:{
+          id:"bio-"+event.id,
+          title:label,
+          description:[event.site_name,event.actor_name,event.reason].filter(Boolean).join(" · "),
+          meta:fmt(event.occurred_at),
+          icon:"user",
+          tone:event.event_type==="revoked"?"danger":"brand",
+        },
       });
     }
 
     for(const item of data.contingencies){
       items.push({
-        id:"cont-"+item.id,
-        title:"Contingencia "+(item.action==="check_in"?"de entrada":"de salida")+" · "+contingencyLabel(item.status),
-        description:item.site_name+" · "+(REASON_LABELS[item.reason_code]||item.reason_code),
-        meta:fmt(item.requested_at),
-        icon:"warning",
-        tone:item.status==="used"||item.status==="approved"?"success":item.status==="pending"?"warning":"danger",
+        at:item.requested_at,
+        item:{
+          id:"cont-"+item.id,
+          title:"Contingencia "+(item.action==="check_in"?"de entrada":"de salida")+" · "+contingencyLabel(item.status),
+          description:item.site_name+" · "+(REASON_LABELS[item.reason_code]||item.reason_code),
+          meta:fmt(item.requested_at),
+          icon:"warning",
+          tone:item.status==="used"||item.status==="approved"?"success":item.status==="pending"?"warning":"danger",
+        },
       });
     }
 
     for(const item of data.scheduleAudit){
       items.push({
-        id:"schedule-audit-"+item.id,
-        title:auditActionLabel(item.action),
-        description:[item.actor_name,item.effective_from?"desde "+dateOnly(item.effective_from):null].filter(Boolean).join(" · "),
-        meta:fmt(item.created_at),
-        icon:"clock",
-        tone:auditActionTone(item.action),
+        at:item.created_at,
+        item:{
+          id:"schedule-audit-"+item.id,
+          title:auditActionLabel(item.action),
+          description:[item.actor_name,item.effective_from?"desde "+dateOnly(item.effective_from):null].filter(Boolean).join(" · "),
+          meta:fmt(item.created_at),
+          icon:"clock",
+          tone:auditActionTone(item.action),
+        },
       });
     }
 
     return items
-      .sort((a,b)=>new Date(String(b.meta)).getTime()-new Date(String(a.meta)).getTime())
-      .slice(0,100);
+      .sort((a,b)=>new Date(b.at).getTime()-new Date(a.at).getTime())
+      .slice(0,100)
+      .map(entry=>entry.item);
   },[data]);
 
   const summaryContent=data?<div className="attendance-audit-summary">

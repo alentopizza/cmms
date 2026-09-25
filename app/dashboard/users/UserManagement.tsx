@@ -164,6 +164,13 @@ function siteAccessLabel(user: ManagedUser) {
   return `${siteNames.slice(0, 2).join(", ")} +${siteNames.length - 2}`;
 }
 
+function attendanceAdminHref(user:ManagedUser){
+  const params=new URLSearchParams();
+  if(user.organization_id)params.set("organization_id",user.organization_id);
+  params.set("user_id",user.id);
+  return `/dashboard/attendance?${params.toString()}#biometric`;
+}
+
 const USER_DOCUMENT_CATEGORIES=[
   {value:"identity",label:"Documento de identidad / cédula"},
   {value:"resume",label:"Hoja de vida"},
@@ -722,13 +729,38 @@ export default function UserManagement({
               </div></div>
               <div className="entity-panel"><h3>Accesos</h3><p className="entity-panel-copy">{roleDescription(roleKey(selectedUser))}</p></div>
             </div>},
-            {id:"attendance",label:"Asistencia",content:<div className="entity-panel-grid">
-              <div className="entity-panel"><h3>Estado de campo</h3><div className="entity-info-grid">
-                <div className="entity-info-field"><span>Turno actual</span><strong>{selectedUser.open_shift?"Abierto":"Sin turno abierto"}</strong></div>
-                <div className="entity-info-field"><span>Horas 30 días</span><strong>{selectedUser.attendance_hours_30d}</strong></div>
-                <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
-                <div className="entity-info-field"><span>Seguimiento Reacción</span><strong>{selectedUser.tracking_live?"En línea":"Sin conexión"}</strong></div>
-              </div></div>
+            {id:"attendance",label:"Asistencia",content:<div className="entity-section-stack user-attendance-admin">
+              <div className="entity-panel-grid">
+                <div className="entity-panel"><h3>Estado de campo</h3><div className="entity-info-grid">
+                  <div className="entity-info-field"><span>Turno actual</span><strong>{selectedUser.open_shift?"Abierto":"Sin turno abierto"}</strong></div>
+                  <div className="entity-info-field"><span>Horas 30 días</span><strong>{selectedUser.attendance_hours_30d}</strong></div>
+                  <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
+                  <div className="entity-info-field"><span>Seguimiento Reacción</span><strong>{selectedUser.tracking_live?"En línea":"Sin conexión"}</strong></div>
+                </div></div>
+                <div className="entity-panel"><h3>Alcance operativo</h3><div className="entity-info-grid">
+                  <div className="entity-info-field"><span>Empresa</span><strong>{selectedUser.organization_name||"Sin empresa operativa"}</strong></div>
+                  <div className="entity-info-field"><span>Sedes autorizadas</span><strong>{siteAccessLabel(selectedUser)}</strong></div>
+                  <div className="entity-info-field"><span>Rol</span><strong>{roleName(roleKey(selectedUser))}</strong></div>
+                  <div className="entity-info-field"><span>Estado de cuenta</span><strong>{selectedUser.active?"Activo":"Inactivo"}</strong></div>
+                </div></div>
+              </div>
+              <div className="entity-panel user-attendance-admin-panel">
+                <div className="user-attendance-admin-heading">
+                  <span className="user-attendance-admin-icon" aria-hidden="true"><UiIcon name="attendance" size={20}/></span>
+                  <div>
+                    <span className="eyebrow">Administración contextual</span>
+                    <h3>Control de asistencia y biometría</h3>
+                    <p className="entity-panel-copy">Abre Asistencia con la empresa y esta persona ya seleccionadas. Desde allí puedes revisar la política, geocercas y realizar el enrolamiento facial supervisado sin volver a buscar al usuario.</p>
+                  </div>
+                  <Badge variant={selectedUser.biometric_status==="verified"?"success":selectedUser.biometric_status==="revoked"?"danger":selectedUser.biometric_status==="legacy"?"warning":"neutral"} icon="attendance">{biometricStatusLabel(selectedUser.biometric_status)}</Badge>
+                </div>
+                {selectedUser.organization_id
+                  ?<div className="user-attendance-admin-actions">
+                    <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Enrolar biometría inicial"}</Link>
+                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}`}><UiIcon name="settings" size={15}/>Configurar asistencia</Link>
+                  </div>
+                  :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
+              </div>
             </div>},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida del técnico</h3><p className="entity-panel-copy">Consolida identidad, rol, alcance, indicadores de ejecución, asistencia y estado operativo con los permisos actuales.</p></div><ProfileExportMenu entity="user" id={selectedUser.id} label="Exportar hoja de vida"/></div>},
           ]}

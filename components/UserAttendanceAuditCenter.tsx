@@ -43,10 +43,6 @@ type AuditShift={
   check_out_accuracy_m:number|null;
   check_in_distance_m:number|null;
   check_out_distance_m:number|null;
-  check_in_face_similarity:number|null;
-  check_out_face_similarity:number|null;
-  check_in_liveness:number|null;
-  check_out_liveness:number|null;
   check_in_contingency_id:string|null;
   check_out_contingency_id:string|null;
   duration_minutes:string;

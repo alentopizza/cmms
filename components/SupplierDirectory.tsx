@@ -2,27 +2,32 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
-import RequisitionBuilder, { type RequisitionSelectableItem } from "@/components/RequisitionBuilder";
+import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import UiIcon from "@/components/UiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MultiSelectDropdown, { type MultiSelectOption } from "@/components/MultiSelectDropdown";
-import BulkImportModal from "@/components/BulkImportModal";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
 import { SupplierCard } from "@/components/business-ui";
-import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Alert, EmptyState, Spinner } from "@/components/ui-kit/Feedback";
 import { CollectionView } from "@/components/ui-kit/DataControls";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StatTiles } from "@/components/ui-kit/Metrics";
+
+const RequisitionBuilder=dynamic(()=>import("@/components/RequisitionBuilder"),{
+  loading:()=> <Spinner label="Cargando requisición"/>,
+});
+const BulkImportModal=dynamic(()=>import("@/components/BulkImportModal"));
 
 export type SupplierDirectoryItem={
   id:string;organization_id:string;organization_name:string;organization_country:string|null;code:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;

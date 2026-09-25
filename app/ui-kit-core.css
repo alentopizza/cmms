@@ -330,3 +330,30 @@
 @media(prefers-reduced-motion:reduce){
   .ds-view-mode-toggle button{transition-duration:.01ms!important}
 }
+
+
+/* Compact ERP list identity -------------------------------------------------- */
+.ds-list-identity{display:flex;align-items:center;gap:var(--space-2);min-width:190px;max-width:360px}
+.ds-list-identity-media{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-brand-secondary)}
+.ds-list-identity-media.avatar{border-radius:50%}
+.ds-list-identity-media.logo{background:var(--color-surface)}
+.ds-list-identity-media img{width:100%;height:100%;object-fit:cover}
+.ds-list-identity-media.logo img{object-fit:contain;padding:4px}
+.ds-list-identity-media b{font-size:11px;font-weight:var(--font-weight-bold);letter-spacing:.03em}
+.ds-list-identity-copy{display:grid;gap:2px;min-width:0;line-height:1.25}
+.ds-list-identity-copy>strong{color:var(--color-text-primary);font-weight:var(--font-weight-semibold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-list-identity-copy>small,.ds-list-identity-copy>em{color:var(--color-text-muted);font-size:10px;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-list-quick-actions{display:inline-flex;align-items:center;justify-content:flex-end;gap:var(--space-1);white-space:nowrap}
+.ds-list-action{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text-secondary);cursor:pointer;text-decoration:none}
+.ds-list-action:hover{border-color:var(--color-border-active);background:var(--color-surface-soft);color:var(--color-brand-secondary)}
+.ds-list-action.primary{color:var(--color-brand-secondary);background:var(--color-surface-teal)}
+.ds-list-action.whatsapp{color:var(--color-success-text);background:var(--color-success-surface);border-color:var(--color-success-border)}
+.ds-list-action.danger{color:var(--color-danger-600)}
+.ds-list-action:focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
+.ds-static-data-table .ds-data-table td{vertical-align:middle}
+.ds-static-data-table .owner-record-actions{display:inline-flex;align-items:center;gap:var(--space-1)}
+.ds-static-data-table .owner-record-actions>.text-button,.ds-static-data-table .owner-delete-button{white-space:nowrap}
+@media(max-width:900px){
+  .ds-list-identity{min-width:170px}
+  .ds-list-identity-media{width:40px;height:40px;flex-basis:40px}
+}

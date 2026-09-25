@@ -25,4 +25,5 @@ export { ProgressBar, CircularProgress, Timeline, StepProgress } from "./Timelin
 export type { ProgressTone, TimelineItem } from "./TimelineProgress";
 export { DataPatternsPreview } from "./DataPatternsPreview";
 export { StaticDataTable } from "./StaticTable";
+export { EntityIdentityCell, ListQuickActions } from "./CollectionIdentity";
 export type { StaticTableColumn, StaticTableRow } from "./StaticTable";

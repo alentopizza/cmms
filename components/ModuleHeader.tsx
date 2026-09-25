@@ -61,7 +61,10 @@ export default function ModuleHeader({
   },[]);
 
   useEffect(() => {
-    const records = Array.from(document.querySelectorAll<HTMLElement>("[data-module-record]"));
+    const records = Array.from(document.querySelectorAll<HTMLElement>("[data-module-record]")).filter(record=>{
+      const pane=record.closest<HTMLElement>("[data-view-pane]");
+      return !pane?.hidden;
+    });
     const options:FacetOptionMap={};
 
     const recordMatchesFacet=(record:HTMLElement,facet:ModuleFacet,selected:string)=>{

@@ -11,11 +11,12 @@ import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Badge } from "@/components/ui-kit/Badge";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
-type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean};
+type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean};
 
 // ── Responsive maintenance directory: desktop table + mobile cards ─────────
 
@@ -30,16 +31,16 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
 
   const plans = session.platformRole !== "user"
     ? await query<PlanRow>(
-        `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+        `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
          FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
          ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`)
     : session.accessAllSites
       ? await query<PlanRow>(
-          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
            FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId])
       : await query<PlanRow>(
-          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
+          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
            FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 AND a.site_id = ANY($2::uuid[])
            ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId, session.siteIds]);
@@ -136,9 +137,12 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         className="maintenance-directory-table"
         caption="Rutinas de mantenimiento preventivo"
         columns={[
-          {key:"plan",label:"Plan"},{key:"company",label:"Empresa"},{key:"asset",label:"Equipo"},
-          {key:"frequency",label:"Frecuencia"},{key:"due",label:"Próximo vencimiento"},{key:"state",label:"Estado"},
-          ...(owner?[{key:"actions",label:"Acciones"}]:[]),
+          {key:"plan",label:"Rutina",width:"34%"},
+          {key:"company",label:"Empresa"},
+          {key:"asset",label:"Equipo"},
+          {key:"due",label:"Próximo vencimiento"},
+          {key:"state",label:"Estado"},
+          ...(owner?[{key:"actions",label:"Acciones",align:"end" as const}]:[]),
         ]}
         rows={plans.rows.map(p=>({id:p.id,recordProps:{
           "data-module-record":true,"data-status":p.active?"active":"inactive",
@@ -147,11 +151,20 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           "data-filter-site":p.site_id,"data-filter-site-label":p.site,
           "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
         },cells:{
-          plan:<strong>{p.name}</strong>,company:p.company,asset:p.asset,
-          frequency:"Cada "+p.frequency_value+" "+p.frequency_unit,
+          plan:<EntityIdentityCell
+            imageSrc={p.asset_has_image?"/api/assets/"+p.asset_id+"/image":null}
+            imageAlt={p.asset_has_image?"Imagen de "+p.asset:""}
+            icon="maintenance"
+            variant="thumbnail"
+            title={p.name}
+            subtitle={"Cada "+p.frequency_value+" "+p.frequency_unit}
+            meta={p.site}
+          />,
+          company:p.company,
+          asset:p.asset,
           due:p.next_due_at?new Date(p.next_due_at).toLocaleDateString("es-CO"):"Sin programar",
           state:<Badge variant={p.active?"success":"neutral"}>{p.active?"Activa":"Inactiva"}</Badge>,
-          ...(owner?{actions:<OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+          ...(owner?{actions:<ListQuickActions><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
             {name:"name",label:"Nombre",value:p.name},
             {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
             {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[
@@ -159,7 +172,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             ]},
             {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date"},
             {name:"active",label:"Estado",value:p.active,type:"checkbox"},
-          ]}/>}:{})
+          ]}/></ListQuickActions>}:{})
         }}))}
         empty={<EmptyState icon="file" title="No hay rutinas disponibles" description="Cuando existan rutinas visibles para tu alcance aparecerán aquí."/>}
       />}/>

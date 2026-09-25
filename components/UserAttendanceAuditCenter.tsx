@@ -49,6 +49,31 @@ type AuditShift={
   check_out_contingency_id:string|null;
   duration_minutes:string;
   completed_activities:number;
+  check_out_site_name:string|null;
+  travel_count:number;
+};
+
+type AuditSegment={
+  id:string;
+  attendance_shift_id:string;
+  sequence:number;
+  segment_type:"site"|"travel";
+  site_id:string|null;
+  site_name:string|null;
+  from_site_id:string|null;
+  from_site_name:string|null;
+  to_site_id:string|null;
+  to_site_name:string|null;
+  destination_task_id:string|null;
+  destination_task_label:string|null;
+  tracking_session_id:string|null;
+  started_at:string;
+  ended_at:string|null;
+  start_accuracy_m:number|null;
+  start_distance_m:number|null;
+  end_accuracy_m:number|null;
+  end_distance_m:number|null;
+  reaction_sample_count:number;
 };
 
 type BiometricProfile={
@@ -118,12 +143,14 @@ type AuditData={
     open_now:boolean;
     completed_activities:number;
     contingencies:number;
+    travels:number;
   };
   currentSchedule:AuditSchedule|null;
   upcomingSchedule:AuditSchedule|null;
   biometric:BiometricProfile;
   biometricEvents:BiometricEvent[];
   shifts:AuditShift[];
+  segments:AuditSegment[];
   contingencies:Contingency[];
   scheduleAudit:ScheduleAudit[];
 };
@@ -302,6 +329,33 @@ export default function UserAttendanceAuditCenter({
       }
     }
 
+    for(const segment of data.segments.filter(item=>item.segment_type==="travel")){
+      items.push({
+        at:segment.started_at,
+        item:{
+          id:"travel-start-"+segment.id,
+          title:"Desplazamiento · "+(segment.from_site_name||"Origen")+" → "+(segment.to_site_name||"Destino"),
+          description:[segment.destination_task_label,segment.reaction_sample_count>0?segment.reaction_sample_count+" punto(s) de ruta Reacción":null].filter(Boolean).join(" · "),
+          meta:fmt(segment.started_at),
+          icon:"reaction",
+          tone:"warning",
+        },
+      });
+      if(segment.ended_at){
+        items.push({
+          at:segment.ended_at,
+          item:{
+            id:"travel-arrival-"+segment.id,
+            title:"Llegada · "+(segment.to_site_name||"Destino"),
+            description:"Desplazamiento completado · "+durationLabel((new Date(segment.ended_at).getTime()-new Date(segment.started_at).getTime())/60000),
+            meta:fmt(segment.ended_at),
+            icon:"location",
+            tone:"success",
+          },
+        });
+      }
+    }
+
     for(const event of data.biometricEvents){
       const label=event.event_type==="enrolled"?"Biometría enrolada":event.event_type==="reenrolled"?"Biometría reenrolada":"Biometría revocada";
       items.push({
@@ -357,6 +411,7 @@ export default function UserAttendanceAuditCenter({
       <KpiCard label="Horas registradas" value={Number(data.summary.field_hours||0).toFixed(1)} hint="presencia real" icon="clock"/>
       <KpiCard label="Actividades finalizadas" value={String(data.summary.completed_activities)} hint="evidencia operativa" icon="activity"/>
       <KpiCard label="Contingencias" value={String(data.summary.contingencies)} hint="excepciones registradas" icon="warning" tone={data.summary.contingencies>0?"warning":"default"}/>
+      <KpiCard label="Desplazamientos" value={String(data.summary.travels)} hint="tramos entre sedes" icon="reaction" tone={data.summary.travels>0?"info":"default"}/>
     </MetricGrid>
 
     <div className="attendance-audit-overview-grid">
@@ -411,7 +466,7 @@ export default function UserAttendanceAuditCenter({
   const shiftsContent=data?<div className="attendance-audit-list">
     {data.shifts.length?data.shifts.map(shift=><article className="attendance-audit-record" key={shift.id}>
       <div className="attendance-audit-record-head">
-        <div><strong>{shift.site_name}</strong><span>{fmt(shift.check_in_at)}{shift.check_out_at?" → "+fmt(shift.check_out_at):" · jornada abierta"}</span></div>
+        <div><strong>{shift.site_name}{shift.check_out_site_name&&shift.check_out_site_name!==shift.site_name?" → "+shift.check_out_site_name:""}</strong><span>{fmt(shift.check_in_at)}{shift.check_out_at?" → "+fmt(shift.check_out_at):" · jornada abierta"}</span></div>
         <Badge variant={shift.status==="open"?"success":"neutral"}>{shift.status==="open"?"Abierta":"Cerrada"}</Badge>
       </div>
       <div className="attendance-audit-record-grid">
@@ -419,9 +474,31 @@ export default function UserAttendanceAuditCenter({
         <div><span>Entrada</span><strong>{modeLabel(shift.check_in_verification_mode)}</strong><small>GPS ±{shift.check_in_accuracy_m===null?"—":Math.round(shift.check_in_accuracy_m)+" m"} · distancia {shift.check_in_distance_m===null?"—":Math.round(shift.check_in_distance_m)+" m"}</small></div>
         <div><span>Salida</span><strong>{shift.check_out_at?modeLabel(shift.check_out_verification_mode):"Pendiente"}</strong><small>{shift.check_out_at?"GPS ±"+(shift.check_out_accuracy_m===null?"—":Math.round(shift.check_out_accuracy_m)+" m")+" · distancia "+(shift.check_out_distance_m===null?"—":Math.round(shift.check_out_distance_m)+" m"):"La jornada aún está abierta."}</small></div>
         <div><span>Actividades</span><strong>{shift.completed_activities}</strong><small>finalizadas vinculadas a esta jornada</small></div>
+        <div><span>Desplazamientos</span><strong>{shift.travel_count}</strong><small>tramos multi-sede visibles</small></div>
       </div>
       {(shift.check_in_verification_mode==="contingency"||shift.check_out_verification_mode==="contingency")&&<Alert variant="warning" title="Jornada con excepción">Al menos una marcación se realizó mediante una contingencia previamente autorizada y auditable.</Alert>}
     </article>):<EmptyState icon="file" title="Sin marcaciones" description="No hay entradas o salidas visibles para esta persona dentro del periodo seleccionado."/>}
+  </div>:null;
+
+  const movementContent=data?<div className="attendance-audit-list">
+    {data.segments.filter(segment=>segment.segment_type==="travel").length
+      ?data.segments.filter(segment=>segment.segment_type==="travel").map(segment=><article className="attendance-audit-record attendance-audit-travel" key={segment.id}>
+        <div className="attendance-audit-record-head">
+          <div><strong>{segment.from_site_name||"Origen"} → {segment.to_site_name||"Destino"}</strong><span>{fmt(segment.started_at)}{segment.ended_at?" → "+fmt(segment.ended_at):" · en curso"}</span></div>
+          <Badge variant={segment.ended_at?"success":"warning"} icon="reaction">{segment.ended_at?"Completado":"En tránsito"}</Badge>
+        </div>
+        <div className="attendance-audit-record-grid">
+          <div><span>Duración</span><strong>{segment.ended_at?durationLabel((new Date(segment.ended_at).getTime()-new Date(segment.started_at).getTime())/60000):"En curso"}</strong></div>
+          <div><span>Actividad destino</span><strong>{segment.destination_task_label||"Sin actividad vinculada"}</strong></div>
+          <div><span>GPS salida</span><strong>{segment.start_accuracy_m===null?"—":"±"+Math.round(segment.start_accuracy_m)+" m"}</strong><small>{segment.start_distance_m===null?"Sin distancia":"a "+Math.round(segment.start_distance_m)+" m de origen"}</small></div>
+          <div><span>GPS llegada</span><strong>{segment.end_accuracy_m===null?"—":"±"+Math.round(segment.end_accuracy_m)+" m"}</strong><small>{segment.end_distance_m===null?"Pendiente o sin GPS":"a "+Math.round(segment.end_distance_m)+" m de destino"}</small></div>
+          <div><span>Ruta Reacción</span><strong>{segment.reaction_sample_count}</strong><small>muestras conectadas durante el tramo</small></div>
+        </div>
+        {segment.tracking_session_id
+          ?<Alert variant="info" title="Trayecto correlacionado con Reacción">Este desplazamiento quedó vinculado a una sesión de seguimiento. Las muestras GPS de Reacción permanecen como evidencia operativa separada de Asistencia.</Alert>
+          :<Alert variant="info" title="Sin sesión Reacción al iniciar">Asistencia conserva salida y llegada aunque Reacción no estuviera conectada. El trayecto continuo solo existe cuando la app de seguimiento estaba activa.</Alert>}
+      </article>)
+      :<EmptyState icon="file" title="Sin desplazamientos" description="No hay cambios de sede visibles dentro del periodo seleccionado."/>}
   </div>:null;
 
   const biometricContent=data?<div className="attendance-audit-biometric">
@@ -475,9 +552,9 @@ export default function UserAttendanceAuditCenter({
   return <section id="attendance-audit" className="attendance-audit-center">
     <div className="attendance-audit-head">
       <div>
-        <span className="eyebrow">Fase 3 · expediente individual</span>
+        <span className="eyebrow">Expediente individual · asistencia multi-sede</span>
         <h2>Administración y auditoría de asistencia</h2>
-        <p>Consulta en una sola vista jornada programada, biometría, marcaciones reales, contingencias e historial administrativo.</p>
+        <p>Consulta jornada programada, marcaciones, desplazamientos entre sedes, biometría, contingencias y trazabilidad administrativa.</p>
       </div>
       <SegmentedControl items={PERIOD_OPTIONS} value={period} onChange={setPeriod} label="Periodo del expediente"/>
     </div>
@@ -504,6 +581,7 @@ export default function UserAttendanceAuditCenter({
         {id:"summary",label:"Resumen",content:summaryContent},
         {id:"schedule",label:"Jornada",content:scheduleContent},
         {id:"shifts",label:"Marcaciones",content:shiftsContent},
+        {id:"movements",label:"Desplazamientos",content:movementContent},
         {id:"biometric",label:"Biometría",content:biometricContent},
         {id:"contingencies",label:"Contingencias",content:contingencyContent},
         {id:"timeline",label:"Trazabilidad",content:timelineContent},

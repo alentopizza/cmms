@@ -51,7 +51,7 @@ El repositorio ya contiene, entre otros:
 - Usuarios, roles y alcance por empresa/sede.
 - Cuadrillas.
 - Asistencia facial 1:1 con geocerca.
-- Enrolamiento biométrico supervisado.
+- Enrolamiento biométrico móvil con aprobación única y recuperación asistida excepcional.
 - Contingencia de asistencia.
 - Reacción: mapa de sedes/técnicos, sesiones de tracking y trayecto reciente.
 - Horarios flexibles por día.
@@ -113,7 +113,7 @@ La administración de Asistencia ya no apila configuración, sedes, enrolamiento
 - `components/AttendanceSetupWorkspace.tsx` compone Stepper, contenido activo, Anterior/Siguiente, progreso circular y `StepProgress`.
 - El paso Configuración es una lectura de los valores reales; no duplica el formulario editable.
 - Sedes reutiliza los Sites/geocercas existentes y dirige la edición a la ficha canónica de Ubicación.
-- Enrolamiento reutiliza `SupervisedBiometricEnrollment`; no existe cámara, plantilla o endpoint biométrico nuevo.
+- El rediseño visual reutilizó inicialmente `SupervisedBiometricEnrollment`; la evolución actual usa `SelfBiometricEnrollment` + `BiometricEnrollmentAdmin` y conserva el componente supervisor solo como fallback.
 - Política continúa siendo el único formulario que publica a `/api/attendance/policy`.
 - El endpoint de Política solo conserva `view=setup&step=4` después de guardar/error para no sacar al usuario del flujo.
 - Resumen no crea una mutación de “finalización”; muestra el estado derivado de empresa, sedes, enrolamiento, política y contingencias.
@@ -260,7 +260,7 @@ Archivos clave:
 La administración de Asistencia ya no depende de que una identidad de plataforma tenga `organizationId` en su sesión.
 
 - Propietario Desweb y Superadministrador seleccionan explícitamente la empresa en `/dashboard/attendance`.
-- Una vez seleccionada, política, geocercas, contingencias, reportes y enrolamiento biométrico administrado se limitan a esa empresa.
+- Una vez seleccionada, política, geocercas, contingencias, reportes y gestión/aprobación biométrica se limitan a esa empresa.
 - `lib/attendance-context.ts` garantiza que un usuario tenant nunca pueda sustituir su organización mediante query/form data.
 - `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
 - El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
@@ -354,7 +354,7 @@ Empresa, Ubicación, Sububicación, Usuario/Técnico y Proveedor usan ficha **en
 ### Biometría y ubicación
 
 - Asistencia facial = verificación 1:1 del usuario autenticado.
-- Enrolamiento inicial = supervisado.
+- Enrolamiento inicial = solicitud móvil del empleado + una aprobación humana; el flujo supervisado queda como recuperación excepcional.
 - Foto de perfil ≠ plantilla biométrica.
 - Geolocalización de Asistencia se valida en servidor.
 - Reacción es tracking operativo separado de Asistencia.

@@ -54,10 +54,12 @@ export default function SupervisedBiometricEnrollment({
   people,
   sites,
   livenessThreshold,
+  organizationId,
 }:{
   people:Person[];
   sites:Site[];
   livenessThreshold:number;
+  organizationId?:string;
 }) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const streamRef=useRef<MediaStream|null>(null);
@@ -164,6 +166,7 @@ export default function SupervisedBiometricEnrollment({
         method:"POST",
         headers:{"content-type":"application/json"},
         body:JSON.stringify({
+          organizationId,
           userId:selected.id,
           siteId,
           embedding:face.embedding,

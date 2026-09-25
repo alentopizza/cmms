@@ -405,8 +405,9 @@ export async function DELETE(request:Request){
     const context=await loadContext(client,session,organizationId,userId);
     if("error" in context){await client.query("ROLLBACK");return context.error;}
     const today=organizationLocalDate(context.organization.timezone);
-    const target=await client.query<{effective_from:string}>(
-      `SELECT effective_from::text FROM user_attendance_schedules
+    const target=await client.query<{effective_from:string;base_site_id:string}>(
+      `SELECT effective_from::text,base_site_id::text
+       FROM user_attendance_schedules
        WHERE id=$1 AND organization_id=$2 AND user_id=$3 FOR UPDATE`,
       [scheduleId,organizationId,userId],
     );

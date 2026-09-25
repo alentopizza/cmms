@@ -555,13 +555,31 @@ export default function CompanyDirectory({
             </div>
             <Link className="button secondary entity-tab-cta" href="/dashboard/locations">Abrir módulo de ubicaciones</Link>
           </div>},
-          {id:"documents",label:"Documentos",content:<div className="entity-section-stack">
+          {id:"documents",label:"Documentos",content:<div className="entity-section-stack company-documents-tab">
             <StatTiles className="entity-stat-grid" items={[
               {label:"Documentos vigentes",value:selected.document_count},
               {label:"Pendientes / vencidos",value:selected.pending_document_count,tone:Number(selected.pending_document_count)>0?"warning":"success"},
               {label:"Perfil",value:selected.profile_completion+"%",tone:selected.profile_completion>=80?"success":"warning"},
             ]}/>
-            <div className="entity-panel"><h3>Expediente empresarial</h3><p className="entity-panel-copy">La gestión completa de documentos, archivo, restauración, vista previa y eliminación protegida permanece en la ficha empresarial.</p><Link className="button secondary entity-tab-cta" href={"/dashboard/companies/"+selected.id}>Abrir expediente documental</Link></div>
+            <section className="company-document-gateway" aria-labelledby={"company-documents-title-"+selected.id}>
+              <span className="company-document-gateway-icon" aria-hidden="true"><UiIcon name="file" size={22}/></span>
+              <div className="company-document-gateway-copy">
+                <span className="eyebrow">Expediente empresarial</span>
+                <h3 id={"company-documents-title-"+selected.id}>Documentos y cumplimiento</h3>
+                <p>Administra requisitos, archivos vigentes y archivados, vencimientos, vista previa, restauración y eliminación protegida desde la ficha completa de la empresa.</p>
+                <div className="company-document-gateway-status">
+                  <Badge variant="brand" icon="file">{selected.document_count} vigentes</Badge>
+                  <Badge variant={Number(selected.pending_document_count)>0?"warning":"success"} icon={Number(selected.pending_document_count)>0?"warning":"check"}>
+                    {selected.pending_document_count} pendientes / vencidos
+                  </Badge>
+                </div>
+              </div>
+              <Link className="ds-button ds-button-secondary ds-button-md company-document-gateway-action" href={"/dashboard/companies/"+selected.id}>
+                <UiIcon name="file" size={16}/>
+                <span>Abrir expediente</span>
+                <UiIcon name="chevron-right" size={14}/>
+              </Link>
+            </section>
           </div>},
           {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack">
             <StatTiles className="entity-stat-grid" items={[{label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"registrados / cupo"}]}/>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-24 — Corrección visual de Documentos en perfil de Empresa
+
+- Se corrigió la tarjeta **Expediente empresarial** de la pestaña Documentos del perfil rápido de Empresa.
+- El texto descriptivo y la acción **Abrir expediente** ahora tienen áreas separadas y ya no se superponen.
+- Se añadieron iconografía V2, estados de documentos vigentes/pendientes y composición responsive específica para desktop, tablet y móvil.
+- El cambio es únicamente visual; la ficha empresarial completa y la autoridad de documentos permanecen sin cambios.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 10: Reports, Settings and final audit
 
 ### Added

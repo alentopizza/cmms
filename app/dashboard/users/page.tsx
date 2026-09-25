@@ -53,21 +53,19 @@ export default async function UsersPage() {
            FROM users u
            LEFT JOIN LATERAL (
              SELECT om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
-                    COALESCE((
-                      SELECT array_agg(oms.site_id::text ORDER BY site.name)
-                      FROM organization_member_sites oms
-                      JOIN sites site ON site.id=oms.site_id
-                      WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
-                    ), ARRAY[]::text[]) site_ids,
-                    COALESCE((
-                      SELECT array_agg(site.name ORDER BY site.name)
-                      FROM organization_member_sites oms
-                      JOIN sites site ON site.id=oms.site_id
-                      WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
-                    ), ARRAY[]::text[]) site_names
+                    COALESCE(site_scope.site_ids,ARRAY[]::text[]) site_ids,
+                    COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names
              FROM organization_members om
              JOIN organizations o ON o.id=om.organization_id
              LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
+             LEFT JOIN LATERAL (
+               SELECT
+                 array_agg(oms.site_id::text ORDER BY site.name) site_ids,
+                 array_agg(site.name ORDER BY site.name) site_names
+               FROM organization_member_sites oms
+               JOIN sites site ON site.id=oms.site_id
+               WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+             ) site_scope ON true
              WHERE om.user_id=u.id
              ORDER BY om.created_at ASC
              LIMIT 1
@@ -92,18 +90,8 @@ export default async function UsersPage() {
                   EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
                   EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
-                  COALESCE((
-                    SELECT array_agg(oms.site_id::text ORDER BY site.name)
-                    FROM organization_member_sites oms
-                    JOIN sites site ON site.id=oms.site_id
-                    WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
-                  ), ARRAY[]::text[]) site_ids,
-                  COALESCE((
-                    SELECT array_agg(site.name ORDER BY site.name)
-                    FROM organization_member_sites oms
-                    JOIN sites site ON site.id=oms.site_id
-                    WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
-                  ), ARRAY[]::text[]) site_names,
+                  COALESCE(site_scope.site_ids,ARRAY[]::text[]) site_ids,
+                  COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
@@ -119,6 +107,14 @@ export default async function UsersPage() {
            JOIN organizations o ON o.id=om.organization_id
            LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           LEFT JOIN LATERAL (
+             SELECT
+               array_agg(oms.site_id::text ORDER BY site.name) site_ids,
+               array_agg(site.name ORDER BY site.name) site_names
+             FROM organization_member_sites oms
+             JOIN sites site ON site.id=oms.site_id
+             WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+           ) site_scope ON true
            WHERE om.organization_id=$1
            ORDER BY u.active DESC,u.full_name`,
           [session.organizationId],

@@ -128,6 +128,22 @@ It is a read/composition surface over the existing sources of truth:
 
 The dossier never changes authorization by itself. Tenant supervisors with limited Site scope only receive matching evidence and matching people; Platform Owner/Superadmin continue to require an explicit Company context. Existing schedule, biometric and contingency mutation routes remain authoritative.
 
+
+A field jornada may now span multiple Sites without creating multiple attendance shifts. The user checks in once at the origin Site and may repeat this sequence as operational work requires:
+
+1. while physically at the current Site, open **Desplazamientos** and select another authorized destination Site;
+2. optionally select an assigned Activity located at that destination;
+3. start the displacement; when geolocation is required, Attendance validates the origin geofence and records departure evidence;
+4. the jornada remains open in an **En tránsito** state and cannot be checked out or moved again until arrival is registered;
+5. if Reaction is connected, its route samples remain available as continuous tracking evidence associated with the Travel segment;
+6. at the destination, register arrival; Attendance validates the destination geofence and changes the current Site segment;
+7. Activities executed at that Site link to the same attendance shift through the current Site segment;
+8. repeat for another authorized Site or close the jornada from the current Site.
+
+The original shift Site remains the jornada origin and the checkout Site preserves the final location. Supervisors see the same evidence inside the attendance dossier through the **Desplazamientos** tab, origin → final Site labels and the chronological timeline.
+
+Attendance departure/arrival and Reaction tracking are intentionally different evidence. Reaction may show the technician moving toward an Attendance destination, but its samples do not create or complete a travel segment automatically. The existing contingency process covers check-in/check-out; movement departure/arrival uses regular geolocation validation when the policy requires it.
+
 The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
 
 - active assigned Work Orders;

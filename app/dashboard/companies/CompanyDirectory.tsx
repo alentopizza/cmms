@@ -20,6 +20,8 @@ import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-document-ca
 import { Badge } from "@/components/ui-kit/Badge";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
@@ -343,7 +345,55 @@ export default function CompanyDirectory({
           }}
         />;
       })}
-    </div>}/>} 
+    </div>} list={<StaticDataTable
+      className="company-directory-list"
+      caption="Listado de empresas"
+      columns={[
+        {key:"company",label:"Empresa",width:"30%"},
+        {key:"status",label:"Estado"},
+        {key:"plan",label:"Plan"},
+        {key:"city",label:"Ciudad / País"},
+        {key:"sites",label:"Ubicaciones",align:"end"},
+        {key:"assets",label:"Activos",align:"end"},
+        {key:"technicians",label:"Técnicos",align:"end"},
+        {key:"actions",label:"Acciones",align:"end"},
+      ]}
+      rows={companies.map(company=>({
+        id:company.id,
+        recordProps:{
+          "data-module-record":true,
+          "data-status":company.active?"active":"inactive",
+          "data-search":[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" "),
+          "data-filter-plan":company.plan_name||"",
+          "data-filter-plan-label":company.plan_name||"",
+          "data-filter-country":company.legal_country||company.country||"",
+          "data-filter-country-label":company.legal_country||company.country||"",
+          "data-filter-city":company.legal_city||company.city||"",
+          "data-filter-city-label":company.legal_city||company.city||"",
+        },
+        cells:{
+          company:<EntityIdentityCell
+            imageSrc={company.has_logo?"/api/organizations/"+company.id+"/assets/logo":null}
+            imageAlt={company.has_logo?"Logo de "+company.name:""}
+            fallback={initials(company.name)}
+            icon="company"
+            variant="logo"
+            title={company.name}
+            subtitle={company.legal_name||company.tax_id||"Empresa registrada"}
+            meta={company.billing_email||company.primary_contact_email||null}
+          />,
+          status:<Badge variant={company.active?"success":"neutral"}>{company.active?"Activa":"Inactiva"}</Badge>,
+          plan:company.plan_name||"Sin plan",
+          city:(company.city||company.legal_city||"Sin ciudad")+" · "+countryLabel(company.legal_country||company.country),
+          sites:Number(company.site_count)||0,
+          assets:Number(company.asset_count)||0,
+          technicians:Number(company.technician_count)||0,
+          actions:<ListQuickActions>
+            <button type="button" className="ds-list-action primary" onClick={()=>{setSelected(company);setEditing(false);}} title="Ver empresa" data-tooltip="Ver empresa" aria-label={"Ver empresa "+company.name}><UiIcon name="eye" size={16}/></button>
+          </ListQuickActions>,
+        },
+      }))}
+    />}/>} 
 
     <ConfirmDialog
       open={confirmation === "edit"}

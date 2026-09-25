@@ -19,6 +19,8 @@ import { Card } from "@/components/ui-kit/Card";
 import { KpiCard, MetricGrid, StatTiles } from "@/components/ui-kit/Metrics";
 import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -212,7 +214,58 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="button secondary">Ver detalles →</Link>}
             </>}
           />;
-        })}</div>}/>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
+        })}</div>} list={<StaticDataTable
+          className="inventory-directory-list"
+          caption="Listado de inventario"
+          columns={[
+            {key:"item",label:"Material / producto",width:"30%"},
+            {key:"status",label:"Estado"},
+            {key:"category",label:"Categoría"},
+            {key:"stock",label:"Existencia",align:"end"},
+            {key:"unit",label:"Unidad"},
+            {key:"location",label:"Ubicación / bodega"},
+            {key:"supplier",label:"Proveedor"},
+            {key:"actions",label:"Acciones",align:"end"},
+          ]}
+          rows={items.rows.map(item=>{
+            const state=stockState(item);
+            const quantity=Number(item.quantity||0);
+            return {
+              id:item.id,
+              recordProps:{
+                "data-module-record":true,"data-status":state.key,
+                "data-search":[item.sku,item.name,item.description,item.category,item.company,item.site,item.location,item.warehouse,item.supplier].filter(Boolean).join(" "),
+                "data-filter-organization":item.organization_id,"data-filter-organization-label":item.company,
+                "data-filter-site":item.site_id||"","data-filter-site-label":item.site||"",
+                "data-filter-category":item.category_id||"","data-filter-category-label":item.category||"",
+                "data-filter-supplier":item.supplier_id||"","data-filter-supplier-label":item.supplier||"",
+                "data-filter-warehouse":item.warehouse_id||"","data-filter-warehouse-label":item.warehouse||"",
+                "data-filter-record":item.active?"active":"inactive","data-filter-record-label":item.active?"Activo":"Inactivo",
+              },
+              cells:{
+                item:<EntityIdentityCell
+                  imageSrc={item.has_image?"/api/inventory/"+item.id+"/image":null}
+                  imageAlt={item.has_image?"Imagen de "+item.name:""}
+                  icon="inventory"
+                  variant="thumbnail"
+                  title={item.name}
+                  subtitle={item.sku}
+                  meta={item.presentation||item.description||null}
+                />,
+                status:<Badge variant={state.key==="out"?"danger":state.key==="low"?"warning":"success"}>{state.label}</Badge>,
+                category:item.category||"Sin categoría",
+                stock:quantity+" "+item.unit,
+                unit:item.unit,
+                location:item.warehouse||item.location||item.storage_location||item.site||"Sin registrar",
+                supplier:item.supplier||"Sin proveedor",
+                actions:<ListQuickActions>
+                  {item.supplier_id&&<Link href={"/dashboard/suppliers?supplier="+item.supplier_id+"&tab=inventory"} className="ds-list-action" title="Ver proveedor" data-tooltip="Ver proveedor" aria-label={"Ver proveedor de "+item.name}><UiIcon name="supplier" size={16}/></Link>}
+                  {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="ds-list-action primary" title="Ver detalles" data-tooltip="Ver detalles" aria-label={"Ver detalles de "+item.name}><UiIcon name="eye" size={16}/></Link>}
+                </ListQuickActions>,
+              },
+            };
+          })}
+        />}/>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
       </div>
 
       <aside className="inventory-movements-panel card">

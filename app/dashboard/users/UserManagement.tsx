@@ -330,39 +330,40 @@ export default function UserManagement({
   },[searchParams,users]);
 
   useEffect(()=>{
-    if(!selectedUserId)return;
-    const hasDocuments=Object.prototype.hasOwnProperty.call(documentsByUser,selectedUserId);
-    const hasEmergency=Object.prototype.hasOwnProperty.call(emergencyByUser,selectedUserId);
-    if(hasDocuments&&hasEmergency)return;
+    if(!selectedUserId||!["documents","emergency"].includes(preferredTab))return;
     const user=users.find(item=>item.id===selectedUserId)||null;
+    const loadingDocuments=preferredTab==="documents";
+    const alreadyLoaded=loadingDocuments
+      ?Object.prototype.hasOwnProperty.call(documentsByUser,selectedUserId)
+      :Object.prototype.hasOwnProperty.call(emergencyByUser,selectedUserId);
+    if(alreadyLoaded)return;
     if(!user?.organization_id){
-      setDocumentsByUser(previous=>({...previous,[selectedUserId]:[]}));
-      setEmergencyByUser(previous=>({...previous,[selectedUserId]:null}));
+      if(loadingDocuments)setDocumentsByUser(previous=>({...previous,[selectedUserId]:[]}));
+      else setEmergencyByUser(previous=>({...previous,[selectedUserId]:null}));
       return;
     }
     let cancelled=false;
     setDetailLoadingUser(selectedUserId);
     setDetailError("");
-    Promise.all([
-      fetch("/api/users/"+selectedUserId+"/documents",{headers:{Accept:"application/json"}}),
-      fetch("/api/users/"+selectedUserId+"/emergency-contact",{headers:{Accept:"application/json"}}),
-    ])
-      .then(async([documentsResponse,emergencyResponse])=>{
-        const documentsPayload=await documentsResponse.json().catch(()=>({}));
-        const emergencyPayload=await emergencyResponse.json().catch(()=>({}));
-        if(!documentsResponse.ok)throw new Error(documentsPayload?.message||"No fue posible cargar los documentos.");
-        if(!emergencyResponse.ok)throw new Error(emergencyPayload?.message||"No fue posible cargar el contacto de emergencia.");
+    const endpoint=loadingDocuments?"documents":"emergency-contact";
+    fetch("/api/users/"+selectedUserId+"/"+endpoint,{headers:{Accept:"application/json"}})
+      .then(async response=>{
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(payload?.message||(loadingDocuments?"No fue posible cargar los documentos.":"No fue posible cargar el contacto de emergencia."));
         if(cancelled)return;
-        setDocumentsByUser(previous=>({...previous,[selectedUserId]:Array.isArray(documentsPayload?.documents)?documentsPayload.documents:[]}));
-        setEmergencyByUser(previous=>({...previous,[selectedUserId]:emergencyPayload?.contact||null}));
+        if(loadingDocuments){
+          setDocumentsByUser(previous=>({...previous,[selectedUserId]:Array.isArray(payload?.documents)?payload.documents:[]}));
+        }else{
+          setEmergencyByUser(previous=>({...previous,[selectedUserId]:payload?.contact||null}));
+        }
       })
       .catch(error=>{if(!cancelled)setDetailError(error instanceof Error?error.message:"No fue posible cargar el expediente.");})
       .finally(()=>{if(!cancelled)setDetailLoadingUser(current=>current===selectedUserId?null:current);});
     return()=>{cancelled=true;};
-  },[selectedUserId,users,documentsByUser,emergencyByUser]);
+  },[selectedUserId,preferredTab,users,documentsByUser,emergencyByUser]);
 
   useEffect(()=>{
-    if(!selectedUserId||statisticsByUser[selectedUserId])return;
+    if(!selectedUserId||preferredTab!=="statistics"||statisticsByUser[selectedUserId])return;
     let cancelled=false;
     setStatisticsLoadingUser(selectedUserId);
     setStatisticsError("");
@@ -376,7 +377,7 @@ export default function UserManagement({
       .catch(error=>{if(!cancelled)setStatisticsError(error instanceof Error?error.message:"No fue posible cargar las estadísticas.");})
       .finally(()=>{if(!cancelled)setStatisticsLoadingUser(current=>current===selectedUserId?null:current);});
     return()=>{cancelled=true;};
-  },[selectedUserId,statisticsByUser]);
+  },[selectedUserId,preferredTab,statisticsByUser]);
 
   useEffect(()=>{
     if(searchParams.get("create")!=="1") return;
@@ -760,6 +761,7 @@ export default function UserManagement({
             <ProfileExportMenu entity="user" id={selectedUser.id} label="Hoja de vida"/>
           </>}
           initialTab={preferredTab}
+          onTabChange={setPreferredTab}
           tabs={[
             {id:"general",label:"Información general",content:<div className="entity-section-stack">
               <div className="entity-panel"><h3>Datos del usuario</h3><div className="entity-info-grid">

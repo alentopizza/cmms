@@ -11,7 +11,10 @@ import { AssetCard } from "@/components/business-ui";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import BulkImportModal from "@/components/BulkImportModal";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
-import UiIcon from "@/components/UiIcon";
+import AssetSubnav from "@/components/AssetSubnav";
+import AssetCatalogOverview, { type AssetCategorySummary, type AssetMaintenanceSummary, type AssetHistorySummary, type AssetDocumentSummary } from "@/components/AssetCatalogOverview";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 
 type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean};
 type Site={id:string;organization_id:string;label:string};
@@ -42,7 +45,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
       a.status,a.criticality,a.manufacturer,a.model,a.serial_number,(a.image_data IS NOT NULL) has_image
     FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
     LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN asset_categories c ON c.id=a.category_id LEFT JOIN suppliers p ON p.id=a.supplier_id`;
-  const [assets,sites,locations,suppliers]=await Promise.all([
+  const [assets,sites,locations,suppliers,catalogCategories,maintenanceSummary,historySummary,documentSummary]=await Promise.all([
     superadmin
       ? query<Asset>(assetSql+" ORDER BY a.created_at DESC LIMIT 600")
       : session.accessAllSites
@@ -67,6 +70,52 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         ? query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true ORDER BY name")
         : query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true AND organization_id=$1 ORDER BY name",[orgId])
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
+    superadmin
+      ? query<AssetCategorySummary>(`SELECT c.id,c.name,p.name parent_name,count(a.id)::int asset_count
+          FROM asset_categories c LEFT JOIN asset_categories p ON p.id=c.parent_id
+          LEFT JOIN assets a ON a.category_id=c.id
+          GROUP BY c.id,c.name,p.name ORDER BY p.name NULLS FIRST,c.name`)
+      : query<AssetCategorySummary>(`SELECT c.id,c.name,p.name parent_name,count(a.id)::int asset_count
+          FROM asset_categories c LEFT JOIN asset_categories p ON p.id=c.parent_id
+          LEFT JOIN assets a ON a.category_id=c.id
+          WHERE c.organization_id=$1
+          GROUP BY c.id,c.name,p.name ORDER BY p.name NULLS FIRST,c.name`,[orgId]),
+    superadmin
+      ? query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
+          FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
+          ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`)
+      : session.accessAllSites
+        ? query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
+            FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
+            WHERE mp.organization_id=$1 ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,[orgId])
+        : query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
+            FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
+            WHERE mp.organization_id=$1 AND a.site_id=ANY($2::uuid[])
+            ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,[orgId,session.siteIds]),
+    superadmin
+      ? query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
+          FROM work_orders w JOIN assets a ON a.id=w.asset_id
+          ORDER BY w.requested_at DESC LIMIT 250`)
+      : session.accessAllSites
+        ? query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
+            FROM work_orders w JOIN assets a ON a.id=w.asset_id
+            WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 250`,[orgId])
+        : query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
+            FROM work_orders w JOIN assets a ON a.id=w.asset_id
+            WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
+            ORDER BY w.requested_at DESC LIMIT 250`,[orgId,session.siteIds]),
+    superadmin
+      ? query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
+          FROM attachments at JOIN assets a ON a.id=at.asset_id
+          WHERE at.asset_id IS NOT NULL ORDER BY at.created_at DESC LIMIT 250`)
+      : session.accessAllSites
+        ? query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
+            FROM attachments at JOIN assets a ON a.id=at.asset_id
+            WHERE at.asset_id IS NOT NULL AND at.organization_id=$1 ORDER BY at.created_at DESC LIMIT 250`,[orgId])
+        : query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
+            FROM attachments at JOIN assets a ON a.id=at.asset_id
+            WHERE at.asset_id IS NOT NULL AND at.organization_id=$1 AND a.site_id=ANY($2::uuid[])
+            ORDER BY at.created_at DESC LIMIT 250`,[orgId,session.siteIds]),
   ]);
   const creationGate=await getCreationGateForScope("asset",session.organizationId,superadmin);
   const error=params.error==="sequence" ? creationGate.message
@@ -77,7 +126,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
   const management=assets.rows.filter(a=>a.status==="maintenance").length;
   const down=assets.rows.filter(a=>a.status==="down").length;
 
-  return <>
+  return <div className="phase7-assets">
     <ModuleHeader
       eyebrow="Registro técnico"
       title="Activos"
@@ -105,19 +154,20 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
         {canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar activo" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
       </div>}
     />
-    {params.created && <div className="notice success section">Activo creado correctamente.</div>}
-    {error && <div className="notice error section">{error}</div>}
+    <AssetSubnav/>
+    {params.created && <div className="section"><Alert variant="success" title="Activo creado">El activo se registró correctamente.</Alert></div>}
+    {error && <div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState icon="◇" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message} href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}/>}
 
-    <section className="section inventory-kpi-grid asset-kpi-grid">
-      <article className="inventory-kpi-card value"><span><UiIcon name="asset"/></span><div><small>Total activos</small><strong>{assets.rowCount||0}</strong><em>Todos los activos registrados</em></div></article>
-      <article className="inventory-kpi-card success"><span><UiIcon name="check"/></span><div><small>Operativos</small><strong>{operational}</strong><em>{assets.rowCount?Math.round(operational/assets.rowCount*100):0}% del total</em></div></article>
-      <article className="inventory-kpi-card warning"><span>!</span><div><small>En gestión</small><strong>{management}</strong><em>{assets.rowCount?Math.round(management/assets.rowCount*100):0}% del total</em></div></article>
-      <article className="inventory-kpi-card danger"><span>×</span><div><small>Fuera de servicio</small><strong>{down}</strong><em>{assets.rowCount?Math.round(down/assets.rowCount*100):0}% del total</em></div></article>
-    </section>
+    <MetricGrid className="section phase7-kpi-grid">
+      <KpiCard label="Total activos" value={String(assets.rowCount||0)} hint="Todos los activos registrados" icon="asset"/>
+      <KpiCard label="Operativos" value={String(operational)} hint={(assets.rowCount?Math.round(operational/assets.rowCount*100):0)+"% del total"} icon="check" tone="success"/>
+      <KpiCard label="En mantenimiento" value={String(management)} hint={(assets.rowCount?Math.round(management/assets.rowCount*100):0)+"% del total"} icon="maintenance" tone="warning"/>
+      <KpiCard label="Fuera de servicio" value={String(down)} hint={(assets.rowCount?Math.round(down/assets.rowCount*100):0)+"% del total"} icon="warning" tone="danger"/>
+    </MetricGrid>
 
-    <section className="section">
+    <section className="section phase7-anchor" id="asset-list">
       <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
       {assets.rows.length?<div className="asset-modern-grid">{assets.rows.map(a=><AssetCard
         key={a.id}
@@ -149,7 +199,14 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
             {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
           ]}/>}
         </>}
-      />)}</div>:<div className="card empty-state"><strong>Aún no hay activos.</strong><span>Usa Agregar activo o Importar para comenzar.</span></div>}
+      />)}</div>:<EmptyState icon="asset" title="Aún no hay activos" description="Usa Agregar activo o Importar para comenzar."/>}
     </section>
-  </>;
+    <AssetCatalogOverview
+      assets={assets.rows}
+      categories={catalogCategories.rows}
+      maintenance={maintenanceSummary.rows}
+      history={historySummary.rows}
+      documents={documentSummary.rows}
+    />
+  </div>;
 }

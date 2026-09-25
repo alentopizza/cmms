@@ -6,6 +6,10 @@ import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import FileDropzone from "@/components/FileDropzone";
 import UiIcon from "@/components/UiIcon";
+import AssetSubnav from "@/components/AssetSubnav";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -85,7 +89,7 @@ export default async function AssetDetailPage({
     :feedback.error==="relation"?"La sede, sububicación o proveedor seleccionado no corresponde a la empresa."
     :feedback.error?"Revisa los datos del activo e inténtalo nuevamente.":"";
 
-  return <>
+  return <div className="phase7-assets phase7-asset-detail">
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
       <Link href="/dashboard"><UiIcon name="home" size={13}/> Inicio</Link><span className="entity-breadcrumb-separator"><UiIcon name="chevron-right" size={13}/></span>
       <Link href="/dashboard/assets">Activos</Link><span className="entity-breadcrumb-separator"><UiIcon name="chevron-right" size={13}/></span>
@@ -98,7 +102,7 @@ export default async function AssetDetailPage({
         <div><span className="eyebrow">Ficha técnica</span><h1>{asset.name}</h1><p>{asset.code} · {asset.organization_name} · {asset.site_name}</p></div>
       </div>
       <div className="entity-profile-toolbar-actions">
-        <span className={"status-badge "+(asset.status==="operational"?"status-active":"")}><i/>{statusLabel(asset.status)}</span>
+        <Badge variant={asset.status==="operational"?"success":asset.status==="maintenance"?"warning":asset.status==="down"?"danger":"neutral"}>{statusLabel(asset.status)}</Badge>
         {canCreateRoutine&&<RoutineCreateModal
           assets={[{id:asset.id,organization_id:asset.organization_id,site_id:asset.site_id,name:asset.name,code:asset.code,label:asset.code+" · "+asset.name}]}
           fixedAssetId={asset.id}
@@ -108,10 +112,13 @@ export default async function AssetDetailPage({
         <Link className="button secondary" href="/dashboard/assets">Volver</Link>
       </div>
     </header>
+    <AssetSubnav/>
 
-    {feedback.created==="routine"&&<div className="notice success section">Rutina creada y asociada a este activo.</div>}
-    {feedback.updated&&<div className="notice success section">Activo actualizado correctamente.</div>}
-    {error&&<div className="notice error section">{error}</div>}
+    {(feedback.created==="routine"||feedback.updated)&&<div className="section phase7-feedback-stack">
+      {feedback.created==="routine"&&<Alert variant="success" title="Rutina creada">Rutina creada y asociada a este activo.</Alert>}
+      {feedback.updated&&<Alert variant="success" title="Activo actualizado">Activo actualizado correctamente.</Alert>}
+    </div>}
+    {error&&<div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     <section className="asset-detail-grid section">
       <article className="card asset-detail-card">
@@ -189,9 +196,17 @@ export default async function AssetDetailPage({
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Rutinas del activo</span><h2>Mantenimiento preventivo</h2></div><small>El activo ya queda seleccionado al crear desde aquí.</small></div>
-      {plans.rowCount?<div className="card inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Rutina</th><th>Frecuencia</th><th>Próxima ejecución</th><th>Duración</th><th>Estado</th></tr></thead><tbody>
-        {plans.rows.map(plan=><tr key={plan.id}><td><strong>{plan.name}</strong></td><td>Cada {plan.frequency_value} {plan.frequency_unit}</td><td>{plan.next_due_at?new Date(plan.next_due_at).toLocaleDateString("es-CO"):"Sin programar"}</td><td>{plan.estimated_minutes?plan.estimated_minutes+" min":"Sin estimar"}</td><td><span className={"status-badge "+(plan.active?"status-active":"status-inactive")}><i/>{plan.active?"Activa":"Inactiva"}</span></td></tr>)}
-      </tbody></table></div>:<div className="card empty-state"><strong>Este activo aún no tiene rutinas.</strong><span>Usa “Agregar rutina” y el activo quedará asociado automáticamente.</span></div>}
+      {plans.rowCount?<StaticDataTable
+        caption="Rutinas de mantenimiento del activo"
+        columns={[{key:"name",label:"Rutina"},{key:"frequency",label:"Frecuencia"},{key:"next",label:"Próxima ejecución"},{key:"duration",label:"Duración"},{key:"state",label:"Estado"}]}
+        rows={plans.rows.map(plan=>({id:plan.id,cells:{
+          name:<strong>{plan.name}</strong>,
+          frequency:"Cada "+plan.frequency_value+" "+plan.frequency_unit,
+          next:plan.next_due_at?new Date(plan.next_due_at).toLocaleDateString("es-CO"):"Sin programar",
+          duration:plan.estimated_minutes?plan.estimated_minutes+" min":"Sin estimar",
+          state:<Badge variant={plan.active?"success":"neutral"}>{plan.active?"Activa":"Inactiva"}</Badge>,
+        }}))}
+      />:<EmptyState icon="asset" title="Este activo aún no tiene rutinas" description="Usa Agregar rutina y el activo quedará asociado automáticamente."/>}
     </section>
-  </>;
+  </div>;
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import UiIcon from "@/components/UiIcon";
+import { Alert } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
 
 type ImportIssue={
   sheet:string;row:number;severity:"error"|"warning";message:string;
@@ -160,10 +162,10 @@ export default function BulkImportModal({
       <UiIcon name="upload" size={16}/><span>{label}</span>
     </button>
     {open&&<div className="modal-backdrop bulk-import-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false);}}>
-      <section className="modal-card bulk-import-modal bulk-import-master-modal" role="dialog" aria-modal="true" aria-label={title}>
+      <section className="modal-card bulk-import-modal bulk-import-master-modal phase7-bulk-import" role="dialog" aria-modal="true" aria-label={title}>
         <header className="modal-header">
           <div><span className="eyebrow">Carga masiva validada</span><h2>{title}</h2><p>{entity==="inventory"?"Una plantilla maestra para productos, bodegas y Kardex; el contexto decide cómo se distribuyen los proveedores.":"Carga o actualiza activos identificados por Código."}</p></div>
-          <button className="modal-close" type="button" onClick={()=>setOpen(false)} aria-label="Cerrar">×</button>
+          <button className="modal-close" type="button" onClick={()=>setOpen(false)} aria-label="Cerrar"><UiIcon name="x" size={16}/></button>
         </header>
 
         {entity==="inventory"&&<div className={"bulk-import-context "+(importScope==="context_only"?"contextual":"global")}>
@@ -208,8 +210,8 @@ export default function BulkImportModal({
         </div>
 
         {result&&<div className="bulk-import-result">
-          {result.error&&<div className="notice error">{result.error}</div>}
-          {result.importId&&<div className="notice success"><strong>{result.importId}</strong> · Importación confirmada y auditada.</div>}
+          {result.error&&<Alert variant="danger" title="No fue posible procesar la importación">{result.error}</Alert>}
+          {result.importId&&<Alert variant="success" title={result.importId}>Importación confirmada y auditada.</Alert>}
           {result.summary&&<div className="bulk-import-summary">{Object.entries(result.summary).filter(([,value])=>typeof value==="number").map(([key,value])=><span key={key}><strong>{value}</strong><small>{summaryLabel(key)}</small></span>)}</div>}
 
           {entity==="inventory"&&result.context?.otherSupplierRows&&result.context.otherSupplierRows>0&&supplierId&&<div className="bulk-import-context-warning">
@@ -245,15 +247,15 @@ export default function BulkImportModal({
             </div>
           </div>}
 
-          {result.valid&&<div className="notice success">Validación completa. {commitBlockedByDuplicates?"Selecciona Actualizar u Omitir para los SKU existentes antes de confirmar.":"Puedes confirmar la importación."}</div>}
-          {result.ok&&<div className="notice success">Importación completada. Actualizando el módulo…</div>}
+          {result.valid&&<Alert variant="success" title="Validación completa">{commitBlockedByDuplicates?"Selecciona Actualizar u Omitir para los SKU existentes antes de confirmar.":"Puedes confirmar la importación."}</Alert>}
+          {result.ok&&<Alert variant="success" title="Importación completada">Actualizando el módulo…</Alert>}
         </div>}
 
         <div className="bulk-import-history">
           <div className="bulk-import-history-head"><div><strong>Historial reciente</strong><span>Origen, alcance, usuario y resultado de las últimas importaciones.</span></div></div>
           {historyBusy?<div className="bulk-import-history-empty">Consultando historial…</div>:history.length?<div className="bulk-import-history-list">
             {history.map(batch=><article key={batch.id}>
-              <span className={"bulk-import-history-state "+batch.status}>{batch.status==="committed"?"Importada":batch.status==="rejected"?"Rechazada":"Validada"}</span>
+              <Badge variant={batch.status==="committed"?"success":batch.status==="rejected"?"danger":"info"}>{batch.status==="committed"?"Importada":batch.status==="rejected"?"Rechazada":"Validada"}</Badge>
               <div><strong>{batchLabel(batch)} · {batch.file_name}</strong><small>{batch.origin==="supplier"?"Proveedor · "+(batch.context_supplier_name||"contextual"):"Global"} · {new Date(batch.committed_at||batch.created_at).toLocaleString("es-CO")}{batch.user_name?" · "+batch.user_name:""}</small></div>
               <div className="bulk-import-history-counts"><span><b>{batch.imported_rows}</b> importadas</span><span><b>{batch.omitted_rows}</b> omitidas</span><span><b>{batch.warning_rows}</b> avisos</span><span><b>{batch.error_rows}</b> errores</span></div>
             </article>)}

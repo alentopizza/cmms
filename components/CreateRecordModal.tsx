@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui-kit/Button";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { Modal } from "@/components/ui-kit/Overlay";
 
 export default function CreateRecordModal({
@@ -10,6 +11,7 @@ export default function CreateRecordModal({
   description,
   triggerLabel,
   icon="+",
+  iconName,
   disabled=false,
   children,
 }:{
@@ -18,6 +20,7 @@ export default function CreateRecordModal({
   description?:string;
   triggerLabel:string;
   icon?:string;
+  iconName?:UiIconName;
   disabled?:boolean;
   children:ReactNode;
 }){
@@ -25,7 +28,7 @@ export default function CreateRecordModal({
 
   return <>
     <Button className="module-add-button" disabled={disabled} onClick={()=>setOpen(true)}>
-      <span className="module-add-button-icon" aria-hidden="true">{icon}</span>
+      <span className="module-add-button-icon" aria-hidden="true">{iconName?<UiIcon name={iconName} size={15}/>:icon}</span>
       <span>{triggerLabel}</span>
     </Button>
     <Modal

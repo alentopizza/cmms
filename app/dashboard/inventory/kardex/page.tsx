@@ -8,6 +8,8 @@ import CreateRecordModal from "@/components/CreateRecordModal";
 import InventorySubnav from "@/components/InventorySubnav";
 import UiIcon from "@/components/UiIcon";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 
 type Tx={
   id:string;organization_id:string;organization_name:string;item_id:string;sku:string;item_name:string;unit:string;supplier_id:string|null;supplier_name:string|null;
@@ -19,6 +21,12 @@ type Tx={
 type Item={id:string;sku:string;name:string;unit:string;organization_id:string;site_id:string|null;warehouse_id:string|null};
 type Warehouse={id:string;name:string;organization_id:string;site_id:string|null};
 
+function typeTone(type:string,quantity:number):BadgeVariant{
+  if(type==="receipt"||type==="return")return "success";
+  if(type==="issue"||type==="supplier_return")return "warning";
+  if(type==="transfer")return "info";
+  return quantity<0?"danger":"brand";
+}
 function typeLabel(type:string,quantity:number){
   if(type==="receipt")return "Entrada";
   if(type==="issue")return "Salida";
@@ -93,7 +101,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
     :params.error?"Revisa artículo, movimiento, cantidad y bodegas.":"";
   const initialMovement=requestedType==="receipt"?"receipt":requestedType==="issue"?"issue":requestedType==="transfer"?"transfer":requestedType==="adjustment"?"adjustment_positive":"receipt";
 
-  return <>
+  return <div className="phase7-inventory phase7-kardex">
     <ModuleHeader
       eyebrow="Inventario"
       title={sectionTitle(requestedType)}
@@ -113,7 +121,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       ]}
       action={<div className="module-header-action-group">
         <ModuleExportMenu entity="kardex" type={requestedType||undefined}/>
-        {canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" icon="▤">
+        {canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/movements">
           <div className="field form-span-2"><label>Artículo *</label><select name="item_id" required><option value="">Selecciona SKU / producto</option>{items.rows.map(item=><option key={item.id} value={item.id}>{item.sku} · {item.name}</option>)}</select></div>
           <div className="field"><label>Movimiento *</label><select name="movement_type" defaultValue={initialMovement} required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución a inventario</option><option value="transfer">Transferencia</option></select><small>Las devoluciones a proveedor se registran únicamente desde la requisición/recepción de origen.</small></div>
@@ -133,11 +141,11 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       </div>}
     />
     <InventorySubnav active={activeSection(requestedType)}/>
-    {params.created&&<div className="notice success section">Movimiento registrado y existencias actualizadas correctamente.</div>}
-    {error&&<div className="notice error section">{error}</div>}
+    {params.created&&<div className="section"><Alert variant="success" title="Movimiento registrado">Existencias actualizadas correctamente en Kardex.</Alert></div>}
+    {error&&<div className="section"><Alert variant="danger" title="Movimiento rechazado">{error}</Alert></div>}
 
-    <section className="card section inventory-kardex-directory">
-      <div className="inventory-kardex-table-wrap"><table className="table inventory-kardex-table"><thead><tr>
+    <section className="card section inventory-kardex-directory phase7-anchor">
+      <div className="ds-data-table-shell inventory-kardex-table-wrap"><div className="ds-data-table-scroll"><table className="ds-data-table inventory-kardex-table"><thead><tr>
         <th>Fecha</th><th>Movimiento</th><th>SKU / producto</th><th>Documento</th><th>Bodega</th><th>Cantidad</th><th>Costo</th><th>Lote / centro</th><th>Usuario</th>
       </tr></thead><tbody>
         {transactions.rows.map(tx=>{
@@ -150,7 +158,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
             data-filter-supplier={tx.supplier_id||""} data-filter-supplier-label={tx.supplier_name||""}
             data-filter-warehouse={tx.warehouse_id||""} data-filter-warehouse-label={tx.warehouse_name||""}>
             <td><strong>{new Date(tx.movement_at).toLocaleDateString("es-CO")}</strong><small className="table-subline">{new Date(tx.movement_at).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})}</small></td>
-            <td><span className={"kardex-type-pill "+tx.type}>{typeLabel(tx.type,qty)}</span></td>
+            <td><Badge variant={typeTone(tx.type,qty)}>{typeLabel(tx.type,qty)}</Badge></td>
             <td><strong>{tx.sku}</strong><small className="table-subline">{tx.item_name} · {tx.supplier_name||"Sin proveedor"}</small></td>
             <td>{tx.document_number||"—"}{tx.source_movement_id?<small className="table-subline">MOV · {tx.source_movement_id}</small>:null}{tx.import_number?<small className="table-subline">IMP-{new Date(tx.import_created_at||tx.movement_at).getFullYear()}-{tx.import_number.padStart(6,"0")}</small>:null}{tx.supplier_return_number?<small className="table-subline">DEV-{tx.supplier_return_number.padStart(6,"0")}</small>:null}{tx.requisition_id&&tx.requisition_number?<Link className="table-subline kardex-requisition-link" href={"/dashboard/requisitions/"+tx.requisition_id}>REQ-{tx.requisition_number.padStart(6,"0")}</Link>:null}</td>
             <td>{tx.warehouse_name||"—"}{tx.destination_name?<small className="table-subline">→ {tx.destination_name}</small>:null}</td>
@@ -160,8 +168,8 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
             <td>{tx.created_by_name||"Sistema"}</td>
           </tr>;
         })}
-      </tbody></table></div>
-      {!transactions.rowCount&&<div className="empty-state"><strong>No hay movimientos para este filtro.</strong><span>Registra un movimiento o cambia la sección del Kardex.</span></div>}
+      </tbody></table></div></div>
+      {!transactions.rowCount&&<EmptyState icon="file" title="No hay movimientos para este filtro" description="Registra un movimiento o cambia la sección del Kardex."/>}
     </section>
-  </>;
+  </div>;
 }

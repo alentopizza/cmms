@@ -902,3 +902,41 @@ Do not broaden selectors into future-phase modules.
 ### Next
 
 Phase 7 — Assets + Inventory end-to-end, including the approved secondary navigations and the validated Kardex/import workflows.
+
+
+## 31. DESWEB Phase 7 checkpoint — Assets + Inventory
+
+Phase 7 is implemented.
+
+### Runtime additions
+
+- `components/AssetSubnav.tsx`;
+- `components/AssetCatalogOverview.tsx`;
+- expanded `components/InventorySubnav.tsx`;
+- `app/phase7-modules.css`;
+- `scripts/phase7-assets-inventory-smoke.mjs`.
+
+### Asset catalog boundary
+
+Do not add `asset_types`, `asset_brands` or `asset_models` tables solely to match navigation labels. Current Types are represented by root Asset Categories, and Brand/Model views are derived from manufacturer/model fields. A future schema change needs a separate domain requirement and migration.
+
+### Inventory authority
+
+Do not update item balances directly from new UI code. Existing Kardex/movement APIs, stock-level triggers/services and unified import rules remain authoritative.
+
+### Import integrity
+
+BulkImportModal Phase 7 changes are presentational only. Preserve:
+- validation-before-commit;
+- contextual/global Supplier scope;
+- duplicate compare/update/skip policy;
+- batch history and audit;
+- current template formats.
+
+### Navigation
+
+Asset and Inventory secondary navigation consume ModuleNavigation. Hash/query destinations require exact active matching.
+
+### Next
+
+Phase 8 — Suppliers + Users + Crews + Attendance.

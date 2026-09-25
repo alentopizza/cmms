@@ -49,7 +49,7 @@ export default async function UiKitPage(){
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 6.</strong> Dashboard, Empresas y Ubicaciones ya son el primer bloque de módulos migrado end-to-end a V2. El catálogo también incluye la tabla estática SSR y las nuevas composiciones CompanyCard/SubLocationCard.
+        <strong>Fase 7.</strong> Activos e Inventario ya consumen navegación secundaria oficial, KPI, Business UI, tablas compartidas, estados V2 y flujos de importación/Kardex integrados sin cambiar la autoridad de stock.
       </div>
 
       <FoundationPreview/>

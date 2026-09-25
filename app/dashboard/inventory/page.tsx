@@ -14,6 +14,10 @@ import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
 import InventorySubnav from "@/components/InventorySubnav";
 import { InventoryCard } from "@/components/business-ui";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Card } from "@/components/ui-kit/Card";
+import { KpiCard, MetricGrid, StatTiles } from "@/components/ui-kit/Metrics";
+import { Badge } from "@/components/ui-kit/Badge";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -103,7 +107,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const lowStock=activeItems.filter(item=>Number(item.quantity)>0&&Number(item.quantity)<=Number(item.min_quantity)).length;
   const outStock=activeItems.filter(item=>Number(item.quantity)<=0).length;
 
-  return <>
+  return <div className="phase7-inventory">
     <ModuleHeader
       eyebrow="Abastecimiento"
       title="Inventario"
@@ -124,7 +128,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {canWrite&&orgId&&<BulkImportModal entity="inventory"/>}
         <ModuleExportMenu entity="inventory"/>
         {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
-        {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" icon="▤">
+        {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" iconName="inventory">
           <form className="form-grid unified-popup-form" method="post" action="/api/inventory" encType="multipart/form-data">
             <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
             <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
@@ -148,25 +152,27 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     />
     <InventorySubnav active="summary"/>
 
-    {params.created && <div className="notice success section">Artículo creado y existencia inicial registrada en Kardex.</div>}
-    {params.updated && <div className="notice success section">Artículo actualizado correctamente.</div>}
-    {params.movement && <div className="notice success section">Movimiento de Kardex registrado correctamente.</div>}
-    {params.requisition_created && <div className="notice success section">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} correctamente y separada{params.requisition_created==="1"?"":"s"} por proveedor.</div>}
-    {error && <div className="notice error section">{error}</div>}
+    {(params.created||params.updated||params.movement||params.requisition_created)&&<div className="section phase7-feedback-stack">
+      {params.created&&<Alert variant="success" title="Producto creado">Artículo creado y existencia inicial registrada en Kardex.</Alert>}
+      {params.updated&&<Alert variant="success" title="Producto actualizado">Artículo actualizado correctamente.</Alert>}
+      {params.movement&&<Alert variant="success" title="Kardex actualizado">Movimiento de Kardex registrado correctamente.</Alert>}
+      {params.requisition_created&&<Alert variant="success" title="Requisiciones creadas">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} correctamente y separada{params.requisition_created==="1"?"":"s"} por proveedor.</Alert>}
+    </div>}
+    {error&&<div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="▤" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
       href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}
     />}
 
-    <section className="section inventory-kpi-grid">
-      <article className="inventory-kpi-card value"><span><UiIcon name="asset"/></span><div><small>Valor total inventario</small><strong>{money(totalValue)}</strong><em>{activeItems.length} productos activos</em></div></article>
-      <article className="inventory-kpi-card success"><span><UiIcon name="check"/></span><div><small>Productos en stock</small><strong>{inStock}</strong><em>{activeItems.length?Math.round(inStock/activeItems.length*100):0}% del total activo</em></div></article>
-      <article className="inventory-kpi-card warning"><span>!</span><div><small>Stock bajo</small><strong>{lowStock}</strong><em>{activeItems.length?Math.round(lowStock/activeItems.length*100):0}% del total activo</em></div></article>
-      <article className="inventory-kpi-card danger"><span>×</span><div><small>Sin stock</small><strong>{outStock}</strong><em>{activeItems.length?Math.round(outStock/activeItems.length*100):0}% del total activo</em></div></article>
-    </section>
+    <MetricGrid className="section phase7-kpi-grid">
+      <KpiCard label="Valor total inventario" value={money(totalValue)} hint={activeItems.length+" productos activos"} icon="inventory"/>
+      <KpiCard label="Productos en stock" value={String(inStock)} hint={(activeItems.length?Math.round(inStock/activeItems.length*100):0)+"% del total activo"} icon="check" tone="success"/>
+      <KpiCard label="Stock bajo" value={String(lowStock)} hint={(activeItems.length?Math.round(lowStock/activeItems.length*100):0)+"% del total activo"} icon="warning" tone="warning"/>
+      <KpiCard label="Sin stock" value={String(outStock)} hint={(activeItems.length?Math.round(outStock/activeItems.length*100):0)+"% del total activo"} icon="error" tone="danger"/>
+    </MetricGrid>
 
-    <section className="section inventory-dashboard-layout" id="productos">
+    <section className="section inventory-dashboard-layout phase7-anchor" id="inventory-products">
       <div className="inventory-products-panel">
         <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div></div>
         {items.rows.length?<div className="inventory-product-grid">{items.rows.map(item=>{
@@ -205,7 +211,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="button secondary">Ver detalles →</Link>}
             </>}
           />;
-        })}</div>:<div className="card empty-state"><strong>Aún no hay artículos.</strong><span>Usa Nuevo producto o Importar para comenzar.</span></div>}
+        })}</div>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
       </div>
 
       <aside className="inventory-movements-panel card">
@@ -214,9 +220,9 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           {movements.rows.length?movements.rows.map(move=>{
             const qty=Number(move.quantity||0);
             return <article key={move.id} className={"inventory-movement-item "+move.type}>
-              <span>{move.type==="issue"||qty<0?"↓":move.type==="transfer"?"↔":"↑"}</span>
+              <span><UiIcon name={move.type==="issue"||qty<0?"upload":move.type==="transfer"?"activity":"download"} size={17}/></span>
               <div><strong>{movementLabel(move.type,qty)}</strong><small>{move.sku} · {move.name}</small><em>{move.warehouse||"Sin bodega"}{move.destination?" → "+move.destination:""} · {new Date(move.movement_at).toLocaleDateString("es-CO")}</em></div>
-              <b>{qty>0?"+":""}{qty}</b>
+              <Badge variant={move.type==="issue"||qty<0?"warning":"success"}>{qty>0?"+":""}{qty}</Badge>
             </article>;
           }):<div className="location-detail-empty">Todavía no hay movimientos registrados.</div>}
         </div>
@@ -234,5 +240,31 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         description="Selecciona insumos y cantidades. Si pertenecen a proveedores distintos, Desweb CMMS crea una requisición independiente para cada proveedor."
       />
     </section>}
-  </>;
+
+    <section className="section phase7-anchor" id="inventory-reports">
+      <Card header={<div><span className="eyebrow">Reportes</span><h2>Resumen de abastecimiento</h2></div>}>
+        <StatTiles items={[
+          {label:"Valor total",value:money(totalValue),hint:"existencia activa"},
+          {label:"Cobertura saludable",value:String(inStock),hint:"productos sobre mínimo",tone:"success"},
+          {label:"Riesgo de reposición",value:String(lowStock+outStock),hint:"stock bajo o agotado",tone:(lowStock+outStock)>0?"warning":"success"},
+          {label:"Movimientos recientes",value:String(movements.rows.length),hint:"últimos registros Kardex"},
+        ]}/>
+        <div className="phase7-report-actions">
+          <ModuleExportMenu entity="inventory"/>
+          <Link className="button secondary" href="/dashboard/inventory/kardex"><UiIcon name="file" size={15}/> Abrir Kardex</Link>
+        </div>
+      </Card>
+    </section>
+
+    <section className="section phase7-anchor" id="inventory-settings">
+      <Card header={<div><span className="eyebrow">Configuración</span><h2>Catálogos y trazabilidad</h2></div>}>
+        <div className="phase7-settings-grid">
+          <Link href="/dashboard/inventory/categories"><UiIcon name="file"/><span><strong>Categorías</strong><small>{categories.rows.length} categorías activas disponibles</small></span></Link>
+          <Link href="/dashboard/inventory/warehouses"><UiIcon name="location"/><span><strong>Almacenes</strong><small>{warehouses.rows.length} bodegas activas disponibles</small></span></Link>
+          <Link href="/dashboard/suppliers"><UiIcon name="supplier"/><span><strong>Proveedores</strong><small>{suppliers.rows.length} proveedores de materiales disponibles</small></span></Link>
+          <Link href="/dashboard/inventory/kardex"><UiIcon name="activity"/><span><strong>Reglas de stock</strong><small>El Kardex sigue siendo la autoridad de movimientos y saldos.</small></span></Link>
+        </div>
+      </Card>
+    </section>
+  </div>;
 }

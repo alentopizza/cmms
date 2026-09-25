@@ -6,6 +6,9 @@ import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import InventorySubnav from "@/components/InventorySubnav";
 import UiIcon from "@/components/UiIcon";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { StatTiles } from "@/components/ui-kit/Metrics";
 
 type Category={
   id:string;organization_id:string;organization_name:string;code:string;name:string;active:boolean;
@@ -36,7 +39,7 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
   const error=feedback.error==="duplicate"?"Ya existe una categoría con ese código o nombre."
     :feedback.error?"Completa los datos requeridos.":"";
 
-  return <>
+  return <div className="phase7-inventory">
     <ModuleHeader
       eyebrow="Inventario"
       title="Categorías"
@@ -46,7 +49,7 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
       searchPlaceholder="Buscar categoría, código o empresa"
       filters={[{value:"all",label:"Todas"},{value:"active",label:"Activas"},{value:"inactive",label:"Inactivas"}]}
       facets={[{key:"organization",label:"Empresa",allLabel:"Todas las empresas"}]}
-      action={canWrite&&session.organizationId?<CreateRecordModal title="Nueva categoría" eyebrow="Catálogo de inventario" description="Crea una categoría reutilizable para mantener datos consistentes." triggerLabel="Nueva categoría" icon="▤">
+      action={canWrite&&session.organizationId?<CreateRecordModal title="Nueva categoría" eyebrow="Catálogo de inventario" description="Crea una categoría reutilizable para mantener datos consistentes." triggerLabel="Nueva categoría" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/categories">
           <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Refrigeración"/></div>
           <div className="field"><label>Código</label><input name="code" placeholder="Ej. REF"/></div>
@@ -55,9 +58,11 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
       </CreateRecordModal>:undefined}
     />
     <InventorySubnav active="categories"/>
-    {feedback.created&&<div className="notice success section">Categoría creada correctamente.</div>}
-    {feedback.updated&&<div className="notice success section">Categoría actualizada correctamente.</div>}
-    {error&&<div className="notice error section">{error}</div>}
+    {(feedback.created||feedback.updated)&&<div className="section phase7-feedback-stack">
+      {feedback.created&&<Alert variant="success" title="Categoría creada">Categoría creada correctamente.</Alert>}
+      {feedback.updated&&<Alert variant="success" title="Categoría actualizada">Categoría actualizada correctamente.</Alert>}
+    </div>}
+    {error&&<div className="section"><Alert variant="danger" title="Revisa la categoría">{error}</Alert></div>}
 
     <section className="section inventory-category-grid">
       {result.rows.map(category=><article key={category.id} className={"card inventory-category-card "+(category.active?"":"inactive")}
@@ -67,13 +72,13 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
         <div className="inventory-category-card-head">
           <span><UiIcon name="file" size={19}/></span>
           <div><small>{category.code}</small><strong>{category.name}</strong><em>{category.organization_name}</em></div>
-          <b className={category.active?"status active":"status"}>{category.active?"Activa":"Inactiva"}</b>
+          <Badge variant={category.active?"success":"neutral"}>{category.active?"Activa":"Inactiva"}</Badge>
         </div>
-        <div className="inventory-category-metrics">
-          <div><span>Productos</span><strong>{category.item_count}</strong></div>
-          <div><span>Unidades</span><strong>{Number(category.quantity||0).toLocaleString("es-CO")}</strong></div>
-          <div><span>Valor</span><strong>{money(Number(category.total_value||0))}</strong></div>
-        </div>
+        <StatTiles className="inventory-category-metrics" items={[
+          {label:"Productos",value:String(category.item_count)},
+          {label:"Unidades",value:Number(category.quantity||0).toLocaleString("es-CO")},
+          {label:"Valor",value:money(Number(category.total_value||0))},
+        ]}/>
         {canWrite&&session.organizationId===category.organization_id&&<div className="inventory-category-actions">
           <details><summary className="button secondary"><UiIcon name="edit" size={14}/> Editar</summary>
             <form method="post" action={"/api/inventory/categories/"+category.id} className="inventory-popover-form">
@@ -89,7 +94,7 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
           </form>
         </div>}
       </article>)}
-      {!result.rowCount&&<div className="card empty-state"><strong>No hay categorías.</strong><span>Crea la primera categoría o impórtala junto con el inventario.</span></div>}
+      {!result.rowCount&&<EmptyState icon="file" title="No hay categorías" description="Crea la primera categoría o impórtala junto con el inventario."/>}
     </section>
-  </>;
+  </div>;
 }

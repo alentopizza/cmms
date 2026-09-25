@@ -765,3 +765,27 @@ Ubicaciones:
 - technician/service/profile/geofence workflows preserved.
 
 `app/phase6-modules.css` is intentionally scoped to `.phase6-dashboard`, `.phase6-company-directory` and `.phase6-location-directory`. It uses Design Tokens only and does not globally rewrite later-phase modules.
+
+
+## 32. Phase 7 — Assets + Inventory
+
+**Status: implemented.**
+
+Assets:
+- official secondary navigation covers List, Types, Categories, Brands, Models, States, Maintenance, History, Documents and Configuration;
+- Types intentionally map to root Asset Categories because no separate `asset_types` master table exists;
+- Brands and Models are derived from the existing manufacturer/model fields;
+- Maintenance, History and Documents are rendered from the established maintenance_plans, work_orders and attachments relationships;
+- list/detail/catalog surfaces consume AssetCard, KpiCard, MetricGrid, Badge, Alert, EmptyState and StaticDataTable.
+
+Inventory:
+- official secondary navigation covers Summary, Products, Categories, Warehouses, Entries, Issues, Adjustments, Transfers, Kardex, Reports and Configuration;
+- stock summary/detail/category/warehouse/Kardex surfaces consume V2 KPI, Badge, Alert, EmptyState, StatTiles and Shared Data UI table grammar;
+- Report and Configuration sections summarize the same live inventory, warehouse, Supplier and Kardex sources rather than introducing parallel persistence;
+- BulkImportModal preserves validation-before-commit, duplicate policy, contextual Supplier scope, batch history and audit behavior while consuming canonical Alert/Badge/icon patterns.
+
+`CreateRecordModal` now exposes an optional `iconName` bridge so migrated flows use `UiIcon` without breaking legacy callers.
+
+`ModuleNavigation` distinguishes query/hash destinations exactly, which is required for official secondary navigation where multiple sections share a pathname.
+
+`app/phase7-modules.css` is token-only and scoped to Assets/Inventory/Bulk Import surfaces.

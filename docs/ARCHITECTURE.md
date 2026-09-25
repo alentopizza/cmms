@@ -738,3 +738,25 @@ Module composition:
 `app/phase6-modules.css` is loaded after Business UI and before shell overrides. The file is intentionally scoped so later modules can continue their progressive migration.
 
 Authorization remains outside presentation. Dashboard filters alter SQL through the established server filter helpers; Company/Location directory filtering only narrows records already returned by authorized queries.
+
+
+### Operational master-data V2 block — Phase 7
+
+Assets and Inventory are the second complete module block migrated to V2.
+
+Assets architecture remains schema-stable:
+- `asset_categories.parent_id` provides the existing type/category hierarchy;
+- manufacturer/model remain record-level fields and drive derived Brand/Model views;
+- maintenance_plans, work_orders and attachments remain the sources for Maintenance, History and Documents views.
+
+This prevents the Design System migration from creating speculative business catalogs.
+
+Inventory architecture remains ledger-led:
+- `inventory_transactions`/stock-level logic remains authoritative for movement and balance behavior;
+- unified import continues to validate and commit through the existing service;
+- Supplier/Requisition/receipt/return relationships are unchanged;
+- Reports/Configuration are read-only compositions over authoritative data, not new persistence layers.
+
+Official secondary navigation is implemented with `ModuleNavigation`. Hash/query destinations are matched exactly so multiple module sections can safely share the same pathname.
+
+Phase 7 presentation is scoped by `app/phase7-modules.css`, loaded after Phase 6 and before shell overrides.

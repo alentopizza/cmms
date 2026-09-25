@@ -663,3 +663,24 @@ A module is considered migrated end-to-end when:
 Phase 6 applies this contract to Dashboard, Empresas and Ubicaciones.
 
 The new `StaticDataTable` is the canonical server-rendered table option. Use client DataTable when sorting/selection/row state must be interactive; use StaticDataTable for already-computed SSR rows where client callbacks would create an unnecessary boundary.
+
+
+## 32. Assets + Inventory module contract — Phase 7
+
+Assets:
+- use AssetCard for directory records;
+- use root categories as the current Type level instead of inventing an Asset Type table;
+- derive Brand/Model views from manufacturer/model until product requirements justify controlled catalogs;
+- use Badge for operational state, KpiCard/MetricGrid for summary and StaticDataTable for SSR history/catalog tables.
+
+Inventory:
+- use InventoryCard for product directory records;
+- treat Kardex as the visual and functional authority for stock movement history;
+- use Badge for stock/movement/category/warehouse states;
+- use StatTiles/KpiCard for summaries;
+- use Shared Data UI table grammar for Kardex and detail history;
+- Bulk Import remains a specialized Business flow but must consume canonical feedback, status and icon primitives.
+
+Secondary module navigation must use ModuleNavigation. When items share a path but differ by query/hash, active matching must use the complete href.
+
+Phase-specific CSS must remain scoped under `.phase7-assets`, `.phase7-inventory` or `.phase7-bulk-import` and use Design Tokens only.

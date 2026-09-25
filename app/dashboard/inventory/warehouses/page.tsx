@@ -6,6 +6,9 @@ import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import InventorySubnav from "@/components/InventorySubnav";
 import UiIcon from "@/components/UiIcon";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { StatTiles } from "@/components/ui-kit/Metrics";
 
 type Warehouse={
   id:string;organization_id:string;organization_name:string;site_id:string|null;site_name:string|null;location_id:string|null;location_name:string|null;
@@ -52,7 +55,7 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
     :feedback.error==="relation"?"La sede o sububicación no corresponde a la empresa."
     :feedback.error?"Completa los datos obligatorios del almacén.":"";
 
-  return <>
+  return <div className="phase7-inventory">
     <ModuleHeader
       eyebrow="Inventario"
       title="Almacenes / Bodegas"
@@ -65,7 +68,7 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
         {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
         {key:"site",label:"Sede",allLabel:"Todas las sedes"},
       ]}
-      action={canWrite&&orgId?<CreateRecordModal title="Nuevo almacén" eyebrow="Inventario físico" description="Define dónde se almacenan existencias y quién responde por ellas." triggerLabel="Nuevo almacén" icon="▤">
+      action={canWrite&&orgId?<CreateRecordModal title="Nuevo almacén" eyebrow="Inventario físico" description="Define dónde se almacenan existencias y quién responde por ellas." triggerLabel="Nuevo almacén" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/warehouses">
           <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.filter(site=>site.organization_id===orgId).map(site=><option value={site.id} key={site.id}>{site.name}</option>)}</select></div>
           <div className="field"><label>Sububicación</label><select name="location_id"><option value="">Sin sububicación específica</option>{locations.rows.filter(location=>location.organization_id===orgId).map(location=><option value={location.id} key={location.id}>{location.name}</option>)}</select></div>
@@ -81,9 +84,11 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
       </CreateRecordModal>:undefined}
     />
     <InventorySubnav active="warehouses"/>
-    {feedback.created&&<div className="notice success section">Almacén creado correctamente.</div>}
-    {feedback.updated&&<div className="notice success section">Almacén actualizado correctamente.</div>}
-    {error&&<div className="notice error section">{error}</div>}
+    {(feedback.created||feedback.updated)&&<div className="section phase7-feedback-stack">
+      {feedback.created&&<Alert variant="success" title="Almacén creado">Almacén creado correctamente.</Alert>}
+      {feedback.updated&&<Alert variant="success" title="Almacén actualizado">Almacén actualizado correctamente.</Alert>}
+    </div>}
+    {error&&<div className="section"><Alert variant="danger" title="Revisa el almacén">{error}</Alert></div>}
 
     <section className="section inventory-warehouse-grid">
       {warehouses.rows.map(warehouse=><article key={warehouse.id} className={"card inventory-warehouse-card "+(warehouse.active?"":"inactive")}
@@ -91,13 +96,13 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
         data-search={[warehouse.code,warehouse.name,warehouse.organization_name,warehouse.site_name,warehouse.location_name,warehouse.responsible,warehouse.location_detail].filter(Boolean).join(" ")}
         data-filter-organization={warehouse.organization_id} data-filter-organization-label={warehouse.organization_name}
         data-filter-site={warehouse.site_id||""} data-filter-site-label={warehouse.site_name||""}>
-        <div className="inventory-warehouse-head"><span><UiIcon name="location" size={22}/></span><div><small>{warehouse.code}</small><strong>{warehouse.name}</strong><em>{warehouse.organization_name} · {warehouse.site_name||"Sin sede"}{warehouse.location_name?" · "+warehouse.location_name:""}</em></div><b>{warehouse.active?"Activo":"Inactivo"}</b></div>
-        <div className="inventory-warehouse-metrics">
-          <div><span>Productos</span><strong>{warehouse.item_count}</strong></div>
-          <div><span>Existencias</span><strong>{Number(warehouse.quantity||0).toLocaleString("es-CO")}</strong></div>
-          <div><span>Valor</span><strong>{money(Number(warehouse.total_value||0))}</strong></div>
-          <div><span>Capacidad</span><strong>{warehouse.capacity||"—"}</strong></div>
-        </div>
+        <div className="inventory-warehouse-head"><span><UiIcon name="location" size={22}/></span><div><small>{warehouse.code}</small><strong>{warehouse.name}</strong><em>{warehouse.organization_name} · {warehouse.site_name||"Sin sede"}{warehouse.location_name?" · "+warehouse.location_name:""}</em></div><Badge variant={warehouse.active?"success":"neutral"}>{warehouse.active?"Activo":"Inactivo"}</Badge></div>
+        <StatTiles className="inventory-warehouse-metrics" items={[
+          {label:"Productos",value:String(warehouse.item_count)},
+          {label:"Existencias",value:Number(warehouse.quantity||0).toLocaleString("es-CO")},
+          {label:"Valor",value:money(Number(warehouse.total_value||0))},
+          {label:"Capacidad",value:warehouse.capacity||"—"},
+        ]}/>
         <div className="inventory-warehouse-copy"><span>Responsable</span><strong>{warehouse.responsible||"Sin registrar"}</strong><small>{warehouse.location_detail||warehouse.notes||"Sin observaciones"}</small></div>
         {canWrite&&<div className="inventory-category-actions">
           <details><summary className="button secondary"><UiIcon name="edit" size={14}/> Editar</summary>
@@ -117,7 +122,7 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
           <form method="post" action={"/api/inventory/warehouses/"+warehouse.id}><input type="hidden" name="intent" value="toggle"/><input type="hidden" name="active" value={warehouse.active?"false":"true"}/><button className="button secondary" type="submit"><UiIcon name="power" size={14}/>{warehouse.active?"Desactivar":"Activar"}</button></form>
         </div>}
       </article>)}
-      {!warehouses.rowCount&&<div className="card empty-state"><strong>No hay almacenes registrados.</strong><span>Crea uno o impórtalo desde la plantilla de Inventario/Kardex.</span></div>}
+      {!warehouses.rowCount&&<EmptyState icon="file" title="No hay almacenes registrados" description="Crea uno o impórtalo desde la plantilla de Inventario/Kardex."/>}
     </section>
-  </>;
+  </div>;
 }

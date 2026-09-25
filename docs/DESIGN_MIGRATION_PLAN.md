@@ -168,6 +168,8 @@ Objetivo:
 
 ## Fase 7 — Activos e Inventario
 
+**Estado: implementada.**
+
 ### Activos
 
 Implementar navegación secundaria oficial:
@@ -200,6 +202,20 @@ Implementar navegación secundaria oficial:
 - Configuración
 
 Migrar cards, tablas, formularios, importación, Kardex y estados sin cambiar la arquitectura funcional ya validada.
+
+**Phase 7 completion checkpoint — 2026-09-24**
+
+Phase 7 is implemented end-to-end for Assets and Inventory.
+
+Assets now includes the approved secondary navigation plus derived catalog views for Types (root categories), Categories, Brands, Models, States, Maintenance, History, Documents and Configuration. This deliberately reuses the existing schema instead of inventing new master-data tables. Asset list/detail surfaces consume official KPI, Badge, Alert, EmptyState, StaticDataTable and Business UI patterns.
+
+Inventory now includes the full approved navigation: Summary, Products, Categories, Warehouses, Entries, Issues, Adjustments, Transfers, Kardex, Reports and Configuration. Summary/detail/category/warehouse/Kardex surfaces consume V2 primitives while preserving the validated Kardex as stock authority. Bulk import keeps its atomic validation, duplicate policy, provider context and audit history while consuming canonical feedback/status/icon patterns.
+
+The CreateRecordModal icon bridge now accepts canonical UiIcon names for V2 module flows, and ModuleNavigation correctly distinguishes hash/query section destinations.
+
+No database schema, API, stock calculation, procurement, requisition, RBAC or organization/Site scope behavior changed.
+
+**Next implementation phase: Phase 8 — Suppliers + People.**
 
 ## Fase 8 — Proveedores + Personas
 

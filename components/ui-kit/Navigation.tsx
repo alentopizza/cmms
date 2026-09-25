@@ -60,17 +60,18 @@ export function Breadcrumb({items,label="Migas de pan"}:{items:BreadcrumbItem[];
   </nav>;
 }
 
-function moduleNavigationActive(activeHref:string|undefined,itemHref:string){
+function moduleNavigationActive(activeHref:string|undefined,itemHref:string,exact=false){
   if(!activeHref)return false;
+  if(exact||/[?#]/.test(itemHref))return activeHref===itemHref;
   const activePath=activeHref.split(/[?#]/)[0].replace(/\/$/,"");
-  const itemPath=itemHref.split(/[?#]/)[0].replace(/\/$/,"");
+  const itemPath=itemHref.replace(/\/$/,"");
   return activePath===itemPath||(itemPath!=="/dashboard"&&activePath.startsWith(itemPath+"/"));
 }
 
-export function ModuleNavigation({items,activeHref,label="Navegación del módulo"}:{items:Array<{label:string;href:string;disabled?:boolean}>;activeHref?:string;label?:string}){
+export function ModuleNavigation({items,activeHref,label="Navegación del módulo",exact=false}:{items:Array<{label:string;href:string;disabled?:boolean}>;activeHref?:string;label?:string;exact?:boolean}){
   return <nav className="ds-module-nav" aria-label={label}>
     {items.map(item=>{
-      const active=moduleNavigationActive(activeHref,item.href);
+      const active=moduleNavigationActive(activeHref,item.href,exact);
       return item.disabled
         ?<span key={item.href} className="disabled" aria-disabled="true">{item.label}</span>
         :<Link key={item.href} href={item.href} className={active?"active":""} aria-current={active?"page":undefined}>{item.label}</Link>;

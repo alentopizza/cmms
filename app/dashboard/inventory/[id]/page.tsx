@@ -6,6 +6,9 @@ import { query } from "@/lib/db";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
 import InventorySubnav from "@/components/InventorySubnav";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 
 type Item={
   id:string;organization_id:string;site_id:string;sku:string;name:string;description:string|null;presentation:string|null;unit:string;
@@ -50,7 +53,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
   ]);
   const canWrite=can(session,"inventory.write");
 
-  return <>
+  return <div className="phase7-inventory phase7-inventory-detail">
     <nav className="entity-breadcrumbs">
       <Link href="/dashboard"><UiIcon name="home" size={13}/> Inicio</Link><span className="entity-breadcrumb-separator"><UiIcon name="chevron-right" size={13}/></span>
       <Link href="/dashboard/inventory">Inventario</Link><span className="entity-breadcrumb-separator"><UiIcon name="chevron-right" size={13}/></span>
@@ -69,16 +72,18 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
       </div>
     </header>
     <InventorySubnav active="products"/>
-    {feedback.updated&&<div className="notice success section">Artículo actualizado.</div>}
-    {feedback.movement&&<div className="notice success section">Movimiento registrado en Kardex.</div>}
-    {feedback.error&&<div className="notice error section">No fue posible completar la operación. Revisa existencias, bodega y datos.</div>}
+    {(feedback.updated||feedback.movement)&&<div className="section phase7-feedback-stack">
+      {feedback.updated&&<Alert variant="success" title="Producto actualizado">Artículo actualizado correctamente.</Alert>}
+      {feedback.movement&&<Alert variant="success" title="Kardex actualizado">Movimiento registrado en Kardex.</Alert>}
+    </div>}
+    {feedback.error&&<div className="section"><Alert variant="danger" title="No fue posible completar la operación">Revisa existencias, bodega y datos.</Alert></div>}
 
-    <section className="section inventory-kpi-grid">
-      <article className="inventory-kpi-card value"><span><UiIcon name="asset"/></span><div><small>Existencia total</small><strong>{item.quantity} {item.unit}</strong><em>{money(Number(item.quantity)*Number(item.unit_cost))}</em></div></article>
-      <article className="inventory-kpi-card success"><span><UiIcon name="check"/></span><div><small>Costo unitario</small><strong>{money(Number(item.unit_cost))}</strong><em>{item.presentation||item.unit}</em></div></article>
-      <article className="inventory-kpi-card warning"><span>!</span><div><small>Stock mínimo</small><strong>{item.min_quantity}</strong><em>{item.unit}</em></div></article>
-      <article className="inventory-kpi-card value"><span><UiIcon name="location"/></span><div><small>Bodega principal</small><strong>{item.warehouse||"Sin registrar"}</strong><em>{item.site}{item.location?" · "+item.location:""}</em></div></article>
-    </section>
+    <MetricGrid className="section phase7-kpi-grid">
+      <KpiCard label="Existencia total" value={item.quantity+" "+item.unit} hint={money(Number(item.quantity)*Number(item.unit_cost))} icon="inventory"/>
+      <KpiCard label="Costo unitario" value={money(Number(item.unit_cost))} hint={item.presentation||item.unit} icon="activity" tone="success"/>
+      <KpiCard label="Stock mínimo" value={item.min_quantity} hint={item.unit} icon="warning" tone={Number(item.quantity)<=Number(item.min_quantity)?"warning":"default"}/>
+      <KpiCard label="Bodega principal" value={item.warehouse||"Sin registrar"} hint={item.site+(item.location?" · "+item.location:"")} icon="location"/>
+    </MetricGrid>
 
     <section className="section inventory-detail-grid">
       <div className="card inventory-detail-panel">
@@ -129,14 +134,15 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
 
     <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Kardex</span><h2>Historial de movimientos</h2></div></div>
-      <div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Bodega</th><th>Cantidad</th><th>Costo</th><th>Lote / vencimiento</th><th>Centro de costo</th><th>Observaciones</th></tr></thead><tbody>
+      <div className="ds-data-table-shell inventory-kardex-table-wrap"><div className="ds-data-table-scroll"><table className="ds-data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Bodega</th><th>Cantidad</th><th>Costo</th><th>Lote / vencimiento</th><th>Centro de costo</th><th>Observaciones</th></tr></thead><tbody>
         {transactions.rows.map(tx=>{const qty=Number(tx.quantity);return <tr key={tx.id}>
           <td>{new Date(tx.movement_at).toLocaleString("es-CO")}</td><td>{movementLabel(tx.type,qty)}</td><td>{tx.document_number||"—"}{tx.requisition_id&&tx.requisition_number?<Link className="table-subline kardex-requisition-link" href={"/dashboard/requisitions/"+tx.requisition_id}>REQ-{tx.requisition_number.padStart(6,"0")}</Link>:null}</td>
           <td>{tx.warehouse||"—"}{tx.destination?" → "+tx.destination:""}</td><td>{qty>0?"+":""}{qty} {item.unit}</td><td>{tx.unit_cost?money(Number(tx.unit_cost)):"—"}</td>
           <td>{tx.lot_number||"—"}{tx.expires_at?<small className="table-subline">Vence {new Date(tx.expires_at+"T12:00:00").toLocaleDateString("es-CO")}</small>:null}</td>
           <td>{tx.cost_center||"—"}</td><td>{tx.notes||"—"}</td>
         </tr>})}
-      </tbody></table></div>
+      </tbody></table></div></div>
+      {!transactions.rowCount&&<EmptyState icon="file" title="Sin movimientos" description="Los movimientos de Kardex de este producto aparecerán aquí."/>}
     </section>
-  </>;
+  </div>;
 }

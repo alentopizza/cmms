@@ -903,3 +903,18 @@ The scoped `app/phase6-modules.css` layer prevents the migration from spilling i
 No DB schema, API, RBAC or tenant/site scope changes were introduced.
 
 Next visual step: Phase 7 Assets + Inventory.
+
+
+### DESWEB V2 operational master-data block — Phase 7 implemented (2026-09-24)
+
+Assets and Inventory are now migrated end-to-end to the V2 presentation stack.
+
+Assets retains the existing `assets`, `asset_categories`, maintenance plan, Work Order and attachment model. The Phase 7 catalog navigation deliberately derives Types, Brands and Models from existing authoritative fields rather than adding speculative schema. List/detail surfaces and derived catalogs now share V2 metrics, statuses, tables, feedback and Business UI.
+
+Inventory retains Kardex as the stock authority and keeps the validated unified bulk-import service unchanged. Summary/detail, categories, warehouses and Kardex now share V2 primitives; Reports and Configuration are read-only operational views over existing stock/catalog data.
+
+Supplier links, Requisition generation, receipt/return reconciliation, multi-warehouse stock levels and import batch audit remain intact.
+
+No DB schema, API contract, RBAC or Site/Organization scoping change was introduced by Phase 7.
+
+Next visual migration: Phase 8 Suppliers + Users + Crews + Attendance.

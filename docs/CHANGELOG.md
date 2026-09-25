@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 7: Assets + Inventory
+
+### Added
+
+- Official `AssetSubnav` with all approved Asset sections.
+- Expanded official `InventorySubnav` with Reports and Configuration.
+- `AssetCatalogOverview` for schema-safe derived Asset catalog views.
+- Canonical `iconName` support in `CreateRecordModal`.
+- Hash/query-aware active matching in `ModuleNavigation`.
+- Token-only `app/phase7-modules.css`.
+- `scripts/phase7-assets-inventory-smoke.mjs` and CI coverage.
+
+### Assets
+
+- Migrated list KPI to KpiCard/MetricGrid.
+- Preserved AssetCard directory behavior and ModuleHeader filtering contracts.
+- Added Types, Categories, Brands, Models, States, Maintenance, History, Documents and Configuration views.
+- Migrated detail status/feedback/routine table to Badge, Alert, EmptyState and StaticDataTable.
+- Preserved edit, Supplier, Site/Sub-location, routine and export flows.
+
+### Inventory
+
+- Migrated summary/detail KPI to V2 metrics.
+- Added Reports and Configuration sections from live inventory data.
+- Migrated categories and warehouses to Badge/StatTiles/Alert/EmptyState.
+- Migrated Kardex tables to Shared Data UI table grammar and Badge states.
+- Replaced movement glyphs with UiIcon.
+- Integrated Bulk Import feedback/history status with Alert/Badge and canonical close icon.
+
+### Integrity
+
+- Kardex remains stock authority.
+- Unified import validation/commit logic is unchanged.
+- Requisition/Supplier/procurement reconciliation behavior is unchanged.
+- No database, API, RBAC or tenant/Site-scope change.
+
+### Next
+
+- Phase 8: Suppliers + Users + Crews + Attendance.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 6: Dashboard, Empresas y Ubicaciones
 
 ### Added

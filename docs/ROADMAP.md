@@ -337,7 +337,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 4 — Shared Data UI:** implemented — Search/FilterPanel, DataTable/Pagination, row/bulk actions, KPI/metric layouts, token chart palette, timeline/progress, ModuleHeader and DashboardAnalytics compatibility migration.
 - **Phase 5 — Business UI:** implemented — shared BusinessCardShell plus AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard and UserCard/Profile metric consolidation while preserving distinct domain identities.
 - **Phase 6 — Dashboard + Companies + Locations:** implemented end-to-end on V2, including SSR data tables, dashboard controls, CompanyCard, SubLocationCard, profile metrics, location filters and scoped module styling.
-- **Phase 7 — Assets + Inventory**, including their approved secondary navigation.
+- **Phase 7 — Assets + Inventory:** implemented end-to-end, including approved secondary navigation, derived Asset catalogs, Inventory reports/settings, V2 KPI/status/table surfaces, Bulk Import integration and Kardex migration while preserving stock authority.
 - **Phase 8 — Suppliers + Users + Crews + Attendance.**
 - **Phase 9 — Maintenance + Work Orders + Activities/Reaction where shared patterns apply.**
 - **Phase 10 — Reports + Settings + final legacy CSS/accessibility/responsive audit.**
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 7 — Assets + Inventory.**
+**Phase 8 — Suppliers + Users + Crews + Attendance.**
 
-Migrate Assets and Inventory end-to-end, including the approved secondary navigation, KPI/metric surfaces, cards/tables, forms, imports, Kardex and responsive states. Preserve the validated stock authority, unified import engine, Supplier relationships, requisition integration, RBAC and server-side scope.
+Migrate Suppliers and People end-to-end using the V2 layers already validated in Phases 6–7. Preserve Supplier/User visual distinction, profile-page workflows, requisitions/procurement relationships, document dossiers, biometric attendance, geolocation controls, privacy boundaries and existing RBAC/server-side scope.
 
 
 ## Recently completed role-dashboard analytics slice

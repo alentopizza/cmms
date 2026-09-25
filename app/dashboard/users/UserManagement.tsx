@@ -172,6 +172,11 @@ function attendanceAdminHref(user:ManagedUser){
   return `/dashboard/attendance?${params.toString()}#biometric`;
 }
 
+function attendanceScheduleEligible(user:ManagedUser){
+  return user.platform_role==="user"
+    && Boolean(user.role&&["admin","manager","technician","provider","external"].includes(user.role));
+}
+
 const USER_DOCUMENT_CATEGORIES=[
   {value:"identity",label:"Documento de identidad / cédula"},
   {value:"resume",label:"Hoja de vida"},
@@ -762,7 +767,7 @@ export default function UserManagement({
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
               </div>
-              {selectedUser.organization_id&&selectedUser.platform_role==="user"&&<UserAttendanceScheduleAdmin
+              {selectedUser.organization_id&&attendanceScheduleEligible(selectedUser)&&<UserAttendanceScheduleAdmin
                 key={selectedUser.id}
                 organizationId={selectedUser.organization_id}
                 people={[{id:selectedUser.id,full_name:selectedUser.full_name,role:roleName(roleKey(selectedUser))}]}

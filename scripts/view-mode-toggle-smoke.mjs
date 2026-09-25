@@ -44,7 +44,7 @@ const moduleContracts=[
   ["components/LocationDirectory.tsx",'storageKey="locations"'],
   ["components/SupplierDirectory.tsx",'storageKey="suppliers"'],
   ["app/dashboard/users/UserManagement.tsx",'storageKey="users"'],
-  ["components/CrewDirectory.tsx","<ViewModeToggle"],
+  ["components/CrewDirectory.tsx",'storageKey="crews"'],
   ["app/dashboard/assets/page.tsx",'storageKey="assets"'],
   ["app/dashboard/work-orders/page.tsx",'storageKey="work-orders"'],
   ["app/dashboard/maintenance/page.tsx",'storageKey="maintenance"'],
@@ -54,6 +54,10 @@ const moduleContracts=[
 for(const [file,marker] of moduleContracts){
   const source=fs.readFileSync(file,"utf8");
   if(!source.includes(marker))throw new Error(file+" missing shared view mode "+marker);
+}
+const crews=fs.readFileSync("components/CrewDirectory.tsx","utf8");
+for(const marker of ['toolbarTargetId="crew-view-mode-tools"','id="crew-view-mode-tools"']){
+  if(!crews.includes(marker))throw new Error("Crews local shared-toggle host missing "+marker);
 }
 
 const locations=fs.readFileSync("components/LocationDirectory.tsx","utf8");

@@ -23,14 +23,17 @@ type Lead = {
   country_code:string|null;
   interest:string;
   message:string|null;
+  source:string;
   status:"new"|"contacted"|"qualified"|"closed"|"discarded";
   created_at:string;
+  updated_at:string;
 };
 
 function initials(value:string){
   return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase()||"L";
 }
 
+const SOURCE_LABELS:Record<string,string>={landing:"Landing",manual:"Manual"};
 const INTEREST_LABELS:Record<string,string>={
   demo:"Demostración",
   trial:"Prueba 15 días",
@@ -51,7 +54,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
   const customization=await getCustomizationSummary();
 
   const leads=await query<Lead>(
-    `SELECT id,full_name,company_name,email,phone,country_code,interest,message,status,created_at::text
+    `SELECT id,full_name,company_name,email,phone,country_code,interest,message,source,status,created_at::text,updated_at::text
      FROM sales_leads
      ORDER BY created_at DESC
      LIMIT 300`
@@ -104,7 +107,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
 
     <section className="section leads-directory">
       {leads.rowCount===0 ? <div className="card empty-state"><span className="eyebrow">Sin oportunidades</span><h2>Aún no hay leads registrados</h2><p>Cuando alguien solicite contacto desde la landing aparecerá aquí.</p></div> :
-        <CollectionView storageKey="leads" label="Vista de leads" grid={<div className="grid leads-directory-grid" data-collection-grid>{leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" ")}>
+        <CollectionView storageKey="leads" label="Vista de leads" grid={<div className="grid leads-directory-grid" data-collection-grid>{leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],SOURCE_LABELS[lead.source]||lead.source,lead.message,lead.status].filter(Boolean).join(" ")}>
           <div className="lead-card-head">
             <div><strong>{lead.full_name}</strong><span>{lead.company_name}</span></div>
             <span className={`lead-status lead-status-${lead.status}`}>{lead.status}</span>
@@ -150,10 +153,11 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           columns={[
             {key:"lead",label:"Lead",width:"30%"},
             {key:"status",label:"Estado"},
-            {key:"interest",label:"Origen / interés"},
-            {key:"contact",label:"Contacto"},
+            {key:"interest",label:"Interés"},
+            {key:"source",label:"Origen"},
             {key:"country",label:"País"},
             {key:"date",label:"Fecha"},
+            {key:"activity",label:"Última actividad"},
             {key:"followup",label:"Seguimiento"},
             {key:"actions",label:"Acciones",align:"end"},
           ]}
@@ -162,15 +166,16 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
             recordProps:{
               "data-module-record":true,
               "data-status":lead.status,
-              "data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],lead.message,lead.status].filter(Boolean).join(" "),
+              "data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],SOURCE_LABELS[lead.source]||lead.source,lead.message,lead.status].filter(Boolean).join(" "),
             },
             cells:{
               lead:<EntityIdentityCell fallback={initials(lead.full_name)} icon="lead" variant="avatar" title={lead.full_name} subtitle={lead.company_name} meta={lead.email}/>,
               status:<span className={"lead-status lead-status-"+lead.status}>{lead.status}</span>,
               interest:INTEREST_LABELS[lead.interest]||lead.interest,
-              contact:lead.phone||lead.email,
+              source:SOURCE_LABELS[lead.source]||lead.source,
               country:countryName(lead.country_code)||"Sin registrar",
               date:new Date(lead.created_at).toLocaleDateString("es-CO"),
+              activity:new Date(lead.updated_at).toLocaleString("es-CO"),
               followup:<form className="lead-status-form lead-status-form-compact" method="post" action={"/api/leads/"+lead.id+"/status"}>
                 <label><span className="ds-visually-hidden">Estado de seguimiento</span>
                   <select name="status" defaultValue={lead.status}>

@@ -282,7 +282,10 @@ export async function buildAttendanceOperationalReport(
          AND om.role=ANY($2::text[])
          AND (
            $3::boolean
-           OR COALESCE(om.access_all_sites,true)=true
+           OR (
+             COALESCE(om.access_all_sites,true)=true
+             AND cardinality($4::uuid[])>0
+           )
            OR EXISTS(
              SELECT 1 FROM organization_member_sites oms
              WHERE oms.organization_id=om.organization_id

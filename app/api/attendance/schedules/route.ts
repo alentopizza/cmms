@@ -244,6 +244,10 @@ export async function POST(request:Request){
       row.effective_from,row.effective_until,payload.effectiveFrom,payload.effectiveUntil,
     ));
     const replaceable=overlaps.filter(row=>row.effective_from<payload.effectiveFrom);
+    if(replaceable.length&&payload.effectiveFrom<=today){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"La jornada vigente de hoy ya forma parte del historial. Programa el cambio desde mañana o una fecha futura."},{status:409});
+    }
     if(replaceable.length===1){
       const prior=replaceable[0];
       await client.query(
@@ -312,9 +316,9 @@ export async function PATCH(request:Request){
       return NextResponse.json({message:"Revisa la vigencia y el horario semanal."},{status:422});
     }
     const today=organizationLocalDate(organization.timezone);
-    if(payload.effectiveFrom<today){
+    if(payload.effectiveFrom<=today){
       await client.query("ROLLBACK");
-      return NextResponse.json({message:"Las vigencias que ya comenzaron se conservan como evidencia. Crea una nueva vigencia para cambiar el horario."},{status:409});
+      return NextResponse.json({message:"Una vigencia existente solo se edita antes de iniciar. Para hoy o períodos anteriores crea una nueva vigencia futura."},{status:409});
     }
     const siteError=validateSiteScope(session,person,sites,payload.baseSiteId,payload.source,payload.sourceSiteId);
     if(siteError){await client.query("ROLLBACK");return NextResponse.json({message:siteError},{status:422});}
@@ -325,9 +329,9 @@ export async function PATCH(request:Request){
       [scheduleId,organizationId,userId],
     );
     if(!target.rowCount){await client.query("ROLLBACK");return NextResponse.json({message:"La vigencia no existe."},{status:404});}
-    if(target.rows[0].effective_from<today){
+    if(target.rows[0].effective_from<=today){
       await client.query("ROLLBACK");
-      return NextResponse.json({message:"Esta vigencia ya inició y no se edita retroactivamente. Crea una nueva vigencia."},{status:409});
+      return NextResponse.json({message:"Esta vigencia ya inició y no se edita retroactivamente. Crea una nueva vigencia futura."},{status:409});
     }
 
     const others=await client.query<{id:string;effective_from:string;effective_until:string|null}>(

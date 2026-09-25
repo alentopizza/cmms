@@ -272,7 +272,7 @@ export default function AttendanceOperationalReport({organizationId}:{organizati
         </article>
       </div>
 
-      <Alert variant="info" title="Lectura descriptiva">La diferencia entre horas programadas y reales no es una calificación de desempeño. El reporte no conoce por sí solo vacaciones, incapacidades, permisos, pausas contractuales u otras causas externas a la evidencia registrada en el CMMS.</Alert>
+      <Alert variant="info" title="Lectura descriptiva">No constituye ranking ni calificación automática. La diferencia entre horas programadas y reales necesita contexto humano: el reporte no conoce por sí solo vacaciones, incapacidades, permisos, pausas contractuales u otras causas externas a la evidencia registrada en el CMMS.</Alert>
 
       <Tabs
         activeId={activeTab}

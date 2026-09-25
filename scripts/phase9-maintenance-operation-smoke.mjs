@@ -44,6 +44,7 @@ for(const marker of ["<Search","<Select","<Button","<Badge","<EmptyState","<Draw
 }
 if(reaction.includes("reaction-detail-backdrop")||reaction.includes("reaction-detail-modal"))throw new Error("Reaction still uses the legacy contextual modal");
 for(const glyph of ["⌕","×","↺","☎"])if(reaction.includes(glyph))throw new Error("Reaction still contains legacy glyph "+glyph);
+if(reaction.includes("setSearchFocused"))throw new Error("Reaction still references the removed private search-focus state");
 
 const cards=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
 if(!cards.includes("<PriorityBadge priority={priority}/>")||!cards.includes("<WorkOrderStatusBadge status={status}/>"))throw new Error("WorkOrderCard does not consume shared Phase 9 status grammar");

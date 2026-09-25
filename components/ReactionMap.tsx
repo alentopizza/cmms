@@ -504,7 +504,6 @@ export default function ReactionMap(){
 
   function resetFilters(){
     setSearch("");
-    setSearchFocused(false);
     setCompanyId("");
     setSiteId("");
     setTechnicianId("");
@@ -514,8 +513,7 @@ export default function ReactionMap(){
   }
 
   function chooseSearchResult(result:SearchResult){
-    setSearch(result.title);
-    setSearchFocused(false);
+    setSearch("");
     if(result.kind==="company"){
       setCompanyId(result.organizationId);
       setSiteId("");
@@ -812,7 +810,7 @@ function ActivityDetail({
           <div className="reaction-mini-avatar">{tech.avatarUrl?<img src={tech.avatarUrl} alt=""/>:<span>{initials(tech.fullName)}</span>}</div>
           <div><strong>{tech.fullName}</strong><small>{tech.telemetryState==="live"?"GPS en vivo":"GPS pausado"} · {tech.organizationName}</small></div>
         </button>)}
-        {!relatedTechnicians.length&&<EmptyState icon="user" title="Sin técnicos conectados" description={
+        {!relatedTechnicians.length&&<EmptyState icon="file" title="Sin técnicos conectados" description={
           activity.crewName
             ? `La actividad está asignada a la cuadrilla ${activity.crewName}, pero no hay integrantes conectados en Reacción.`
             : activity.supplierName

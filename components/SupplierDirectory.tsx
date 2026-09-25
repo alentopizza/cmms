@@ -19,6 +19,8 @@ import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequ
 import { SupplierCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 
@@ -223,7 +225,60 @@ export default function SupplierDirectory({
             <button type="button" className="supplier-card-quick-action-v3 danger" title="Eliminar proveedor" data-tooltip="Eliminar proveedor" aria-label="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={16}/></button>
           </>}
         />;
-      })}</div>}/>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}
+      })}</div>} list={<StaticDataTable
+        className="supplier-directory-list"
+        caption="Listado de proveedores"
+        columns={[
+          {key:"supplier",label:"Proveedor",width:"28%"},
+          {key:"status",label:"Estado"},
+          {key:"organization",label:"Empresa"},
+          {key:"type",label:"Tipo"},
+          {key:"specialty",label:"Especialidad"},
+          {key:"items",label:"Suministros",align:"end"},
+          {key:"requisitions",label:"Req. abiertas",align:"end"},
+          {key:"actions",label:"Acciones",align:"end"},
+        ]}
+        rows={suppliers.map(s=>{
+          const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
+          const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
+          return {
+            id:s.id,
+            recordProps:{
+              "data-module-record":true,"data-status":s.active?"active":"inactive",
+              "data-search":[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,...(s.capability_labels||[]),...(s.specialty_labels||[]),s.contact_name,s.email].filter(Boolean).join(" "),
+              "data-filter-organization":s.organization_id,"data-filter-organization-label":s.organization_name,
+              "data-filter-capability":(s.capability_codes||[]).join("|"),"data-filter-capability-label":(s.capability_labels||[]).join("|"),
+              "data-filter-specialty":(s.specialty_codes||[]).join("|"),"data-filter-specialty-label":(s.specialty_labels||[]).join("|"),
+              "data-filter-country":s.country_code||"","data-filter-country-label":countryName(s.country_code)||s.country_code||"",
+            },
+            cells:{
+              supplier:<EntityIdentityCell
+                imageSrc={s.has_logo?"/api/suppliers/"+s.id+"/logo":null}
+                imageAlt={s.has_logo?"Logo de "+s.name:""}
+                fallback={initials(s.name)}
+                icon="supplier"
+                variant="logo"
+                title={s.name}
+                subtitle={(s.specialty_labels||[]).join(" · ")||s.service_category||typeLabel(s.supplier_type)}
+                meta={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||s.legal_name||null}
+              />,
+              status:<Badge variant={s.active?"success":"neutral"}>{s.active?"Activo":"Inactivo"}</Badge>,
+              organization:s.organization_name,
+              type:(s.capability_labels||[]).join(" · ")||typeLabel(s.supplier_type),
+              specialty:(s.specialty_labels||[]).join(" · ")||s.service_category||"—",
+              items:supplierItems,
+              requisitions:supplierReqs,
+              actions:<ListQuickActions>
+                <button className="ds-list-action primary" type="button" onClick={()=>open(s.id)} title="Ver ficha" data-tooltip="Ver ficha" aria-label={"Ver ficha de "+s.name}><UiIcon name="eye" size={16}/></button>
+                <button className="ds-list-action" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor" data-tooltip="Editar proveedor" aria-label="Editar proveedor"><UiIcon name="edit" size={16}/></button>
+                {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="ds-list-action" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición" data-tooltip="Crear requisición" aria-label="Crear requisición"><UiIcon name="plus" size={16}/></button>}
+                {s.phone&&<a className="ds-list-action whatsapp" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Contactar por WhatsApp" data-tooltip="Contactar por WhatsApp" aria-label="Contactar por WhatsApp"><UiIcon name="whatsapp" size={16}/></a>}
+                <button type="button" className="ds-list-action danger" title="Eliminar proveedor" data-tooltip="Eliminar proveedor" aria-label="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={16}/></button>
+              </ListQuickActions>,
+            },
+          };
+        })}
+      />}/>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}
       {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}
     </section>
     <ConfirmDialog

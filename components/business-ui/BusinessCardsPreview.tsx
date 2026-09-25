@@ -24,9 +24,24 @@ export function BusinessCardsPreview(){
       <MaintenanceCard name="Rutina compresor mensual" asset="Compresor C-04" company="DESWEB Demo" frequency="Cada 1 mes" nextDue="30/09/2026" active actions={<button className="ds-business-demo-action" type="button" onClick={()=>setMessage("Acciones de rutina")}>Acciones</button>}/>
       <WorkOrderCard id="demo" number="1042" title="Temperatura fuera de rango" asset="Cámara 02" company="DESWEB Demo" priority="Alta" status="in_progress" actions={<button className="ds-business-demo-icon" type="button" onClick={()=>setMessage("Acciones de OT")} aria-label="Acciones"><UiIcon name="more" size={15}/></button>}/>
       <SupplierCard name="Proveedor Andino" subtitle="Proveedor Andino SAS" location="Bogotá · Colombia" specialty="Refrigeración · Eléctrico" type="Materiales + servicios" status="active" fallback="PA" contact="Laura Gómez" phone="+57 300 000 0000" email="compras@proveedor.com" metrics={[{label:"Actividades",value:3,icon:"activity"},{label:"Suministros",value:28,icon:"inventory"},{label:"Requisiciones",value:4,icon:"requisition"}]} onOpen={()=>setMessage("Ficha de proveedor")} actions={<><button className="supplier-card-primary-action-v3" type="button" onClick={()=>setMessage("Ficha de proveedor")}><UiIcon name="file" size={16}/><span>Ver ficha</span><UiIcon name="chevron-right" size={16}/></button><button className="supplier-card-quick-action-v3" type="button" onClick={()=>setMessage("Editar proveedor")} aria-label="Editar proveedor" data-tooltip="Editar proveedor"><UiIcon name="edit" size={16}/></button></>}/>
-      <CrewCard name="Cuadrilla Refrigeración" organization="DESWEB Demo" site="Planta Norte" active leaderName="Laura Gómez" leaderRole="Supervisora" fallback="LG" metrics={[
-        {label:"Integrantes",value:5,icon:"user"},{label:"Actividades activas",value:3,icon:"activity"},{label:"Completadas",value:18,icon:"check"},
-      ]} roster={<div className="ds-business-demo-copy">Equipo operativo con líder e integrantes diferenciados.</div>}/>
+      <CrewCard
+        name="Cuadrilla Refrigeración"
+        organization="DESWEB Demo"
+        site="Planta Norte"
+        active
+        leaderName="Laura Gómez"
+        leaderRole="Supervisora"
+        fallback="LG"
+        description="Equipo operativo con líder e integrantes diferenciados."
+        metrics={[
+          {label:"Integrantes",value:5,icon:"user"},{label:"Actividades",value:3,icon:"activity"},{label:"Completadas",value:18,icon:"check"},
+        ]}
+        members={[
+          {id:"demo-1",name:"Laura Gómez",role:"Supervisora",fallback:"LG"},
+          {id:"demo-2",name:"Carlos Díaz",role:"Técnico",fallback:"CD"},
+          {id:"demo-3",name:"Ana Torres",role:"Técnica",fallback:"AT"},
+        ]}
+      />
       <LocationCard name="Planta Norte" organization="DESWEB Demo" location="Bogotá · Colombia" address="Zona industrial" active fallback="DD" onOpen={()=>setMessage("Ficha de ubicación")} resources={<nav className="ds-business-resource-demo" aria-label="Recursos de Planta Norte"><button type="button" onClick={()=>setMessage("Sububicaciones")}>12 sububicaciones</button><Link href="/dashboard/assets">84 activos</Link></nav>}/>
     </div>
   </section>;

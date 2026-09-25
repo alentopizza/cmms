@@ -13,9 +13,11 @@ import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import UiIcon from "@/components/UiIcon";
 import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
 
-type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
+type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
 
 // ── Responsive work-order directory: desktop table + mobile cards ──────────
 
@@ -37,18 +39,18 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   let orders;
   if(superadmin){
     orders=await query<OrderRow>(
-      `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+      `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
        FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
        ORDER BY w.requested_at DESC LIMIT 200`);
   }else if(requesterOnly){
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId])
       : await query<OrderRow>(
-          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id=ANY($3::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,
@@ -57,7 +59,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
     const supplierId=session.externalSupplierId;
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND $2::uuid IS NOT NULL AND (
              w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
@@ -65,7 +67,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,supplierId])
       : await query<OrderRow>(
-          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND $2::uuid IS NOT NULL AND (
              w.service_supplier_id=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND t.service_supplier_id=$2)
@@ -75,7 +77,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   }else if(externalOnly){
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND (
              w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
@@ -85,7 +87,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId])
       : await query<OrderRow>(
-          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND (
              w.assigned_to=$2 OR EXISTS(SELECT 1 FROM work_order_tasks t WHERE t.work_order_id=w.id AND (
@@ -97,11 +99,11 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   }else{
     orders=session.accessAllSites
       ? await query<OrderRow>(
-          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 200`,[orgId])
       : await query<OrderRow>(
-          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
+          `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,[orgId,session.siteIds]);
@@ -203,9 +205,12 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         className="work-order-directory-table"
         caption="Órdenes de trabajo visibles"
         columns={[
-          {key:"number",label:"OT"},{key:"work",label:"Trabajo"},{key:"company",label:"Empresa"},{key:"asset",label:"Equipo"},
-          {key:"priority",label:"Prioridad"},{key:"status",label:"Estado"},{key:"activity",label:"Detalle"},
-          ...(owner?[{key:"actions",label:"Acciones"}]:[]),
+          {key:"order",label:"Orden",width:"34%"},
+          {key:"company",label:"Empresa"},
+          {key:"asset",label:"Equipo"},
+          {key:"priority",label:"Prioridad"},
+          {key:"status",label:"Estado"},
+          {key:"actions",label:"Acciones",align:"end"},
         ]}
         rows={orders.rows.map(w=>({id:w.id,recordProps:{
           "data-module-record":true,"data-status":w.status,
@@ -215,18 +220,31 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,
           "data-filter-type":w.type,"data-filter-type-label":w.type,
         },cells:{
-          number:"#"+w.number,work:<strong>{w.title}</strong>,company:w.company,asset:w.asset,
-          priority:<PriorityBadge priority={w.priority}/>,status:<WorkOrderStatusBadge status={w.status}/>,
-          activity:<Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Actividades →</Link>,
-          ...(owner?{actions:<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
-            {name:"title",label:"Título",value:w.title},
-            {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
-              {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
-            ]},
-            {name:"status",label:"Estado",value:w.status,type:"select",options:[
-              {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
-            ]},
-          ]}/>}:{})
+          order:<EntityIdentityCell
+            imageSrc={w.asset_id&&w.asset_has_image?"/api/assets/"+w.asset_id+"/image":null}
+            imageAlt={w.asset_id&&w.asset_has_image?"Imagen de "+w.asset:""}
+            icon="work-order"
+            variant="thumbnail"
+            title={"OT #"+w.number}
+            subtitle={w.title}
+            meta={[w.type,w.site].filter(Boolean).join(" · ")}
+          />,
+          company:w.company,
+          asset:w.asset,
+          priority:<PriorityBadge priority={w.priority}/>,
+          status:<WorkOrderStatusBadge status={w.status}/>,
+          actions:<ListQuickActions>
+            <Link className="ds-list-action primary" href={"/dashboard/work-orders/"+w.id} title="Ver actividades" data-tooltip="Ver actividades" aria-label={"Ver actividades de OT #"+w.number}><UiIcon name="eye" size={16}/></Link>
+            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+              {name:"title",label:"Título",value:w.title},
+              {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
+                {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
+              ]},
+              {name:"status",label:"Estado",value:w.status,type:"select",options:[
+                {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
+              ]},
+            ]}/>}
+          </ListQuickActions>,
         }}))}
         empty={(providerOnly||externalOnly||creationGate.ready)?<EmptyState icon="file" title="No hay órdenes disponibles" description={providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"La jerarquía está lista. Usa Agregar para crear la primera orden."}/>:undefined}
       />}/>

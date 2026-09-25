@@ -686,7 +686,7 @@ Rules:
 - `AttendanceSetupWorkspace` composes the active step, Previous/Next controls, progress summary and responsive layout;
 - Configuración shows the currently effective values but is read-only so Policy remains the only editable policy implementation;
 - Sedes reads the already-authorized Site/geofence data and links to the canonical Location editor rather than introducing a second geofence editor;
-- Enrolamiento embeds the existing `SupervisedBiometricEnrollment` component unchanged in authority;
+- Enrolamiento is the biometric administration surface; after ADR-044 its primary workflow is employee-initiated enrollment plus one-time approval, while `SupervisedBiometricEnrollment` remains the exceptional assisted fallback;
 - Política posts to the existing `/api/attendance/policy` endpoint. The endpoint may preserve validated navigation state after redirect, but its business validation and persistence contract remain unchanged;
 - Resumen is derived presentation state and does not create a new “finalize setup” database mutation;
 - daily field presence, inter-Site movement, self contingency, per-user Attendance dossier, supervisor contingency review and Phase 5 reporting are grouped under `view=operation`;
@@ -695,3 +695,31 @@ Rules:
 - setup completeness is guidance only. It must not replace or broaden backend authorization, policy validation, biometric verification, geofence validation or operational eligibility.
 
 This decision reduces configuration scroll and clarifies responsibility while preserving one source of truth for every Attendance capability.
+
+## ADR-044 — Biometric activation uses employee-initiated capture plus one-time human approval
+
+Status: accepted.
+
+Daily Attendance must scale to large workforces without requiring administrators to approve every check-in, while initial biometric identity still requires a governed human confirmation.
+
+Rules:
+- facial Attendance remains 1:1 verification of the authenticated account;
+- the employee may initiate an enrollment **request** from their own authenticated mobile session, but the request is not an active biometric identity;
+- before capture, the employee must read the active `attendance_biometric_policy_versions` record and explicitly consent to biometric treatment plus camera/location use;
+- each request stores the exact accepted policy-version reference and consent timestamp;
+- enrollment capture requires an authorized Site, GPS/geofence evidence, acceptable accuracy, the configured Human liveness/anti-spoof thresholds and a randomized active gesture challenge;
+- gesture/challenge results originate on the client and are supplemental anti-spoof evidence. They never replace server-side Organization/role/Site/geofence/liveness validation;
+- `biometric_enrollment_requests` may hold an encrypted template and small encrypted preview only while the request is pending;
+- the preview is private/no-store, Site-scoped and expires after no more than 72 hours;
+- an authorized Attendance manager compares the human profile photo with the transient live preview and approves/rejects identity once;
+- approval copies only the encrypted template into `user_biometric_profiles` with method `self_camera_approved` and immediately clears the request template/preview;
+- rejection or expiry also clears both temporary biometric payloads;
+- the preview is never promoted to permanent profile evidence and ordinary check-in/check-out photographs remain unpersisted;
+- after approval, standard daily check-in/check-out continues automatically through the existing server-authoritative 1:1 face comparison, liveness/anti-spoof and GPS/geofence rules. It must not require another administrative approval;
+- revocation invalidates the permanent template and future use requires approved reenrollment or the exceptional supervised recovery path;
+- the previous supervisor-operated camera workflow remains available only for recovery/support cases;
+- enrollment administration is exception-oriented: verified, pending and attention states help administrators find unresolved cases without ranking employees;
+- Site-limited managers may only see/review request evidence inside their authorized Site scope;
+- the audit dossier may expose request lifecycle, accepted policy version, consent timestamp, Site/location summary, liveness method and reviewer/decision metadata, but never raw embeddings, transient preview after decision, or raw biometric scores.
+
+This model separates **identity establishment** (one human decision) from **routine presence verification** (automatic and server-validated), making the flow operationally viable for large employee populations while retaining an auditable consent and approval chain.

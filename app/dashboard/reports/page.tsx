@@ -105,7 +105,7 @@ export default async function ReportsPage(){
         </Card>}
         {canAttendanceReports&&<Card className="phase10-report-card" header={<div className="phase10-report-card-head"><UiIcon name="attendance" size={20}/><div><strong>Asistencia</strong><small>Programado vs. real · multi-sede</small></div></div>}>
           <p>Compara jornada programada con presencia real, separa tiempo en sede y desplazamiento, y conserva actividades, contingencias y evidencia Reacción.</p>
-          <Link className="ds-button ds-button-secondary ds-button-md phase10-link-button" href="/dashboard/attendance#attendance-report"><UiIcon name="report" size={16}/>Abrir reporte de asistencia</Link>
+          <Link className="ds-button ds-button-secondary ds-button-md phase10-link-button" href="/dashboard/attendance?view=operation#attendance-report"><UiIcon name="report" size={16}/>Abrir reporte de asistencia</Link>
         </Card>}
       </div>
     </section>

@@ -191,8 +191,9 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Una cuadrilla puede combinar Técnicos, Supervisores/Managers y Colaboradores externos autorizados.",
       "Elige el líder visualmente por su foto y nombre. El liderazgo no depende del rol: cualquiera de los integrantes elegibles puede ser líder.",
       "Al seleccionar al líder, el sistema lo incluye automáticamente como integrante de la cuadrilla.",
-      "La tarjeta de cuadrilla destaca la foto y datos de contacto del líder, muestra integrantes y resume actividades activas/completadas del equipo.",
-      "Cuando existe teléfono o correo puedes contactar al líder y a los integrantes desde las acciones disponibles.",
+      "La vista principal muestra tarjetas compactas sin fotografía grande: nombre, sede, líder, descripción, integrantes y actividades reales del equipo.",
+      "Usa el buscador y los filtros de sede/estado para acotar la colección. Puedes alternar entre Vista cuadrícula y Vista listado sin cambiar la fuente de datos.",
+      "Cuando existe teléfono o correo puedes contactar al líder desde WhatsApp, llamada o correo. Si faltan esos datos, la acción correspondiente simplemente no aparece.",
     ],
     notes:["Los indicadores de actividades de una cuadrilla describen trabajo asignado; no son una calificación automática de sus integrantes."],
     keywords:["cuadrilla","líder","supervisor","técnico","integrantes","equipo"],
@@ -619,6 +620,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Nuevo directorio visual de Cuadrillas",
+    summary:"Cuadrillas usa tarjetas compactas 3/2/1, métricas reales, búsqueda/filtros y selector cuadrícula/listado sin cambiar la lógica de creación ni los datos existentes.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-25",
     title:"Documentos de Empresa con más espacio de trabajo",

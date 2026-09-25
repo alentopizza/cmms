@@ -676,7 +676,7 @@ The administrative surface of **Asistencia** is reorganized as one five-step set
 
 1. **Configuración** — read-only overview of Organization, module state, current verification parameters and real controlled roles;
 2. **Sedes** — the existing Site/geofence state with links back to the canonical Site editor;
-3. **Enrolamiento** — the existing supervised biometric component, camera, GPS presence verification and consent flow;
+3. **Enrolamiento** — employee-initiated mobile enrollment requests, biometric coverage/status and one-time human identity approval; the prior supervised capture remains an exceptional recovery path;
 4. **Política** — the single editable `/api/attendance/policy` form;
 5. **Resumen** — descriptive readiness summary using current Organization/Site/enrollment/policy/contingency evidence.
 
@@ -684,9 +684,40 @@ The shared UI Core `Stepper` provides active/completed/pending presentation. The
 
 **Operación y reportes** is a secondary view selected by `view=operation`. It keeps the existing field presence flow, multi-Site movement, self contingency, per-user audit dossier, supervisor contingency queue and Phase 5 report. This prevents those operational surfaces from being hidden while removing them from the configuration scroll.
 
-No database model, attendance authorization, facial verification, GPS/geofence calculation, schedule authority, contingency rule or report calculation changed for this UX reorganization. The policy endpoint only preserves validated setup-navigation state after save/error so the user returns to the same step.
+The original five-step UX reorganization did not change business authority. The later biometric enrollment enhancement adds migration `040_biometric_self_enrollment_approval.sql` while preserving Attendance authorization, daily facial verification, geofence calculations, schedule authority, contingency rules and report calculations.
 
 Deep links from Users and Reportes explicitly target the correct setup or operational view.
+
+### Mobile biometric enrollment with one-time approval
+
+Initial biometric activation now scales through an **employee-initiated request + one-time human identity decision** rather than requiring a supervisor to operate the camera for every worker.
+
+The normal first-time flow is:
+
+1. the authenticated field user opens Attendance from their own mobile device;
+2. reads the currently active, versioned biometric notice;
+3. explicitly accepts biometric treatment plus camera/location use;
+4. selects an authorized Site and proves presence inside its geofence;
+5. completes a randomized active-liveness challenge (blink plus one head/turn movement);
+6. the same capture also passes the existing Human liveness/anti-spoof checks and produces a face embedding;
+7. the server stores a **pending** request only after revalidating Organization, role, Site, GPS accuracy, geofence and liveness thresholds;
+8. an authorized Admin/Manager (or explicitly contextualized platform operator) compares the profile photo with a short-lived encrypted live preview and approves or rejects identity once;
+9. approval moves the encrypted template into the active biometric profile; the pending template and preview are deleted;
+10. later check-in/check-out uses the existing automatic 1:1 face + liveness/anti-spoof + GPS/geofence flow without daily human approval.
+
+Migration `040_biometric_self_enrollment_approval.sql` adds:
+- `attendance_biometric_policy_versions` for immutable consent-version references;
+- `biometric_enrollment_requests` for pending/review lifecycle and location/liveness metadata;
+- `self_camera_approved` as a verified enrollment method;
+- request/approval/rejection/expiry enrollment events.
+
+The transient enrollment preview is encrypted at rest, private/no-store, visible only to an authorized Attendance manager while the request is `pending`, and expires after at most 72 hours. Approval, rejection or expiry clears both preview and temporary request embedding. A photograph is **not** copied into `user_biometric_profiles`.
+
+The Enrolamiento step is now an exception-oriented control center: verified coverage, pending approvals and workers requiring attention are visible at a glance; only pending requests require a human decision. The previous `SupervisedBiometricEnrollment` remains available as an assisted recovery/support path.
+
+The per-user Attendance dossier also includes enrollment-request audit evidence: accepted policy version, consent time, Site, GPS accuracy/distance, liveness method, reviewer and decision timestamps/notes. It deliberately omits the encrypted template, transient preview and raw facial similarity/liveness scores.
+
+Active gesture challenges are client-originated supplemental anti-spoof evidence. Server authority still comes from authenticated identity, policy/role/Site validation, GPS/geofence validation, embedding validation and the configured Human liveness/anti-spoof thresholds.
 
 
 ### Mobile field shell phase 4A

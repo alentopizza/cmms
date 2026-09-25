@@ -99,6 +99,20 @@ for(const marker of ["resolveAttendanceOrganization","canAccessAttendanceSite","
   if(!enrollmentApi.includes(marker))throw new Error("Biometric enrollment organization scope missing "+marker);
 }
 
+const activities=fs.readFileSync("app/api/work-orders/[id]/activities/route.ts","utf8");
+if(!activities.includes("COALESCE(current_site_id,site_id)=$3")){
+  throw new Error("Activity execution is not correlated to the current attendance site");
+}
+
+const contingencyRequest=fs.readFileSync("app/api/attendance/contingency/route.ts","utf8");
+if(!contingencyRequest.includes("COALESCE(current_site_id,site_id) current_site_id")){
+  throw new Error("Attendance contingency request still uses only the origin site");
+}
+const contingencyUse=fs.readFileSync("app/api/attendance/contingency/use/route.ts","utf8");
+for(const marker of ["current_site_id","check_out_site_id","attendance_schedule_id","attendance_displacements"]){
+  if(!contingencyUse.includes(marker))throw new Error("Attendance contingency use missing "+marker);
+}
+
 const css=fs.readFileSync("app/phase8-modules.css","utf8");
 for(const marker of [".attendance-schedule-editor",".attendance-displacement-card",".attendance-organization-scope"]){
   if(!css.includes(marker))throw new Error("Attendance scheduling CSS missing "+marker);

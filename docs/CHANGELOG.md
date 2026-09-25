@@ -7,7 +7,7 @@
 - `CollectionView` conserva la preferencia visual por módulo en el navegador y notifica a `ModuleHeader` para reaplicar búsqueda, estado y facetas después de cambiar de vista.
 - Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes de trabajo, Rutinas/Mantenimiento, Inventario y Leads ya consumen el patrón compartido.
 - Ubicaciones conserva sus tarjetas aprobadas en cuadrícula y añade una vista listado real con Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción **Ver ubicación** sobre la misma colección.
-- Cuadrillas deja de mantener un selector visual privado y reutiliza `ViewModeToggle`; sus filtros locales y ambas presentaciones existentes permanecen intactos.
+- Cuadrillas deja de mantener estado/selector visual privado y usa `CollectionView`; el `ViewModeToggle` compartido se monta dentro de su toolbar local y conserva sus filtros y ambas presentaciones existentes.
 - Órdenes y Rutinas reutilizan las tarjetas y `StaticDataTable` que ya existían; el modo elegido por el usuario sustituye la antigua decisión automática desktop/mobile.
 - Los módulos que solo poseían tarjetas reutilizan esas mismas tarjetas en una disposición de lista de una columna, sin duplicar CRUD, acciones ni datos.
 - Se añadió `scripts/view-mode-toggle-smoke.mjs` a CI y se actualizaron los smokes de Fases 4, 7, 8 y 9.

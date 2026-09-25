@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import type { OrganizationRole, PlatformRole } from "@/lib/permissions";
@@ -75,7 +76,7 @@ export function userSessionToken(userId: string, maxAgeSeconds = 60 * 60 * 12) {
   });
 }
 
-export async function getSession(): Promise<AuthSession | null> {
+async function resolveSession(): Promise<AuthSession | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -182,6 +183,8 @@ export async function getSession(): Promise<AuthSession | null> {
     externalSupplierId: user.platform_role !== "user" ? null : user.external_supplier_id,
   };
 }
+
+export const getSession = cache(resolveSession);
 
 export async function isAuthenticated() {
   return Boolean(await getSession());

@@ -451,8 +451,13 @@ export async function buildAttendanceOperationalReport(
          AND event.occurred_at < ((($4::date+1)::timestamp) AT TIME ZONE $5)
          AND ($6::boolean OR work_order.site_id=ANY($7::uuid[]))
          AND ($8::uuid IS NULL OR work_order.site_id=$8::uuid)
+         AND (
+           $6::boolean
+           OR event.attendance_shift_id IS NULL
+           OR event.attendance_shift_id=ANY($9::uuid[])
+         )
        ORDER BY event.task_id,event.occurred_at DESC`,
-      [organizationId,userIds,dates.from,dates.to,organization.timezone,scope.all,scope.siteIds,requestedSiteId],
+      [organizationId,userIds,dates.from,dates.to,organization.timezone,scope.all,scope.siteIds,requestedSiteId,shiftIds],
     );
 
     const contingencies=await client.query<ContingencyRow>(
@@ -471,16 +476,26 @@ export async function buildAttendanceOperationalReport(
     );
 
     const schedulesByUser=new Map<string,ScheduleRow[]>();
-    for(const row of schedules.rows)(schedulesByUser.get(row.user_id)||schedulesByUser.set(row.user_id,[]).get(row.user_id)!).push(row);
+    for(const row of schedules.rows){
+      const list=schedulesByUser.get(row.user_id)||[];
+      list.push(row);
+      schedulesByUser.set(row.user_id,list);
+    }
 
     const shiftsByUserDate=new Map<string,ShiftRow[]>();
     for(const row of shifts.rows){
       const key=row.user_id+"|"+row.local_date;
-      (shiftsByUserDate.get(key)||shiftsByUserDate.set(key,[]).get(key)!).push(row);
+      const list=shiftsByUserDate.get(key)||[];
+      list.push(row);
+      shiftsByUserDate.set(key,list);
     }
 
     const segmentsByShift=new Map<string,SegmentRow[]>();
-    for(const row of segments.rows)(segmentsByShift.get(row.attendance_shift_id)||segmentsByShift.set(row.attendance_shift_id,[]).get(row.attendance_shift_id)!).push(row);
+    for(const row of segments.rows){
+      const list=segmentsByShift.get(row.attendance_shift_id)||[];
+      list.push(row);
+      segmentsByShift.set(row.attendance_shift_id,list);
+    }
 
     const activitiesByUserDate=new Map<string,{inside:number;outside:number}>();
     for(const row of activities.rows){

@@ -356,7 +356,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     </section>}
     <section className="section phase8-attendance-summary-head">
       <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>{selectedOrganization?`Administrando ${selectedOrganization.name}. `:""}Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
-      <Badge variant={activeNow>0?"success":"neutral"} icon="attendance">{activeNow} en campo</Badge>
+      <Badge variant={policy.enabled?"success":"neutral"} icon="attendance">{policy.enabled?"Control activo":"Control inactivo"}</Badge>
     </section>
 
     {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}

@@ -69,6 +69,7 @@ type AuditSegment={
   tracking_session_id:string|null;
   started_at:string;
   ended_at:string|null;
+  notes:string|null;
   start_accuracy_m:number|null;
   start_distance_m:number|null;
   end_accuracy_m:number|null;
@@ -494,6 +495,7 @@ export default function UserAttendanceAuditCenter({
           <div><span>GPS llegada</span><strong>{segment.end_accuracy_m===null?"—":"±"+Math.round(segment.end_accuracy_m)+" m"}</strong><small>{segment.end_distance_m===null?"Pendiente o sin GPS":"a "+Math.round(segment.end_distance_m)+" m de destino"}</small></div>
           <div><span>Ruta Reacción</span><strong>{segment.reaction_sample_count}</strong><small>muestras conectadas durante el tramo</small></div>
         </div>
+        {segment.notes&&<p className="attendance-audit-note">Nota de desplazamiento: {segment.notes}</p>}
         {segment.tracking_session_id
           ?<Alert variant="info" title="Trayecto correlacionado con Reacción">Este desplazamiento quedó vinculado a una sesión de seguimiento. Las muestras GPS de Reacción permanecen como evidencia operativa separada de Asistencia.</Alert>
           :<Alert variant="info" title="Sin sesión Reacción al iniciar">Asistencia conserva salida y llegada aunque Reacción no estuviera conectada. El trayecto continuo solo existe cuando la app de seguimiento estaba activa.</Alert>}

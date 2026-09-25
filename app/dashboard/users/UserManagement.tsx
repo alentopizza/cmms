@@ -17,7 +17,7 @@ import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
-import UserAttendanceScheduleAdmin from "@/components/UserAttendanceScheduleAdmin";
+import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -767,7 +767,7 @@ export default function UserManagement({
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
               </div>
-              {selectedUser.organization_id&&attendanceScheduleEligible(selectedUser)&&<UserAttendanceScheduleAdmin
+              {selectedUser.organization_id&&attendanceScheduleEligible(selectedUser)&&<UserAttendanceAuditCenter
                 key={selectedUser.id}
                 organizationId={selectedUser.organization_id}
                 people={[{id:selectedUser.id,full_name:selectedUser.full_name,role:roleName(roleKey(selectedUser))}]}

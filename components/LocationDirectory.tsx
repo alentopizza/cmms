@@ -13,7 +13,8 @@ import UiIcon from "@/components/UiIcon";
 import { CountryCityFields } from "@/components/InternationalFields";
 import { LocationCard, SubLocationCard } from "@/components/business-ui";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
-import { Search } from "@/components/ui-kit/DataControls";
+import { CollectionView, Search } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { Select } from "@/components/ui-kit/FormControls";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 
@@ -139,7 +140,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
   }
 
   return <div className="phase6-location-directory">
-    {!selected&&<div className="site-visual-grid site-visual-grid-compact">
+    {!selected&&<CollectionView storageKey="locations" label="Vista de ubicaciones" grid={<div className="site-visual-grid site-visual-grid-compact" data-collection-grid>
       {sites.map(site=><LocationCard
         key={site.id}
         name={site.name}
@@ -167,7 +168,42 @@ export default function LocationDirectory({sites,sublocations,services,technicia
           </Link>
         </nav>}
       />)}
-    </div>}
+    </div>} list={<StaticDataTable
+      className="location-directory-list"
+      caption="Listado de ubicaciones"
+      columns={[
+        {key:"location",label:"Ubicación"},
+        {key:"company",label:"Empresa"},
+        {key:"city",label:"Ciudad / País"},
+        {key:"sublocations",label:"Sububicaciones",align:"end"},
+        {key:"assets",label:"Activos",align:"end"},
+        {key:"status",label:"Estado"},
+        {key:"actions",label:"Acciones",align:"end"},
+      ]}
+      rows={sites.map(site=>({
+        id:site.id,
+        recordProps:{
+          "data-module-record":true,
+          "data-status":site.active?"active":"inactive",
+          "data-search":[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" "),
+          "data-filter-organization":site.organization_id,
+          "data-filter-organization-label":site.organization_name,
+          "data-filter-country":site.country,
+          "data-filter-country-label":countryName(site.country),
+          "data-filter-city":site.city||"",
+          "data-filter-city-label":site.city||"",
+        },
+        cells:{
+          location:<span><strong>{site.name}</strong>{site.code&&<small> · {site.code}</small>}</span>,
+          company:site.organization_name,
+          city:(site.city||"Sin ciudad")+" · "+countryName(site.country),
+          sublocations:site.location_count,
+          assets:site.asset_count,
+          status:<Badge variant={site.active?"success":"neutral"}>{site.active?"Activa":"Inactiva"}</Badge>,
+          actions:<button type="button" className="text-button" onClick={()=>openSite(site.id)}>Ver ubicación</button>,
+        },
+      }))}
+    />}/>} 
 
     {selected&&!selectedSub&&<section className="section entity-page-detail">
         <EntityProfileWorkspace

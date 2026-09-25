@@ -43,7 +43,7 @@ export async function GET(){
   const global=session.platformRole!=="user";
   const organizationId=session.organizationId;
 
-  const companies=await query<CompanyRow>(
+  const companiesPromise=query<CompanyRow>(
     global
       ? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
                 COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') contact_country,
@@ -85,7 +85,7 @@ export async function GET(){
     global?[]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
-  const sites=await query<SiteRow>(
+  const sitesPromise=query<SiteRow>(
     global
       ? `SELECT s.id,s.organization_id,o.name organization_name,o.timezone organization_timezone,s.name,s.code,
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
@@ -111,7 +111,7 @@ export async function GET(){
     global?[]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
-  const technicians=await query<TechRow>(
+  const techniciansPromise=query<TechRow>(
     global
       ? `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,u.email,u.phone,om.role,
                 ts.organization_id,o.name organization_name,
@@ -190,7 +190,7 @@ export async function GET(){
     global?[]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
-  const activities=await query<ActivityRow>(
+  const activitiesPromise=query<ActivityRow>(
     global
       ? `SELECT t.id,w.id work_order_id,w.number::text work_order_number,w.title work_order_title,
                 w.type work_order_type,w.status work_order_status,
@@ -278,6 +278,13 @@ export async function GET(){
          LIMIT 500`,
     global?[]:[organizationId,session.accessAllSites,session.siteIds],
   );
+
+  const [companies,sites,technicians,activities]=await Promise.all([
+    companiesPromise,
+    sitesPromise,
+    techniciansPromise,
+    activitiesPromise,
+  ]);
 
   const ids=technicians.rows.map(row=>row.tracking_session_id);
   let samples:{rows:SampleRow[]}={rows:[]};

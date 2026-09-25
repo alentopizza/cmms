@@ -205,24 +205,51 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     : {rows:[]} as {rows:ContingencyReviewItem[]};
 
   const enrollmentPeople=canManage && organizationId
-    ? await query<EnrollmentPerson>(
-        `SELECT
-           u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
-           CASE
-             WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
-             WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
-             WHEN bp.user_id IS NOT NULL THEN 'legacy'
-             ELSE 'missing'
-           END biometric_status
-         FROM organization_members om
-         JOIN users u ON u.id=om.user_id
-         LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
-         WHERE om.organization_id=$1
-           AND u.active=true
-           AND om.role IN ('admin','manager','technician','provider','external')
-         ORDER BY u.full_name`,
-        [organizationId],
-      )
+    ? session.platformRole!=="user"||session.accessAllSites
+      ? await query<EnrollmentPerson>(
+          `SELECT
+             u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
+             CASE
+               WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+               WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+               WHEN bp.user_id IS NOT NULL THEN 'legacy'
+               ELSE 'missing'
+             END biometric_status
+           FROM organization_members om
+           JOIN users u ON u.id=om.user_id
+           LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           WHERE om.organization_id=$1
+             AND u.active=true
+             AND om.role IN ('admin','manager','technician','provider','external')
+           ORDER BY u.full_name`,
+          [organizationId],
+        )
+      : await query<EnrollmentPerson>(
+          `SELECT
+             u.id,u.full_name,u.email,om.role,(u.avatar_data IS NOT NULL) has_avatar,
+             CASE
+               WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+               WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+               WHEN bp.user_id IS NOT NULL THEN 'legacy'
+               ELSE 'missing'
+             END biometric_status
+           FROM organization_members om
+           JOIN users u ON u.id=om.user_id
+           LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           WHERE om.organization_id=$1
+             AND u.active=true
+             AND om.role IN ('admin','manager','technician','provider','external')
+             AND (
+               COALESCE(om.access_all_sites,true)=true
+               OR EXISTS(
+                 SELECT 1 FROM organization_member_sites oms
+                 WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+                   AND oms.site_id=ANY($2::uuid[])
+               )
+             )
+           ORDER BY u.full_name`,
+          [organizationId,session.siteIds],
+        )
     : {rows:[]} as {rows:EnrollmentPerson[]};
 
   const reports=canReports && organizationId

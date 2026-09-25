@@ -115,6 +115,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Configura la sede principal con dirección, ciudad, país y geocerca validada en el mapa.",
       "Crea sedes adicionales cuando corresponda y después sus sububicaciones.",
       "En los directorios principales puedes alternar entre Vista cuadrícula y Vista listado con el selector del encabezado. El cambio conserva la búsqueda, filtros y datos ya cargados; en Ubicaciones la vista listado resume sede, empresa, ciudad, recursos, estado y acceso a la ficha.",
+      "En Vista listado la primera columna conserva la identidad del registro con logo, avatar, foto o icono existente y las acciones rápidas aparecen al final según los permisos y funciones reales de cada módulo.",
       "Selecciona la tarjeta de empresa para cambiar el módulo a su perfil en la misma pantalla. Las migas de pan permiten volver al directorio sin cerrar un popup.",
       "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida. En Documentos el perfil libera todo el ancho: selecciona una fila para previsualizarla a la izquierda, usa Ver para abrir el visor ampliado, Descargar para bajar el archivo directamente y Más acciones para gestionarlo. En escritorio el listado tiene prioridad de espacio y en móvil aparece antes de la previsualización.",
       "Usa las acciones rápidas para acceder a ubicaciones, activos, usuarios y la ficha empresarial completa, o exporta la Hoja de vida en PDF, Excel o Word compatible.",
@@ -624,7 +625,7 @@ export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-25",
     title:"Vista cuadrícula / listado en directorios",
-    summary:"Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes, Rutinas, Inventario y Leads comparten el mismo selector visual sin volver a consultar la colección ni perder búsqueda/filtros.",
+    summary:"Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes, Rutinas, Inventario y Leads comparten el selector visual. El listado conserva logo, avatar, foto o icono de cada entidad y muestra acciones rápidas aplicables sin volver a consultar la colección ni perder búsqueda/filtros.",
     roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external","requester"],
   },
   {

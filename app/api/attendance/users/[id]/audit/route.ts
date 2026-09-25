@@ -7,6 +7,7 @@ import { attendanceOrganizationId } from "@/lib/attendance-context";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PERIODS=new Map([["30",30],["90",90],["365",365],["all",null]] as const);
+const AUDIT_ROLES=new Set(["admin","manager","technician","provider","external"]);
 
 type TargetUser={
   id:string;
@@ -79,6 +80,7 @@ export async function GET(
     const personResult=await loadTarget(client,organizationId,userId);
     if(!personResult.rowCount)return NextResponse.json({message:"El usuario no pertenece a esta empresa."},{status:404});
     const person=personResult.rows[0];
+    if(!AUDIT_ROLES.has(person.role))return NextResponse.json({message:"El rol de este usuario no utiliza control de asistencia."},{status:422});
     if(!targetVisibleInScope(person,scope))return new NextResponse("Forbidden",{status:403});
 
     const paramsBase=[organizationId,userId,days,scope] as const;
@@ -135,8 +137,6 @@ export async function GET(
                 s.check_in_verification_mode,s.check_out_verification_mode,
                 s.check_in_accuracy_m,s.check_out_accuracy_m,
                 s.check_in_distance_m,s.check_out_distance_m,
-                s.check_in_face_similarity,s.check_out_face_similarity,
-                s.check_in_liveness,s.check_out_liveness,
                 s.check_in_contingency_id,s.check_out_contingency_id,
                 round(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))/60.0::numeric,1)::text duration_minutes,
                 COALESCE((
@@ -235,11 +235,10 @@ export async function GET(
            AND a.metadata->>'user_id'=$2
            AND ($3::int IS NULL OR a.created_at>=now()-($3::int*interval '1 day'))
            AND (
-             $4::uuid[] IS NULL
+             $4::text[] IS NULL
              OR (
                a.metadata ? 'base_site_id'
-               AND (a.metadata->>'base_site_id') ~* '^[0-9a-f-]{36}$'
-               AND (a.metadata->>'base_site_id')::uuid=ANY($4::uuid[])
+               AND a.metadata->>'base_site_id'=ANY($4::text[])
              )
            )
          ORDER BY a.created_at DESC

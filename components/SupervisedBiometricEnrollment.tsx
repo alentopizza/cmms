@@ -54,16 +54,20 @@ export default function SupervisedBiometricEnrollment({
   people,
   sites,
   livenessThreshold,
+  organizationId,
+  initialUserId="",
 }:{
   people:Person[];
   sites:Site[];
   livenessThreshold:number;
+  organizationId:string;
+  initialUserId?:string;
 }) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const humanRef=useRef<any>(null);
 
-  const [userId,setUserId]=useState("");
+  const [userId,setUserId]=useState(()=>people.some(person=>person.id===initialUserId)?initialUserId:"");
   const [siteId,setSiteId]=useState("");
   const [consent,setConsent]=useState(false);
   const [identityChecked,setIdentityChecked]=useState(false);
@@ -164,6 +168,7 @@ export default function SupervisedBiometricEnrollment({
         method:"POST",
         headers:{"content-type":"application/json"},
         body:JSON.stringify({
+          organizationId,
           userId:selected.id,
           siteId,
           embedding:face.embedding,
@@ -198,7 +203,7 @@ export default function SupervisedBiometricEnrollment({
       const response=await fetch("/api/attendance/enrollment-supervised",{
         method:"DELETE",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({userId:selected.id,reason:"Revocación administrativa desde Asistencia"}),
+        body:JSON.stringify({organizationId,userId:selected.id,reason:"Revocación administrativa desde Asistencia"}),
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.message||"No fue posible revocar la biometría.");
@@ -211,7 +216,7 @@ export default function SupervisedBiometricEnrollment({
     }
   }
 
-  return <section className="card section biometric-supervisor-card">
+  return <section id="biometric" className="card section biometric-supervisor-card">
     <div className="section-heading">
       <div>
         <span className="eyebrow">Identidad biométrica</span>

@@ -581,13 +581,31 @@ export default function CompanyDirectory({
               </Link>
             </section>
           </div>},
-          {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack">
-            <StatTiles className="entity-stat-grid" items={[{label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"registrados / cupo"}]}/>
-            <div className="entity-panel"><h3>Personal de la empresa</h3><p className="entity-panel-copy">Consulta o administra los usuarios y técnicos vinculados a esta empresa desde el directorio de acceso.</p><Link className="button secondary entity-tab-cta" href="/dashboard/users">Abrir usuarios y técnicos</Link></div>
-          </div>},
-          {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">
-            <div className="entity-panel"><h3>Hoja de vida de la empresa</h3><p className="entity-panel-copy">Consolida identidad empresarial, contacto, recursos, documentos y estructura principal en un formato autorizado para compartir.</p></div>
-            <ProfileExportMenu entity="organization" id={selected.id} label="Exportar hoja de vida"/>
+          {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack company-technicians-tab">
+            <StatTiles className="entity-stat-grid" items={[
+              {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"registrados / cupo"},
+              {label:"Cupos disponibles",value:String(Math.max(0,Number(selected.max_technicians)-Number(selected.technician_count))),tone:Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"},
+              {label:"Ocupación",value:(Number(selected.max_technicians)>0?Math.min(100,Math.round(Number(selected.technician_count)/Number(selected.max_technicians)*100)):0)+"%",tone:Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"},
+            ]}/>
+            <section className="company-staff-gateway" aria-labelledby={"company-staff-title-"+selected.id}>
+              <span className="company-staff-gateway-icon" aria-hidden="true"><UiIcon name="user" size={22}/></span>
+              <div className="company-staff-gateway-copy">
+                <span className="eyebrow">Personal de la empresa</span>
+                <h3 id={"company-staff-title-"+selected.id}>Usuarios y técnicos vinculados</h3>
+                <p>Consulta y administra usuarios, técnicos, roles, datos de contacto y acceso operativo desde el directorio de personas.</p>
+                <div className="company-staff-gateway-status">
+                  <Badge variant="brand" icon="user">{selected.technician_count} técnicos registrados</Badge>
+                  <Badge variant={Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"} icon={Number(selected.technician_count)<Number(selected.max_technicians)?"check":"warning"}>
+                    {Math.max(0,Number(selected.max_technicians)-Number(selected.technician_count))} cupos disponibles
+                  </Badge>
+                </div>
+              </div>
+              <Link className="ds-button ds-button-secondary ds-button-md company-staff-gateway-action" href="/dashboard/users">
+                <UiIcon name="user" size={16}/>
+                <span>Abrir usuarios y técnicos</span>
+                <UiIcon name="chevron-right" size={14}/>
+              </Link>
+            </section>
           </div>},
         ]}
       />

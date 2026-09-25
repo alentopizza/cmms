@@ -36,10 +36,12 @@ for(const glyph of ["▣","⌄","‹","›"])if(range.includes(glyph))throw new 
 if(!range.includes("<UiIcon")||!range.includes("<Button"))throw new Error("Date range picker must consume UI Core/icon primitives");
 
 const companies=fs.readFileSync("app/dashboard/companies/CompanyDirectory.tsx","utf8");
-for(const marker of ["phase6-company-directory","<CompanyCard","<StatTiles","status={<Badge","company-document-gateway","company-document-gateway-action"]){
+for(const marker of ["phase6-company-directory","<CompanyCard","<StatTiles","status={<Badge","company-document-gateway","company-document-gateway-action","company-staff-gateway","company-staff-gateway-action"]){
   if(!companies.includes(marker))throw new Error("Companies Phase 6 migration missing "+marker);
 }
 if(companies.includes('<div className="entity-panel"><h3>Expediente empresarial</h3>'))throw new Error("Company Documents tab still uses the overlapping legacy gateway composition");
+if(companies.includes('<div className="entity-panel"><h3>Personal de la empresa</h3>'))throw new Error("Company Technicians tab still uses the overlapping legacy gateway composition");
+if(companies.includes('id:"life"'))throw new Error("Company quick profile still renders the redundant life tab");
 if(companies.includes("function ResourceIcon"))throw new Error("Companies still defines a private resource icon system");
 if(companies.includes("function CompanyMetric"))throw new Error("Companies still defines private metric cards");
 
@@ -62,7 +64,7 @@ if(staticTable.includes('"use client"'))throw new Error("StaticDataTable must re
 if(!staticTable.includes('className="ds-data-table"'))throw new Error("StaticDataTable must reuse Shared Data UI table grammar");
 
 const css=fs.readFileSync("app/phase6-modules.css","utf8");
-for(const selector of [".phase6-dashboard",".phase6-company-directory",".phase6-location-directory",".company-document-gateway",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
+for(const selector of [".phase6-dashboard",".phase6-company-directory",".phase6-location-directory",".company-document-gateway",".company-staff-gateway",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 6 CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 6 CSS must use Design Tokens only");

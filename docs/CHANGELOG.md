@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-24 — Corrección visual de Técnicos y simplificación de Hoja de vida en Empresa
+
+- Se corrigió la pestaña **Técnicos** del perfil rápido de Empresa con una tarjeta V2 separando descripción, estados y acción.
+- Se añadieron indicadores de técnicos registrados, cupos disponibles y ocupación.
+- Se eliminó la pestaña redundante **Hoja de vida** del perfil rápido; la exportación permanece disponible en la acción superior **Exportar**.
+- Se añadió composición responsive específica para desktop, tablet y móvil.
+- El cambio no modifica usuarios, técnicos, permisos, cuotas ni los endpoints de exportación.
+
+
 ## 2026-09-24 — Corrección visual de Documentos en perfil de Empresa
 
 - Se corrigió la tarjeta **Expediente empresarial** de la pestaña Documentos del perfil rápido de Empresa.

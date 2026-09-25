@@ -84,6 +84,12 @@ for(const marker of ["<UiIcon","<Badge","<Alert","<EmptyState","<Button"]){
   if(!contingency.includes(marker))throw new Error("AttendanceContingency missing V2 primitive "+marker);
 }
 if(contingency.includes("window.alert"))throw new Error("AttendanceContingency still uses native alert feedback");
+if(!contingency.includes("organizationId"))throw new Error("Attendance contingency review does not carry company context");
+const contingencyReviewRoute=fs.readFileSync("app/api/attendance/contingency/[id]/route.ts","utf8");
+for(const marker of ["attendanceOrganizationId","organizationId","attendance_contingency_request","actor_platform_role","actor_email"]){
+  if(!contingencyReviewRoute.includes(marker))throw new Error("Attendance contingency review context/audit missing "+marker);
+}
+if(contingencyReviewRoute.includes("if(!session?.userId||!session.organizationId)"))throw new Error("Contingency review still blocks authorized platform attendance managers");
 const biometric=fs.readFileSync("components/SupervisedBiometricEnrollment.tsx","utf8");
 for(const marker of ["<UiIcon","<Badge","<Alert","<Button","organizationId","initialUserId","id=\"biometric\""]){
   if(!biometric.includes(marker))throw new Error("SupervisedBiometricEnrollment missing V2/admin primitive "+marker);

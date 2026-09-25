@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import UiIcon from "@/components/UiIcon";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import { CrewCard } from "@/components/business-ui";
-import { Search, ViewModeToggle } from "@/components/ui-kit/DataControls";
+import { CollectionView, Search } from "@/components/ui-kit/DataControls";
 import { Select } from "@/components/ui-kit/FormControls";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
@@ -100,7 +100,6 @@ export default function CrewDirectory({
   const [search,setSearch]=useState("");
   const [siteId,setSiteId]=useState("all");
   const [status,setStatus]=useState("all");
-  const [view,setView]=useState<"grid"|"list">("grid");
 
   const sites=useMemo(()=>{
     const map=new Map<string,string>();
@@ -157,7 +156,7 @@ export default function CrewDirectory({
           {value:"inactive",label:"Inactivas"},
         ]}
       />
-      <ViewModeToggle value={view} onChange={setView} label="Vista de cuadrillas"/>
+      <div id="crew-view-mode-tools" className="crew-view-mode-tools"/>
     </div>
 
     <div className="crew-directory-result-meta-v2">
@@ -165,8 +164,11 @@ export default function CrewDirectory({
       {hasFilters&&<button type="button" onClick={()=>{setSearch("");setSiteId("all");setStatus("all");}}><UiIcon name="reset" size={13}/>Limpiar filtros</button>}
     </div>
 
-    {view==="grid"
-      ? filtered.length?<div className="crew-directory-grid-v2">{filtered.map(crew=><CrewCard
+    <CollectionView
+      storageKey="crews"
+      label="Vista de cuadrillas"
+      toolbarTargetId="crew-view-mode-tools"
+      grid={filtered.length?<div className="crew-directory-grid-v2" data-collection-grid>{filtered.map(crew=><CrewCard
           key={crew.id}
           name={crew.name}
           organization={crew.organizationName}
@@ -200,8 +202,8 @@ export default function CrewDirectory({
             "data-filter-site":crew.siteId||"",
             "data-filter-site-label":crew.siteName||"",
           }}
-        />)}</div>:empty
-      :<StaticDataTable
+        />)}</div>:empty}
+      list={<StaticDataTable
         className="crew-directory-list-v2"
         caption="Listado de cuadrillas"
         columns={[
@@ -238,5 +240,6 @@ export default function CrewDirectory({
         }))}
         empty={empty}
       />}
+    />
   </section>;
 }

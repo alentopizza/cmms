@@ -55,9 +55,10 @@ if(companies.includes("function ResourceIcon"))throw new Error("Companies still 
 if(companies.includes("function CompanyMetric"))throw new Error("Companies still defines private metric cards");
 
 const documentWorkspace=fs.readFileSync("components/CompanyDocumentWorkspace.tsx","utf8");
-for(const marker of ["company-document-workspace-v2","company-document-preview-panel","company-document-list-panel","company-document-table","Previsualizar documento","Descargar documento","Compartir documento","Cargando previsualización","<Drawer"]){
+for(const marker of ["company-document-workspace-v2","company-document-preview-panel","company-document-list-panel","company-document-table","Ver documento","Descargar documento","Más acciones","Cargando previsualización","<Modal","<Drawer"]){
   if(!documentWorkspace.includes(marker))throw new Error("Company document manager missing "+marker);
 }
+if(documentWorkspace.includes("Compartir documento"))throw new Error("Company document manager must not expose the removed Share action");
 if(!documentWorkspace.includes('selectedId')||!documentWorkspace.includes('visible[0]'))throw new Error("Company document manager must auto-select the first visible document");
 if(!documentWorkspace.includes('onError={()=>{setPreviewLoading(false);setPreviewError(true);}}'))throw new Error("Company document preview must expose a PDF preview error state");
 const documentCreate=fs.readFileSync("components/CompanyDocumentCreateModal.tsx","utf8");

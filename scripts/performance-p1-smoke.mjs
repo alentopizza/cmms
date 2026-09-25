@@ -12,6 +12,9 @@ const required=[
   "components/ReactionMap.tsx",
   "app/dashboard/users/UserManagement.tsx",
   "app/dashboard/users/page.tsx",
+  "components/EntityProfileWorkspace.tsx",
+  "app/api/users/[id]/documents/route.ts",
+  "app/api/users/[id]/emergency-contact/route.ts",
   "app/dashboard/companies/CompanyDirectory.tsx",
   "components/SupplierDirectory.tsx",
   "components/LocationDirectory.tsx",
@@ -86,10 +89,33 @@ for(const marker of [
 }
 if((usersPage.match(/SELECT array_agg\(oms\.site_id::text ORDER BY site\.name\)/g)||[]).length>0)throw new Error("Users must not scan site membership twice per row");
 
+const userServerPage=fs.readFileSync("app/dashboard/users/page.tsx","utf8");
+for(const forbidden of ["LIMIT 1600","ManagedUserDocument","ManagedEmergencyContact","documents={documents.rows}","emergencyContacts={emergencyContacts.rows}"]){
+  if(userServerPage.includes(forbidden))throw new Error("Users initial render must not preload detail data: "+forbidden);
+}
+
+const profileWorkspace=fs.readFileSync("components/EntityProfileWorkspace.tsx","utf8");
+for(const marker of ["onTabChange?: (tabId:string)=>void","onTabChange?.(tab.id)"]){
+  if(!profileWorkspace.includes(marker))throw new Error("Profile tab-demand hook missing "+marker);
+}
+
+const userDocumentsRoute=fs.readFileSync("app/api/users/[id]/documents/route.ts","utf8");
+for(const marker of ["export async function GET","users.manage","WHERE organization_id=$1 AND user_id=$2","NextResponse.json({documents:result.rows})"]){
+  if(!userDocumentsRoute.includes(marker))throw new Error("Lazy user documents endpoint contract missing "+marker);
+}
+const userEmergencyRoute=fs.readFileSync("app/api/users/[id]/emergency-contact/route.ts","utf8");
+for(const marker of ["export async function GET","users.manage","FROM user_emergency_contacts","NextResponse.json({contact:result.rows[0]||null})"]){
+  if(!userEmergencyRoute.includes(marker))throw new Error("Lazy emergency contact endpoint contract missing "+marker);
+}
+
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
 for(const marker of [
   'dynamic(()=>import("@/components/UserStatisticsDashboard")',
   'dynamic(()=>import("@/components/UserAttendanceAuditCenter")',
+  'preferredTab!=="statistics"',
+  '["documents","emergency"].includes(preferredTab)',
+  'onTabChange={setPreferredTab}',
+  'fetch("/api/users/"+selectedUserId+"/"+endpoint',
 ]){
   if(!users.includes(marker))throw new Error("Users detail lazy bundle contract missing "+marker);
 }

@@ -176,10 +176,14 @@ export function CollectionView({
   },[mode,storageKey]);
 
   const toggle=<ViewModeToggle value={mode} onChange={setMode} label={label}/>;
-  const content=mode==="list"&&list!==undefined?list:grid;
 
   return <div className={["ds-collection-view","is-"+mode,className].filter(Boolean).join(" ")} data-view-mode={mode}>
     {toolbarHost&&createPortal(toggle,toolbarHost)}
-    {content}
+    {list!==undefined
+      ?<>
+        <div data-view-pane="grid" hidden={mode!=="grid"}>{grid}</div>
+        <div data-view-pane="list" hidden={mode!=="list"}>{list}</div>
+      </>
+      :grid}
   </div>;
 }

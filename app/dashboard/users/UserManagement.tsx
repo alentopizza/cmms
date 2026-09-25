@@ -261,8 +261,6 @@ export default function UserManagement({
   fixedOrganizationId,
   currentUserId,
   serviceSuppliers,
-  documents,
-  emergencyContacts,
 }: {
   users: ManagedUser[];
   organizations: Organization[];
@@ -272,8 +270,6 @@ export default function UserManagement({
   fixedOrganizationId: string | null;
   currentUserId: string | null;
   serviceSuppliers: ServiceSupplier[];
-  documents: ManagedUserDocument[];
-  emergencyContacts: ManagedEmergencyContact[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -291,6 +287,10 @@ export default function UserManagement({
   const [statisticsByUser,setStatisticsByUser]=useState<Record<string,UserStatisticsSnapshot>>({});
   const [statisticsLoadingUser,setStatisticsLoadingUser]=useState<string|null>(null);
   const [statisticsError,setStatisticsError]=useState("");
+  const [documentsByUser,setDocumentsByUser]=useState<Record<string,ManagedUserDocument[]>>({});
+  const [emergencyByUser,setEmergencyByUser]=useState<Record<string,ManagedEmergencyContact|null>>({});
+  const [detailLoadingUser,setDetailLoadingUser]=useState<string|null>(null);
+  const [detailError,setDetailError]=useState("");
 
   useEffect(() => {
     if (!mode) return;
@@ -319,8 +319,8 @@ export default function UserManagement({
   }, [organizations, draft.organization_id]);
   const selectedUser=useMemo(()=>users.find(user=>user.id===selectedUserId)||null,[users,selectedUserId]);
   const selectedStatistics=selectedUserId?statisticsByUser[selectedUserId]||null:null;
-  const selectedDocuments=useMemo(()=>documents.filter(document=>document.user_id===selectedUserId),[documents,selectedUserId]);
-  const selectedEmergencyContact=useMemo(()=>emergencyContacts.find(contact=>contact.user_id===selectedUserId)||null,[emergencyContacts,selectedUserId]);
+  const selectedDocuments=selectedUserId?documentsByUser[selectedUserId]||[]:[];
+  const selectedEmergencyContact=selectedUserId?(emergencyByUser[selectedUserId]??null):null;
 
   useEffect(()=>{
     const requestedUser=searchParams.get("user");
@@ -328,6 +328,38 @@ export default function UserManagement({
     const requestedTab=searchParams.get("tab");
     if(requestedTab)setPreferredTab(requestedTab);
   },[searchParams,users]);
+
+  useEffect(()=>{
+    if(!selectedUserId)return;
+    const hasDocuments=Object.prototype.hasOwnProperty.call(documentsByUser,selectedUserId);
+    const hasEmergency=Object.prototype.hasOwnProperty.call(emergencyByUser,selectedUserId);
+    if(hasDocuments&&hasEmergency)return;
+    const user=users.find(item=>item.id===selectedUserId)||null;
+    if(!user?.organization_id){
+      setDocumentsByUser(previous=>({...previous,[selectedUserId]:[]}));
+      setEmergencyByUser(previous=>({...previous,[selectedUserId]:null}));
+      return;
+    }
+    let cancelled=false;
+    setDetailLoadingUser(selectedUserId);
+    setDetailError("");
+    Promise.all([
+      fetch("/api/users/"+selectedUserId+"/documents",{headers:{Accept:"application/json"}}),
+      fetch("/api/users/"+selectedUserId+"/emergency-contact",{headers:{Accept:"application/json"}}),
+    ])
+      .then(async([documentsResponse,emergencyResponse])=>{
+        const documentsPayload=await documentsResponse.json().catch(()=>({}));
+        const emergencyPayload=await emergencyResponse.json().catch(()=>({}));
+        if(!documentsResponse.ok)throw new Error(documentsPayload?.message||"No fue posible cargar los documentos.");
+        if(!emergencyResponse.ok)throw new Error(emergencyPayload?.message||"No fue posible cargar el contacto de emergencia.");
+        if(cancelled)return;
+        setDocumentsByUser(previous=>({...previous,[selectedUserId]:Array.isArray(documentsPayload?.documents)?documentsPayload.documents:[]}));
+        setEmergencyByUser(previous=>({...previous,[selectedUserId]:emergencyPayload?.contact||null}));
+      })
+      .catch(error=>{if(!cancelled)setDetailError(error instanceof Error?error.message:"No fue posible cargar el expediente.");})
+      .finally(()=>{if(!cancelled)setDetailLoadingUser(current=>current===selectedUserId?null:current);});
+    return()=>{cancelled=true;};
+  },[selectedUserId,users,documentsByUser,emergencyByUser]);
 
   useEffect(()=>{
     if(!selectedUserId||statisticsByUser[selectedUserId])return;
@@ -744,8 +776,14 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
               </div></div>
             </div>},
-            {id:"documents",label:"Documentos",content:<UserDocuments user={selectedUser} documents={selectedDocuments}/>},
-            {id:"emergency",label:"Contacto de emergencia",content:<div className="entity-section-stack">
+            {id:"documents",label:"Documentos",content:detailLoadingUser===selectedUser.id
+              ?<div className="entity-panel"><Spinner label="Cargando documentos…"/></div>
+              :detailError?<div className="entity-panel"><Alert variant="danger" title="No fue posible cargar el expediente">{detailError}</Alert></div>
+              :<UserDocuments user={selectedUser} documents={selectedDocuments}/>},
+            {id:"emergency",label:"Contacto de emergencia",content:detailLoadingUser===selectedUser.id
+              ?<div className="entity-panel"><Spinner label="Cargando contacto de emergencia…"/></div>
+              :detailError?<div className="entity-panel"><Alert variant="danger" title="No fue posible cargar el expediente">{detailError}</Alert></div>
+              :<div className="entity-section-stack">
               <div className="entity-panel"><h3>Referencia personal / contacto de emergencia</h3><div className="entity-info-grid">
                 <div className="entity-info-field"><span>Nombre</span><strong>{selectedEmergencyContact?.full_name||"Sin registrar"}</strong></div>
                 <div className="entity-info-field"><span>Relación</span><strong>{selectedEmergencyContact?emergencyRelationshipLabel(selectedEmergencyContact.relationship_code):"Sin registrar"}</strong></div>

@@ -178,6 +178,20 @@ Example user-creation help text:
 
 ---
 
+## Tenant-scoped support operations by platform roles
+
+Platform Owner and Superadministrator may support tenant operations that their platform permission set exposes, but tenant-scoped data must always be entered through an explicit customer context.
+
+For Attendance specifically:
+
+- the platform operator selects the active Company before policy, biometric, contingency or reporting controls are enabled;
+- supervised biometric enrollment still requires the subject to be physically present, Site/geofence validation, identity confirmation, consent and liveness evidence;
+- the selected Company is revalidated server-side and cannot be replaced by an arbitrary client value for tenant users;
+- the bootstrap Platform Owner may have no persistent `users.id`; biometric/contingency audit metadata must retain platform role/email so the action remains attributable;
+- this support capability does not merge platform roles into the customer role hierarchy and does not create cross-company attendance views.
+
+---
+
 ## Canonical tenant roles
 
 Tenant roles are scoped to exactly one organization and, where applicable, to all sites or an explicit site subset.

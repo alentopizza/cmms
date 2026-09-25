@@ -1,9 +1,9 @@
 # Development handoff
 
-> Última revisión: 2026-09-24  
+> Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> HEAD revisado antes de crear este handoff: `c32037e638eb6f1c1d83bfd68f8a54c939f3ba99`
+> Base revisada para esta entrega: `a497a784939d3dbf5ede7ecc2ba9b6fcf8494e3e`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -67,7 +67,29 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-La última tanda de cambios del 24 de septiembre de 2026 se concentró en **Usuarios y Proveedores**.
+### Asistencia operativa · Fase 1
+
+La administración de Asistencia ya no depende de que una identidad de plataforma tenga `organizationId` en su sesión.
+
+- Propietario Desweb y Superadministrador seleccionan explícitamente la empresa en `/dashboard/attendance`.
+- Una vez seleccionada, política, geocercas, contingencias, reportes y enrolamiento supervisado se limitan a esa empresa.
+- `lib/attendance-context.ts` garantiza que un usuario tenant nunca pueda sustituir su organización mediante query/form data.
+- `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
+- El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
+- La pestaña **Asistencia** del perfil de Usuario enlaza al módulo con `organization_id` + `user_id`; el enrolamiento abre con la persona enfocada.
+- No se cambió `attendance_shifts`: la asignación de horarios individuales y los desplazamientos multi-sede pertenecen a las fases siguientes.
+
+Archivos clave:
+
+- `app/dashboard/attendance/page.tsx`
+- `app/api/attendance/policy/route.ts`
+- `app/api/attendance/enrollment-supervised/route.ts`
+- `components/SupervisedBiometricEnrollment.tsx`
+- `app/dashboard/users/UserManagement.tsx`
+- `lib/attendance-context.ts`
+- `app/phase8-modules.css`
+
+La tanda inmediatamente anterior del 24 de septiembre de 2026 se concentró en **Usuarios y Proveedores**.
 
 ### Usuarios
 

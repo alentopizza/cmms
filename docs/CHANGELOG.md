@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-25 — Asistencia operativa Fase 1: contexto administrativo y biometría
+
+- Propietario Desweb y Superadministrador pueden seleccionar explícitamente la empresa que administran desde `/dashboard/attendance`.
+- Política de asistencia, enrolamiento biométrico supervisado, contingencias, geocercas y reportes quedan limitados al contexto de empresa seleccionado.
+- El selector no amplía autorización: las mutaciones vuelven a validar empresa, usuario y sede en servidor; los usuarios de tenant siguen usando únicamente su organización autenticada.
+- El enrolamiento y la revocación biométrica aceptan supervisión de un operador de plataforma autorizado dentro de ese contexto explícito.
+- Cuando el bootstrap Platform Owner no tiene fila persistente de usuario, el evento biométrico conserva rol/email del actor en metadata auditable y deja `actor_user_id` nulo.
+- La pestaña **Asistencia** de la ficha de Usuario ahora muestra estado de campo, alcance operativo y acciones contextuales para abrir Asistencia con empresa + persona preseleccionadas.
+- El enlace contextual permite iniciar el enrolamiento inicial o administrar/reenrolar biometría sin volver a buscar al usuario.
+- Se añadieron guardrails smoke para impedir regresiones del contexto multiempresa, del deep-link Usuario → Asistencia y del flujo biométrico administrativo.
+- No se añadieron tablas ni migraciones en esta fase; horarios individuales y desplazamientos entre sedes permanecen para las siguientes fases funcionales.
+
 ## 2026-09-24 — Rediseño visual de la tarjeta real de Proveedores
 
 - Se rediseñó el `SupplierCard` existente de Business UI; no se creó una tarjeta paralela ni se modificó el modelo de datos.

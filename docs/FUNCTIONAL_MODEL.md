@@ -105,6 +105,10 @@ For **Sububicación**, the same profile geometry uses the Sub-location reference
 
 For **Técnico/Usuario**, the identity column uses the profile photo and Company/role scope. The right panel may show identity/access information, descriptive execution statistics, Attendance/biometric state and Reaction connection context. These statistics are operational evidence only and must not become automatic worker ranking or employment decisions.
 
+The User **Asistencia** tab is also an administrative gateway for authorized supervisors. It exposes current shift state, recent field hours, biometric status, Reaction connection and the user's Company/Site scope. From that tab, an authorized administrator can open the canonical Attendance module with the Company and person preselected for policy/geofence review or supervised biometric enrollment. The User profile does not duplicate biometric capture or attendance policy logic.
+
+For global Platform Owner/Superadmin identities, Attendance requires an explicit Company context before tenant-scoped controls appear. Tenant Admin/Manager sessions continue to use their authenticated Company automatically. Server mutation routes always revalidate the Company, target User and Site; query-string context only reduces navigation/reselection work.
+
 The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
 
 - active assigned Work Orders;

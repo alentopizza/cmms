@@ -81,6 +81,16 @@ This roadmap is directional and should be updated as priorities change.
 
 ## Next functional priorities
 
+### Attendance operational track
+
+- **Phase 1 — implemented:** explicit Company context for Platform Owner/Superadmin in Attendance, server-scoped policy/biometric administration, and User → Attendance contextual deep-link with the person focused for supervised enrollment.
+- **Phase 2 — next:** individual work schedules/jornada assignment by person, including day-specific hours, effective dates, base Site and controlled inheritance/copy from Company/Site schedules.
+- **Phase 3 — planned:** richer per-user attendance administration/audit surfaces over the existing supervised biometric lifecycle.
+- **Phase 4 — planned:** multi-Site travel segments inside one workday so a person may start at one Site, move for assigned work and close the same jornada at another authorized Site with preserved GPS/activity evidence.
+- **Phase 5 — planned:** reports for scheduled vs actual jornada, origin/destination Sites, travel segments, field hours, activities, contingencies and supporting evidence.
+
+Attendance and Reaction remain separate authorities: Attendance proves presence/working-time events; Reaction is live operational tracking when the field session is connected.
+
 ### Current foundation slice
 
 - organization resource limits;

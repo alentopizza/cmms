@@ -560,6 +560,14 @@ Attendance is operational by default for organizations that have never configure
 
 Biometric identity now has a supervised chain of trust. Initial/renewed enrollment is performed by an attendance manager with the user physically present. Existing self-enrolled profiles are treated as legacy and cannot authorize attendance until reenrolled. The system records the supervising user, site, enrollment method and verification time. Revocation nulls the usable encrypted embedding and keeps an audit event/metadata record.
 
+### Attendance administration context
+
+Attendance administration is tenant-scoped even for global platform identities. Tenant Admin/Manager sessions continue to derive the organization from authenticated membership. Platform Owner/Superadmin must explicitly select an active customer organization in `/dashboard/attendance` before policy, geofence, contingency, report or supervised-biometric administration becomes active.
+
+The selected organization is orchestration context only. Policy and biometric mutations revalidate the organization, target user and Site server-side. The Users profile can deep-link to Attendance with organization + user focus so the supervisor does not need to search again. Bootstrap Platform Owner enrollment/revocation events preserve actor platform role/email in audit metadata when no persistent actor user row exists.
+
+This is **Asistencia operativa — Fase 1**. Individual work schedules/jornada assignment and multi-Site travel segments are intentionally deferred to later functional phases; the current attendance shift model remains unchanged in this checkpoint.
+
 
 ### Mobile field shell phase 4A
 

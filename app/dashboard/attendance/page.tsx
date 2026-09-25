@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { can, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
+import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
@@ -12,6 +12,9 @@ import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { attendanceOrganizationId } from "@/lib/attendance-context";
+
+type OrganizationOption={id:string;name:string};
 
 type Policy={
   enabled:boolean;
@@ -57,16 +60,26 @@ type ReportRow={
 
 // ── Page orchestration: policy, sites, enrollment and reports ────────────────
 
-export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string}>}) {
+export default async function AttendancePage({searchParams}:{searchParams:Promise<{saved?:string;error?:string;organization_id?:string;user_id?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
-  const canSelf=can(session,"attendance.self");
+  const globalOperator=isPlatformOperator(session);
+  const canSelf=Boolean(session.userId&&session.organizationId&&can(session,"attendance.self"));
   const canManage=can(session,"attendance.manage");
   const canReports=can(session,"attendance.reports");
   if(!canSelf && !canManage && !canReports) redirect("/dashboard");
 
   const feedback=await searchParams;
-  const organizationId=session.organizationId;
+  const organizations=globalOperator
+    ? await query<OrganizationOption>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
+    : {rows:[]} as {rows:OrganizationOption[]};
+  const requestedOrganizationId=attendanceOrganizationId(session,feedback.organization_id);
+  const organizationId=globalOperator
+    ? organizations.rows.some(item=>item.id===requestedOrganizationId)?requestedOrganizationId:null
+    : requestedOrganizationId;
+  const selectedOrganization=organizationId
+    ? organizations.rows.find(item=>item.id===organizationId)||null
+    : null;
 
   const policyResult=organizationId
     ? await query<Policy>(
@@ -181,7 +194,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       )
     : {rows:[]} as {rows:EnrollmentPerson[]};
 
-  const reports=canReports
+  const reports=canReports && organizationId
     ? session.platformRole!=="user"
       ? await query<ReportRow>(
           `SELECT u.id user_id,u.full_name,om.role,
@@ -225,11 +238,11 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                ORDER BY e.task_id,e.occurred_at DESC
              ) x
            ) ev ON true
-           WHERE om.role IN ('technician','external','provider','manager','admin')
+           WHERE om.organization_id=$1 AND om.role IN ('technician','external','provider','manager','admin')
            ORDER BY u.full_name`,
+          [organizationId],
         )
-      : organizationId
-        ? await query<ReportRow>(
+      : await query<ReportRow>(
             `SELECT u.id user_id,u.full_name,om.role,
                     COALESCE(sh.shifts,0)::int shifts,
                     COALESCE(sh.field_hours,0)::text field_hours,
@@ -275,7 +288,6 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
              ORDER BY u.full_name`,
             [organizationId],
           )
-        : {rows:[]} as {rows:ReportRow[]}
     : {rows:[]} as {rows:ReportRow[]};
 
   const activeNow=reports.rows.filter(row=>row.open_now).length;
@@ -293,13 +305,35 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
     />
+    {globalOperator&&<section className="section attendance-admin-context">
+      <div className="attendance-admin-context-copy">
+        <span className="eyebrow">Contexto administrativo</span>
+        <h2>{selectedOrganization?selectedOrganization.name:"Selecciona una empresa"}</h2>
+        <p>{selectedOrganization
+          ?"Políticas, enrolamiento biométrico, geocercas, contingencias y reportes quedan limitados a esta empresa."
+          :"El Propietario y Superadministrador deben elegir la empresa antes de modificar la asistencia."}</p>
+      </div>
+      <form method="get" action="/dashboard/attendance" className="attendance-admin-context-form">
+        <div className="field">
+          <label htmlFor="attendance-organization">Empresa *</label>
+          <select id="attendance-organization" name="organization_id" defaultValue={organizationId||""} required>
+            <option value="">Selecciona empresa</option>
+            {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </div>
+        {feedback.user_id&&<input type="hidden" name="user_id" value={feedback.user_id}/>} 
+        <button className="button" type="submit">Administrar empresa</button>
+      </form>
+    </section>}
     <section className="section phase8-attendance-summary-head">
-      <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
+      <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>{selectedOrganization?`Administrando ${selectedOrganization.name}. `:""}Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
       <Badge variant={activeNow>0?"success":"neutral"} icon="attendance">{activeNow} en campo</Badge>
     </section>
 
     {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}
     {feedback.error==="roles" && <div className="section"><Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert></div>}
+
+    {globalOperator&&!organizationId&&<section className="section"><EmptyState icon="info" title="Selecciona una empresa para administrar Asistencia" description="El contexto de empresa evita mezclar políticas, personas, sedes y biometría entre clientes. Selecciona una empresa arriba para continuar."/></section>}
 
     {canSelf && organizationId && <>
       {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
@@ -340,7 +374,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       }
     </>}
 
-    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} />}
+    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} organizationId={organizationId} />}
 
     {canManage && organizationId && <SupervisedBiometricEnrollment
       people={enrollmentPeople.rows}
@@ -353,11 +387,14 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         geofenceRadius:site.geofence_radius_m,
       }))}
       livenessThreshold={policy.liveness_threshold}
+      organizationId={organizationId}
+      initialUserId={feedback.user_id||""}
     />}
 
     {canManage && organizationId && <section className="card section">
       <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><Badge variant={policy.enabled?"success":"neutral"}>{policy.enabled?"Activo":"Inactivo"}</Badge></div>
       <form method="post" action="/api/attendance/policy" className="form-grid">
+        <input type="hidden" name="organization_id" value={organizationId}/>
         <div className="field"><label>Estado</label><select name="enabled" defaultValue={String(policy.enabled)}><option value="true">Activado</option><option value="false">Desactivado</option></select></div>
         <div className="field"><label>Biometría facial</label><select name="require_face" defaultValue={String(policy.require_face)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
         <div className="field"><label>Geolocalización</label><select name="require_geolocation" defaultValue={String(policy.require_geolocation)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
@@ -374,7 +411,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       <div className="attendance-site-grid">{sites.rows.map(site=><article className="card attendance-site-card" key={site.id}><div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div><Badge variant={site.latitude!==null&&site.longitude!==null?"success":"warning"}>{site.latitude!==null&&site.longitude!==null ? site.geofence_radius_m+" m":"Sin geocerca"}</Badge><Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar →</Link></article>)}</div>
     </section>}
 
-    {canReports && <section className="section">
+    {canReports && organizationId && <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Últimos 30 días</span><h2>Estadísticas de operación en campo</h2><p className="muted">Datos descriptivos para análisis humano: no son un ranking ni una calificación automática de desempeño.</p></div></div>
       <MetricGrid className="attendance-summary-grid phase8-attendance-kpis">
         <KpiCard label="Personal con jornada abierta" value={String(activeNow)} hint="en este momento" icon="attendance" tone={activeNow>0?"success":"default"}/>

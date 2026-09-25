@@ -242,7 +242,7 @@ export function AttendanceContingencySelf({
 
 // ── Supervisor review queue ─────────────────────────────────────────────────
 
-export function AttendanceContingencyReview({requests}:{requests:ContingencyReviewItem[]}){
+export function AttendanceContingencyReview({requests,organizationId}:{requests:ContingencyReviewItem[];organizationId:string}){
   const [items,setItems]=useState(requests);
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [busyId,setBusyId]=useState("");
@@ -256,6 +256,7 @@ export function AttendanceContingencyReview({requests}:{requests:ContingencyRevi
         method:"PATCH",
         headers:{"content-type":"application/json"},
         body:JSON.stringify({
+          organizationId,
           decision,
           note:notes[id]||"",
           minutes:30,

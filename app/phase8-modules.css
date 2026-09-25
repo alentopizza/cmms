@@ -176,6 +176,28 @@
 .phase8-attendance .biometric-supervisor-camera{padding:var(--space-3)}
 .phase8-attendance .biometric-enrollment-location-check{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
 
+/* Phase 1 — attendance administration context ----------------------------- */
+.phase8-attendance .attendance-admin-context{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,520px);gap:var(--space-4);align-items:end;
+  padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-admin-context-copy{display:grid;gap:var(--space-1)}
+.phase8-attendance .attendance-admin-context-copy h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h3)}
+.phase8-attendance .attendance-admin-context-copy p{margin:0;color:var(--color-text-muted)}
+.phase8-attendance .attendance-admin-context-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-2);align-items:end}
+.phase8-attendance .attendance-admin-context-form .field{margin:0}
+.phase8-users .user-attendance-admin{display:grid;gap:var(--space-4)}
+.phase8-users .user-attendance-admin-panel{display:grid;gap:var(--space-4)}
+.phase8-users .user-attendance-admin-heading{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-3);align-items:start}
+.phase8-users .user-attendance-admin-heading h3{margin:2px 0;color:var(--color-text-primary)}
+.phase8-users .user-attendance-admin-icon{
+  width:42px;height:42px;display:grid;place-items:center;border-radius:var(--radius-xl);
+  background:var(--color-surface-teal);color:var(--color-brand-secondary)
+}
+.phase8-users .user-attendance-admin-actions{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.phase8-users .user-attendance-admin-actions .button{display:inline-flex;align-items:center;gap:var(--space-2);text-decoration:none}
+
 /* Shared forms/focus ------------------------------------------------------- */
 .phase8-suppliers .field input,.phase8-suppliers .field select,.phase8-suppliers .field textarea,
 .phase8-supplier-directory .field input,.phase8-supplier-directory .field select,.phase8-supplier-directory .field textarea,
@@ -197,7 +219,7 @@
 }
 @media(max-width:900px){
   .phase8-users .user-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .phase8-users .user-ops-layout,.phase8-crews .crew-showcase-grid,.phase8-attendance .attendance-presence-grid,.phase8-attendance .biometric-supervisor-grid{grid-template-columns:1fr}
+  .phase8-users .user-ops-layout,.phase8-crews .crew-showcase-grid,.phase8-attendance .attendance-presence-grid,.phase8-attendance .biometric-supervisor-grid,.phase8-attendance .attendance-admin-context{grid-template-columns:1fr}
   .phase8-users .user-ops-kpis,.phase8-users .entity-stat-grid.ds-stat-tiles,.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .phase8-attendance .attendance-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -207,6 +229,9 @@
   .phase8-supplier-directory .supplier-commercial-kpi-grid,.phase8-attendance-kpis,.phase8-attendance .attendance-site-grid{grid-template-columns:1fr}
   .phase8-crews .crew-roster-grid,.phase8-attendance .attendance-location-states,.phase8-attendance .attendance-validation-steps{grid-template-columns:1fr}
   .phase8-attendance .phase8-attendance-summary-head{align-items:flex-start;flex-direction:column}
+  .phase8-attendance .attendance-admin-context-form{grid-template-columns:1fr}
+  .phase8-users .user-attendance-admin-heading{grid-template-columns:auto minmax(0,1fr)}
+  .phase8-users .user-attendance-admin-heading>.ds-badge{grid-column:1/-1;justify-self:start}
   .phase8-attendance .attendance-presence-status{grid-template-columns:auto minmax(0,1fr)}
   .phase8-attendance .attendance-presence-status>.ds-badge{grid-column:1/-1;justify-self:start}
   .phase8-crews .ds-crew-leader{grid-template-columns:1fr}

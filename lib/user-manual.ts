@@ -55,7 +55,7 @@ export const MANUAL_ROLES:Array<{id:ManualRole;label:string;summary:string}> = [
   {id:"external",label:"Colaborador externo",summary:"Trabajo de campo asignado directamente o mediante cuadrilla."},
 ];
 
-export const MANUAL_LAST_REVIEW = "2026-09-24";
+export const MANUAL_LAST_REVIEW = "2026-09-25";
 
 // ── User-facing articles ────────────────────────────────────────────────────
 
@@ -172,6 +172,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
+      "En la pestaña Asistencia, usa Administrar biometría / Enrolar biometría inicial para abrir el módulo Asistencia con la empresa y el usuario ya seleccionados.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
@@ -206,7 +207,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/attendance",
     steps:[
       "El usuario debe existir y tener foto de perfil.",
-      "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento; puede ser la sede principal o cualquier otra sede autorizada.",
+      "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento. Propietario Desweb y Superadministrador primero seleccionan explícitamente la empresa que están administrando y luego el usuario/sede dentro de ese contexto.",
       "El supervisor pulsa Verificar presencia en la sede. El GPS debe estar dentro de la geocerca antes de habilitar la cámara.",
       "La persona debe estar físicamente presente; el supervisor confirma visualmente su identidad.",
       "La persona acepta el tratamiento de su plantilla facial.",
@@ -482,6 +483,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Administración contextual de Asistencia y biometría",
+    summary:"Propietario Desweb y Superadministrador pueden seleccionar la empresa en Asistencia para gestionar política, geocercas, contingencias, reportes y enrolamiento supervisado; la ficha de Usuario abre ese flujo con la persona ya enfocada.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-24",
     title:"Centro de reportes y cierre visual V2",

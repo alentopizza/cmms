@@ -116,7 +116,7 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 ## Biometric attendance invariants
 
 - Facial attendance is 1:1 verification of the authenticated account, never company-wide biometric identification.
-- Initial facial enrollment must be supervised by an authorized Admin/Manager with the person physically present. Self-enrollment is prohibited.
+- Initial facial enrollment must be supervised with the person physically present. A tenant Admin/Manager may supervise within its authorized organization/Site scope; Platform Owner/Superadmin may supervise only after explicitly selecting the target organization in the Attendance administration context. Self-enrollment is prohibited.
 - Uploaded profile photos are human identity aids only and must never become the biometric reference template.
 - Legacy self-enrolled templates are not considered verified and require supervised reenrollment before attendance use.
 - Biometric revocation must preserve audit metadata while making the encrypted template unusable.
@@ -124,6 +124,8 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
+- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, supervised biometrics, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
+- Bootstrap Platform Owner has no database user row; supervised enrollment/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
 
 

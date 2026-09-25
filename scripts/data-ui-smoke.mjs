@@ -15,7 +15,7 @@ for(const file of requiredFiles){
 
 const barrel=fs.readFileSync("components/ui-kit/index.ts","utf8");
 for(const symbol of [
-  "Search","FilterPanel","FilterGroup","DataTable","Pagination","RowActions",
+  "Search","FilterPanel","FilterGroup","ViewModeToggle","CollectionView","DataTable","Pagination","RowActions",
   "KpiCard","MetricGrid","StatTiles","LineChart","ProgressBar","CircularProgress","Timeline","StepProgress","DataPatternsPreview",
 ]){
   if(!barrel.includes(symbol))throw new Error("Shared Data UI barrel does not export "+symbol);
@@ -44,7 +44,7 @@ for(const contract of ["aria-sort","selectable","bulkActions","RowActions","Pagi
 }
 
 const controls=fs.readFileSync("components/ui-kit/DataControls.tsx","utf8");
-for(const contract of ['event.key==="Escape"',"aria-haspopup=\"dialog\"","Limpiar búsqueda"]){
+for(const contract of ['event.key==="Escape"',"aria-haspopup=\"dialog\"","Limpiar búsqueda","ViewModeToggle","CollectionView","cmms:view-mode-change","cmms:view-mode:"]){
   if(!controls.includes(contract))throw new Error("Search/Filter accessibility contract missing "+contract);
 }
 
@@ -55,6 +55,7 @@ if(!moduleHeader.includes("@/components/ui-kit/DataControls")||!moduleHeader.inc
 if(!moduleHeader.includes('querySelectorAll<HTMLElement>("[data-module-record]")')){
   throw new Error("ModuleHeader must preserve authorized DOM-record filtering compatibility");
 }
+if(!moduleHeader.includes("cmms:view-mode-change"))throw new Error("ModuleHeader must reapply filters when collection view changes");
 
 const analytics=fs.readFileSync("components/DashboardAnalytics.tsx","utf8");
 if(!analytics.includes("@/components/ui-kit/Metrics")||!analytics.includes("@/components/ui-kit/Charts")){

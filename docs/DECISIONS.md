@@ -580,3 +580,23 @@ Rules:
 - no cross-company attendance report or biometric management view is created by this context selector.
 
 This allows Desweb platform operators to support customer onboarding without weakening tenant isolation or creating a second attendance model.
+
+
+## ADR-039 — Individual attendance schedules are versioned planning evidence
+
+Status: accepted.
+
+Company/Site business hours describe when an operating entity is open. A person's expected work schedule is a different concept and needs its own effective-dated record so shift planning can vary by person without changing Company/Site operating hours.
+
+Rules:
+- `user_attendance_schedules` stores the person's base Site, weekly day-specific schedule, timezone snapshot and effective date range;
+- Company or Site `business_schedule` may be used as a template, but the individual record stores a snapshot rather than a live inherited pointer;
+- one user cannot have overlapping individual schedule vigencias inside the same Organization;
+- timeline mutations are serialized server-side and started/past vigencias are not retroactively edited or deleted;
+- a new future vigencia may close the prior open-ended vigencia on the day immediately before the new one begins;
+- the base Site and any Site used as a template must be authorized for both the target user and the supervising tenant user's Site scope;
+- Platform Owner/Superadmin use the explicit Attendance Organization context from ADR-038;
+- scheduled hours do not authorize or reject attendance events. A valid real check-in/check-out outside schedule remains valid operational evidence;
+- the scheduled-vs-actual interpretation belongs to descriptive reporting and human review, not automatic employment scoring.
+
+This keeps expected work time auditable while preserving actual field evidence and avoiding silent historical changes when Company/Site hours are edited.

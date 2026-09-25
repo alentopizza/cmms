@@ -12,7 +12,7 @@ export async function POST(
   context:{params:Promise<{id:string}>},
 ){
   const session=await getSession();
-  if(!session?.userId)return new NextResponse("Unauthorized",{status:401});
+  if(!session)return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"attendance.manage"))return new NextResponse("Forbidden",{status:403});
 
   const {id}=await context.params;

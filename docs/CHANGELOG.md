@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-25 — Selector global Cuadrícula / Listado
+
+- Se incorporaron `ViewModeToggle` y `CollectionView` al Shared Data UI como patrón oficial para alternar entre **Vista cuadrícula** y **Vista listado**.
+- El selector cambia únicamente la presentación de la colección ya cargada: no crea endpoints, consultas, servicios ni fuentes de estado paralelas.
+- `CollectionView` conserva la preferencia visual por módulo en el navegador y notifica a `ModuleHeader` para reaplicar búsqueda, estado y facetas después de cambiar de vista.
+- Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes de trabajo, Rutinas/Mantenimiento, Inventario y Leads ya consumen el patrón compartido.
+- Ubicaciones conserva sus tarjetas aprobadas en cuadrícula y añade una vista listado real con Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción **Ver ubicación** sobre la misma colección.
+- Cuadrillas deja de mantener un selector visual privado y reutiliza `ViewModeToggle`; sus filtros locales y ambas presentaciones existentes permanecen intactos.
+- Órdenes y Rutinas reutilizan las tarjetas y `StaticDataTable` que ya existían; el modo elegido por el usuario sustituye la antigua decisión automática desktop/mobile.
+- Los módulos que solo poseían tarjetas reutilizan esas mismas tarjetas en una disposición de lista de una columna, sin duplicar CRUD, acciones ni datos.
+- Se añadió `scripts/view-mode-toggle-smoke.mjs` a CI y se actualizaron los smokes de Fases 4, 7, 8 y 9.
+- No hubo cambios de base de datos, RBAC, permisos ni modelos de dominio.
+
 ## 2026-09-25 — Documentos de Empresa · previsualización, gestión y visor completo
 
 - La pestaña **Documentos** conserva `CompanyDocumentWorkspace` y los endpoints/documentos existentes; no se creó una pantalla, servicio ni fuente de datos paralela.

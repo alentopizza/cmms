@@ -34,8 +34,8 @@ for(const marker of [
   "Buscar cuadrilla, líder, sede o descripción...",
   "Todas las sedes",
   "Todos los estados",
-  "Vista cuadrícula",
-  "Vista listado",
+  "<ViewModeToggle",
+  'label="Vista de cuadrillas"',
   "<CrewCard",
   "<StaticDataTable",
   "Contactar por WhatsApp",
@@ -76,7 +76,7 @@ for(const marker of [
   "@media(max-width:1180px)",
   "@media(max-width:620px)",
   ".crew-directory-controls-v2",
-  ".crew-directory-view-toggle-v2",
+  ".crew-directory-controls-v2 .ds-view-mode-toggle",
   ".crew-directory-list-v2",
 ]){
   if(!css.includes(marker))throw new Error("Crew responsive styles missing "+marker);

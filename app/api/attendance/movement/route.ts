@@ -228,6 +228,10 @@ export async function POST(request:Request){
         await client.query("ROLLBACK");
         return NextResponse.json({message:"La sede de origen o destino no está disponible."},{status:422});
       }
+      if(policy.require_geolocation&&(toSite.latitude===null||toSite.longitude===null)){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"La sede de destino no tiene geocerca configurada y no puede recibir un desplazamiento geolocalizado."},{status:409});
+      }
 
       const location=validateLocation({
         latitude:body?.latitude,longitude:body?.longitude,accuracy:body?.accuracy,
@@ -275,6 +279,14 @@ export async function POST(request:Request){
           location.latitude,location.longitude,location.accuracy,location.distance,
           typeof body?.notes==="string"?body.notes.trim().slice(0,500)||null:null,
         ],
+      );
+
+      await client.query(
+        `UPDATE attendance_contingency_requests
+         SET status='cancelled',updated_at=now()
+         WHERE organization_id=$1 AND user_id=$2 AND action='check_out'
+           AND status IN ('pending','approved')`,
+        [session.organizationId,session.userId],
       );
 
       await audit(client,session,session.organizationId,"attendance_travel_started",inserted.rows[0].id,{

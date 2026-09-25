@@ -32,25 +32,25 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const canWrite=can(session,"work_orders.write");
   const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
-  const creationGate=await getCreationGateForScope("work_order",session.organizationId,superadmin);
+  const creationGatePromise=getCreationGateForScope("work_order",session.organizationId,superadmin);
   const requesterOnly=session.role==="requester" && session.userId;
   const providerOnly=session.role==="provider" && session.userId;
   const externalOnly=session.role==="external" && session.userId;
 
-  let orders;
+  async function loadOrders(){
   if(superadmin){
-    orders=await query<OrderRow>(
+    return query<OrderRow>(
       `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
        FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
        ORDER BY w.requested_at DESC LIMIT 200`);
   }else if(requesterOnly){
     orders=session.accessAllSites
-      ? await query<OrderRow>(
+      ? query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId])
-      : await query<OrderRow>(
+      : query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.requested_by=$2 AND w.site_id=ANY($3::uuid[])
@@ -59,7 +59,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   }else if(providerOnly){
     const supplierId=session.externalSupplierId;
     orders=session.accessAllSites
-      ? await query<OrderRow>(
+      ? query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND $2::uuid IS NOT NULL AND (
@@ -67,7 +67,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,supplierId])
-      : await query<OrderRow>(
+      : query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND $2::uuid IS NOT NULL AND (
@@ -77,7 +77,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           [orgId,supplierId,session.siteIds]);
   }else if(externalOnly){
     orders=session.accessAllSites
-      ? await query<OrderRow>(
+      ? query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND (
@@ -87,7 +87,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
            )
            ORDER BY w.requested_at DESC LIMIT 200`,
           [orgId,session.userId])
-      : await query<OrderRow>(
+      : query<OrderRow>(
           `SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($3::uuid[]) AND (
@@ -99,24 +99,31 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           [orgId,session.userId,session.siteIds]);
   }else{
     orders=session.accessAllSites
-      ? await query<OrderRow>(
+      ? query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 ORDER BY w.requested_at DESC LIMIT 200`,[orgId])
-      : await query<OrderRow>(
+      : query<OrderRow>(
           `SELECT w.id,w.organization_id,w.site_id,s.name site,w.number::text,w.title,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,o.name company,w.type,w.priority,w.status,w.requested_at::text
            FROM work_orders w JOIN organizations o ON o.id=w.organization_id JOIN sites s ON s.id=w.site_id LEFT JOIN assets a ON a.id=w.asset_id
            WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
            ORDER BY w.requested_at DESC LIMIT 200`,[orgId,session.siteIds]);
   }
+  }
 
-  const assets=canWrite
+  const assetsPromise=canWrite
     ? superadmin
-      ? await query<{id:string;label:string}>(`SELECT a.id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' ORDER BY o.name,a.name`)
+      ? query<{id:string;label:string}>(`SELECT a.id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' ORDER BY o.name,a.name`)
       : session.accessAllSites
-        ? await query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
-        : await query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
-    : {rows:[]} as {rows:{id:string;label:string}[]};
+        ? query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
+        : query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
+    : Promise.resolve({rows:[]} as {rows:{id:string;label:string}[]});
+
+  const [creationGate,orders,assets]=await Promise.all([
+    creationGatePromise,
+    loadOrders(),
+    assetsPromise,
+  ]);
 
   const activeOrders=orders.rows.filter(order=>!["completed","cancelled"].includes(order.status)).length;
   const urgentOrders=orders.rows.filter(order=>order.priority==="urgent"&&!["completed","cancelled"].includes(order.status)).length;

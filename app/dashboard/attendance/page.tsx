@@ -327,7 +327,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
   const selfScheduleRow=selfSchedule.rows[0]||null;
   const selfScheduledDay=selfScheduleRow
-    ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date,selfScheduleRow.timezone)
+    ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date)
     : null;
 
   return <div className="phase8-attendance">

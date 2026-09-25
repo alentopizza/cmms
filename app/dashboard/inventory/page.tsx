@@ -13,6 +13,7 @@ import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
 import InventorySubnav from "@/components/InventorySubnav";
+import { InventoryCard } from "@/components/business-ui";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -172,33 +173,38 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           const state=stockState(item);
           const quantity=Number(item.quantity||0),max=Math.max(Number(item.max_quantity||0),Number(item.min_quantity||0),quantity,1);
           const pct=Math.max(0,Math.min(100,quantity/max*100));
-          return <article className={"inventory-product-card"+(item.active?"":" inactive")} key={item.id}
-            data-module-record data-status={state.key}
-            data-search={[item.sku,item.name,item.description,item.category,item.company,item.site,item.location,item.warehouse,item.supplier].filter(Boolean).join(" ")}
-            data-filter-organization={item.organization_id} data-filter-organization-label={item.company}
-            data-filter-site={item.site_id||""} data-filter-site-label={item.site||""}
-            data-filter-category={item.category_id||""} data-filter-category-label={item.category||""}
-            data-filter-supplier={item.supplier_id||""} data-filter-supplier-label={item.supplier||""}
-            data-filter-warehouse={item.warehouse_id||""} data-filter-warehouse-label={item.warehouse||""}
-            data-filter-record={item.active?"active":"inactive"} data-filter-record-label={item.active?"Activo":"Inactivo"}>
-            <div className="inventory-product-card-head">
-              <span className={"inventory-product-visual"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={32}/>}</span>
-              <div><div className="inventory-product-state-row"><span className={"inventory-stock-pill "+state.key}>{state.label}</span>{!item.active&&<span className="inventory-record-pill">Inactivo</span>}</div><small>SKU: {item.sku}</small><h3>{item.name}</h3><p>{item.category||"Sin categoría"} · {item.presentation||item.unit}</p></div>
-            </div>
-            <div className="inventory-product-stock">
-              <div><strong>{item.quantity}</strong><span>{item.unit}</span></div>
-              <div className="inventory-stock-progress"><i style={{width:pct+"%"}}/><span>Mín: {item.min_quantity} · Máx: {item.max_quantity}</span></div>
-            </div>
-            <div className="inventory-product-meta">
-              <span><small>Proveedor</small><strong>{item.supplier||"Sin proveedor"}</strong></span>
-              <span><small>Bodega</small><strong>{item.warehouse||item.storage_location||"Sin registrar"}</strong></span>
-              <span><small>Valor unitario</small><strong>{money(Number(item.unit_cost||0))}</strong></span>
-            </div>
-            <div className="inventory-product-actions">
+          return <InventoryCard
+            key={item.id}
+            name={item.name}
+            sku={item.sku}
+            category={item.category||"Sin categoría"}
+            presentation={item.presentation||item.unit}
+            quantity={quantity}
+            unit={item.unit}
+            min={Number(item.min_quantity||0)}
+            max={Number(item.max_quantity||0)}
+            supplier={item.supplier||"Sin proveedor"}
+            warehouse={item.warehouse||item.storage_location||"Sin registrar"}
+            unitValue={money(Number(item.unit_cost||0))}
+            status={state.label}
+            statusTone={state.key==="out"?"danger":state.key==="low"?"warning":"success"}
+            active={item.active}
+            imageSrc={item.has_image?"/api/inventory/"+item.id+"/image":null}
+            recordProps={{
+              "data-module-record":true,"data-status":state.key,
+              "data-search":[item.sku,item.name,item.description,item.category,item.company,item.site,item.location,item.warehouse,item.supplier].filter(Boolean).join(" "),
+              "data-filter-organization":item.organization_id,"data-filter-organization-label":item.company,
+              "data-filter-site":item.site_id||"","data-filter-site-label":item.site||"",
+              "data-filter-category":item.category_id||"","data-filter-category-label":item.category||"",
+              "data-filter-supplier":item.supplier_id||"","data-filter-supplier-label":item.supplier||"",
+              "data-filter-warehouse":item.warehouse_id||"","data-filter-warehouse-label":item.warehouse||"",
+              "data-filter-record":item.active?"active":"inactive","data-filter-record-label":item.active?"Activo":"Inactivo",
+            }}
+            actions={<>
               <Link href={"/dashboard/suppliers?supplier="+(item.supplier_id||"")+"&tab=inventory"} className="text-button">Ver proveedor</Link>
               {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="button secondary">Ver detalles →</Link>}
-            </div>
-          </article>;
+            </>}
+          />;
         })}</div>:<div className="card empty-state"><strong>Aún no hay artículos.</strong><span>Usa Nuevo producto o Importar para comenzar.</span></div>}
       </div>
 

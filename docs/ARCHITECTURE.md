@@ -700,3 +700,25 @@ Shared Data UI is presentation/state tooling only. It must never become an autho
 `ModuleHeader` is the first compatibility migration and intentionally keeps its DOM-record contract. `DashboardAnalytics` is the first analytical compatibility migration and keeps its current server-facing props while using shared KPI/chart primitives.
 
 Dense domain tables remain in their module layers until their scheduled migrations so row actions, CRUD forms and business-specific responsive compositions are not silently changed.
+
+
+### Business UI runtime layer — Phase 5
+
+The frontend composition stack is now:
+
+`Design Tokens → UI Core → Shared Data UI → Business UI → ERP modules`.
+
+Business UI lives under `components/business-ui/` and is responsible for domain-aware composition, not business authorization or persistence.
+
+`BusinessCardShell` standardizes structural behavior such as surface border/radius, focus, state and responsive grammar. Specialized cards preserve their domain identities:
+- Asset emphasizes condition, physical location, supplier and criticality;
+- Inventory emphasizes stock state, quantity thresholds, warehouse and unit value;
+- Maintenance emphasizes cadence and next due date;
+- Work Order emphasizes number, priority, status and activity navigation;
+- Supplier emphasizes capabilities, contact and commercial/operational counts;
+- Location emphasizes organization identity, place imagery and resource entry points;
+- User preserves the established person/access card composition while consuming the common outer shell.
+
+`EntityProfileWorkspace` remains the canonical profile-page composition. Phase 5 only centralizes its stat rows through BusinessProfileStat; domain tabs/actions are intentionally not homogenized.
+
+Business UI components receive already-authorized data and caller-provided actions. They must never infer or grant permissions.

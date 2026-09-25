@@ -59,6 +59,7 @@ jobs:
       - run: node scripts/ui-kit-core-smoke.mjs
       - run: node scripts/shell-v2-smoke.mjs
       - run: node scripts/data-ui-smoke.mjs
+      - run: node scripts/business-ui-smoke.mjs
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

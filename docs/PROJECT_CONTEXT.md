@@ -865,3 +865,24 @@ Search and filtering are centralized through Search + FilterPanel/FilterGroup. D
 No DB schema, API, RBAC or business-rule changes are part of Phase 4.
 
 Next visual step: Phase 5 Business UI.
+
+
+### DESWEB V2 Business UI — Phase 5 implemented (2026-09-24)
+
+The reusable domain-card layer is now official.
+
+`components/business-ui/BusinessCards.tsx` provides a shared BusinessCardShell plus AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, UserCard and BusinessProfileStat. The objective is controlled reuse: shared spacing, states, token usage and accessibility without flattening the information architecture of each domain.
+
+Current consumption:
+- Assets directory → AssetCard;
+- Inventory products → InventoryCard;
+- Maintenance responsive directory → MaintenanceCard;
+- Work Order responsive directory → WorkOrderCard;
+- Supplier directory → SupplierCard;
+- Location/Site directory → LocationCard;
+- Users → UserCard shell;
+- EntityProfileWorkspace → shared BusinessProfileStat.
+
+Existing server-side access rules, contextual creation, record editing, requisitions, maps/geofences and module-specific actions remain unchanged.
+
+Phase 6 is the first complete module migration block: Dashboard, Companies and Locations.

@@ -655,7 +655,7 @@ Legacy compatibility wrappers now delegate to UI Kit without changing their publ
 
 The live `/ui-kit` page now documents Foundations plus Buttons, Forms, Cards/Status, Navigation, Overlays and Feedback using the real components.
 
-DataTable/Pagination/Search-Filter/KPI/Timeline/Progress remain Phase 4. ERP-specific Business UI remains Phase 5.
+DataTable/Pagination/Search-Filter/KPI/Timeline/Progress are implemented in Phase 4. ERP-specific Business UI is implemented in Phase 5.
 
 
 ## 28. Phase 3 shell/navigation implementation status
@@ -704,3 +704,30 @@ Data authorization rule:
 Search, filters, sorting, pagination and selection are presentation/data-navigation tools. They never grant scope. Server queries/RBAC remain authoritative and must constrain the dataset before these components receive it.
 
 Dense Work Order, Maintenance, Inventory and other module-specific table/card migrations remain in their scheduled module phases. Phase 4 establishes the reusable contract rather than changing their business flows.
+
+
+## 30. Phase 5 Business UI implementation status
+
+**Status: implemented.**
+
+Canonical runtime:
+
+- `components/business-ui/BusinessCards.tsx` — BusinessCardShell, AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, UserCard and BusinessProfileStat;
+- `components/business-ui/index.ts` — official Business UI exports;
+- `app/business-ui.css` — token-only shared Business UI presentation;
+- `components/business-ui/BusinessCardsPreview.tsx` — live authenticated examples in `/ui-kit`.
+
+Migration coverage:
+
+- Assets directory cards use `AssetCard`;
+- Inventory product cards use `InventoryCard`;
+- Maintenance responsive cards use `MaintenanceCard`;
+- Work Order responsive cards use `WorkOrderCard`;
+- Supplier directory cards use `SupplierCard`;
+- Site/Location directory cards use `LocationCard`;
+- User directory cards consume `UserCard` as their shared outer shell;
+- `EntityProfileWorkspace` consumes `BusinessProfileStat` while retaining domain-specific tabs, quick actions and profile identity.
+
+Business UI intentionally shares layout grammar, spacing, states, focus and semantic tokens without forcing identical content. Supplier, User, Asset, Inventory and Location retain distinct information hierarchy and actions.
+
+The legacy desktop tables in Maintenance/Work Orders remain in place for the planned module-specific migrations. Business UI does not move CRUD/RBAC/business logic into visual components.

@@ -11,6 +11,7 @@ import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountryCityFields } from "@/components/InternationalFields";
+import { LocationCard } from "@/components/business-ui";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -132,30 +133,33 @@ export default function LocationDirectory({sites,sublocations,services,technicia
 
   return <>
     {!selected&&<div className="site-visual-grid site-visual-grid-compact">
-      {sites.map(site=><article
-        className="site-visual-card site-compact-card" key={site.id} data-module-record data-status={site.active?"active":"inactive"}
-        data-search={[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" ")}
-        data-filter-organization={site.organization_id} data-filter-organization-label={site.organization_name}
-        data-filter-country={site.country} data-filter-country-label={countryName(site.country)}
-        data-filter-city={site.city||""} data-filter-city-label={site.city||""}
-      >
-        <button className="site-visual-card-button site-card-main-action" type="button" onClick={()=>openSite(site.id)}>
-          <div className={"site-visual-cover"+(site.has_image?"":" fallback")}>{site.has_image&&<img src={"/api/sites/"+site.id+"/image"} alt="" />}</div>
-          <div className="site-company-logo">{site.organization_has_logo?<img src={"/api/organizations/"+site.organization_id+"/assets/logo"} alt={"Logo de "+site.organization_name} />:<span>{initials(site.organization_name)}</span>}</div>
-          <div className="site-visual-content site-visual-content-compact">
-            <h3>{site.name}</h3>
-            <p><span>{site.organization_name}</span><span>{site.city||"Ciudad sin registrar"} · {countryName(site.country)}</span><span>{site.address||"Dirección sin registrar"}</span></p>
-          </div>
-        </button>
-        <nav className="site-resource-actions" aria-label={"Recursos de "+site.name}>
+      {sites.map(site=><LocationCard
+        key={site.id}
+        name={site.name}
+        organization={site.organization_name}
+        location={(site.city||"Ciudad sin registrar")+" · "+countryName(site.country)}
+        address={site.address||"Dirección sin registrar"}
+        active={site.active}
+        coverSrc={site.has_image?"/api/sites/"+site.id+"/image":null}
+        logoSrc={site.organization_has_logo?"/api/organizations/"+site.organization_id+"/assets/logo":null}
+        fallback={initials(site.organization_name)}
+        onOpen={()=>openSite(site.id)}
+        recordProps={{
+          "data-module-record":true,"data-status":site.active?"active":"inactive",
+          "data-search":[site.name,site.organization_name,site.code,site.city,site.country,site.address].filter(Boolean).join(" "),
+          "data-filter-organization":site.organization_id,"data-filter-organization-label":site.organization_name,
+          "data-filter-country":site.country,"data-filter-country-label":countryName(site.country),
+          "data-filter-city":site.city||"","data-filter-city-label":site.city||"",
+        }}
+        resources={<nav className="site-resource-actions" aria-label={"Recursos de "+site.name}>
           <button type="button" className="site-resource-action" title="Sububicaciones" data-tooltip="Sububicaciones" aria-label={"Sububicaciones: "+site.location_count} onClick={()=>openSite(site.id)}>
-            <span className="site-resource-icon" aria-hidden="true">⌁</span><strong>{site.location_count}</strong>
+            <span className="site-resource-icon" aria-hidden="true"><UiIcon name="sublocation" size={17}/></span><strong>{site.location_count}</strong>
           </button>
           <Link href="/dashboard/assets" className="site-resource-action" title="Activos" data-tooltip="Activos" aria-label={"Activos: "+site.asset_count+". Abrir módulo."}>
-            <span className="site-resource-icon" aria-hidden="true">◇</span><strong>{site.asset_count}</strong>
+            <span className="site-resource-icon" aria-hidden="true"><UiIcon name="asset" size={17}/></span><strong>{site.asset_count}</strong>
           </Link>
-        </nav>
-      </article>)}
+        </nav>}
+      />)}
     </div>}
 
     {selected&&!selectedSub&&<section className="section entity-page-detail">

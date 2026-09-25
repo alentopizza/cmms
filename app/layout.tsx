@@ -2,6 +2,7 @@ import "./globals.css";
 import "./design-tokens.css";
 import "./ui-kit-core.css";
 import "./data-ui.css";
+import "./business-ui.css";
 import "./shell-v2.css";
 
 export const metadata = {

@@ -7,6 +7,7 @@ import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
+import { UserCard } from "@/components/business-ui";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
@@ -555,20 +556,22 @@ export default function UserManagement({
       </div>
 
       <div className="user-role-grid user-compact-profile-grid">
-        {users.map(user => <article
-          className={"user-directory-profile-card "+(user.active ? "" : "user-role-card-inactive")}
+        {users.map(user => <UserCard
           key={user.id}
-          data-module-record
-          data-status={user.active ? "active" : "inactive"}
-          data-search={[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[]),user.external_supplier_name].filter(Boolean).join(" ")}
-          data-filter-organization={user.organization_id||""}
-          data-filter-organization-label={user.organization_name||""}
-          data-filter-role={roleKey(user)}
-          data-filter-role-label={roleName(roleKey(user))}
-          data-filter-site={(user.site_ids||[]).join("|")}
-          data-filter-site-label={(user.site_names||[]).join("|")}
-          data-filter-supplier={user.external_supplier_id||""}
-          data-filter-supplier-label={user.external_supplier_name||""}
+          className={"user-directory-profile-card "+(user.active ? "" : "user-role-card-inactive")}
+          recordProps={{
+            "data-module-record":true,
+            "data-status":user.active ? "active" : "inactive",
+            "data-search":[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[]),user.external_supplier_name].filter(Boolean).join(" "),
+            "data-filter-organization":user.organization_id||"",
+            "data-filter-organization-label":user.organization_name||"",
+            "data-filter-role":roleKey(user),
+            "data-filter-role-label":roleName(roleKey(user)),
+            "data-filter-site":(user.site_ids||[]).join("|"),
+            "data-filter-site-label":(user.site_names||[]).join("|"),
+            "data-filter-supplier":user.external_supplier_id||"",
+            "data-filter-supplier-label":user.external_supplier_name||"",
+          }}
         >
           <button className="user-card-profile-trigger" type="button" onClick={()=>{setSelectedUserId(user.id);setPreferredTab("general");}} aria-label={"Ver perfil de "+user.full_name}>
             <span className="user-card-cover" aria-hidden="true">
@@ -602,7 +605,7 @@ export default function UserManagement({
               {isPlatformOwner && user.id !== currentUserId && <button className="user-card-icon-action danger" type="button" onClick={() => setConfirm({ kind: "delete", user })} title="Eliminar usuario"><UiIcon name="trash" size={14}/></button>}
             </>}
           </div>
-        </article>)}
+        </UserCard>)}
       </div>
     </section>)}
 

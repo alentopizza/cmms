@@ -8,6 +8,7 @@ import ModuleHeader from "@/components/ModuleHeader";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import { WorkOrderCard } from "@/components/business-ui";
 
 type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
 
@@ -155,38 +156,33 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
     <section className="section work-order-directory-section">
       <div className="work-order-mobile-list">
-        {orders.rows.map(w=><article key={w.id} className="work-order-mobile-card" data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}
-          data-filter-organization={w.organization_id} data-filter-organization-label={w.company}
-          data-filter-site={w.site_id} data-filter-site-label={w.site}
-          data-filter-priority={w.priority} data-filter-priority-label={w.priority}
-          data-filter-type={w.type} data-filter-type-label={w.type}>
-          <Link href={"/dashboard/work-orders/"+w.id} className="work-order-mobile-main">
-            <div className="work-order-mobile-icon" aria-hidden="true">✓</div>
-            <div className="work-order-mobile-copy">
-              <span>OT #{w.number}</span>
-              <strong>{w.title}</strong>
-              <small>{w.asset}</small>
-            </div>
-            <span className="work-order-mobile-chevron" aria-hidden="true">›</span>
-          </Link>
-          <div className="work-order-mobile-meta">
-            <div><span>Empresa</span><strong>{w.company}</strong></div>
-            <div><span>Prioridad</span><strong>{w.priority}</strong></div>
-          </div>
-          <div className="work-order-mobile-footer">
-            <span className="status">{w.status}</span>
-            <Link className="text-button" href={"/dashboard/work-orders/"+w.id}>Ver actividades →</Link>
-            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
-              {name:"title",label:"Título",value:w.title},
-              {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
-                {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
-              ]},
-              {name:"status",label:"Estado",value:w.status,type:"select",options:[
-                {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
-              ]},
-            ]}/>}
-          </div>
-        </article>)}
+        {orders.rows.map(w=><WorkOrderCard
+          key={w.id}
+          id={w.id}
+          number={w.number}
+          title={w.title}
+          asset={w.asset}
+          company={w.company}
+          priority={w.priority}
+          status={w.status}
+          recordProps={{
+            "data-module-record":true,"data-status":w.status,
+            "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" "),
+            "data-filter-organization":w.organization_id,"data-filter-organization-label":w.company,
+            "data-filter-site":w.site_id,"data-filter-site-label":w.site,
+            "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,
+            "data-filter-type":w.type,"data-filter-type-label":w.type,
+          }}
+          actions={owner?<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+            {name:"title",label:"Título",value:w.title},
+            {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
+              {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
+            ]},
+            {name:"status",label:"Estado",value:w.status,type:"select",options:[
+              {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
+            ]},
+          ]}/>:undefined}
+        />)}
       </div>
       <table className="table work-order-directory-table"><thead><tr><th>OT</th><th>Trabajo</th><th>Empresa</th><th>Equipo</th><th>Prioridad</th><th>Estado</th><th></th>{owner&&<th>Acciones</th>}</tr></thead><tbody>
       {orders.rows.map(w=><tr key={w.id} data-module-record data-status={w.status} data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}

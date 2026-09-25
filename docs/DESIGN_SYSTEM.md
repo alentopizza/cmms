@@ -620,3 +620,30 @@ Rules:
 - data components use Design Tokens only and support light/dark/reduced-motion.
 
 The Shared Data UI layer is reusable infrastructure. Domain identity belongs to Business UI and module phases.
+
+
+## 30. Business UI — Phase 5
+
+Business UI converts generic primitives into domain-aware ERP components.
+
+Canonical components:
+- BusinessCardShell;
+- AssetCard;
+- InventoryCard;
+- MaintenanceCard;
+- WorkOrderCard;
+- SupplierCard;
+- LocationCard;
+- UserCard;
+- BusinessProfileStat.
+
+Rules:
+- share tokens, spacing, focus, states and structural rhythm;
+- do not force the same content hierarchy across domains;
+- preserve contextual actions and existing workflows;
+- use `UiIcon`, Badge/Status and Shared Data UI primitives instead of Unicode glyphs or module-local equivalents;
+- preserve `data-module-record`/facet attributes where ModuleHeader depends on them;
+- visual components must not contain authorization logic;
+- responsive domain cards can coexist with dense desktop tables until the owning module phase migrates those tables.
+
+The Business UI layer is the required base for Phase 6–9 module migrations.

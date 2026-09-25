@@ -132,6 +132,8 @@ Migrar primero superficies reutilizables como `ModuleHeader`, directorios y tabl
 
 ## Fase 5 — Business UI
 
+**Estado: implementada.**
+
 Crear sobre primitives:
 
 - AssetCard;
@@ -305,4 +307,12 @@ Phase 4 is implemented. The official Shared Data UI layer now provides Search, F
 
 Dense module-specific tables/cards remain scheduled for their module migration phases so Phase 4 does not rewrite CRUD/business flows.
 
-**Next implementation phase: Phase 5 — Business UI.**
+**Phase 5 completion checkpoint — 2026-09-24**
+
+Phase 5 is implemented. The Business UI layer now provides a shared `BusinessCardShell` plus domain compositions for Asset, Inventory, Maintenance, Work Order, Supplier, Location and User cards. Existing directory surfaces consume these components while preserving their domain-specific information, actions, responsive behavior and `data-module-record` filtering contracts.
+
+`EntityProfileWorkspace` also consumes the shared Business Profile stat pattern, consolidating profile-side metrics without replacing each domain's tabs or actions.
+
+No API, DB, RBAC or business-flow changes were introduced.
+
+**Next implementation phase: Phase 6 — Dashboard + Companies + Locations.**

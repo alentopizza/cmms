@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { BusinessProfileStat } from "@/components/business-ui";
 
 export type EntityProfileStat = {
   label: string;
@@ -73,7 +74,7 @@ export default function EntityProfileWorkspace({
 
   const active = available.find(tab => tab.id === activeTab) || available[0];
 
-  return <section className="entity-profile-workspace">
+  return <section className="entity-profile-workspace ds-business-profile">
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
       {breadcrumbs.map((crumb, index) => <Fragment key={crumb.label + index}>
         {index > 0 && <span className="entity-breadcrumb-separator" aria-hidden="true"><UiIcon name="chevron-right" size={13}/></span>}
@@ -115,11 +116,7 @@ export default function EntityProfileWorkspace({
         </div>
 
         <div className="entity-profile-stats">
-          {stats.map(stat => <div className="entity-profile-stat" key={stat.label}>
-            <span className="entity-profile-stat-icon" aria-hidden="true"><UiIcon name={stat.icon || "activity"} size={17}/></span>
-            <div><small>{stat.label}</small><strong>{stat.value}</strong>{stat.hint && <em>{stat.hint}</em>}</div>
-            <span className="entity-profile-stat-arrow" aria-hidden="true">›</span>
-          </div>)}
+          {stats.map(stat => <BusinessProfileStat key={stat.label} label={stat.label} value={stat.value} icon={stat.icon||"activity"} hint={stat.hint}/>)}
         </div>
 
         {quickActions && <div className="entity-profile-quick-actions">

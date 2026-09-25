@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 5: Business UI
+
+### Added
+
+- Official `components/business-ui` layer.
+- Shared `BusinessCardShell`, `BusinessMetaGrid`, `BusinessMetricStrip` and `BusinessProfileStat`.
+- Domain cards: `AssetCard`, `InventoryCard`, `MaintenanceCard`, `WorkOrderCard`, `SupplierCard`, `LocationCard` and `UserCard`.
+- Token-only `app/business-ui.css`.
+- Interactive Business UI catalog examples in authenticated `/ui-kit`.
+- `scripts/business-ui-smoke.mjs` in CI.
+
+### Migrated
+
+- Asset directory cards.
+- Inventory product cards and stock progress.
+- Mobile Maintenance and Work Order cards.
+- Supplier directory cards.
+- Site/Location directory cards.
+- User directory outer card shell.
+- Entity Profile sidebar metrics.
+
+### Preserved
+
+- Domain-specific composition and actions.
+- ModuleHeader `data-module-record` filtering/facets.
+- Owner record actions, Supplier workflows, WhatsApp links, contextual creation and profile navigation.
+- Server-side RBAC, organization/site scoping, APIs and database behavior.
+- Existing dense desktop tables for later module-specific migration.
+
+### Next
+
+- Phase 6: Dashboard + Companies + Locations.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 4: Shared Data UI
 
 ### Added

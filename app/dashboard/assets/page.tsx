@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AssetCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
+import { AssetCard } from "@/components/business-ui";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import BulkImportModal from "@/components/BulkImportModal";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
@@ -118,34 +119,37 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<{c
 
     <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
-      {assets.rows.length?<div className="asset-modern-grid">{assets.rows.map(a=><article key={a.id} className="asset-modern-card"
-        data-module-record data-status={a.status} data-search={[a.code,a.name,a.company,a.site,a.location,a.category,a.supplier,a.status,a.criticality,a.manufacturer,a.model].filter(Boolean).join(" ")}
-        data-filter-organization={a.organization_id} data-filter-organization-label={a.company}
-        data-filter-site={a.site_id} data-filter-site-label={a.site}
-        data-filter-criticality={a.criticality} data-filter-criticality-label={criticalityLabel(a.criticality)}
-        data-filter-category={a.category_id||""} data-filter-category-label={a.category||""}
-        data-filter-supplier={a.supplier_id||""} data-filter-supplier-label={a.supplier||""}>
-        <div className={"asset-modern-visual"+(a.has_image?" has-image":"")}>{a.has_image?<img src={"/api/assets/"+a.id+"/image"} alt="" />:<UiIcon name="asset" size={48}/>}<span className={"asset-status-pill "+a.status}>{statusLabel(a.status)}</span></div>
-        <div className="asset-modern-copy">
-          <div className="asset-modern-code">Código: {a.code}</div>
-          <h3>{a.name}</h3>
-          <p>{a.category||"Sin categoría"}</p>
-          <span><UiIcon name="location" size={13}/>{a.site}{a.location?" · "+a.location:""}</span>
-          <div className="asset-modern-specs">
-            <div><small>Proveedor</small><strong>{a.supplier||"Sin proveedor"}</strong></div>
-            <div><small>Criticidad</small><strong>{criticalityLabel(a.criticality)}</strong></div>
-            <div><small>Fabricante / modelo</small><strong>{[a.manufacturer,a.model].filter(Boolean).join(" · ")||"Sin registrar"}</strong></div>
-          </div>
-        </div>
-        <div className="asset-modern-actions">
+      {assets.rows.length?<div className="asset-modern-grid">{assets.rows.map(a=><AssetCard
+        key={a.id}
+        name={a.name}
+        code={a.code}
+        category={a.category||"Sin categoría"}
+        site={a.site}
+        location={a.location}
+        supplier={a.supplier||"Sin proveedor"}
+        criticality={criticalityLabel(a.criticality)}
+        manufacturerModel={[a.manufacturer,a.model].filter(Boolean).join(" · ")||"Sin registrar"}
+        status={statusLabel(a.status)}
+        statusTone={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}
+        imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
+        recordProps={{
+          "data-module-record":true,"data-status":a.status,
+          "data-search":[a.code,a.name,a.company,a.site,a.location,a.category,a.supplier,a.status,a.criticality,a.manufacturer,a.model].filter(Boolean).join(" "),
+          "data-filter-organization":a.organization_id,"data-filter-organization-label":a.company,
+          "data-filter-site":a.site_id,"data-filter-site-label":a.site,
+          "data-filter-criticality":a.criticality,"data-filter-criticality-label":criticalityLabel(a.criticality),
+          "data-filter-category":a.category_id||"","data-filter-category-label":a.category||"",
+          "data-filter-supplier":a.supplier_id||"","data-filter-supplier-label":a.supplier||"",
+        }}
+        actions={<>
           <Link className="button secondary" href={"/dashboard/assets/"+a.id}>Ver detalles →</Link>
           {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
             {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
             {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
             {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
           ]}/>}
-        </div>
-      </article>)}</div>:<div className="card empty-state"><strong>Aún no hay activos.</strong><span>Usa Agregar activo o Importar para comenzar.</span></div>}
+        </>}
+      />)}</div>:<div className="card empty-state"><strong>Aún no hay activos.</strong><span>Usa Agregar activo o Importar para comenzar.</span></div>}
     </section>
   </>;
 }

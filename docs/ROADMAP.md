@@ -335,7 +335,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 2 — UI Core primitives:** implemented — Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload, compatibility wrappers and live /ui-kit examples.
 - **Phase 3 — Global shell/navigation:** implemented — token-driven shell, SVG navigation iconography, contextual header/account actions and responsive drawer/field navigation while preserving RBAC/preferences.
 - **Phase 4 — Shared Data UI:** implemented — Search/FilterPanel, DataTable/Pagination, row/bulk actions, KPI/metric layouts, token chart palette, timeline/progress, ModuleHeader and DashboardAnalytics compatibility migration.
-- **Phase 5 — Business UI:** AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, preserving distinct domain identities.
+- **Phase 5 — Business UI:** implemented — shared BusinessCardShell plus AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard and UserCard/Profile metric consolidation while preserving distinct domain identities.
 - **Phase 6 — Dashboard + Companies + Locations.**
 - **Phase 7 — Assets + Inventory**, including their approved secondary navigation.
 - **Phase 8 — Suppliers + Users + Crews + Attendance.**
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 5 — Business UI.**
+**Phase 6 — Dashboard + Companies + Locations.**
 
-Build AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard and LocationCard from the official primitives. Consolidate shared entity-card structure without erasing the distinct identities and operational actions of each domain.
+Apply Foundations, UI Core, Shared Data UI and Business UI to the first full module block. Migrate Dashboard, Companies and Locations end-to-end while preserving analytics queries, contextual creation, Entity Profile behavior, maps/geofences, RBAC and existing operational actions.
 
 
 ## Recently completed role-dashboard analytics slice

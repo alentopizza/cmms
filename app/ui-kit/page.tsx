@@ -5,6 +5,7 @@ import UiIcon from "@/components/UiIcon";
 import { FoundationPreview } from "@/components/ui-kit/FoundationPreview";
 import { CorePrimitivesPreview } from "@/components/ui-kit/CorePrimitivesPreview";
 import { DataPatternsPreview } from "@/components/ui-kit/DataPatternsPreview";
+import { BusinessCardsPreview } from "@/components/business-ui";
 import "./ui-kit.css";
 
 export const dynamic="force-dynamic";
@@ -44,15 +45,17 @@ export default async function UiKitPage(){
         <a href="#metrics">KPI</a>
         <a href="#charts">Charts</a>
         <a href="#progress">Timeline / Progress</a>
+        <a href="#business-cards">Business UI</a>
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 4.</strong> Shared Data UI ya es parte del contrato oficial: Search, filtros, DataTable, Pagination, acciones, KPI, chart palette, Timeline y Progress. Los componentes ERP especializados pertenecen a la Fase 5.
+        <strong>Fase 5.</strong> Business UI ya es parte del contrato oficial: AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard y el shell compartido de UserCard/Entity Profile.
       </div>
 
       <FoundationPreview/>
       <CorePrimitivesPreview/>
       <DataPatternsPreview/>
+      <BusinessCardsPreview/>
     </div>
   </main>;
 }

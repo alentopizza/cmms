@@ -831,3 +831,37 @@ Do not interpret DataTable filtering/sorting/selection as security. Server autho
 ### Next
 
 Phase 5 — Business UI. Build domain components from UI Core + Shared Data UI without flattening Supplier/User/Asset/Inventory identities into one generic card.
+
+
+## 29. DESWEB Business UI Phase 5 checkpoint — 2026-09-24
+
+Phase 5 is implemented.
+
+### Runtime
+
+- `components/business-ui/BusinessCards.tsx`
+- `components/business-ui/BusinessCardsPreview.tsx`
+- `components/business-ui/index.ts`
+- `app/business-ui.css`
+- `scripts/business-ui-smoke.mjs`
+
+### Migrated consumers
+
+- `app/dashboard/assets/page.tsx` → AssetCard;
+- `app/dashboard/inventory/page.tsx` → InventoryCard;
+- `app/dashboard/maintenance/page.tsx` → MaintenanceCard for responsive cards;
+- `app/dashboard/work-orders/page.tsx` → WorkOrderCard for responsive cards;
+- `components/SupplierDirectory.tsx` → SupplierCard;
+- `components/LocationDirectory.tsx` → LocationCard;
+- `app/dashboard/users/UserManagement.tsx` → UserCard outer shell;
+- `components/EntityProfileWorkspace.tsx` → BusinessProfileStat.
+
+### Compatibility boundary
+
+Existing class names are retained where useful during progressive migration, so current module layout/responsive behavior remains stable while Business UI becomes the canonical structural layer.
+
+Do not remove module-specific desktop tables or profile tabs merely because a Business Card exists. Those surfaces migrate with their owning module phase.
+
+### Next
+
+Phase 6 — Dashboard + Companies + Locations end-to-end.

@@ -1,0 +1,89 @@
+/* ==========================================================================
+   DESWEB UI Kit — Business UI · Phase 5
+   Domain cards share structure/tokens while preserving domain identity.
+   ========================================================================== */
+
+.ds-business-card{
+  min-width:0;overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs);
+  transition:transform var(--motion-normal) var(--ease-standard),border-color var(--motion-normal) var(--ease-standard),box-shadow var(--motion-normal) var(--ease-standard)
+}
+.ds-business-card:hover{border-color:var(--color-border-default);box-shadow:var(--shadow-sm)}
+.ds-business-open{font:inherit;color:inherit}
+.ds-business-copy h3{color:var(--color-text-primary)}
+.ds-business-copy p,.ds-business-copy small,.ds-business-copy em{color:var(--color-text-muted)}
+.ds-business-eyebrow{color:var(--color-brand-secondary);font-size:10px;font-weight:var(--font-weight-bold);letter-spacing:.06em;text-transform:uppercase}
+.ds-business-location-line{display:flex;align-items:center;gap:var(--space-1);color:var(--color-text-secondary)}
+.ds-business-actions{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.ds-business-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.ds-business-meta-grid>span{display:grid;gap:2px;min-width:0}
+.ds-business-meta-grid small{color:var(--color-text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:var(--font-weight-bold)}
+.ds-business-meta-grid strong{color:var(--color-text-secondary);font-size:var(--font-size-body-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-business-metric-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-1)}
+.ds-business-metric-strip>span{display:grid;justify-items:center;gap:1px;padding:var(--space-2);border-radius:var(--radius-lg);background:var(--color-surface-soft)}
+.ds-business-metric-strip strong{color:var(--color-text-primary);font-size:var(--font-size-body-lg)}
+.ds-business-metric-strip small{color:var(--color-text-muted);font-size:9px}
+.ds-business-status{position:absolute;right:var(--space-3);top:var(--space-3)}
+.ds-business-thumbnail img,.ds-business-visual img,.ds-business-logo img,.ds-business-banner img{width:100%;height:100%;object-fit:cover}
+
+/* Asset */
+.ds-business-asset .asset-modern-visual{position:relative}
+.ds-business-asset .ds-badge{box-shadow:var(--shadow-xs)}
+.ds-business-asset .asset-modern-specs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-business-asset .asset-modern-actions{border-top-color:var(--color-border-subtle)}
+
+/* Inventory */
+.ds-business-inventory .inventory-product-state-row{display:flex;gap:var(--space-1);flex-wrap:wrap}
+.ds-business-inventory .inventory-product-stock .ds-progress{flex:1}
+.ds-business-inventory .inventory-product-meta{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-business-inventory.inactive{opacity:.72}
+
+/* Maintenance / Work orders */
+.ds-business-mobile-main{display:grid;align-items:center;gap:var(--space-3)}
+.ds-business-icon{display:grid;place-items:center;color:var(--color-brand-secondary)}
+.ds-business-maintenance .maintenance-mobile-main{grid-template-columns:auto minmax(0,1fr) auto}
+.ds-business-maintenance .maintenance-mobile-meta{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-business-work-order .work-order-mobile-main{grid-template-columns:auto minmax(0,1fr) auto}
+.ds-business-work-order .work-order-mobile-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* Supplier */
+.ds-business-supplier .supplier-card-banner{position:relative}
+.ds-business-supplier .supplier-card-banner>.ds-badge{position:absolute;right:var(--space-3);top:var(--space-3)}
+.ds-business-supplier .supplier-card-logo{overflow:hidden}
+.ds-business-supplier .supplier-card-metrics-v2{display:grid}
+.ds-business-supplier.inactive{opacity:.78}
+
+/* Location */
+.ds-business-location .site-visual-cover{position:relative}
+.ds-location-status{position:absolute;right:var(--space-3);top:var(--space-3)}
+.ds-business-location .site-company-logo{overflow:hidden}
+
+/* User/Profile consolidation */
+.ds-business-user.user-role-card-inactive{opacity:.76}
+.ds-business-profile-stat .entity-profile-stat-arrow{display:grid;place-items:center}
+.ds-business-profile .entity-profile-identity-card,
+.ds-business-profile .entity-profile-content-card{border-color:var(--color-border-subtle);box-shadow:var(--shadow-xs)}
+
+/* Official Business UI examples */
+.ds-business-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+.ds-business-preview-grid>.ds-business-card{min-height:100%}
+.ds-business-demo-action,.ds-business-demo-icon,.ds-business-resource-demo button,.ds-business-resource-demo a{
+  min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-1);padding:0 var(--space-3);
+  border:1px solid var(--color-border-default);border-radius:var(--radius-md);background:var(--color-surface);
+  color:var(--color-brand-secondary);font:inherit;font-size:var(--font-size-body-sm);font-weight:var(--font-weight-semibold);cursor:pointer
+}
+.ds-business-demo-icon{width:34px;padding:0}
+.ds-business-resource-demo{display:flex;gap:var(--space-2);padding:var(--space-3);border-top:1px solid var(--color-border-subtle)}
+
+.ds-business-open:focus-visible,
+.ds-business-demo-action:focus-visible,.ds-business-demo-icon:focus-visible,
+.ds-business-resource-demo button:focus-visible,.ds-business-resource-demo a:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--color-focus-ring) 42%,transparent);outline-offset:2px
+}
+
+@media(max-width:1100px){.ds-business-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .ds-business-meta-grid,.ds-business-maintenance .maintenance-mobile-meta{grid-template-columns:1fr}
+  .ds-business-preview-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.ds-business-card{transition:none!important}}

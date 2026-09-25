@@ -5,6 +5,7 @@ import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader from "@/components/ModuleHeader";
+import { MaintenanceCard } from "@/components/business-ui";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 
@@ -86,25 +87,22 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     {creationGate.ready && <section className="card section"><p>Desde el módulo puedes escoger el activo. Si creas la rutina entrando al activo, esa relación queda preseleccionada automáticamente.</p></section>}
     <section className="section maintenance-directory-section">
       <div className="maintenance-mobile-list">
-        {plans.rows.map(p=><article key={p.id} className="maintenance-mobile-card" data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" ")}
-          data-filter-organization={p.organization_id} data-filter-organization-label={p.company}
-          data-filter-site={p.site_id} data-filter-site-label={p.site}
-          data-filter-frequency={p.frequency_unit} data-filter-frequency-label={p.frequency_unit}>
-          <div className="maintenance-mobile-main">
-            <div className="maintenance-mobile-icon" aria-hidden="true">↻</div>
-            <div className="maintenance-mobile-copy">
-              <span>{p.active?"Rutina activa":"Rutina inactiva"}</span>
-              <strong>{p.name}</strong>
-              <small>{p.asset}</small>
-            </div>
-            <span className={"status "+(p.active?"status-active":"status-inactive")}>{p.active?"Activa":"Inactiva"}</span>
-          </div>
-          <div className="maintenance-mobile-meta">
-            <div><span>Empresa</span><strong>{p.company}</strong></div>
-            <div><span>Frecuencia</span><strong>Cada {p.frequency_value} {p.frequency_unit}</strong></div>
-            <div className="maintenance-mobile-meta-wide"><span>Próximo vencimiento</span><strong>{p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}</strong></div>
-          </div>
-          {owner&&<div className="maintenance-mobile-footer"><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+        {plans.rows.map(p=><MaintenanceCard
+          key={p.id}
+          name={p.name}
+          asset={p.asset}
+          company={p.company}
+          frequency={"Cada "+p.frequency_value+" "+p.frequency_unit}
+          nextDue={p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}
+          active={p.active}
+          recordProps={{
+            "data-module-record":true,"data-status":p.active?"active":"inactive",
+            "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
+            "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
+            "data-filter-site":p.site_id,"data-filter-site-label":p.site,
+            "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
+          }}
+          actions={owner?<OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
             {name:"name",label:"Nombre",value:p.name},
             {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
             {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[
@@ -112,8 +110,8 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             ]},
             {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date"},
             {name:"active",label:"Estado",value:p.active,type:"checkbox"},
-          ]}/></div>}
-        </article>)}
+          ]}/>:undefined}
+        />)}
       </div>
       <table className="table maintenance-directory-table"><thead><tr><th>Plan</th><th>Empresa</th><th>Equipo</th><th>Frecuencia</th><th>Próximo vencimiento</th>{owner&&<th>Acciones</th>}</tr></thead>
       <tbody>{plans.rows.map(p=><tr key={p.id} data-module-record data-status={p.active?"active":"inactive"} data-search={[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" ")}

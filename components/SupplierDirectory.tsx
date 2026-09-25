@@ -16,6 +16,7 @@ import BulkImportModal from "@/components/BulkImportModal";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
+import { SupplierCard } from "@/components/business-ui";
 
 export type SupplierDirectoryItem={
   id:string;organization_id:string;organization_name:string;organization_country:string|null;code:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
@@ -181,43 +182,40 @@ export default function SupplierDirectory({
         const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
         const supplierActivities=activities.filter(item=>item.supplier_id===s.id&&["pending","in_progress"].includes(item.status)).length;
         const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
-        return <article className={"supplier-directory-card-v2 "+(s.active?"":"inactive")} key={s.id} data-module-record data-status={s.active?"active":"inactive"} data-search={[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,...(s.capability_labels||[]),...(s.specialty_labels||[]),s.contact_name,s.email].filter(Boolean).join(" ")}
-          data-filter-organization={s.organization_id} data-filter-organization-label={s.organization_name}
-          data-filter-capability={(s.capability_codes||[]).join("|")} data-filter-capability-label={(s.capability_labels||[]).join("|")}
-          data-filter-specialty={(s.specialty_codes||[]).join("|")} data-filter-specialty-label={(s.specialty_labels||[]).join("|")}
-          data-filter-country={s.country_code||""} data-filter-country-label={countryName(s.country_code)||s.country_code||""}>
-          <button type="button" className="supplier-card-open" onClick={()=>open(s.id)} aria-label={"Abrir ficha de "+s.name}>
-            <span className="supplier-card-banner" aria-hidden="true">
-              <span className={"supplier-card-state "+(s.active?"active":"inactive")}>{s.active?"Activo":"Inactivo"}</span>
-            </span>
-            <span className="supplier-card-logo-row">
-              <span className="supplier-card-logo">{s.has_logo?<img src={"/api/suppliers/"+s.id+"/logo"} alt="" />:<b>{initials(s.name)}</b>}</span>
-              <span className="supplier-card-type">{(s.capability_labels||[]).join(" · ")||typeLabel(s.supplier_type)}</span>
-            </span>
-            <span className="supplier-card-copy-v2">
-              <strong>{s.name}</strong>
-              <span>{s.legal_name||s.organization_name}</span>
-              <small>{[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}</small>
-              <em>{(s.specialty_labels||[]).join(" · ")||s.service_category||"Especialidad sin registrar"}</em>
-            </span>
-            <span className="supplier-card-contact-v2">
-              <span><UiIcon name="user" size={12}/><b>{s.contact_name||"Sin contacto"}</b></span>
-              <span><UiIcon name="phone" size={12}/><b>{s.phone||"Sin teléfono"}</b></span>
-            </span>
-            <span className="supplier-card-metrics-v2">
-              <span><strong>{supplierActivities}</strong><small>Actividades</small></span>
-              <span><strong>{supplierItems}</strong><small>Suministros</small></span>
-              <span><strong>{supplierReqs}</strong><small>Requisiciones</small></span>
-            </span>
-          </button>
-          <div className="supplier-card-actions-v2">
+        return <SupplierCard
+          key={s.id}
+          name={s.name}
+          subtitle={s.legal_name||s.organization_name}
+          location={[s.city,countryName(s.country_code)].filter(Boolean).join(" · ")||"Ubicación sin registrar"}
+          specialty={(s.specialty_labels||[]).join(" · ")||s.service_category||"Especialidad sin registrar"}
+          type={(s.capability_labels||[]).join(" · ")||typeLabel(s.supplier_type)}
+          status={s.active?"active":"inactive"}
+          logoSrc={s.has_logo?"/api/suppliers/"+s.id+"/logo":null}
+          fallback={initials(s.name)}
+          contact={s.contact_name||"Sin contacto"}
+          phone={s.phone||"Sin teléfono"}
+          metrics={[
+            {label:"Actividades",value:supplierActivities},
+            {label:"Suministros",value:supplierItems},
+            {label:"Requisiciones",value:supplierReqs},
+          ]}
+          onOpen={()=>open(s.id)}
+          recordProps={{
+            "data-module-record":true,"data-status":s.active?"active":"inactive",
+            "data-search":[s.name,s.legal_name,s.organization_name,s.tax_id,s.city,...(s.capability_labels||[]),...(s.specialty_labels||[]),s.contact_name,s.email].filter(Boolean).join(" "),
+            "data-filter-organization":s.organization_id,"data-filter-organization-label":s.organization_name,
+            "data-filter-capability":(s.capability_codes||[]).join("|"),"data-filter-capability-label":(s.capability_labels||[]).join("|"),
+            "data-filter-specialty":(s.specialty_codes||[]).join("|"),"data-filter-specialty-label":(s.specialty_labels||[]).join("|"),
+            "data-filter-country":s.country_code||"","data-filter-country-label":countryName(s.country_code)||s.country_code||"",
+          }}
+          actions={<>
             <button className="supplier-card-primary-action" type="button" onClick={()=>open(s.id)}><UiIcon name="file" size={14}/> Ver ficha</button>
             <button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"general",true)} title="Editar proveedor"><UiIcon name="edit" size={14}/></button>
             {(s.supplier_type==="materials"||s.supplier_type==="both")&&<button className="supplier-card-icon-action" type="button" onClick={()=>open(s.id,"requisitions")} title="Crear requisición"><UiIcon name="plus" size={14}/></button>}
             {s.phone&&<a className="supplier-card-icon-action" href={"https://wa.me/"+s.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={14}/></a>}
             <button type="button" className="supplier-card-icon-action danger" title="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={14}/></button>
-          </div>
-        </article>;
+          </>}
+        />;
       })}</div>:<div className="card empty-state"><strong>Aún no hay proveedores.</strong><span>Registra el primero para asociar servicios, suministros y requisiciones.</span></div>}
       {deleteError&&<div className="notice error section">{deleteError}</div>}
     </section>

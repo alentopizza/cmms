@@ -83,7 +83,7 @@ export async function POST(request:Request){
     const shift=shiftResult.rows[0];
 
     if(action==="start"){
-      const destinationSiteId=typeof body.destinationSiteId==="string"?body.destinationSiteId:"";
+      const destinationSiteId=typeof body?.destinationSiteId==="string"?body.destinationSiteId:"";
       if(!destinationSiteId||destinationSiteId===shift.current_site_id){
         await client.query("ROLLBACK");
         return NextResponse.json({message:"Selecciona una sede de destino diferente a tu ubicación actual."},{status:422});

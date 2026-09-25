@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-import { SubLocationCreateModal } from "@/components/ContextCreateModals";
-import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
@@ -18,6 +17,14 @@ import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Select } from "@/components/ui-kit/FormControls";
 import { StatTiles } from "@/components/ui-kit/Metrics";
+import { Spinner } from "@/components/ui-kit/Feedback";
+
+const GeofenceMapPicker=dynamic(()=>import("@/components/GeofenceMapPicker"),{
+  loading:()=> <Spinner label="Cargando mapa"/>,
+});
+const SubLocationCreateModal=dynamic(
+  ()=>import("@/components/ContextCreateModals").then(module=>module.SubLocationCreateModal),
+);
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;

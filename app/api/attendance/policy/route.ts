@@ -27,7 +27,10 @@ export async function POST(request: Request) {
   const roles = form.getAll("enabled_roles").map(String).filter(role => ROLE_SET.has(role));
 
   if (!roles.length) {
-    return NextResponse.redirect(new URL("/dashboard/attendance?error=roles", request.url), 303);
+    const target = new URL("/dashboard/attendance", request.url);
+    target.searchParams.set("organization_id", organizationId);
+    target.searchParams.set("error", "roles");
+    return NextResponse.redirect(target, 303);
   }
 
   await query(

@@ -311,13 +311,15 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                WHEN bp.user_id IS NOT NULL THEN 'legacy'
                ELSE 'missing'
              END biometric_status,
-             request.id::text request_id,request.status request_status,request_site.name request_site_name,
+             request.id::text request_id,
+             CASE WHEN request.status='pending' AND request.preview_expires_at<=now() THEN 'expired' ELSE request.status END request_status,
+             request_site.name request_site_name,
              request.requested_at::text request_requested_at,request.review_note request_review_note
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
            LEFT JOIN LATERAL (
-             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note
+             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note,enrollment.preview_expires_at
              FROM biometric_enrollment_requests enrollment
              WHERE enrollment.organization_id=om.organization_id AND enrollment.user_id=om.user_id
              ORDER BY enrollment.requested_at DESC
@@ -339,13 +341,15 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                WHEN bp.user_id IS NOT NULL THEN 'legacy'
                ELSE 'missing'
              END biometric_status,
-             request.id::text request_id,request.status request_status,request_site.name request_site_name,
+             request.id::text request_id,
+             CASE WHEN request.status='pending' AND request.preview_expires_at<=now() THEN 'expired' ELSE request.status END request_status,
+             request_site.name request_site_name,
              request.requested_at::text request_requested_at,request.review_note request_review_note
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
            LEFT JOIN LATERAL (
-             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note
+             SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note,enrollment.preview_expires_at
              FROM biometric_enrollment_requests enrollment
              WHERE enrollment.organization_id=om.organization_id AND enrollment.user_id=om.user_id
                AND enrollment.site_id=ANY($2::uuid[])
@@ -386,7 +390,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const generalComplete=Boolean(organizationId);
   const sitesComplete=sites.rows.length>0&&(!policy.require_geolocation||geofencedSites===sites.rows.length);
   const enrollmentComplete=!policy.require_face||(controlledPeople.length>0&&verifiedControlled===controlledPeople.length);
-  const policyComplete=Boolean(policyResult.rows[0]);
+  const policyComplete=Boolean(policyResult.rows[0])&&(!policy.require_face||Boolean(biometricNotice.rows[0]));
   const summaryComplete=generalComplete&&sitesComplete&&enrollmentComplete&&policyComplete;
 
   function attendanceHref({view="setup",step,userId}:{view?:"setup"|"operation";step?:string;userId?:string}={}){

@@ -27,6 +27,28 @@ async function targetUser(id:string,session:NonNullable<Awaited<ReturnType<typeo
   return row;
 }
 
+export async function GET(_request:Request,{params}:{params:Promise<{id:string}>}){
+  const session=await getSession();
+  if(!session)return new NextResponse("Unauthorized",{status:401});
+  if(!can(session,"users.manage"))return new NextResponse("Forbidden",{status:403});
+  const {id}=await params;
+  if(!UUID.test(id))return new NextResponse("Usuario inválido",{status:400});
+  const user=await targetUser(id,session);
+  if(!user)return new NextResponse("Usuario no disponible",{status:404});
+  const result=await query<{
+    id:string;organization_id:string;user_id:string;category:string;display_name:string;reference:string|null;
+    issue_date:string|null;expires_at:string|null;file_name:string|null;file_mime_type:string|null;archived_at:string|null;created_at:string;
+  }>(
+    `SELECT id,organization_id,user_id,category,display_name,reference,issue_date::text,expires_at::text,
+            file_name,file_mime_type,archived_at::text,created_at::text
+     FROM user_documents
+     WHERE organization_id=$1 AND user_id=$2
+     ORDER BY created_at DESC`,
+    [user.organization_id,id],
+  );
+  return NextResponse.json({documents:result.rows});
+}
+
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const session=await getSession();
   if(!session)return new NextResponse("Unauthorized",{status:401});

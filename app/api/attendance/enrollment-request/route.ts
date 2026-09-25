@@ -76,7 +76,7 @@ export async function GET(){
     await client.query("BEGIN");
     await expirePending(client,session.organizationId,session.userId);
 
-    const [policy,notice,profile,request]=await Promise.all([
+    const [policy,notice,account,profile,request]=await Promise.all([
       client.query<Policy>(
         `SELECT enabled,enabled_roles,require_face,max_location_accuracy_m,liveness_threshold
          FROM organization_attendance_policies WHERE organization_id=$1`,
@@ -88,6 +88,10 @@ export async function GET(){
          WHERE organization_id=$1 AND active=true
          ORDER BY version DESC LIMIT 1`,
         [session.organizationId],
+      ),
+      client.query<{has_avatar:boolean}>(
+        "SELECT (avatar_data IS NOT NULL) has_avatar FROM users WHERE id=$1 AND active=true",
+        [session.userId],
       ),
       client.query<{status:string}>(
         `SELECT CASE
@@ -123,6 +127,7 @@ export async function GET(){
         livenessThreshold:effective.liveness_threshold,
       },
       notice:notice.rows[0]||null,
+      hasAvatar:Boolean(account.rows[0]?.has_avatar),
       profileStatus:profile.rows[0]?.status||"missing",
       request:request.rows[0]||null,
     },{headers:{"Cache-Control":"private, no-store, max-age=0"}});
@@ -182,6 +187,15 @@ export async function POST(request:Request){
     if(!Number.isFinite(live)||!Number.isFinite(real)||live<policy.liveness_threshold||real<policy.liveness_threshold){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"La prueba de presencia real no alcanzó el nivel requerido."},{status:422});
+    }
+
+    const account=await client.query<{has_avatar:boolean}>(
+      "SELECT (avatar_data IS NOT NULL) has_avatar FROM users WHERE id=$1 AND active=true",
+      [session.userId],
+    );
+    if(!account.rows[0]?.has_avatar){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"Debes tener una foto de perfil antes de solicitar la aprobación biométrica."},{status:422});
     }
 
     const alreadyVerified=await client.query(

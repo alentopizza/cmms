@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, FilterPanel, FilterGroup } from "@/components/ui-kit/DataControls";
+import { Search, FilterPanel, FilterGroup, ViewModeToggle, type ViewMode } from "@/components/ui-kit/DataControls";
 import { DataTable, Pagination, type DataTableColumn } from "@/components/ui-kit/DataTable";
 import { Select } from "@/components/ui-kit/FormControls";
 import { KpiCard, MetricGrid, StatTiles } from "@/components/ui-kit/Metrics";
@@ -21,6 +21,7 @@ export function DataPatternsPreview(){
   const [status,setStatus]=useState("all");
   const [page,setPage]=useState(1);
   const [bulkMessage,setBulkMessage]=useState("");
+  const [viewMode,setViewMode]=useState<ViewMode>("grid");
   const filtered=useMemo(()=>demoRows.filter(row=>
     (status==="all"||row.status===status)&&
     (!query||[row.asset,row.site,row.status,row.priority].join(" ").toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")))
@@ -49,7 +50,8 @@ export function DataPatternsPreview(){
             />
           </FilterGroup>
         </FilterPanel>
-        <span className="ds-demo-muted">{filtered.length} de {demoRows.length} registros</span>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} label="Vista de demostración"/>
+        <span className="ds-demo-muted">{filtered.length} de {demoRows.length} registros · {viewMode==="grid"?"Cuadrícula":"Listado"}</span>
       </div>
     </section>
 

@@ -165,7 +165,7 @@ export async function POST(request:Request){
 
 export async function DELETE(request:Request){
   const session=await getSession();
-  if(!session?.userId||!organizationId)return new NextResponse("Unauthorized",{status:401});
+  if(!session)return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"attendance.manage"))return new NextResponse("Forbidden",{status:403});
 
   const body=await request.json().catch(()=>null) as {organizationId?:unknown;userId?:unknown;reason?:unknown}|null;
@@ -193,7 +193,7 @@ export async function DELETE(request:Request){
        SET encrypted_embedding=NULL,revoked_at=now(),revoked_by=$1,revoked_reason=$2,updated_at=now()
        WHERE user_id=$3 AND organization_id=$4 AND revoked_at IS NULL
        RETURNING enrollment_site_id`,
-      [session.userId,reason,userId,organizationId],
+      [session.userId||null,reason,userId,organizationId],
     );
     if(!revoked.rowCount){
       await client.query("ROLLBACK");

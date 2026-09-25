@@ -70,7 +70,7 @@ if(!attendance.includes("<AttendanceOperationalReport"))throw new Error("Attenda
 if(attendance.includes("const reports=canReports"))throw new Error("Legacy duplicate attendance report query remains active");
 
 const reports=fs.readFileSync("app/dashboard/reports/page.tsx","utf8");
-if(!reports.includes("/dashboard/attendance#attendance-report"))throw new Error("Report Center does not link to Attendance Phase 5");
+if(!reports.includes("/dashboard/attendance?view=operation#attendance-report"))throw new Error("Report Center does not link to Attendance Phase 5 operation view");
 
 const css=fs.readFileSync("app/phase8-modules.css","utf8");
 for(const marker of [".attendance-operational-report",".attendance-report-filters",".attendance-report-kpis",".attendance-report-context-grid"]){

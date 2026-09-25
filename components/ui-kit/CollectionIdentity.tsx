@@ -33,5 +33,5 @@ export function EntityIdentityCell({
 }
 
 export function ListQuickActions({children}:{children:ReactNode}){
-  return <span className="ds-list-quick-actions">{children}</span>;
+  return <div className="ds-list-quick-actions">{children}</div>;
 }

@@ -374,7 +374,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       }
     </>}
 
-    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} />}
+    {canManage && organizationId && <AttendanceContingencyReview requests={contingencyReview.rows} organizationId={organizationId} />}
 
     {canManage && organizationId && <SupervisedBiometricEnrollment
       people={enrollmentPeople.rows}

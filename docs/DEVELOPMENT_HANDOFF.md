@@ -1020,3 +1020,43 @@ Provider/external Work Order directory SELECTs now include the organization/Site
 ### Next
 
 Phase 10 — Reports + Settings + final legacy/accessibility/responsive audit.
+
+
+## 34. DESWEB Phase 10 checkpoint — Design System V2 program closed
+
+Phase 10 is implemented and the progressive V2 migration program is complete.
+
+### New runtime surface
+
+- `/dashboard/reports` centralizes existing report/export entry points.
+- Sidebar stable module ID: `reports`.
+- Reports remains visible to authenticated roles because the underlying endpoints enforce the role-specific data scope.
+
+### Final visual/runtime additions
+
+- `app/phase10-modules.css`;
+- UiIcon: `report`, `sun`, `moon`, `system`;
+- `scripts/phase10-final-smoke.mjs`;
+- `scripts/design-system-final-audit.mjs`;
+- `docs/DESIGN_AUDIT_FINAL.md`.
+
+### Reports boundary
+
+Do not create another reporting table or duplicate Dashboard queries merely for the Reports screen. Reuse the established export routes or add a deliberate domain report only when the product requires new metrics.
+
+### Settings/Personalization boundary
+
+Preserve:
+- app customization assets in PostgreSQL;
+- organization white-label rules;
+- ThemePreferences local browser persistence;
+- Locale/default Country persistence;
+- procurement approval policy semantics.
+
+### Legacy CSS boundary
+
+`app/globals.css` remains legacy compatibility debt. The final audit freezes its hardcoded-color and `!important` baselines. Do not add new raw colors there casually and do not mass-replace old values without proving selector ownership.
+
+### V2 rule going forward
+
+There is no Phase 11 migration. New modules/features should be built directly on tokens/UI Kit/Shared Data UI/Business UI. Legacy retirement is incremental maintenance.

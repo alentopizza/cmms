@@ -437,6 +437,28 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["requisición","compras","proveedor","inventario","insumos","cantidades","abastecimiento"],
   },
   {
+    id:"reports",
+    title:"Centro de reportes y exportaciones",
+    summary:"Consolida el reporte ejecutivo del Dashboard y las exportaciones oficiales de Activos, Inventario y Kardex sin duplicar datos.",
+    icon:"R",
+    module:"Reportes",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
+    href:"/dashboard/reports",
+    steps:[
+      "Abre Reportes desde el menú lateral o desde Más en la navegación móvil de campo.",
+      "En Reporte ejecutivo selecciona periodo, estado, sede y prioridad según las opciones disponibles para tu rol.",
+      "Usa Exportar para generar Excel, CSV o PDF. El archivo conserva los mismos filtros visibles y el alcance autorizado por empresa, sede y rol.",
+      "Las exportaciones de Activos, Inventario y Kardex reutilizan los endpoints oficiales de cada módulo; no crean una copia paralela de la información.",
+      "Las hojas de vida de empresas, ubicaciones, usuarios y proveedores continúan exportándose desde cada perfil individual.",
+      "Las requisiciones continúan exportándose desde su detalle para conservar cantidades, aprobación, recepciones, devoluciones y conciliación documental."
+    ],
+    notes:[
+      "Reportes nunca amplía permisos: solo reúne accesos a información que tu sesión ya puede consultar.",
+      "PDF y Excel respetan la identidad visual permitida por la configuración global o la marca blanca de la empresa."
+    ],
+    keywords:["reportes","exportar","excel","csv","pdf","dashboard","kardex","activos","inventario"],
+  },
+  {
     id:"settings",
     title:"Mi configuración y configuración administrativa",
     summary:"Apariencia personal para todos y ajustes de empresa/plataforma según permisos.",
@@ -460,6 +482,11 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-24",
+    title:"Centro de reportes y cierre visual V2",
+    summary:"Reportes centraliza exportaciones existentes y Configuración/Personalización adoptan la gramática final del Design System V2 sin cambiar permisos ni fuentes de datos.",
+  },
   {
     date:"2026-09-24",
     title:"Alta de suministros desde proveedor corregida",

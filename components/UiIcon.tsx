@@ -51,7 +51,11 @@ export type UiIconName =
   | "logout"
   | "reorder"
   | "reset"
-  | "filter";
+  | "filter"
+  | "report"
+  | "sun"
+  | "moon"
+  | "system";
 
 export default function UiIcon({
   name,
@@ -127,5 +131,9 @@ export default function UiIcon({
   if (name === "reorder") return <svg {...common}><path d="M8 6h10M8 12h10M8 18h10"/><circle cx="4.5" cy="6" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="4.5" cy="18" r=".8"/></svg>;
   if (name === "reset") return <svg {...common}><path d="M5 7V3.5M5 7h3.5"/><path d="M5.4 7A8 8 0 1 1 4.5 15"/></svg>;
   if (name === "filter") return <svg {...common}><path d="M4 6h16M7 12h10M10 18h4"/></svg>;
+  if (name === "report") return <svg {...common}><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 16v-3M12 16V9M15.5 16v-5"/><path d="M8.5 7h7"/></svg>;
+  if (name === "sun") return <svg {...common}><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></svg>;
+  if (name === "moon") return <svg {...common}><path d="M19 15.2A7.6 7.6 0 0 1 8.8 5a7.8 7.8 0 1 0 10.2 10.2Z"/></svg>;
+  if (name === "system") return <svg {...common}><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg>;
   return <svg {...common}><path d="M4 17.5V12M9.3 17.5V8.5M14.7 17.5V5M20 17.5V10.5"/></svg>;
 }

@@ -726,3 +726,24 @@ Rules:
 - Reaction filters may narrow already-authorized snapshot data in the client, but snapshot authorization remains server-side.
 
 Phase 9 CSS must stay scoped to `.phase9-maintenance`, `.phase9-work-orders`, `.phase9-work-order-detail` and `.phase9-reaction`.
+
+
+## 35. Final V2 governance contract — Phase 10
+
+The numbered migration program is complete.
+
+New work must:
+- consume Design Tokens instead of adding raw colors to V2 stylesheets;
+- reuse UI Core, Shared Data UI and Business UI before creating private controls;
+- use UiIcon rather than decorative Unicode for product controls/navigation;
+- include visible keyboard focus;
+- respect `prefers-reduced-motion`;
+- provide responsive behavior in the same delivery;
+- preserve theme and white-label compatibility;
+- keep state/authorization/business rules server-authoritative.
+
+`app/globals.css` is accepted compatibility debt. Its audited baseline is frozen; future refactors should make the number decrease, never grow.
+
+Reports are an orchestration surface over existing authorized data/export endpoints, not a parallel data model.
+
+See `docs/DESIGN_AUDIT_FINAL.md` for the closure audit.

@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { id: "maintenance", icon: "maintenance", label: "Rutinas", href: "/dashboard/maintenance", permission: "maintenance.read" },
   { id: "inventory", icon: "inventory", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
   { id: "requisitions", icon: "requisition", label: "Requisiciones", href: "/dashboard/requisitions", permission: "requisitions.read" },
+  { id: "reports", icon: "report", label: "Reportes", href: "/dashboard/reports" },
   { id: "help", icon: "help", label: "Manual / Ayuda", href: "/dashboard/help" },
 ];
 

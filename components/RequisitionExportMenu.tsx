@@ -5,7 +5,7 @@ import UiIcon from "@/components/UiIcon";
 export default function RequisitionExportMenu({id}:{id:string}){
   const base="/api/requisitions/"+encodeURIComponent(id)+"/export?format=";
   return <details className="profile-export-menu">
-    <summary className="button profile-export-trigger">
+    <summary className="ds-button ds-button-primary ds-button-md profile-export-trigger">
       <UiIcon name="download" size={17}/>
       <span>Exportar</span>
       <UiIcon name="chevron-right" size={13} className="profile-export-chevron"/>

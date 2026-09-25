@@ -847,3 +847,29 @@ Reaction:
 - Google Maps, technician routes, live/paused telemetry and snapshot logic are unchanged.
 
 Phase 9 styles live in `app/phase9-modules.css` and are scoped to Maintenance, Work Orders, Work Order Detail and Reaction.
+
+
+## 35. Phase 10 — Reports, Settings and final V2 closure
+
+**Status: implemented.**
+
+Reports:
+- `/dashboard/reports` is the central entry point for reporting/export workflows;
+- it reuses the role-scoped Dashboard export endpoint and the official Asset/Inventory/Kardex export endpoints;
+- it does not create a parallel reporting data model;
+- profile and Requisition documents remain contextual to their authoritative record pages.
+
+Settings and Personalization:
+- feedback uses Alert;
+- global/company state uses Badge;
+- entitlement consumption uses ProgressBar;
+- actions use Button/UiIcon;
+- theme choices use canonical `sun`, `moon`, `system` icons;
+- global branding, white-label branding, Locale/Country defaults, procurement policy and theme persistence are unchanged.
+
+Final audit:
+- all V2-owned CSS outside `design-tokens.css` must contain zero raw hexadecimal colors;
+- the `globals.css` legacy baseline is frozen and may only decrease;
+- no second UI framework may be introduced;
+- Phase 10 retains focus-visible, responsive and reduced-motion contracts;
+- final details are recorded in `docs/DESIGN_AUDIT_FINAL.md`.

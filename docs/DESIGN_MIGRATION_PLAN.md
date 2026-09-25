@@ -292,6 +292,8 @@ No database schema, API contract, task/Work Order state machine, assignment rule
 
 ## Fase 10 — Reportes, Configuración y cierre
 
+**Estado: implementada.**
+
 Migrar:
 
 - Reportes;
@@ -310,6 +312,27 @@ Cierre técnico:
 - performance;
 - consistencia de iconos;
 - documentación final de `/ui-kit`.
+
+**Phase 10 completion checkpoint — 2026-09-24**
+
+Phase 10 closes the progressive DESWEB V2 migration program.
+
+A new Reports Center at `/dashboard/reports` consolidates the existing role-scoped Dashboard report export and the official Asset/Inventory/Kardex exports. It does not create a second reporting data model or broaden authorization. Profile and Requisition exports remain contextual to their authoritative record surfaces.
+
+Settings and Personalization now consume V2 Alert, Badge, Button, ProgressBar and canonical UiIcon patterns while retaining theme preferences, international defaults, procurement policy, global branding and organization white-label behavior.
+
+The final audit establishes the following governance baseline:
+- every V2-owned stylesheet outside `design-tokens.css` contains zero hardcoded hexadecimal colors;
+- the remaining legacy color debt is isolated to `app/globals.css` and is frozen at the audited baseline so it cannot grow unnoticed;
+- no second UI framework is permitted;
+- Phase 10 surfaces must retain focus-visible, responsive and reduced-motion contracts;
+- Reports, Settings and Personalization must not reintroduce legacy decorative glyphs.
+
+The CSS debt in `globals.css` is intentionally not removed by a blind global replacement. Future maintenance may retire selectors only when their last legacy consumer is migrated or deleted.
+
+No database schema, API authorization contract, report source-of-truth, procurement policy semantics, white-label storage, theme persistence or tenant/Site scope changed.
+
+**DESWEB Design System V2 migration program: phases 0–10 implemented.**
 
 ## Criterio por fase
 

@@ -7,6 +7,7 @@ import "./phase6-modules.css";
 import "./phase7-modules.css";
 import "./phase8-modules.css";
 import "./phase9-modules.css";
+import "./phase10-modules.css";
 import "./shell-v2.css";
 
 export const metadata = {

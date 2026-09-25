@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { Badge } from "@/components/ui-kit/Badge";
 
 type ThemePreference = "light" | "dark" | "system";
 
@@ -29,10 +31,10 @@ export default function ThemePreferences() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  const options: Array<{ value: ThemePreference; title: string; description: string; icon: string }> = [
-    { value: "light", title: "Claro", description: "Interfaz luminosa para espacios con buena iluminación.", icon: "☀" },
-    { value: "dark", title: "Oscuro", description: "Reduce el brillo y resalta superficies operativas.", icon: "◐" },
-    { value: "system", title: "Sistema", description: "Sigue automáticamente la apariencia de tu dispositivo.", icon: "◒" },
+  const options: Array<{ value: ThemePreference; title: string; description: string; icon: UiIconName }> = [
+    { value: "light", title: "Claro", description: "Interfaz luminosa para espacios con buena iluminación.", icon: "sun" },
+    { value: "dark", title: "Oscuro", description: "Reduce el brillo y resalta superficies operativas.", icon: "moon" },
+    { value: "system", title: "Sistema", description: "Sigue automáticamente la apariencia de tu dispositivo.", icon: "system" },
   ];
 
   return <div className="theme-preference-grid">
@@ -46,12 +48,12 @@ export default function ThemePreferences() {
       }}
       aria-pressed={preference === option.value}
     >
-      <span className="theme-preference-icon" aria-hidden="true">{option.icon}</span>
+      <span className="theme-preference-icon" aria-hidden="true"><UiIcon name={option.icon} size={19}/></span>
       <span className="theme-preference-copy">
         <strong>{option.title}</strong>
         <small>{option.description}</small>
       </span>
-      <span className="theme-preference-check" aria-hidden="true">{preference === option.value ? "✓" : ""}</span>
+      <span className="theme-preference-check" aria-hidden="true">{preference === option.value ? <Badge variant="success">Activo</Badge> : null}</span>
     </button>)}
   </div>;
 }

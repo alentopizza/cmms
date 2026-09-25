@@ -5,7 +5,7 @@ import UiIcon from "@/components/UiIcon";
 export default function ModuleExportMenu({entity,type}:{entity:"inventory"|"assets"|"kardex";type?:string}){
   const base="/api/module-export?entity="+entity+(type?"&type="+encodeURIComponent(type):"")+"&format=";
   return <details className="profile-export-menu module-export-menu">
-    <summary className="button secondary profile-export-trigger"><UiIcon name="download" size={16}/><span>Exportar</span><UiIcon name="chevron-right" size={12}/></summary>
+    <summary className="ds-button ds-button-secondary ds-button-md profile-export-trigger"><UiIcon name="download" size={16}/><span>Exportar</span><UiIcon name="chevron-right" size={12}/></summary>
     <div className="profile-export-options">
       <a href={base+"xlsx"}><span className="export-format xlsx">XLS</span><span><strong>Excel</strong><small>Base estructurada para análisis o respaldo</small></span></a>
       <a href={base+"csv"}><span className="export-format xlsx">CSV</span><span><strong>CSV</strong><small>Intercambio de datos plano</small></span></a>

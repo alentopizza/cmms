@@ -64,6 +64,8 @@ jobs:
       - run: node scripts/phase7-assets-inventory-smoke.mjs
       - run: node scripts/phase8-suppliers-people-smoke.mjs
       - run: node scripts/phase9-maintenance-operation-smoke.mjs
+      - run: node scripts/phase10-final-smoke.mjs
+      - run: node scripts/design-system-final-audit.mjs
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

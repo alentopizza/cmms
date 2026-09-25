@@ -340,15 +340,15 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 7 — Assets + Inventory:** implemented end-to-end, including approved secondary navigation, derived Asset catalogs, Inventory reports/settings, V2 KPI/status/table surfaces, Bulk Import integration and Kardex migration while preserving stock authority.
 - **Phase 8 — Suppliers + Users + Crews + Attendance:** implemented end-to-end, including Supplier/User profile preservation, dedicated CrewCard, V2 operational user statistics and Attendance/biometric/geofence/contingency surfaces.
 - **Phase 9 — Maintenance + Work Orders + Activities/Reaction:** implemented end-to-end with shared state/priority grammar, KPI, StaticDataTable, StepProgress/Progress/Timeline, Activity execution cards and Reaction Drawer/contextual-detail migration.
-- **Phase 10 — Reports + Settings + final legacy CSS/accessibility/responsive audit.**
+- **Phase 10 — Reports + Settings + final audit:** implemented — Reports Center, Settings/Personalization V2 migration, final hardcoded-color/component/accessibility/responsive/reduced-motion/icon audit and CI guardrails.
 
 Each phase must remain deployable, preserve business logic, update documentation/manual as needed and merge only after CI/build/regressions pass.
 
-### Immediate next phase
+### Design System V2 program status
 
-**Phase 10 — Reports + Settings + final audit.**
+**Phases 0–10 are implemented.**
 
-Migrate Reports, Settings, Personalization-compatible remaining surfaces and close the V2 program with the planned legacy CSS/hex/duplicate-component, accessibility, responsive, reduced-motion, contrast, performance and icon-consistency audits.
+The next work is no longer a numbered visual-migration phase. New product work must consume the established tokens/UI Kit/Shared Data UI/Business UI contracts, and legacy `globals.css` selectors should be retired opportunistically when their final consumer is migrated or removed. The final audit guardrails must remain green in CI.
 
 
 ## Recently completed role-dashboard analytics slice

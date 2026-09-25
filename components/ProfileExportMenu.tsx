@@ -18,7 +18,7 @@ export default function ProfileExportMenu({
   const base = `/api/profile-export?entity=${encodeURIComponent(entity)}&id=${encodeURIComponent(id)}&format=`;
 
   return <details className="profile-export-menu">
-    <summary className="button profile-export-trigger">
+    <summary className="ds-button ds-button-primary ds-button-md profile-export-trigger">
       <UiIcon name="download" size={17}/>
       <span>{label}</span>
       <UiIcon name="chevron-right" size={13} className="profile-export-chevron"/>

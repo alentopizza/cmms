@@ -1,5 +1,48 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 10: Reports, Settings and final audit
+
+### Added
+
+- `/dashboard/reports` as a central reporting/export surface.
+- Canonical `report`, `sun`, `moon` and `system` UiIcon names.
+- Token-only `app/phase10-modules.css`.
+- `scripts/phase10-final-smoke.mjs`.
+- `scripts/design-system-final-audit.mjs`.
+- `docs/DESIGN_AUDIT_FINAL.md`.
+
+### Reports
+
+- Added a stable `reports` navigation item and contextual header.
+- Reused Dashboard Excel/CSV/PDF exports with URL filter parity.
+- Reused Asset/Inventory/Kardex module exports.
+- Linked existing Attendance, profile and Requisition report workflows without duplicating data or permissions.
+- Updated the in-product manual for the new Reports workflow.
+
+### Settings and Personalization
+
+- Replaced remaining decorative Unicode module/theme icons with UiIcon.
+- Migrated feedback to Alert, status to Badge, resource consumption to ProgressBar and primary actions to Button.
+- Preserved global branding, organization white-label, Locale/Country defaults, procurement approval policy and light/dark/system persistence.
+
+### Final audit
+
+- Confirmed zero hardcoded hex colors in V2-owned stylesheets.
+- Recorded/froze legacy `app/globals.css` baseline at 1,561 hex occurrences / 915 unique values and 190 `!important` declarations.
+- Added CI guardrails against V2 hex regressions, legacy-baseline growth and duplicate external UI frameworks.
+- Added responsive, focus-visible and reduced-motion contract checks.
+
+### Integrity
+
+- No database schema or API authorization changes.
+- No reporting data model duplication.
+- No RBAC, tenant/Site scope, procurement-policy or white-label persistence changes.
+
+### Design System program
+
+- Phases 0–10 are implemented.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 9: Maintenance operation
 
 ### Added

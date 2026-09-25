@@ -795,3 +795,19 @@ The existing `/api/work-orders/[id]/activities` route remains the state-transiti
 Reaction remains a client map because Google Maps, browser interaction and live snapshot refresh require it. Its contextual entity/activity detail now uses the UI Core Drawer. The Drawer changes focus/keyboard/overlay behavior only; tracking sessions, route points, snapshot authorization and Maps overlays remain unchanged.
 
 Provider/external Work Order list queries include organization/Site/type columns needed by presentation facets, but retain their existing assignment/Supplier predicates and Site-scope predicates.
+
+
+### Reports + Settings V2 closure — Phase 10
+
+`/dashboard/reports` is a presentation/orchestration route, not a new reporting persistence layer.
+
+It reuses existing authoritative exports:
+- Dashboard role-scoped report: `/api/dashboard/export`;
+- module exports: `/api/module-export`;
+- contextual profile/Requisition exports remain in their existing routes.
+
+The Reports page may query visible Site labels for filter controls, but export endpoints remain responsible for authorization and report data generation.
+
+Settings and Personalization retain their existing POST endpoints and persistence. Phase 10 changes visual composition only.
+
+Final visual governance is enforced by `scripts/design-system-final-audit.mjs`. V2 stylesheets are token-only. The large legacy `app/globals.css` remains compatibility debt and is frozen at its audited baseline rather than globally rewritten.

@@ -27,6 +27,7 @@ const sections: Array<{ match: (pathname: string) => boolean; section: Section }
   { match: pathname => pathname.startsWith("/dashboard/maintenance"), section: { label: "Rutinas", eyebrow: "Planificación", icon: "maintenance" } },
   { match: pathname => pathname.startsWith("/dashboard/inventory"), section: { label: "Inventario", eyebrow: "Repuestos y existencias", icon: "inventory" } },
   { match: pathname => pathname.startsWith("/dashboard/requisitions"), section: { label: "Requisiciones", eyebrow: "Abastecimiento", icon: "requisition" } },
+  { match: pathname => pathname.startsWith("/dashboard/reports"), section: { label: "Reportes", eyebrow: "Análisis y exportación", icon: "report" } },
   { match: pathname => pathname.startsWith("/dashboard/settings") || pathname.startsWith("/dashboard/personalization"), section: { label: "Configuración", eyebrow: "Plataforma", icon: "settings" } },
   { match: pathname => pathname.startsWith("/dashboard/preferences"), section: { label: "Mi configuración", eyebrow: "Cuenta", icon: "preferences" } },
   { match: pathname => pathname.startsWith("/dashboard/help"), section: { label: "Manual / Ayuda", eyebrow: "Centro de ayuda", icon: "help" } },

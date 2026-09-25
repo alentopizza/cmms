@@ -950,3 +950,16 @@ Provider/external Work Order queries now include organization/Site/type presenta
 No DB schema, API, RBAC, assignment, task-state, tracking or tenant/Site scope change was introduced.
 
 Next visual step: Phase 10 Reports + Settings + final V2 audit.
+
+
+### DESWEB V2 final closure — Phase 10 implemented (2026-09-24)
+
+The progressive Design System migration program is complete through Phase 10.
+
+A Reports Center now exposes existing role-authorized exports from one navigation surface. It reuses Dashboard and module export endpoints and does not introduce a new reporting authority.
+
+Settings and Personalization consume the final V2 interaction/state vocabulary while preserving global customization, organization white-label, light/dark/system preference, Locale/Country defaults and procurement approval configuration.
+
+The final audit freezes `app/globals.css` at its measured legacy hardcoded-color baseline and requires all V2-owned stylesheets to remain token-only. New product work must be V2-native; legacy selectors should be retired only when their final consumer is removed.
+
+See `docs/DESIGN_AUDIT_FINAL.md`.

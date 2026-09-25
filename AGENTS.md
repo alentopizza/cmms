@@ -555,3 +555,16 @@ Before adding any button, input, select, checkbox/radio/switch, card, badge/stat
 Current compatibility wrappers (`ConfirmDialog`, `CreateRecordModal`, `MultiSelectDropdown`, `FileDropzone`) intentionally preserve old module APIs while delegating to UI Kit. Do not fork them back into separate implementations.
 
 DataTable/KPI/Search-Filter data tooling is deferred to Phase 4. Business entity cards are deferred to Phase 5.
+
+
+## DESWEB Design System V2 closure invariants
+
+The progressive migration program is complete through Phase 10.
+
+- New UI work must use Design Tokens/UI Kit/Shared Data UI/Business UI before adding private patterns.
+- New V2-owned CSS must not introduce raw hexadecimal colors; `app/globals.css` is compatibility debt and its audited baseline may only decrease.
+- Product controls/navigation use `UiIcon`, not decorative Unicode glyphs.
+- Responsive, visible keyboard focus and reduced-motion behavior are acceptance criteria for new UI.
+- `/dashboard/reports` is an orchestration surface over existing authorized report/export endpoints; do not create parallel reporting tables or client-side authorization.
+- There is no planned Phase 11 migration. Retire legacy CSS opportunistically when its final consumer is removed.
+- Consult `docs/DESIGN_AUDIT_FINAL.md` before broad visual refactors.

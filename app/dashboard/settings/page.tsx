@@ -8,6 +8,11 @@ import ThemePreferences from "@/components/ThemePreferences";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 import FileDropzone from "@/components/FileDropzone";
 import { CountrySelect, LocaleSelect } from "@/components/InternationalFields";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { Alert } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
+import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
 
 type CompanySettingsRow = {
   id: string;
@@ -57,7 +62,7 @@ type ResourceCard = {
   description: string;
   used: number;
   limit: number;
-  icon: string;
+  icon: UiIconName;
 };
 
 function resourceState(used: number, limit: number) {
@@ -88,28 +93,30 @@ function CompanySettings({
   procurementError?: boolean;
 }) {
   const resources: ResourceCard[] = [
-    { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "⌂" },
-    { key: "locations", label: "Sububicaciones", description: "Áreas, pisos, habitaciones y demás espacios internos.", used: company.sublocation_count, limit: company.max_sublocations, icon: "⌗" },
-    { key: "assets", label: "Activos", description: "Equipos y activos registrados dentro de la operación.", used: company.asset_count, limit: company.max_assets, icon: "◇" },
-    { key: "inventory", label: "Inventario", description: "Artículos y repuestos controlados por existencia.", used: company.inventory_item_count, limit: company.max_inventory_items, icon: "▤" },
-    { key: "technicians", label: "Técnicos", description: "Usuarios con rol técnico asignados a la empresa.", used: company.technician_count, limit: company.max_technicians, icon: "◎" },
+    { key: "sites", label: "Ubicaciones principales", description: "Sedes principales habilitadas para la empresa.", used: company.site_count, limit: company.max_sites, icon: "location" },
+    { key: "locations", label: "Sububicaciones", description: "Áreas, pisos, habitaciones y demás espacios internos.", used: company.sublocation_count, limit: company.max_sublocations, icon: "sublocation" },
+    { key: "assets", label: "Activos", description: "Equipos y activos registrados dentro de la operación.", used: company.asset_count, limit: company.max_assets, icon: "asset" },
+    { key: "inventory", label: "Inventario", description: "Artículos y repuestos controlados por existencia.", used: company.inventory_item_count, limit: company.max_inventory_items, icon: "inventory" },
+    { key: "technicians", label: "Técnicos", description: "Usuarios con rol técnico asignados a la empresa.", used: company.technician_count, limit: company.max_technicians, icon: "user" },
   ];
 
-  return <>
+  return <div className="phase10-settings phase10-company-settings">
     <header className="page-header settings-page-header">
       <div>
         <span className="eyebrow">Empresa</span>
         <h1 className="page-title">Configuración de empresa</h1>
         <p className="muted">Consulta la información de tu organización y el consumo de los recursos asignados por la plataforma.</p>
       </div>
-      <span className="settings-status"><i /> {company.active ? "Empresa activa" : "Empresa inactiva"}</span>
+      <Badge variant={company.active?"success":"neutral"} icon="company">{company.active ? "Empresa activa" : "Empresa inactiva"}</Badge>
     </header>
 
-    {welcome && <div className="notice success section">Tu empresa fue creada correctamente. Ya puedes revisar el plan, sus fechas y los recursos disponibles.</div>}
-    {planUpdated && <div className="notice success section">Tu plan fue actualizado correctamente y los nuevos recursos ya están disponibles.</div>}
-    {localeSaved && <div className="notice success section">Idioma y región predeterminados actualizados correctamente.</div>}
-    {procurementSaved && <div className="notice success section">Política de aprobación de abastecimiento actualizada correctamente.</div>}
-    {procurementError && <div className="notice error section">No fue posible guardar la política de aprobación. Revisa el modo, el monto y el alcance de aprobadores.</div>}
+    {(welcome||planUpdated||localeSaved||procurementSaved)&&<div className="section phase10-feedback-stack">
+      {welcome&&<Alert variant="success" title="Empresa creada">Tu empresa fue creada correctamente. Ya puedes revisar el plan, sus fechas y los recursos disponibles.</Alert>}
+      {planUpdated&&<Alert variant="success" title="Plan actualizado">Los nuevos recursos ya están disponibles.</Alert>}
+      {localeSaved&&<Alert variant="success" title="Idioma y región actualizados">La preferencia predeterminada quedó guardada.</Alert>}
+      {procurementSaved&&<Alert variant="success" title="Política actualizada">La política de aprobación de abastecimiento quedó guardada.</Alert>}
+    </div>}
+    {procurementError&&<div className="section"><Alert variant="danger" title="No fue posible guardar la política">Revisa el modo, el monto y el alcance de aprobadores.</Alert></div>}
 
     <section className="company-settings-hero section">
       <article className="card company-plan-banner">
@@ -126,7 +133,7 @@ function CompanySettings({
             : company.current_period_end
               ? new Date(company.current_period_end).toLocaleDateString("es-CO")
               : "No registrado"}</strong></div>
-          <Link className="button company-plan-upgrade" href="/#planes">{company.plan_code === "pro" ? "Ver planes" : "Mejorar plan"}</Link>
+          <Link className="ds-button ds-button-secondary ds-button-md company-plan-upgrade" href="/#planes"><UiIcon name="chevron-right" size={15}/><span>{company.plan_code === "pro" ? "Ver planes" : "Mejorar plan"}</span></Link>
         </div>
       </article>
 
@@ -160,17 +167,15 @@ function CompanySettings({
           const status = resourceState(resource.used, resource.limit);
           return <article className={`card company-entitlement-card company-entitlement-${status.state}`} key={resource.key}>
             <div className="company-entitlement-head">
-              <span className="company-entitlement-icon" aria-hidden="true">{resource.icon}</span>
-              <span className={`company-entitlement-status company-entitlement-status-${status.state}`}>{status.label}</span>
+              <span className="company-entitlement-icon" aria-hidden="true"><UiIcon name={resource.icon} size={20}/></span>
+              <Badge variant={status.state==="critical"?"danger":status.state==="warning"?"warning":"success"}>{status.label}</Badge>
             </div>
             <div className="company-entitlement-copy">
               <span>{resource.label}</span>
               <strong><b>{resource.used}</b><small> / {resource.limit}</small></strong>
               <p>{resource.description}</p>
             </div>
-            <div className="company-entitlement-progress" aria-label={`${status.ratio}% consumido`}>
-              <span style={{ width: `${status.ratio}%` }} />
-            </div>
+            <ProgressBar value={status.ratio} max={100} showValue={false} compact tone={status.state==="critical"?"danger":status.state==="warning"?"warning":"success"} caption={status.ratio+"% consumido"}/>
             <div className="company-entitlement-foot">
               <span>{status.ratio}% consumido</span>
               <strong>{Math.max(0, resource.limit - resource.used)} disponibles</strong>
@@ -193,10 +198,10 @@ function CompanySettings({
           <h2>Identidad de tu plataforma</h2>
           <p>Personaliza el nombre, colores y logos visibles dentro del panel de tu empresa.</p>
         </div>
-        <span className="settings-panel-icon" aria-hidden="true">✦</span>
+        <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="company" size={20}/></span>
       </div>
-      {brandingSaved && <div className="notice success">La identidad visual de tu empresa se actualizó correctamente.</div>}
-      {brandingError && <div className="notice error">No fue posible guardar la personalización. Revisa colores y archivos.</div>}
+      {brandingSaved&&<Alert variant="success" title="Identidad visual actualizada">La identidad visual de tu empresa se actualizó correctamente.</Alert>}
+      {brandingError&&<Alert variant="danger" title="No fue posible guardar la personalización">Revisa colores y archivos.</Alert>}
       <form className="white-label-form" method="post" action="/api/organization-branding" encType="multipart/form-data">
         <div className="form-grid">
           <div className="field form-span-2"><label>Nombre de la plataforma</label><input name="app_name" defaultValue={company.branding_app_name || `${company.name} CMMS`} required /></div>
@@ -206,7 +211,7 @@ function CompanySettings({
           <FileDropzone name="logo_on_dark" label="Logo para fondo oscuro" description="Versión clara/negativa para superficies oscuras." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={company.branding_logo_dark ? "Logo personalizado actual" : null} compact />
           <label className="white-label-checkbox form-span-2"><input name="show_desweb_branding" type="checkbox" defaultChecked={company.show_desweb_branding} /><span>Mostrar “Desweb · Desarrollo de Soluciones” en el pie del panel.</span></label>
         </div>
-        <div className="form-actions"><button className="button" type="submit">Guardar identidad visual</button></div>
+        <div className="form-actions"><Button type="submit" iconLeft="check">Guardar identidad visual</Button></div>
       </form>
     </section>}
 
@@ -217,13 +222,13 @@ function CompanySettings({
           <h2>Idioma y región</h2>
           <p>Define el idioma base de la empresa y el país que se propondrá inicialmente en nuevos formularios.</p>
         </div>
-        <span className="settings-panel-icon" aria-hidden="true">文</span>
+        <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="preferences" size={20}/></span>
       </div>
       <form className="form-grid international-settings-form" method="post" action="/api/preferences/locale">
         <input type="hidden" name="scope" value="organization"/>
         <LocaleSelect id="company-preferred-locale" name="locale" defaultValue={company.preferred_locale}/>
         <CountrySelect id="company-default-country" name="country" label="País predeterminado" defaultValue={company.default_country||"CO"} required/>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar idioma y región</button></div>
+        <div className="form-span-2 form-actions"><Button type="submit" iconLeft="check">Guardar idioma y región</Button></div>
       </form>
     </section>
 
@@ -234,7 +239,7 @@ function CompanySettings({
           <h2>Aprobación de requisiciones</h2>
           <p>Define cuándo una requisición necesita autorización antes de registrar recepciones en Inventario / Kardex.</p>
         </div>
-        <span className="settings-panel-icon" aria-hidden="true">✓</span>
+        <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="requisition" size={20}/></span>
       </div>
       <form className="form-grid procurement-policy-form" method="post" action="/api/procurement-policy">
         <div className="field">
@@ -266,7 +271,7 @@ function CompanySettings({
           <strong>Regla de integridad</strong>
           <span>Si una requisición aprobada cambia en cantidad, costo o fecha requerida, la aprobación se reabre y el saldo pendiente vuelve a quedar bloqueado hasta una nueva decisión.</span>
         </div>
-        <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar política de aprobación</button></div>
+        <div className="form-span-2 form-actions"><Button type="submit" iconLeft="check">Guardar política de aprobación</Button></div>
       </form>
     </section>
 
@@ -278,11 +283,11 @@ function CompanySettings({
             <h2>Usuarios y roles</h2>
             <p>Administra cuentas de tu organización y define el alcance por sede de cada usuario.</p>
           </div>
-          <span className="settings-panel-icon" aria-hidden="true">◎</span>
+          <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="user" size={20}/></span>
         </div>
         <Link className="settings-link-card" href="/dashboard/users">
           <div><strong>Administrar usuarios</strong><span>Roles, sedes y permisos operativos</span></div>
-          <b aria-hidden="true">→</b>
+          <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
         </Link>
       </article>
 
@@ -293,15 +298,15 @@ function CompanySettings({
             <h2>Ubicaciones</h2>
             <p>Consulta y administra las sedes y sububicaciones permitidas dentro del cupo asignado.</p>
           </div>
-          <span className="settings-panel-icon" aria-hidden="true">⌂</span>
+          <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="location" size={20}/></span>
         </div>
         <Link className="settings-link-card" href="/dashboard/locations">
           <div><strong>Administrar ubicaciones</strong><span>Sedes, áreas y jerarquía física</span></div>
-          <b aria-hidden="true">→</b>
+          <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
         </Link>
       </article>
     </section>
-  </>;
+  </div>;
 }
 
 export default async function SettingsPage({
@@ -321,19 +326,21 @@ export default async function SettingsPage({
 
   if (isPlatformAdmin) {
     const customization = await getCustomizationSummary();
-    return <>
+    return <div className="phase10-settings phase10-platform-settings">
       <header className="page-header settings-page-header">
         <div>
           <span className="eyebrow">Plataforma</span>
           <h1 className="page-title">Configuración</h1>
           <p className="muted">Centraliza la apariencia, la identidad visual y las preferencias globales de Desweb CMMS.</p>
         </div>
-        <span className="settings-status"><i /> Configuración global</span>
+        <Badge variant="brand" icon="settings">Configuración global</Badge>
       </header>
 
-      {params.branding_saved === "1" && <div className="notice success section">La identidad visual global se actualizó correctamente.</div>}
-      {params.branding_error && <div className="notice error section">{params.branding_error}</div>}
-      {params.locale_saved === "1" && <div className="notice success section">Idioma y región globales actualizados correctamente.</div>}
+      {(params.branding_saved==="1"||params.locale_saved==="1")&&<div className="section phase10-feedback-stack">
+        {params.branding_saved==="1"&&<Alert variant="success" title="Identidad visual actualizada">La identidad visual global se actualizó correctamente.</Alert>}
+        {params.locale_saved==="1"&&<Alert variant="success" title="Idioma y región actualizados">La configuración global quedó guardada.</Alert>}
+      </div>}
+      {params.branding_error&&<div className="section"><Alert variant="danger" title="No fue posible guardar la identidad visual">{params.branding_error}</Alert></div>}
 
       <section className="settings-grid section">
         <article className="card settings-panel settings-panel-wide international-settings-panel">
@@ -343,13 +350,13 @@ export default async function SettingsPage({
               <h2>Idioma y región predeterminados</h2>
               <p>Configura la base regional de Desweb CMMS. Los nuevos clientes pueden usar otra región sin modificar el catálogo global.</p>
             </div>
-            <span className="settings-panel-icon" aria-hidden="true">文</span>
+            <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="preferences" size={20}/></span>
           </div>
           <form className="form-grid international-settings-form" method="post" action="/api/preferences/locale">
             <input type="hidden" name="scope" value="platform"/>
             <LocaleSelect id="platform-default-locale" name="locale" defaultValue={customization.defaultLocale}/>
             <CountrySelect id="platform-default-country" name="country" label="País predeterminado" defaultValue={customization.defaultCountry} required/>
-            <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar idioma y región</button></div>
+            <div className="form-span-2 form-actions"><Button type="submit" iconLeft="check">Guardar idioma y región</Button></div>
           </form>
         </article>
         <article className="card settings-panel settings-panel-wide">
@@ -359,7 +366,7 @@ export default async function SettingsPage({
               <h2>Tema de la interfaz</h2>
               <p>Elige cómo quieres visualizar la plataforma. Esta preferencia se guarda en este navegador.</p>
             </div>
-            <span className="settings-panel-icon" aria-hidden="true">◐</span>
+            <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="system" size={20}/></span>
           </div>
           <ThemePreferences />
         </article>
@@ -371,7 +378,7 @@ export default async function SettingsPage({
               <h2>Marca de la plataforma</h2>
               <p>Administra directamente los recursos gráficos globales usados por Desweb CMMS.</p>
             </div>
-            <span className="settings-panel-icon" aria-hidden="true">✦</span>
+            <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="company" size={20}/></span>
           </div>
 
           <form className="platform-branding-form" method="post" action="/api/customization" encType="multipart/form-data">
@@ -434,7 +441,7 @@ export default async function SettingsPage({
                 <strong>Guardar identidad visual</strong>
                 <span>Solo se reemplazan los archivos que selecciones.</span>
               </div>
-              <button className="button" type="submit">Guardar cambios</button>
+              <Button type="submit" iconLeft="check">Guardar cambios</Button>
             </div>
           </form>
         </article>
@@ -446,15 +453,15 @@ export default async function SettingsPage({
               <h2>Usuarios y permisos</h2>
               <p>Gestiona las cuentas, roles y alcance operativo de quienes ingresan al CMMS.</p>
             </div>
-            <span className="settings-panel-icon" aria-hidden="true">◎</span>
+            <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="user" size={20}/></span>
           </div>
           <Link className="settings-link-card" href="/dashboard/users">
             <div><strong>Administrar usuarios</strong><span>Roles, empresas, sedes y estado de acceso</span></div>
-            <b aria-hidden="true">→</b>
+            <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
           </Link>
         </article>
       </section>
-    </>;
+    </div>;
   }
 
   if (!session.organizationId) redirect("/dashboard");

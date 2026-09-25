@@ -3,6 +3,10 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getCustomizationSummary, logoOnDarkSrc, logoOnLightSrc } from "@/lib/customization";
 import FileDropzone from "@/components/FileDropzone";
+import UiIcon from "@/components/UiIcon";
+import { Alert } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
 
 function formatSize(bytes: number) {
   if (!bytes) return "Predeterminado";
@@ -22,7 +26,7 @@ export default async function PersonalizationPage({
   const params = await searchParams;
   const customization = await getCustomizationSummary();
 
-  return <>
+  return <div className="phase10-personalization">
     <header className="page-header">
       <div>
         <span className="eyebrow">Configuración visual</span>
@@ -31,15 +35,16 @@ export default async function PersonalizationPage({
       </div>
     </header>
 
-    {params.saved === "1" && <div className="notice success section">Los cambios de personalización fueron guardados.</div>}
-    {params.error && <div className="notice error section">{params.error}</div>}
+    {params.saved==="1"&&<div className="section"><Alert variant="success" title="Personalización guardada">Los cambios de personalización fueron guardados.</Alert></div>}
+    {params.error&&<div className="section"><Alert variant="danger" title="No fue posible guardar la personalización">{params.error}</Alert></div>}
 
     <section className="card section customization-intro">
-      <div>
-        <h2>Marca y recursos gráficos</h2>
-        <p className="muted">Los archivos se almacenan en PostgreSQL, por lo que permanecen disponibles después de cada nueva implementación.</p>
+      <div className="phase10-customization-intro-copy">
+        <span className="phase10-customization-intro-icon" aria-hidden="true"><UiIcon name="preferences" size={20}/></span>
+        <div><h2>Marca y recursos gráficos</h2>
+        <p className="muted">Los archivos se almacenan en PostgreSQL, por lo que permanecen disponibles después de cada nueva implementación.</p></div>
       </div>
-      <div className="customization-badge">Global</div>
+      <Badge variant="brand" icon="company">Global</Badge>
     </section>
 
     <form className="section customization-grid" method="post" action="/api/customization" encType="multipart/form-data">
@@ -58,7 +63,7 @@ export default async function PersonalizationPage({
         </div>
         <FileDropzone id="logo_on_light" name="logo_on_light" label="Reemplazar logo" description="Versión para fondos claros. Recomendado: transparente." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnLightName} compact />
         {customization.hasLogoOnLight &&
-          <button className="button secondary" type="submit" name="reset" value="logo-on-light">Restablecer logo</button>}
+          <Button variant="secondary" type="submit" name="reset" value="logo-on-light" iconLeft="reset">Restablecer logo</Button>}
       </article>
 
       <article className="card customization-card">
@@ -76,7 +81,7 @@ export default async function PersonalizationPage({
         </div>
         <FileDropzone id="logo_on_dark" name="logo_on_dark" label="Reemplazar logo" description="Versión clara/negativa para fondos oscuros." accept=".png,.webp,.svg,.jpg,.jpeg,image/png,image/webp,image/svg+xml,image/jpeg" maxSizeMb={2} kind="image" existingFileName={customization.logoOnDarkName} compact />
         {customization.hasLogoOnDark &&
-          <button className="button secondary" type="submit" name="reset" value="logo-on-dark">Restablecer logo</button>}
+          <Button variant="secondary" type="submit" name="reset" value="logo-on-dark" iconLeft="reset">Restablecer logo</Button>}
       </article>
 
       <article className="card customization-card">
@@ -94,13 +99,13 @@ export default async function PersonalizationPage({
         </div>
         <FileDropzone id="favicon" name="favicon" label="Reemplazar favicon" description="Cuadrado · 64×64 o 128×128 px recomendado." accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml" maxSizeMb={2} kind="image" existingFileName={customization.faviconName} compact />
         {customization.hasFavicon &&
-          <button className="button secondary" type="submit" name="reset" value="favicon">Restablecer favicon</button>}
+          <Button variant="secondary" type="submit" name="reset" value="favicon" iconLeft="reset">Restablecer favicon</Button>}
       </article>
 
       <div className="customization-savebar">
         <div><strong>Guardar archivos seleccionados</strong><span>Máximo 2 MB por archivo.</span></div>
-        <button className="button" type="submit">Guardar personalización</button>
+        <Button type="submit" iconLeft="check">Guardar personalización</Button>
       </div>
     </form>
-  </>;
+  </div>;
 }

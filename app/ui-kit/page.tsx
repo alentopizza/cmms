@@ -49,7 +49,7 @@ export default async function UiKitPage(){
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 9.</strong> Mantenimiento, Órdenes de Trabajo, Actividades y Reacción ya comparten gramática oficial de estado/prioridad, KPI, Timeline/Progress, detalle contextual en Drawer y experiencia responsive de campo.
+        <strong>Fase 10.</strong> Reportes, Configuración y Personalización cierran la migración V2; el audit final congela la deuda de globals.css y evita nuevos colores hardcodeados, frameworks UI duplicados o regresiones de accesibilidad/responsive.
       </div>
 
       <FoundationPreview/>

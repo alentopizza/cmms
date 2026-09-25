@@ -8,13 +8,12 @@ import AttendanceCapture from "@/components/AttendanceCapture";
 import AttendanceMovement, { type AttendanceMovementSegment } from "@/components/AttendanceMovement";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
+import AttendanceOperationalReport from "@/components/AttendanceOperationalReport";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
-import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
-import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { attendanceOrganizationId } from "@/lib/attendance-context";
 import { attendanceScheduleWeeklyHours, scheduleDayForDate } from "@/lib/attendance-schedules";
 import type { BusinessDaySchedule } from "@/lib/business-hours";
@@ -47,20 +46,6 @@ type EnrollmentPerson={
   role:OrganizationRole;
   has_avatar:boolean;
   biometric_status:"verified"|"legacy"|"revoked"|"missing";
-};
-
-type ReportRow={
-  user_id:string;
-  full_name:string;
-  role:OrganizationRole;
-  shifts:number;
-  field_hours:string;
-  completed_in_shift:number;
-  completed_outside_shift:number;
-  avg_activity_minutes:string|null;
-  last_check_in:string|null;
-  open_now:boolean;
-  contingency_events:number;
 };
 
 type SelfSchedule={
@@ -331,106 +316,6 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         )
     : {rows:[]} as {rows:EnrollmentPerson[]};
 
-  const reports=canReports && organizationId
-    ? session.platformRole!=="user"
-      ? await query<ReportRow>(
-          `SELECT u.id user_id,u.full_name,om.role,
-                  COALESCE(sh.shifts,0)::int shifts,
-                  COALESCE(sh.field_hours,0)::text field_hours,
-                  COALESCE(ev.completed_in_shift,0)::int completed_in_shift,
-                  COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
-                  ev.avg_activity_minutes::text avg_activity_minutes,
-                  sh.last_check_in::text last_check_in,
-                  COALESCE(sh.open_now,false) open_now,
-                  COALESCE(sh.contingency_events,0)::int contingency_events
-           FROM organization_members om
-           JOIN users u ON u.id=om.user_id
-           LEFT JOIN LATERAL (
-             SELECT count(*)::int shifts,
-                    round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
-                    max(s.check_in_at) last_check_in,
-                    bool_or(s.status='open') open_now,
-                    count(*) FILTER (
-                      WHERE s.check_in_verification_mode='contingency'
-                         OR s.check_out_verification_mode='contingency'
-                    )::int contingency_events
-             FROM attendance_shifts s
-             WHERE s.user_id=u.id AND s.organization_id=om.organization_id
-               AND s.check_in_at>=now()-interval '30 days'
-           ) sh ON true
-           LEFT JOIN LATERAL (
-             SELECT count(*) FILTER (WHERE x.within_shift)::int completed_in_shift,
-                    count(*) FILTER (WHERE NOT x.within_shift)::int completed_outside_shift,
-                    round(avg(x.duration_minutes)::numeric,1) avg_activity_minutes
-             FROM (
-               SELECT DISTINCT ON (e.task_id)
-                      e.task_id,e.within_shift,
-                      CASE WHEN t.started_at IS NOT NULL AND t.completed_at IS NOT NULL
-                           THEN EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0 END duration_minutes
-               FROM activity_execution_events e
-               JOIN work_order_tasks t ON t.id=e.task_id
-               WHERE e.user_id=u.id AND e.organization_id=om.organization_id
-                 AND e.event_type='completed'
-                 AND e.occurred_at>=now()-interval '30 days'
-               ORDER BY e.task_id,e.occurred_at DESC
-             ) x
-           ) ev ON true
-           WHERE om.organization_id=$1 AND om.role IN ('technician','external','provider','manager','admin')
-           ORDER BY u.full_name`,
-          [organizationId],
-        )
-      : await query<ReportRow>(
-            `SELECT u.id user_id,u.full_name,om.role,
-                    COALESCE(sh.shifts,0)::int shifts,
-                    COALESCE(sh.field_hours,0)::text field_hours,
-                    COALESCE(ev.completed_in_shift,0)::int completed_in_shift,
-                    COALESCE(ev.completed_outside_shift,0)::int completed_outside_shift,
-                    ev.avg_activity_minutes::text avg_activity_minutes,
-                    sh.last_check_in::text last_check_in,
-                    COALESCE(sh.open_now,false) open_now,
-                    COALESCE(sh.contingency_events,0)::int contingency_events
-             FROM organization_members om
-             JOIN users u ON u.id=om.user_id
-             LEFT JOIN LATERAL (
-               SELECT count(*)::int shifts,
-                      round(COALESCE(sum(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))),0)/3600.0::numeric,2) field_hours,
-                      max(s.check_in_at) last_check_in,
-                      bool_or(s.status='open') open_now,
-                      count(*) FILTER (
-                        WHERE s.check_in_verification_mode='contingency'
-                           OR s.check_out_verification_mode='contingency'
-                      )::int contingency_events
-               FROM attendance_shifts s
-               WHERE s.user_id=u.id AND s.organization_id=$1
-                 AND s.check_in_at>=now()-interval '30 days'
-             ) sh ON true
-             LEFT JOIN LATERAL (
-               SELECT count(*) FILTER (WHERE x.within_shift)::int completed_in_shift,
-                      count(*) FILTER (WHERE NOT x.within_shift)::int completed_outside_shift,
-                      round(avg(x.duration_minutes)::numeric,1) avg_activity_minutes
-               FROM (
-                 SELECT DISTINCT ON (e.task_id)
-                        e.task_id,e.within_shift,
-                        CASE WHEN t.started_at IS NOT NULL AND t.completed_at IS NOT NULL
-                             THEN EXTRACT(EPOCH FROM (t.completed_at-t.started_at))/60.0 END duration_minutes
-                 FROM activity_execution_events e
-                 JOIN work_order_tasks t ON t.id=e.task_id
-                 WHERE e.user_id=u.id AND e.organization_id=$1
-                   AND e.event_type='completed'
-                   AND e.occurred_at>=now()-interval '30 days'
-                 ORDER BY e.task_id,e.occurred_at DESC
-               ) x
-             ) ev ON true
-             WHERE om.organization_id=$1 AND om.role IN ('technician','external','provider','manager','admin')
-             ORDER BY u.full_name`,
-            [organizationId],
-          )
-    : {rows:[]} as {rows:ReportRow[]};
-
-  const activeNow=reports.rows.filter(row=>row.open_now).length;
-  const totalHours=reports.rows.reduce((sum,row)=>sum+Number(row.field_hours||0),0);
-  const completedInShift=reports.rows.reduce((sum,row)=>sum+row.completed_in_shift,0);
-
   const selfScheduleRow=selfSchedule.rows[0]||null;
   const selfScheduledDay=selfScheduleRow
     ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date)
@@ -443,7 +328,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       eyebrow="Operación en campo"
       title="Presencia y actividades"
       description="Valida presencia física en sitio con GPS y rostro en vivo. La jornada puede iniciar aunque todavía no existan actividades asignadas."
-      count={canReports?reports.rows.length:1}
+      count={canReports?enrollmentPeople.rows.length:1}
       countLabel={canReports?"personas":"sesión"}
       searchPlaceholder="Buscar persona o rol en el reporte de asistencia"
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
@@ -593,37 +478,6 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       <div className="attendance-site-grid">{sites.rows.map(site=><article className="card attendance-site-card" key={site.id}><div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div><Badge variant={site.latitude!==null&&site.longitude!==null?"success":"warning"}>{site.latitude!==null&&site.longitude!==null ? site.geofence_radius_m+" m":"Sin geocerca"}</Badge><Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar →</Link></article>)}</div>
     </section>}
 
-    {canReports && organizationId && <section className="section">
-      <div className="section-heading"><div><span className="eyebrow">Últimos 30 días</span><h2>Estadísticas de operación en campo</h2><p className="muted">Datos descriptivos para análisis humano: no son un ranking ni una calificación automática de desempeño.</p></div></div>
-      <MetricGrid className="attendance-summary-grid phase8-attendance-kpis">
-        <KpiCard label="Personal con jornada abierta" value={String(activeNow)} hint="en este momento" icon="attendance" tone={activeNow>0?"success":"default"}/>
-        <KpiCard label="Horas registradas" value={totalHours.toFixed(1)} hint="últimos 30 días" icon="clock"/>
-        <KpiCard label="Actividades finalizadas en jornada" value={String(completedInShift)} hint="cruce horario descriptivo" icon="check" tone="success"/>
-      </MetricGrid>
-      <StaticDataTable
-        className="attendance-report-table"
-        caption="Estadísticas descriptivas de asistencia de los últimos 30 días"
-        columns={[
-          {key:"person",label:"Persona"},{key:"role",label:"Rol"},{key:"shifts",label:"Jornadas",align:"end"},
-          {key:"hours",label:"Horas campo",align:"end"},{key:"inside",label:"Act. en jornada",align:"end"},
-          {key:"outside",label:"Act. fuera de jornada",align:"end"},{key:"average",label:"Duración media act."},
-          {key:"contingencies",label:"Contingencias",align:"end"},{key:"state",label:"Estado"},
-        ]}
-        rows={reports.rows.map(row=>({id:row.user_id,recordProps:{
-          "data-module-record":true,
-          "data-status":row.open_now?"active":"inactive",
-          "data-search":[row.full_name,ROLE_LABELS[row.role]].join(" "),
-          "data-filter-role":row.role,
-          "data-filter-role-label":ROLE_LABELS[row.role],
-        },cells:{
-          person:<span><strong>{row.full_name}</strong>{row.last_check_in&&<small className="table-subline">Última entrada: {new Date(row.last_check_in).toLocaleString("es-CO")}</small>}</span>,
-          role:ROLE_LABELS[row.role],shifts:row.shifts,hours:Number(row.field_hours).toFixed(1)+" h",
-          inside:row.completed_in_shift,outside:row.completed_outside_shift,
-          average:row.avg_activity_minutes?row.avg_activity_minutes+" min":"—",contingencies:row.contingency_events,
-          state:<Badge variant={row.open_now?"success":"neutral"}>{row.open_now?"En campo":"Sin jornada"}</Badge>,
-        }}))}
-        empty={<EmptyState icon="file" title="Aún no hay datos de asistencia" description="Los registros aparecerán cuando el personal habilitado empiece a marcar entrada y salida."/>}
-      />
-    </section>}
+    {canReports && organizationId && <AttendanceOperationalReport organizationId={organizationId}/>}
   </div>;
 }

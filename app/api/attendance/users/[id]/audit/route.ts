@@ -159,8 +159,10 @@ export async function GET(
                      THEN site.name ELSE NULL END enrollment_site_name,
                 CASE WHEN $3::uuid[] IS NULL OR bp.enrollment_site_id=ANY($3::uuid[])
                      THEN bp.enrollment_site_id::text ELSE NULL END enrollment_site_id,
-                COALESCE(enroller.full_name,NULL) enrolled_by_name,
-                COALESCE(revoker.full_name,NULL) revoked_by_name,
+                CASE WHEN $3::uuid[] IS NULL OR bp.enrollment_site_id IS NULL OR bp.enrollment_site_id=ANY($3::uuid[])
+                     THEN enroller.full_name ELSE NULL END enrolled_by_name,
+                CASE WHEN $3::uuid[] IS NULL OR bp.enrollment_site_id IS NULL OR bp.enrollment_site_id=ANY($3::uuid[])
+                     THEN revoker.full_name ELSE NULL END revoked_by_name,
                 CASE
                   WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
                   WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
@@ -276,7 +278,6 @@ export async function GET(
       },
       currentSchedule,
       upcomingSchedule,
-      schedules:schedules.rows,
       biometric:biometricProfile.rows[0]||{status:"missing"},
       biometricEvents:biometricEvents.rows,
       shifts:shifts.rows,

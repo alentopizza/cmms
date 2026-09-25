@@ -7,6 +7,7 @@ import ModuleHeader from "@/components/ModuleHeader";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import LocationDirectory, { type LocationDirectoryService, type LocationDirectorySite, type LocationDirectorySub, type LocationDirectoryTechnician } from "@/components/LocationDirectory";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 
 type OrganizationRow = { id: string; name: string; country: string };
 type SiteRow = LocationDirectorySite;
@@ -230,8 +231,8 @@ export default async function LocationsIndexPage({
       /> : undefined}
     />
 
-    {params.created && <div className="notice success section">{params.created === "location" ? "Sububicación creada correctamente." : "Ubicación principal creada correctamente."}</div>}
-    {message && <div className="notice error section">{message}</div>}
+    {params.created && <div className="section"><Alert variant="success" title="Ubicación actualizada">{params.created === "location" ? "Sububicación creada correctamente." : "Ubicación principal creada correctamente."}</Alert></div>}
+    {message && <div className="section"><Alert variant="danger" title="Revisa la información">{message}</Alert></div>}
 
     {!sublocationGate.ready && <CreationPrerequisiteState
       icon="⌁"
@@ -243,7 +244,7 @@ export default async function LocationsIndexPage({
     />}
 
     <section className="section">
-      {sites.rowCount ? <LocationDirectory sites={sites.rows} sublocations={sublocations.rows} services={services.rows} technicians={technicians.rows} /> : sublocationGate.ready ? <div className="card empty-state"><strong>No hay ubicaciones disponibles.</strong><span>Crea la primera sede para comenzar la estructura física.</span></div> : null}
+      {sites.rowCount ? <LocationDirectory sites={sites.rows} sublocations={sublocations.rows} services={services.rows} technicians={technicians.rows} /> : sublocationGate.ready ? <EmptyState icon="asset" title="No hay ubicaciones disponibles" description="Crea la primera sede para comenzar la estructura física."/> : null}
     </section>
   </>;
 }

@@ -11,7 +11,11 @@ import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountryCityFields } from "@/components/InternationalFields";
-import { LocationCard } from "@/components/business-ui";
+import { LocationCard, SubLocationCard } from "@/components/business-ui";
+import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { Search } from "@/components/ui-kit/DataControls";
+import { Select } from "@/components/ui-kit/FormControls";
+import { StatTiles } from "@/components/ui-kit/Metrics";
 
 export type LocationDirectorySite={
   id:string; organization_id:string; organization_name:string; name:string; code:string|null;
@@ -58,8 +62,12 @@ function scheduleLabel(site:LocationDirectorySite){
 function InfoField({label,value}:{label:string;value:React.ReactNode}){
   return <div className="entity-info-field"><span>{label}</span><strong>{value}</strong></div>;
 }
-function MetricCard({label,value,hint}:{label:string;value:React.ReactNode;hint?:string}){
-  return <div className="entity-stat-card"><small>{label}</small><strong>{value}</strong>{hint&&<span>{hint}</span>}</div>;
+function serviceTone(status:string):BadgeVariant{
+  if(status==="completed")return "success";
+  if(status==="cancelled")return "neutral";
+  if(status==="paused")return "warning";
+  if(status==="assigned"||status==="in_progress")return "info";
+  return "brand";
 }
 
 export default function LocationDirectory({sites,sublocations,services,technicians}:{sites:LocationDirectorySite[];sublocations:LocationDirectorySub[];services:LocationDirectoryService[];technicians:LocationDirectoryTechnician[];}){
@@ -123,15 +131,14 @@ export default function LocationDirectory({sites,sublocations,services,technicia
 
   function serviceList(items:LocationDirectoryService[],empty:string){
     return <div className="location-service-list">
-      {items.length?items.map(item=><a key={item.id} href={"/dashboard/work-orders/"+item.id} className="location-service-card">
-        <span className={"status-dot status-"+item.status}/>
+      {items.length?items.map(item=><Link key={item.id} href={"/dashboard/work-orders/"+item.id} className="location-service-card">
         <div><small>{new Date(item.requested_at).toLocaleDateString("es-CO")} · OT #{item.number}</small><strong>{item.title}</strong><span>{item.location_name||"Sin sububicación"}</span></div>
-        <b>{statusLabel(item.status)}</b>
-      </a>):<div className="location-detail-empty">{empty}</div>}
+        <Badge variant={serviceTone(item.status)}>{statusLabel(item.status)}</Badge>
+      </Link>):<div className="location-detail-empty">{empty}</div>}
     </div>;
   }
 
-  return <>
+  return <div className="phase6-location-directory">
     {!selected&&<div className="site-visual-grid site-visual-grid-compact">
       {sites.map(site=><LocationCard
         key={site.id}
@@ -179,7 +186,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
           imageSrc={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null}
           imageAlt={"Logo de "+selected.organization_name}
           fallback={initials(selected.organization_name)}
-          status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i />{selected.active?"Activa":"Inactiva"}</span>}
+          status={<Badge variant={selected.active?"success":"neutral"}>{selected.active?"Activa":"Inactiva"}</Badge>}
           stats={[
             {label:"Sububicaciones",value:selected.location_count,icon:"sublocation"},
             {label:"Activos",value:selected.asset_count,icon:"asset"},
@@ -252,12 +259,12 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               </div>
             </div>},
             {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
-              <div className="entity-stat-grid">
-                <MetricCard label="Sububicaciones" value={selected.location_count} hint="espacios activos"/>
-                <MetricCard label="Activos" value={selected.asset_count} hint="no retirados"/>
-                <MetricCard label="OT activas" value={siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length} hint="abiertas o en ejecución"/>
-                <MetricCard label="Técnicos asignados" value={siteTechnicians.length} hint="derivados de actividades"/>
-              </div>
+              <StatTiles className="entity-stat-grid" items={[
+                {label:"Sububicaciones",value:String(selected.location_count),hint:"espacios activos"},
+                {label:"Activos",value:String(selected.asset_count),hint:"no retirados"},
+                {label:"OT activas",value:String(siteServices.filter(item=>!["completed","cancelled"].includes(item.status)).length),hint:"abiertas o en ejecución",tone:"warning"},
+                {label:"Técnicos asignados",value:String(siteTechnicians.length),hint:"derivados de actividades"},
+              ]}/>
               <div className="entity-panel"><h3>Estado de mantenimiento</h3><div className="entity-info-grid">
                 <InfoField label="Abiertas" value={siteServices.filter(item=>item.status==="open").length}/>
                 <InfoField label="Asignadas" value={siteServices.filter(item=>item.status==="assigned").length}/>
@@ -266,18 +273,40 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               </div></div>
             </div>},
             {id:"sublocations",label:"Sububicaciones",content:<div>
-              <div className="location-list-toolbar"><strong>Cantidad: {visibleSubs.length}</strong><div><input value={subSearch} onChange={event=>setSubSearch(event.target.value)} placeholder="Buscar sububicación"/><select value={subStatus} onChange={event=>setSubStatus(event.target.value)}><option value="all">Todas</option><option value="active">Activas</option><option value="inactive">Inactivas</option></select>{subTypeOptions.length>1&&<select value={subType} onChange={event=>setSubType(event.target.value)}><option value="all">Todos los tipos</option>{subTypeOptions.map(type=><option key={type} value={type}>{typeLabel(type)}</option>)}</select>}</div></div>
-              {visibleSubs.length?<div className="sublocation-visual-grid">{visibleSubs.map(item=><article className="sublocation-visual-card" key={item.id}><button type="button" onClick={()=>{setSelectedSubId(item.id);setEditingSub(false);}}>
-                <div className={"sublocation-visual-photo"+(item.has_image?"":" fallback")}>{item.has_image&&<img src={"/api/locations/"+item.id+"/image"} alt="" />}</div>
-                <div className="sublocation-mini-logo">{selected.organization_has_logo?<img src={"/api/organizations/"+selected.organization_id+"/assets/logo"} alt="" />:<span>{initials(selected.organization_name)}</span>}</div>
-                <strong>{item.name}</strong><small>{typeLabel(item.type)} · {item.asset_count} activos</small>
-              </button></article>)}</div>:<div className="location-detail-empty">Aún no hay sububicaciones. Usa la acción de crear para registrar la primera.</div>}
+              <div className="location-list-toolbar"><strong>Cantidad: {visibleSubs.length}</strong><div>
+                <Search value={subSearch} onValueChange={setSubSearch} placeholder="Buscar sububicación" ariaLabel="Buscar sububicación" compact/>
+                <Select value={subStatus} onChange={event=>setSubStatus(event.target.value)} placeholder="" aria-label="Estado de sububicación" options={[
+                  {value:"all",label:"Todas"},{value:"active",label:"Activas"},{value:"inactive",label:"Inactivas"},
+                ]}/>
+                {subTypeOptions.length>1&&<Select value={subType} onChange={event=>setSubType(event.target.value)} placeholder="" aria-label="Tipo de sububicación" options={[
+                  {value:"all",label:"Todos los tipos"},...subTypeOptions.map(type=>({value:type,label:typeLabel(type)})),
+                ]}/>}
+              </div></div>
+              {visibleSubs.length?<div className="sublocation-visual-grid">{visibleSubs.map(item=><SubLocationCard
+                key={item.id}
+                name={item.name}
+                type={typeLabel(item.type)}
+                assetCount={item.asset_count}
+                imageSrc={item.has_image?"/api/locations/"+item.id+"/image":null}
+                organizationLogoSrc={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null}
+                fallback={initials(selected.organization_name)}
+                onOpen={()=>{setSelectedSubId(item.id);setEditingSub(false);}}
+              />)}</div>:<div className="location-detail-empty">Aún no hay sububicaciones. Usa la acción de crear para registrar la primera.</div>}
             </div>},
-            {id:"services",label:"Servicios",content:<div><div className="location-list-toolbar"><strong>{visibleServices.length} registros</strong><div><input value={serviceSearch} onChange={event=>setServiceSearch(event.target.value)} placeholder="Buscar servicio"/><select value={serviceStatus} onChange={event=>setServiceStatus(event.target.value)}><option value="all">Todos</option><option value="open">Abiertos</option><option value="assigned">Asignados</option><option value="in_progress">En progreso</option><option value="completed">Finalizados</option></select></div></div>{serviceList(visibleServices,"No hay servicios de mantenimiento para esta sede.")}</div>},
+            {id:"services",label:"Servicios",content:<div><div className="location-list-toolbar"><strong>{visibleServices.length} registros</strong><div>
+              <Search value={serviceSearch} onValueChange={setServiceSearch} placeholder="Buscar servicio" ariaLabel="Buscar servicio" compact/>
+              <Select value={serviceStatus} onChange={event=>setServiceStatus(event.target.value)} placeholder="" aria-label="Estado del servicio" options={[
+                {value:"all",label:"Todos"},{value:"open",label:"Abiertos"},{value:"assigned",label:"Asignados"},{value:"in_progress",label:"En progreso"},{value:"completed",label:"Finalizados"},
+              ]}/>
+            </div></div>{serviceList(visibleServices,"No hay servicios de mantenimiento para esta sede.")}</div>},
             {id:"technicians",label:"Técnicos",content:technicianList(siteTechnicians,"esta ubicación")},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">
               <div className="entity-panel"><h3>Hoja de vida de la ubicación</h3><p className="entity-panel-copy">Consolida identidad, contacto, geocerca e indicadores operativos de la sede. El formato se genera con el alcance autorizado actual.</p></div>
-              <div className="entity-stat-grid"><MetricCard label="PDF" value="Ejecutivo" hint="impresión y archivo"/><MetricCard label="Excel" value="Datos" hint="resumen estructurado"/><MetricCard label="Word" value="Editable" hint="documento compatible"/></div>
+              <StatTiles className="entity-stat-grid" items={[
+                {label:"PDF",value:"Ejecutivo",hint:"impresión y archivo"},
+                {label:"Excel",value:"Datos",hint:"resumen estructurado"},
+                {label:"Word",value:"Editable",hint:"documento compatible"},
+              ]}/>
               <ProfileExportMenu entity="site" id={selected.id} label="Exportar hoja de vida"/>
             </div>},
           ]}
@@ -301,7 +330,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
           coverSrc={selectedSub.has_image?"/api/locations/"+selectedSub.id+"/image":null}
           imageSrc={selected.organization_has_logo?"/api/organizations/"+selected.organization_id+"/assets/logo":null}
           fallback={initials(selected.organization_name)}
-          status={<span className={"status-badge "+(selectedSub.active?"status-active":"status-inactive")}><i />{selectedSub.active?"Activa":"Inactiva"}</span>}
+          status={<Badge variant={selectedSub.active?"success":"neutral"}>{selectedSub.active?"Activa":"Inactiva"}</Badge>}
           stats={[
             {label:"Sububicaciones",value:selectedSub.child_count,icon:"sublocation"},
             {label:"Activos",value:selectedSub.asset_count,icon:"asset"},
@@ -339,15 +368,17 @@ export default function LocationDirectory({sites,sublocations,services,technicia
               <InfoField label="Empresa" value={selected.organization_name}/><InfoField label="Estado" value={selectedSub.active?"Activa":"Inactiva"}/>
               <div className="form-span-2"><InfoField label="Descripción" value={selectedSub.description||"Sin descripción"}/></div>
             </div></div></div>},
-            {id:"statistics",label:"Estadísticas",content:<div className="entity-stat-grid">
-              <MetricCard label="Sububicaciones internas" value={selectedSub.child_count}/><MetricCard label="Activos" value={selectedSub.asset_count}/>
-              <MetricCard label="OT activas" value={selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length}/><MetricCard label="OT finalizadas visibles" value={selectedSubServices.filter(item=>item.status==="completed").length}/>
-            </div>},
+            {id:"statistics",label:"Estadísticas",content:<StatTiles className="entity-stat-grid" items={[
+              {label:"Sububicaciones internas",value:String(selectedSub.child_count)},
+              {label:"Activos",value:String(selectedSub.asset_count)},
+              {label:"OT activas",value:String(selectedSubServices.filter(item=>!["completed","cancelled"].includes(item.status)).length),tone:"warning"},
+              {label:"OT finalizadas visibles",value:String(selectedSubServices.filter(item=>item.status==="completed").length),tone:"success"},
+            ]}/>},
             {id:"services",label:"Servicios",content:serviceList(selectedSubServices,"No hay servicios asociados directamente a esta sububicación.")},
             {id:"technicians",label:"Técnicos",content:technicianList(selectedSubTechnicians,"esta sububicación")},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida de sububicación</h3><p className="entity-panel-copy">Consolida identificación, jerarquía, descripción, activos y órdenes asociadas directamente al espacio.</p></div><ProfileExportMenu entity="location" id={selectedSub.id} label="Exportar hoja de vida"/></div>},
           ]}
         />
     </section>}
-  </>;
+  </div>;
 }

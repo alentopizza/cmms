@@ -8,7 +8,9 @@ export {
   MaintenanceCard,
   WorkOrderCard,
   SupplierCard,
+  CompanyCard,
   LocationCard,
+  SubLocationCard,
   UserCard,
 } from "./BusinessCards";
 export type { BusinessDomain } from "./BusinessCards";

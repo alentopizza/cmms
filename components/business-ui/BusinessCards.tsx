@@ -4,7 +4,7 @@ import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
 
-export type BusinessDomain="asset"|"inventory"|"maintenance"|"work-order"|"supplier"|"location"|"user";
+export type BusinessDomain="asset"|"inventory"|"maintenance"|"work-order"|"supplier"|"company"|"location"|"user";
 
 type RecordProps=HTMLAttributes<HTMLElement>&{[key:`data-${string}`]:string|number|boolean|undefined};
 
@@ -167,6 +167,42 @@ export function SupplierCard({
   </BusinessCardShell>;
 }
 
+export function CompanyCard({
+  name,plan,location,active,coverSrc,logoSrc,fallback,profileCompletion,pendingDocuments,resources,onOpen,recordProps,
+}:{
+  name:string;plan:string;location:string;active:boolean;coverSrc?:string|null;logoSrc?:string|null;fallback:string;
+  profileCompletion:number;pendingDocuments:number;
+  resources:Array<{label:string;current:number;max:number;href:string;icon:UiIconName}>;
+  onOpen:()=>void;recordProps?:RecordProps;
+}){
+  return <BusinessCardShell domain="company" className="company-visual-card company-visual-card-v2 company-compact-card" recordProps={recordProps}>
+    <button className="company-card-button company-card-main-action ds-business-open" type="button" onClick={onOpen} aria-label={"Ver detalle de "+name}>
+      <div className={"company-card-cover ds-business-banner"+(coverSrc?"":" company-card-cover-fallback")}>{coverSrc&&<img src={coverSrc} alt="" />}<span className="ds-company-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
+      <div className="company-card-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+name}/>:<span>{fallback}</span>}</div>
+      <div className="company-card-content company-card-content-compact ds-business-copy">
+        <div className="company-card-heading-row company-card-heading-centered"><h3>{name}</h3><Badge variant="brand">{plan}</Badge></div>
+        <small className="company-card-location-compact">{location}</small>
+      </div>
+    </button>
+    <nav className="company-resource-actions ds-company-resources" aria-label={"Recursos de "+name}>
+      {resources.map(resource=><Link
+        key={resource.label}
+        href={resource.href}
+        className="company-resource-action"
+        title={resource.label}
+        aria-label={resource.label+": "+resource.current+" usados de "+resource.max+" asignados. Abrir módulo."}
+      >
+        <span className="company-resource-action-icon"><UiIcon name={resource.icon} size={17}/></span>
+        <strong>{resource.current}/{resource.max}</strong>
+      </Link>)}
+    </nav>
+    <div className="company-card-footer-meta company-card-footer-compact ds-company-completion">
+      <ProgressBar value={profileCompletion} label="Perfil" compact/>
+      <small>{pendingDocuments} {pendingDocuments===1?"documento pendiente":"documentos pendientes"}</small>
+    </div>
+  </BusinessCardShell>;
+}
+
 export function LocationCard({
   name,organization,location,address,active,coverSrc,logoSrc,fallback,onOpen,resources,recordProps,
 }:{
@@ -180,6 +216,21 @@ export function LocationCard({
       <div className="site-visual-content site-visual-content-compact ds-business-copy"><h3>{name}</h3><p><span>{organization}</span><span>{location}</span><span>{address}</span></p></div>
     </button>
     {resources}
+  </BusinessCardShell>;
+}
+
+export function SubLocationCard({
+  name,type,assetCount,imageSrc,organizationLogoSrc,fallback,onOpen,recordProps,
+}:{
+  name:string;type:string;assetCount:number;imageSrc?:string|null;organizationLogoSrc?:string|null;fallback:string;
+  onOpen:()=>void;recordProps?:RecordProps;
+}){
+  return <BusinessCardShell domain="location" className="sublocation-visual-card ds-sublocation-card" recordProps={recordProps}>
+    <button type="button" className="ds-business-open" onClick={onOpen} aria-label={"Abrir sububicación "+name}>
+      <div className={"sublocation-visual-photo ds-business-banner"+(imageSrc?"":" fallback")}>{imageSrc&&<img src={imageSrc} alt="" />}</div>
+      <div className="sublocation-mini-logo ds-business-logo">{organizationLogoSrc?<img src={organizationLogoSrc} alt="" />:<span>{fallback}</span>}</div>
+      <strong>{name}</strong><small>{type} · {assetCount} activos</small>
+    </button>
   </BusinessCardShell>;
 }
 

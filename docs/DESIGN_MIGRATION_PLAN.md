@@ -153,6 +153,8 @@ No homogeneizar identidades que el producto necesita distinguir; compartir estru
 
 ## Fase 6 — Primer bloque de módulos
 
+**Estado: implementada.**
+
 Orden:
 
 1. Dashboard;
@@ -315,4 +317,14 @@ Phase 5 is implemented. The Business UI layer now provides a shared `BusinessCar
 
 No API, DB, RBAC or business-flow changes were introduced.
 
-**Next implementation phase: Phase 6 — Dashboard + Companies + Locations.**
+**Phase 6 completion checkpoint — 2026-09-24**
+
+Phase 6 is implemented end-to-end for Dashboard, Empresas and Ubicaciones.
+
+Dashboard now consumes UI Core Card/Badge/Button/Select, Shared Data UI Progress and a new server-compatible `StaticDataTable`; the date-range/export controls use canonical SVG iconography and V2 controls while preserving URL-driven filters and export parity.
+
+Empresas now consumes `CompanyCard`, Badge, StatTiles, Alert and the shared Entity Profile/Business UI grammar. Ubicaciones consumes `LocationCard`, `SubLocationCard`, Search/Select, Badge, StatTiles, Alert/EmptyState and token-driven directory/profile styling. Existing maps, geofences, contextual creation, exports, edit confirmations and authorized query scopes are unchanged.
+
+`app/phase6-modules.css` is a token-only scoped migration layer for these three modules. No database/API/RBAC changes were introduced.
+
+**Next implementation phase: Phase 7 — Assets + Inventory.**

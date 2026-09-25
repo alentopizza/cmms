@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
-import { AssetCard, InventoryCard, LocationCard, MaintenanceCard, SupplierCard, WorkOrderCard } from "@/components/business-ui/BusinessCards";
+import { AssetCard, CompanyCard, InventoryCard, LocationCard, MaintenanceCard, SupplierCard, WorkOrderCard } from "@/components/business-ui/BusinessCards";
 
 export function BusinessCardsPreview(){
   const [message,setMessage]=useState("");
@@ -14,6 +14,11 @@ export function BusinessCardsPreview(){
     </div>
     {message&&<div className="ds-phase-note">{message}</div>}
     <div className="ds-business-preview-grid">
+      <CompanyCard name="DESWEB Demo" plan="Enterprise" location="Bogotá · Colombia" active fallback="DD" profileCompletion={88} pendingDocuments={2} resources={[
+        {label:"Ubicaciones",current:4,max:8,href:"/dashboard/locations",icon:"location"},
+        {label:"Activos",current:84,max:250,href:"/dashboard/assets",icon:"asset"},
+        {label:"Inventario",current:128,max:1000,href:"/dashboard/inventory",icon:"inventory"},
+      ]} onOpen={()=>setMessage("Ficha de empresa")}/>
       <AssetCard name="Compresor C-04" code="ACT-004" category="Refrigeración" site="Planta Norte" location="Sala técnica" supplier="Servicios Técnicos" criticality="Alta" manufacturerModel="Copeland · ZR61" status="Operativo" statusTone="success" actions={<button className="ds-business-demo-action" type="button" onClick={()=>setMessage("Detalle de activo")}>Ver detalles</button>}/>
       <InventoryCard name="Filtro secador 3/8" sku="INV-038" category="Refrigeración" presentation="Unidad" quantity={18} unit="und" min={8} max={30} supplier="Suministros Central" warehouse="Almacén principal" unitValue="$ 48.000" status="En stock" statusTone="success" actions={<button className="ds-business-demo-action" type="button" onClick={()=>setMessage("Detalle de inventario")}>Ver detalles</button>}/>
       <MaintenanceCard name="Rutina compresor mensual" asset="Compresor C-04" company="DESWEB Demo" frequency="Cada 1 mes" nextDue="30/09/2026" active actions={<button className="ds-business-demo-action" type="button" onClick={()=>setMessage("Acciones de rutina")}>Acciones</button>}/>

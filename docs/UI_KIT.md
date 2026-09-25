@@ -731,3 +731,37 @@ Migration coverage:
 Business UI intentionally shares layout grammar, spacing, states, focus and semantic tokens without forcing identical content. Supplier, User, Asset, Inventory and Location retain distinct information hierarchy and actions.
 
 The legacy desktop tables in Maintenance/Work Orders remain in place for the planned module-specific migrations. Business UI does not move CRUD/RBAC/business logic into visual components.
+
+
+## 31. Phase 6 first complete module block
+
+**Status: implemented.**
+
+The first end-to-end V2 module block covers Dashboard, Empresas and Ubicaciones.
+
+New reusable contract:
+- `StaticDataTable` provides the same Shared Data UI table grammar for Server Components/SSR datasets without client-side column callbacks.
+- `CompanyCard` extends Business UI for the organization directory.
+- `SubLocationCard` extends Business UI for nested physical-space directories.
+- `CreationPrerequisiteState` renders canonical `UiIcon` SVGs even for legacy callers.
+
+Dashboard:
+- Card, Badge, Button and Select from UI Core;
+- ProgressBar and StaticDataTable from Shared Data UI;
+- existing role-aware KPI/LineChart/StatTiles wrappers;
+- token-driven date-range and export controls;
+- URL/query-driven period, comparison, Site, priority and status logic unchanged.
+
+Empresas:
+- CompanyCard directory;
+- Badge/StatTiles/Alert/EmptyState;
+- EntityProfileWorkspace preserved for tabs, edit flow, map/geofence, documents and exports;
+- company resource links and profile completion remain contextual.
+
+Ubicaciones:
+- LocationCard + SubLocationCard;
+- Search/Select inside profile subdirectories;
+- Badge/StatTiles/Alert/EmptyState;
+- technician/service/profile/geofence workflows preserved.
+
+`app/phase6-modules.css` is intentionally scoped to `.phase6-dashboard`, `.phase6-company-directory` and `.phase6-location-directory`. It uses Design Tokens only and does not globally rewrite later-phase modules.

@@ -722,3 +722,19 @@ Business UI lives under `components/business-ui/` and is responsible for domain-
 `EntityProfileWorkspace` remains the canonical profile-page composition. Phase 5 only centralizes its stat rows through BusinessProfileStat; domain tabs/actions are intentionally not homogenized.
 
 Business UI components receive already-authorized data and caller-provided actions. They must never infer or grant permissions.
+
+
+### First complete V2 module block — Phase 6
+
+Dashboard, Empresas and Ubicaciones are the first feature modules whose complete presentation layer is explicitly scoped to V2.
+
+A new server-compatible `StaticDataTable` complements the client-side DataTable. It accepts already-rendered React cells and therefore works safely in Server Components without passing callback functions across the server/client boundary.
+
+Module composition:
+- Dashboard: server queries → role-specific composition → KPI/Chart/Progress/StaticDataTable → UI Core controls;
+- Empresas: authorized organization query → CompanyCard directory → EntityProfileWorkspace;
+- Ubicaciones: authorized Site/Sub-location query → LocationCard/SubLocationCard → EntityProfileWorkspace.
+
+`app/phase6-modules.css` is loaded after Business UI and before shell overrides. The file is intentionally scoped so later modules can continue their progressive migration.
+
+Authorization remains outside presentation. Dashboard filters alter SQL through the established server filter helpers; Company/Location directory filtering only narrows records already returned by authorized queries.

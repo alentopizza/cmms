@@ -886,3 +886,20 @@ Current consumption:
 Existing server-side access rules, contextual creation, record editing, requisitions, maps/geofences and module-specific actions remain unchanged.
 
 Phase 6 is the first complete module migration block: Dashboard, Companies and Locations.
+
+
+### DESWEB V2 first module block — Phase 6 implemented (2026-09-24)
+
+Dashboard, Empresas and Ubicaciones are the first modules migrated end-to-end after Foundations, UI Core, Shared Data UI and Business UI.
+
+Dashboard retains the existing role-specific SQL, comparison periods, filters and export semantics. Presentation now consumes official Card/Badge/Button/Select, ProgressBar, KPI/chart primitives and the new server-compatible StaticDataTable.
+
+Empresas retains organization CRUD, edit confirmations, resource limits, profile/document flows, primary Site/geofence and exports. Its directory now consumes CompanyCard and its profile metrics/feedback consume official V2 primitives.
+
+Ubicaciones retains authorized Site/Sub-location queries, contextual creation, maps/geofences, service/technician associations and profile exports. Site and Sub-location directories plus their local filtering/status/metrics now consume Business UI and Shared Data UI.
+
+The scoped `app/phase6-modules.css` layer prevents the migration from spilling into modules scheduled for later phases.
+
+No DB schema, API, RBAC or tenant/site scope changes were introduced.
+
+Next visual step: Phase 7 Assets + Inventory.

@@ -22,3 +22,5 @@ export type { LineChartSeries } from "./Charts";
 export { ProgressBar, CircularProgress, Timeline, StepProgress } from "./TimelineProgress";
 export type { ProgressTone, TimelineItem } from "./TimelineProgress";
 export { DataPatternsPreview } from "./DataPatternsPreview";
+export { StaticDataTable } from "./StaticTable";
+export type { StaticTableColumn, StaticTableRow } from "./StaticTable";

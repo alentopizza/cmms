@@ -6,6 +6,7 @@ import NewCompanyModal from "./NewCompanyModal";
 import ModuleHeader from "@/components/ModuleHeader";
 import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
 import { getCustomizationSummary } from "@/lib/customization";
+import { Alert } from "@/components/ui-kit/Feedback";
 
 export default async function CompaniesPage({
   searchParams,
@@ -85,7 +86,7 @@ export default async function CompaniesPage({
   return <>
     <ModuleHeader
       eyebrow="Configuración operativa"
-      title="Compañías"
+      title="Empresas"
       description="Administra empresas, planes, estructura operativa y recursos contratados desde un mismo directorio."
       count={companies.rowCount || 0}
       countLabel="compañías"
@@ -98,10 +99,10 @@ export default async function CompaniesPage({
       action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} defaultCountry={customization.defaultCountry} defaultLocale={customization.defaultLocale} />}
     />
 
-    {(params.saved || params.deleted || params.error) && <div className="section">
-      {params.saved && <div className="notice success">Los cambios de la empresa se guardaron correctamente.</div>}
-      {params.deleted && <div className="notice success">La empresa y su información relacionada fueron eliminadas.</div>}
-      {params.error && <div className="notice error">{
+    {(params.saved || params.deleted || params.error) && <div className="section phase6-feedback-stack">
+      {params.saved && <Alert variant="success" title="Empresa actualizada">Los cambios de la empresa se guardaron correctamente.</Alert>}
+      {params.deleted && <Alert variant="success" title="Empresa eliminada">La empresa y su información relacionada fueron eliminadas.</Alert>}
+      {params.error && <Alert variant="danger" title="No fue posible completar la operación">{
         params.error === "site-geofence"
           ? "Valida la dirección de la sede principal en el mapa y define un radio permitido entre 20 y 5000 metros."
           : params.error === "business-hours"
@@ -121,7 +122,7 @@ export default async function CompaniesPage({
                         : params.error === "save"
                           ? "Ocurrió un error interno al guardar. Revisa el registro del servicio con la referencia ORG-SAVE."
                           : "No fue posible completar la operación. Revisa la información e inténtalo nuevamente."
-      }</div>}
+      }</Alert>}
     </div>}
 
     <section className="section">

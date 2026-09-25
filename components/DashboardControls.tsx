@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DashboardDateRangePicker from "@/components/DashboardDateRangePicker";
+import UiIcon from "@/components/UiIcon";
+import { Button } from "@/components/ui-kit/Button";
+import { Select } from "@/components/ui-kit/FormControls";
 
 type Option={value:string;label:string};
 
@@ -79,28 +82,58 @@ export default function DashboardControls({
         initialMonth={month}
         onApply={({from:nextFrom,to:nextTo})=>apply({from:nextFrom,to:nextTo,month:""})}
       />
-      {mode==="platform"&&companyStatusOptions.length>0&&<label><span>Empresa</span><select value={companyStatus} onChange={event=>apply({company_status:event.target.value})}><option value="all">Todas</option>{companyStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
-      {siteOptions.length>0&&<label><span>Sede</span><select value={siteId} onChange={event=>apply({site_id:event.target.value})}><option value="all">Todas</option>{siteOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
-      {activityStatusOptions.length>0&&<label><span>{mode==="platform"?"Suscripción":mode==="field"?"Actividad":"Estado"}</span><select value={activityStatus} onChange={event=>apply({activity_status:event.target.value})}><option value="all">Todos</option>{activityStatusOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
-      {priorityOptions.length>0&&<label><span>Prioridad</span><select value={priority} onChange={event=>apply({priority:event.target.value})}><option value="all">Todas</option>{priorityOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
-      <label><span>Comparar con</span><select value={compare} onChange={event=>apply({compare:event.target.value})}><option value="previous_period">Periodo anterior</option><option value="previous_year">Mismo periodo año anterior</option></select></label>
-      <button className="text-button dashboard-clear-filters" type="button" onClick={clear}>Limpiar</button>
+      {mode==="platform"&&companyStatusOptions.length>0&&<Select
+        label="Empresa"
+        value={companyStatus}
+        onChange={event=>apply({company_status:event.target.value})}
+        placeholder=""
+        options={[{value:"all",label:"Todas"},...companyStatusOptions]}
+      />}
+      {siteOptions.length>0&&<Select
+        label="Sede"
+        value={siteId}
+        onChange={event=>apply({site_id:event.target.value})}
+        placeholder=""
+        options={[{value:"all",label:"Todas"},...siteOptions]}
+      />}
+      {activityStatusOptions.length>0&&<Select
+        label={mode==="platform"?"Suscripción":mode==="field"?"Actividad":"Estado"}
+        value={activityStatus}
+        onChange={event=>apply({activity_status:event.target.value})}
+        placeholder=""
+        options={[{value:"all",label:"Todos"},...activityStatusOptions]}
+      />}
+      {priorityOptions.length>0&&<Select
+        label="Prioridad"
+        value={priority}
+        onChange={event=>apply({priority:event.target.value})}
+        placeholder=""
+        options={[{value:"all",label:"Todas"},...priorityOptions]}
+      />}
+      <Select
+        label="Comparar con"
+        value={compare}
+        onChange={event=>apply({compare:event.target.value})}
+        placeholder=""
+        options={[{value:"previous_period",label:"Periodo anterior"},{value:"previous_year",label:"Mismo periodo año anterior"}]}
+      />
+      <Button className="dashboard-clear-filters" variant="ghost" size="sm" onClick={clear}>Limpiar</Button>
     </div>
     <div className="dashboard-export-menu" ref={exportRef}>
-      <button className="button dashboard-export-trigger" type="button" onClick={()=>setExportOpen(value=>!value)} aria-expanded={exportOpen}>
-        <span>Exportar</span><span aria-hidden="true">⌄</span>
-      </button>
-      {exportOpen&&<div className="dashboard-export-popover">
-        <a href={href("xlsx")} onClick={()=>setExportOpen(false)}>
-          <span className="dashboard-export-format-icon">XLS</span>
+      <Button className="dashboard-export-trigger" onClick={()=>setExportOpen(value=>!value)} aria-expanded={exportOpen} aria-haspopup="menu" iconLeft="download" iconRight={exportOpen?"chevron-up":"chevron-down"}>
+        Exportar
+      </Button>
+      {exportOpen&&<div className="dashboard-export-popover" role="menu" aria-label="Formatos de exportación">
+        <a role="menuitem" href={href("xlsx")} onClick={()=>setExportOpen(false)}>
+          <span className="dashboard-export-format-icon"><UiIcon name="file" size={17}/></span>
           <span><strong>Excel</strong><small>Libro .xlsx con resumen y datos</small></span>
         </a>
-        <a href={href("csv")} onClick={()=>setExportOpen(false)}>
-          <span className="dashboard-export-format-icon">CSV</span>
+        <a role="menuitem" href={href("csv")} onClick={()=>setExportOpen(false)}>
+          <span className="dashboard-export-format-icon"><UiIcon name="file" size={17}/></span>
           <span><strong>CSV</strong><small>Datos tabulares · compatible con Power BI</small></span>
         </a>
-        <a href={href("pdf")} onClick={()=>setExportOpen(false)}>
-          <span className="dashboard-export-format-icon">PDF</span>
+        <a role="menuitem" href={href("pdf")} onClick={()=>setExportOpen(false)}>
+          <span className="dashboard-export-format-icon"><UiIcon name="file" size={17}/></span>
           <span><strong>PDF</strong><small>Reporte ejecutivo con gráficas y membrete</small></span>
         </a>
       </div>}

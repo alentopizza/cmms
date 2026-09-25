@@ -336,7 +336,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 3 — Global shell/navigation:** implemented — token-driven shell, SVG navigation iconography, contextual header/account actions and responsive drawer/field navigation while preserving RBAC/preferences.
 - **Phase 4 — Shared Data UI:** implemented — Search/FilterPanel, DataTable/Pagination, row/bulk actions, KPI/metric layouts, token chart palette, timeline/progress, ModuleHeader and DashboardAnalytics compatibility migration.
 - **Phase 5 — Business UI:** implemented — shared BusinessCardShell plus AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard and UserCard/Profile metric consolidation while preserving distinct domain identities.
-- **Phase 6 — Dashboard + Companies + Locations.**
+- **Phase 6 — Dashboard + Companies + Locations:** implemented end-to-end on V2, including SSR data tables, dashboard controls, CompanyCard, SubLocationCard, profile metrics, location filters and scoped module styling.
 - **Phase 7 — Assets + Inventory**, including their approved secondary navigation.
 - **Phase 8 — Suppliers + Users + Crews + Attendance.**
 - **Phase 9 — Maintenance + Work Orders + Activities/Reaction where shared patterns apply.**
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 6 — Dashboard + Companies + Locations.**
+**Phase 7 — Assets + Inventory.**
 
-Apply Foundations, UI Core, Shared Data UI and Business UI to the first full module block. Migrate Dashboard, Companies and Locations end-to-end while preserving analytics queries, contextual creation, Entity Profile behavior, maps/geofences, RBAC and existing operational actions.
+Migrate Assets and Inventory end-to-end, including the approved secondary navigation, KPI/metric surfaces, cards/tables, forms, imports, Kardex and responsive states. Preserve the validated stock authority, unified import engine, Supplier relationships, requisition integration, RBAC and server-side scope.
 
 
 ## Recently completed role-dashboard analytics slice

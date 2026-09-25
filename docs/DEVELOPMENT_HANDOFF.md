@@ -865,3 +865,40 @@ Do not remove module-specific desktop tables or profile tabs merely because a Bu
 ### Next
 
 Phase 6 — Dashboard + Companies + Locations end-to-end.
+
+
+## 30. DESWEB Phase 6 checkpoint — Dashboard + Empresas + Ubicaciones
+
+Phase 6 is implemented.
+
+### New runtime pieces
+
+- `components/ui-kit/StaticTable.tsx` — server-compatible Shared Data UI table;
+- `CompanyCard` and `SubLocationCard` in Business UI;
+- `app/phase6-modules.css` — scoped token-only styles;
+- `scripts/phase6-modules-smoke.mjs`.
+
+### Dashboard
+
+Do not move Dashboard SQL or access rules to client components. The existing URL filters continue to drive server queries and export parity. Presentation now uses V2 primitives, including StaticDataTable for SSR rows.
+
+### Empresas
+
+CompanyDirectory consumes CompanyCard and official metric/status/feedback primitives. EntityProfileWorkspace remains the editing/profile shell. Confirmation gates around edit/save/delete are unchanged.
+
+### Ubicaciones
+
+LocationDirectory consumes LocationCard/SubLocationCard, Search/Select, Badge and StatTiles. Existing Site/Sub-location selection, map/geofence editing, contextual creation and technician/service relationships are unchanged.
+
+### Scoped CSS
+
+Keep Phase 6 module-specific rules under:
+- `.phase6-dashboard`;
+- `.phase6-company-directory`;
+- `.phase6-location-directory`.
+
+Do not broaden selectors into future-phase modules.
+
+### Next
+
+Phase 7 — Assets + Inventory end-to-end, including the approved secondary navigations and the validated Kardex/import workflows.

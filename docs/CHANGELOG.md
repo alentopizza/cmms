@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 6: Dashboard, Empresas y Ubicaciones
+
+### Added
+
+- `StaticDataTable` for server-rendered datasets using the Shared Data UI table grammar.
+- `CompanyCard` and `SubLocationCard` Business UI compositions.
+- Token-only `app/phase6-modules.css` scoped to the first migrated module block.
+- `scripts/phase6-modules-smoke.mjs` and CI coverage.
+
+### Dashboard
+
+- Migrated dashboard panels to UI Core Card.
+- Migrated status pills to Badge.
+- Migrated distribution bars to ProgressBar.
+- Migrated role dashboard tables to StaticDataTable.
+- Migrated filter selects/export trigger to Select/Button.
+- Replaced date-range/export Unicode glyphs with canonical UiIcon SVGs.
+- Preserved role-aware SQL, URL filters, comparison periods and export semantics.
+
+### Empresas
+
+- Migrated the directory to CompanyCard.
+- Migrated status/metrics/feedback/empty state to Badge, StatTiles, Alert and EmptyState.
+- Replaced private resource SVGs with the canonical UiIcon vocabulary.
+- Preserved EntityProfileWorkspace, edit/save/delete confirmations, resource links, primary Site/geofence, documents and exports.
+
+### Ubicaciones
+
+- Kept LocationCard and added SubLocationCard.
+- Migrated subdirectory filters to Search/Select.
+- Migrated service/profile states and metrics to Badge/StatTiles.
+- Migrated top-level feedback/empty states to Alert/EmptyState.
+- Preserved contextual creation, maps/geofences, technician/service associations and exports.
+
+### Integrity
+
+- No database, API, RBAC or server-scope changes.
+- Later-phase module interiors remain intentionally untouched.
+
+### Next
+
+- Phase 7: Assets + Inventory.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 5: Business UI
 
 ### Added

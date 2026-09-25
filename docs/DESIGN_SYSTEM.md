@@ -647,3 +647,19 @@ Rules:
 - responsive domain cards can coexist with dense desktop tables until the owning module phase migrates those tables.
 
 The Business UI layer is the required base for Phase 6–9 module migrations.
+
+
+## 31. Complete module migration contract — Phase 6
+
+A module is considered migrated end-to-end when:
+
+1. its primary directory/analytical surfaces consume official UI Core, Shared Data UI or Business UI patterns;
+2. local duplicate status, metric, search/filter and table patterns are removed where a canonical primitive exists;
+3. legacy glyph iconography is replaced by UiIcon;
+4. responsive, keyboard focus, light/dark and reduced-motion behavior is covered by token-driven styles;
+5. existing business queries, authorization, routes and workflows remain unchanged;
+6. its module-specific migration layer is scoped and cannot unintentionally restyle modules scheduled for later phases.
+
+Phase 6 applies this contract to Dashboard, Empresas and Ubicaciones.
+
+The new `StaticDataTable` is the canonical server-rendered table option. Use client DataTable when sorting/selection/row state must be interactive; use StaticDataTable for already-computed SSR rows where client callbacks would create an unnecessary boundary.

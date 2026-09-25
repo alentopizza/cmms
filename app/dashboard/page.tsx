@@ -4,6 +4,10 @@ import { getSession } from "@/lib/auth";
 import { can, roleLabel } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import DashboardControls from "@/components/DashboardControls";
+import { Card } from "@/components/ui-kit/Card";
+import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import {
   DashboardKpis,
   DashboardRoleIntro,
@@ -51,21 +55,24 @@ const PRIORITY_OPTIONS:Option[]=[
 ];
 
 function Bars({rows}:{rows:B[]}) {
-  const total=rows.reduce((s,r)=>s+r.count,0);
-  return <div className="dashboard-progress-list">{rows.map(r=>{
-    const p=pct(r.count,total);
-    return <div className="dashboard-progress-row" key={r.key}>
-      <div><strong>{r.label}</strong><span>{r.count}</span></div>
-      <div className="dashboard-progress-track"><span style={{width:String(p)+"%"}}/></div>
-      <small>{p}%</small>
-    </div>;
-  })}</div>;
+  const total=rows.reduce((sum,row)=>sum+row.count,0);
+  return <div className="dashboard-progress-list">{rows.map(row=><div className="dashboard-progress-row" key={row.key}>
+    <div><strong>{row.label}</strong><span>{row.count}</span></div>
+    <ProgressBar value={row.count} max={Math.max(total,1)} compact/>
+  </div>)}</div>;
 }
 function Panel({eyebrow,title,children,action}:{eyebrow:string;title:string;children:React.ReactNode;action?:React.ReactNode}) {
-  return <section className="card dashboard-panel"><header className="dashboard-panel-head"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div>{action}</header>{children}</section>;
+  return <Card className="dashboard-panel phase6-dashboard-panel" header={<><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div>{action}</>}>{children}</Card>;
 }
-function Empty({children}:{children:React.ReactNode}){return <div className="dashboard-empty">{children}</div>}
-function Status({value}:{value:string}){return <span className={"dashboard-status dashboard-status-"+value}>{value.replaceAll("_"," ")}</span>}
+function Empty({children}:{children:React.ReactNode}){return <div className="ds-chart-empty dashboard-empty">{children}</div>}
+function dashboardStatusTone(value:string):BadgeVariant{
+  if(["active","completed","closed"].includes(value))return "success";
+  if(["trialing","assigned","in_progress","past_due","paused"].includes(value))return "warning";
+  if(["suspended","canceled","cancelled","rejected"].includes(value))return "danger";
+  if(["open","pending","new"].includes(value))return "info";
+  return "neutral";
+}
+function Status({value}:{value:string}){return <Badge variant={dashboardStatusTone(value)}>{value.replaceAll("_"," ")}</Badge>}
 
 function scope(session:Session,alias:string) {
   return session.accessAllSites
@@ -105,7 +112,7 @@ function Frame({
     field:"Carga operativa, ejecución y evidencia de campo del periodo seleccionado.",
     requester:"Seguimiento de solicitudes, tiempos de resolución y evolución mensual.",
   };
-  return <div className="role-dashboard role-dashboard-v2">
+  return <div className="role-dashboard role-dashboard-v2 phase6-dashboard">
     <DashboardRoleIntro
       eyebrow={"Dashboard · "+role}
       title={"Indicadores para "+role}
@@ -284,7 +291,17 @@ async function platform(session:Session,filters:DashboardFilters) {
       <Panel eyebrow="Suscripciones" title="Distribución de planes">{planRows.length?<Bars rows={planRows}/>:<Empty>No hay suscripciones para los filtros seleccionados.</Empty>}</Panel>
       <Panel eyebrow="Comercial" title="Embudo de leads" action={<Link className="text-button" href="/dashboard/leads">Ver leads →</Link>}>{leadRows.length?<Bars rows={leadRows}/>:<Empty>No hay leads en el periodo seleccionado.</Empty>}</Panel>
     </div>
-    <Panel eyebrow="Clientes" title="Suscripciones filtradas"><div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>Empresa</th><th>Plan</th><th>Estado</th><th>Periodo</th></tr></thead><tbody>{recent.rows.map(row=><tr key={row.id}><td><Link href={"/dashboard/companies/"+row.id}>{row.name}</Link></td><td>{row.plan}</td><td><Status value={row.status}/></td><td>{row.period_end?new Date(row.period_end).toLocaleDateString("es-CO"):"—"}</td></tr>)}</tbody></table></div></Panel>
+    <Panel eyebrow="Clientes" title="Suscripciones filtradas"><StaticDataTable
+      caption="Suscripciones filtradas"
+      columns={[{key:"company",label:"Empresa"},{key:"plan",label:"Plan"},{key:"status",label:"Estado"},{key:"period",label:"Periodo"}]}
+      rows={recent.rows.map(row=>({id:row.id,cells:{
+        company:<Link href={"/dashboard/companies/"+row.id}>{row.name}</Link>,
+        plan:row.plan,
+        status:<Status value={row.status}/>,
+        period:row.period_end?new Date(row.period_end).toLocaleDateString("es-CO"):"—",
+      }}))}
+      empty={<Empty>No hay suscripciones para los filtros seleccionados.</Empty>}
+    /></Panel>
   </Frame>;
 }
 
@@ -576,7 +593,18 @@ async function operation(session:Session,filters:DashboardFilters) {
       <Panel eyebrow="Sedes" title="Carga por ubicación">{siteRows.length?<Bars rows={siteRows}/>:<Empty>Sin datos por sede.</Empty>}</Panel>
     </div>
     <Panel eyebrow="Actividad reciente" title="Órdenes filtradas" action={<Link className="text-button" href="/dashboard/work-orders">Ver órdenes →</Link>}>
-      <div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>OT</th><th>Trabajo</th><th>Activo</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>{recent.data.rows.map((row:{id:string;number:string;title:string;status:string;priority:string;asset:string|null})=><tr key={row.id}><td><Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link></td><td>{row.title}</td><td>{row.asset||"—"}</td><td>{row.priority}</td><td><Status value={row.status}/></td></tr>)}</tbody></table></div>
+      <StaticDataTable
+        caption="Órdenes filtradas"
+        columns={[{key:"order",label:"OT"},{key:"work",label:"Trabajo"},{key:"asset",label:"Activo"},{key:"priority",label:"Prioridad"},{key:"status",label:"Estado"}]}
+        rows={recent.data.rows.map((row:{id:string;number:string;title:string;status:string;priority:string;asset:string|null})=>({id:row.id,cells:{
+          order:<Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link>,
+          work:row.title,
+          asset:row.asset||"—",
+          priority:row.priority,
+          status:<Status value={row.status}/>,
+        }}))}
+        empty={<Empty>No hay órdenes para los filtros seleccionados.</Empty>}
+      />
     </Panel>
   </Frame>;
 }
@@ -738,7 +766,18 @@ async function field(session:Session,filters:DashboardFilters) {
         ]}/>
       </Panel>
     </div>
-    <Panel eyebrow="Trabajo reciente" title="Actividades filtradas" action={<Link className="text-button" href="/dashboard/work-orders">Ver órdenes →</Link>}><div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>OT</th><th>Actividad</th><th>Sede</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>{recent.rows.map(row=><tr key={row.id}><td><Link href={"/dashboard/work-orders/"+row.wo}>#{row.number}</Link></td><td>{row.description}</td><td>{row.site}</td><td>{row.priority}</td><td><Status value={row.status}/></td></tr>)}</tbody></table></div></Panel>
+    <Panel eyebrow="Trabajo reciente" title="Actividades filtradas" action={<Link className="text-button" href="/dashboard/work-orders">Ver órdenes →</Link>}><StaticDataTable
+      caption="Actividades filtradas"
+      columns={[{key:"order",label:"OT"},{key:"activity",label:"Actividad"},{key:"site",label:"Sede"},{key:"priority",label:"Prioridad"},{key:"status",label:"Estado"}]}
+      rows={recent.rows.map(row=>({id:row.id,cells:{
+        order:<Link href={"/dashboard/work-orders/"+row.wo}>#{row.number}</Link>,
+        activity:row.description,
+        site:row.site,
+        priority:row.priority,
+        status:<Status value={row.status}/>,
+      }}))}
+      empty={<Empty>No hay actividades para los filtros seleccionados.</Empty>}
+    /></Panel>
   </Frame>;
 }
 
@@ -843,7 +882,18 @@ async function requester(session:Session,filters:DashboardFilters) {
       </Panel>
       <Panel eyebrow="Prioridad" title="Distribución de solicitudes">{priorityRows.length?<Bars rows={priorityRows}/>:<Empty>No hay solicitudes en el periodo.</Empty>}</Panel>
     </div>
-    <Panel eyebrow="Seguimiento" title="Solicitudes filtradas"><div className="dashboard-table-wrap"><table className="dashboard-table"><thead><tr><th>OT</th><th>Solicitud</th><th>Sede</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody>{recent.rows.map(row=><tr key={row.id}><td><Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link></td><td>{row.title}</td><td>{row.site}</td><td>{row.priority}</td><td><Status value={row.status}/></td></tr>)}</tbody></table></div></Panel>
+    <Panel eyebrow="Seguimiento" title="Solicitudes filtradas"><StaticDataTable
+      caption="Solicitudes filtradas"
+      columns={[{key:"order",label:"OT"},{key:"request",label:"Solicitud"},{key:"site",label:"Sede"},{key:"priority",label:"Prioridad"},{key:"status",label:"Estado"}]}
+      rows={recent.rows.map(row=>({id:row.id,cells:{
+        order:<Link href={"/dashboard/work-orders/"+row.id}>#{row.number}</Link>,
+        request:row.title,
+        site:row.site,
+        priority:row.priority,
+        status:<Status value={row.status}/>,
+      }}))}
+      empty={<Empty>No hay solicitudes en el periodo seleccionado.</Empty>}
+    /></Panel>
   </Frame>;
 }
 

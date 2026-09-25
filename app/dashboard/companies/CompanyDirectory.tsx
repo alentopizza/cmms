@@ -11,7 +11,11 @@ import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
-import UiIcon from "@/components/UiIcon";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
+import { CompanyCard } from "@/components/business-ui";
+import { Badge } from "@/components/ui-kit/Badge";
+import { EmptyState } from "@/components/ui-kit/Feedback";
+import { StatTiles } from "@/components/ui-kit/Metrics";
 import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 
 export type CompanyDirectoryItem = {
@@ -80,10 +84,6 @@ function DetailField({ label, value }: { label: string; value: ReactNode }) {
   return <div className="entity-info-field"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function CompanyMetric({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
-  return <div className="entity-stat-card"><small>{label}</small><strong>{value}</strong>{hint && <span>{hint}</span>}</div>;
-}
-
 function companyScheduleLabel(company: CompanyDirectoryItem) {
   const rows=(company.business_schedule||[]).filter(row=>row.enabled);
   if(!rows.length) return "Sin horario activo";
@@ -98,19 +98,6 @@ function countryLabel(code:string|null){
 }
 
 type ResourceKind = "sites" | "sublocations" | "assets" | "inventory" | "technicians";
-
-function ResourceIcon({ kind }: { kind: ResourceKind }) {
-  const common = {
-    viewBox: "0 0 24 24",
-    "aria-hidden": true,
-  } as const;
-
-  if (kind === "sites") return <svg {...common}><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M9.5 20v-6h5v6"/></svg>;
-  if (kind === "sublocations") return <svg {...common}><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/><path d="M10 7h4a3 3 0 0 1 3 3v4"/></svg>;
-  if (kind === "assets") return <svg {...common}><path d="M5 9.5 12 5l7 4.5-7 4.5-7-4.5Z"/><path d="m5 9.5 7 4.5 7-4.5"/><path d="M5 14.5 12 19l7-4.5"/></svg>;
-  if (kind === "inventory") return <svg {...common}><path d="M4 7.5 12 4l8 3.5-8 3.5-8-3.5Z"/><path d="M4 7.5V17l8 3 8-3V7.5"/><path d="M12 11v9"/></svg>;
-  return <svg {...common}><circle cx="12" cy="8" r="3.5"/><path d="M5.5 19c.8-3.3 3-5.2 6.5-5.2s5.7 1.9 6.5 5.2"/></svg>;
-}
 
 export default function CompanyDirectory({
   companies,
@@ -261,10 +248,10 @@ export default function CompanyDirectory({
   }
 
   if (companies.length === 0) {
-    return <div className="card empty-state"><strong>Aún no hay empresas registradas.</strong><span>Usa el botón “Nueva empresa” para crear la primera.</span></div>;
+    return <EmptyState icon="file" title="Aún no hay empresas registradas" description="Usa Nueva empresa para crear el primer registro de la plataforma."/>;
   }
 
-  return <>
+  return <div className="phase6-company-directory">
     {!selected&&<div className="company-card-grid company-card-grid-compact">
       {companies.map(company => {
         const resources: Array<{
@@ -273,70 +260,37 @@ export default function CompanyDirectory({
           current: number;
           max: number;
           href: string;
+          icon: UiIconName;
         }> = [
-          { kind: "sites", label: "Ubicaciones", current: Number(company.site_count) || 0, max: Number(company.max_sites) || 0, href: "/dashboard/locations" },
-          { kind: "sublocations", label: "Sububicaciones", current: Number(company.sublocation_count) || 0, max: Number(company.max_sublocations) || 0, href: "/dashboard/locations" },
-          { kind: "assets", label: "Activos", current: Number(company.asset_count) || 0, max: Number(company.max_assets) || 0, href: "/dashboard/assets" },
-          { kind: "inventory", label: "Inventario", current: Number(company.inventory_item_count) || 0, max: Number(company.max_inventory_items) || 0, href: "/dashboard/inventory" },
-          { kind: "technicians", label: "Técnicos", current: Number(company.technician_count) || 0, max: Number(company.max_technicians) || 0, href: "/dashboard/users" },
+          { kind: "sites", label: "Ubicaciones", current: Number(company.site_count) || 0, max: Number(company.max_sites) || 0, href: "/dashboard/locations", icon:"location" },
+          { kind: "sublocations", label: "Sububicaciones", current: Number(company.sublocation_count) || 0, max: Number(company.max_sublocations) || 0, href: "/dashboard/locations", icon:"sublocation" },
+          { kind: "assets", label: "Activos", current: Number(company.asset_count) || 0, max: Number(company.max_assets) || 0, href: "/dashboard/assets", icon:"asset" },
+          { kind: "inventory", label: "Inventario", current: Number(company.inventory_item_count) || 0, max: Number(company.max_inventory_items) || 0, href: "/dashboard/inventory", icon:"inventory" },
+          { kind: "technicians", label: "Técnicos", current: Number(company.technician_count) || 0, max: Number(company.max_technicians) || 0, href: "/dashboard/users", icon:"user" },
         ];
 
-        return <article
-          className="company-visual-card company-visual-card-v2 company-compact-card"
+        return <CompanyCard
           key={company.id}
-          data-module-record
-          data-status={company.active ? "active" : "inactive"}
-          data-search={[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" ")}
-          data-filter-plan={company.plan_name||""} data-filter-plan-label={company.plan_name||""}
-          data-filter-country={company.legal_country||company.country||""} data-filter-country-label={company.legal_country||company.country||""}
-          data-filter-city={company.legal_city||company.city||""} data-filter-city-label={company.legal_city||company.city||""}
-        >
-          <button className="company-card-button company-card-main-action" type="button" onClick={() => {
-            setSelected(company);
-            setEditing(false);
-          }} aria-label={`Ver detalle de ${company.name}`}>
-            <div className={`company-card-cover ${company.has_cover ? "" : "company-card-cover-fallback"}`}>
-              {company.has_cover && <img src={`/api/organizations/${company.id}/assets/cover`} alt={`Punto de referencia de ${company.name}`} />}
-            </div>
-
-            <div className="company-card-logo">
-              {company.has_logo
-                ? <img src={`/api/organizations/${company.id}/assets/logo`} alt={`Logo de ${company.name}`} />
-                : <span>{initials(company.name)}</span>}
-            </div>
-
-            <div className="company-card-content company-card-content-compact">
-              <div className="company-card-heading-row company-card-heading-centered">
-                <h3>{company.name}</h3>
-                <span className="company-plan-pill company-plan-pill-card">{company.plan_name || "Sin plan"}</span>
-              </div>
-              <div className="company-card-primary-status">
-                <span className={company.active ? "company-state-dot active" : "company-state-dot"} aria-hidden="true">✓</span>
-                <span>{company.active ? "Activa" : "Inactiva"}</span>
-              </div>
-              <small className="company-card-location-compact">{company.city || "Ciudad sin registrar"}{company.country ? ` · ${company.country}` : ""}</small>
-            </div>
-          </button>
-
-          <nav className="company-resource-actions" aria-label={`Recursos de ${company.name}`}>
-            {resources.map(resource => <Link
-              key={resource.kind}
-              href={resource.href}
-              className="company-resource-action"
-              title={resource.label}
-              data-tooltip={resource.label}
-              aria-label={`${resource.label}: ${resource.current} usados de ${resource.max} asignados. Abrir módulo.`}
-            >
-              <span className="company-resource-action-icon"><ResourceIcon kind={resource.kind} /></span>
-              <strong>{resource.current}/{resource.max}</strong>
-            </Link>)}
-          </nav>
-
-          <div className="company-card-footer-meta company-card-footer-compact">
-            <span>{company.profile_completion}% perfil</span>
-            <span>{company.pending_document_count} pendientes</span>
-          </div>
-        </article>;
+          name={company.name}
+          plan={company.plan_name||"Sin plan"}
+          location={(company.city||"Ciudad sin registrar")+(company.country?" · "+company.country:"")}
+          active={company.active}
+          coverSrc={company.has_cover?"/api/organizations/"+company.id+"/assets/cover":null}
+          logoSrc={company.has_logo?"/api/organizations/"+company.id+"/assets/logo":null}
+          fallback={initials(company.name)}
+          profileCompletion={company.profile_completion}
+          pendingDocuments={Number(company.pending_document_count)||0}
+          resources={resources.map(resource=>({label:resource.label,current:resource.current,max:resource.max,href:resource.href,icon:resource.icon}))}
+          onOpen={()=>{setSelected(company);setEditing(false);}}
+          recordProps={{
+            "data-module-record":true,
+            "data-status":company.active?"active":"inactive",
+            "data-search":[company.name,company.legal_name,company.tax_id,company.city,company.country,company.plan_name,company.site_name].filter(Boolean).join(" "),
+            "data-filter-plan":company.plan_name||"","data-filter-plan-label":company.plan_name||"",
+            "data-filter-country":company.legal_country||company.country||"","data-filter-country-label":company.legal_country||company.country||"",
+            "data-filter-city":company.legal_city||company.city||"","data-filter-city-label":company.legal_city||company.city||"",
+          }}
+        />;
       })}
     </div>}
 
@@ -388,7 +342,7 @@ export default function CompanyDirectory({
         imageSrc={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo?v="+assetVersion:null}
         imageAlt={"Logo de "+selected.name}
         fallback={initials(selected.name)}
-        status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i />{selected.active?"Activa":"Inactiva"}</span>}
+        status={<Badge variant={selected.active?"success":"neutral"}>{selected.active?"Activa":"Inactiva"}</Badge>}
         stats={[
           {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,icon:"location"},
           {label:"Activos",value:selected.asset_count+"/"+selected.max_assets,icon:"asset"},
@@ -422,9 +376,9 @@ export default function CompanyDirectory({
           >
             {saveError&&<div className="notice error">{saveError}</div>}
             {saveSuccess&&<div className="company-save-success" role="status" aria-live="polite">
-              <span className="company-save-success-icon" aria-hidden="true">✓</span>
+              <span className="company-save-success-icon" aria-hidden="true"><UiIcon name="check" size={17}/></span>
               <div><strong>Cambios guardados correctamente</strong><p>{saveSuccess.message}</p></div>
-              <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}>×</button>
+              <button type="button" aria-label="Cerrar confirmación" onClick={()=>setSaveSuccess(null)}><UiIcon name="x" size={14}/></button>
             </div>}
             <input type="hidden" name="intent" value="update"/>
             <input type="hidden" name="return_to" value="directory"/>
@@ -564,14 +518,14 @@ export default function CompanyDirectory({
             </div>
           </div>},
           {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack">
-            <div className="entity-stat-grid">
-              <CompanyMetric label="Ubicaciones" value={selected.site_count+"/"+selected.max_sites} hint="usadas / asignadas"/>
-              <CompanyMetric label="Sububicaciones" value={selected.sublocation_count+"/"+selected.max_sublocations} hint="usadas / asignadas"/>
-              <CompanyMetric label="Activos" value={selected.asset_count+"/"+selected.max_assets} hint="usados / asignados"/>
-              <CompanyMetric label="Inventario" value={selected.inventory_item_count+"/"+selected.max_inventory_items} hint="usados / asignados"/>
-              <CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="usados / asignados"/>
-              <CompanyMetric label="Perfil" value={selected.profile_completion+"%"} hint="completitud"/>
-            </div>
+            <StatTiles className="entity-stat-grid" items={[
+              {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,hint:"usadas / asignadas"},
+              {label:"Sububicaciones",value:selected.sublocation_count+"/"+selected.max_sublocations,hint:"usadas / asignadas"},
+              {label:"Activos",value:selected.asset_count+"/"+selected.max_assets,hint:"usados / asignados"},
+              {label:"Inventario",value:selected.inventory_item_count+"/"+selected.max_inventory_items,hint:"usados / asignados"},
+              {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"usados / asignados"},
+              {label:"Perfil",value:selected.profile_completion+"%",hint:"completitud",tone:selected.profile_completion>=80?"success":"warning"},
+            ]}/>
           </div>},
           {id:"locations",label:"Ubicaciones",content:<div className="entity-section-stack">
             <div className="entity-two-column">
@@ -602,15 +556,15 @@ export default function CompanyDirectory({
             <Link className="button secondary entity-tab-cta" href="/dashboard/locations">Abrir módulo de ubicaciones</Link>
           </div>},
           {id:"documents",label:"Documentos",content:<div className="entity-section-stack">
-            <div className="entity-stat-grid">
-              <CompanyMetric label="Documentos vigentes" value={selected.document_count}/>
-              <CompanyMetric label="Pendientes / vencidos" value={selected.pending_document_count}/>
-              <CompanyMetric label="Perfil" value={selected.profile_completion+"%"}/>
-            </div>
+            <StatTiles className="entity-stat-grid" items={[
+              {label:"Documentos vigentes",value:selected.document_count},
+              {label:"Pendientes / vencidos",value:selected.pending_document_count,tone:Number(selected.pending_document_count)>0?"warning":"success"},
+              {label:"Perfil",value:selected.profile_completion+"%",tone:selected.profile_completion>=80?"success":"warning"},
+            ]}/>
             <div className="entity-panel"><h3>Expediente empresarial</h3><p className="entity-panel-copy">La gestión completa de documentos, archivo, restauración, vista previa y eliminación protegida permanece en la ficha empresarial.</p><Link className="button secondary entity-tab-cta" href={"/dashboard/companies/"+selected.id}>Abrir expediente documental</Link></div>
           </div>},
           {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack">
-            <div className="entity-stat-grid"><CompanyMetric label="Técnicos" value={selected.technician_count+"/"+selected.max_technicians} hint="registrados / cupo"/></div>
+            <StatTiles className="entity-stat-grid" items={[{label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"registrados / cupo"}]}/>
             <div className="entity-panel"><h3>Personal de la empresa</h3><p className="entity-panel-copy">Consulta o administra los usuarios y técnicos vinculados a esta empresa desde el directorio de acceso.</p><Link className="button secondary entity-tab-cta" href="/dashboard/users">Abrir usuarios y técnicos</Link></div>
           </div>},
           {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack">
@@ -621,5 +575,5 @@ export default function CompanyDirectory({
       />
     </section>}
 
-  </>;
+  </div>;
 }

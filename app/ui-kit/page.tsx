@@ -49,7 +49,7 @@ export default async function UiKitPage(){
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 5.</strong> Business UI ya es parte del contrato oficial: AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard y el shell compartido de UserCard/Entity Profile.
+        <strong>Fase 6.</strong> Dashboard, Empresas y Ubicaciones ya son el primer bloque de módulos migrado end-to-end a V2. El catálogo también incluye la tabla estática SSR y las nuevas composiciones CompanyCard/SubLocationCard.
       </div>
 
       <FoundationPreview/>

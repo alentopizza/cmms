@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import UiIcon from "@/components/UiIcon";
+import { Button } from "@/components/ui-kit/Button";
 
 type Range={from:string;to:string};
 
@@ -157,22 +159,22 @@ export default function DashboardDateRangePicker({
   }
 
   return <div className="dashboard-date-range" ref={host}>
-    <button className={"dashboard-range-trigger"+(open?" active":"")} type="button" onClick={()=>setOpen(value=>!value)} aria-expanded={open}>
-      <span className="dashboard-range-icon" aria-hidden="true">▣</span>
+    <button className={"dashboard-range-trigger"+(open?" active":"")} type="button" onClick={()=>setOpen(value=>!value)} aria-expanded={open} aria-haspopup="dialog">
+      <span className="dashboard-range-icon" aria-hidden="true"><UiIcon name="clock" size={16}/></span>
       <span><small>Periodo</small><strong>{labelRange(initialFrom||from,initialTo||to)}</strong></span>
-      <span className="dashboard-range-chevron" aria-hidden="true">⌄</span>
+      <span className="dashboard-range-chevron" aria-hidden="true"><UiIcon name={open?"chevron-up":"chevron-down"} size={14}/></span>
     </button>
 
-    {open&&<div className="dashboard-range-popover">
+    {open&&<div className="dashboard-range-popover" role="dialog" aria-label="Seleccionar periodo del dashboard">
       <div className="dashboard-range-main">
         <div className="dashboard-range-inputs">
           <label><span>Desde</span><input type="date" value={from} onChange={event=>{setFrom(event.target.value);setTo("");if(event.target.value)setViewMonth(startOfMonth(fromIso(event.target.value)))}}/></label>
           <label><span>Hasta</span><input type="date" value={to} min={from||undefined} onChange={event=>setTo(event.target.value)}/></label>
         </div>
         <div className="dashboard-range-calendar-nav">
-          <button type="button" onClick={()=>setViewMonth(month=>addMonths(month,-1))} aria-label="Mes anterior">‹</button>
+          <button type="button" onClick={()=>setViewMonth(month=>addMonths(month,-1))} aria-label="Mes anterior"><UiIcon name="chevron-left" size={15}/></button>
           <span>Selecciona el rango</span>
-          <button type="button" onClick={()=>setViewMonth(month=>addMonths(month,1))} aria-label="Mes siguiente">›</button>
+          <button type="button" onClick={()=>setViewMonth(month=>addMonths(month,1))} aria-label="Mes siguiente"><UiIcon name="chevron-right" size={15}/></button>
         </div>
         <div className="dashboard-range-calendars">
           <Calendar month={viewMonth} from={from} to={to} onPick={pick}/>
@@ -193,7 +195,7 @@ export default function DashboardDateRangePicker({
           <span>Rango seleccionado</span>
           <strong>{labelRange(from,to||from)}</strong>
         </div>
-        <button className="button dashboard-range-apply" type="button" disabled={!from} onClick={apply}>Aplicar</button>
+        <Button className="dashboard-range-apply" disabled={!from} onClick={apply}>Aplicar</Button>
       </aside>
     </div>}
   </div>;

@@ -357,11 +357,9 @@ Cada fase debe cerrar con:
 - convertir todo en glassmorphism, gradientes o cards;
 - usar colores funcionales como decoración.
 
-## Siguiente fase
+## Estado posterior al programa
 
-Después de completar Fase 1, el siguiente trabajo es **Fase 2 — Primitives e interacción base**.
-
-Phase 1 baseline is documented in `docs/DESIGN_AUDIT_PHASE1.md`. Phase 2 must evaluate existing reusable components before promoting/replacing them with official UI Kit primitives.
+Las Fases 0–10 están implementadas. No existe una Fase 11 de migración visual planificada. El trabajo funcional nuevo —incluida la evolución de Asistencia— debe nacer directamente sobre Design Tokens, UI Core, Shared Data UI y Business UI, retirando deuda legacy únicamente cuando deje de tener consumidores.
 
 
 ## Phase 2 completion checkpoint — 2026-09-24

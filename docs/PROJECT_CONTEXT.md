@@ -670,6 +670,24 @@ The canonical Attendance screen now embeds this report and the central Reportes 
 
 The planned Attendance operational track (Phases 1–5) is now functionally complete. Future Attendance work should be treated as incremental product enhancement rather than an automatic Phase 6 migration.
 
+### Attendance administration UX
+
+The administrative surface of **Asistencia** is reorganized as one five-step setup experience without creating a second attendance implementation:
+
+1. **Configuración** — read-only overview of Organization, module state, current verification parameters and real controlled roles;
+2. **Sedes** — the existing Site/geofence state with links back to the canonical Site editor;
+3. **Enrolamiento** — the existing supervised biometric component, camera, GPS presence verification and consent flow;
+4. **Política** — the single editable `/api/attendance/policy` form;
+5. **Resumen** — descriptive readiness summary using current Organization/Site/enrollment/policy/contingency evidence.
+
+The shared UI Core `Stepper` provides active/completed/pending presentation. The same `step=1..5` query state drives Previous/Next links and direct step access, so the setup remains one page rather than five routes. Platform operators preserve the explicit `organization_id` context on every step.
+
+**Operación y reportes** is a secondary view selected by `view=operation`. It keeps the existing field presence flow, multi-Site movement, self contingency, per-user audit dossier, supervisor contingency queue and Phase 5 report. This prevents those operational surfaces from being hidden while removing them from the configuration scroll.
+
+No database model, attendance authorization, facial verification, GPS/geofence calculation, schedule authority, contingency rule or report calculation changed for this UX reorganization. The policy endpoint only preserves validated setup-navigation state after save/error so the user returns to the same step.
+
+Deep links from Users and Reportes explicitly target the correct setup or operational view.
+
 
 ### Mobile field shell phase 4A
 

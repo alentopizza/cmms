@@ -40,10 +40,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/subscription/expired");
   }
 
-  const customization = await getCustomizationSummary();
-  const organizationBranding = session.whiteLabel && session.organizationId
-    ? await getOrganizationBranding(session.organizationId)
-    : null;
   const visibleItems = navItems.filter(item =>
 (!item.permission || can(session, item.permission)) &&
     (!item.anyPermissions || item.anyPermissions.some(permission => can(session, permission)))
@@ -51,7 +47,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({ id, icon, label, href }));
   const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
 
-  const [preferenceResult, identityResult] = await Promise.all([
+  const [customization, organizationBranding, preferenceResult, identityResult] = await Promise.all([
+    getCustomizationSummary(),
+    session.whiteLabel && session.organizationId
+      ? getOrganizationBranding(session.organizationId)
+      : Promise.resolve(null),
     session.userId
       ? query<{ sidebar_order: string[] | null; sidebar_collapsed: boolean | null }>(
           "SELECT sidebar_order,sidebar_collapsed FROM user_dashboard_preferences WHERE user_id=$1",

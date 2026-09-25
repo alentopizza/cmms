@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-25 — Enrolamiento biométrico móvil con aprobación única
+
+- El empleado puede iniciar su primera solicitud biométrica desde su propio celular; la solicitud por sí sola no habilita Asistencia.
+- El flujo móvil exige leer la política biométrica vigente, aceptar tratamiento, autorizar cámara/ubicación, validar sede por GPS/geocerca y completar una prueba de vida activa.
+- La prueba activa pide dos gestos aleatorios e incluye siempre un parpadeo; además se mantienen liveness y anti-spoof del motor facial existente.
+- El backend vuelve a validar empresa, rol, sede, geocerca, precisión GPS, embedding y umbrales antes de crear una solicitud pendiente.
+- Se añadió `attendance_biometric_policy_versions` para conservar la versión exacta del texto aceptado y `biometric_enrollment_requests` para solicitud, revisión y trazabilidad.
+- La captura de enrolamiento utilizada para la comparación humana es cifrada y temporal: solo puede verse mientras la solicitud está pendiente, expira como máximo a las 72 horas y se elimina al aprobar, rechazar o expirar.
+- La plantilla temporal de la solicitud también se elimina después de la decisión; el perfil permanente conserva únicamente la plantilla cifrada aprobada.
+- El paso Enrolamiento de Asistencia se convirtió en una bandeja por excepción con KPIs de personal controlado, biometría verificada, pendientes y casos que requieren atención.
+- La aprobación administrativa compara foto de perfil y captura temporal y ocurre una sola vez. Después de aprobar, las entradas/salidas usan validación facial 1:1, liveness/anti-spoof y GPS/geocerca automáticamente, sin aprobación humana diaria.
+- El enrolamiento supervisor anterior permanece disponible como `Enrolamiento asistido excepcional` para recuperación y soporte.
+- El expediente individual incorpora versión de política, consentimiento, sede/GPS, método de prueba de vida, estado de solicitud, aprobador, tiempos y notas de revisión sin exponer embeddings, preview decidido ni scores crudos.
+- La ficha de Usuario ahora habla de `Gestionar enrolamiento` en lugar de asumir que el administrador debe capturar inicialmente a cada persona.
+- Migración nueva: `040_biometric_self_enrollment_approval.sql`.
+- Se añadió `biometric-enrollment-approval-smoke.mjs` y cobertura CI para privacidad, scope, aprobación única y compatibilidad con marcación diaria.
+
 ## 2026-09-25 — Rediseño UX de Asistencia en cinco pasos
 
 - La administración de Asistencia se reorganizó en un flujo interno de **Configuración, Sedes, Enrolamiento, Política y Resumen** sin crear cinco páginas ni una implementación paralela.
@@ -7,12 +24,12 @@
 - `AttendanceSetupWorkspace` muestra un único paso a la vez, Anterior/Siguiente, progreso circular y estado sincronizado de los cinco pasos.
 - Configuración resume empresa, estado, parámetros y roles reales en modo lectura; la edición permanece exclusivamente en Política.
 - Sedes reutiliza las geocercas existentes y enlaza a la ficha canónica de cada ubicación.
-- Enrolamiento conserva `SupervisedBiometricEnrollment`, cámara, GPS, consentimiento y endpoints existentes.
+- El rediseño de cinco pasos nació reutilizando el flujo supervisor existente; el enrolamiento posterior evoluciona a solicitud móvil + aprobación única y conserva `SupervisedBiometricEnrollment` como recuperación excepcional.
 - Política conserva el mismo formulario y endpoint; únicamente se preserva el paso de retorno tras guardar o validar errores.
 - Resumen deriva su estado de datos actuales y no introduce una segunda mutación de “confirmación”.
 - Presencia diaria, desplazamientos, expediente, contingencias y reporte Fase 5 pasan a la vista secundaria **Operación y reportes**, evitando que queden debajo de toda la configuración.
 - Se corrigieron deep links desde Usuarios y Reportes para abrir directamente Enrolamiento, Expediente o Reporte en la vista correspondiente.
-- No se modificaron modelos de base de datos, RBAC, biometría, GPS/geocercas, jornadas, contingencias ni cálculos del reporte.
+- Ese rediseño visual no modificó modelos ni reglas; la evolución biométrica posterior sí añade la migración 040 manteniendo RBAC, jornadas, contingencias y cálculos del reporte.
 - Se añadió `scripts/attendance-setup-ux-smoke.mjs` y ejecución obligatoria en CI.
 
 ## 2026-09-25 — Asistencia operativa Fase 5: reporte programado vs. real

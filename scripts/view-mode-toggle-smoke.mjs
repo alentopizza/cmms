@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const required=[
   "components/ui-kit/DataControls.tsx",
+  "components/ui-kit/CollectionIdentity.tsx",
   "components/ModuleHeader.tsx",
   "app/dashboard/companies/CompanyDirectory.tsx",
   "components/LocationDirectory.tsx",
@@ -60,13 +61,34 @@ for(const [file,marker] of moduleContracts){
   const source=fs.readFileSync(file,"utf8");
   if(!source.includes(marker))throw new Error(file+" missing shared view mode "+marker);
 }
+
+const visualListContracts=[
+  ["app/dashboard/companies/CompanyDirectory.tsx",'list={<StaticDataTable',"has_logo","EntityIdentityCell","ds-list-action"],
+  ["components/SupplierDirectory.tsx",'list={<StaticDataTable',"has_logo","EntityIdentityCell","ds-list-action"],
+  ["app/dashboard/users/UserManagement.tsx",'list={<StaticDataTable',"has_avatar","EntityIdentityCell","ds-list-action"],
+  ["components/CrewDirectory.tsx",'list={<StaticDataTable',"leaderHasAvatar","EntityIdentityCell","Contactar por WhatsApp"],
+  ["app/dashboard/assets/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
+  ["app/dashboard/work-orders/page.tsx",'list={<StaticDataTable',"asset_has_image","EntityIdentityCell","Ver actividades"],
+  ["app/dashboard/maintenance/page.tsx",'list={<StaticDataTable',"asset_has_image","EntityIdentityCell","ListQuickActions"],
+  ["app/dashboard/inventory/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
+  ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","Enviar correo"],
+];
+for(const [file,...markers] of visualListContracts){
+  const source=fs.readFileSync(file,"utf8");
+  for(const marker of markers)if(!source.includes(marker))throw new Error(file+" visual list identity/action contract missing "+marker);
+}
 const crews=fs.readFileSync("components/CrewDirectory.tsx","utf8");
 for(const marker of ['toolbarTargetId="crew-view-mode-tools"','id="crew-view-mode-tools"']){
   if(!crews.includes(marker))throw new Error("Crews local shared-toggle host missing "+marker);
 }
 
+const identity=fs.readFileSync("components/ui-kit/CollectionIdentity.tsx","utf8");
+for(const marker of ["EntityIdentityCell","ListQuickActions",'variant?:"avatar"|"logo"|"thumbnail"|"icon"']){
+  if(!identity.includes(marker))throw new Error("Shared compact list identity missing "+marker);
+}
+
 const locations=fs.readFileSync("components/LocationDirectory.tsx","utf8");
-for(const marker of ["<StaticDataTable","Listado de ubicaciones","Ver ubicación"]){
+for(const marker of ["<StaticDataTable","Listado de ubicaciones","Ver ubicación","ds-list-action"]){
   if(!locations.includes(marker))throw new Error("Locations approved list view missing "+marker);
 }
 
@@ -85,7 +107,7 @@ for(const marker of [".ds-collection-view.is-grid .maintenance-mobile-list",".ds
 }
 
 const coreCss=fs.readFileSync("app/ui-kit-core.css","utf8");
-for(const marker of [".ds-view-mode-toggle",".module-page-tools .module-view-mode-tools",".ds-collection-view.is-list [data-collection-grid]","background:var(--color-brand-secondary)","color:var(--color-text-inverse)"]){
+for(const marker of [".ds-view-mode-toggle",".module-page-tools .module-view-mode-tools",".ds-collection-view.is-list [data-collection-grid]",".ds-list-identity-media",".ds-list-quick-actions",".ds-list-action","background:var(--color-brand-secondary)","color:var(--color-text-inverse)"]){
   if(!coreCss.includes(marker))throw new Error("Shared view-mode styling missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(coreCss))throw new Error("UI Kit core CSS must remain token-only");

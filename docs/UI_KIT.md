@@ -828,8 +828,10 @@ Users:
 - personnel documents, emergency contact, access scope, Supplier relationship and profile exports remain unchanged.
 
 Crews:
-- `CrewCard` is now an official Business UI composition;
-- leader identity, roster, communication actions and operational counts remain visibly distinct;
+- `CrewCard` is the official Business UI composition and uses the approved compact directory treatment: no large hero photo, compact leader identity, optional real description, three real operational metrics, compact member avatars and quick contact actions;
+- `CrewDirectory` may switch between grid and StaticDataTable list presentation over the same authorized collection; it must not introduce a second query/service layer;
+- approved density is 3 columns desktop, 2 tablet and 1 mobile;
+- only existing Crew states/data may be shown. Current schema supports active/inactive but not paused status or discipline, so those mockup concepts must not be fabricated;
 - Crew creation still enforces same-company/Site access eligibility and leader membership.
 
 Attendance:

@@ -64,6 +64,13 @@
 .ds-business-profile .entity-profile-identity-card,
 .ds-business-profile .entity-profile-content-card{border-color:var(--color-border-subtle);box-shadow:var(--shadow-xs)}
 
+.ds-business-profile.entity-profile-wide-tab .entity-profile-grid{grid-template-columns:minmax(0,1fr)}
+.ds-business-profile.entity-profile-wide-tab .entity-profile-identity-card{display:none}
+.ds-business-profile.entity-profile-wide-tab .entity-profile-content-card{
+  grid-column:1/-1;max-height:none
+}
+.ds-business-profile.entity-profile-wide-tab .entity-profile-tab-body{overflow:visible}
+
 /* Official Business UI examples */
 .ds-business-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
 .ds-business-preview-grid>.ds-business-card{min-height:100%}

@@ -566,7 +566,28 @@ Attendance administration is tenant-scoped even for global platform identities. 
 
 The selected organization is orchestration context only. Policy and biometric mutations revalidate the organization, target user and Site server-side. The Users profile can deep-link to Attendance with organization + user focus so the supervisor does not need to search again. Bootstrap Platform Owner enrollment/revocation events preserve actor platform role/email in audit metadata when no persistent actor user row exists.
 
-This is **Asistencia operativa — Fase 1**. Individual work schedules/jornada assignment and multi-Site travel segments are intentionally deferred to later functional phases; the current attendance shift model remains unchanged in this checkpoint.
+This organization-context layer is **Asistencia operativa — Fase 1**.
+
+### Individual attendance schedules
+
+**Asistencia operativa — Fase 2** adds versioned per-person work schedules through migration `038_user_attendance_schedules.sql`.
+
+Each schedule vigencia stores:
+- Organization and target User;
+- base Site;
+- seven-day day-specific working hours;
+- timezone snapshot;
+- effective-from / optional effective-until dates;
+- Company/Site/custom template provenance;
+- audit attribution and notes.
+
+Company and Site `business_schedule` values are reusable templates only. Saving an individual schedule copies a snapshot so future edits to Company/Site hours cannot silently rewrite a person's history.
+
+The schedule timeline is server-controlled: ranges cannot overlap, mutations are serialized with a transaction advisory lock, and a started/past vigencia cannot be edited or deleted retroactively. Creating a later vigencia may close the preceding one on the prior day.
+
+The field Attendance view shows the current expected workday and prefers the configured base Site when no shift is open, but the schedule is **not** an authorization gate. Real check-ins/check-outs remain valid evidence even outside programmed hours and can be compared later in descriptive reports.
+
+Multi-Site travel segments inside one jornada remain deferred to a later functional phase; the current `attendance_shifts` start/end model is unchanged in Phase 2.
 
 
 ### Mobile field shell phase 4A

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import UiIcon from "@/components/UiIcon";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";

@@ -81,7 +81,7 @@ El patrón Cuadrícula/Listado conserva ahora la identidad visual de la entidad 
 - Órdenes: imagen del activo relacionado si existe; si no, icono Work Order.
 - Rutinas: imagen del activo/equipo relacionado si existe; si no, icono Maintenance.
 - Inventario: imagen del producto/material.
-- Leads: iniciales/placeholder actual mientras el modelo no provea foto/logo relacionado.
+- Leads: iniciales/placeholder actual mientras el modelo no provea foto/logo relacionado. El listado usa `source` y `updated_at` reales para Origen/Última actividad; no existe Responsable en `sales_leads`, por lo que no debe inventarse.
 - Ubicaciones mantiene la tabla aprobada y no exige imagen.
 - Acciones rápidas reutilizan únicamente las acciones reales y permisos ya existentes en cada módulo.
 - Órdenes/Rutinas solo extendieron sus SELECT actuales con metadatos de imagen del activo; no hay query, endpoint ni servicio paralelo.

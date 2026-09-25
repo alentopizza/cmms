@@ -15,6 +15,8 @@ const required=[
   "components/UserAttendanceAuditCenter.tsx",
   "app/dashboard/attendance/page.tsx",
   "app/phase8-modules.css",
+  "app/api/organizations/route.ts",
+  "app/api/public/test-checkout/route.ts",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing biometric approval file: "+file);
 
@@ -44,6 +46,7 @@ for(const marker of [
   "encryptEmbedding",
   "now()+interval '72 hours'",
   "consent:true",
+  "avatar_data IS NOT NULL",
   "biometric_enrollment_events",
 ]){
   if(!selfRoute.includes(marker))throw new Error("Self enrollment route missing "+marker);
@@ -134,6 +137,14 @@ for(const marker of ["biometricRequests","attendance_biometric_policy_versions",
 }
 for(const sensitive of ["encrypted_preview","request.encrypted_embedding"]){
   if(audit.includes(sensitive))throw new Error("Attendance audit must not expose sensitive biometric payload "+sensitive);
+}
+
+const organizationCreate=fs.readFileSync("app/api/organizations/route.ts","utf8");
+const trialCreate=fs.readFileSync("app/api/public/test-checkout/route.ts","utf8");
+for(const [label,source] of [["organization",organizationCreate],["trial",trialCreate]]){
+  for(const marker of ["attendance_biometric_policy_versions","DEFAULT_BIOMETRIC_NOTICE_TITLE","DEFAULT_BIOMETRIC_NOTICE_BODY"]){
+    if(!source.includes(marker))throw new Error(label+" provisioning does not seed biometric notice: "+marker);
+  }
 }
 
 const css=fs.readFileSync("app/phase8-modules.css","utf8");

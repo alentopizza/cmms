@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { query } from "@/lib/db";
 
 export type OrganizationBrandingSummary = {
@@ -9,7 +10,7 @@ export type OrganizationBrandingSummary = {
   showDeswebBranding: boolean;
 };
 
-export async function getOrganizationBranding(organizationId: string): Promise<OrganizationBrandingSummary> {
+async function resolveOrganizationBranding(organizationId: string): Promise<OrganizationBrandingSummary> {
   const result = await query<{
     app_name: string | null;
     primary_color: string | null;
@@ -33,6 +34,8 @@ export async function getOrganizationBranding(organizationId: string): Promise<O
     showDeswebBranding: row?.show_desweb_branding ?? false,
   };
 }
+
+export const getOrganizationBranding = cache(resolveOrganizationBranding);
 
 export function isHexColor(value: string) {
   return /^#[0-9a-f]{6}$/i.test(value);

@@ -25,11 +25,14 @@ export async function POST(request: Request) {
   const faceThreshold = Math.max(0.3, Math.min(0.95, Number(form.get("face_similarity_threshold") || 0.55)));
   const livenessThreshold = Math.max(0.3, Math.min(0.99, Number(form.get("liveness_threshold") || 0.60)));
   const roles = form.getAll("enabled_roles").map(String).filter(role => ROLE_SET.has(role));
+  const returnStep = ["1","2","3","4","5"].includes(String(form.get("return_step") || "")) ? String(form.get("return_step")) : "";
 
   if (!roles.length) {
     const target = new URL("/dashboard/attendance", request.url);
     target.searchParams.set("organization_id", organizationId);
     target.searchParams.set("error", "roles");
+    target.searchParams.set("view", "setup");
+    if (returnStep) target.searchParams.set("step", returnStep);
     return NextResponse.redirect(target, 303);
   }
 
@@ -54,5 +57,7 @@ export async function POST(request: Request) {
   const target = new URL("/dashboard/attendance", request.url);
   target.searchParams.set("organization_id", organizationId);
   target.searchParams.set("saved", "policy");
+  target.searchParams.set("view", "setup");
+  if (returnStep) target.searchParams.set("step", returnStep);
   return NextResponse.redirect(target, 303);
 }

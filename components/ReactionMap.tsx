@@ -250,6 +250,7 @@ export default function ReactionMap(){
   useEffect(()=>{
     let cancelled=false;
     let timer:ReturnType<typeof setInterval>|null=null;
+    let refreshing=false;
 
     async function boot(){
       try{
@@ -278,6 +279,8 @@ export default function ReactionMap(){
     }
 
     async function refresh(){
+      if(cancelled||document.visibilityState==="hidden"||refreshing)return;
+      refreshing=true;
       try{
         const response=await fetch("/api/reaction/snapshot",{cache:"no-store"});
         if(!response.ok)throw new Error("No fue posible actualizar posiciones.");
@@ -290,8 +293,14 @@ export default function ReactionMap(){
         const paused=data.technicians.length-live;
         setStatus(`${data.companies.length} empresa${data.companies.length===1?"":"s"} · ${data.sites.length} sede${data.sites.length===1?"":"s"} · ${live} técnico${live===1?"":"s"} en vivo${paused?` · ${paused} GPS pausado${paused===1?"":"s"}`:""}`);
       }catch(cause){
-        setStatus(cause instanceof Error?cause.message:"No fue posible actualizar posiciones.");
+        if(!cancelled)setStatus(cause instanceof Error?cause.message:"No fue posible actualizar posiciones.");
+      }finally{
+        refreshing=false;
       }
+    }
+
+    function onVisibilityChange(){
+      if(document.visibilityState==="visible")void refresh();
     }
 
     function clearOverlays(){
@@ -387,9 +396,11 @@ export default function ReactionMap(){
     }
 
     drawRef.current=draw;
+    document.addEventListener("visibilitychange",onVisibilityChange);
     void boot();
     return()=>{
       cancelled=true;
+      document.removeEventListener("visibilitychange",onVisibilityChange);
       if(timer)clearInterval(timer);
       for(const overlay of overlaysRef.current){
         if("map" in overlay)overlay.map=null;

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import {
   OrganizationDocumentUploadError,
   isOrganizationDocumentCategory,
@@ -13,8 +14,10 @@ import {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-function redirectToCompany(id: string, requestUrl: string, queryString: string) {
-  return NextResponse.redirect(publicUrl("/dashboard/companies/" + id + "?" + queryString + "#documents", requestUrl), 303);
+function redirectToCompany(id:string,requestUrl:string,queryString:string,returnTo=""){
+  if(!returnTo)return NextResponse.redirect(publicUrl("/dashboard/companies/"+id+"?"+queryString+"#documents",requestUrl),303);
+  const target=appendFeedback(safeDashboardReturn(returnTo,"/dashboard/companies/"+id),"?"+queryString);
+  return NextResponse.redirect(publicUrl(target,requestUrl),303);
 }
 
 function dateValue(value: FormDataEntryValue | null) {
@@ -79,16 +82,17 @@ export async function POST(
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
+  const returnTo = String(form.get("return_to") || "");
 
   if (intent === "archive") {
     if (current.rows[0].archived_at) {
-      return redirectToCompany(id, request.url, "saved=document-archived");
+      return redirectToCompany(id,request.url,"saved=document-archived",returnTo);
     }
     await query(
       "UPDATE organization_documents SET archived_at=now(),archived_by=$1,updated_at=now() WHERE id=$2 AND organization_id=$3",
       [session.userId || null, documentId, id],
     );
-    return redirectToCompany(id, request.url, "saved=document-archived");
+    return redirectToCompany(id,request.url,"saved=document-archived",returnTo);
   }
 
   if (intent === "restore") {
@@ -96,11 +100,11 @@ export async function POST(
       "UPDATE organization_documents SET archived_at=NULL,archived_by=NULL,updated_at=now() WHERE id=$1 AND organization_id=$2",
       [documentId, id],
     );
-    return redirectToCompany(id, request.url, "saved=document-restored");
+    return redirectToCompany(id,request.url,"saved=document-restored",returnTo);
   }
 
   if (current.rows[0].archived_at) {
-    return redirectToCompany(id, request.url, "error=document-archived");
+    return redirectToCompany(id,request.url,"error=document-archived",returnTo);
   }
 
   try {
@@ -113,12 +117,12 @@ export async function POST(
     const notes = String(form.get("notes") || "").trim();
 
     if (!displayName || !isOrganizationDocumentCategory(category) || !isOrganizationDocumentRequirement(requirementLevel)) {
-      return redirectToCompany(id, request.url, "error=document-fields");
+      return redirectToCompany(id,request.url,"error=document-fields",returnTo);
     }
 
     const file = await readOrganizationDocumentUpload(form.get("file"));
     if (requirementLevel === "not_applicable" && file) {
-      return redirectToCompany(id, request.url, "error=document-not-applicable");
+      return redirectToCompany(id,request.url,"error=document-not-applicable",returnTo);
     }
 
     if (requirementLevel === "not_applicable") {
@@ -147,10 +151,10 @@ export async function POST(
       );
     }
 
-    return redirectToCompany(id, request.url, "saved=document");
+    return redirectToCompany(id,request.url,"saved=document",returnTo);
   } catch (error) {
     if (error instanceof OrganizationDocumentUploadError) {
-      return redirectToCompany(id, request.url, "error=" + error.code);
+      return redirectToCompany(id,request.url,"error="+error.code,returnTo);
     }
     throw error;
   }

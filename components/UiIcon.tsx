@@ -55,7 +55,13 @@ export type UiIconName =
   | "report"
   | "sun"
   | "moon"
-  | "system";
+  | "system"
+  | "share"
+  | "print"
+  | "zoom-in"
+  | "zoom-out"
+  | "fit"
+  | "rotate";
 
 export default function UiIcon({
   name,
@@ -135,5 +141,11 @@ export default function UiIcon({
   if (name === "sun") return <svg {...common}><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></svg>;
   if (name === "moon") return <svg {...common}><path d="M19 15.2A7.6 7.6 0 0 1 8.8 5a7.8 7.8 0 1 0 10.2 10.2Z"/></svg>;
   if (name === "system") return <svg {...common}><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg>;
+  if (name === "share") return <svg {...common}><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.3 10.9 7.4-4.2M8.3 13.1l7.4 4.2"/></svg>;
+  if (name === "print") return <svg {...common}><path d="M7 8V4h10v4"/><rect x="5" y="13" width="14" height="7" rx="1"/><path d="M5 16H3.8A1.8 1.8 0 0 1 2 14.2v-4.4A1.8 1.8 0 0 1 3.8 8h16.4A1.8 1.8 0 0 1 22 9.8v4.4a1.8 1.8 0 0 1-1.8 1.8H19"/><path d="M17 11h.01"/></svg>;
+  if (name === "zoom-in") return <svg {...common}><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4M10.5 7.5v6M7.5 10.5h6"/></svg>;
+  if (name === "zoom-out") return <svg {...common}><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4M7.5 10.5h6"/></svg>;
+  if (name === "fit") return <svg {...common}><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>;
+  if (name === "rotate") return <svg {...common}><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>;
   return <svg {...common}><path d="M4 17.5V12M9.3 17.5V8.5M14.7 17.5V5M20 17.5V10.5"/></svg>;
 }

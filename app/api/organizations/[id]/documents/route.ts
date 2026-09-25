@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import {
   ORGANIZATION_DOCUMENT_CATEGORIES,
   OrganizationDocumentUploadError,
@@ -14,8 +15,10 @@ import {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-function redirectToCompany(id: string, requestUrl: string, queryString: string) {
-  return NextResponse.redirect(publicUrl("/dashboard/companies/" + id + "?" + queryString + "#documents", requestUrl), 303);
+function redirectToCompany(id:string,requestUrl:string,queryString:string,returnTo=""){
+  if(!returnTo)return NextResponse.redirect(publicUrl("/dashboard/companies/"+id+"?"+queryString+"#documents",requestUrl),303);
+  const target=appendFeedback(safeDashboardReturn(returnTo,"/dashboard/companies/"+id),"?"+queryString);
+  return NextResponse.redirect(publicUrl(target,requestUrl),303);
 }
 
 function dateValue(value: FormDataEntryValue | null) {
@@ -37,6 +40,7 @@ export async function POST(
   const organization = await query("SELECT 1 FROM organizations WHERE id=$1", [id]);
   if (!organization.rowCount) return new NextResponse("Empresa no encontrada", { status: 404 });
 
+  let returnTo="";
   try {
     const form = await request.formData();
     const category = String(form.get("category") || "");
@@ -46,16 +50,17 @@ export async function POST(
     const issueDate = dateValue(form.get("issue_date"));
     const expiresAt = dateValue(form.get("expires_at"));
     const notes = String(form.get("notes") || "").trim();
+    returnTo = String(form.get("return_to") || "");
 
     if (!isOrganizationDocumentCategory(category) || !isOrganizationDocumentRequirement(requirementLevel)) {
-      return redirectToCompany(id, request.url, "error=document-fields");
+      return redirectToCompany(id,request.url,"error=document-fields",returnTo);
     }
 
     const resolvedName = displayName || ORGANIZATION_DOCUMENT_CATEGORIES[category];
     const file = await readOrganizationDocumentUpload(form.get("file"));
 
     if (requirementLevel === "not_applicable" && file) {
-      return redirectToCompany(id, request.url, "error=document-not-applicable");
+      return redirectToCompany(id,request.url,"error=document-not-applicable",returnTo);
     }
 
     await query(
@@ -69,10 +74,10 @@ export async function POST(
       ],
     );
 
-    return redirectToCompany(id, request.url, "saved=document");
+    return redirectToCompany(id,request.url,"saved=document",returnTo);
   } catch (error) {
     if (error instanceof OrganizationDocumentUploadError) {
-      return redirectToCompany(id, request.url, "error=" + error.code);
+      return redirectToCompany(id,request.url,"error="+error.code,returnTo);
     }
     throw error;
   }

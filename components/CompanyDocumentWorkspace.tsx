@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import FileDropzone from "@/components/FileDropzone";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
+import UiIcon from "@/components/UiIcon";
+import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
+import { Search } from "@/components/ui-kit/DataControls";
+import { Select } from "@/components/ui-kit/FormControls";
+import { EmptyState } from "@/components/ui-kit/Feedback";
+import { Drawer } from "@/components/ui-kit/Overlay";
 
 export type CompanyDocumentItem = {
   id:string;
@@ -24,9 +31,12 @@ export type CompanyDocumentItem = {
   archived_by_name:string|null;
 };
 
-function formatDate(value:string|null){
+type DocumentStateKey="archived"|"na"|"pending"|"optional"|"current"|"no-expiry"|"expired"|"expiring";
+
+function formatDate(value:string|null,withTime=false){
   if(!value)return "Sin fecha";
-  return new Date(value+(value.length===10?"T12:00:00":"")).toLocaleDateString("es-CO");
+  const date=new Date(value+(value.length===10?"T12:00:00":""));
+  return withTime?date.toLocaleString("es-CO"):date.toLocaleDateString("es-CO");
 }
 function bytesLabel(value:string|null){
   if(!value)return "";
@@ -34,16 +44,23 @@ function bytesLabel(value:string|null){
   if(!Number.isFinite(bytes))return "";
   return bytes>=1024*1024?(bytes/1024/1024).toFixed(1)+" MB":Math.max(1,Math.round(bytes/1024))+" KB";
 }
-function docState(document:CompanyDocumentItem){
-  if(document.archived_at)return {key:"archived",label:"Archivado"};
-  if(document.requirement_level==="not_applicable")return {key:"na",label:"No aplica"};
-  if(!document.file_name)return {key:document.requirement_level==="required"?"pending":"optional",label:document.requirement_level==="required"?"Pendiente":"Sin archivo"};
-  if(!document.expires_at)return {key:"current",label:"Vigente"};
+function docState(document:CompanyDocumentItem):{key:DocumentStateKey;label:string;variant:BadgeVariant}{
+  if(document.archived_at)return {key:"archived",label:"Archivado",variant:"neutral"};
+  if(document.requirement_level==="not_applicable")return {key:"na",label:"No aplica",variant:"neutral"};
+  if(!document.file_name)return document.requirement_level==="required"
+    ?{key:"pending",label:"Pendiente",variant:"warning"}
+    :{key:"optional",label:"Sin archivo",variant:"neutral"};
+  if(!document.expires_at)return {key:"no-expiry",label:"Sin vigencia",variant:"neutral"};
   const expiry=new Date(document.expires_at+"T23:59:59");
-  if(expiry.getTime()<Date.now())return {key:"expired",label:"Vencido"};
+  if(expiry.getTime()<Date.now())return {key:"expired",label:"Vencido",variant:"danger"};
   const days=Math.ceil((expiry.getTime()-Date.now())/86400000);
-  if(days<=30)return {key:"expiring",label:"Próximo a vencer"};
-  return {key:"current",label:"Vigente"};
+  if(days<=30)return {key:"expiring",label:"Por vencer",variant:"warning"};
+  return {key:"current",label:"Vigente",variant:"success"};
+}
+function typeCode(mime:string|null){
+  if(mime==="application/pdf")return "PDF";
+  if(mime?.startsWith("image/"))return "IMG";
+  return "DOC";
 }
 
 export default function CompanyDocumentWorkspace({
@@ -51,148 +68,222 @@ export default function CompanyDocumentWorkspace({
   documents,
   categories,
   owner,
+  returnTo="",
 }:{
   organizationId:string;
   documents:CompanyDocumentItem[];
   categories:Record<string,string>;
   owner:boolean;
+  returnTo?:string;
 }){
   const [view,setView]=useState<"active"|"archived">("active");
   const [selectedId,setSelectedId]=useState("");
   const [editing,setEditing]=useState(false);
+  const [search,setSearch]=useState("");
+  const [category,setCategory]=useState("all");
+  const [validity,setValidity]=useState("all");
+  const [sort,setSort]=useState("newest");
+  const [zoom,setZoom]=useState(100);
+  const [fit,setFit]=useState(true);
+  const [rotation,setRotation]=useState(0);
+  const [previewLoading,setPreviewLoading]=useState(false);
+  const [previewError,setPreviewError]=useState(false);
+  const [shareMessage,setShareMessage]=useState("");
 
   const active=useMemo(()=>documents.filter(item=>!item.archived_at),[documents]);
   const archived=useMemo(()=>documents.filter(item=>Boolean(item.archived_at)),[documents]);
-  const visible=view==="active"?active:archived;
+  const source=view==="active"?active:archived;
+
+  const visible=useMemo(()=>{
+    const term=search.trim().toLowerCase();
+    const filtered=source.filter(item=>{
+      const state=docState(item);
+      if(term&&!([item.display_name,item.file_name,item.reference,categories[item.category]||item.category].filter(Boolean).join(" ").toLowerCase().includes(term)))return false;
+      if(category!=="all"&&item.category!==category)return false;
+      if(validity!=="all"){
+        if(validity==="no-expiry"&&!(item.file_name&&!item.expires_at))return false;
+        else if(validity!=="no-expiry"&&state.key!==validity)return false;
+      }
+      return true;
+    });
+    return [...filtered].sort((a,b)=>{
+      if(sort==="name")return a.display_name.localeCompare(b.display_name,"es");
+      if(sort==="expiry")return (a.expires_at||"9999-12-31").localeCompare(b.expires_at||"9999-12-31");
+      return new Date(b.created_at).getTime()-new Date(a.created_at).getTime();
+    });
+  },[source,search,category,validity,sort,categories]);
+
   const selected=visible.find(item=>item.id===selectedId)||visible[0]||null;
 
   useEffect(()=>{
+    if(!visible.length){setSelectedId("");setEditing(false);return;}
     if(!visible.some(item=>item.id===selectedId)){
-      setSelectedId(visible[0]?.id||"");
+      setSelectedId(visible[0].id);
       setEditing(false);
     }
-  },[view,visible,selectedId]);
+  },[visible,selectedId]);
 
-  const previewUrl=selected?.file_name
-    ? "/api/organizations/"+organizationId+"/documents/"+selected.id+"?inline=1"
-    : "";
-  const downloadUrl=selected?.file_name
-    ? "/api/organizations/"+organizationId+"/documents/"+selected.id
-    : "";
+  useEffect(()=>{
+    setZoom(100);setFit(true);setRotation(0);setPreviewError(false);setShareMessage("");
+    setPreviewLoading(Boolean(selected?.file_name));
+  },[selected?.id,selected?.file_name]);
 
-  return <div className="company-document-workspace">
-    <div className="company-document-browser">
-      <div className="company-document-tabs" role="tablist" aria-label="Estado de documentos">
-        <button type="button" className={view==="active"?"active":""} onClick={()=>setView("active")}>
-          Vigentes <b>{active.length}</b>
-        </button>
-        <button type="button" className={view==="archived"?"active":""} onClick={()=>setView("archived")}>
-          Archivados <b>{archived.length}</b>
-        </button>
+  const previewUrl=selected?.file_name?"/api/organizations/"+organizationId+"/documents/"+selected.id+"?inline=1":"";
+  const downloadUrl=selected?.file_name?"/api/organizations/"+organizationId+"/documents/"+selected.id:"";
+  const pdfPreviewUrl=selected?.file_mime_type==="application/pdf"&&previewUrl
+    ?previewUrl+"#zoom="+(fit?"page-width":zoom)
+    :previewUrl;
+
+  async function shareDocument(document:CompanyDocumentItem){
+    if(!document.file_name)return;
+    const url=window.location.origin+"/api/organizations/"+organizationId+"/documents/"+document.id;
+    try{
+      if(navigator.share)await navigator.share({title:document.display_name,url});
+      else if(navigator.clipboard){await navigator.clipboard.writeText(url);setShareMessage("Enlace copiado");}
+    }catch{/* user cancelled */}
+  }
+  async function shareSelected(){if(selected)await shareDocument(selected);}
+  function printSelected(){
+    if(!previewUrl)return;
+    const win=window.open(previewUrl,"_blank");
+    if(win)window.setTimeout(()=>{try{win.print();}catch{}},900);
+  }
+  function selectDocument(id:string){
+    setSelectedId(id);setEditing(false);
+  }
+
+  const categoryOptions=[
+    {value:"all",label:"Todos los tipos"},
+    ...Object.entries(categories).map(([value,label])=>({value,label})),
+  ];
+  const validityOptions=[
+    {value:"all",label:"Todas las vigencias"},
+    {value:"current",label:"Vigentes"},
+    {value:"expiring",label:"Por vencer"},
+    {value:"expired",label:"Vencidos"},
+    {value:"pending",label:"Pendientes"},
+    {value:"no-expiry",label:"Sin vigencia"},
+  ];
+
+  return <div className="company-document-workspace company-document-workspace-v2">
+    <section className="company-document-preview-panel" aria-label="Previsualización del documento seleccionado">
+      {!selected?<EmptyState icon="file" title={source.length?"Sin coincidencias":"No hay documentos"} description={source.length?"Ajusta la búsqueda o los filtros para seleccionar un documento.":"Aún no se han cargado documentos para esta empresa."}/>:
+      <>
+        <header className="company-document-preview-title">
+          <span className={"company-document-type-icon type-"+typeCode(selected.file_mime_type).toLowerCase()} aria-hidden="true">{typeCode(selected.file_mime_type)}</span>
+          <div>
+            <strong>{selected.file_name||selected.display_name}</strong>
+            <small>{selected.file_name?([bytesLabel(selected.file_size_bytes),selected.uploaded_by_name?"Cargado por "+selected.uploaded_by_name:null,formatDate(selected.created_at,true)].filter(Boolean).join(" · ")):"Requisito sin archivo adjunto"}</small>
+          </div>
+          <Badge variant={docState(selected).variant}>{docState(selected).label}</Badge>
+        </header>
+
+        <div className="company-document-viewer-toolbar" aria-label="Controles del visor">
+          <div className="company-document-viewer-group">
+            <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.max(50,value-10));}} disabled={!selected.file_name} title="Alejar documento" data-tooltip="Zoom -"><UiIcon name="zoom-out" size={16}/></button>
+            <span className="company-document-zoom-value">{fit?"Ajustado":zoom+"%"}</span>
+            <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.min(200,value+10));}} disabled={!selected.file_name} title="Acercar documento" data-tooltip="Zoom +"><UiIcon name="zoom-in" size={16}/></button>
+            <button type="button" className="document-viewer-icon" onClick={()=>setFit(true)} disabled={!selected.file_name} title="Ajustar documento al panel" data-tooltip="Ajustar a pantalla"><UiIcon name="fit" size={16}/></button>
+            <button type="button" className="document-viewer-icon" onClick={()=>setRotation(value=>(value+90)%360)} disabled={!selected.file_mime_type?.startsWith("image/")} title={selected.file_mime_type?.startsWith("image/")?"Rotar imagen":"La rotación PDF está disponible en los controles nativos del visor"} data-tooltip="Rotar"><UiIcon name="rotate" size={16}/></button>
+          </div>
+          <div className="company-document-viewer-group">
+            {selected.file_name&&<a className="document-viewer-icon" href={downloadUrl} title="Descargar documento" data-tooltip="Descargar documento"><UiIcon name="download" size={16}/></a>}
+            <button type="button" className="document-viewer-icon" disabled={!selected.file_name} onClick={printSelected} title="Imprimir documento" data-tooltip="Imprimir documento"><UiIcon name="print" size={16}/></button>
+            <button type="button" className="document-viewer-icon" disabled={!selected.file_name} onClick={shareSelected} title="Compartir documento" data-tooltip="Compartir documento"><UiIcon name="share" size={16}/></button>
+            <button type="button" className="document-viewer-icon" onClick={()=>setEditing(true)} disabled={Boolean(selected.archived_at)} title="Más opciones del documento" data-tooltip="Más opciones"><UiIcon name="more" size={16}/></button>
+          </div>
+        </div>
+
+        <div className={"company-document-file-preview-v2"+(previewLoading?" loading":"")}>
+          {previewLoading&&selected.file_name&&<div className="company-document-preview-loader"><span className="ds-spinner ds-spinner-md"/><strong>Cargando previsualización…</strong></div>}
+          {previewError?<EmptyState icon="file" title="No fue posible cargar la previsualización" description="Puedes descargar el archivo original o volver a intentarlo seleccionando el documento."/>:
+          !selected.file_name?<EmptyState icon="file" title="Documento no disponible" description="Este requisito todavía no tiene un archivo adjunto."/>:
+          selected.file_mime_type==="application/pdf"
+            ?<iframe key={pdfPreviewUrl} src={pdfPreviewUrl} title={"Vista previa de "+selected.display_name} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/>
+            :selected.file_mime_type?.startsWith("image/")
+              ?<div className="company-document-image-stage"><img key={previewUrl} src={previewUrl} alt={"Vista previa de "+selected.display_name} style={{transform:"rotate("+rotation+"deg) scale("+(fit?1:zoom/100)+")"}} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/></div>
+              :<EmptyState icon="file" title={selected.file_name} description="Este formato no dispone de previsualización integrada. Usa Descargar para abrir el archivo original."/>}
+        </div>
+        {shareMessage&&<span className="company-document-share-message" role="status">{shareMessage}</span>}
+      </>}
+    </section>
+
+    <section className="company-document-list-panel">
+      <header className="company-document-list-head">
+        <div className="company-document-list-title">
+          <span aria-hidden="true"><UiIcon name="file" size={24}/></span>
+          <div><h3>Documentos</h3><p>Gestión y control de documentos de la empresa.</p></div>
+        </div>
+        <div className="company-document-view-switch" role="tablist" aria-label="Estado de documentos">
+          <button type="button" className={view==="active"?"active":""} onClick={()=>setView("active")}>Vigentes <b>{active.length}</b></button>
+          <button type="button" className={view==="archived"?"active":""} onClick={()=>setView("archived")}>Archivados <b>{archived.length}</b></button>
+        </div>
+      </header>
+
+      <div className="company-document-filterbar">
+        <Search value={search} onValueChange={setSearch} placeholder="Buscar documentos..." ariaLabel="Buscar documentos"/>
+        <Select aria-label="Tipo de documento" placeholder="" value={category} onChange={event=>setCategory(event.target.value)} options={categoryOptions}/>
+        <Select aria-label="Vigencia del documento" placeholder="" value={validity} onChange={event=>setValidity(event.target.value)} options={validityOptions}/>
+        <Select aria-label="Orden de documentos" placeholder="" value={sort} onChange={event=>setSort(event.target.value)} options={[
+          {value:"newest",label:"Más recientes"},{value:"name",label:"Nombre A–Z"},{value:"expiry",label:"Próximo vencimiento"},
+        ]}/>
       </div>
 
-      {visible.length===0
-        ? <div className="company-documents-empty">
-            <strong>{view==="active"?"No hay documentos vigentes.":"No hay documentos archivados."}</strong>
-            <span>{view==="active"?"Agrega un requisito o restaura uno archivado.":"Los documentos archivados aparecerán aquí y podrán restaurarse."}</span>
-          </div>
-        : <div className="company-document-list modern">
-            {visible.map(document=>{
-              const state=docState(document);
-              const rowClass="company-document-row"+(selected?.id===document.id?" selected":"");
-              return <button
-                type="button"
-                key={document.id}
-                className={rowClass}
-                onClick={()=>{setSelectedId(document.id);setEditing(false);}}
-              >
-                <span className="company-document-row-icon" aria-hidden="true">
-                  {document.file_mime_type==="application/pdf"?"PDF":document.file_mime_type?.startsWith("image/")?"IMG":"DOC"}
-                </span>
-                <span className="company-document-row-copy">
-                  <small>{categories[document.category]||document.category}</small>
-                  <strong>{document.display_name}</strong>
-                  <em>{document.file_name||"Sin archivo"}{document.file_size_bytes?" · "+bytesLabel(document.file_size_bytes):""}</em>
-                </span>
-                <span className={"company-document-state document-state-"+state.key}>{state.label}</span>
-              </button>;
-            })}
-          </div>}
-    </div>
+      {!visible.length?<EmptyState icon="file" title={source.length?"No hay resultados":"No hay documentos"} description={source.length?"No encontramos documentos con los filtros seleccionados.":view==="active"?"Aún no se han cargado documentos para esta empresa.":"No hay documentos archivados."}/>:
+      <div className="company-document-table-wrap">
+        <table className="company-document-table">
+          <thead><tr><th>Tipo</th><th>Nombre del documento</th><th>Fecha de cargue</th><th>Vigencia</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>{visible.map(document=>{
+            const state=docState(document);
+            const isSelected=selected?.id===document.id;
+            return <tr key={document.id} className={isSelected?"selected":""} aria-selected={isSelected} tabIndex={0} onClick={()=>selectDocument(document.id)} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();selectDocument(document.id);}}}>
+              <td><span className="company-document-type-cell"><span className={"company-document-mini-type type-"+typeCode(document.file_mime_type).toLowerCase()}>{typeCode(document.file_mime_type)}</span>{categories[document.category]||document.category}</span></td>
+              <td><strong>{document.file_name||document.display_name}</strong>{document.reference&&<small>Ref. {document.reference}</small>}</td>
+              <td>{formatDate(document.created_at,true)}</td>
+              <td>{document.expires_at?formatDate(document.expires_at):document.file_name?"Sin vigencia":"—"}</td>
+              <td><Badge variant={state.variant}>{state.label}</Badge></td>
+              <td>
+                <div className="company-document-row-actions" onClick={event=>event.stopPropagation()}>
+                  <button type="button" onClick={()=>selectDocument(document.id)} title="Previsualizar documento" data-tooltip="Previsualizar documento"><UiIcon name="eye" size={15}/></button>
+                  {document.file_name&&<a href={"/api/organizations/"+organizationId+"/documents/"+document.id} title="Descargar documento" data-tooltip="Descargar documento"><UiIcon name="download" size={15}/></a>}
+                  {document.file_name&&<button type="button" onClick={()=>{selectDocument(document.id);void shareDocument(document);}} title="Compartir documento" data-tooltip="Compartir documento"><UiIcon name="share" size={15}/></button>}
+                  <button type="button" onClick={()=>{selectDocument(document.id);setEditing(true);}} title="Más acciones" data-tooltip="Más acciones"><UiIcon name="more" size={15}/></button>
+                </div>
+              </td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>}
+      <footer className="company-document-list-foot">Mostrando {visible.length} de {source.length} documentos</footer>
+    </section>
 
-    <aside className="company-document-preview-card">
-      {!selected
-        ? <div className="company-document-preview-empty">
-            <span>▤</span>
-            <strong>Selecciona un documento</strong>
-            <p>Aquí verás su vista previa, información y acciones disponibles.</p>
-          </div>
-        : <>
-          <header className="company-document-preview-head">
-            <div>
-              <span>{categories[selected.category]||selected.category}</span>
-              <h3>{selected.display_name}</h3>
-              <small>{selected.reference?"Ref. "+selected.reference:"Sin referencia"}</small>
-            </div>
-            <span className={"company-document-state document-state-"+docState(selected).key}>{docState(selected).label}</span>
-          </header>
-
-          <div className="company-document-file-preview">
-            {!selected.file_name
-              ? <div className="company-document-no-file"><span>▤</span><strong>Sin archivo adjunto</strong><small>Puedes editar el requisito y cargar un PDF o una imagen.</small></div>
-              : selected.file_mime_type==="application/pdf"
-                ? <iframe src={previewUrl} title={"Vista previa de "+selected.display_name} />
-                : selected.file_mime_type?.startsWith("image/")
-                  ? <img src={previewUrl} alt={"Vista previa de "+selected.display_name} />
-                  : <div className="company-document-no-file"><span>DOC</span><strong>{selected.file_name}</strong><small>Usa Descargar para abrir este tipo de archivo.</small></div>}
-          </div>
-
-          <div className="company-document-preview-meta">
-            <div><span>Archivo</span><strong>{selected.file_name||"Sin archivo"}</strong></div>
-            <div><span>Emisión</span><strong>{formatDate(selected.issue_date)}</strong></div>
-            <div><span>Vencimiento</span><strong>{formatDate(selected.expires_at)}</strong></div>
-            <div><span>Actualizado</span><strong>{formatDate(selected.updated_at)}</strong></div>
-            {selected.archived_at&&<div className="form-span-2"><span>Archivado</span><strong>{formatDate(selected.archived_at)+(selected.archived_by_name?" · por "+selected.archived_by_name:"")}</strong></div>}
-          </div>
-
-          {selected.notes&&<div className="company-document-preview-notes"><span>Observaciones</span><p>{selected.notes}</p></div>}
-
-          <div className="company-document-action-pills">
-            {selected.file_name&&<a className="document-action-pill download" href={downloadUrl} title="Descargar el archivo original" data-tooltip="Descargar"><i>↓</i><span>Descargar</span></a>}
-            {!selected.archived_at&&<button className="document-action-pill edit" type="button" onClick={()=>setEditing(current=>!current)} title="Editar información o reemplazar el archivo" data-tooltip="Editar"><i>✎</i><span>Editar</span></button>}
-            {!selected.archived_at
-              ? <form method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id}>
-                  <input type="hidden" name="intent" value="archive"/>
-                  <ConfirmSubmitButton className="document-action-pill archive" title="Archivar el documento sin eliminarlo" data-tooltip="Archivar" confirmation={"¿Seguro que quieres archivar “"+selected.display_name+"”? Podrás restaurarlo después."}>
-                    <i>↧</i><span>Archivar</span>
-                  </ConfirmSubmitButton>
-                </form>
-              : <form method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id}>
-                  <input type="hidden" name="intent" value="restore"/>
-                  <button className="document-action-pill restore" type="submit" title="Restaurar el documento a la ficha vigente" data-tooltip="Restaurar"><i>↥</i><span>Restaurar</span></button>
-                </form>}
-            {owner&&<OwnerDeleteButton
-              table="organization_documents"
-              id={selected.id}
-              label={selected.display_name}
-              className="document-action-pill delete"
-              tooltip="Eliminar definitivamente el documento"
-              icon="×"
-            />}
-          </div>
-
-          {editing&&!selected.archived_at&&<form className="company-document-preview-edit" method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id} encType="multipart/form-data">
-            <div className="field"><label>Categoría</label><select name="category" defaultValue={selected.category}>{Object.entries(categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></div>
-            <div className="field"><label>Nivel</label><select name="requirement_level" defaultValue={selected.requirement_level}><option value="required">Requerido</option><option value="optional">Opcional</option><option value="not_applicable">No aplica</option></select></div>
-            <div className="field form-span-2"><label>Nombre</label><input name="display_name" defaultValue={selected.display_name} required/></div>
-            <div className="field"><label>Referencia</label><input name="reference" defaultValue={selected.reference||""}/></div>
-            <div className="field"><label>Emisión</label><input name="issue_date" type="date" defaultValue={selected.issue_date||""}/></div>
-            <div className="field"><label>Vencimiento</label><input name="expires_at" type="date" defaultValue={selected.expires_at||""}/></div>
-            <div className="form-span-2"><FileDropzone name="file" label="Reemplazar archivo" description="Déjalo sin seleccionar para conservar el archivo actual." accept="application/pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} kind="document" compact existingFileName={selected.file_name}/></div>
-            <div className="field form-span-2"><label>Observaciones</label><textarea name="notes" rows={3} defaultValue={selected.notes||""}/></div>
-            <div className="form-span-2 form-actions"><button className="button secondary" type="button" onClick={()=>setEditing(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
-          </form>}
-        </>}
-    </aside>
+    <Drawer open={editing&&Boolean(selected)} onClose={()=>setEditing(false)} title={selected?.display_name||"Documento"} description="Editar información, archivo y estado del documento.">
+      {selected&&<div className="company-document-drawer-content">
+        {!selected.archived_at&&<form className="company-document-preview-edit" method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id} encType="multipart/form-data">
+          {returnTo&&<input type="hidden" name="return_to" value={returnTo}/>}
+          <div className="field"><label>Categoría</label><select name="category" defaultValue={selected.category}>{Object.entries(categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></div>
+          <div className="field"><label>Nivel</label><select name="requirement_level" defaultValue={selected.requirement_level}><option value="required">Requerido</option><option value="optional">Opcional</option><option value="not_applicable">No aplica</option></select></div>
+          <div className="field form-span-2"><label>Nombre</label><input name="display_name" defaultValue={selected.display_name} required/></div>
+          <div className="field"><label>Referencia</label><input name="reference" defaultValue={selected.reference||""}/></div>
+          <div className="field"><label>Emisión</label><input name="issue_date" type="date" defaultValue={selected.issue_date||""}/></div>
+          <div className="field"><label>Vencimiento</label><input name="expires_at" type="date" defaultValue={selected.expires_at||""}/></div>
+          <div className="form-span-2"><FileDropzone name="file" label="Reemplazar archivo" description="Déjalo sin seleccionar para conservar el archivo actual." accept="application/pdf,image/png,image/jpeg,image/webp" maxSizeMb={10} kind="document" compact existingFileName={selected.file_name}/></div>
+          <div className="field form-span-2"><label>Observaciones</label><textarea name="notes" rows={3} defaultValue={selected.notes||""}/></div>
+          <div className="form-span-2 form-actions"><Button type="button" variant="secondary" onClick={()=>setEditing(false)}>Cancelar</Button><Button type="submit" iconLeft="check">Guardar cambios</Button></div>
+        </form>}
+        <div className="company-document-drawer-actions">
+          {!selected.archived_at
+            ?<form method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id}>
+                <input type="hidden" name="intent" value="archive"/>{returnTo&&<input type="hidden" name="return_to" value={returnTo}/>}
+                <ConfirmSubmitButton className="ds-button ds-button-secondary ds-button-md" confirmation={"¿Seguro que quieres archivar “"+selected.display_name+"”? Podrás restaurarlo después."}>Archivar documento</ConfirmSubmitButton>
+              </form>
+            :<form method="post" action={"/api/organizations/"+organizationId+"/documents/"+selected.id}>
+                <input type="hidden" name="intent" value="restore"/>{returnTo&&<input type="hidden" name="return_to" value={returnTo}/>}
+                <Button type="submit" variant="secondary" iconLeft="reset">Restaurar documento</Button>
+              </form>}
+          {owner&&<OwnerDeleteButton table="organization_documents" id={selected.id} label={selected.display_name} redirectTo={returnTo||undefined} className="ds-button ds-button-danger ds-button-md" tooltip="Eliminar definitivamente el documento"/>}
+        </div>
+      </div>}
+    </Drawer>
   </div>;
 }

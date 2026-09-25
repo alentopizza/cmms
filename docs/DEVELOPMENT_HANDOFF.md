@@ -1060,3 +1060,16 @@ Preserve:
 ### V2 rule going forward
 
 There is no Phase 11 migration. New modules/features should be built directly on tokens/UI Kit/Shared Data UI/Business UI. Legacy retirement is incremental maintenance.
+
+
+## 35. Company contextual management tabs
+
+The Company quick profile now treats Locations, Documents and Technicians as real management surfaces rather than gateway panels.
+
+- CompaniesPage loads authorized organization-related Site, Location, Technician and document metadata from PostgreSQL and passes it to CompanyDirectory.
+- Location cards reuse Business UI LocationCard/SubLocationCard and the existing LocationCreateModal, including Site/Sub-location creation in one contextual flow.
+- Technician cards reuse User identity data and ContextUserCreateModal with the Company and technician role preselected.
+- Documents reuse CompanyDocumentWorkspace and existing organization document endpoints; no parallel document store or preview service exists.
+- EntityProfileWorkspace tabs may expose an optional contextual `action` rendered at the far right of the tab row.
+- Contextual create/edit/archive/restore operations use safe `return_to` values so the Company quick profile and active tab reopen after the server redirect.
+- `app/document-workspace.css` owns the split 40/60 document manager layout and must remain token-only.

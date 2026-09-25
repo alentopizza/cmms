@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-24 — Gestión contextual de Ubicaciones, Documentos y Técnicos en Empresa
+
+- Las pestañas **Ubicaciones**, **Documentos** y **Técnicos** del perfil rápido de Empresa aprovechan ahora el área de trabajo completa con datos reales del ERP.
+- Ubicaciones muestra tarjetas de sedes y sububicaciones existentes, con acción contextual **Agregar** que reutiliza el flujo actual de ubicación principal/sububicación.
+- Técnicos muestra tarjetas de técnicos vinculados, avatar, estado, alcance de sedes y accesos rápidos de contacto; **Nuevo técnico** reutiliza el creador de usuarios con la empresa y rol técnico preseleccionados.
+- Documentos integra el `CompanyDocumentWorkspace` real en diseño 40/60: visor persistente, búsqueda, filtros, vigencia, tabla seleccionable y acciones rápidas.
+- La previsualización sigue usando el endpoint existente de documentos y el visor PDF/imagen actual; no se añadieron tablas ni servicios paralelos.
+- Se añadió **Cargar documento** mediante el endpoint existente y retornos contextuales seguros para reabrir Empresa y la pestaña correspondiente después de crear, editar, archivar o restaurar.
+- `EntityProfileWorkspace` admite ahora una acción contextual por pestaña.
+- Se añadió `app/document-workspace.css`, token-only, responsive y con reduced-motion.
+
+
 ## 2026-09-24 — Corrección visual de Técnicos y simplificación de Hoja de vida en Empresa
 
 - Se corrigió la pestaña **Técnicos** del perfil rápido de Empresa con una tarjeta V2 separando descripción, estados y acción.

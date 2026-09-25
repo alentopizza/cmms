@@ -1,15 +1,6 @@
-export const ORGANIZATION_DOCUMENT_CATEGORIES = {
-  tax: "RUT / documento tributario",
-  legal: "Existencia y representación legal",
-  contract: "Contrato / acuerdo comercial",
-  privacy: "Tratamiento de datos / privacidad",
-  insurance: "Póliza / seguro",
-  certification: "Certificación",
-  other: "Otro documento corporativo",
-} as const;
-
-export type OrganizationDocumentCategory = keyof typeof ORGANIZATION_DOCUMENT_CATEGORIES;
-export type OrganizationDocumentRequirement = "required" | "optional" | "not_applicable";
+import { ORGANIZATION_DOCUMENT_CATEGORIES, type OrganizationDocumentCategory, type OrganizationDocumentRequirement } from "@/lib/organization-document-catalog";
+export { ORGANIZATION_DOCUMENT_CATEGORIES };
+export type { OrganizationDocumentCategory, OrganizationDocumentRequirement };
 
 const ALLOWED_DOCUMENT_MIME = new Set([
   "application/pdf",

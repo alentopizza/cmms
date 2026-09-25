@@ -327,3 +327,71 @@
   .phase6-company-directory .company-staff-gateway-action{width:100%;justify-self:stretch}
   .phase6-company-directory .company-staff-gateway-status{align-items:stretch;flex-direction:column}
 }
+
+
+/* Company related-management tabs — 2026-09-24 --------------------------- */
+.phase6-company-directory .company-related-tab{align-content:start}
+.phase6-company-directory .company-related-location-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)
+}
+.phase6-company-directory .company-related-location-grid .ds-business-card{min-width:0}
+.phase6-company-directory .company-related-location-metrics{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;border-top:1px solid var(--color-border-subtle);
+  background:var(--color-border-subtle)
+}
+.phase6-company-directory .company-related-location-metrics>span{
+  display:grid;justify-items:center;gap:2px;padding:var(--space-2);background:var(--color-surface-soft)
+}
+.phase6-company-directory .company-related-location-metrics strong{color:var(--color-text-primary);font-size:var(--font-size-body)}
+.phase6-company-directory .company-related-location-metrics small{color:var(--color-text-muted);font-size:8px}
+.phase6-company-directory .company-technician-card-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)
+}
+.phase6-company-directory .company-technician-card{
+  min-width:0;overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);
+  background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase6-company-directory .company-technician-card.inactive{opacity:.78}
+.phase6-company-directory .company-technician-card-main{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center;padding:var(--space-4)
+}
+.phase6-company-directory .company-technician-avatar{
+  width:58px;height:58px;display:grid;place-items:center;overflow:hidden;border-radius:50%;
+  background:var(--color-surface-teal);color:var(--color-brand-secondary);font-weight:var(--font-weight-bold)
+}
+.phase6-company-directory .company-technician-avatar img{width:100%;height:100%;object-fit:cover}
+.phase6-company-directory .company-technician-copy{display:grid;gap:3px;min-width:0}
+.phase6-company-directory .company-technician-copy>div{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}
+.phase6-company-directory .company-technician-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-primary);font-size:var(--font-size-body)}
+.phase6-company-directory .company-technician-copy>span{color:var(--color-brand-secondary);font-size:9px;font-weight:var(--font-weight-semibold)}
+.phase6-company-directory .company-technician-copy small{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-muted);font-size:9px
+}
+.phase6-company-directory .company-technician-copy em{
+  display:flex;align-items:center;gap:var(--space-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--color-text-muted);font-size:8px;font-style:normal
+}
+.phase6-company-directory .company-technician-actions{
+  display:flex;align-items:center;gap:var(--space-1);padding:var(--space-3);border-top:1px solid var(--color-border-subtle);
+  background:var(--color-surface-soft)
+}
+.phase6-company-directory .company-technician-actions a{
+  min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);
+  padding:0 var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);
+  background:var(--color-surface);color:var(--color-brand-secondary);font-size:9px;font-weight:var(--font-weight-semibold);text-decoration:none
+}
+.phase6-company-directory .company-technician-actions a:first-child{flex:1}
+.phase6-company-directory .company-technician-actions a:not(:first-child){width:34px;padding:0}
+.phase6-company-directory .company-technician-actions a:not(:first-child) span{display:none}
+.phase6-company-directory .company-technician-actions a:hover{background:var(--color-surface-teal)}
+.phase6-company-directory .company-documents-management-tab{gap:0}
+.phase6-company-directory .company-documents-management-tab .company-document-workspace-v2{margin:0}
+
+@media(max-width:1180px){
+  .phase6-company-directory .company-related-location-grid,
+  .phase6-company-directory .company-technician-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .phase6-company-directory .company-related-location-grid,
+  .phase6-company-directory .company-technician-card-grid{grid-template-columns:1fr}
+}

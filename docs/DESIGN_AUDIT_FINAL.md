@@ -30,6 +30,7 @@ Baseline medido antes del cierre de Fase 10:
 | `app/phase8-modules.css` | 0 | V2 |
 | `app/phase9-modules.css` | 0 | V2 |
 | `app/phase10-modules.css` | 0 | V2 |
+| `app/document-workspace.css` | 0 | V2 |
 | `app/shell-v2.css` | 0 | V2 |
 | `app/ui-kit-core.css` | 0 | V2 |
 | `app/ui-kit/ui-kit.css` | 0 | V2 |

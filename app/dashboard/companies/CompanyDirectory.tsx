@@ -12,7 +12,11 @@ import PhoneField from "@/components/PhoneField";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
-import { CompanyCard } from "@/components/business-ui";
+import { CompanyCard, LocationCard, SubLocationCard, UserCard } from "@/components/business-ui";
+import { ContextUserCreateModal, LocationCreateModal } from "@/components/ContextCreateModals";
+import CompanyDocumentWorkspace, { type CompanyDocumentItem } from "@/components/CompanyDocumentWorkspace";
+import CompanyDocumentCreateModal from "@/components/CompanyDocumentCreateModal";
+import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-document-catalog";
 import { Badge } from "@/components/ui-kit/Badge";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { StatTiles } from "@/components/ui-kit/Metrics";
@@ -97,16 +101,49 @@ function countryLabel(code:string|null){
   return map[code.toUpperCase()]||code;
 }
 
+export type CompanyRelatedSite={
+  id:string;organization_id:string;name:string;code:string|null;city:string|null;country:string;address:string|null;active:boolean;
+  asset_count:number;sublocation_count:number;has_image:boolean;
+};
+export type CompanyRelatedLocation={
+  id:string;organization_id:string;site_id:string;name:string;code:string|null;type:string;parent_id:string|null;active:boolean;
+  asset_count:number;has_image:boolean;
+};
+export type CompanyRelatedTechnician={
+  id:string;organization_id:string;full_name:string;email:string;phone:string|null;active:boolean;has_avatar:boolean;
+  access_all_sites:boolean;site_names:string[];
+};
+export type CompanyRelatedSupplier={id:string;organization_id:string;name:string};
+export type CompanyRelatedDocument=CompanyDocumentItem&{organization_id:string};
+
 type ResourceKind = "sites" | "sublocations" | "assets" | "inventory" | "technicians";
 
 export default function CompanyDirectory({
   companies,
+  sites,
+  locations,
+  technicians,
+  documents,
+  serviceSuppliers,
   canManageResources,
+  canManageLocations,
+  canManageUsers,
   canDelete,
+  initialCompanyId,
+  initialTab,
 }: {
   companies: CompanyDirectoryItem[];
+  sites: CompanyRelatedSite[];
+  locations: CompanyRelatedLocation[];
+  technicians: CompanyRelatedTechnician[];
+  documents: CompanyRelatedDocument[];
+  serviceSuppliers: CompanyRelatedSupplier[];
   canManageResources: boolean;
+  canManageLocations: boolean;
+  canManageUsers: boolean;
   canDelete: boolean;
+  initialCompanyId?: string;
+  initialTab?: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<CompanyDirectoryItem | null>(null);
@@ -118,6 +155,12 @@ export default function CompanyDirectory({
   const [saveSuccess, setSaveSuccess] = useState<{ message: string; files: string[] } | null>(null);
   const [assetVersion, setAssetVersion] = useState(0);
   const editFormRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(()=>{
+    if(!initialCompanyId)return;
+    const company=companies.find(item=>item.id===initialCompanyId);
+    if(company)setSelected(company);
+  },[initialCompanyId,companies]);
 
   useEffect(() => {
     if (!selected || editing) return;
@@ -251,6 +294,13 @@ export default function CompanyDirectory({
     return <EmptyState icon="file" title="Aún no hay empresas registradas" description="Usa Nueva empresa para crear el primer registro de la plataforma."/>;
   }
 
+  const selectedSites=selected?sites.filter(item=>item.organization_id===selected.id):[];
+  const selectedLocations=selected?locations.filter(item=>item.organization_id===selected.id):[];
+  const selectedTechnicians=selected?technicians.filter(item=>item.organization_id===selected.id):[];
+  const selectedDocuments=selected?documents.filter(item=>item.organization_id===selected.id):[];
+  const selectedServiceSuppliers=selected?serviceSuppliers.filter(item=>item.organization_id===selected.id):[];
+  const selectedReturnTo=selected?"/dashboard/companies?company="+encodeURIComponent(selected.id):"/dashboard/companies";
+
   return <div className="phase6-company-directory">
     {!selected&&<div className="company-card-grid company-card-grid-compact">
       {companies.map(company => {
@@ -365,6 +415,7 @@ export default function CompanyDirectory({
           <Link href="/dashboard/users"><UiIcon name="user"/> Usuarios</Link>
           <Link href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> Ficha completa</Link>
         </>}
+        initialTab={initialCompanyId===selected.id?initialTab:undefined}
         tabs={[
           {id:"general",label:"Información general",content:editing?<form
             ref={editFormRef}
@@ -527,85 +578,88 @@ export default function CompanyDirectory({
               {label:"Perfil",value:selected.profile_completion+"%",hint:"completitud",tone:selected.profile_completion>=80?"success":"warning"},
             ]}/>
           </div>},
-          {id:"locations",label:"Ubicaciones",content:<div className="entity-section-stack">
-            <div className="entity-two-column">
-              <div className="entity-panel"><h3>Sede principal</h3><div className="entity-info-grid">
-                <DetailField label="Nombre" value={selected.site_name||"Sin sede principal"}/>
-                <DetailField label="Código" value={selected.site_code||"Sin código"}/>
-                <DetailField label="Ciudad" value={selected.city||"Sin registrar"}/>
-                <DetailField label="País" value={selected.country||"Sin registrar"}/>
-                <DetailField label="Dirección" value={selected.address||"Sin registrar"}/>
-                <DetailField label="Ubicaciones activas" value={selected.active_site_count}/>
-              </div></div>
-              <div className="entity-panel"><h3>Mapa y geocerca</h3>
-                {selected.site_id?<GeofenceMapPicker
-                  initialAddress={selected.address}
-                  initialLatitude={selected.site_latitude}
-                  initialLongitude={selected.site_longitude}
-                  initialRadius={selected.site_geofence_radius_m||250}
-                  cityHint={selected.city}
-                  countryHint={selected.country}
-                  readOnly
-                  addressRequired={false}
-                  coordinateRequired={false}
-                  markerImageUrl={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null}
-                  markerLabel={selected.name}
-                />:<p className="entity-panel-copy">La empresa aún no tiene una sede principal configurada.</p>}
-              </div>
-            </div>
-            <Link className="button secondary entity-tab-cta" href="/dashboard/locations">Abrir módulo de ubicaciones</Link>
-          </div>},
-          {id:"documents",label:"Documentos",content:<div className="entity-section-stack company-documents-tab">
+          {id:"locations",label:"Ubicaciones",action:canManageLocations?<LocationCreateModal
+            organizations={[{id:selected.id,name:selected.name,country:selected.legal_country||selected.country||"CO"}]}
+            sites={selectedSites.map(site=>({id:site.id,organization_id:site.organization_id,name:site.name,organization_name:selected.name}))}
+            locations={selectedLocations.map(location=>({id:location.id,organization_id:location.organization_id,site_id:location.site_id,name:location.name,label:location.name}))}
+            fixedOrganizationId={selected.id}
+            fixedOrganizationName={selected.name}
+            returnTo={selectedReturnTo+"&tab=locations"}
+          />:undefined,content:<div className="entity-section-stack company-related-tab company-locations-tab">
             <StatTiles className="entity-stat-grid" items={[
-              {label:"Documentos vigentes",value:selected.document_count},
-              {label:"Pendientes / vencidos",value:selected.pending_document_count,tone:Number(selected.pending_document_count)>0?"warning":"success"},
-              {label:"Perfil",value:selected.profile_completion+"%",tone:selected.profile_completion>=80?"success":"warning"},
+              {label:"Ubicaciones",value:selected.site_count+"/"+selected.max_sites,hint:"registradas / cupo"},
+              {label:"Activas",value:selected.active_site_count,tone:"success"},
+              {label:"Sububicaciones",value:selected.sublocation_count+"/"+selected.max_sublocations,hint:"registradas / cupo"},
             ]}/>
-            <section className="company-document-gateway" aria-labelledby={"company-documents-title-"+selected.id}>
-              <span className="company-document-gateway-icon" aria-hidden="true"><UiIcon name="file" size={22}/></span>
-              <div className="company-document-gateway-copy">
-                <span className="eyebrow">Expediente empresarial</span>
-                <h3 id={"company-documents-title-"+selected.id}>Documentos y cumplimiento</h3>
-                <p>Administra requisitos, archivos vigentes y archivados, vencimientos, vista previa, restauración y eliminación protegida desde la ficha completa de la empresa.</p>
-                <div className="company-document-gateway-status">
-                  <Badge variant="brand" icon="file">{selected.document_count} vigentes</Badge>
-                  <Badge variant={Number(selected.pending_document_count)>0?"warning":"success"} icon={Number(selected.pending_document_count)>0?"warning":"check"}>
-                    {selected.pending_document_count} pendientes / vencidos
-                  </Badge>
-                </div>
-              </div>
-              <Link className="ds-button ds-button-secondary ds-button-md company-document-gateway-action" href={"/dashboard/companies/"+selected.id}>
-                <UiIcon name="file" size={16}/>
-                <span>Abrir expediente</span>
-                <UiIcon name="chevron-right" size={14}/>
-              </Link>
-            </section>
+            {selectedSites.length||selectedLocations.length?<div className="company-related-location-grid">
+              {selectedSites.map(site=><LocationCard
+                key={site.id}
+                name={site.name}
+                organization={selected.name}
+                location={(site.city||"Ciudad sin registrar")+" · "+site.country}
+                address={site.address||"Dirección sin registrar"}
+                active={site.active}
+                coverSrc={site.has_image?"/api/sites/"+site.id+"/image":null}
+                logoSrc={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null}
+                fallback={initials(selected.name)}
+                onOpen={()=>router.push("/dashboard/locations/"+site.id)}
+                resources={<div className="company-related-location-metrics"><span><strong>{site.asset_count}</strong><small>Activos</small></span><span><strong>{site.sublocation_count}</strong><small>Sububicaciones</small></span></div>}
+              />)}
+              {selectedLocations.map(location=><SubLocationCard
+                key={location.id}
+                name={location.name}
+                type={location.type}
+                assetCount={location.asset_count}
+                imageSrc={location.has_image?"/api/locations/"+location.id+"/image":null}
+                organizationLogoSrc={selected.has_logo?"/api/organizations/"+selected.id+"/assets/logo":null}
+                fallback={initials(selected.name)}
+                onOpen={()=>router.push("/dashboard/locations/"+location.site_id)}
+              />)}
+            </div>:<EmptyState icon="file" title="Aún no hay ubicaciones" description="Crea una ubicación principal o sububicación para comenzar la estructura física de esta empresa."/>}
           </div>},
-          {id:"technicians",label:"Técnicos",content:<div className="entity-section-stack company-technicians-tab">
+          {id:"documents",label:"Documentos",action:<CompanyDocumentCreateModal organizationId={selected.id} organizationName={selected.name} returnTo={selectedReturnTo+"&tab=documents"}/>,content:<div className="entity-section-stack company-documents-tab company-documents-management-tab">
+            <CompanyDocumentWorkspace
+              organizationId={selected.id}
+              documents={selectedDocuments}
+              categories={ORGANIZATION_DOCUMENT_CATEGORIES}
+              owner={canDelete}
+              returnTo={selectedReturnTo+"&tab=documents"}
+            />
+          </div>},
+          {id:"technicians",label:"Técnicos",action:canManageUsers?<ContextUserCreateModal
+            organizationId={selected.id}
+            organizationName={selected.name}
+            serviceSuppliers={selectedServiceSuppliers.map(item=>({id:item.id,name:item.name}))}
+            countryCode={selected.legal_country||selected.country||"CO"}
+            initialRole="technician"
+            triggerLabel="Nuevo técnico"
+            secondary={false}
+            lockRole
+            returnTo={selectedReturnTo+"&tab=technicians"}
+          />:undefined,content:<div className="entity-section-stack company-technicians-tab company-related-tab">
             <StatTiles className="entity-stat-grid" items={[
               {label:"Técnicos",value:selected.technician_count+"/"+selected.max_technicians,hint:"registrados / cupo"},
               {label:"Cupos disponibles",value:String(Math.max(0,Number(selected.max_technicians)-Number(selected.technician_count))),tone:Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"},
               {label:"Ocupación",value:(Number(selected.max_technicians)>0?Math.min(100,Math.round(Number(selected.technician_count)/Number(selected.max_technicians)*100)):0)+"%",tone:Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"},
             ]}/>
-            <section className="company-staff-gateway" aria-labelledby={"company-staff-title-"+selected.id}>
-              <span className="company-staff-gateway-icon" aria-hidden="true"><UiIcon name="user" size={22}/></span>
-              <div className="company-staff-gateway-copy">
-                <span className="eyebrow">Personal de la empresa</span>
-                <h3 id={"company-staff-title-"+selected.id}>Usuarios y técnicos vinculados</h3>
-                <p>Consulta y administra usuarios, técnicos, roles, datos de contacto y acceso operativo desde el directorio de personas.</p>
-                <div className="company-staff-gateway-status">
-                  <Badge variant="brand" icon="user">{selected.technician_count} técnicos registrados</Badge>
-                  <Badge variant={Number(selected.technician_count)<Number(selected.max_technicians)?"success":"warning"} icon={Number(selected.technician_count)<Number(selected.max_technicians)?"check":"warning"}>
-                    {Math.max(0,Number(selected.max_technicians)-Number(selected.technician_count))} cupos disponibles
-                  </Badge>
+            {selectedTechnicians.length?<div className="company-technician-card-grid">
+              {selectedTechnicians.map(technician=><UserCard key={technician.id} className={"company-technician-card"+(technician.active?"":" inactive")}>
+                <div className="company-technician-card-main">
+                  <span className="company-technician-avatar">{technician.has_avatar?<img src={"/api/users/"+technician.id+"/avatar"} alt=""/>:initials(technician.full_name)}</span>
+                  <div className="company-technician-copy">
+                    <div><strong>{technician.full_name}</strong><Badge variant={technician.active?"success":"neutral"}>{technician.active?"Activo":"Inactivo"}</Badge></div>
+                    <span>Técnico</span>
+                    <small>{technician.email}</small>
+                    <em><UiIcon name="location" size={12}/>{technician.access_all_sites?"Todas las sedes":technician.site_names.length?technician.site_names.join(", "):"Sin sedes asignadas"}</em>
+                  </div>
                 </div>
-              </div>
-              <Link className="ds-button ds-button-secondary ds-button-md company-staff-gateway-action" href="/dashboard/users">
-                <UiIcon name="user" size={16}/>
-                <span>Abrir usuarios y técnicos</span>
-                <UiIcon name="chevron-right" size={14}/>
-              </Link>
-            </section>
+                <div className="company-technician-actions">
+                  <Link href="/dashboard/users" title="Abrir perfil de usuario"><UiIcon name="user" size={15}/><span>Ver perfil</span></Link>
+                  {technician.phone&&<a href={"https://wa.me/"+technician.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp"><UiIcon name="whatsapp" size={15}/></a>}
+                  {technician.phone&&<a href={"tel:"+technician.phone.replace(/[^+\d]/g,"")} title="Llamar técnico"><UiIcon name="phone" size={15}/></a>}
+                </div>
+              </UserCard>)}
+            </div>:<EmptyState icon="file" title="Aún no hay técnicos vinculados" description="Crea un técnico desde esta empresa para conservar automáticamente la relación y el alcance inicial."/>}
           </div>},
         ]}
       />

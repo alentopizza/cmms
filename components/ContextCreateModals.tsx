@@ -330,6 +330,9 @@ export function ContextUserCreateModal({
   returnTo,
   triggerLabel = "Nuevo usuario",
   countryCode = "CO",
+  initialRole = "viewer",
+  secondary = true,
+  lockRole = false,
 }: {
   organizationId: string;
   organizationName: string;
@@ -337,20 +340,23 @@ export function ContextUserCreateModal({
   returnTo: string;
   triggerLabel?: string;
   countryCode?: string;
+  initialRole?: string;
+  secondary?: boolean;
+  lockRole?: boolean;
 }) {
   const [open,setOpen]=useState(false);
-  const [role,setRole]=useState("viewer");
+  const [role,setRole]=useState(initialRole);
   const [userCountry,setUserCountry]=useState(countryCode);
 
   useEffect(() => {
     if (open) {
-      setRole("viewer");
+      setRole(initialRole);
       setUserCountry(countryCode);
     }
-  }, [open,countryCode]);
+  }, [open,countryCode,initialRole]);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="user-plus" secondary onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="user-plus" secondary={secondary} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Control de acceso" title="Crear usuario" description={`La cuenta quedará vinculada directamente a ${organizationName}; no tendrás que seleccionar la empresa nuevamente.`}>
       <form className="company-modal-form" method="post" encType="multipart/form-data" action="/api/users">
         <input type="hidden" name="organization_id" value={organizationId} />
@@ -365,7 +371,7 @@ export function ContextUserCreateModal({
           <div className="field"><label>Número de documento</label><input name="identity_document_number" placeholder="Número del documento seleccionado" /></div>
           <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={userCountry} />
           <div className="field"><label>Contraseña temporal *</label><input name="password" type="password" minLength={8} required autoComplete="new-password" placeholder="Mínimo 8 caracteres" /></div>
-          <div className="field"><label>Rol *</label><select name="role" value={role} onChange={event=>setRole(event.target.value)}><option value="admin">Administrador de empresa</option><option value="manager">Manager / Supervisor</option><option value="technician">Técnico</option><option value="requester">Solicitante</option><option value="viewer">Consulta</option><option value="provider">Proveedor de servicios</option><option value="external">Colaborador externo</option></select></div>
+          {lockRole?<><input type="hidden" name="role" value={role}/><div className="field"><label>Rol</label><input value={role==="technician"?"Técnico":role} readOnly/></div></>:<div className="field"><label>Rol *</label><select name="role" value={role} onChange={event=>setRole(event.target.value)}><option value="admin">Administrador de empresa</option><option value="manager">Manager / Supervisor</option><option value="technician">Técnico</option><option value="requester">Solicitante</option><option value="viewer">Consulta</option><option value="provider">Proveedor de servicios</option><option value="external">Colaborador externo</option></select></div>}
           {(role==="provider" || role==="external") && <div className="field"><label>Proveedor de servicios {role==="provider"?"*":"(opcional)"}</label><select name="external_supplier_id" required={role==="provider"}><option value="">Selecciona proveedor</option>{serviceSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>}
         </div>
         <aside className="role-permission-note"><div className="role-permission-icon">i</div><div><strong>Empresa preseleccionada</strong><p>El usuario tendrá inicialmente acceso a todas las sedes de {organizationName}. El alcance puede ajustarse posteriormente desde Usuarios.</p></div></aside>

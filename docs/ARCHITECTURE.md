@@ -811,3 +811,16 @@ The Reports page may query visible Site labels for filter controls, but export e
 Settings and Personalization retain their existing POST endpoints and persistence. Phase 10 changes visual composition only.
 
 Final visual governance is enforced by `scripts/design-system-final-audit.mjs`. V2 stylesheets are token-only. The large legacy `app/globals.css` remains compatibility debt and is frozen at its audited baseline rather than globally rewritten.
+
+
+### Company contextual related-data workspace
+
+The Company quick profile does not introduce new domain APIs. Its related-management tabs are composed from existing PostgreSQL sources and workflows:
+
+- Sites/Locations: existing `sites` / `locations` tables and creation routes;
+- Technicians: `organization_members` + `users` + Site access mappings and the existing Users creation endpoint;
+- Documents: `organization_documents` and the existing organization document GET/POST routes.
+
+The document manager uses the existing authenticated inline file endpoint for PDF/image preview. The new 40/60 presentation, filters, selection and viewer controls are client presentation only.
+
+Organization document POST routes now honor a sanitized dashboard `return_to` value, preserving their previous Company-detail fallback when no contextual return is provided.

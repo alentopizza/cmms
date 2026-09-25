@@ -7,6 +7,8 @@ const required=[
   "components/DashboardControls.tsx",
   "components/DashboardDateRangePicker.tsx",
   "app/dashboard/companies/CompanyDirectory.tsx",
+  "components/CompanyDocumentWorkspace.tsx",
+  "components/CompanyDocumentCreateModal.tsx",
   "components/LocationDirectory.tsx",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Phase 6 file: "+file);
@@ -35,15 +37,35 @@ const range=fs.readFileSync("components/DashboardDateRangePicker.tsx","utf8");
 for(const glyph of ["▣","⌄","‹","›"])if(range.includes(glyph))throw new Error("Date range picker still contains legacy glyph "+glyph);
 if(!range.includes("<UiIcon")||!range.includes("<Button"))throw new Error("Date range picker must consume UI Core/icon primitives");
 
-const companies=fs.readFileSync("app/dashboard/companies/CompanyDirectory.tsx","utf8");
-for(const marker of ["phase6-company-directory","<CompanyCard","<StatTiles","status={<Badge","company-document-gateway","company-document-gateway-action","company-staff-gateway","company-staff-gateway-action"]){
-  if(!companies.includes(marker))throw new Error("Companies Phase 6 migration missing "+marker);
+const companiesPage=fs.readFileSync("app/dashboard/companies/page.tsx","utf8");
+for(const marker of ["CompanyRelatedSite","CompanyRelatedLocation","CompanyRelatedTechnician","CompanyRelatedDocument","organization_documents","organization_member_sites"]){
+  if(!companiesPage.includes(marker))throw new Error("Companies server data source missing "+marker);
 }
-if(companies.includes('<div className="entity-panel"><h3>Expediente empresarial</h3>'))throw new Error("Company Documents tab still uses the overlapping legacy gateway composition");
-if(companies.includes('<div className="entity-panel"><h3>Personal de la empresa</h3>'))throw new Error("Company Technicians tab still uses the overlapping legacy gateway composition");
+const companies=fs.readFileSync("app/dashboard/companies/CompanyDirectory.tsx","utf8");
+for(const marker of ["phase6-company-directory","<CompanyCard","<StatTiles","status={<Badge","<LocationCreateModal","<CompanyDocumentWorkspace","<CompanyDocumentCreateModal","<ContextUserCreateModal","company-related-location-grid","company-technician-card-grid"]){
+  if(!companies.includes(marker))throw new Error("Companies Phase 6 related-management migration missing "+marker);
+}
+if(companies.includes("company-document-gateway"))throw new Error("Company Documents tab still renders the obsolete gateway instead of the document manager");
+if(companies.includes("company-staff-gateway"))throw new Error("Company Technicians tab still renders the obsolete gateway instead of technician cards");
 if(companies.includes('id:"life"'))throw new Error("Company quick profile still renders the redundant life tab");
+for(const marker of ['tab=locations','tab=documents','tab=technicians','initialRole="technician"','lockRole']){
+  if(!companies.includes(marker))throw new Error("Contextual company workflow missing "+marker);
+}
 if(companies.includes("function ResourceIcon"))throw new Error("Companies still defines a private resource icon system");
 if(companies.includes("function CompanyMetric"))throw new Error("Companies still defines private metric cards");
+
+const documentWorkspace=fs.readFileSync("components/CompanyDocumentWorkspace.tsx","utf8");
+for(const marker of ["company-document-workspace-v2","company-document-preview-panel","company-document-list-panel","company-document-table","Previsualizar documento","Descargar documento","Compartir documento","Cargando previsualización","<Drawer"]){
+  if(!documentWorkspace.includes(marker))throw new Error("Company document manager missing "+marker);
+}
+if(!documentWorkspace.includes('selectedId')||!documentWorkspace.includes('visible[0]'))throw new Error("Company document manager must auto-select the first visible document");
+if(!documentWorkspace.includes('onError={()=>{setPreviewLoading(false);setPreviewError(true);}}'))throw new Error("Company document preview must expose a PDF preview error state");
+const documentCreate=fs.readFileSync("components/CompanyDocumentCreateModal.tsx","utf8");
+if(!documentCreate.includes("/api/organizations/")||!documentCreate.includes('name="return_to"'))throw new Error("Company document create action must reuse the existing endpoint and contextual return path");
+for(const route of ["app/api/organizations/[id]/documents/route.ts","app/api/organizations/[id]/documents/[documentId]/route.ts"]){
+  const source=fs.readFileSync(route,"utf8");
+  if(!source.includes("safeDashboardReturn")||!source.includes("return_to"))throw new Error(route+" must preserve the contextual Company return path");
+}
 
 const locations=fs.readFileSync("components/LocationDirectory.tsx","utf8");
 for(const marker of ["phase6-location-directory","<LocationCard","<SubLocationCard","<Search","<Select","<StatTiles","status={<Badge"]){
@@ -64,10 +86,15 @@ if(staticTable.includes('"use client"'))throw new Error("StaticDataTable must re
 if(!staticTable.includes('className="ds-data-table"'))throw new Error("StaticDataTable must reuse Shared Data UI table grammar");
 
 const css=fs.readFileSync("app/phase6-modules.css","utf8");
-for(const selector of [".phase6-dashboard",".phase6-company-directory",".phase6-location-directory",".company-document-gateway",".company-staff-gateway",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
+for(const selector of [".phase6-dashboard",".phase6-company-directory",".phase6-location-directory",".company-related-location-grid",".company-technician-card-grid",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 6 CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 6 CSS must use Design Tokens only");
+const documentCss=fs.readFileSync("app/document-workspace.css","utf8");
+for(const selector of [".company-document-workspace-v2",".company-document-preview-panel",".company-document-list-panel",".entity-profile-tab-action","@media(max-width:900px)","@media(prefers-reduced-motion:reduce)"]){
+  if(!documentCss.includes(selector))throw new Error("Document workspace CSS missing "+selector);
+}
+if(/#[0-9a-fA-F]{3,8}\b/.test(documentCss))throw new Error("Document workspace CSS must use Design Tokens only");
 
 const layout=fs.readFileSync("app/layout.tsx","utf8");
 const businessIndex=layout.indexOf('import "./business-ui.css";');

@@ -17,6 +17,7 @@ export type EntityProfileTab = {
   id: string;
   label: string;
   content: ReactNode;
+  action?: ReactNode;
 };
 
 export type EntityProfileBreadcrumb = {
@@ -126,17 +127,20 @@ export default function EntityProfileWorkspace({
       </aside>
 
       <section className="entity-profile-content-card">
-        <nav className="entity-profile-tabs" aria-label={"Secciones de " + title}>
-          {available.map(tab => <button
-            key={tab.id}
-            type="button"
-            className={active?.id === tab.id ? "active" : ""}
-            aria-pressed={active?.id === tab.id}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>)}
-        </nav>
+        <div className="entity-profile-tabbar">
+          <nav className="entity-profile-tabs" aria-label={"Secciones de " + title}>
+            {available.map(tab => <button
+              key={tab.id}
+              type="button"
+              className={active?.id === tab.id ? "active" : ""}
+              aria-pressed={active?.id === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>)}
+          </nav>
+          {active?.action && <div className="entity-profile-tab-action">{active.action}</div>}
+        </div>
         <div className="entity-profile-tab-body" key={active?.id}>
           {active?.content}
         </div>

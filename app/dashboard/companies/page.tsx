@@ -4,20 +4,27 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import ModuleHeader from "@/components/ModuleHeader";
-import CompanyDirectory, { type CompanyDirectoryItem } from "./CompanyDirectory";
+import CompanyDirectory, {
+  type CompanyDirectoryItem,
+  type CompanyRelatedDocument,
+  type CompanyRelatedLocation,
+  type CompanyRelatedSite,
+  type CompanyRelatedSupplier,
+  type CompanyRelatedTechnician,
+} from "./CompanyDirectory";
 import { getCustomizationSummary } from "@/lib/customization";
 import { Alert } from "@/components/ui-kit/Feedback";
 
 export default async function CompaniesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ create?: string; create_error?: string; saved?: string; deleted?: string; error?: string }>;
+  searchParams: Promise<{ create?: string; create_error?: string; saved?: string; deleted?: string; error?: string; company?: string; tab?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!can(session, "companies.manage")) redirect("/dashboard");
 
-  const [companies, params, customization] = await Promise.all([
+  const [companies, params, customization, sites, locations, technicians, documents, serviceSuppliers] = await Promise.all([
     query<CompanyDirectoryItem>(
       `SELECT o.id,o.name,o.slug,o.legal_name,o.tax_id,o.tax_id_type,o.timezone,o.active,
         o.legal_address,o.legal_city,o.legal_country,o.phone,o.admin_email,o.billing_email,o.website,
@@ -81,6 +88,54 @@ export default async function CompaniesPage({
     ),
     searchParams,
     getCustomizationSummary(),
+    query<CompanyRelatedSite>(
+      `SELECT s.id,s.organization_id,s.name,s.code,s.city,s.country,s.address,s.active,
+              count(DISTINCT a.id)::int asset_count,
+              count(DISTINCT l.id)::int sublocation_count,
+              (s.image_data IS NOT NULL) has_image
+       FROM sites s
+       LEFT JOIN assets a ON a.site_id=s.id
+       LEFT JOIN locations l ON l.site_id=s.id
+       GROUP BY s.id
+       ORDER BY s.active DESC,s.created_at ASC`,
+    ),
+    query<CompanyRelatedLocation>(
+      `SELECT l.id,l.organization_id,l.site_id,l.name,l.code,l.type,l.parent_id,l.active,
+              count(DISTINCT a.id)::int asset_count,
+              (l.image_data IS NOT NULL) has_image
+       FROM locations l
+       LEFT JOIN assets a ON a.location_id=l.id
+       GROUP BY l.id
+       ORDER BY l.created_at ASC`,
+    ),
+    query<CompanyRelatedTechnician>(
+      `SELECT u.id,om.organization_id,u.full_name,u.email,u.phone,u.active,(u.avatar_data IS NOT NULL) has_avatar,
+              om.access_all_sites,
+              COALESCE(array_agg(DISTINCT s.name ORDER BY s.name) FILTER (WHERE s.id IS NOT NULL),ARRAY[]::text[]) site_names
+       FROM organization_members om
+       JOIN users u ON u.id=om.user_id
+       LEFT JOIN organization_member_sites oms ON oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+       LEFT JOIN sites s ON s.id=oms.site_id
+       WHERE om.role='technician'
+       GROUP BY u.id,om.organization_id,om.access_all_sites
+       ORDER BY u.active DESC,u.full_name`,
+    ),
+    query<CompanyRelatedDocument>(
+      `SELECT d.id,d.organization_id,d.category,d.requirement_level,d.display_name,d.reference,
+              d.issue_date::text,d.expires_at::text,d.notes,d.file_name,d.file_mime_type,
+              d.file_size_bytes::text,d.created_at::text,d.updated_at::text,u.full_name uploaded_by_name,
+              d.archived_at::text,au.full_name archived_by_name
+       FROM organization_documents d
+       LEFT JOIN users u ON u.id=d.uploaded_by
+       LEFT JOIN users au ON au.id=d.archived_by
+       ORDER BY (d.archived_at IS NOT NULL),d.created_at DESC`,
+    ),
+    query<CompanyRelatedSupplier>(
+      `SELECT id,organization_id,name
+       FROM suppliers
+       WHERE active=true AND supplier_type IN ('services','both')
+       ORDER BY organization_id,name`,
+    ),
   ]);
 
   return <>
@@ -128,8 +183,17 @@ export default async function CompaniesPage({
     <section className="section">
       <CompanyDirectory
         companies={companies.rows}
+        sites={sites.rows}
+        locations={locations.rows}
+        technicians={technicians.rows}
+        documents={documents.rows}
+        serviceSuppliers={serviceSuppliers.rows}
         canManageResources={can(session, "company_resources.manage")}
+        canManageLocations={can(session, "locations.manage")}
+        canManageUsers={can(session, "users.manage")}
         canDelete={isPlatformOwner(session)}
+        initialCompanyId={params.company}
+        initialTab={params.tab}
       />
     </section>
   </>;

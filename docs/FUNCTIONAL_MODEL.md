@@ -227,6 +227,20 @@ Each organization can independently enable the feature and define:
 
 Default intended field roles are **Técnico**, **Colaborador externo** and **Proveedor de servicios**. Administrators and Managers may also be included when the organization wants them to clock field attendance.
 
+### Individual work schedule
+
+An attendance-controlled user may have one active weekly schedule per Organization. The schedule records:
+
+- enabled/disabled day of week;
+- planned start and end time;
+- planned break minutes;
+- grace-before and grace-after values;
+- active/inactive state.
+
+This schedule is a planning and traceability reference, not the Company's or Site's operating-hours record. Company/Site `business_schedule` continues to describe when the business/place operates. Editing a person's schedule does not alter historical shifts: the active schedule is snapshotted when the shift starts.
+
+The current implementation does not automatically punish, block, rank or make employment decisions from schedule variance. Future payroll/overtime enforcement requires an explicit separate policy.
+
 ### Facial verification
 
 Facial verification is 1:1 verification against the authenticated user's enrolled template; it is not a search across all employees.
@@ -239,7 +253,7 @@ Enrollment:
 5. the server encrypts the embedding with AES-256-GCM before database persistence;
 6. the application does not persist the enrollment photograph.
 
-Users can delete their biometric template from the attendance workspace. Deletion removes the stored template rather than only hiding it.
+Biometric revocation is an administrative supervised action. It makes the encrypted template unusable while preserving non-biometric audit metadata; the user cannot self-replace or self-revoke the identity template.
 
 ### Geofencing
 
@@ -315,14 +329,33 @@ Contingency cannot replace initial biometric enrollment, cannot be reused, canno
 A field shift contains:
 - user;
 - organization;
-- site;
+- immutable origin/check-in Site;
+- current confirmed operating Site;
+- actual check-out Site when closed;
 - check-in/check-out timestamps;
 - GPS coordinates and accuracy;
-- distance from the configured site point;
+- distance from the configured Site point;
 - facial verification confidence;
-- liveness and anti-spoof confidence.
+- liveness and anti-spoof confidence;
+- the schedule ID/snapshot in effect when the shift began, when one was assigned.
 
 Only one open shift per user is allowed.
+
+### Intra-shift displacement
+
+A technician may move between authorized Sites without closing and reopening the working day.
+
+1. The user starts a displacement while still inside the geofence of the current Site.
+2. The system records origin, destination, departure time and available GPS evidence.
+3. The shift remains open and the displacement is marked **in transit**.
+4. At the destination the user selects **Registrar llegada**.
+5. The server revalidates the destination Site, scope, GPS accuracy and geofence.
+6. Only after successful arrival does the destination become the shift's `current_site_id`.
+7. The user may repeat the process for another Site or close the shift at the current confirmed Site.
+
+A standard shift cannot close while a displacement is still in transit. The original `site_id` is never rewritten, so reports retain where the working day began.
+
+Displacement is event-based attendance evidence, not continuous location tracking. Reaction remains responsible for connected operational tracking and recent route telemetry.
 
 ### Activity/attendance correlation
 

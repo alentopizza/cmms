@@ -17,6 +17,8 @@ import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
+import AttendanceScheduleEditor, { type AttendanceScheduleView } from "@/components/AttendanceScheduleEditor";
+import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -93,7 +95,7 @@ type UserStatisticsSnapshot = {
 };
 
 type Organization = { id: string; name: string; country: string };
-type Site = { id: string; organization_id: string; name: string; organization_name: string };
+type Site = { id: string; organization_id: string; name: string; organization_name: string; city:string|null; latitude:number|null; longitude:number|null; geofence_radius_m:number };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
 type Draft = {
@@ -238,6 +240,9 @@ export default function UserManagement({
   serviceSuppliers,
   documents,
   emergencyContacts,
+  attendanceSchedules,
+  attendancePolicies,
+  canManageAttendance,
 }: {
   users: ManagedUser[];
   organizations: Organization[];
@@ -249,6 +254,9 @@ export default function UserManagement({
   serviceSuppliers: ServiceSupplier[];
   documents: ManagedUserDocument[];
   emergencyContacts: ManagedEmergencyContact[];
+  attendanceSchedules: AttendanceScheduleView[];
+  attendancePolicies: Array<{organization_id:string;liveness_threshold:number}>;
+  canManageAttendance:boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -296,6 +304,11 @@ export default function UserManagement({
   const selectedStatistics=selectedUserId?statisticsByUser[selectedUserId]||null:null;
   const selectedDocuments=useMemo(()=>documents.filter(document=>document.user_id===selectedUserId),[documents,selectedUserId]);
   const selectedEmergencyContact=useMemo(()=>emergencyContacts.find(contact=>contact.user_id===selectedUserId)||null,[emergencyContacts,selectedUserId]);
+  const selectedAttendanceSites=useMemo(()=>selectedUser?.organization_id?sites.filter(site=>site.organization_id===selectedUser.organization_id):[],[sites,selectedUser]);
+  const selectedAttendanceSchedule=useMemo(()=>selectedUser?.organization_id?attendanceSchedules.filter(item=>item.organization_id===selectedUser.organization_id&&item.user_id===selectedUser.id):[],[attendanceSchedules,selectedUser]);
+  const selectedAttendanceThreshold=selectedUser?.organization_id
+    ? attendancePolicies.find(item=>item.organization_id===selectedUser.organization_id)?.liveness_threshold??0.60
+    : 0.60;
 
   useEffect(()=>{
     const requestedUser=searchParams.get("user");
@@ -722,13 +735,39 @@ export default function UserManagement({
               </div></div>
               <div className="entity-panel"><h3>Accesos</h3><p className="entity-panel-copy">{roleDescription(roleKey(selectedUser))}</p></div>
             </div>},
-            {id:"attendance",label:"Asistencia",content:<div className="entity-panel-grid">
-              <div className="entity-panel"><h3>Estado de campo</h3><div className="entity-info-grid">
+            {id:"attendance",label:"Asistencia",content:<div className="entity-section-stack user-attendance-management">
+              <div className="entity-panel"><div className="section-heading"><div><h3>Estado de campo</h3><p className="entity-panel-copy">Jornada, biometría y seguimiento operativo de esta persona.</p></div><Link className="text-button" href={selectedUser.organization_id?"/dashboard/attendance?organization="+selectedUser.organization_id:"/dashboard/attendance"}>Abrir módulo de Asistencia →</Link></div><div className="entity-info-grid">
                 <div className="entity-info-field"><span>Turno actual</span><strong>{selectedUser.open_shift?"Abierto":"Sin turno abierto"}</strong></div>
                 <div className="entity-info-field"><span>Horas 30 días</span><strong>{selectedUser.attendance_hours_30d}</strong></div>
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
                 <div className="entity-info-field"><span>Seguimiento Reacción</span><strong>{selectedUser.tracking_live?"En línea":"Sin conexión"}</strong></div>
               </div></div>
+              {canManageAttendance&&selectedUser.organization_id&&selectedUser.platform_role==="user"?<>
+                <AttendanceScheduleEditor
+                  key={"schedule-"+selectedUser.id}
+                  organizationId={selectedUser.organization_id}
+                  people={[{id:selectedUser.id,full_name:selectedUser.full_name,role:roleName(roleKey(selectedUser))}]}
+                  schedules={selectedAttendanceSchedule}
+                  initialUserId={selectedUser.id}
+                  title="Jornada asignada"
+                  description="Configura días y horas de referencia para este usuario. Los desplazamientos entre sedes se registran durante la jornada desde Asistencia."
+                />
+                {(["admin","manager","technician","provider","external"] as string[]).includes(selectedUser.role||"")&&<SupervisedBiometricEnrollment
+                  people={[{
+                    id:selectedUser.id,
+                    full_name:selectedUser.full_name,
+                    email:selectedUser.email,
+                    role:roleName(roleKey(selectedUser)),
+                    has_avatar:selectedUser.has_avatar,
+                    biometric_status:selectedUser.biometric_status,
+                  }]}
+                  sites={selectedAttendanceSites.map(site=>({
+                    id:site.id,name:site.name,city:site.city,latitude:site.latitude,longitude:site.longitude,geofenceRadius:site.geofence_radius_m,
+                  }))}
+                  livenessThreshold={selectedAttendanceThreshold}
+                  organizationId={selectedUser.organization_id}
+                />}
+              </>:<Alert variant="info" title="Configuración administrada">La jornada y el enrolamiento biométrico se administran para usuarios vinculados a una empresa y requieren permiso de asistencia.</Alert>}
             </div>},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida del técnico</h3><p className="entity-panel-copy">Consolida identidad, rol, alcance, indicadores de ejecución, asistencia y estado operativo con los permisos actuales.</p></div><ProfileExportMenu entity="user" id={selectedUser.id} label="Exportar hoja de vida"/></div>},
           ]}

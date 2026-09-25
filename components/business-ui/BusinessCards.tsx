@@ -4,7 +4,7 @@ import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
 
-export type BusinessDomain="asset"|"inventory"|"maintenance"|"work-order"|"supplier"|"company"|"location"|"user";
+export type BusinessDomain="asset"|"inventory"|"maintenance"|"work-order"|"supplier"|"company"|"location"|"user"|"crew";
 
 type RecordProps=HTMLAttributes<HTMLElement>&{[key:`data-${string}`]:string|number|boolean|undefined};
 
@@ -231,6 +231,36 @@ export function SubLocationCard({
       <div className="sublocation-mini-logo ds-business-logo">{organizationLogoSrc?<img src={organizationLogoSrc} alt="" />:<span>{fallback}</span>}</div>
       <strong>{name}</strong><small>{type} · {assetCount} activos</small>
     </button>
+  </BusinessCardShell>;
+}
+
+export function CrewCard({
+  name,organization,site,active,leaderName,leaderRole,leaderPhotoSrc,fallback,metrics,leaderActions,roster,actions,recordProps,
+}:{
+  name:string;organization:string;site?:string|null;active:boolean;leaderName:string;leaderRole:string;leaderPhotoSrc?:string|null;fallback:string;
+  metrics:Array<{label:string;value:ReactNode;icon?:UiIconName}>;leaderActions?:ReactNode;roster?:ReactNode;actions?:ReactNode;recordProps?:RecordProps;
+}){
+  return <BusinessCardShell domain="crew" className={"crew-showcase-card ds-crew-card "+(active?"":"inactive")} recordProps={recordProps}>
+    <div className="crew-leader-hero ds-crew-leader">
+      <div className="crew-leader-photo ds-crew-leader-photo">
+        {leaderPhotoSrc?<img src={leaderPhotoSrc} alt={"Foto de "+leaderName}/>:<span>{fallback}</span>}
+        <div className="crew-leader-shade"/>
+        <Badge variant="brand" icon="crew" className="crew-leader-badge">Líder</Badge>
+        <div className="crew-leader-identity"><strong>{leaderName}</strong><small>{leaderRole}</small></div>
+      </div>
+      {leaderActions&&<div className="crew-leader-actions ds-business-actions">{leaderActions}</div>}
+    </div>
+    <div className="crew-showcase-main">
+      <header className="crew-showcase-head">
+        <div><span className="eyebrow">Cuadrilla</span><h3>{name}</h3><p>{organization}{site?" · "+site:""}</p></div>
+        <Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge>
+      </header>
+      <div className="crew-showcase-metrics ds-crew-metrics">
+        {metrics.map(item=><div key={item.label}>{item.icon&&<UiIcon name={item.icon} size={18}/>}<span><strong>{item.value}</strong><small>{item.label}</small></span></div>)}
+      </div>
+      {roster}
+      {actions&&<div className="crew-showcase-owner-actions ds-business-actions">{actions}</div>}
+    </div>
   </BusinessCardShell>;
 }
 

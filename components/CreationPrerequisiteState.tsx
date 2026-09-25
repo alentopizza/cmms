@@ -2,7 +2,7 @@ import Link from "next/link";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
 
 function prerequisiteIcon(value:string):UiIconName{
-  const legacy:Record<string,UiIconName>={"◇":"asset","✓":"work-order","↻":"maintenance","⌁":"sublocation",inventory:"inventory",asset:"asset"};
+  const legacy:Record<string,UiIconName>={"◇":"asset","✓":"work-order","↻":"maintenance","⌁":"sublocation",inventory:"inventory",asset:"asset",supplier:"supplier",crew:"crew",attendance:"attendance",user:"user"};
   return legacy[value]||"activity";
 }
 

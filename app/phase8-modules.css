@@ -1,0 +1,217 @@
+/* ==========================================================================
+   DESWEB V2 — Phase 8 complete module block
+   Suppliers + Users + Crews + Attendance.
+   Scoped token-only migration layer.
+   ========================================================================== */
+
+.phase8-suppliers,.phase8-users,.phase8-crews,.phase8-attendance{display:grid;gap:var(--space-4)}
+.phase8-feedback-stack{display:grid;gap:var(--space-2)}
+
+/* Suppliers ---------------------------------------------------------------- */
+.phase8-suppliers .supplier-profile-grid,
+.phase8-supplier-directory .supplier-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+.phase8-supplier-directory .ds-business-supplier{min-width:0}
+.phase8-supplier-directory .supplier-directory-modern{display:grid;gap:var(--space-4)}
+.phase8-supplier-directory .entity-profile-workspace{display:grid;gap:var(--space-4)}
+.phase8-supplier-directory .entity-profile-page-head,
+.phase8-supplier-directory .entity-profile-identity-card,
+.phase8-supplier-directory .entity-profile-content-card{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-supplier-directory .entity-panel{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);box-shadow:none
+}
+.phase8-supplier-directory .entity-info-field{border-color:var(--color-border-subtle);background:var(--color-surface)}
+.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles .ds-stat-tile{background:var(--color-surface);border-color:var(--color-border-subtle)}
+.phase8-supplier-directory .supplier-commercial-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}
+.phase8-supplier-directory .supplier-commercial-kpi-grid>article{
+  display:grid;gap:var(--space-1);padding:var(--space-3);border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-xl);background:var(--color-surface)
+}
+.phase8-supplier-directory .supplier-commercial-kpi-grid span{color:var(--color-text-muted);font-size:9px;font-weight:var(--font-weight-bold);text-transform:uppercase;letter-spacing:.05em}
+.phase8-supplier-directory .supplier-commercial-kpi-grid strong{color:var(--color-text-primary);font-size:var(--font-size-h4)}
+.phase8-supplier-directory .supplier-commercial-kpi-grid small{color:var(--color-text-muted);font-size:9px;line-height:1.4}
+.phase8-supplier-directory .supplier-commercial-trend>article{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface)
+}
+.phase8-supplier-directory .supplier-requisition-operational-row{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface)
+}
+.phase8-supplier-directory .supplier-requisition-progress{background:var(--color-surface-soft)}
+.phase8-supplier-directory .supplier-requisition-progress i{background:var(--color-action-primary)}
+.phase8-supplier-directory .ds-data-table-shell{box-shadow:none}
+
+/* Users -------------------------------------------------------------------- */
+.phase8-users .user-role-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4)}
+.phase8-users .ds-business-user{min-width:0}
+.phase8-users .user-directory-profile-card{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs);overflow:hidden
+}
+.phase8-users .user-card-cover{position:relative;display:block;height:70px;background:linear-gradient(135deg,var(--color-navy-800),var(--color-brand-secondary))}
+.phase8-users .user-card-status{position:absolute;right:var(--space-3);top:var(--space-3)}
+.phase8-users .user-card-avatar{
+  width:70px;height:70px;display:grid;place-items:center;overflow:hidden;border:4px solid var(--color-surface);
+  border-radius:50%;background:var(--color-surface);box-shadow:var(--shadow-sm);color:var(--color-brand-secondary);font-weight:var(--font-weight-bold)
+}
+.phase8-users .user-card-avatar img{width:100%;height:100%;object-fit:cover}
+.phase8-users .user-card-identity{display:grid;gap:3px;padding:var(--space-3) var(--space-4)}
+.phase8-users .user-card-identity strong{color:var(--color-text-primary);font-size:var(--font-size-body-lg)}
+.phase8-users .user-card-identity span{color:var(--color-brand-secondary);font-size:var(--font-size-body-sm);font-weight:var(--font-weight-semibold)}
+.phase8-users .user-card-identity small,.phase8-users .user-card-identity em{color:var(--color-text-muted);font-size:9px;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phase8-users .user-card-badges{padding:0 var(--space-4) var(--space-3)}
+.phase8-users .user-card-badges>span{display:flex;align-items:center;gap:var(--space-1);color:var(--color-text-muted);font-size:9px}
+.phase8-users .user-card-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;border-top:1px solid var(--color-border-subtle);border-bottom:1px solid var(--color-border-subtle);background:var(--color-border-subtle)}
+.phase8-users .user-card-metrics>span{display:grid;justify-items:center;gap:2px;padding:var(--space-2);background:var(--color-surface-soft)}
+.phase8-users .user-card-metrics strong{color:var(--color-text-primary);font-size:var(--font-size-body)}
+.phase8-users .user-card-metrics small{color:var(--color-text-muted);font-size:8px}
+.phase8-users .user-card-compact-actions{display:flex;align-items:center;gap:var(--space-1);padding:var(--space-3)}
+.phase8-users .user-card-primary-action,.phase8-users .user-card-icon-action{
+  min-height:34px;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-text-secondary);cursor:pointer
+}
+.phase8-users .user-card-primary-action{display:flex;align-items:center;justify-content:center;gap:var(--space-2);flex:1;padding:0 var(--space-3);font-weight:var(--font-weight-semibold)}
+.phase8-users .user-card-icon-action{width:34px;display:grid;place-items:center}
+.phase8-users .user-card-primary-action:hover,.phase8-users .user-card-icon-action:hover{background:var(--color-surface-teal);color:var(--color-brand-secondary)}
+.phase8-users .user-card-icon-action.danger:hover{background:var(--color-danger-surface);color:var(--color-danger-text)}
+.phase8-users .entity-profile-page-head,
+.phase8-users .entity-profile-identity-card,
+.phase8-users .entity-profile-content-card{border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)}
+.phase8-users .entity-panel{border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);box-shadow:none}
+.phase8-users .entity-info-field{border-color:var(--color-border-subtle);background:var(--color-surface)}
+.phase8-users .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+.phase8-users .user-form-modal{border-color:var(--color-border-subtle);background:var(--color-surface);box-shadow:var(--shadow-lg)}
+.phase8-users .site-access-mode button,.phase8-users .site-checkbox-card{
+  border-color:var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+.phase8-users .site-access-mode button.active,.phase8-users .site-checkbox-card.active{border-color:var(--color-border-active);background:var(--color-surface-teal)}
+.phase8-users .role-permission-note{border:1px solid var(--color-info-border);border-radius:var(--radius-xl);background:var(--color-info-surface)}
+.phase8-users .role-permission-icon{display:grid;place-items:center;color:var(--color-info-text)}
+.phase8-users .user-statistics-loading{display:grid;justify-items:center;gap:var(--space-2);padding:var(--space-6);color:var(--color-text-muted)}
+
+/* User operational analytics */
+.phase8-users .user-ops-dashboard{display:grid;gap:var(--space-4)}
+.phase8-users .user-ops-welcome{display:grid;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)}
+.phase8-users .user-ops-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.phase8-users .user-ops-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.phase8-users .user-ops-card{border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)}
+.phase8-users .user-ops-profile-status>div{border-color:var(--color-border-subtle);background:var(--color-surface-soft)}
+.phase8-users .user-ops-time-summary{display:flex;align-items:baseline;gap:var(--space-2);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.phase8-users .user-ops-time-summary strong{font-size:var(--font-size-h3);color:var(--color-text-primary)}
+.phase8-users .user-ops-time-summary span{font-size:10px;color:var(--color-text-muted)}
+.phase8-users .user-ops-agenda-row,.phase8-users .user-ops-task-list>a{border-color:var(--color-border-subtle);background:var(--color-surface-soft)}
+.phase8-users .user-ops-agenda-row:hover,.phase8-users .user-ops-task-list>a:hover{background:var(--color-surface-teal)}
+
+/* Crews -------------------------------------------------------------------- */
+.phase8-crews .crew-showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.phase8-crews .ds-business-crew{min-width:0;overflow:hidden}
+.phase8-crews .ds-crew-leader{display:grid;grid-template-columns:minmax(0,1fr) auto;background:var(--color-navy-900)}
+.phase8-crews .ds-crew-leader-photo{position:relative;min-height:180px;overflow:hidden;background:linear-gradient(135deg,var(--color-navy-800),var(--color-brand-secondary))}
+.phase8-crews .ds-crew-leader-photo>img{width:100%;height:100%;object-fit:cover}
+.phase8-crews .ds-crew-leader-photo>span:not(.ds-badge){position:absolute;inset:0;display:grid;place-items:center;color:var(--color-text-inverse);font-size:var(--font-size-h2);font-weight:var(--font-weight-bold)}
+.phase8-crews .crew-leader-shade{position:absolute;inset:45% 0 0;background:linear-gradient(transparent,var(--color-navy-950))}
+.phase8-crews .crew-leader-badge{position:absolute;left:var(--space-3);top:var(--space-3)}
+.phase8-crews .crew-leader-identity{position:absolute;left:var(--space-4);right:var(--space-4);bottom:var(--space-4);display:grid;gap:2px;color:var(--color-text-inverse)}
+.phase8-crews .crew-leader-identity strong{font-size:var(--font-size-body-lg)}.phase8-crews .crew-leader-identity small{opacity:.8}
+.phase8-crews .crew-leader-actions{display:grid;align-content:center;gap:var(--space-2);padding:var(--space-3);background:var(--color-navy-900)}
+.phase8-crews .crew-leader-actions a{width:40px;height:40px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--color-text-inverse) 20%,transparent);border-radius:var(--radius-lg);color:var(--color-text-inverse)}
+.phase8-crews .crew-leader-actions a span{display:none}
+.phase8-crews .crew-showcase-main{display:grid;gap:var(--space-3);padding:var(--space-4)}
+.phase8-crews .crew-showcase-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+.phase8-crews .crew-showcase-head h3{margin:2px 0;color:var(--color-text-primary);font-size:var(--font-size-h4)}
+.phase8-crews .crew-showcase-head p,.phase8-crews .crew-showcase-description{margin:0;color:var(--color-text-muted);font-size:var(--font-size-body-sm)}
+.phase8-crews .ds-crew-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.phase8-crews .ds-crew-metrics>div{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);color:var(--color-brand-secondary)}
+.phase8-crews .ds-crew-metrics>div span{display:grid}.phase8-crews .ds-crew-metrics strong{color:var(--color-text-primary)}.phase8-crews .ds-crew-metrics small{color:var(--color-text-muted);font-size:8px}
+.phase8-crews .crew-roster-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.phase8-crews .crew-roster-person{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-2);align-items:center;padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.phase8-crews .crew-person-avatar{width:38px;height:38px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:var(--color-surface-teal);color:var(--color-brand-secondary)}
+.phase8-crews .crew-person-avatar img{width:100%;height:100%;object-fit:cover}
+.phase8-crews .crew-roster-person>div{display:grid;gap:1px;min-width:0}.phase8-crews .crew-roster-person strong{color:var(--color-text-primary);font-size:10px}.phase8-crews .crew-roster-person small{color:var(--color-text-muted);font-size:8px}
+.phase8-crews .crew-roster-person nav{display:flex;gap:var(--space-1)}.phase8-crews .crew-roster-person nav a{width:28px;height:28px;display:grid;place-items:center;border-radius:var(--radius-md);color:var(--color-brand-secondary)}
+.phase8-crews .crew-roster-empty,.phase8-crews .crew-roster-more{padding:var(--space-3);border:1px dashed var(--color-border-default);border-radius:var(--radius-xl);color:var(--color-text-muted);font-size:9px}
+.phase8-crews .crew-create-form .crew-leader-option,.phase8-crews .crew-create-form .crew-member-options label,.phase8-crews .crew-selected-leader{border-color:var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+
+/* Attendance --------------------------------------------------------------- */
+.phase8-attendance .phase8-attendance-summary-head{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .phase8-attendance-summary-head h1{margin:2px 0;color:var(--color-text-primary);font-size:var(--font-size-h2)}
+.phase8-attendance .phase8-attendance-summary-head p{margin:0;color:var(--color-text-muted)}
+.phase8-attendance .attendance-presence-status,.phase8-attendance .attendance-location-card,.phase8-attendance .attendance-action-card,
+.phase8-attendance .attendance-camera-card,.phase8-attendance .attendance-contingency-card,.phase8-attendance .attendance-contingency-review,
+.phase8-attendance .biometric-supervisor-card,.phase8-attendance>.card{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase8-attendance .attendance-presence-status{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-4)}
+.phase8-attendance .attendance-presence-status-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:var(--radius-xl);background:var(--color-surface-teal);color:var(--color-brand-secondary)}
+.phase8-attendance .attendance-presence-grid,.phase8-attendance .biometric-supervisor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.phase8-attendance .attendance-location-card,.phase8-attendance .attendance-action-card{padding:var(--space-4)}
+.phase8-attendance .attendance-location-states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.phase8-attendance .attendance-location-states>div{display:grid;gap:2px;padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft)}
+.phase8-attendance .attendance-location-states span{color:var(--color-text-muted);font-size:8px}.phase8-attendance .attendance-location-states strong{color:var(--color-text-primary);font-size:10px}
+.phase8-attendance .attendance-validation-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.phase8-attendance .attendance-validation-steps>div{display:grid;grid-template-columns:auto 1fr;gap:var(--space-2);align-items:center;padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface-soft)}
+.phase8-attendance .attendance-validation-steps>div>span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:var(--color-surface);color:var(--color-text-muted);font-size:9px;font-weight:var(--font-weight-bold)}
+.phase8-attendance .attendance-validation-steps>div.done>span{background:var(--color-success-surface);color:var(--color-success-text)}
+.phase8-attendance .attendance-validation-steps>div.current{border-color:var(--color-border-active);background:var(--color-surface-teal)}
+.phase8-attendance .attendance-camera-stage{overflow:hidden;border-radius:var(--radius-xl);background:var(--color-navy-950)}
+.phase8-attendance .attendance-camera-placeholder{color:var(--color-text-inverse)}
+.phase8-attendance .attendance-no-assignment-note,.phase8-attendance .contingency-warning{
+  border:1px solid var(--color-info-border);border-radius:var(--radius-xl);background:var(--color-info-surface)
+}
+.phase8-attendance .contingency-active-state,.phase8-attendance .contingency-review-item,.phase8-attendance .biometric-person-card{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+.phase8-attendance .contingency-active-icon{display:grid;place-items:center;color:var(--color-brand-secondary)}
+.phase8-attendance .attendance-role-grid label,.phase8-attendance .attendance-consent{
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)
+}
+.phase8-attendance .attendance-site-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)}
+.phase8-attendance .attendance-site-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center}
+.phase8-attendance .attendance-site-card .text-button{grid-column:1/-1}
+.phase8-attendance-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+.phase8-attendance .attendance-report-table{min-width:980px}
+.phase8-attendance .table-subline{display:block;margin-top:2px;color:var(--color-text-muted);font-size:9px}
+.phase8-attendance .biometric-supervisor-camera{padding:var(--space-3)}
+.phase8-attendance .biometric-enrollment-location-check{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+
+/* Shared forms/focus ------------------------------------------------------- */
+.phase8-suppliers .field input,.phase8-suppliers .field select,.phase8-suppliers .field textarea,
+.phase8-supplier-directory .field input,.phase8-supplier-directory .field select,.phase8-supplier-directory .field textarea,
+.phase8-users .field input,.phase8-users .field select,.phase8-users .field textarea,
+.phase8-crews .field input,.phase8-crews .field select,.phase8-crews .field textarea,
+.phase8-attendance .field input,.phase8-attendance .field select,.phase8-attendance .field textarea{
+  border-color:var(--color-border-default);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text-primary)
+}
+.phase8-suppliers button:focus-visible,.phase8-suppliers a:focus-visible,.phase8-supplier-directory button:focus-visible,.phase8-supplier-directory a:focus-visible,
+.phase8-users button:focus-visible,.phase8-users a:focus-visible,.phase8-crews button:focus-visible,.phase8-crews a:focus-visible,
+.phase8-attendance button:focus-visible,.phase8-attendance a:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--color-focus-ring) 42%,transparent);outline-offset:2px
+}
+
+@media(max-width:1180px){
+  .phase8-suppliers .supplier-profile-grid,.phase8-supplier-directory .supplier-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase8-users .user-role-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .phase8-supplier-directory .supplier-commercial-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .phase8-users .user-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase8-users .user-ops-layout,.phase8-crews .crew-showcase-grid,.phase8-attendance .attendance-presence-grid,.phase8-attendance .biometric-supervisor-grid{grid-template-columns:1fr}
+  .phase8-users .user-ops-kpis,.phase8-users .entity-stat-grid.ds-stat-tiles,.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phase8-attendance .attendance-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .phase8-suppliers .supplier-profile-grid,.phase8-supplier-directory .supplier-profile-grid,.phase8-users .user-role-grid,
+  .phase8-users .user-ops-kpis,.phase8-users .entity-stat-grid.ds-stat-tiles,.phase8-supplier-directory .entity-stat-grid.ds-stat-tiles,
+  .phase8-supplier-directory .supplier-commercial-kpi-grid,.phase8-attendance-kpis,.phase8-attendance .attendance-site-grid{grid-template-columns:1fr}
+  .phase8-crews .crew-roster-grid,.phase8-attendance .attendance-location-states,.phase8-attendance .attendance-validation-steps{grid-template-columns:1fr}
+  .phase8-attendance .phase8-attendance-summary-head{align-items:flex-start;flex-direction:column}
+  .phase8-attendance .attendance-presence-status{grid-template-columns:auto minmax(0,1fr)}
+  .phase8-attendance .attendance-presence-status>.ds-badge{grid-column:1/-1;justify-self:start}
+  .phase8-crews .ds-crew-leader{grid-template-columns:1fr}
+  .phase8-crews .crew-leader-actions{display:flex;justify-content:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  .phase8-suppliers *,.phase8-supplier-directory *,.phase8-users *,.phase8-crews *,.phase8-attendance *{scroll-behavior:auto!important}
+}

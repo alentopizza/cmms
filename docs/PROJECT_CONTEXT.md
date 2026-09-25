@@ -918,3 +918,18 @@ Supplier links, Requisition generation, receipt/return reconciliation, multi-war
 No DB schema, API contract, RBAC or Site/Organization scoping change was introduced by Phase 7.
 
 Next visual migration: Phase 8 Suppliers + Users + Crews + Attendance.
+
+
+### DESWEB V2 Suppliers + People block — Phase 8 implemented (2026-09-24)
+
+Suppliers, Users, Crews and Attendance are migrated end-to-end to V2 presentation without changing their domain boundaries.
+
+Supplier and User remain intentionally different visual entities. Supplier is a commercial/operational third party connected to Inventory, Requisitions, Procurement evidence, returns, documents and finance. User is a person/account with role, Site scope, personnel dossier, emergency contact and optional external Supplier relationship.
+
+Crews now consume a dedicated CrewCard while keeping actual member roles and explicit leader selection.
+
+Attendance remains privacy-sensitive and server-authoritative. Existing biometric profiles, supervised enrollment, liveness checks, GPS accuracy, Site geofences, contingency approvals and attendance policies were not relaxed or moved into presentation logic. Reporting remains descriptive and is not an automated worker ranking.
+
+No DB schema, API, RBAC, biometric threshold, geofence rule or tenant/Site scope changed.
+
+Next visual migration: Phase 9 Maintenance + Work Orders + Activities/Reaction.

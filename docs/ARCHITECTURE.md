@@ -760,3 +760,19 @@ Inventory architecture remains ledger-led:
 Official secondary navigation is implemented with `ModuleNavigation`. Hash/query destinations are matched exactly so multiple module sections can safely share the same pathname.
 
 Phase 7 presentation is scoped by `app/phase7-modules.css`, loaded after Phase 6 and before shell overrides.
+
+
+### Suppliers + People V2 block — Phase 8
+
+Phase 8 keeps domain identity separate while consolidating presentation:
+
+- Suppliers remain commercial third parties with SupplierCard, requisition/procurement/inventory/document/financial relations.
+- Users remain people/accounts with UserCard, role/Site scope, personnel dossier, emergency contact and optional Supplier relation.
+- Crews compose Users through CrewCard without replacing member roles or access scopes.
+- Attendance remains an independent privacy-sensitive subsystem over Users/Sites with supervised biometric enrollment, geofences and contingency approval.
+
+`StaticDataTable.recordProps` lets SSR tables expose `data-module-record` and facet metadata directly on table rows. This keeps ModuleHeader client filtering presentational while source rows and authorization remain server-side.
+
+Attendance capture still performs device GPS/camera acquisition in the client because browsers require it, but authoritative validation and persistence remain in the existing APIs. Phase 8 did not alter similarity/liveness thresholds, geofence rules, encrypted biometric storage, policy semantics or contingency authorization.
+
+`app/phase8-modules.css` is loaded after Phase 7 and before shell overrides and is scoped to the four migrated domains.

@@ -789,3 +789,34 @@ Inventory:
 `ModuleNavigation` distinguishes query/hash destinations exactly, which is required for official secondary navigation where multiple sections share a pathname.
 
 `app/phase7-modules.css` is token-only and scoped to Assets/Inventory/Bulk Import surfaces.
+
+
+## 33. Phase 8 — Suppliers + People + Attendance
+
+**Status: implemented.**
+
+Suppliers:
+- keep the SupplierCard commercial identity and Supplier Entity Profile;
+- Badge/Alert/EmptyState/StatTiles now cover profile state, feedback and summary metrics;
+- commercial requisition evidence uses the Shared Data UI table grammar;
+- Inventory, Requisition, Procurement, Supplier Return, documents and financial relationships are unchanged.
+
+Users:
+- keep the separate UserCard/access-profile identity;
+- directory/profile states and feedback use V2 primitives;
+- statistics fallback uses StatTiles and operational analytics use KpiCard, ProgressBar, Badge and EmptyState;
+- personnel documents, emergency contact, access scope, Supplier relationship and profile exports remain unchanged.
+
+Crews:
+- `CrewCard` is now an official Business UI composition;
+- leader identity, roster, communication actions and operational counts remain visibly distinct;
+- Crew creation still enforces same-company/Site access eligibility and leader membership.
+
+Attendance:
+- page orchestration uses ModuleHeader, KpiCard, Badge, Alert, EmptyState and StaticDataTable;
+- capture, supervised enrollment and contingency clients use canonical Button/Badge/Alert/icon primitives;
+- geofence, GPS precision, liveness, consent, encryption and supervised identity rules are unchanged.
+
+`StaticDataTable` now accepts optional `recordProps` on rows. This enables ModuleHeader search/facet metadata on SSR rows without converting authoritative server data into a client table.
+
+`app/phase8-modules.css` is token-only and scoped to Suppliers, Users, Crews and Attendance.

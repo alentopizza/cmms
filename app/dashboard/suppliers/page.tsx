@@ -18,6 +18,7 @@ import SupplierDirectory, {
 } from "@/components/SupplierDirectory";
 import type { RequisitionSelectableItem } from "@/components/RequisitionBuilder";
 import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
+import { Alert } from "@/components/ui-kit/Feedback";
 
 type Organization={id:string;name:string;country:string};
 type CatalogOption={code:string;label:string};
@@ -132,7 +133,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
     : params.inventory_error==="sku"?"Ya existe un artículo con ese SKU en la empresa."
     : params.inventory_error?params.inventory_error:"";
 
-  return <>
+  return <div className="phase8-suppliers">
     <ModuleHeader
       eyebrow="Abastecimiento y terceros"
       title="Proveedores"
@@ -147,7 +148,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
         {key:"specialty",label:"Especialidad",allLabel:"Todas las especialidades"},
         {key:"country",label:"País",allLabel:"Todos los países"},
       ]}
-      action={creationGate.ready?<CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra su identidad, logo, alcance comercial y contacto." triggerLabel="Agregar" icon="▣">
+      action={creationGate.ready?<CreateRecordModal title="Crear proveedor" eyebrow="Nuevo proveedor" description="Registra su identidad, logo, alcance comercial y contacto." triggerLabel="Agregar" iconName="supplier">
         <form className="form-grid unified-popup-form" method="post" action="/api/suppliers" encType="multipart/form-data">
           {platform?<div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
             :<input type="hidden" name="organization_id" value={session.organizationId||""}/>}
@@ -171,17 +172,19 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       </CreateRecordModal>:undefined}
     />
 
-    {params.created&&<div className="notice success section">Proveedor creado correctamente.</div>}
-    {params.inventory_created&&<div className="notice success section">Suministro creado correctamente y asociado al proveedor.</div>}
-    {params.requisition_created&&<div className="notice success section">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} para el proveedor.</div>}
-    {params.updated&&<div className="notice success section">Proveedor actualizado correctamente.</div>}
-    {params.deleted&&<div className="notice success section">Proveedor eliminado correctamente.</div>}
-    {params.saved&&<div className="notice success section">Documento del proveedor actualizado correctamente.</div>}
-    {error&&<div className="notice error section">{error}</div>}
-    {inventoryError&&<div className="notice error section">{inventoryError}</div>}
+    {(params.created||params.inventory_created||params.requisition_created||params.updated||params.deleted||params.saved)&&<div className="section phase8-feedback-stack">
+      {params.created&&<Alert variant="success" title="Proveedor creado">Proveedor creado correctamente.</Alert>}
+      {params.inventory_created&&<Alert variant="success" title="Suministro creado">Suministro creado correctamente y asociado al proveedor.</Alert>}
+      {params.requisition_created&&<Alert variant="success" title="Requisición creada">{params.requisition_created} requisición{params.requisition_created==="1"?"":"es"} creada{params.requisition_created==="1"?"":"s"} para el proveedor.</Alert>}
+      {params.updated&&<Alert variant="success" title="Proveedor actualizado">Proveedor actualizado correctamente.</Alert>}
+      {params.deleted&&<Alert variant="success" title="Proveedor eliminado">Proveedor eliminado correctamente.</Alert>}
+      {params.saved&&<Alert variant="success" title="Documento actualizado">Documento del proveedor actualizado correctamente.</Alert>}
+    </div>}
+    {error&&<div className="section"><Alert variant="danger" title="No fue posible completar la acción">{error}</Alert></div>}
+    {inventoryError&&<div className="section"><Alert variant="danger" title="Revisa el suministro">{inventoryError}</Alert></div>}
 
     {!creationGate.ready&&<CreationPrerequisiteState
-      icon="▣" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
+      icon="supplier" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
       href={creationGate.href||"/dashboard/locations"} action={creationGate.action||"Continuar"}
     />}
 
@@ -204,5 +207,5 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       initialSelectedId={params.supplier||""}
       initialTab={params.tab||"general"}
     />
-  </>;
+  </div>;
 }

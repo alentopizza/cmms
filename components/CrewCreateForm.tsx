@@ -122,7 +122,7 @@ export default function CrewCreateForm({
           >
             <span className="crew-person-avatar">{worker.has_avatar?<img src={"/api/users/"+worker.id+"/avatar"} alt=""/>:<b>{initials(worker.full_name)}</b>}</span>
             <span><strong>{worker.full_name}</strong><small>{roleLabel(worker.role)}{worker.supplier_name?" · "+worker.supplier_name:""}</small></span>
-            <i>{leaderId===worker.id?"✓":""}</i>
+            <i>{leaderId===worker.id?<UiIcon name="check" size={13}/>:null}</i>
           </button>)}
         </div>:<div className="site-access-empty">No hay Técnicos, Supervisores o Colaboradores externos activos con acceso a esta sede.</div>}
     </div>

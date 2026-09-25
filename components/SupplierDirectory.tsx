@@ -17,6 +17,9 @@ import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
 import { SupplierCard } from "@/components/business-ui";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { StatTiles } from "@/components/ui-kit/Metrics";
 
 export type SupplierDirectoryItem={
   id:string;organization_id:string;organization_name:string;organization_country:string|null;code:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
@@ -176,7 +179,7 @@ export default function SupplierDirectory({
   }
 
   if(!selected){
-    return <><section className="section supplier-directory-modern">
+    return <div className="phase8-supplier-directory"><section className="section supplier-directory-modern">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2><p className="muted">Abre una tarjeta para consultar su operación, suministros y requisiciones sin salir del módulo.</p></div></div>
       {suppliers.length?<div className="supplier-profile-grid">{suppliers.map(s=>{
         const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
@@ -216,8 +219,8 @@ export default function SupplierDirectory({
             <button type="button" className="supplier-card-icon-action danger" title="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={14}/></button>
           </>}
         />;
-      })}</div>:<div className="card empty-state"><strong>Aún no hay proveedores.</strong><span>Registra el primero para asociar servicios, suministros y requisiciones.</span></div>}
-      {deleteError&&<div className="notice error section">{deleteError}</div>}
+      })}</div>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}
+      {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}
     </section>
     <ConfirmDialog
       open={Boolean(deleteCandidate)}
@@ -228,7 +231,7 @@ export default function SupplierDirectory({
       variant="danger"
       onConfirm={confirmSupplierDelete}
       onCancel={()=>setDeleteCandidate(null)}
-    /></>;
+    /></div>;
   }
 
   const activeActivities=selectedActivities.filter(item=>["pending","in_progress"].includes(item.status)).length;
@@ -297,7 +300,7 @@ export default function SupplierDirectory({
     </div>
   </div>;
 
-  return <><EntityProfileWorkspace
+  return <div className="phase8-supplier-directory"><EntityProfileWorkspace
     eyebrow="Directorio de proveedores"
     headingLabel="Proveedor"
     headingIcon="company"
@@ -306,7 +309,7 @@ export default function SupplierDirectory({
     breadcrumbs={[{label:"Inicio",href:"/dashboard"},{label:"Proveedores",onClick:()=>{setSelectedId("");setEditing(false);}},{label:selected.name}]}
     imageSrc={selected.has_logo?"/api/suppliers/"+selected.id+"/logo":null}
     fallback={initials(selected.name)}
-    status={<span className={"status-badge "+(selected.active?"status-active":"status-inactive")}><i/>{selected.active?"Activo":"Inactivo"}</span>}
+    status={<Badge variant={selected.active?"success":"neutral"}>{selected.active?"Activo":"Inactivo"}</Badge>}
     meta={[(selected.capability_labels||[]).join(" · ")||typeLabel(selected.supplier_type),selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin identificación",[selected.city,countryName(selected.country_code)].filter(Boolean).join(" · ")]}
     stats={[
       {label:"Actividades",value:activeActivities,icon:"work-order",hint:"activas"},
@@ -330,14 +333,14 @@ export default function SupplierDirectory({
     tabs={[
       {id:"general",label:"Información general",content:general},
       {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack supplier-commercial-analytics">
-        <div className="entity-stat-grid">
-          <div className="entity-stat-card"><small>Actividades totales</small><strong>{selectedActivities.length}</strong><span>{activeActivities} activas</span></div>
-          <div className="entity-stat-card"><small>Suministros asociados</small><strong>{selectedActiveItems.length}</strong><span>{selectedItems.length-selectedActiveItems.length} inactivos conservados</span></div>
-          <div className="entity-stat-card"><small>Requisiciones</small><strong>{selectedReqs.length}</strong><span>{openReqs} abiertas</span></div>
-          <div className="entity-stat-card"><small>Documentos vigentes</small><strong>{activeDocs}</strong><span>{selectedDocs.length-activeDocs} archivados</span></div>
-          <div className="entity-stat-card"><small>Devoluciones a proveedor</small><strong>{selected.supplier_return_count||0}</strong><span>{Number(selected.supplier_return_quantity||0).toLocaleString("es-CO")} unidades registradas</span></div>
-          <div className="entity-stat-card"><small>Documentos de compra</small><strong>{selected.procurement_document_count||0}</strong><span>{selected.procurement_document_disputed>0?selected.procurement_document_disputed+" en disputa":selected.procurement_document_pending>0?selected.procurement_document_pending+" pendientes de revisión":"Sin pendientes"}</span></div>
-        </div>
+        <StatTiles className="entity-stat-grid" items={[
+          {label:"Actividades totales",value:String(selectedActivities.length),hint:activeActivities+" activas"},
+          {label:"Suministros asociados",value:String(selectedActiveItems.length),hint:(selectedItems.length-selectedActiveItems.length)+" inactivos conservados"},
+          {label:"Requisiciones",value:String(selectedReqs.length),hint:openReqs+" abiertas"},
+          {label:"Documentos vigentes",value:String(activeDocs),hint:(selectedDocs.length-activeDocs)+" archivados"},
+          {label:"Devoluciones a proveedor",value:String(selected.supplier_return_count||0),hint:Number(selected.supplier_return_quantity||0).toLocaleString("es-CO")+" unidades registradas",tone:(selected.supplier_return_count||0)>0?"warning":"default"},
+          {label:"Documentos de compra",value:String(selected.procurement_document_count||0),hint:selected.procurement_document_disputed>0?selected.procurement_document_disputed+" en disputa":selected.procurement_document_pending>0?selected.procurement_document_pending+" pendientes de revisión":"Sin pendientes",tone:selected.procurement_document_disputed>0?"danger":selected.procurement_document_pending>0?"warning":"success"},
+        ]}/>
 
         <div className="entity-panel supplier-commercial-panel">
           <div className="entity-panel-heading-row">
@@ -392,7 +395,7 @@ export default function SupplierDirectory({
 
         <div className="entity-panel supplier-commercial-history">
           <div className="entity-panel-heading-row"><div><h3>Base reciente del indicador</h3><p className="entity-panel-copy">Últimas requisiciones con recepción para revisar de dónde salen los KPIs.</p></div></div>
-          {selectedCommercialReqs.length?<div className="inventory-kardex-table-wrap"><table className="table"><thead><tr><th>Requisición</th><th>Recepción</th><th>Lead time</th><th>Cantidad</th><th>Costo</th><th>Fecha requerida</th></tr></thead><tbody>
+          {selectedCommercialReqs.length?<div className="ds-data-table-shell inventory-kardex-table-wrap"><div className="ds-data-table-scroll"><table className="ds-data-table"><thead><tr><th>Requisición</th><th>Recepción</th><th>Lead time</th><th>Cantidad</th><th>Costo</th><th>Fecha requerida</th></tr></thead><tbody>
             {selectedCommercialReqs.map(row=><tr key={row.requisition_id}>
               <td><Link className="kardex-requisition-link" href={"/dashboard/requisitions/"+row.requisition_id}>REQ-{row.number.padStart(6,"0")}</Link><small className="table-subline">{statusLabel(row.status)}</small></td>
               <td>{row.first_receipt_at?new Date(row.first_receipt_at).toLocaleDateString("es-CO"):"—"}<small className="table-subline">{row.completed?"Completa":"Parcial"}</small></td>
@@ -401,7 +404,7 @@ export default function SupplierDirectory({
               <td><strong>{pct(row.price_variance_pct)}</strong><small className="table-subline">{varianceCopy(row.price_variance_pct)}</small></td>
               <td>{row.needed_by?new Date(row.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}{row.completed_on_time!=null?<small className="table-subline">{row.completed_on_time?"Completada a tiempo":"Completada después de fecha"}</small>:null}</td>
             </tr>)}
-          </tbody></table></div>:<div className="location-detail-empty">No hay requisiciones con recepción para mostrar.</div>}
+          </tbody></table></div></div>:<EmptyState icon="file" title="No hay requisiciones con recepción" description="El historial comercial aparecerá cuando existan recepciones físicas enlazadas."/>}
         </div>
       </div>},
       {id:"documents",label:"Documentos",content:<SupplierDocuments supplier={selected} documents={selectedDocs}/>},
@@ -533,7 +536,7 @@ export default function SupplierDirectory({
       </div>},
     ]}
   />
-  {deleteError&&<div className="notice error section">{deleteError}</div>}
+  {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}
   <ConfirmDialog
     open={Boolean(deleteCandidate)}
     title="Eliminar proveedor"
@@ -543,5 +546,5 @@ export default function SupplierDirectory({
     variant="danger"
     onConfirm={confirmSupplierDelete}
     onCancel={()=>setDeleteCandidate(null)}
-  /></>;
+  /></div>;
 }

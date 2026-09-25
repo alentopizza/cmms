@@ -338,7 +338,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 5 — Business UI:** implemented — shared BusinessCardShell plus AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard and UserCard/Profile metric consolidation while preserving distinct domain identities.
 - **Phase 6 — Dashboard + Companies + Locations:** implemented end-to-end on V2, including SSR data tables, dashboard controls, CompanyCard, SubLocationCard, profile metrics, location filters and scoped module styling.
 - **Phase 7 — Assets + Inventory:** implemented end-to-end, including approved secondary navigation, derived Asset catalogs, Inventory reports/settings, V2 KPI/status/table surfaces, Bulk Import integration and Kardex migration while preserving stock authority.
-- **Phase 8 — Suppliers + Users + Crews + Attendance.**
+- **Phase 8 — Suppliers + Users + Crews + Attendance:** implemented end-to-end, including Supplier/User profile preservation, dedicated CrewCard, V2 operational user statistics and Attendance/biometric/geofence/contingency surfaces.
 - **Phase 9 — Maintenance + Work Orders + Activities/Reaction where shared patterns apply.**
 - **Phase 10 — Reports + Settings + final legacy CSS/accessibility/responsive audit.**
 
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 8 — Suppliers + Users + Crews + Attendance.**
+**Phase 9 — Maintenance + Work Orders + Activities/Reaction.**
 
-Migrate Suppliers and People end-to-end using the V2 layers already validated in Phases 6–7. Preserve Supplier/User visual distinction, profile-page workflows, requisitions/procurement relationships, document dossiers, biometric attendance, geolocation controls, privacy boundaries and existing RBAC/server-side scope.
+Migrate the maintenance operation end-to-end with special focus on state/priority grammar, timelines and progress, contextual detail, responsive field use and shared patterns in Reaction. Preserve Work Order/task state machines, technician assignment, SLA/due-date logic, tracking sessions, mobile field workflows, RBAC and server-authoritative transitions.
 
 
 ## Recently completed role-dashboard analytics slice

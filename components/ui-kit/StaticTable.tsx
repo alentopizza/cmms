@@ -10,6 +10,7 @@ export type StaticTableColumn={
 export type StaticTableRow={
   id:string;
   cells:Record<string,ReactNode>;
+  recordProps?:Record<string,string|number|boolean|undefined>;
 };
 
 export function StaticDataTable({
@@ -35,7 +36,7 @@ export function StaticDataTable({
           data-align={column.align||"start"}
           style={column.width?{width:column.width}:undefined}
         >{column.label}</th>)}</tr></thead>
-        <tbody>{rows.map(row=><tr key={row.id}>
+        <tbody>{rows.map(row=><tr key={row.id} {...row.recordProps}>
           {columns.map(column=><td key={column.key} data-align={column.align||"start"}>{row.cells[column.key]}</td>)}
         </tr>)}</tbody>
       </table>

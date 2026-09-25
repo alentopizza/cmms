@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import UiIcon from "@/components/UiIcon";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
 
 // ── Shared contingency contracts ─────────────────────────────────────────────
 
@@ -196,7 +200,7 @@ export function AttendanceContingencySelf({
     </div>
 
     {active ? <div className={"contingency-active-state "+active.status}>
-      <div className="contingency-active-icon" aria-hidden="true">{active.status==="approved"?"✓":"…"}</div>
+      <div className="contingency-active-icon" aria-hidden="true"><UiIcon name={active.status==="approved"?"check":"clock"} size={18}/></div>
       <div>
         <span>{actionLabel(active.action)}</span>
         <strong>{active.status==="approved"?"Autorización aprobada":"Esperando revisión"}</strong>
@@ -204,7 +208,7 @@ export function AttendanceContingencySelf({
         {active.status==="approved"&&expires&&<small>Vence: {expires.toLocaleString("es-CO")}</small>}
         {active.review_note&&<small>Nota del supervisor: {active.review_note}</small>}
       </div>
-      {active.status==="approved"&&<button className="button" type="button" disabled={busy} onClick={useApproved}>{busy?"Registrando…":active.action==="check_in"?"Iniciar por contingencia":"Finalizar por contingencia"}</button>}
+      {active.status==="approved"&&<Button loading={busy} onClick={useApproved} iconLeft="attendance">{active.action==="check_in"?"Iniciar por contingencia":"Finalizar por contingencia"}</Button>}
     </div> : <div className="contingency-request-form">
       <div className="field">
         <label>Evento afectado</label>
@@ -227,12 +231,12 @@ export function AttendanceContingencySelf({
         <label>¿Qué ocurrió? *</label>
         <textarea value={details} onChange={event=>setDetails(event.target.value)} maxLength={1000} placeholder="Describe el problema y cualquier contexto útil para que el supervisor pueda validarlo."/>
       </div>
-      <div className="contingency-warning form-span-2"><span aria-hidden="true">!</span><p><strong>Una contingencia queda auditada.</strong><small>El supervisor verá usuario, sede, motivo, hora y la información técnica disponible. La autorización vence y solo sirve para un registro.</small></p></div>
-      <button className="button form-span-2" type="button" disabled={busy} onClick={submit}>{busy?"Enviando…":"Solicitar contingencia"}</button>
+      <div className="contingency-warning form-span-2"><span aria-hidden="true"><UiIcon name="warning" size={16}/></span><p><strong>Una contingencia queda auditada.</strong><small>El supervisor verá usuario, sede, motivo, hora y la información técnica disponible. La autorización vence y solo sirve para un registro.</small></p></div>
+      <Button className="form-span-2" loading={busy} onClick={submit} iconLeft="warning">Solicitar contingencia</Button>
     </div>}
 
-    {message&&<div className="notice success">{message}</div>}
-    {error&&<div className="notice error">{error}</div>}
+    {message&&<Alert variant="success" title="Contingencia actualizada">{message}</Alert>}
+    {error&&<Alert variant="danger" title="No fue posible completar la contingencia">{error}</Alert>}
   </section>;
 }
 
@@ -242,9 +246,11 @@ export function AttendanceContingencyReview({requests}:{requests:ContingencyRevi
   const [items,setItems]=useState(requests);
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [busyId,setBusyId]=useState("");
+  const [reviewError,setReviewError]=useState("");
 
   async function decide(id:string,decision:"approve"|"reject"){
     setBusyId(id);
+    setReviewError("");
     try{
       const response=await fetch(`/api/attendance/contingency/${id}`,{
         method:"PATCH",
@@ -259,7 +265,7 @@ export function AttendanceContingencyReview({requests}:{requests:ContingencyRevi
       if(!response.ok)throw new Error(data.message||"No fue posible revisar la solicitud.");
       setItems(current=>current.filter(item=>item.id!==id));
     }catch(cause){
-      window.alert(cause instanceof Error?cause.message:"No fue posible revisar la solicitud.");
+      setReviewError(cause instanceof Error?cause.message:"No fue posible revisar la solicitud.");
     }finally{
       setBusyId("");
     }
@@ -272,10 +278,11 @@ export function AttendanceContingencyReview({requests}:{requests:ContingencyRevi
         <h2>Contingencias pendientes</h2>
         <p className="muted">La aprobación crea una autorización de 30 minutos y un solo uso. Revisa que el incidente sea coherente antes de aprobar.</p>
       </div>
-      <span className="status-badge">{items.length} pendientes</span>
+      <Badge variant={items.length?"warning":"success"}>{items.length} pendientes</Badge>
     </div>
+    {reviewError&&<Alert variant="danger" title="No fue posible revisar la contingencia">{reviewError}</Alert>}
 
-    {items.length===0 ? <div className="empty-state compact"><strong>No hay contingencias pendientes.</strong><span>Las nuevas solicitudes aparecerán aquí para su revisión.</span></div> :
+    {items.length===0 ? <EmptyState icon="file" title="No hay contingencias pendientes" description="Las nuevas solicitudes aparecerán aquí para su revisión."/> :
       <div className="contingency-review-list">
         {items.map(item=><article key={item.id} className="contingency-review-item">
           <div className="contingency-review-head">
@@ -299,8 +306,8 @@ export function AttendanceContingencyReview({requests}:{requests:ContingencyRevi
             <input value={notes[item.id]||""} onChange={event=>setNotes(current=>({...current,[item.id]:event.target.value}))} placeholder="Opcional: motivo o instrucción para el usuario"/>
           </div>
           <div className="form-actions">
-            <button className="button secondary" type="button" disabled={busyId===item.id} onClick={()=>decide(item.id,"reject")}>Rechazar</button>
-            <button className="button" type="button" disabled={busyId===item.id} onClick={()=>decide(item.id,"approve")}>Aprobar 30 min</button>
+            <Button variant="secondary" disabled={busyId===item.id} onClick={()=>decide(item.id,"reject")} iconLeft="x">Rechazar</Button>
+            <Button disabled={busyId===item.id} loading={busyId===item.id} onClick={()=>decide(item.id,"approve")} iconLeft="check">Aprobar 30 min</Button>
           </div>
         </article>)}
       </div>}

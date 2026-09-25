@@ -49,7 +49,7 @@ export default async function UiKitPage(){
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 7.</strong> Activos e Inventario ya consumen navegación secundaria oficial, KPI, Business UI, tablas compartidas, estados V2 y flujos de importación/Kardex integrados sin cambiar la autoridad de stock.
+        <strong>Fase 8.</strong> Proveedores, Usuarios, Cuadrillas y Asistencia ya consumen Business UI, feedback/estados V2, métricas y tablas compartidas, preservando expedientes, biometría, geocercas, privacidad y relaciones de compras.
       </div>
 
       <FoundationPreview/>

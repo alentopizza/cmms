@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
+import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { EmptyState } from "@/components/ui-kit/Feedback";
+import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import { ProgressBar } from "@/components/ui-kit/TimelineProgress";
 
 export type UserStatisticsDay={date:string;hours:number};
 export type UserStatisticsActivity={
@@ -48,6 +52,13 @@ function dateLabel(value:string|null){
   if(!value)return "Sin fecha";
   return new Intl.DateTimeFormat("es-CO",{day:"2-digit",month:"short"}).format(new Date(value+"T12:00:00"));
 }
+function statusTone(status:string):BadgeVariant{
+  if(status==="completed")return "success";
+  if(status==="in_progress")return "info";
+  if(status==="pending")return "warning";
+  if(status==="cancelled")return "neutral";
+  return "brand";
+}
 function statusLabel(status:string){
   if(status==="in_progress")return "En ejecución";
   if(status==="pending")return "Pendiente";
@@ -70,19 +81,19 @@ export default function UserStatisticsDashboard({data}:{data:UserStatisticsDashb
         <h2>Resumen de {data.name.split(/\s+/)[0]}</h2>
         <p>Asistencia, actividades, carga operativa y próximos compromisos con información real del CMMS.</p>
       </div>
-      <div className="user-ops-kpis">
-        <article><span>OT activas</span><strong>{data.assignedWorkOrders}</strong><small>asignadas</small></article>
-        <article><span>Pendientes</span><strong>{data.pendingActivities}</strong><small>actividades</small></article>
-        <article><span>Completadas</span><strong>{data.completedActivities30d}</strong><small>últimos 30 días</small></article>
-        <article><span>Horas campo</span><strong>{Number(data.attendanceHours30d||0).toFixed(1)}</strong><small>últimos 30 días</small></article>
-      </div>
+      <MetricGrid className="user-ops-kpis">
+        <KpiCard label="OT activas" value={String(data.assignedWorkOrders)} hint="asignadas" icon="work-order"/>
+        <KpiCard label="Pendientes" value={String(data.pendingActivities)} hint="actividades" icon="activity" tone={data.pendingActivities?"warning":"success"}/>
+        <KpiCard label="Completadas" value={String(data.completedActivities30d)} hint="últimos 30 días" icon="check" tone="success"/>
+        <KpiCard label="Horas campo" value={Number(data.attendanceHours30d||0).toFixed(1)} hint="últimos 30 días" icon="clock"/>
+      </MetricGrid>
     </div>
 
     <div className="user-ops-layout">
       <article className="user-ops-card user-ops-profile">
         <div className="user-ops-photo">
           {data.photoUrl?<img src={data.photoUrl} alt="" />:<span><UiIcon name="user" size={42}/></span>}
-          <i className={data.active?"active":"inactive"}>{data.active?"Activo":"Inactivo"}</i>
+          <Badge variant={data.active?"success":"neutral"}>{data.active?"Activo":"Inactivo"}</Badge>
         </div>
         <div className="user-ops-profile-copy">
           <h3>{data.name}</h3>
@@ -121,11 +132,10 @@ export default function UserStatisticsDashboard({data}:{data:UserStatisticsDashb
           <div><span className="eyebrow">Hoy</span><h3>Tiempo de campo</h3></div>
           <UiIcon name="clock" size={18}/>
         </div>
-        <div className="user-ops-time-ring" style={{background:`conic-gradient(var(--brand-teal) ${todayProgress}%, var(--surface-soft) ${todayProgress}% 100%)`}}>
-          <div><strong>{Number(data.attendanceTodayHours||0).toFixed(1)}h</strong><span>registradas hoy</span></div>
-        </div>
+        <div className="user-ops-time-summary"><strong>{Number(data.attendanceTodayHours||0).toFixed(1)}h</strong><span>registradas hoy</span></div>
+        <ProgressBar value={todayProgress} max={100} compact tone={todayProgress>=75?"success":"brand"} caption="Referencia visual sobre una jornada de 8 h"/>
         <div className="user-ops-time-meta">
-          <span className={data.openShift?"live":""}><i/>{data.openShift?"Turno en curso":"Sin turno abierto"}</span>
+          <Badge variant={data.openShift?"success":"neutral"} icon="attendance">{data.openShift?"Turno en curso":"Sin turno abierto"}</Badge>
           <small>{data.openShiftStartedAt?"Entrada "+new Date(data.openShiftStartedAt).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}):"Biometría "+data.biometricLabel.toLowerCase()}</small>
         </div>
       </article>
@@ -135,7 +145,7 @@ export default function UserStatisticsDashboard({data}:{data:UserStatisticsDashb
           <div><span className="eyebrow">Ejecución</span><h3>Cumplimiento</h3></div>
           <strong>{completedProgress}%</strong>
         </div>
-        <div className="user-ops-compliance-track"><span style={{width:completedProgress+"%"}}/><i style={{width:pendingProgress+"%"}}/></div>
+        <ProgressBar value={completedProgress} max={100} compact tone={completedProgress>=80?"success":completedProgress>=50?"warning":"danger"} caption={pendingProgress+"% pendiente"}/>
         <div className="user-ops-compliance-legend">
           <span><i className="done"/>Completadas 30 días<b>{data.completedActivities30d}</b></span>
           <span><i className="pending"/>Pendientes actuales<b>{data.pendingActivities}</b></span>
@@ -153,9 +163,9 @@ export default function UserStatisticsDashboard({data}:{data:UserStatisticsDashb
           {data.upcomingActivities.map(activity=><Link href={"/dashboard/work-orders/"+activity.work_order_id} key={activity.id} className="user-ops-agenda-row">
             <span className="user-ops-agenda-date"><strong>{dateLabel(activity.due_date)}</strong><small>OT #{activity.order_number}</small></span>
             <span className="user-ops-agenda-copy"><strong>{activity.description}</strong><small>{activity.order_title}{activity.site_name?" · "+activity.site_name:""}</small></span>
-            <span className={"activity-status activity-status-"+activity.status}>{statusLabel(activity.status)}</span>
+            <Badge variant={statusTone(activity.status)}>{statusLabel(activity.status)}</Badge>
           </Link>)}
-        </div>:<div className="user-ops-empty"><UiIcon name="check" size={26}/><strong>Sin compromisos pendientes</strong><span>No hay actividades abiertas asignadas a este usuario.</span></div>}
+        </div>:<EmptyState icon="file" title="Sin compromisos pendientes" description="No hay actividades abiertas asignadas a este usuario."/>}
       </article>
 
       <article className="user-ops-card user-ops-task-card">
@@ -169,7 +179,7 @@ export default function UserStatisticsDashboard({data}:{data:UserStatisticsDashb
             <span><strong>{activity.description}</strong><small>OT #{activity.order_number} · {dateLabel(activity.due_date)}</small></span>
             <em>{String(index+1).padStart(2,"0")}</em>
           </Link>)}
-        </div>:<div className="user-ops-task-empty"><UiIcon name="check" size={30}/><strong>Trabajo al día</strong><span>No tiene actividades pendientes.</span></div>}
+        </div>:<EmptyState icon="file" title="Trabajo al día" description="No tiene actividades pendientes."/>}
       </article>
     </div>
   </section>;

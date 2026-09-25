@@ -684,3 +684,26 @@ Inventory:
 Secondary module navigation must use ModuleNavigation. When items share a path but differ by query/hash, active matching must use the complete href.
 
 Phase-specific CSS must remain scoped under `.phase7-assets`, `.phase7-inventory` or `.phase7-bulk-import` and use Design Tokens only.
+
+
+## 33. Suppliers + People + Attendance contract — Phase 8
+
+Supplier and User must remain visually distinct:
+- Supplier uses commercial identity, logo, capabilities/specialties, procurement/supply signals and SupplierCard.
+- User uses personal identity/avatar, role/access scope, personnel dossier, operational presence signals and UserCard.
+- Do not collapse both into one generic contact card.
+
+Crew uses CrewCard:
+- leader treatment is explicit but does not change the person's actual role;
+- roster members keep their User identity and communication actions;
+- metrics remain descriptive operational counts.
+
+Attendance:
+- use Badge/Alert/Button/EmptyState for state and feedback;
+- use KpiCard/StaticDataTable for descriptive reporting;
+- never turn attendance statistics into automatic worker rankings or decisions;
+- biometric/geolocation capture UI must not weaken server-side verification, consent, encryption, supervised enrollment or Site geofence rules.
+
+StaticDataTable may receive `recordProps` only for presentation/filter metadata; authorization must never depend on client-side filtering.
+
+Phase 8 CSS must remain scoped under `.phase8-suppliers`, `.phase8-supplier-directory`, `.phase8-users`, `.phase8-crews` and `.phase8-attendance`.

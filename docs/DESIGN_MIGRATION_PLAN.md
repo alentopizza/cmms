@@ -219,6 +219,8 @@ No database schema, API, stock calculation, procurement, requisition, RBAC or or
 
 ## Fase 8 — Proveedores + Personas
 
+**Estado: implementada.**
+
 Migrar:
 
 - Proveedores;
@@ -233,6 +235,24 @@ Preservar:
 - flujos de asistencia/biometría;
 - seguridad y privacidad;
 - acciones contextuales existentes.
+
+**Phase 8 completion checkpoint — 2026-09-24**
+
+Phase 8 is implemented end-to-end for Suppliers, Users, Crews and Attendance.
+
+Suppliers retain the distinct commercial identity already established by SupplierCard and EntityProfileWorkspace while status, feedback, summary metrics and commercial history tables now consume V2 primitives. Inventory, requisitions, procurement evidence, returns, documents and financial-profile relationships remain unchanged.
+
+Users retain their separate people/access visual language through UserCard and EntityProfileWorkspace. Directory/profile status, empty/error states and statistics fallback now consume Badge, Alert, EmptyState, StatTiles, Button and Spinner. User operational analytics consume KpiCard, ProgressBar, Badge and EmptyState while preserving descriptive—not automated—performance interpretation.
+
+Crews now consume a dedicated CrewCard Business UI composition with explicit leader treatment, roster, metrics and contextual communication/actions. Existing leader/member roles and access rules are preserved.
+
+Attendance now consumes ModuleHeader, Badge, Alert, KpiCard, StaticDataTable and canonical iconography. AttendanceCapture, supervised biometric enrollment and contingency flows retain the existing GPS/geofence, liveness, encryption/consent, supervisor approval and one-use authorization behavior. No biometric or location decision moved to the client beyond the existing capture UX.
+
+StaticDataTable now supports optional server-rendered row metadata so ModuleHeader search/facets can filter SSR table rows without a client data-table boundary.
+
+No database schema, attendance policy, biometric threshold, API, RBAC, privacy boundary or organization/Site scope changes were introduced.
+
+**Next implementation phase: Phase 9 — Maintenance operation.**
 
 ## Fase 9 — Operación de mantenimiento
 

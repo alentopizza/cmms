@@ -8,6 +8,10 @@ import PhoneField from "@/components/PhoneField";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ModuleHeader from "@/components/ModuleHeader";
 import { UserCard } from "@/components/business-ui";
+import { Alert, EmptyState, Spinner } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { StatTiles } from "@/components/ui-kit/Metrics";
+import { Button } from "@/components/ui-kit/Button";
 import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
@@ -523,7 +527,7 @@ export default function UserManagement({
   const modalTitle = mode === "edit" ? "Editar usuario" : "Crear usuario";
   const selectedDescription = roleDescription(draft.role);
 
-  return <>
+  return <div className="phase8-users">
     <ModuleHeader
       eyebrow="Control de acceso"
       title="Usuarios y roles"
@@ -537,19 +541,18 @@ export default function UserManagement({
         {key:"site",label:"Sede",allLabel:"Todas las sedes"},
         {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
       ]}
-      action={<button className="button module-add-button" type="button" onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}><span className="module-add-button-icon">◎</span><span>{organizations.length ? "Agregar" : "Crear empresa"}</span></button>}
+      action={<Button className="module-add-button" iconLeft={organizations.length?"user-plus":"company"} onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}>{organizations.length ? "Agregar" : "Crear empresa"}</Button>}
     />
 
-    {actionError && <div className="notice error section">{actionError}</div>}
-    {saveSuccess && <div className="notice success section">{saveSuccess}</div>}
+    {actionError && <div className="section"><Alert variant="danger" title="No fue posible completar la acción">{actionError}</Alert></div>}
+    {saveSuccess && <div className="section"><Alert variant="success" title="Cambios guardados">{saveSuccess}</Alert></div>}
 
-    {!selectedUser && (users.length === 0 ? <section className="card user-empty-state section">
-      <div className="user-empty-icon" aria-hidden="true">◎</div>
-      <span className="eyebrow">Control de acceso</span>
-      <h2>{organizations.length ? "Aún no tienes usuarios creados" : "Primero debes crear una empresa"}</h2>
-      <p>{organizations.length ? "Crea la primera cuenta. El usuario pertenecerá a una empresa; las sedes solo definen posteriormente su alcance de acceso." : "No puedes crear usuarios de empresa todavía. Primero registra la empresa a la que pertenecerán."}</p>
-      <button className="button" type="button" onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}>{organizations.length ? "Crear usuario" : "Crear empresa"}</button>
-    </section> : <section className="section">
+    {!selectedUser && (users.length === 0 ? <section className="section"><EmptyState
+      icon="file"
+      title={organizations.length ? "Aún no tienes usuarios creados" : "Primero debes crear una empresa"}
+      description={organizations.length ? "Crea la primera cuenta. El usuario pertenecerá a una empresa; las sedes solo definen posteriormente su alcance de acceso." : "No puedes crear usuarios de empresa todavía. Primero registra la empresa a la que pertenecerán."}
+      action={<Button iconLeft={organizations.length?"user-plus":"company"} onClick={organizations.length ? openCreate : ()=>router.push("/dashboard/companies?create=1")}>{organizations.length ? "Crear usuario" : "Crear empresa"}</Button>}
+    /></section> : <section className="section">
       <div className="section-heading user-directory-heading">
         <div><span className="eyebrow">Directorio de acceso</span><h2>Usuarios registrados ({users.length})</h2></div>
         <small>Los accesos se limitan por empresa, rol y sedes autorizadas.</small>
@@ -575,7 +578,7 @@ export default function UserManagement({
         >
           <button className="user-card-profile-trigger" type="button" onClick={()=>{setSelectedUserId(user.id);setPreferredTab("general");}} aria-label={"Ver perfil de "+user.full_name}>
             <span className="user-card-cover" aria-hidden="true">
-              <span className={"user-card-status "+(user.active?"active":"inactive")}>{user.active?"Activo":"Inactivo"}</span>
+              <Badge variant={user.active?"success":"neutral"} className="user-card-status">{user.active?"Activo":"Inactivo"}</Badge>
             </span>
             <span className="user-card-avatar-row">
               <span className="user-card-avatar" aria-hidden="true">{user.has_avatar ? <img src={"/api/users/"+user.id+"/avatar"} alt="" /> : initials(user.full_name)}</span>
@@ -624,7 +627,7 @@ export default function UserManagement({
           meta={[roleName(roleKey(selectedUser)),siteAccessLabel(selectedUser)]}
           imageSrc={selectedUser.has_avatar?"/api/users/"+selectedUser.id+"/avatar":null}
           fallback={initials(selectedUser.full_name)}
-          status={<span className={"status-badge "+(selectedUser.active?"status-active":"status-inactive")}><i />{selectedUser.active?"Activo":"Inactivo"}</span>}
+          status={<Badge variant={selectedUser.active?"success":"neutral"}>{selectedUser.active?"Activo":"Inactivo"}</Badge>}
           stats={[
             {label:"OT asignadas",value:selectedUser.assigned_work_orders,icon:"work-order"},
             {label:"Actividades pendientes",value:selectedUser.pending_activities,icon:"activity"},
@@ -678,14 +681,14 @@ export default function UserManagement({
               </form>
             </div>},
             {id:"statistics",label:"Estadísticas",content:statisticsError&&!selectedStatistics
-              ?<div className="entity-panel user-statistics-fallback"><div className="notice error">{statisticsError}</div><div className="entity-stat-grid">
-                <div className="entity-stat-card"><small>OT asignadas activas</small><strong>{selectedUser.assigned_work_orders}</strong><span>órdenes no cerradas</span></div>
-                <div className="entity-stat-card"><small>Actividades pendientes</small><strong>{selectedUser.pending_activities}</strong><span>pendientes o en progreso</span></div>
-                <div className="entity-stat-card"><small>Completadas · 30 días</small><strong>{selectedUser.completed_activities_30d}</strong><span>eventos de ejecución</span></div>
-                <div className="entity-stat-card"><small>Horas campo · 30 días</small><strong>{selectedUser.attendance_hours_30d}</strong><span>turnos de asistencia</span></div>
-              </div></div>
+              ?<div className="entity-panel user-statistics-fallback"><Alert variant="danger" title="No fue posible cargar el detalle">{statisticsError}</Alert><StatTiles className="entity-stat-grid" items={[
+                {label:"OT asignadas activas",value:String(selectedUser.assigned_work_orders),hint:"órdenes no cerradas"},
+                {label:"Actividades pendientes",value:String(selectedUser.pending_activities),hint:"pendientes o en progreso",tone:selectedUser.pending_activities?"warning":"success"},
+                {label:"Completadas · 30 días",value:String(selectedUser.completed_activities_30d),hint:"eventos de ejecución"},
+                {label:"Horas campo · 30 días",value:String(selectedUser.attendance_hours_30d),hint:"turnos de asistencia"},
+              ]}/></div>
               :!selectedStatistics||statisticsLoadingUser===selectedUser.id
-                ?<div className="user-statistics-loading"><span className="user-statistics-loading-ring"/><strong>Cargando estadísticas operativas…</strong><small>Asistencia, actividades y próximos compromisos.</small></div>
+                ?<div className="user-statistics-loading"><Spinner label="Cargando estadísticas operativas…"/><small>Asistencia, actividades y próximos compromisos.</small></div>
                 :<UserStatisticsDashboard data={{
                   id:selectedUser.id,
                   name:selectedUser.full_name,
@@ -742,11 +745,11 @@ export default function UserManagement({
             <h2 id="user-modal-title">{modalTitle}</h2>
             <p>{mode === "edit" ? "Actualiza identidad, empresa, permisos de sedes y credenciales." : "El usuario quedará vinculado a una empresa. Las sedes no son requisito para crear la cuenta."}</p>
           </div>
-          <button className="modal-close" type="button" aria-label="Cerrar" onClick={closeModal}>×</button>
+          <button className="modal-close" type="button" aria-label="Cerrar" onClick={closeModal}><UiIcon name="x" size={16}/></button>
         </header>
 
         <form className="company-modal-form user-modal-form" onSubmit={submit} noValidate>
-          {errors.general && <div className="notice error">{errors.general}</div>}
+          {errors.general && <Alert variant="danger" title="Revisa el formulario">{errors.general}</Alert>}
 
           <div className="form-grid">
             <div className={`form-span-2 user-photo-field ${errors.avatar ? "field-error" : ""}`}>
@@ -855,7 +858,7 @@ export default function UserManagement({
                       setDraft(previous => ({ ...previous, access_all_sites: true, site_ids: [] }));
                     }}
                   >
-                    <span className="site-access-mode-icon">✓</span>
+                    <span className="site-access-mode-icon"><UiIcon name="check" size={15}/></span>
                     <span><strong>Todas las sedes</strong><small>Acceso actual y a nuevas sedes que se creen.</small></span>
                   </button>
                   <button
@@ -863,7 +866,7 @@ export default function UserManagement({
                     className={!draft.access_all_sites ? "active" : ""}
                     onClick={() => updateDraft("access_all_sites", false)}
                   >
-                    <span className="site-access-mode-icon">◎</span>
+                    <span className="site-access-mode-icon"><UiIcon name="location" size={15}/></span>
                     <span><strong>Sedes específicas</strong><small>Selecciona individualmente dónde puede operar.</small></span>
                   </button>
                 </div>
@@ -873,7 +876,7 @@ export default function UserManagement({
                     const checked = draft.site_ids.includes(site.id);
                     return <label className={`site-checkbox-card ${checked ? "active" : ""}`} key={site.id}>
                       <input type="checkbox" checked={checked} onChange={() => toggleSite(site.id)} />
-                      <span className="site-checkbox-mark">{checked ? "✓" : ""}</span>
+                      <span className="site-checkbox-mark">{checked ? <UiIcon name="check" size={12}/> : null}</span>
                       <span><strong>{site.name}</strong><small>{site.organization_name}</small></span>
                     </label>;
                   })}
@@ -884,7 +887,7 @@ export default function UserManagement({
           </div>
 
           <aside className="role-permission-note">
-            <div className="role-permission-icon" aria-hidden="true">i</div>
+            <div className="role-permission-icon" aria-hidden="true"><UiIcon name="info" size={16}/></div>
             <div><strong>{roleName(draft.role)}</strong><p>{selectedDescription}</p></div>
           </aside>
 
@@ -927,5 +930,5 @@ export default function UserManagement({
         void runConfirmedAction();
       }}
     />
-  </>;
+  </div>;
 }

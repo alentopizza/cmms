@@ -1,5 +1,52 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 8: Suppliers + People + Attendance
+
+### Added
+
+- `CrewCard` Business UI composition.
+- Server-row filter metadata support in `StaticDataTable`.
+- Token-only `app/phase8-modules.css`.
+- `scripts/phase8-suppliers-people-smoke.mjs` and CI coverage.
+
+### Suppliers
+
+- Preserved SupplierCard and Supplier profile identity.
+- Migrated profile status, summary metrics, feedback and empty states to V2 primitives.
+- Migrated commercial history tables to Shared Data UI grammar.
+- Preserved Inventory/Supply, Requisition, Procurement, Return, Documents and Financial flows.
+
+### Users
+
+- Preserved UserCard and access-profile identity.
+- Migrated directory/profile state, feedback and empty states to V2 primitives.
+- Migrated statistics fallback and operational user analytics to V2 KPI/progress/status patterns.
+- Replaced remaining modal/access-scope glyphs with canonical UiIcon.
+- Preserved personnel documents, emergency contact, access scopes, Supplier links and exports.
+
+### Crews
+
+- Migrated directory cards to CrewCard.
+- Preserved explicit leader selection, real member roles, Site eligibility and contextual communication actions.
+- Replaced leader/status glyphs with canonical V2 icon/status patterns.
+
+### Attendance
+
+- Migrated module header, summary KPI, Site states and report table to V2.
+- Migrated presence capture, supervised biometric enrollment and contingency feedback/actions/statuses to canonical primitives.
+- Preserved GPS/geofence, liveness, consent, biometric encryption, supervised enrollment and one-use contingency authorization behavior.
+- Attendance reporting remains descriptive and does not rank workers automatically.
+
+### Integrity
+
+- No database, API, RBAC, attendance-policy, biometric-threshold or privacy-boundary changes.
+- No Supplier/User visual convergence: both retain distinct domain identities.
+
+### Next
+
+- Phase 9: Maintenance + Work Orders + Activities/Reaction.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 7: Assets + Inventory
 
 ### Added

@@ -9,6 +9,8 @@ import CreateRecordModal from "@/components/CreateRecordModal";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import CrewCreateForm, { type CrewFormWorker } from "@/components/CrewCreateForm";
 import UiIcon from "@/components/UiIcon";
+import { CrewCard } from "@/components/business-ui";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 
 type Crew = {
   id:string;
@@ -129,7 +131,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     : params.error==="duplicate" ? "Ya existe una cuadrilla con ese nombre dentro de la empresa."
     : params.error ? "No fue posible crear la cuadrilla." : "";
 
-  return <>
+  return <div className="phase8-crews">
     <ModuleHeader
       eyebrow="Ejecución operativa"
       title="Cuadrillas"
@@ -146,7 +148,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
         eyebrow="Nuevo equipo"
         description="Selecciona la sede, define los integrantes y elige visualmente quién será el líder. El liderazgo no depende de que sea Técnico o Supervisor."
         triggerLabel="Agregar"
-        icon="◉"
+        iconName="crew"
       >
         <CrewCreateForm
           organizations={organizations.rows}
@@ -157,11 +159,11 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       </CreateRecordModal> : undefined}
     />
 
-    {params.created && <div className="notice success section">Cuadrilla creada correctamente.</div>}
-    {error && <div className="notice error section">{error}</div>}
+    {params.created && <div className="section"><Alert variant="success" title="Cuadrilla creada">Cuadrilla creada correctamente.</Alert></div>}
+    {error && <div className="section"><Alert variant="danger" title="No fue posible crear la cuadrilla">{error}</Alert></div>}
 
     {!creationGate.ready && <CreationPrerequisiteState
-      icon="◉"
+      icon="crew"
       eyebrow="Jerarquía de creación"
       title={creationGate.title}
       message={creationGate.message}
@@ -179,54 +181,28 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
         const crewMembers=members.rows.filter(member=>member.crew_id===crew.id);
         const roster=crewMembers.filter(member=>member.user_id!==crew.leader_user_id);
         const searchMembers=crewMembers.map(member=>member.full_name).join(" ");
-        return <article
-          className={"crew-showcase-card "+(crew.active?"":"inactive")}
+        return <CrewCard
           key={crew.id}
-          data-module-record
-          data-status={crew.active?"active":"inactive"}
-          data-search={[crew.name,crew.organization_name,crew.site_name,crew.leader_name,crew.description,searchMembers].filter(Boolean).join(" ")}
-          data-filter-organization={crew.organization_id}
-          data-filter-organization-label={crew.organization_name}
-          data-filter-site={crew.site_id||""}
-          data-filter-site-label={crew.site_name||""}
-        >
-          <div className="crew-leader-hero">
-            <div className="crew-leader-photo">
-              {crew.leader_user_id&&crew.leader_has_avatar
-                ?<img src={"/api/users/"+crew.leader_user_id+"/avatar"} alt={"Foto de "+(crew.leader_name||"líder")}/>
-                :<span>{initials(crew.leader_name||crew.name)}</span>}
-              <div className="crew-leader-shade"/>
-              <span className="crew-leader-badge">♕ Líder</span>
-              <div className="crew-leader-identity">
-                <strong>{crew.leader_name||"Líder sin asignar"}</strong>
-                <small>{roleLabel(crew.leader_role)}</small>
-              </div>
-            </div>
-            <div className="crew-leader-actions">
-              {crew.leader_phone&&<a href={"https://wa.me/"+crew.leader_phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="WhatsApp del líder"><UiIcon name="whatsapp" size={17}/><span>WhatsApp</span></a>}
-              {crew.leader_phone&&<a href={"tel:"+crew.leader_phone.replace(/[^+\d]/g,"")} title="Llamar al líder"><UiIcon name="phone" size={17}/><span>Llamar</span></a>}
-              {crew.leader_email&&<a href={"mailto:"+crew.leader_email} title="Correo del líder"><UiIcon name="mail" size={17}/><span>Correo</span></a>}
-            </div>
-          </div>
-
-          <div className="crew-showcase-main">
-            <header className="crew-showcase-head">
-              <div>
-                <span className="eyebrow">Cuadrilla</span>
-                <h3>{crew.name}</h3>
-                <p>{crew.organization_name}{crew.site_name?" · "+crew.site_name:""}</p>
-              </div>
-              <span className={"status-badge "+(crew.active?"status-active":"status-inactive")}><i/>{crew.active?"Activa":"Inactiva"}</span>
-            </header>
-
-            <div className="crew-showcase-metrics">
-              <div><UiIcon name="user" size={18}/><span><strong>{crew.member_count}</strong><small>Integrantes</small></span></div>
-              <div><UiIcon name="activity" size={18}/><span><strong>{crew.active_activity_count}</strong><small>Actividades activas</small></span></div>
-              <div><UiIcon name="check" size={18}/><span><strong>{crew.completed_activity_count}</strong><small>Completadas</small></span></div>
-            </div>
-
+          name={crew.name}
+          organization={crew.organization_name}
+          site={crew.site_name}
+          active={crew.active}
+          leaderName={crew.leader_name||"Líder sin asignar"}
+          leaderRole={roleLabel(crew.leader_role)}
+          leaderPhotoSrc={crew.leader_user_id&&crew.leader_has_avatar?"/api/users/"+crew.leader_user_id+"/avatar":null}
+          fallback={initials(crew.leader_name||crew.name)}
+          metrics={[
+            {label:"Integrantes",value:crew.member_count,icon:"user"},
+            {label:"Actividades activas",value:crew.active_activity_count,icon:"activity"},
+            {label:"Completadas",value:crew.completed_activity_count,icon:"check"},
+          ]}
+          leaderActions={<>
+            {crew.leader_phone&&<a href={"https://wa.me/"+crew.leader_phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="WhatsApp del líder"><UiIcon name="whatsapp" size={17}/><span>WhatsApp</span></a>}
+            {crew.leader_phone&&<a href={"tel:"+crew.leader_phone.replace(/[^+\d]/g,"")} title="Llamar al líder"><UiIcon name="phone" size={17}/><span>Llamar</span></a>}
+            {crew.leader_email&&<a href={"mailto:"+crew.leader_email} title="Correo del líder"><UiIcon name="mail" size={17}/><span>Correo</span></a>}
+          </>}
+          roster={<>
             {crew.description&&<p className="crew-showcase-description">{crew.description}</p>}
-
             <div className="crew-roster-head"><strong>Integrantes</strong><span>{crewMembers.length} en el equipo</span></div>
             <div className="crew-roster-grid">
               {roster.slice(0,4).map(member=><div className="crew-roster-person" key={member.user_id}>
@@ -240,15 +216,23 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
               {roster.length===0&&<div className="crew-roster-empty">El líder es actualmente el único integrante.</div>}
               {roster.length>4&&<div className="crew-roster-more">+{roster.length-4}<small>integrantes</small></div>}
             </div>
-
-            {owner&&<div className="crew-showcase-owner-actions"><OwnerRecordActions table="crews" id={crew.id} label={crew.name} fields={[
-              {name:"name",label:"Nombre",value:crew.name},
-              {name:"description",label:"Descripción",value:crew.description||"",type:"textarea"},
-              {name:"active",label:"Estado",value:crew.active,type:"checkbox"},
-            ]}/></div>}
-          </div>
-        </article>;
-      })}</div> : <div className="card empty-state"><strong>Aún no hay cuadrillas.</strong><span>Crea Técnicos o Supervisores y luego conforma el primer equipo operativo.</span></div>}
+          </>}
+          actions={owner?<OwnerRecordActions table="crews" id={crew.id} label={crew.name} fields={[
+            {name:"name",label:"Nombre",value:crew.name},
+            {name:"description",label:"Descripción",value:crew.description||"",type:"textarea"},
+            {name:"active",label:"Estado",value:crew.active,type:"checkbox"},
+          ]}/>:undefined}
+          recordProps={{
+            "data-module-record":true,
+            "data-status":crew.active?"active":"inactive",
+            "data-search":[crew.name,crew.organization_name,crew.site_name,crew.leader_name,crew.description,searchMembers].filter(Boolean).join(" "),
+            "data-filter-organization":crew.organization_id,
+            "data-filter-organization-label":crew.organization_name,
+            "data-filter-site":crew.site_id||"",
+            "data-filter-site-label":crew.site_name||"",
+          }}
+        />;
+      })}</div> : <EmptyState icon="file" title="Aún no hay cuadrillas" description="Crea Técnicos o Supervisores y luego conforma el primer equipo operativo."/>}
     </section>
-  </>;
+  </div>;
 }

@@ -940,3 +940,44 @@ Asset and Inventory secondary navigation consume ModuleNavigation. Hash/query de
 ### Next
 
 Phase 8 — Suppliers + Users + Crews + Attendance.
+
+
+## 32. DESWEB Phase 8 checkpoint — Suppliers + Users + Crews + Attendance
+
+Phase 8 is implemented.
+
+### Runtime additions/changes
+
+- `CrewCard` in Business UI;
+- `StaticDataTable.recordProps` for SSR directory/report filtering;
+- `app/phase8-modules.css`;
+- `scripts/phase8-suppliers-people-smoke.mjs`.
+
+### Supplier boundary
+
+Keep Supplier workflows commercial/operational. Do not merge Supplier and User visuals or persistence. Inventory, Requisitions, Procurement documents, Returns, Supplier documents and financial profile logic remain authoritative.
+
+### User boundary
+
+User is an account/person. Preserve organization membership, role, Site scope, personnel documents, emergency contact, optional external Supplier relation and profile export behavior.
+
+### Crew boundary
+
+Crew leader selection is explicit and visual only. The leader remains a User with their real organization role; crew membership must continue to respect organization/Site access rules.
+
+### Attendance/privacy boundary
+
+Do not weaken:
+- supervised biometric enrollment;
+- user consent;
+- encrypted facial embedding storage;
+- liveness/similarity validation;
+- GPS accuracy and Site geofence checks;
+- one-use/expiring contingency approvals;
+- descriptive-only attendance reporting.
+
+Client camera/GPS code is capture UX, not the authorization boundary.
+
+### Next
+
+Phase 9 — Maintenance + Work Orders + Activities/Reaction.

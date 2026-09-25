@@ -7,6 +7,11 @@ import AttendanceCapture from "@/components/AttendanceCapture";
 import SupervisedBiometricEnrollment from "@/components/SupervisedBiometricEnrollment";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
+import ModuleHeader from "@/components/ModuleHeader";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 
 type Policy={
   enabled:boolean;
@@ -277,18 +282,28 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const totalHours=reports.rows.reduce((sum,row)=>sum+Number(row.field_hours||0),0);
   const completedInShift=reports.rows.reduce((sum,row)=>sum+row.completed_in_shift,0);
 
-  return <>
-    <header className="page-header">
-      <div><span className="eyebrow">Operación en campo</span><h1 className="page-title">Presencia y actividades</h1><p className="muted">Valida presencia física en sitio con GPS y rostro en vivo. La jornada puede iniciar aunque todavía no existan actividades asignadas.</p></div>
-      <div className="brand-pill"><span /> {activeNow} en campo</div>
-    </header>
+  return <div className="phase8-attendance">
+    <ModuleHeader
+      eyebrow="Operación en campo"
+      title="Presencia y actividades"
+      description="Valida presencia física en sitio con GPS y rostro en vivo. La jornada puede iniciar aunque todavía no existan actividades asignadas."
+      count={canReports?reports.rows.length:1}
+      countLabel={canReports?"personas":"sesión"}
+      searchPlaceholder="Buscar persona o rol en el reporte de asistencia"
+      filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
+      facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
+    />
+    <section className="section phase8-attendance-summary-head">
+      <div><span className="eyebrow">Operación en campo</span><h1>Presencia y actividades</h1><p>Biometría facial supervisada, GPS y geocercas con trazabilidad auditable.</p></div>
+      <Badge variant={activeNow>0?"success":"neutral"} icon="attendance">{activeNow} en campo</Badge>
+    </section>
 
-    {feedback.saved==="policy" && <div className="notice success section">Política de asistencia actualizada.</div>}
-    {feedback.error==="roles" && <div className="notice error section">Selecciona al menos un rol para aplicar el control de asistencia.</div>}
+    {feedback.saved==="policy" && <div className="section"><Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert></div>}
+    {feedback.error==="roles" && <div className="section"><Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert></div>}
 
     {canSelf && organizationId && <>
       {!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)
-        ? <section className="card section empty-state"><strong>El control de asistencia no está habilitado para tu rol.</strong><span>Un administrador puede activarlo desde la política de asistencia.</span></section>
+        ? <section className="section"><EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/></section>
         : <>
             <section className="section">
               <AttendanceCapture
@@ -341,7 +356,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     />}
 
     {canManage && organizationId && <section className="card section">
-      <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><span className={"setup-flow-state "+(policy.enabled?"ready":"blocked")}>{policy.enabled?"Activo":"Inactivo"}</span></div>
+      <div className="section-heading"><div><span className="eyebrow">Política de empresa</span><h2>Control de asistencia</h2><p className="muted">Define a qué roles aplica y qué verificaciones deben superar. La configuración no toma decisiones laborales automáticas.</p></div><Badge variant={policy.enabled?"success":"neutral"}>{policy.enabled?"Activo":"Inactivo"}</Badge></div>
       <form method="post" action="/api/attendance/policy" className="form-grid">
         <div className="field"><label>Estado</label><select name="enabled" defaultValue={String(policy.enabled)}><option value="true">Activado</option><option value="false">Desactivado</option></select></div>
         <div className="field"><label>Biometría facial</label><select name="require_face" defaultValue={String(policy.require_face)}><option value="true">Obligatoria</option><option value="false">No requerida</option></select></div>
@@ -356,17 +371,40 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
     {canManage && organizationId && <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Geocercas</span><h2>Sedes habilitadas</h2><p className="muted">Cada sede debe tener coordenadas y radio antes de exigir geolocalización.</p></div></div>
-      <div className="attendance-site-grid">{sites.rows.map(site=><article className="card attendance-site-card" key={site.id}><div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div><span className={"setup-flow-state "+(site.latitude!==null&&site.longitude!==null?"ready":"blocked")}>{site.latitude!==null&&site.longitude!==null ? site.geofence_radius_m+" m":"Sin geocerca"}</span><Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar →</Link></article>)}</div>
+      <div className="attendance-site-grid">{sites.rows.map(site=><article className="card attendance-site-card" key={site.id}><div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div><Badge variant={site.latitude!==null&&site.longitude!==null?"success":"warning"}>{site.latitude!==null&&site.longitude!==null ? site.geofence_radius_m+" m":"Sin geocerca"}</Badge><Link className="text-button" href={"/dashboard/locations/"+site.id}>Configurar →</Link></article>)}</div>
     </section>}
 
     {canReports && <section className="section">
       <div className="section-heading"><div><span className="eyebrow">Últimos 30 días</span><h2>Estadísticas de operación en campo</h2><p className="muted">Datos descriptivos para análisis humano: no son un ranking ni una calificación automática de desempeño.</p></div></div>
-      <div className="attendance-summary-grid">
-        <article className="card compact-metric"><span>Personal con jornada abierta</span><strong>{activeNow}</strong><small>en este momento</small></article>
-        <article className="card compact-metric"><span>Horas registradas</span><strong>{totalHours.toFixed(1)}</strong><small>últimos 30 días</small></article>
-        <article className="card compact-metric"><span>Actividades finalizadas en jornada</span><strong>{completedInShift}</strong><small>cruce horario descriptivo</small></article>
-      </div>
-      {reports.rows.length ? <div className="attendance-report-table-wrap"><table className="table attendance-report-table"><thead><tr><th>Persona</th><th>Rol</th><th>Jornadas</th><th>Horas campo</th><th>Act. en jornada</th><th>Act. fuera de jornada</th><th>Duración media act.</th><th>Contingencias</th><th>Estado</th></tr></thead><tbody>{reports.rows.map(row=><tr key={row.user_id}><td><strong>{row.full_name}</strong>{row.last_check_in&&<small className="table-subline">Última entrada: {new Date(row.last_check_in).toLocaleString("es-CO")}</small>}</td><td>{ROLE_LABELS[row.role]}</td><td>{row.shifts}</td><td>{Number(row.field_hours).toFixed(1)} h</td><td>{row.completed_in_shift}</td><td>{row.completed_outside_shift}</td><td>{row.avg_activity_minutes ? row.avg_activity_minutes+" min":"—"}</td><td>{row.contingency_events}</td><td><span className={"status-badge "+(row.open_now?"status-active":"status-inactive")}><i />{row.open_now?"En campo":"Sin jornada"}</span></td></tr>)}</tbody></table></div> : <div className="card empty-state"><strong>Aún no hay datos de asistencia.</strong><span>Los registros aparecerán cuando el personal habilitado empiece a marcar entrada y salida.</span></div>}
+      <MetricGrid className="attendance-summary-grid phase8-attendance-kpis">
+        <KpiCard label="Personal con jornada abierta" value={String(activeNow)} hint="en este momento" icon="attendance" tone={activeNow>0?"success":"default"}/>
+        <KpiCard label="Horas registradas" value={totalHours.toFixed(1)} hint="últimos 30 días" icon="clock"/>
+        <KpiCard label="Actividades finalizadas en jornada" value={String(completedInShift)} hint="cruce horario descriptivo" icon="check" tone="success"/>
+      </MetricGrid>
+      <StaticDataTable
+        className="attendance-report-table"
+        caption="Estadísticas descriptivas de asistencia de los últimos 30 días"
+        columns={[
+          {key:"person",label:"Persona"},{key:"role",label:"Rol"},{key:"shifts",label:"Jornadas",align:"end"},
+          {key:"hours",label:"Horas campo",align:"end"},{key:"inside",label:"Act. en jornada",align:"end"},
+          {key:"outside",label:"Act. fuera de jornada",align:"end"},{key:"average",label:"Duración media act."},
+          {key:"contingencies",label:"Contingencias",align:"end"},{key:"state",label:"Estado"},
+        ]}
+        rows={reports.rows.map(row=>({id:row.user_id,recordProps:{
+          "data-module-record":true,
+          "data-status":row.open_now?"active":"inactive",
+          "data-search":[row.full_name,ROLE_LABELS[row.role]].join(" "),
+          "data-filter-role":row.role,
+          "data-filter-role-label":ROLE_LABELS[row.role],
+        },cells:{
+          person:<span><strong>{row.full_name}</strong>{row.last_check_in&&<small className="table-subline">Última entrada: {new Date(row.last_check_in).toLocaleString("es-CO")}</small>}</span>,
+          role:ROLE_LABELS[row.role],shifts:row.shifts,hours:Number(row.field_hours).toFixed(1)+" h",
+          inside:row.completed_in_shift,outside:row.completed_outside_shift,
+          average:row.avg_activity_minutes?row.avg_activity_minutes+" min":"—",contingencies:row.contingency_events,
+          state:<Badge variant={row.open_now?"success":"neutral"}>{row.open_now?"En campo":"Sin jornada"}</Badge>,
+        }}))}
+        empty={<EmptyState icon="file" title="Aún no hay datos de asistencia" description="Los registros aparecerán cuando el personal habilitado empiece a marcar entrada y salida."/>}
+      />
     </section>}
-  </>;
+  </div>;
 }

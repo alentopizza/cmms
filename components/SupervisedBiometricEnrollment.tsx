@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { captureLiveFace, loadBiometricEngine } from "@/lib/client-biometric";
+import UiIcon from "@/components/UiIcon";
+import { Alert } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
 
 type Person = {
   id:string;
@@ -235,9 +239,9 @@ export default function SupervisedBiometricEnrollment({
         </div>
 
         <div className="biometric-enrollment-location-check">
-          <button className="button secondary" type="button" disabled={busy||!selectedSite} onClick={verifyEnrollmentLocation}>
-            {locationVerified?"✓ Ubicación verificada":"⌖ Verificar presencia en la sede"}
-          </button>
+          <Button variant="secondary" disabled={busy||!selectedSite} onClick={verifyEnrollmentLocation} iconLeft={locationVerified?"check":"location"}>
+            {locationVerified?"Ubicación verificada":"Verificar presencia en la sede"}
+          </Button>
           {locationVerified&&locationEvidence&&<small>GPS ±{Math.round(locationEvidence.accuracy)} m · distancia {Math.round(locationEvidence.distance)} m</small>}
         </div>
 
@@ -248,9 +252,9 @@ export default function SupervisedBiometricEnrollment({
           <div>
             <strong>{selected.full_name}</strong>
             <small>{selected.email}</small>
-            <span className={"status-badge "+(selectedStatus==="verified"?"status-active":"")}>
+            <Badge variant={selectedStatus==="verified"?"success":selectedStatus==="revoked"?"danger":selectedStatus==="legacy"?"warning":"neutral"} icon="attendance">
               {selectedStatus==="verified"?"Biometría verificada":selectedStatus==="legacy"?"Requiere reenrolamiento":selectedStatus==="revoked"?"Revocada":"Sin biometría"}
-            </span>
+            </Badge>
           </div>
         </div>}
 
@@ -265,19 +269,19 @@ export default function SupervisedBiometricEnrollment({
         </label>
 
         <div className="form-actions">
-          <button className="button secondary" type="button" disabled={busy||!selected} onClick={revoke}>Revocar biometría</button>
-          <button className="button" type="button" disabled={busy||!selected||!locationVerified} onClick={enroll}>{busy?"Procesando…":"Activar cámara y enrolar"}</button>
+          <Button variant="secondary" disabled={busy||!selected} onClick={revoke} iconLeft="power">Revocar biometría</Button>
+          <Button disabled={busy||!selected||!locationVerified} loading={busy} onClick={enroll} iconLeft="user">Activar cámara y enrolar</Button>
         </div>
 
-        {message&&<div className="notice success">{message}</div>}
-        {error&&<div className="notice error">{error}</div>}
+        {message&&<Alert variant="success" title="Biometría actualizada">{message}</Alert>}
+        {error&&<Alert variant="danger" title="No fue posible completar el enrolamiento">{error}</Alert>}
       </div>
 
       <div className="attendance-camera-card biometric-supervisor-camera">
         <div className="attendance-camera-stage">
           <video ref={videoRef} playsInline muted className={cameraReady?"ready":""}/>
           <div className="attendance-face-guide" aria-hidden="true"/>
-          {!cameraReady&&<div className="attendance-camera-placeholder"><span>◎</span><strong>Persona físicamente presente</strong><small>La cámara se activa únicamente al iniciar el enrolamiento supervisado.</small></div>}
+          {!cameraReady&&<div className="attendance-camera-placeholder"><span><UiIcon name="user" size={24}/></span><strong>Persona físicamente presente</strong><small>La cámara se activa únicamente al iniciar el enrolamiento supervisado.</small></div>}
         </div>
       </div>
     </div>

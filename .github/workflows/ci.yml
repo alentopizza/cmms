@@ -62,6 +62,7 @@ jobs:
       - run: node scripts/business-ui-smoke.mjs
       - run: node scripts/phase6-modules-smoke.mjs
       - run: node scripts/phase7-assets-inventory-smoke.mjs
+      - run: node scripts/phase8-suppliers-people-smoke.mjs
       - run: npm run build
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import { captureLiveFace, loadBiometricEngine, type FaceCapture } from "@/lib/client-biometric";
+import UiIcon from "@/components/UiIcon";
+import { Alert } from "@/components/ui-kit/Feedback";
+import { Badge } from "@/components/ui-kit/Badge";
+import { Button } from "@/components/ui-kit/Button";
 
 type Site = {
   id:string;
@@ -295,7 +299,7 @@ export default function AttendanceCapture({
 
   return <div className="attendance-presence-workspace">
     <section className={"attendance-presence-status "+(openShift?"active":"")}>
-      <div className="attendance-presence-status-icon" aria-hidden="true">{openShift?"✓":"⌖"}</div>
+      <div className="attendance-presence-status-icon" aria-hidden="true"><UiIcon name={openShift?"check":"attendance"} size={22}/></div>
       <div>
         <span className="eyebrow">Estado de presencia</span>
         <h2>{openShift?"En sitio y disponible":"Listo para iniciar en sitio"}</h2>
@@ -303,14 +307,14 @@ export default function AttendanceCapture({
           ? `Presencia validada en ${openShift.site_name}. La jornada no depende de tener actividades asignadas.`
           : "Puedes iniciar tu presencia biométrica aunque todavía no tengas órdenes o actividades asignadas."}</p>
       </div>
-      <span className={"attendance-presence-pill "+(openShift?"active":"")}>{openShift?"Jornada abierta":"Sin jornada"}</span>
+      <Badge variant={openShift?"success":"neutral"} icon="attendance">{openShift?"Jornada abierta":"Sin jornada"}</Badge>
     </section>
 
     <div className="attendance-presence-grid">
       <section className="attendance-location-card">
         <header>
           <div><span className="eyebrow">Ubicación</span><h3>{selectedSite?.name||"Selecciona una sede"}</h3><p>{selectedSite?.city||"La geocerca se valida con el GPS del celular."}</p></div>
-          {distance!==null&&<span className={"attendance-range-badge "+(insideRange&&accuracyOk?"inside":"outside")}>{insideRange&&accuracyOk?"Dentro del rango":Math.round(distance)+" m"}</span>}
+          {distance!==null&&<Badge variant={insideRange&&accuracyOk?"success":"warning"} icon="location">{insideRange&&accuracyOk?"Dentro del rango":Math.round(distance)+" m"}</Badge>}
         </header>
 
         {selectedSite?.geofenceConfigured&&selectedSite.latitude!==null&&selectedSite.longitude!==null
@@ -327,7 +331,7 @@ export default function AttendanceCapture({
               coordinateRequired={false}
               className="attendance-presence-map"
             />
-          : <div className="attendance-map-empty"><span>⌖</span><strong>Sede sin geocerca</strong><small>Un administrador debe configurar el punto y radio antes de usar asistencia geolocalizada.</small></div>}
+          : <div className="attendance-map-empty"><span><UiIcon name="location" size={22}/></span><strong>Sede sin geocerca</strong><small>Un administrador debe configurar el punto y radio antes de usar asistencia geolocalizada.</small></div>}
 
         <div className="attendance-location-states">
           <div className={geoPermission==="denied"?"blocked":gps?"ready":""}><span>GPS</span><strong>{gps?`±${Math.round(gps.accuracy)} m`:geoPermission==="denied"?"Bloqueado":"Pendiente"}</strong></div>
@@ -342,17 +346,17 @@ export default function AttendanceCapture({
           <h2>Requiere enrolamiento supervisado</h2>
           <p>Tu identidad facial todavía no está verificada. Un Administrador o Manager debe enrolarte presencialmente desde este módulo antes de que puedas iniciar actividades.</p>
           <div className="attendance-no-assignment-note">
-            <span aria-hidden="true">i</span>
+            <span aria-hidden="true"><UiIcon name="info" size={16}/></span>
             <p><strong>La foto de perfil no sustituye este paso.</strong><small>El supervisor confirma tu identidad y la cámara genera una plantilla facial cifrada con prueba de vida.</small></p>
           </div>
-          <button className="button secondary attendance-start-button" type="button" disabled>Enrolamiento requerido</button>
+          <Button className="attendance-start-button" variant="secondary" disabled iconLeft="attendance">Enrolamiento requerido</Button>
         </> : <>
           <span className="eyebrow">{openShift?"Cierre de jornada":"Inicio de jornada"}</span>
           <h2>{openShift?"Jornada abierta · debes marcar salida al terminar":"Verifica tu presencia"}</h2>
 
           {openShift
             ? <div className="attendance-open-shift"><span>Inicio validado</span><strong>{new Date(openShift.check_in_at).toLocaleString("es-CO")}</strong><small>{openShift.site_name} · disponible para recibir actividades</small></div>
-            : <div className="attendance-no-assignment-note"><span aria-hidden="true">i</span><p><strong>No necesitas una actividad asignada para iniciar.</strong><small>El registro confirma que estás presencialmente en la sede. Las actividades que recibas después quedarán relacionadas con esta jornada.</small></p></div>}
+            : <div className="attendance-no-assignment-note"><span aria-hidden="true"><UiIcon name="info" size={16}/></span><p><strong>No necesitas una actividad asignada para iniciar.</strong><small>El registro confirma que estás presencialmente en la sede. Las actividades que recibas después quedarán relacionadas con esta jornada.</small></p></div>}
 
           <div className="field">
             <label>Sede *</label>
@@ -368,14 +372,14 @@ export default function AttendanceCapture({
             <div className={openShift?"done":phase==="saving"?"current":""}><span>3</span><p><strong>Presencia</strong><small>{openShift?"En sitio":"Abrir jornada"}</small></p></div>
           </div>
 
-          {requireGeolocation&&!openShift&&<button className="button secondary attendance-location-check" type="button" disabled={busy} onClick={verifyLocation}>⌖ Verificar ubicación</button>}
-          <button className={"button attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} type="button" disabled={busy||(!siteId&&configuredSites.length===0)} onClick={()=>clock(openShift?"check_out":"check_in")}>{activityLabel}</button>
+          {requireGeolocation&&!openShift&&<Button className="attendance-location-check" variant="secondary" disabled={busy} onClick={verifyLocation} iconLeft="location">Verificar ubicación</Button>}
+          <Button className={"attendance-clock-button attendance-start-button "+(openShift?"attendance-stop-button":"")} variant={openShift?"danger":"primary"} loading={busy} disabled={!busy&&(!siteId&&configuredSites.length===0)} onClick={()=>clock(openShift?"check_out":"check_in")} iconLeft="attendance">{activityLabel}</Button>
 
           {requireFace&&enrolled&&!openShift&&<small className="attendance-biometric-note">Tu biometría fue verificada por un supervisor. La revocación o reenrolamiento también requiere supervisión.</small>}
         </>}
 
-        {message&&<div className="notice success">{message}</div>}
-        {error&&<div className="notice error">{error}</div>}
+        {message&&<Alert variant="success" title="Validación completada">{message}</Alert>}
+        {error&&<Alert variant="danger" title="No fue posible validar la presencia">{error}</Alert>}
       </section>
     </div>
 
@@ -383,7 +387,7 @@ export default function AttendanceCapture({
       <div className="attendance-camera-stage">
         <video ref={videoRef} playsInline muted className={cameraReady?"ready":""} />
         <div className="attendance-face-guide" aria-hidden="true" />
-        {!cameraReady&&<div className="attendance-camera-placeholder"><span>◎</span><strong>Verificación facial presencial</strong><small>La cámara se activa únicamente durante enrolamiento, inicio o finalización de actividades.</small></div>}
+        {!cameraReady&&<div className="attendance-camera-placeholder"><span><UiIcon name="user" size={24}/></span><strong>Verificación facial presencial</strong><small>La cámara se activa únicamente durante enrolamiento, inicio o finalización de actividades.</small></div>}
       </div>
       <div className="attendance-camera-state">
         <span className={cameraReady?"ready":""}><i /> Cámara</span>

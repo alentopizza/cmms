@@ -11,6 +11,7 @@ export {
   CompanyCard,
   LocationCard,
   SubLocationCard,
+  CrewCard,
   UserCard,
 } from "./BusinessCards";
 export type { BusinessDomain } from "./BusinessCards";

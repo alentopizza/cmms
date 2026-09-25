@@ -166,3 +166,10 @@
 @media(prefers-reduced-motion:reduce){
   .phase9-maintenance *,.phase9-work-orders *,.phase9-work-order-detail *,.phase9-reaction *{scroll-behavior:auto!important}
 }
+
+
+/* User-selected collection mode overrides the former viewport-only switch. */
+.phase9-maintenance .ds-collection-view.is-grid .maintenance-mobile-list,
+.phase9-work-orders .ds-collection-view.is-grid .work-order-mobile-list{display:grid;gap:var(--space-3)}
+.phase9-maintenance .ds-collection-view.is-list .maintenance-directory-table,
+.phase9-work-orders .ds-collection-view.is-list .work-order-directory-table{display:block}

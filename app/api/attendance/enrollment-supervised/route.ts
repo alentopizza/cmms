@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { canAccessSite, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { encryptEmbedding, finiteCoordinate, haversineMeters, validateEmbedding } from "@/lib/biometric";
 import { pool } from "@/lib/db";
 import type { PoolClient } from "pg";
+import { canAccessAttendanceSite, resolveAttendanceOrganization } from "@/lib/attendance-scope";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,14 +24,15 @@ async function targetUser(client:PoolClient, organizationId:string, userId:strin
 
 export async function POST(request:Request){
   const session=await getSession();
-  if(!session?.userId||!session.organizationId)return new NextResponse("Unauthorized",{status:401});
+  if(!session)return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"attendance.manage"))return new NextResponse("Forbidden",{status:403});
 
   const body=await request.json().catch(()=>null) as {
-    userId?:unknown; siteId?:unknown; embedding?:unknown; consent?:unknown; identityChecked?:unknown;
+    organizationId?:unknown; userId?:unknown; siteId?:unknown; embedding?:unknown; consent?:unknown; identityChecked?:unknown;
     live?:unknown; real?:unknown; latitude?:unknown; longitude?:unknown; accuracy?:unknown;
   }|null;
 
+  const organizationId=resolveAttendanceOrganization(session,body?.organizationId);
   const userId=typeof body?.userId==="string"?body.userId:"";
   const siteId=typeof body?.siteId==="string"?body.siteId:"";
   const embedding=validateEmbedding(body?.embedding);
@@ -40,7 +42,7 @@ export async function POST(request:Request){
   const longitude=finiteCoordinate(body?.longitude,-180,180);
   const accuracy=Number(body?.accuracy);
 
-  if(!UUID.test(userId)||!UUID.test(siteId)||!embedding||body?.consent!==true||body?.identityChecked!==true){
+  if(!organizationId||!UUID.test(organizationId)||!UUID.test(userId)||!UUID.test(siteId)||!embedding||body?.consent!==true||body?.identityChecked!==true){
     return NextResponse.json({message:"El enrolamiento supervisado está incompleto."},{status:422});
   }
 
@@ -52,7 +54,7 @@ export async function POST(request:Request){
       `SELECT enabled,enabled_roles,liveness_threshold
        FROM organization_attendance_policies
        WHERE organization_id=$1`,
-      [session.organizationId],
+      [organizationId],
     );
     const attendancePolicy=policy.rows[0];
     if(!attendancePolicy?.enabled){
@@ -65,7 +67,7 @@ export async function POST(request:Request){
       return NextResponse.json({message:"La prueba de presencia real no alcanzó el nivel requerido."},{status:422});
     }
 
-    const person=await targetUser(client,session.organizationId,userId);
+    const person=await targetUser(client,organizationId,userId);
     if(!person.rowCount){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"El usuario no pertenece a esta empresa."},{status:404});
@@ -79,14 +81,14 @@ export async function POST(request:Request){
       return NextResponse.json({message:"El usuario debe tener foto de perfil antes del enrolamiento supervisado."},{status:422});
     }
 
-    if(!canAccessSite(session,siteId)){
+    if(!canAccessAttendanceSite(session,organizationId,siteId)){
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden",{status:403});
     }
 
     const site=await client.query<{latitude:number|null;longitude:number|null;geofence_radius_m:number}>(
       "SELECT latitude,longitude,geofence_radius_m FROM sites WHERE id=$1 AND organization_id=$2 AND active=true",
-      [siteId,session.organizationId],
+      [siteId,organizationId],
     );
     if(!site.rowCount){
       await client.query("ROLLBACK");
@@ -108,7 +110,7 @@ export async function POST(request:Request){
       const subjectSite=await client.query(
         `SELECT 1 FROM organization_member_sites
          WHERE organization_id=$1 AND user_id=$2 AND site_id=$3`,
-        [session.organizationId,userId,siteId],
+        [organizationId,userId,siteId],
       );
       if(!subjectSite.rowCount){
         await client.query("ROLLBACK");
@@ -135,14 +137,14 @@ export async function POST(request:Request){
                      enrolled_by=EXCLUDED.enrolled_by,enrollment_site_id=EXCLUDED.enrollment_site_id,
                      enrollment_method='supervised_camera',identity_verified_at=now(),
                      revoked_by=NULL,revoked_reason=NULL`,
-      [userId,session.organizationId,encrypted,session.userId,siteId],
+      [userId,organizationId,encrypted,session.userId||null,siteId],
     );
 
     await client.query(
       `INSERT INTO biometric_enrollment_events(
          organization_id,user_id,actor_user_id,site_id,event_type,enrollment_method,metadata
        ) VALUES($1,$2,$3,$4,$5,'supervised_camera',$6::jsonb)`,
-      [session.organizationId,userId,session.userId,siteId,eventType,JSON.stringify({
+      [organizationId,userId,session.userId||null,siteId,eventType,JSON.stringify({
         identity_checked:true,
         consent:true,
         enrollment_location:{latitude,longitude,accuracy,distance_m:enrollmentDistance},
@@ -163,13 +165,14 @@ export async function POST(request:Request){
 
 export async function DELETE(request:Request){
   const session=await getSession();
-  if(!session?.userId||!session.organizationId)return new NextResponse("Unauthorized",{status:401});
+  if(!session?.userId||!organizationId)return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"attendance.manage"))return new NextResponse("Forbidden",{status:403});
 
-  const body=await request.json().catch(()=>null) as {userId?:unknown;reason?:unknown}|null;
+  const body=await request.json().catch(()=>null) as {organizationId?:unknown;userId?:unknown;reason?:unknown}|null;
+  const organizationId=resolveAttendanceOrganization(session,body?.organizationId);
   const userId=typeof body?.userId==="string"?body.userId:"";
   const reason=typeof body?.reason==="string"?body.reason.trim().slice(0,500):"Revocación administrativa";
-  if(!UUID.test(userId))return NextResponse.json({message:"Usuario inválido."},{status:422});
+  if(!organizationId||!UUID.test(organizationId)||!UUID.test(userId))return NextResponse.json({message:"Usuario o empresa inválidos."},{status:422});
 
   const client=await pool.connect();
   try{
@@ -178,7 +181,7 @@ export async function DELETE(request:Request){
     const open=await client.query(
       `SELECT 1 FROM attendance_shifts
        WHERE organization_id=$1 AND user_id=$2 AND status='open'`,
-      [session.organizationId,userId],
+      [organizationId,userId],
     );
     if(open.rowCount){
       await client.query("ROLLBACK");
@@ -190,7 +193,7 @@ export async function DELETE(request:Request){
        SET encrypted_embedding=NULL,revoked_at=now(),revoked_by=$1,revoked_reason=$2,updated_at=now()
        WHERE user_id=$3 AND organization_id=$4 AND revoked_at IS NULL
        RETURNING enrollment_site_id`,
-      [session.userId,reason,userId,session.organizationId],
+      [session.userId,reason,userId,organizationId],
     );
     if(!revoked.rowCount){
       await client.query("ROLLBACK");
@@ -201,7 +204,7 @@ export async function DELETE(request:Request){
       `INSERT INTO biometric_enrollment_events(
          organization_id,user_id,actor_user_id,site_id,event_type,enrollment_method,metadata
        ) VALUES($1,$2,$3,$4,'revoked',NULL,$5::jsonb)`,
-      [session.organizationId,userId,session.userId,revoked.rows[0].enrollment_site_id||null,JSON.stringify({reason})],
+      [organizationId,userId,session.userId||null,revoked.rows[0].enrollment_site_id||null,JSON.stringify({reason})],
     );
 
     await client.query("COMMIT");

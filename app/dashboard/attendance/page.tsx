@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import UiIcon from "@/components/UiIcon";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -395,7 +396,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     "5":{title:"Resumen y confirmación",description:"Revisa la configuración vigente antes de continuar a la operación diaria.",icon:"report"},
   };
 
-  const setupStepContent:Record<string,React.ReactNode>={
+  const setupStepContent:Record<string,ReactNode>={
     "1":<div className="attendance-setup-sections">
       <section className="attendance-setup-group">
         <div className="attendance-setup-group-head"><UiIcon name="company" size={17}/><div><strong>Información de la empresa</strong><small>Contexto sobre el que se aplican las reglas de asistencia.</small></div></div>

@@ -6,6 +6,7 @@ const required=[
   "lib/attendance-schedules.ts",
   "app/api/attendance/schedules/route.ts",
   "components/UserAttendanceScheduleAdmin.tsx",
+  "components/UserAttendanceAuditCenter.tsx",
   "components/AttendanceCapture.tsx",
   "app/dashboard/attendance/page.tsx",
   "app/dashboard/users/UserManagement.tsx",
@@ -29,11 +30,13 @@ for(const marker of ["<BusinessHoursFields","Copiar empresa","Copiar sede base",
   if(!component.includes(marker))throw new Error("Attendance schedule UI missing "+marker);
 }
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
-for(const marker of ["<UserAttendanceScheduleAdmin","attendance-scheduled-workday","preferredSiteId","user_attendance_schedules"]){
+for(const marker of ["<UserAttendanceAuditCenter","attendance-scheduled-workday","preferredSiteId","user_attendance_schedules"]){
   if(!attendance.includes(marker))throw new Error("Attendance Phase 2 orchestration missing "+marker);
 }
+const auditCenter=fs.readFileSync("components/UserAttendanceAuditCenter.tsx","utf8");
+if(!auditCenter.includes("<UserAttendanceScheduleAdmin"))throw new Error("Attendance audit center no longer reuses Phase 2 schedule administration");
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
-if(!users.includes("<UserAttendanceScheduleAdmin"))throw new Error("User profile does not expose attendance schedule administration");
+if(!users.includes("<UserAttendanceAuditCenter"))throw new Error("User profile does not expose attendance schedule administration through the audit center");
 const capture=fs.readFileSync("components/AttendanceCapture.tsx","utf8");
 if(!capture.includes("preferredSiteId"))throw new Error("Attendance capture does not prefer scheduled base Site");
 const css=fs.readFileSync("app/phase8-modules.css","utf8");

@@ -34,6 +34,7 @@ type EnrollmentState={
     livenessThreshold:number;
   };
   notice:{id:string;version:number;title:string;body:string;published_at:string}|null;
+  hasAvatar:boolean;
   profileStatus:"verified"|"legacy"|"revoked"|"missing";
   request:{
     id:string;
@@ -279,6 +280,7 @@ export default function SelfBiometricEnrollment({
     {state?.request?.status==="rejected"&&<Alert variant="warning" title="La solicitud anterior fue rechazada">{state.request.review_note||"Repite el enrolamiento y verifica que tu rostro, ubicación y datos correspondan correctamente."}</Alert>}
     {state?.request?.status==="expired"&&<Alert variant="warning" title="La evidencia temporal expiró">Por seguridad debes repetir la captura y enviar una nueva solicitud.</Alert>}
     {!state?.notice&&<Alert variant="danger" title="Política biométrica pendiente">Un administrador debe publicar la política biométrica de la empresa antes de que puedas enrolarte.</Alert>}
+    {state&&!state.hasAvatar&&<Alert variant="warning" title="Foto de perfil requerida">Antes de enviar la solicitud, un administrador debe registrar tu foto de perfil. Esa foto solo sirve para que el aprobador confirme visualmente tu identidad; no se usa como plantilla facial.</Alert>}
 
     <div className="self-biometric-steps">
       <article className={policyRead?"done":""}>
@@ -314,7 +316,7 @@ export default function SelfBiometricEnrollment({
       <article className={challengeCompleted===2?"done":""}>
         <span>4</span>
         <div><strong>Prueba de vida activa</strong><small>{challengeLabel||"La cámara te pedirá dos gestos aleatorios para reducir intentos con foto o pantalla."}</small></div>
-        <Button size="sm" loading={busy} disabled={busy||!location||!state?.notice} onClick={submitEnrollment} iconLeft="user">Activar cámara y enviar</Button>
+        <Button size="sm" loading={busy} disabled={busy||!location||!state?.notice||!state.hasAvatar} onClick={submitEnrollment} iconLeft="user">Activar cámara y enviar</Button>
       </article>
     </div>
 

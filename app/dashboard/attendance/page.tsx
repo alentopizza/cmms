@@ -506,7 +506,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     "3":<div className="attendance-setup-embedded">
       <BiometricEnrollmentAdmin
         organizationId={organizationId||""}
-        people={enrollmentPeople.rows}
+        people={controlledPeople}
         sites={sites.rows.map(site=>({
           id:site.id,
           name:site.name,

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui-kit/Button";
 import { Search } from "@/components/ui-kit/DataControls";
 import { Select } from "@/components/ui-kit/FormControls";
 import { EmptyState } from "@/components/ui-kit/Feedback";
-import { Drawer } from "@/components/ui-kit/Overlay";
+import { Drawer, Modal } from "@/components/ui-kit/Overlay";
 
 export type CompanyDocumentItem = {
   id:string;
@@ -63,6 +63,67 @@ function typeCode(mime:string|null){
   return "DOC";
 }
 
+function DocumentViewer({
+  document:item,
+  organizationId,
+  mode="context",
+  onMore,
+}:{
+  document:CompanyDocumentItem;
+  organizationId:string;
+  mode?:"context"|"modal";
+  onMore?:()=>void;
+}){
+
+  useEffect(()=>{
+    setZoom(100);
+    setFit(true);
+    setRotation(0);
+    setPreviewError(false);
+    setPreviewLoading(Boolean(item.file_name));
+  },[item.id,item.file_name]);
+
+  const previewUrl=item.file_name?"/api/organizations/"+organizationId+"/documents/"+item.id+"?inline=1":"";
+  const downloadUrl=item.file_name?"/api/organizations/"+organizationId+"/documents/"+item.id:"";
+  const pdfPreviewUrl=item.file_mime_type==="application/pdf"&&previewUrl
+    ?previewUrl+"#zoom="+(fit?"page-width":zoom)
+    :previewUrl;
+
+  function printDocument(){
+    if(!previewUrl)return;
+    const win=window.open(previewUrl,"_blank");
+    if(win)window.setTimeout(()=>{try{win.print();}catch{}},900);
+  }
+
+  return <div className={"company-document-viewer company-document-viewer-"+mode}>
+    <div className="company-document-viewer-toolbar" aria-label={mode==="modal"?"Controles del visor completo":"Controles de previsualización"}>
+      <div className="company-document-viewer-group" data-toolbar-group="view">
+        <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.max(50,value-10));}} disabled={!item.file_name} title="Alejar documento" data-tooltip="Zoom -"><UiIcon name="zoom-out" size={16}/></button>
+        <span className="company-document-zoom-value">{fit?"Ajustado":zoom+"%"}</span>
+        <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.min(200,value+10));}} disabled={!item.file_name} title="Acercar documento" data-tooltip="Zoom +"><UiIcon name="zoom-in" size={16}/></button>
+        <button type="button" className="document-viewer-icon" onClick={()=>setFit(true)} disabled={!item.file_name} title="Ajustar documento al panel" data-tooltip="Ajustar a pantalla"><UiIcon name="fit" size={16}/></button>
+        <button type="button" className="document-viewer-icon" onClick={()=>setRotation(value=>(value+90)%360)} disabled={!item.file_mime_type?.startsWith("image/")} title={item.file_mime_type?.startsWith("image/")?"Rotar imagen":"La rotación PDF está disponible en los controles nativos del visor"} data-tooltip="Rotar"><UiIcon name="rotate" size={16}/></button>
+      </div>
+      <div className="company-document-viewer-group company-document-viewer-actions" data-toolbar-group="document">
+        {item.file_name&&<a className="document-viewer-icon" href={downloadUrl} title="Descargar documento" data-tooltip="Descargar documento"><UiIcon name="download" size={16}/></a>}
+        <button type="button" className="document-viewer-icon" disabled={!item.file_name} onClick={printDocument} title="Imprimir documento" data-tooltip="Imprimir documento"><UiIcon name="print" size={16}/></button>
+        {onMore&&<button type="button" className="document-viewer-icon" onClick={onMore} title="Más acciones" data-tooltip="Más acciones"><UiIcon name="more" size={16}/></button>}
+      </div>
+    </div>
+
+    <div className={"company-document-file-preview-v2"+(previewLoading?" loading":"")}>
+      {previewLoading&&item.file_name&&<div className="company-document-preview-loader"><span className="ds-spinner ds-spinner-md"/><strong>Cargando previsualización…</strong></div>}
+      {previewError?<EmptyState icon="file" title="No fue posible cargar la previsualización" description="Puedes descargar el archivo original o volver a intentarlo seleccionando el documento."/>:
+      !item.file_name?<EmptyState icon="file" title="Documento no disponible" description="Este requisito todavía no tiene un archivo adjunto."/>:
+      item.file_mime_type==="application/pdf"
+        ?<iframe key={pdfPreviewUrl} src={pdfPreviewUrl} title={"Vista previa de "+item.display_name} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/>
+        :item.file_mime_type?.startsWith("image/")
+          ?<div className="company-document-image-stage"><img key={previewUrl} src={previewUrl} alt={"Vista previa de "+item.display_name} style={{transform:"rotate("+rotation+"deg) scale("+(fit?1:zoom/100)+")"}} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/></div>
+          :<EmptyState icon="file" title={item.file_name} description="Este formato no dispone de previsualización integrada. Usa Descargar para abrir el archivo original."/>}
+    </div>
+  </div>;
+}
+
 export default function CompanyDocumentWorkspace({
   organizationId,
   documents,
@@ -78,6 +139,7 @@ export default function CompanyDocumentWorkspace({
 }){
   const [view,setView]=useState<"active"|"archived">("active");
   const [selectedId,setSelectedId]=useState("");
+  const [viewerDocumentId,setViewerDocumentId]=useState("");
   const [editing,setEditing]=useState(false);
   const [search,setSearch]=useState("");
   const [category,setCategory]=useState("all");
@@ -88,7 +150,6 @@ export default function CompanyDocumentWorkspace({
   const [rotation,setRotation]=useState(0);
   const [previewLoading,setPreviewLoading]=useState(false);
   const [previewError,setPreviewError]=useState(false);
-  const [shareMessage,setShareMessage]=useState("");
 
   const active=useMemo(()=>documents.filter(item=>!item.archived_at),[documents]);
   const archived=useMemo(()=>documents.filter(item=>Boolean(item.archived_at)),[documents]);
@@ -114,6 +175,12 @@ export default function CompanyDocumentWorkspace({
   },[source,search,category,validity,sort,categories]);
 
   const selected=visible.find(item=>item.id===selectedId)||visible[0]||null;
+  const viewerDocument=documents.find(item=>item.id===viewerDocumentId)||null;
+  const viewerDescription=viewerDocument
+    ?viewerDocument.file_name
+      ?[typeCode(viewerDocument.file_mime_type),bytesLabel(viewerDocument.file_size_bytes),formatDate(viewerDocument.created_at,true)].filter(Boolean).join(" · ")
+      :"Requisito sin archivo adjunto"
+    :undefined;
 
   useEffect(()=>{
     if(!visible.length){setSelectedId("");setEditing(false);return;}
@@ -123,33 +190,18 @@ export default function CompanyDocumentWorkspace({
     }
   },[visible,selectedId]);
 
-  useEffect(()=>{
-    setZoom(100);setFit(true);setRotation(0);setPreviewError(false);setShareMessage("");
-    setPreviewLoading(Boolean(selected?.file_name));
-  },[selected?.id,selected?.file_name]);
-
-  const previewUrl=selected?.file_name?"/api/organizations/"+organizationId+"/documents/"+selected.id+"?inline=1":"";
-  const downloadUrl=selected?.file_name?"/api/organizations/"+organizationId+"/documents/"+selected.id:"";
-  const pdfPreviewUrl=selected?.file_mime_type==="application/pdf"&&previewUrl
-    ?previewUrl+"#zoom="+(fit?"page-width":zoom)
-    :previewUrl;
-
-  async function shareDocument(document:CompanyDocumentItem){
-    if(!document.file_name)return;
-    const url=window.location.origin+"/api/organizations/"+organizationId+"/documents/"+document.id;
-    try{
-      if(navigator.share)await navigator.share({title:document.display_name,url});
-      else if(navigator.clipboard){await navigator.clipboard.writeText(url);setShareMessage("Enlace copiado");}
-    }catch{/* user cancelled */}
-  }
-  async function shareSelected(){if(selected)await shareDocument(selected);}
-  function printSelected(){
-    if(!previewUrl)return;
-    const win=window.open(previewUrl,"_blank");
-    if(win)window.setTimeout(()=>{try{win.print();}catch{}},900);
-  }
   function selectDocument(id:string){
     setSelectedId(id);setEditing(false);
+  }
+  function openDocument(id:string){
+    setSelectedId(id);
+    setEditing(false);
+    setViewerDocumentId(id);
+  }
+  function openDocumentActions(id:string){
+    setSelectedId(id);
+    setViewerDocumentId("");
+    setEditing(true);
   }
 
   const categoryOptions=[
@@ -178,33 +230,8 @@ export default function CompanyDocumentWorkspace({
           <Badge variant={docState(selected).variant}>{docState(selected).label}</Badge>
         </header>
 
-        <div className="company-document-viewer-toolbar" aria-label="Controles del visor">
-          <div className="company-document-viewer-group">
-            <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.max(50,value-10));}} disabled={!selected.file_name} title="Alejar documento" data-tooltip="Zoom -"><UiIcon name="zoom-out" size={16}/></button>
-            <span className="company-document-zoom-value">{fit?"Ajustado":zoom+"%"}</span>
-            <button type="button" className="document-viewer-icon" onClick={()=>{setFit(false);setZoom(value=>Math.min(200,value+10));}} disabled={!selected.file_name} title="Acercar documento" data-tooltip="Zoom +"><UiIcon name="zoom-in" size={16}/></button>
-            <button type="button" className="document-viewer-icon" onClick={()=>setFit(true)} disabled={!selected.file_name} title="Ajustar documento al panel" data-tooltip="Ajustar a pantalla"><UiIcon name="fit" size={16}/></button>
-            <button type="button" className="document-viewer-icon" onClick={()=>setRotation(value=>(value+90)%360)} disabled={!selected.file_mime_type?.startsWith("image/")} title={selected.file_mime_type?.startsWith("image/")?"Rotar imagen":"La rotación PDF está disponible en los controles nativos del visor"} data-tooltip="Rotar"><UiIcon name="rotate" size={16}/></button>
-          </div>
-          <div className="company-document-viewer-group">
-            {selected.file_name&&<a className="document-viewer-icon" href={downloadUrl} title="Descargar documento" data-tooltip="Descargar documento"><UiIcon name="download" size={16}/></a>}
-            <button type="button" className="document-viewer-icon" disabled={!selected.file_name} onClick={printSelected} title="Imprimir documento" data-tooltip="Imprimir documento"><UiIcon name="print" size={16}/></button>
-            <button type="button" className="document-viewer-icon" disabled={!selected.file_name} onClick={shareSelected} title="Compartir documento" data-tooltip="Compartir documento"><UiIcon name="share" size={16}/></button>
-            <button type="button" className="document-viewer-icon" onClick={()=>setEditing(true)} disabled={Boolean(selected.archived_at)} title="Más opciones del documento" data-tooltip="Más opciones"><UiIcon name="more" size={16}/></button>
-          </div>
-        </div>
+        <DocumentViewer document={selected} organizationId={organizationId} mode="context" onMore={()=>setEditing(true)}/>
 
-        <div className={"company-document-file-preview-v2"+(previewLoading?" loading":"")}>
-          {previewLoading&&selected.file_name&&<div className="company-document-preview-loader"><span className="ds-spinner ds-spinner-md"/><strong>Cargando previsualización…</strong></div>}
-          {previewError?<EmptyState icon="file" title="No fue posible cargar la previsualización" description="Puedes descargar el archivo original o volver a intentarlo seleccionando el documento."/>:
-          !selected.file_name?<EmptyState icon="file" title="Documento no disponible" description="Este requisito todavía no tiene un archivo adjunto."/>:
-          selected.file_mime_type==="application/pdf"
-            ?<iframe key={pdfPreviewUrl} src={pdfPreviewUrl} title={"Vista previa de "+selected.display_name} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/>
-            :selected.file_mime_type?.startsWith("image/")
-              ?<div className="company-document-image-stage"><img key={previewUrl} src={previewUrl} alt={"Vista previa de "+selected.display_name} style={{transform:"rotate("+rotation+"deg) scale("+(fit?1:zoom/100)+")"}} onLoad={()=>setPreviewLoading(false)} onError={()=>{setPreviewLoading(false);setPreviewError(true);}}/></div>
-              :<EmptyState icon="file" title={selected.file_name} description="Este formato no dispone de previsualización integrada. Usa Descargar para abrir el archivo original."/>}
-        </div>
-        {shareMessage&&<span className="company-document-share-message" role="status">{shareMessage}</span>}
       </>}
     </section>
 
@@ -244,10 +271,9 @@ export default function CompanyDocumentWorkspace({
               <td><Badge variant={state.variant}>{state.label}</Badge></td>
               <td>
                 <div className="company-document-row-actions" onClick={event=>event.stopPropagation()}>
-                  <button type="button" onClick={()=>selectDocument(document.id)} title="Previsualizar documento" data-tooltip="Previsualizar documento"><UiIcon name="eye" size={15}/></button>
+                  <button type="button" onClick={()=>openDocument(document.id)} title="Ver documento" data-tooltip="Ver documento"><UiIcon name="eye" size={15}/></button>
                   {document.file_name&&<a href={"/api/organizations/"+organizationId+"/documents/"+document.id} title="Descargar documento" data-tooltip="Descargar documento"><UiIcon name="download" size={15}/></a>}
-                  {document.file_name&&<button type="button" onClick={()=>{selectDocument(document.id);void shareDocument(document);}} title="Compartir documento" data-tooltip="Compartir documento"><UiIcon name="share" size={15}/></button>}
-                  <button type="button" onClick={()=>{selectDocument(document.id);setEditing(true);}} title="Más acciones" data-tooltip="Más acciones"><UiIcon name="more" size={15}/></button>
+                  <button type="button" onClick={()=>openDocumentActions(document.id)} title="Más acciones" data-tooltip="Más acciones"><UiIcon name="more" size={15}/></button>
                 </div>
               </td>
             </tr>;
@@ -256,6 +282,28 @@ export default function CompanyDocumentWorkspace({
       </div>}
       <footer className="company-document-list-foot">Mostrando {visible.length} de {source.length} documentos</footer>
     </section>
+
+    <Modal
+      open={Boolean(viewerDocument)}
+      onClose={()=>setViewerDocumentId("")}
+      title={viewerDocument?.file_name||viewerDocument?.display_name||"Documento"}
+      description={viewerDescription}
+      size="lg"
+      className="company-document-modal"
+      bodyClassName="company-document-modal-body"
+    >
+      {viewerDocument&&<>
+        <div className="company-document-modal-summary">
+          <span className={"company-document-type-icon type-"+typeCode(viewerDocument.file_mime_type).toLowerCase()} aria-hidden="true">{typeCode(viewerDocument.file_mime_type)}</span>
+          <div>
+            <strong>{categories[viewerDocument.category]||viewerDocument.category}</strong>
+            <small>{viewerDocument.expires_at?"Vigencia hasta "+formatDate(viewerDocument.expires_at):viewerDocument.file_name?"Sin fecha de vencimiento":"Sin archivo adjunto"}</small>
+          </div>
+          <Badge variant={docState(viewerDocument).variant}>{docState(viewerDocument).label}</Badge>
+        </div>
+        <DocumentViewer document={viewerDocument} organizationId={organizationId} mode="modal" onMore={()=>openDocumentActions(viewerDocument.id)}/>
+      </>}
+    </Modal>
 
     <Drawer open={editing&&Boolean(selected)} onClose={()=>setEditing(false)} title={selected?.display_name||"Documento"} description="Editar información, archivo y estado del documento.">
       {selected&&<div className="company-document-drawer-content">

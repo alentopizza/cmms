@@ -404,11 +404,11 @@
   width:100%;min-width:0;padding:var(--space-4)
 }
 .phase6-company-directory .entity-profile-wide-tab[data-active-tab="documents"] .company-document-workspace-v2{
-  grid-template-columns:minmax(420px,1fr) minmax(520px,1fr);width:100%
+  grid-template-columns:minmax(360px,40%) minmax(0,60%);width:100%
 }
 @media(max-width:1180px){
   .phase6-company-directory .entity-profile-wide-tab[data-active-tab="documents"] .company-document-workspace-v2{
-    grid-template-columns:minmax(360px,46%) minmax(0,54%)
+    grid-template-columns:minmax(330px,45%) minmax(0,55%)
   }
 }
 @media(max-width:900px){

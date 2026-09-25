@@ -261,9 +261,15 @@
 .phase8-attendance .attendance-displacement-arrow{display:grid;place-items:center;color:var(--color-info-text)}
 .phase8-users .user-attendance-management{display:grid;gap:var(--space-4)}
 .phase8-users .user-attendance-management .biometric-supervisor-card{margin:0}
+.phase8-users .user-attendance-management .biometric-supervisor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+.phase8-users .user-attendance-management .biometric-supervisor-card{padding:var(--space-4)}
+.phase8-users .user-attendance-management .biometric-person-card{border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.phase8-users .user-attendance-management .attendance-camera-stage{overflow:hidden;border-radius:var(--radius-xl);background:var(--color-navy-950)}
+.phase8-users .user-attendance-management .attendance-camera-placeholder{color:var(--color-text-inverse)}
+.phase8-users .user-attendance-management .biometric-supervisor-camera{padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
 
 @media(max-width:900px){
-  .phase8-attendance .attendance-organization-form,.attendance-schedule-toolbar,.attendance-schedule-grace{grid-template-columns:1fr}
+  .phase8-attendance .attendance-organization-form,.attendance-schedule-toolbar,.attendance-schedule-grace,.phase8-users .user-attendance-management .biometric-supervisor-grid{grid-template-columns:1fr}
   .attendance-day-row{grid-template-columns:1fr repeat(3,minmax(0,1fr))}
   .phase8-attendance .attendance-displacement-start{grid-template-columns:1fr 1fr}
   .phase8-attendance .attendance-displacement-start .ds-button{grid-column:1/-1}

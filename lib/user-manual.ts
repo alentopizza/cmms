@@ -272,6 +272,33 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["expediente","auditoría","asistencia","marcaciones","desplazamientos","biometría","contingencia","trazabilidad","jornada"],
   },
   {
+    id:"attendance-operational-report",
+    title:"Reporte operativo de asistencia",
+    summary:"Cómo comparar jornada programada y presencia real con evidencia multi-sede, actividades, contingencias y Reacción.",
+    icon:"▥",
+    module:"Asistencia",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+    href:"/dashboard/attendance#attendance-report",
+    steps:[
+      "Abre Asistencia y desplázate a Reporte operativo. Propietario Desweb y Superadministrador deben seleccionar primero la empresa que desean revisar.",
+      "Define Desde y Hasta. El reporte permite hasta 366 días por consulta y usa los días locales de la empresa.",
+      "Opcionalmente filtra por una persona o por una sede relacionada. Los filtros solo reducen información ya autorizada; nunca amplían permisos.",
+      "Revisa Horas programadas y Horas reales. La Diferencia se calcula únicamente sobre días con jornada individual programada.",
+      "Consulta Tiempo en sede y Desplazamiento para separar permanencia física y trayectos multi-sede dentro de la misma jornada.",
+      "En Resumen por persona revisa jornadas, jornadas multi-sede, actividades y contingencias sin ordenar ni puntuar trabajadores.",
+      "En Detalle diario revisa programación, horas reales, origen → sede final, sedes visitadas, desplazamientos, actividades y evidencia adicional.",
+      "Los días programados sin marcación y los días con asistencia no programada se muestran como evidencia que requiere contexto humano; el sistema no decide la causa.",
+      "Usa Exportar para generar Excel, CSV o PDF. Los tres formatos conservan exactamente la empresa, periodo, persona/sede y alcance aplicados al reporte.",
+    ],
+    notes:[
+      "El reporte no conoce por sí solo vacaciones, incapacidades, permisos, pausas contractuales u otras causas externas al CMMS.",
+      "Si tu cuenta está limitada a ciertas sedes, una jornada multi-sede que cruce una sede fuera de tu alcance no se muestra parcialmente.",
+      "Una jornada todavía abierta usa el tiempo transcurrido hasta el momento de generar el reporte y permanece identificada como abierta.",
+      "Las métricas son descriptivas para revisión humana y no constituyen ranking, sanción ni decisión laboral automatizada.",
+    ],
+    keywords:["asistencia","reporte","programado","real","horas","desplazamiento","sede","excel","csv","pdf"],
+  },
+  {
     id:"attendance-multi-site-displacement",
     title:"Desplazarse entre sedes sin cerrar la jornada",
     summary:"Cómo salir de una sede, viajar a otra ubicación autorizada y continuar la misma jornada.",
@@ -518,7 +545,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
   {
     id:"reports",
     title:"Centro de reportes y exportaciones",
-    summary:"Consolida el reporte ejecutivo del Dashboard y las exportaciones oficiales de Activos, Inventario y Kardex sin duplicar datos.",
+    summary:"Consolida el reporte ejecutivo del Dashboard, el reporte operativo de Asistencia y las exportaciones oficiales sin duplicar datos.",
     icon:"R",
     module:"Reportes",
     roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
@@ -527,6 +554,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Abre Reportes desde el menú lateral o desde Más en la navegación móvil de campo.",
       "En Reporte ejecutivo selecciona periodo, estado, sede y prioridad según las opciones disponibles para tu rol.",
       "Usa Exportar para generar Excel, CSV o PDF. El archivo conserva los mismos filtros visibles y el alcance autorizado por empresa, sede y rol.",
+      "En Asistencia abre el reporte programado vs. real para revisar horas, sede/desplazamiento, jornadas multi-sede, actividades, contingencias y evidencia Reacción; desde allí exporta XLSX, CSV o PDF con los mismos filtros.",
       "Las exportaciones de Activos, Inventario y Kardex reutilizan los endpoints oficiales de cada módulo; no crean una copia paralela de la información.",
       "Las hojas de vida de empresas, ubicaciones, usuarios y proveedores continúan exportándose desde cada perfil individual.",
       "Las requisiciones continúan exportándose desde su detalle para conservar cantidades, aprobación, recepciones, devoluciones y conciliación documental."
@@ -535,7 +563,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Reportes nunca amplía permisos: solo reúne accesos a información que tu sesión ya puede consultar.",
       "PDF y Excel respetan la identidad visual permitida por la configuración global o la marca blanca de la empresa."
     ],
-    keywords:["reportes","exportar","excel","csv","pdf","dashboard","kardex","activos","inventario"],
+    keywords:["reportes","exportar","excel","csv","pdf","dashboard","asistencia","kardex","activos","inventario"],
   },
   {
     id:"settings",
@@ -561,6 +589,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Reporte operativo de Asistencia programado vs. real",
+    summary:"Asistencia incorpora filtros por periodo/persona/sede, separa horas programadas, reales, en sede y desplazamiento, y exporta XLSX/CSV/PDF desde el mismo dataset autorizado.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-25",
     title:"Desplazamientos multi-sede dentro de una jornada",

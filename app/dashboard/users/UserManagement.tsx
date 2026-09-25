@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -19,8 +20,7 @@ import EntityProfileWorkspace from "@/components/EntityProfileWorkspace";
 import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
-import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
-import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
+import type { UserStatisticsActivity, UserStatisticsDay } from "@/components/UserStatisticsDashboard";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -28,6 +28,13 @@ import {
   SUPERADMIN_DESCRIPTION,
   type OrganizationRole,
 } from "@/lib/permissions";
+
+const UserStatisticsDashboard=dynamic(()=>import("@/components/UserStatisticsDashboard"),{
+  loading:()=> <Spinner label="Cargando estadísticas"/>,
+});
+const UserAttendanceAuditCenter=dynamic(()=>import("@/components/UserAttendanceAuditCenter"),{
+  loading:()=> <Spinner label="Cargando auditoría de asistencia"/>,
+});
 
 // ── User directory contracts and role/scope presentation ───────────────────
 

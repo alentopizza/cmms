@@ -26,6 +26,7 @@ type Props = {
   requireGeolocation: boolean;
   maxLocationAccuracy: number;
   livenessThreshold: number;
+  preferredSiteId?: string | null;
 };
 
 type GpsFix = {
@@ -70,6 +71,7 @@ export default function AttendanceCapture({
   requireGeolocation,
   maxLocationAccuracy,
   livenessThreshold,
+  preferredSiteId=null,
 }:Props) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const streamRef=useRef<MediaStream|null>(null);
@@ -82,7 +84,7 @@ export default function AttendanceCapture({
   const [error,setError]=useState("");
   const enrolled=initialEnrolled;
   const [openShift,setOpenShift]=useState(initialOpenShift);
-  const [siteId,setSiteId]=useState(initialOpenShift?.site_id || sites[0]?.id || "");
+  const [siteId,setSiteId]=useState(initialOpenShift?.site_id || (preferredSiteId&&sites.some(site=>site.id===preferredSiteId)?preferredSiteId:"") || sites[0]?.id || "");
   const [gps,setGps]=useState<GpsFix|null>(null);
   const [geoPermission,setGeoPermission]=useState<"unknown"|"prompt"|"granted"|"denied">("unknown");
 

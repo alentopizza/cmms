@@ -17,6 +17,7 @@ import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon from "@/components/UiIcon";
 import { CountrySelect, PersonalDocumentTypeSelect } from "@/components/InternationalFields";
 import UserStatisticsDashboard, { type UserStatisticsActivity, type UserStatisticsDay } from "@/components/UserStatisticsDashboard";
+import UserAttendanceScheduleAdmin from "@/components/UserAttendanceScheduleAdmin";
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
@@ -169,6 +170,11 @@ function attendanceAdminHref(user:ManagedUser){
   if(user.organization_id)params.set("organization_id",user.organization_id);
   params.set("user_id",user.id);
   return `/dashboard/attendance?${params.toString()}#biometric`;
+}
+
+function attendanceScheduleEligible(user:ManagedUser){
+  return user.platform_role==="user"
+    && Boolean(user.role&&["admin","manager","technician","provider","external"].includes(user.role));
 }
 
 const USER_DOCUMENT_CATEGORIES=[
@@ -757,10 +763,17 @@ export default function UserManagement({
                 {selectedUser.organization_id
                   ?<div className="user-attendance-admin-actions">
                     <Link className="button" href={attendanceAdminHref(selectedUser)}><UiIcon name={selectedUser.biometric_status==="verified"?"attendance":"user"} size={15}/>{selectedUser.biometric_status==="verified"?"Administrar biometría":"Enrolar biometría inicial"}</Link>
-                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}`}><UiIcon name="settings" size={15}/>Configurar asistencia</Link>
+                    <Link className="button secondary" href={`/dashboard/attendance?organization_id=${selectedUser.organization_id}&user_id=${selectedUser.id}#schedule`}><UiIcon name="clock" size={15}/>Abrir en Asistencia</Link>
                   </div>
                   :<Alert variant="warning" title="Usuario sin empresa operativa">Asistencia requiere una empresa para aplicar política, sedes y biometría.</Alert>}
               </div>
+              {selectedUser.organization_id&&attendanceScheduleEligible(selectedUser)&&<UserAttendanceScheduleAdmin
+                key={selectedUser.id}
+                organizationId={selectedUser.organization_id}
+                people={[{id:selectedUser.id,full_name:selectedUser.full_name,role:roleName(roleKey(selectedUser))}]}
+                initialUserId={selectedUser.id}
+                lockedUserId={selectedUser.id}
+              />}
             </div>},
             {id:"life",label:"Hoja de vida",content:<div className="entity-section-stack"><div className="entity-panel"><h3>Hoja de vida del técnico</h3><p className="entity-panel-copy">Consolida identidad, rol, alcance, indicadores de ejecución, asistencia y estado operativo con los permisos actuales.</p></div><ProfileExportMenu entity="user" id={selectedUser.id} label="Exportar hoja de vida"/></div>},
           ]}

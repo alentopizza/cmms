@@ -109,6 +109,13 @@ The User **Asistencia** tab is also an administrative gateway for authorized sup
 
 For global Platform Owner/Superadmin identities, Attendance requires an explicit Company context before tenant-scoped controls appear. Tenant Admin/Manager sessions continue to use their authenticated Company automatically. Server mutation routes always revalidate the Company, target User and Site; query-string context only reduces navigation/reselection work.
 
+
+The same User **Asistencia** tab now owns individual work-schedule administration through the shared Attendance schedule component. An authorized supervisor can define a base Site, effective dates and a seven-day schedule with different start/end times per day. The editor can begin from the Company schedule, the selected base Site schedule or a custom schedule.
+
+Template reuse is a copy operation, not live inheritance. Once saved, the User schedule is an effective-dated snapshot. Started/past vigencias remain immutable; future vigencias may be edited or deleted. A new future vigencia closes an overlapping prior open-ended schedule immediately before the new start date.
+
+The field user's Attendance screen shows today's expected hours and uses the schedule's base Site as the initial Site suggestion when possible. This planning record never blocks a valid attendance event outside the expected window; actual presence is preserved for later scheduled-vs-actual analysis.
+
 The User **Estadísticas** tab projects current CMMS evidence into one operational dashboard:
 
 - active assigned Work Orders;

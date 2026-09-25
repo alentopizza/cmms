@@ -67,7 +67,34 @@ Las relaciones operativas importantes deben seguir usando sus fuentes autoritati
 
 ## 4. Trabajo más reciente en `main`
 
-### Asistencia operativa · Fase 1
+### Asistencia operativa · Fase 2
+
+La jornada esperada ya se administra por persona como una línea de tiempo efectiva, separada de los marcajes reales.
+
+- Migración `038_user_attendance_schedules.sql`: nueva tabla versionada por Usuario/Empresa.
+- Cada vigencia conserva sede base, siete días con horas independientes, zona horaria, fecha inicio/fin, notas y procedencia de plantilla.
+- Empresa/Sede sirven como plantillas de copia; no existe herencia viva que pueda reescribir historial.
+- `/api/attendance/schedules` revalida Organización, Usuario, Site y alcance del supervisor.
+- Las mutaciones usan `pg_advisory_xact_lock` por Usuario para evitar dos vigencias concurrentes superpuestas.
+- Las vigencias iniciadas/pasadas son inmutables desde este flujo; solo las futuras se editan/eliminan.
+- Una nueva vigencia futura puede cerrar la anterior el día previo.
+- `UserAttendanceScheduleAdmin` se reutiliza en la ficha de Usuario y en el módulo Asistencia.
+- El usuario de campo ve su jornada esperada del día y `AttendanceCapture` prefiere la sede base como selección inicial.
+- El horario programado es planificación/evidencia comparativa: **no bloquea** un check-in/check-out válido fuera de horario.
+- Fase 3 queda como siguiente paso: administración/auditoría consolidada por persona. Los desplazamientos multi-sede siguen reservados para Fase 4.
+
+Archivos clave:
+
+- `db/migrations/038_user_attendance_schedules.sql`
+- `lib/attendance-schedules.ts`
+- `app/api/attendance/schedules/route.ts`
+- `components/UserAttendanceScheduleAdmin.tsx`
+- `components/AttendanceCapture.tsx`
+- `app/dashboard/attendance/page.tsx`
+- `app/dashboard/users/UserManagement.tsx`
+- `scripts/attendance-schedule-smoke.mjs`
+
+### Asistencia operativa · Fase 1 (base anterior)
 
 La administración de Asistencia ya no depende de que una identidad de plataforma tenga `organizationId` en su sesión.
 
@@ -77,7 +104,7 @@ La administración de Asistencia ya no depende de que una identidad de plataform
 - `/api/attendance/policy` y `/api/attendance/enrollment-supervised` vuelven a validar el contexto en servidor.
 - El bootstrap Platform Owner puede supervisar enrolamiento/revocación; cuando no existe `users.id`, el evento conserva rol/email del actor en metadata.
 - La pestaña **Asistencia** del perfil de Usuario enlaza al módulo con `organization_id` + `user_id`; el enrolamiento abre con la persona enfocada.
-- No se cambió `attendance_shifts`: la asignación de horarios individuales y los desplazamientos multi-sede pertenecen a las fases siguientes.
+- Fase 1 no cambió `attendance_shifts`. Fase 2 añadió la planificación individual en `user_attendance_schedules`; `attendance_shifts` continúa representando hechos reales y el desplazamiento multi-sede sigue reservado para una fase posterior.
 
 Archivos clave:
 

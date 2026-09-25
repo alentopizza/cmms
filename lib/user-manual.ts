@@ -172,7 +172,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "La agenda y la lista de pendientes se alimentan de actividades de órdenes de trabajo asignadas al usuario; al seleccionar una actividad puedes abrir su OT.",
       "En Técnicos, los indicadores de OT, actividades y horas de campo son descriptivos; no constituyen una clasificación laboral automática.",
       "Desde el perfil autorizado puedes exportar la Hoja de vida en PDF, Excel o Word compatible.",
-      "En la pestaña Asistencia, usa Administrar biometría / Enrolar biometría inicial para abrir el módulo Asistencia con la empresa y el usuario ya seleccionados.",
+      "En la pestaña Asistencia puedes administrar la jornada individual por vigencias y también usar Administrar biometría / Enrolar biometría inicial para abrir el módulo Asistencia con la empresa y el usuario ya seleccionados.",
       "La foto de perfil sirve para identificación humana; no es la referencia biométrica facial.",
     ],
     notes:["Un Administrador de empresa puede administrar usuarios ordinarios de su propia organización dentro de su permiso."],
@@ -221,6 +221,30 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["facial","biometría","enrolamiento","cámara","rostro"],
   },
   {
+    id:"individual-attendance-schedule",
+    title:"Jornada individual y horario programado",
+    summary:"Cómo asignar sede base, días y horas de trabajo por persona sin alterar el horario de la empresa.",
+    icon:"◷",
+    module:"Asistencia",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
+    href:"/dashboard/attendance#schedule",
+    steps:[
+      "Un Administrador, Manager, Propietario Desweb o Superadministrador abre Asistencia y selecciona la persona. En la ficha de Usuario también puede administrar la misma jornada desde la pestaña Asistencia.",
+      "Selecciona la sede base y la fecha desde la cual entra en vigencia el horario. La fecha final es opcional.",
+      "Puedes empezar copiando el horario de la Empresa, copiando el horario de la sede base o usando un horario personalizado.",
+      "Activa únicamente los días laborables y define hora de inicio y fin de cada día; no es necesario que todos los días tengan el mismo horario.",
+      "Guardar crea una vigencia independiente. Si ya existe una jornada vigente, programa el cambio desde una fecha futura; la vigencia anterior se cierra antes del nuevo inicio.",
+      "Las vigencias que ya comenzaron permanecen como historial y no se reescriben retroactivamente.",
+      "El usuario de campo ve en Asistencia el horario esperado para hoy y la sede base se propone primero cuando todavía no hay una jornada abierta.",
+    ],
+    notes:[
+      "Copiar Empresa o Sede crea una instantánea. Cambiar después el horario de la Empresa/Sede no modifica silenciosamente la jornada individual guardada.",
+      "El horario programado no bloquea un marcaje real fuera de la ventana esperada. La entrada/salida se conserva como evidencia para comparación posterior.",
+      "La sede base de jornada no reemplaza el alcance de sedes del usuario ni la asignación de actividades.",
+    ],
+    keywords:["jornada","horario","turno","vigencia","sede base","asistencia","programado"],
+  },
+  {
     id:"field-presence",
     title:"Iniciar actividades y presencia en sitio",
     summary:"Cómo abrir una jornada aunque todavía no tengas actividades asignadas.",
@@ -229,7 +253,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     roles:["all","admin","manager","technician","provider","external"],
     href:"/dashboard/attendance",
     steps:[
-      "Abre Asistencia desde el celular.",
+      "Abre Asistencia desde el celular. Si tienes jornada individual, verás primero el horario esperado de hoy y la sede base configurada.",
       "El sistema obtiene una ubicación GPS precisa y valida la geocerca de la sede.",
       "Si la ubicación es válida, activa la cámara y verifica tu rostro contra la plantilla supervisada.",
       "Selecciona Iniciar actividades. Quedarás En sitio y disponible.",
@@ -483,6 +507,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Jornadas individuales por vigencia",
+    summary:"Asistencia permite programar por persona sede base, días y horas variables con vigencia e historial; Empresa/Sede sirven como plantillas copiadas y el horario esperado no bloquea marcajes reales.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
+  },
   {
     date:"2026-09-25",
     title:"Administración contextual de Asistencia y biometría",

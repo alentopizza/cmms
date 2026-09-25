@@ -194,6 +194,30 @@ export function businessHoursScheduleJson(hours: BusinessHours) {
   return JSON.stringify(hours.schedule);
 }
 
+export function businessHoursFromSchedule(
+  value: unknown,
+  fallback: BusinessHours = DEFAULT_BUSINESS_HOURS,
+): BusinessHours {
+  const schedule = normalizeSchedule(value, fallback);
+  validateSchedule(schedule);
+  const enabled = schedule.filter(item => item.enabled);
+  const representative = enabled[0];
+
+  return {
+    days: enabled.map(item => item.day),
+    openTime: representative.openTime,
+    closeTime: representative.closeTime,
+    schedule,
+  };
+}
+
+export function businessScheduleWeeklyMinutes(schedule: BusinessDaySchedule[]) {
+  return schedule.reduce((total,item) => {
+    if (!item.enabled) return total;
+    return total + Math.max(0, minutes(item.closeTime) - minutes(item.openTime));
+  }, 0);
+}
+
 const WEEKDAY: Record<string, number> = {
   Mon: 1,
   Tue: 2,

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-25 — Asistencia operativa Fase 2: jornadas individuales
+
+- Se añadió `user_attendance_schedules` como línea de tiempo versionada de jornada esperada por persona.
+- Cada vigencia guarda sede base, horario semanal por día, zona horaria, fecha de inicio/fin, notas y procedencia de plantilla.
+- Los horarios de Empresa y Sede se pueden copiar como plantilla sin crear herencia viva; cambios posteriores en la fuente no reescriben la jornada individual.
+- Las vigencias iniciadas o históricas no se editan ni eliminan retroactivamente; los cambios se programan mediante una nueva vigencia.
+- Una nueva vigencia futura puede cerrar automáticamente la anterior el día previo, evitando superposición.
+- Las mutaciones de la línea de tiempo se serializan en PostgreSQL y vuelven a validar empresa, usuario, sede base, sede plantilla y alcance de sedes.
+- La pestaña **Asistencia** del Usuario permite administrar la jornada individual sin duplicar el módulo de asistencia.
+- El módulo **Asistencia** incorpora el mismo administrador de jornadas para Admin/Manager/Propietario/Superadmin.
+- El usuario de campo ve su horario programado para hoy; la sede base se usa como selección inicial cuando no existe una jornada abierta.
+- El horario programado no bloquea marcajes reales fuera de la ventana prevista; esos eventos se conservan para comparación descriptiva posterior.
+- Se añadió CI específico para migración, integridad, alcance, UI y regresiones de Fase 2.
+
 ## 2026-09-25 — Asistencia operativa Fase 1: contexto administrativo y biometría
 
 - Propietario Desweb y Superadministrador pueden seleccionar explícitamente la empresa que administran desde `/dashboard/attendance`.

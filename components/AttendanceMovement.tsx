@@ -180,7 +180,7 @@ export default function AttendanceMovement({
         <label>Sede de destino *</label>
         <select value={destinationId} onChange={event=>{setDestinationId(event.target.value);setTaskId("");}}>
           <option value="">Selecciona destino</option>
-          {destinations.map(site=><option key={site.id} value={site.id}>{site.name}{site.city?" · "+site.city:""}{requireGeolocation&&!site.geofenceConfigured?" · Sin geocerca":""}</option>)}
+          {destinations.map(site=><option key={site.id} value={site.id} disabled={requireGeolocation&&!site.geofenceConfigured}>{site.name}{site.city?" · "+site.city:""}{requireGeolocation&&!site.geofenceConfigured?" · Sin geocerca":""}</option>)}
         </select>
       </div>
       <div className="field">

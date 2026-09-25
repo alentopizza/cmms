@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import UiIcon from "@/components/UiIcon";
 
 export function Search({
@@ -107,4 +108,78 @@ export function FilterGroup({label,children}:{label:string;children:ReactNode}){
     <span>{label}</span>
     <div>{children}</div>
   </section>;
+}
+
+
+export type ViewMode="grid"|"list";
+
+export function ViewModeToggle({
+  value,
+  onChange,
+  label="Modo de visualización",
+}:{
+  value:ViewMode;
+  onChange:(value:ViewMode)=>void;
+  label?:string;
+}){
+  return <div className="ds-view-mode-toggle" role="group" aria-label={label}>
+    <button
+      type="button"
+      className={value==="grid"?"active":""}
+      aria-pressed={value==="grid"}
+      onClick={()=>onChange("grid")}
+      title="Vista cuadrícula"
+      data-tooltip="Vista cuadrícula"
+    ><UiIcon name="dashboard" size={17}/><span className="ds-visually-hidden">Vista cuadrícula</span></button>
+    <button
+      type="button"
+      className={value==="list"?"active":""}
+      aria-pressed={value==="list"}
+      onClick={()=>onChange("list")}
+      title="Vista listado"
+      data-tooltip="Vista listado"
+    ><UiIcon name="menu" size={17}/><span className="ds-visually-hidden">Vista listado</span></button>
+  </div>;
+}
+
+export function CollectionView({
+  grid,
+  list,
+  storageKey,
+  label="Vista de la colección",
+  defaultMode="grid",
+  className="",
+  toolbarTargetId="context-header-tools",
+}:{
+  grid:ReactNode;
+  list?:ReactNode;
+  storageKey:string;
+  label?:string;
+  defaultMode?:ViewMode;
+  className?:string;
+  toolbarTargetId?:string;
+}){
+  const [mode,setMode]=useState<ViewMode>(defaultMode);
+  const [toolbarHost,setToolbarHost]=useState<HTMLElement|null>(null);
+
+  useEffect(()=>{
+    setToolbarHost(document.getElementById(toolbarTargetId));
+    try{
+      const saved=window.localStorage.getItem("cmms:view-mode:"+storageKey);
+      if(saved==="grid"||saved==="list")setMode(saved);
+    }catch{}
+  },[storageKey,toolbarTargetId]);
+
+  useEffect(()=>{
+    try{window.localStorage.setItem("cmms:view-mode:"+storageKey,mode);}catch{}
+    window.dispatchEvent(new CustomEvent("cmms:view-mode-change",{detail:{storageKey,mode}}));
+  },[mode,storageKey]);
+
+  const toggle=<ViewModeToggle value={mode} onChange={setMode} label={label}/>;
+  const content=mode==="list"&&list!==undefined?list:grid;
+
+  return <div className={["ds-collection-view","is-"+mode,className].filter(Boolean).join(" ")} data-view-mode={mode}>
+    {toolbarHost&&createPortal(toggle,toolbarHost)}
+    {content}
+  </div>;
 }

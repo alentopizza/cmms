@@ -13,7 +13,8 @@ export { Modal, Drawer } from "./Overlay";
 export { Tooltip, Dropdown } from "./TooltipDropdown";
 export { FileUpload } from "./FileUpload";
 
-export { Search, FilterPanel, FilterGroup } from "./DataControls";
+export { Search, FilterPanel, FilterGroup, ViewModeToggle, CollectionView } from "./DataControls";
+export type { ViewMode } from "./DataControls";
 export { DataTable, Pagination, RowActions } from "./DataTable";
 export type { DataTableColumn, DataTableBulkAction } from "./DataTable";
 export { KpiCard, MetricGrid, StatTiles } from "./Metrics";

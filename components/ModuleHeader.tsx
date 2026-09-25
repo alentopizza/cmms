@@ -45,12 +45,19 @@ export default function ModuleHeader({
   const [facetOptions,setFacetOptions]=useState<FacetOptionMap>({});
   const [visibleCount, setVisibleCount] = useState(count);
   const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
+  const [viewRevision,setViewRevision]=useState(0);
 
   const normalizedSearch = useMemo(() => search.trim().toLocaleLowerCase("es"), [search]);
   const facetSignature=JSON.stringify(facets);
 
   useEffect(()=>{
     setPortalHost(document.getElementById("context-header-tools"));
+  },[]);
+
+  useEffect(()=>{
+    const onViewModeChange=()=>setViewRevision(value=>value+1);
+    window.addEventListener("cmms:view-mode-change",onViewModeChange);
+    return()=>window.removeEventListener("cmms:view-mode-change",onViewModeChange);
   },[]);
 
   useEffect(() => {
@@ -103,7 +110,7 @@ export default function ModuleHeader({
       }
       return changed?next:previous;
     });
-  }, [normalizedSearch, filter, count, facetSignature, facetValues, facets]);
+  }, [normalizedSearch, filter, count, facetSignature, facetValues, facets, viewRevision]);
 
   if(!portalHost) return null;
 

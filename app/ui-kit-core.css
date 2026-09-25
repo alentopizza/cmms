@@ -301,3 +301,29 @@
 @media(prefers-reduced-motion:reduce){
   .ds-button,.ds-card-interactive,.ds-switch-track,.ds-switch-track span,.ds-skeleton,.ds-overlay-backdrop,.ds-modal,.ds-drawer{animation:none!important;transition:none!important}
 }
+
+
+/* Shared collection view mode ------------------------------------------------ */
+.ds-view-mode-toggle{
+  display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-lg);background:var(--color-surface-soft);box-shadow:var(--shadow-xs);
+}
+.ds-view-mode-toggle button{
+  width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:var(--radius-md);
+  background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:background var(--motion-fast) ease,color var(--motion-fast) ease,box-shadow var(--motion-fast) ease;
+}
+.ds-view-mode-toggle button:hover{background:var(--color-surface);color:var(--color-brand-secondary)}
+.ds-view-mode-toggle button.active{background:var(--color-brand-secondary);color:var(--color-text-inverse);box-shadow:var(--shadow-xs)}
+.ds-view-mode-toggle button:focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
+.ds-collection-view{min-width:0}
+.ds-collection-view.is-list [data-collection-grid]{grid-template-columns:1fr!important}
+.ds-collection-view.is-list [data-collection-grid]>*{min-width:0}
+.module-page-tools .ds-view-mode-toggle{order:2;flex:0 0 auto}
+.module-page-tools .module-add-action{order:3}
+.module-page-tools .module-visible-count{order:4}
+@media(max-width:700px){
+  .ds-view-mode-toggle button{width:32px;height:32px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ds-view-mode-toggle button{transition-duration:.01ms!important}
+}

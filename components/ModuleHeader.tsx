@@ -159,6 +159,8 @@ export default function ModuleHeader({
         </FilterGroup>)}
       </FilterPanel>}
 
+      <div id="module-view-mode-tools" className="module-view-mode-tools" aria-label="Modo de visualización"/>
+
       {action && <div className="module-add-action">{action}</div>}
       <span className="module-visible-count" aria-live="polite" title={countLabel}>{visibleCount}/{count}</span>
     </div>,

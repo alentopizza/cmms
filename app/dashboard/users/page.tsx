@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import UserManagement, { type ManagedUser, type ManagedUserDocument, type ManagedEmergencyContact } from "./UserManagement";
+import type { AttendanceScheduleView } from "@/components/AttendanceScheduleEditor";
 
 type Organization = { id: string; name: string; country: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string; city:string|null; latitude:number|null; longitude:number|null; geofence_radius_m:number };
@@ -185,11 +186,11 @@ export default async function UsersPage() {
   ]);
 
   const attendanceSchedules=isGlobalOperator
-    ? await query(
+    ? await query<AttendanceScheduleView>(
         `SELECT id,organization_id,user_id,name,weekly_schedule,grace_before_minutes,grace_after_minutes,active,updated_at::text
          FROM user_attendance_schedules ORDER BY updated_at DESC`,
       )
-    : await query(
+    : await query<AttendanceScheduleView>(
         `SELECT id,organization_id,user_id,name,weekly_schedule,grace_before_minutes,grace_after_minutes,active,updated_at::text
          FROM user_attendance_schedules WHERE organization_id=$1 ORDER BY updated_at DESC`,
         [session.organizationId],

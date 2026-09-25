@@ -10,6 +10,8 @@ import ModuleHeader from "@/components/ModuleHeader";
 import { UserCard } from "@/components/business-ui";
 import { Alert, EmptyState, Spinner } from "@/components/ui-kit/Feedback";
 import { CollectionView } from "@/components/ui-kit/DataControls";
+import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { Button } from "@/components/ui-kit/Button";
@@ -625,7 +627,63 @@ export default function UserManagement({
             </>}
           </div>
         </UserCard>)}
-      </div>}/>
+      </div>} list={<StaticDataTable
+        className="user-directory-list"
+        caption="Listado de usuarios"
+        columns={[
+          {key:"user",label:"Usuario",width:"30%"},
+          {key:"status",label:"Estado"},
+          {key:"company",label:"Empresa"},
+          {key:"scope",label:"Alcance"},
+          {key:"orders",label:"OT activas",align:"end"},
+          {key:"pending",label:"Pendientes",align:"end"},
+          {key:"completed",label:"Completadas",align:"end"},
+          {key:"actions",label:"Acciones",align:"end"},
+        ]}
+        rows={users.map(user=>({
+          id:user.id,
+          recordProps:{
+            "data-module-record":true,
+            "data-status":user.active?"active":"inactive",
+            "data-search":[user.full_name,user.email,user.organization_name,roleName(roleKey(user)),...(user.site_names||[]),user.external_supplier_name].filter(Boolean).join(" "),
+            "data-filter-organization":user.organization_id||"",
+            "data-filter-organization-label":user.organization_name||"",
+            "data-filter-role":roleKey(user),
+            "data-filter-role-label":roleName(roleKey(user)),
+            "data-filter-site":(user.site_ids||[]).join("|"),
+            "data-filter-site-label":(user.site_names||[]).join("|"),
+            "data-filter-supplier":user.external_supplier_id||"",
+            "data-filter-supplier-label":user.external_supplier_name||"",
+          },
+          cells:{
+            user:<EntityIdentityCell
+              imageSrc={user.has_avatar?"/api/users/"+user.id+"/avatar":null}
+              imageAlt={user.has_avatar?"Foto de "+user.full_name:""}
+              fallback={initials(user.full_name)}
+              icon="user"
+              variant="avatar"
+              title={user.full_name}
+              subtitle={roleName(roleKey(user))}
+              meta={user.email}
+            />,
+            status:<Badge variant={user.active?"success":"neutral"}>{user.active?"Activo":"Inactivo"}</Badge>,
+            company:user.organization_name||"Acceso global",
+            scope:siteAccessLabel(user),
+            orders:user.assigned_work_orders,
+            pending:user.pending_activities,
+            completed:user.completed_activities_30d,
+            actions:<ListQuickActions>
+              <button className="ds-list-action primary" type="button" onClick={()=>{setSelectedUserId(user.id);setPreferredTab("general");}} title="Ver perfil" data-tooltip="Ver perfil" aria-label={"Ver perfil de "+user.full_name}><UiIcon name="eye" size={15}/></button>
+              {user.platform_role!=="platform_owner"&&(isPlatformOperator?(isPlatformOwner||user.platform_role!=="superadmin"):user.platform_role==="user")&&<>
+                <button className="ds-list-action" type="button" onClick={()=>openEdit(user)} title="Editar usuario" data-tooltip="Editar usuario"><UiIcon name="edit" size={15}/></button>
+                {user.phone&&<a className="ds-list-action whatsapp" href={"https://wa.me/"+user.phone.replace(/\D/g,"")} target="_blank" rel="noreferrer" title="Abrir WhatsApp" data-tooltip="Abrir WhatsApp"><UiIcon name="whatsapp" size={15}/></a>}
+                {user.id!==currentUserId&&<button className="ds-list-action" type="button" onClick={()=>setConfirm({kind:"status",user})} title={user.active?"Desactivar usuario":"Reactivar usuario"} data-tooltip={user.active?"Desactivar usuario":"Reactivar usuario"}><UiIcon name={user.active?"power":"check"} size={15}/></button>}
+                {isPlatformOwner&&user.id!==currentUserId&&<button className="ds-list-action danger" type="button" onClick={()=>setConfirm({kind:"delete",user})} title="Eliminar usuario" data-tooltip="Eliminar usuario"><UiIcon name="trash" size={15}/></button>}
+              </>}
+            </ListQuickActions>,
+          },
+        }))}
+      />}/>
     </section>)}
 
     {selectedUser&&<section className="section entity-page-detail">

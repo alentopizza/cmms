@@ -129,6 +129,13 @@ function validateSiteScope(
   return null;
 }
 
+async function lockScheduleTimeline(client:PoolClient,organizationId:string,userId:string){
+  await client.query(
+    "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+    ["attendance-schedule:"+organizationId+":"+userId],
+  );
+}
+
 async function audit(
   client:PoolClient,
   session:AuthSession,
@@ -214,6 +221,7 @@ export async function POST(request:Request){
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+    await lockScheduleTimeline(client,organizationId,userId);
     const context=await loadContext(client,session,organizationId,userId);
     if("error" in context){await client.query("ROLLBACK");return context.error;}
     const {organization,person,sites}=context;
@@ -310,6 +318,7 @@ export async function PATCH(request:Request){
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+    await lockScheduleTimeline(client,organizationId,userId);
     const context=await loadContext(client,session,organizationId,userId);
     if("error" in context){await client.query("ROLLBACK");return context.error;}
     const {organization,person,sites}=context;
@@ -392,6 +401,7 @@ export async function DELETE(request:Request){
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+    await lockScheduleTimeline(client,organizationId,userId);
     const context=await loadContext(client,session,organizationId,userId);
     if("error" in context){await client.query("ROLLBACK");return context.error;}
     const today=organizationLocalDate(context.organization.timezone);

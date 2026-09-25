@@ -8,6 +8,8 @@ const required=[
   "app/phase8-modules.css",
   "app/api/attendance/policy/route.ts",
   "components/SupervisedBiometricEnrollment.tsx",
+  "components/SelfBiometricEnrollment.tsx",
+  "components/BiometricEnrollmentAdmin.tsx",
   "components/AttendanceContingency.tsx",
   "components/UserAttendanceAuditCenter.tsx",
   "components/AttendanceOperationalReport.tsx",
@@ -24,7 +26,8 @@ for(const marker of [
   'label:"Política",description:"Reglas y roles"',
   'label:"Resumen",description:"Confirmación"',
   "<AttendanceSetupWorkspace",
-  "<SupervisedBiometricEnrollment",
+  "<BiometricEnrollmentAdmin",
+  "<SelfBiometricEnrollment",
   "<AttendanceCapture",
   "<AttendanceContingencyReview",
   "<UserAttendanceAuditCenter",
@@ -42,8 +45,19 @@ for(const marker of [
 if(page.includes("attendance-admin-context")){
   throw new Error("Legacy long-scroll attendance admin context should not remain in the redesigned page");
 }
-if((page.match(/<SupervisedBiometricEnrollment/g)||[]).length!==1){
-  throw new Error("Attendance setup must reuse exactly one supervised biometric enrollment component");
+if(page.includes("<SupervisedBiometricEnrollment")){
+  throw new Error("Attendance page must not mount supervised enrollment as the primary setup flow");
+}
+const biometricAdmin=fs.readFileSync("components/BiometricEnrollmentAdmin.tsx","utf8");
+if((biometricAdmin.match(/<SupervisedBiometricEnrollment/g)||[]).length!==1){
+  throw new Error("Biometric admin center must preserve one assisted-enrollment fallback");
+}
+for(const marker of ["Cobertura biométrica","Pendiente aprobación","Aprobar identidad","Quién ya lo tiene y quién falta"]){
+  if(!biometricAdmin.includes(marker))throw new Error("Biometric admin coverage center missing "+marker);
+}
+const selfEnrollment=fs.readFileSync("components/SelfBiometricEnrollment.tsx","utf8");
+for(const marker of ["Leer política","Verificar sede","Prueba de vida activa","Pendiente de aprobación única"]){
+  if(!selfEnrollment.includes(marker))throw new Error("Self biometric enrollment missing "+marker);
 }
 if((page.match(/<AttendanceOperationalReport/g)||[]).length!==1){
   throw new Error("Attendance setup must keep one operational report implementation");
@@ -87,8 +101,8 @@ for(const marker of ["return_step",'target.searchParams.set("view", "setup")',"a
 }
 
 const enrollment=fs.readFileSync("components/SupervisedBiometricEnrollment.tsx","utf8");
-for(const marker of ["Activar cámara y enrolar","Verificar presencia en la sede","identityChecked","consent"]){
-  if(!enrollment.includes(marker))throw new Error("Existing biometric enrollment flow changed unexpectedly: "+marker);
+for(const marker of ["Enrolamiento asistido excepcional","Activar cámara y enrolar","Verificar presencia en la sede","identityChecked","consent"]){
+  if(!enrollment.includes(marker))throw new Error("Assisted biometric recovery flow changed unexpectedly: "+marker);
 }
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");

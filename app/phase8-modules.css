@@ -262,6 +262,7 @@
 .phase8-attendance .attendance-setup-embedded>.section{
   margin:0;border:0;box-shadow:none;padding:0
 }
+.phase8-attendance .attendance-setup-embedded .biometric-supervisor-card>.section-heading{display:none}
 .phase8-attendance .attendance-setup-embedded .biometric-supervisor-grid{margin-top:0}
 
 .phase8-attendance .attendance-setup-actions{

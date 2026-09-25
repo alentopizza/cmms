@@ -12,7 +12,8 @@ import {
   type AttendanceScheduleRecord,
   type AttendanceScheduleSource,
 } from "@/lib/attendance-schedules";
-import { normalizeBusinessHoursRow, type BusinessDaySchedule } from "@/lib/business-hours";
+import { normalizeBusinessHoursRow } from "@/lib/business-hours";
+import type { PoolClient } from "pg";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SCHEDULE_ROLES=new Set(["admin","manager","technician","provider","external"]);
@@ -40,7 +41,7 @@ function previousDate(value:string){
   return date.toISOString().slice(0,10);
 }
 
-async function targetUser(client:any,organizationId:string,userId:string){
+async function targetUser(client:PoolClient,organizationId:string,userId:string){
   return client.query<TargetUser>(
     `SELECT u.id,u.full_name,om.role,COALESCE(om.access_all_sites,true) access_all_sites,
             COALESCE((
@@ -64,7 +65,7 @@ function visibleSites(session:AuthSession,person:TargetUser,sites:ScheduleSite[]
   );
 }
 
-async function loadContext(client:any,session:AuthSession,organizationId:string,userId:string){
+async function loadContext(client:PoolClient,session:AuthSession,organizationId:string,userId:string){
   const [organization,personResult,sitesResult]=await Promise.all([
     client.query<{
       id:string;name:string;timezone:string;
@@ -129,7 +130,7 @@ function validateSiteScope(
 }
 
 async function audit(
-  client:any,
+  client:PoolClient,
   session:AuthSession,
   organizationId:string,
   action:string,

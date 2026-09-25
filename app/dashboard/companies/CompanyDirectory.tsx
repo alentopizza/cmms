@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import GeofenceMapPicker from "@/components/GeofenceMapPicker";
 import BusinessHoursFields from "@/components/BusinessHoursFields";
 import FileDropzone from "@/components/FileDropzone";
 import PhoneField from "@/components/PhoneField";
@@ -14,16 +14,23 @@ import ProfileExportMenu from "@/components/ProfileExportMenu";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { CompanyCard, LocationCard, SubLocationCard, UserCard } from "@/components/business-ui";
 import { ContextUserCreateModal, LocationCreateModal } from "@/components/ContextCreateModals";
-import CompanyDocumentWorkspace, { type CompanyDocumentItem } from "@/components/CompanyDocumentWorkspace";
-import CompanyDocumentCreateModal from "@/components/CompanyDocumentCreateModal";
+import type { CompanyDocumentItem } from "@/components/CompanyDocumentWorkspace";
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-document-catalog";
 import { Badge } from "@/components/ui-kit/Badge";
-import { EmptyState } from "@/components/ui-kit/Feedback";
+import { EmptyState, Spinner } from "@/components/ui-kit/Feedback";
 import { CollectionView } from "@/components/ui-kit/DataControls";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { CountryCityFields, CountryTimezoneSelect, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
+
+const GeofenceMapPicker=dynamic(()=>import("@/components/GeofenceMapPicker"),{
+  loading:()=> <Spinner label="Cargando mapa"/>,
+});
+const CompanyDocumentWorkspace=dynamic(()=>import("@/components/CompanyDocumentWorkspace"),{
+  loading:()=> <Spinner label="Cargando documentos"/>,
+});
+const CompanyDocumentCreateModal=dynamic(()=>import("@/components/CompanyDocumentCreateModal"));
 
 export type CompanyDirectoryItem = {
   id: string;

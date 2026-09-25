@@ -43,6 +43,7 @@ for(const marker of [
   "attendance_travel_arrived",
   "last_seen_at>now()-interval '30 minutes'",
   "status='cancelled'",
+  "cancelled_checkout_contingency_ids",
 ]){
   if(!movement.includes(marker))throw new Error("Phase 4 movement authority missing "+marker);
 }

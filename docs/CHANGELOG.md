@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-09-24 — DESWEB Design System V2 Phase 4: Shared Data UI
+
+### Added
+
+- Search, FilterPanel and FilterGroup as official shared data controls.
+- Sortable DataTable with optional row selection, row actions, bulk actions and Pagination.
+- KpiCard, MetricGrid and StatTiles.
+- LineChart wired exclusively to the canonical `--chart-1` through `--chart-10` palette.
+- Timeline, ProgressBar, CircularProgress and StepProgress.
+- Token-only `app/data-ui.css`.
+- Interactive Shared Data UI examples in the authenticated `/ui-kit` catalog.
+- `scripts/data-ui-smoke.mjs` in CI.
+
+### Changed
+
+- `ModuleHeader` now delegates Search and filter presentation to Shared Data UI while preserving its current `data-module-record` search/status/cascading-facet behavior.
+- `DashboardAnalytics` now delegates KPI/stat/chart presentation to the official Phase 4 primitives without changing its public API.
+- Added the canonical filter icon to `UiIcon`.
+
+### Integrity
+
+- No database, API, RBAC, server-scope or business-rule changes.
+- Dense module-specific tables remain scheduled for their module migration phases instead of being rewritten in this shared layer.
+
+### Next
+
+- Phase 5: Business UI.
+
+
 ## 2026-09-24 — DESWEB Design System V2 Phase 3: shell y navegación global
 
 ### Changed

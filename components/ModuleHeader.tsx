@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { Search, FilterPanel, FilterGroup } from "@/components/ui-kit/DataControls";
+import { Select } from "@/components/ui-kit/FormControls";
 
 type FilterOption = { value: string; label: string };
 export type ModuleFacet = { key:string; label:string; allLabel?:string };
@@ -101,48 +103,54 @@ export default function ModuleHeader({
       }
       return changed?next:previous;
     });
-  }, [normalizedSearch, filter, count, facetSignature, facetValues]);
+  }, [normalizedSearch, filter, count, facetSignature, facetValues, facets]);
 
   if(!portalHost) return null;
 
   const visibleFacets=facets.filter(facet=>(facetOptions[facet.key]?.length||0)>1);
+  const activeFilterCount=(filter!==(filters[0]?.value||"all")?1:0)+visibleFacets.filter(facet=>(facetValues[facet.key]||"all")!=="all").length;
+  const hasFilterControls=filters.length>1||visibleFacets.length>0;
 
   return createPortal(
-    <div className="module-page-tools module-page-tools-portal" aria-label={title}>
-      <label className="module-search-control">
-        <span aria-hidden="true">⌕</span>
-        <input
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={`Buscar en ${title}`}
-        />
-      </label>
+    <div className="module-page-tools module-page-tools-portal" aria-label={title} data-module-header-v2>
+      <Search
+        value={search}
+        onValueChange={setSearch}
+        placeholder={searchPlaceholder}
+        ariaLabel={"Buscar en "+title}
+        compact
+      />
 
-      {filters.length>1&&<label className="module-filter-control">
-        <span aria-hidden="true">☷</span>
-        <select value={filter} onChange={event => setFilter(event.target.value)} aria-label={`Filtrar ${title}`}>
-          {filters.map(option => <option value={option.value} key={option.value}>{option.label}</option>)}
-        </select>
-      </label>}
-
-      {visibleFacets.map(facet=><label className="module-filter-control module-facet-control" key={facet.key}>
-        <span aria-hidden="true">⌄</span>
-        <select
-          value={facetValues[facet.key]||"all"}
-          onChange={event=>setFacetValues(previous=>({...previous,[facet.key]:event.target.value}))}
-          aria-label={`Filtrar ${title} por ${facet.label}`}
-        >
-          <option value="all">{facet.allLabel||"Todos · "+facet.label}</option>
-          {(facetOptions[facet.key]||[]).map(option=><option value={option.value} key={option.value}>{option.label}</option>)}
-        </select>
-      </label>)}
-
-      {(filter!==(filters[0]?.value||"all")||normalizedSearch||Object.values(facetValues).some(value=>value&&value!=="all"))&&
-        <button className="text-button module-filter-reset" type="button" onClick={()=>{setSearch("");setFilter(filters[0]?.value||"all");setFacetValues({});}}>Limpiar</button>}
+      {hasFilterControls&&<FilterPanel
+        activeCount={activeFilterCount}
+        label={"Filtros de "+title}
+        onClear={()=>{setFilter(filters[0]?.value||"all");setFacetValues({});}}
+      >
+        {filters.length>1&&<FilterGroup label="Estado">
+          <Select
+            value={filter}
+            onChange={event=>setFilter(event.target.value)}
+            aria-label={"Filtrar "+title+" por estado"}
+            placeholder=""
+            options={filters}
+          />
+        </FilterGroup>}
+        {visibleFacets.map(facet=><FilterGroup label={facet.label} key={facet.key}>
+          <Select
+            value={facetValues[facet.key]||"all"}
+            onChange={event=>setFacetValues(previous=>({...previous,[facet.key]:event.target.value}))}
+            aria-label={"Filtrar "+title+" por "+facet.label}
+            placeholder=""
+            options={[
+              {value:"all",label:facet.allLabel||"Todos · "+facet.label},
+              ...(facetOptions[facet.key]||[]),
+            ]}
+          />
+        </FilterGroup>)}
+      </FilterPanel>}
 
       {action && <div className="module-add-action">{action}</div>}
-      <span className="module-visible-count" aria-live="polite">{visibleCount}/{count}</span>
+      <span className="module-visible-count" aria-live="polite" title={countLabel}>{visibleCount}/{count}</span>
     </div>,
     portalHost,
   );

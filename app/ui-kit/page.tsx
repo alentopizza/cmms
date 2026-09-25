@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import UiIcon from "@/components/UiIcon";
 import { FoundationPreview } from "@/components/ui-kit/FoundationPreview";
 import { CorePrimitivesPreview } from "@/components/ui-kit/CorePrimitivesPreview";
+import { DataPatternsPreview } from "@/components/ui-kit/DataPatternsPreview";
 import "./ui-kit.css";
 
 export const dynamic="force-dynamic";
@@ -38,14 +39,20 @@ export default async function UiKitPage(){
         <a href="#navigation">Navigation</a>
         <a href="#overlays">Overlays</a>
         <a href="#feedback">Feedback</a>
+        <a href="#data-controls">Search / Filters</a>
+        <a href="#tables">DataTable</a>
+        <a href="#metrics">KPI</a>
+        <a href="#charts">Charts</a>
+        <a href="#progress">Timeline / Progress</a>
       </nav>
 
       <div className="ds-phase-note">
-        <strong>Fase 2.</strong> Buttons, Forms, Cards, Navigation, Overlays y Feedback ya son primitives oficiales. DataTable, filtros, KPI, Timeline y Progress pertenecen a la Fase 4; los componentes ERP especializados pertenecen a la Fase 5.
+        <strong>Fase 4.</strong> Shared Data UI ya es parte del contrato oficial: Search, filtros, DataTable, Pagination, acciones, KPI, chart palette, Timeline y Progress. Los componentes ERP especializados pertenecen a la Fase 5.
       </div>
 
       <FoundationPreview/>
       <CorePrimitivesPreview/>
+      <DataPatternsPreview/>
     </div>
   </main>;
 }

@@ -678,3 +678,25 @@ Navigation authorization and ordering remain outside the visual layer. `app/dash
 Organization white-label colors continue to override semantic action tokens at the authenticated shell boundary. The shell does not hardcode tenant colors.
 
 `UiIcon` is the single global SVG icon vocabulary for shell/navigation. Do not reintroduce Unicode module glyphs or a second icon library.
+
+
+### Shared Data UI runtime layer — Phase 4
+
+The frontend stack now includes a data-interaction layer between UI Core and ERP domain composition:
+
+`Design Tokens → UI Core → Shared Data UI → Business UI / compatibility wrappers → ERP modules`.
+
+Runtime locations:
+
+- `components/ui-kit/DataControls.tsx`;
+- `components/ui-kit/DataTable.tsx`;
+- `components/ui-kit/Metrics.tsx`;
+- `components/ui-kit/Charts.tsx`;
+- `components/ui-kit/TimelineProgress.tsx`;
+- `app/data-ui.css`.
+
+Shared Data UI is presentation/state tooling only. It must never become an authorization boundary. Search, filter, sort, selection and pagination operate on datasets already constrained by server-side organization/site/RBAC rules.
+
+`ModuleHeader` is the first compatibility migration and intentionally keeps its DOM-record contract. `DashboardAnalytics` is the first analytical compatibility migration and keeps its current server-facing props while using shared KPI/chart primitives.
+
+Dense domain tables remain in their module layers until their scheduled migrations so row actions, CRUD forms and business-specific responsive compositions are not silently changed.

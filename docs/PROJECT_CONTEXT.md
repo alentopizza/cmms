@@ -850,3 +850,18 @@ The V2 shell is a scoped compatibility layer in `app/shell-v2.css`, loaded after
 Global module/navigation glyphs now use the canonical `UiIcon` SVG system. Sidebar order/collapse persistence, RBAC filtering, Organization white-label action tokens and light/dark/system preferences remain authoritative and unchanged. Requisitions now has an explicit contextual-header identity instead of falling back to the generic product title.
 
 Next visual step: Phase 4 Shared Data UI.
+
+
+### DESWEB V2 Shared Data UI — Phase 4 implemented (2026-09-24)
+
+The UI Kit now includes the shared data-interaction layer required before module-by-module migration.
+
+Search and filtering are centralized through Search + FilterPanel/FilterGroup. DataTable provides sorting, optional row selection, bulk actions, row action menus and Pagination for client-side datasets. KPI/metric composition, the chart token sequence, Timeline and progress primitives are also canonical.
+
+`ModuleHeader` has been migrated as a compatibility wrapper: it still narrows only the records already rendered from server-authorized data and preserves its dynamic cascading facets, but its controls now come from Shared Data UI.
+
+`DashboardAnalytics` similarly preserves the dashboard-facing API while delegating KPI/stat/chart presentation to the official Phase 4 primitives. This reduces duplication before Dashboard's full module migration in Phase 6.
+
+No DB schema, API, RBAC or business-rule changes are part of Phase 4.
+
+Next visual step: Phase 5 Business UI.

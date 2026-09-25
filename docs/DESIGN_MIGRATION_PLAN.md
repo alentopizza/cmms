@@ -112,6 +112,8 @@ Objetivo: establecer la nueva identidad DESWEB V2 en toda la aplicación sin toc
 
 ## Fase 4 — Data UI compartida
 
+**Estado: implementada.**
+
 Componentes/patrones:
 
 - Search;
@@ -295,4 +297,12 @@ Phase 3 is implemented. The authenticated shell now consumes the V2 token layer 
 
 RBAC, routes, white-label action tokens, sidebar ordering/collapse persistence and light/dark/system theme behavior are unchanged.
 
-**Next implementation phase: Phase 4 — Shared Data UI.**
+**Phase 4 completion checkpoint — 2026-09-24**
+
+Phase 4 is implemented. The official Shared Data UI layer now provides Search, FilterPanel/FilterGroup, DataTable, Pagination, row/bulk actions, KPI/metric layouts, token-based line charts, Timeline and Progress primitives.
+
+`ModuleHeader` preserves its existing client-side narrowing of already server-authorized records while delegating its Search/filter presentation to the new layer. `DashboardAnalytics` preserves its public API while delegating KPI and chart rendering to Shared Data UI. The live authenticated `/ui-kit` documents the real Phase 4 components.
+
+Dense module-specific tables/cards remain scheduled for their module migration phases so Phase 4 does not rewrite CRUD/business flows.
+
+**Next implementation phase: Phase 5 — Business UI.**

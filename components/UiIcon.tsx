@@ -50,7 +50,8 @@ export type UiIconName =
   | "help"
   | "logout"
   | "reorder"
-  | "reset";
+  | "reset"
+  | "filter";
 
 export default function UiIcon({
   name,
@@ -125,5 +126,6 @@ export default function UiIcon({
   if (name === "logout") return <svg {...common}><path d="M10 5H5v14h5"/><path d="M13 8l4 4-4 4M17 12H9"/></svg>;
   if (name === "reorder") return <svg {...common}><path d="M8 6h10M8 12h10M8 18h10"/><circle cx="4.5" cy="6" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="4.5" cy="18" r=".8"/></svg>;
   if (name === "reset") return <svg {...common}><path d="M5 7V3.5M5 7h3.5"/><path d="M5.4 7A8 8 0 1 1 4.5 15"/></svg>;
+  if (name === "filter") return <svg {...common}><path d="M4 6h16M7 12h10M10 18h4"/></svg>;
   return <svg {...common}><path d="M4 17.5V12M9.3 17.5V8.5M14.7 17.5V5M20 17.5V10.5"/></svg>;
 }

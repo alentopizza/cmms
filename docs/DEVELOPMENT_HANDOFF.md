@@ -792,3 +792,42 @@ Requisitions now has explicit contextual Header metadata instead of falling back
 ### Next
 
 Phase 4 — Shared Data UI: Search, filters, DataTable, pagination, row/bulk actions, KPI, chart palette, timeline and progress. Do not begin module-by-module visual migration before these shared patterns are established.
+
+
+## 28. DESWEB Shared Data UI Phase 4 checkpoint — 2026-09-24
+
+Phase 4 is implemented.
+
+### Canonical imports
+
+Prefer `@/components/ui-kit` for:
+
+- Search / FilterPanel / FilterGroup;
+- DataTable / Pagination / RowActions;
+- KpiCard / MetricGrid / StatTiles;
+- LineChart;
+- Timeline / ProgressBar / CircularProgress / StepProgress.
+
+### Compatibility wrappers already migrated
+
+`ModuleHeader`:
+- public props unchanged;
+- portal target unchanged;
+- `data-module-record`, `data-status`, `data-search` and cascading `data-filter-*` semantics unchanged;
+- only presentation/interaction controls moved to Shared Data UI.
+
+`DashboardAnalytics`:
+- exported Dashboard KPI/trend types/functions remain available;
+- KPI and chart presentation now delegates to Phase 4 primitives.
+
+### Important boundary
+
+Do not interpret DataTable filtering/sorting/selection as security. Server authorization must constrain rows before they reach the component. Do not move tenant/site/RBAC rules into client UI state.
+
+### CI
+
+`scripts/data-ui-smoke.mjs` verifies token-only CSS, chart-token wiring, accessibility contracts, compatibility migrations, catalog coverage and stylesheet load order.
+
+### Next
+
+Phase 5 — Business UI. Build domain components from UI Core + Shared Data UI without flattening Supplier/User/Asset/Inventory identities into one generic card.

@@ -11,3 +11,14 @@ export { Tabs, Pills, SegmentedControl, Breadcrumb, ModuleNavigation } from "./N
 export { Modal, Drawer } from "./Overlay";
 export { Tooltip, Dropdown } from "./TooltipDropdown";
 export { FileUpload } from "./FileUpload";
+
+export { Search, FilterPanel, FilterGroup } from "./DataControls";
+export { DataTable, Pagination, RowActions } from "./DataTable";
+export type { DataTableColumn, DataTableBulkAction } from "./DataTable";
+export { KpiCard, MetricGrid, StatTiles } from "./Metrics";
+export type { KpiTone, KpiDirection, KpiCardProps } from "./Metrics";
+export { LineChart } from "./Charts";
+export type { LineChartSeries } from "./Charts";
+export { ProgressBar, CircularProgress, Timeline, StepProgress } from "./TimelineProgress";
+export type { ProgressTone, TimelineItem } from "./TimelineProgress";
+export { DataPatternsPreview } from "./DataPatternsPreview";

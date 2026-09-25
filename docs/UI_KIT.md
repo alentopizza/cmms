@@ -678,3 +678,29 @@ Implemented shell contracts:
 - CI runs `scripts/shell-v2-smoke.mjs`.
 
 Phase 4 owns Search/Filter/DataTable/KPI/timeline/progress standardization. Phase 3 does not migrate internal module content.
+
+
+## 29. Phase 4 Shared Data UI implementation status
+
+**Status: implemented.**
+
+Canonical runtime:
+
+- `components/ui-kit/DataControls.tsx` — Search, FilterPanel, FilterGroup;
+- `components/ui-kit/DataTable.tsx` — sortable DataTable, row actions, bulk selection/actions and Pagination;
+- `components/ui-kit/Metrics.tsx` — KpiCard, MetricGrid and StatTiles;
+- `components/ui-kit/Charts.tsx` — LineChart using only `--chart-1` through `--chart-10`;
+- `components/ui-kit/TimelineProgress.tsx` — Timeline, ProgressBar, CircularProgress and StepProgress;
+- `app/data-ui.css` — token-only Phase 4 styles;
+- `components/ui-kit/DataPatternsPreview.tsx` — live authenticated examples in `/ui-kit`.
+
+Compatibility migrations:
+
+- `ModuleHeader` keeps the existing `data-module-record` filtering contract but delegates Search/filter controls to Shared Data UI.
+- `DashboardAnalytics` keeps its current exported API while delegating KPI and trend rendering to `KpiCard`, `MetricGrid`, `StatTiles` and `LineChart`.
+
+Data authorization rule:
+
+Search, filters, sorting, pagination and selection are presentation/data-navigation tools. They never grant scope. Server queries/RBAC remain authoritative and must constrain the dataset before these components receive it.
+
+Dense Work Order, Maintenance, Inventory and other module-specific table/card migrations remain in their scheduled module phases. Phase 4 establishes the reusable contract rather than changing their business flows.

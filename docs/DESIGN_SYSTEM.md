@@ -593,3 +593,30 @@ Rules:
 - module authorization and user navigation preferences remain unchanged by visual migration.
 
 Phase 4 begins shared Data UI; it must build on this shell rather than invent module-local header/filter systems.
+
+
+## 29. Shared Data UI — Phase 4
+
+Phase 4 adds the official data-display and data-navigation grammar.
+
+Canonical primitives:
+- Search;
+- FilterPanel / FilterGroup;
+- DataTable;
+- Pagination;
+- RowActions / bulk actions;
+- KpiCard / MetricGrid / StatTiles;
+- LineChart;
+- Timeline;
+- ProgressBar / CircularProgress / StepProgress.
+
+Rules:
+- chart series consume `--chart-1` through `--chart-10`; modules do not invent local chart palettes;
+- filters are never access control;
+- DataTable selection and bulk actions only expose actions supplied by the caller;
+- destructive row actions keep explicit semantic treatment;
+- table state must remain understandable by keyboard and screen-reader users;
+- progress uses text/value in addition to color;
+- data components use Design Tokens only and support light/dark/reduced-motion.
+
+The Shared Data UI layer is reusable infrastructure. Domain identity belongs to Business UI and module phases.

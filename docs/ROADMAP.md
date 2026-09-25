@@ -334,7 +334,7 @@ The next cross-module program is the progressive visual/UX migration defined in 
 - **Phase 1 — Foundations:** implemented — CSS tokens, semantic aliases, typography, spacing, radius, shadows, motion, icon-system decision, initial `/ui-kit` structure and CI smoke.
 - **Phase 2 — UI Core primitives:** implemented — Button, forms, Select, Card, Badge/Status, Modal/Drawer, Tooltip/Dropdown, Tabs/Breadcrumb, Toast/Alert, Loading/Empty, Avatar/FileUpload, compatibility wrappers and live /ui-kit examples.
 - **Phase 3 — Global shell/navigation:** implemented — token-driven shell, SVG navigation iconography, contextual header/account actions and responsive drawer/field navigation while preserving RBAC/preferences.
-- **Phase 4 — Shared Data UI:** Search, filters, DataTable, pagination, row/bulk actions, KPI, charts, timeline and progress.
+- **Phase 4 — Shared Data UI:** implemented — Search/FilterPanel, DataTable/Pagination, row/bulk actions, KPI/metric layouts, token chart palette, timeline/progress, ModuleHeader and DashboardAnalytics compatibility migration.
 - **Phase 5 — Business UI:** AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard, LocationCard, preserving distinct domain identities.
 - **Phase 6 — Dashboard + Companies + Locations.**
 - **Phase 7 — Assets + Inventory**, including their approved secondary navigation.
@@ -346,9 +346,9 @@ Each phase must remain deployable, preserve business logic, update documentation
 
 ### Immediate next phase
 
-**Phase 4 — Shared Data UI.**
+**Phase 5 — Business UI.**
 
-Standardize Search, filters, DataTable, pagination, row/bulk actions, KPI, chart palette, timeline and progress on top of the implemented UI Core and global V2 shell. Preserve server-authoritative authorization and existing module behavior.
+Build AssetCard, InventoryCard, MaintenanceCard, WorkOrderCard, SupplierCard and LocationCard from the official primitives. Consolidate shared entity-card structure without erasing the distinct identities and operational actions of each domain.
 
 
 ## Recently completed role-dashboard analytics slice

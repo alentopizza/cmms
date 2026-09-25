@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { finiteCoordinate, haversineMeters } from "@/lib/biometric";
 import { pool } from "@/lib/db";
+import type { PoolClient } from "pg";
 import { DEFAULT_ATTENDANCE_POLICY } from "@/lib/attendance-policy";
 import { canAccessAttendanceSite } from "@/lib/attendance-scope";
 
@@ -10,7 +11,7 @@ type Policy={require_geolocation:boolean;max_location_accuracy_m:number};
 type Site={id:string;name:string;latitude:number|null;longitude:number|null;geofence_radius_m:number;active:boolean};
 
 async function validateLocation(
-  client:any,
+  client:PoolClient,
   organizationId:string,
   siteId:string,
   body:Record<string,unknown>,
@@ -57,6 +58,7 @@ export async function POST(request:Request){
   if(!action)return NextResponse.json({message:"Acción de desplazamiento inválida."},{status:422});
 
   const client=await pool.connect();
+  let activePolicy:Policy=DEFAULT_ATTENDANCE_POLICY;
   try{
     await client.query("BEGIN");
     const policyResult=await client.query<Policy>(
@@ -65,6 +67,7 @@ export async function POST(request:Request){
       [session.organizationId],
     );
     const policy=policyResult.rows[0]||DEFAULT_ATTENDANCE_POLICY;
+    activePolicy=policy;
 
     const shiftResult=await client.query<{id:string;current_site_id:string;site_id:string}>(
       `SELECT id,COALESCE(current_site_id,site_id)::text current_site_id,site_id::text
@@ -160,7 +163,7 @@ export async function POST(request:Request){
     });
   }catch(error){
     await client.query("ROLLBACK");
-    const mapped=failure(error,DEFAULT_ATTENDANCE_POLICY);
+    const mapped=failure(error,activePolicy);
     if(mapped)return NextResponse.json({message:mapped[0]},{status:mapped[1]});
     throw error;
   }finally{

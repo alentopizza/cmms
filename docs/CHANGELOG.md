@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-25 — Listados ERP con identidad visual y acciones rápidas
+
+- El modo **Listado** deja de representar Empresas, Proveedores, Usuarios, Activos, Inventario y Leads como tarjetas de una sola columna; ahora utiliza `StaticDataTable` sobre la misma colección ya cargada.
+- Se añadió `EntityIdentityCell` como primitive compartido: miniatura compacta de 40–44 px, nombre principal jerárquico e información secundaria. Soporta logo, avatar, thumbnail e icono/placeholder sin generar imágenes.
+- Empresas usa exclusivamente el logo real existente o iniciales; Proveedores usa su logo; Usuarios su avatar; Activos e Inventario su imagen principal; Leads usa iniciales porque el modelo actual no expone una imagen relacionada.
+- Cuadrillas conserva su tabla existente, pero la primera columna ahora usa la foto/avatar del líder como identidad principal; la columna Líder mantiene nombre y rol sin duplicar la foto.
+- Ubicaciones conserva su estructura aprobada y cambia únicamente **Ver ubicación** a acción rápida compacta.
+- Órdenes y Rutinas amplían sus SELECT existentes con `asset_id` y `asset_has_image`; usan la imagen real del activo/equipo cuando existe y el icono de Orden/Rutina como fallback. No se creó una consulta adicional.
+- Las acciones rápidas del listado reutilizan únicamente operaciones ya existentes por módulo: abrir ficha/detalle, editar, requisición, WhatsApp, activar/desactivar, eliminar, actividades, proveedor, correo o acciones Owner según corresponda.
+- La cuadrícula no fue modificada. `CollectionView`, búsqueda, filtros, estado, paginación, selección, RBAC y fuentes de datos permanecen compartidos entre ambas representaciones.
+- `scripts/view-mode-toggle-smoke.mjs` protege ahora identidad visual, listas reales y acciones rápidas por módulo.
+- No hubo migraciones, endpoints nuevos ni cambios de permisos.
+
 ## 2026-09-25 — Selector global Cuadrícula / Listado
 
 - Se incorporaron `ViewModeToggle` y `CollectionView` al Shared Data UI como patrón oficial para alternar entre **Vista cuadrícula** y **Vista listado**.

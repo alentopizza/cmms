@@ -15,6 +15,25 @@ export function encryptEmbedding(embedding: number[]) {
   return Buffer.concat([iv, tag, encrypted]);
 }
 
+export function encryptBiometricBlob(payload: Buffer | Uint8Array) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key(), iv);
+  const encrypted = Buffer.concat([cipher.update(Buffer.from(payload)), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([iv, tag, encrypted]);
+}
+
+export function decryptBiometricBlob(payload: Buffer | Uint8Array) {
+  const buffer = Buffer.from(payload);
+  if (buffer.length < 29) throw new Error("Invalid biometric blob");
+  const iv = buffer.subarray(0, 12);
+  const tag = buffer.subarray(12, 28);
+  const encrypted = buffer.subarray(28);
+  const decipher = createDecipheriv("aes-256-gcm", key(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+}
+
 export function decryptEmbedding(payload: Buffer | Uint8Array) {
   const buffer = Buffer.from(payload);
   if (buffer.length < 29) throw new Error("Invalid biometric payload");

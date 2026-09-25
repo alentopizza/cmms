@@ -248,6 +248,10 @@ export async function POST(request:Request){
       await client.query("ROLLBACK");
       return NextResponse.json({message:"La jornada vigente de hoy ya forma parte del historial. Programa el cambio desde mañana o una fecha futura."},{status:409});
     }
+    if(replaceable.length>1){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"Existe más de una vigencia previa en conflicto. Revisa el historial antes de programar un nuevo cambio."},{status:409});
+    }
     if(replaceable.length===1){
       const prior=replaceable[0];
       await client.query(

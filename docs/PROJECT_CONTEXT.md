@@ -556,9 +556,9 @@ The client validates GPS/geofence first, then activates live facial verification
 Attendance is operational by default for organizations that have never configured a policy. The default self-service role set is Admin, Manager, Technician, Provider and External collaborator, matching roles that have `attendance.self`. Explicitly disabled policies remain disabled. Existing organizations without a policy are backfilled by migration `017_attendance_policy_defaults.sql`; new organizations receive the policy during onboarding.
 
 
-### Supervised biometric identity chain
+### Biometric identity chain
 
-Biometric identity now has a supervised chain of trust. Initial/renewed enrollment is performed by an attendance manager with the user physically present. Existing self-enrolled profiles are treated as legacy and cannot authorize attendance until reenrolled. The system records the supervising user, site, enrollment method and verification time. Revocation nulls the usable encrypted embedding and keeps an audit event/metadata record.
+Biometric identity has a governed chain of trust. The default initial/renewed flow is an authenticated employee request from their own mobile device followed by one authorized human approval; the request itself never activates Attendance identity. The assisted supervisor-operated camera flow remains available for recovery/support. Existing legacy self-enrolled profiles remain non-authoritative until an approved reenrollment occurs. The system records consent version, Site, enrollment method, request/review lifecycle and verification time. Revocation nulls the usable encrypted embedding and preserves audit metadata.
 
 ### Attendance administration context
 
@@ -727,7 +727,7 @@ Field mobile navigation now reserves four primary operational destinations (Dash
 
 ### Attendance contingency phase 4B
 
-Attendance now includes an audited exceptional path for operational failures after supervised biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without active supervised biometric enrollment.
+Attendance now includes an audited exceptional path for operational failures after verified biometric enrollment. A field user can request contingency for check-in/check-out; an authorized attendance manager reviews it, and approval creates a 30-minute, one-time authorization. Using the authorization creates/closes the shift with verification mode `contingency`, preserving available GPS evidence and an explicit link to the reviewed request. The workflow cannot establish identity and therefore cannot be used by users without an active verified biometric enrollment.
 
 
 ### Hybrid role-aware user manual
@@ -737,7 +737,7 @@ The product now has one shared user-manual content source rendered in two contex
 
 ### Current location provider
 
-Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains the existing supervised 1:1 Human-based pipeline; it is deliberately independent from the map provider.
+Site/geofence UI now prefers Google Maps Platform for cartography and address validation. GPS continues to come from the user's device, and attendance/enrollment geofence decisions continue to be recalculated server-side. Facial verification remains a 1:1 Human-based pipeline against an approved biometric profile; it is deliberately independent from the map provider.
 
 
 ### Company quick-edit contact persistence

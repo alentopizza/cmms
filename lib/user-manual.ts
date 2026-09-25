@@ -115,7 +115,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Configura la sede principal con dirección, ciudad, país y geocerca validada en el mapa.",
       "Crea sedes adicionales cuando corresponda y después sus sububicaciones.",
       "Selecciona la tarjeta de empresa para cambiar el módulo a su perfil en la misma pantalla. Las migas de pan permiten volver al directorio sin cerrar un popup.",
-      "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida; el contenido cambia en el panel derecho.",
+      "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida. En Documentos el panel lateral interno se oculta temporalmente para dar todo el ancho al visor y a la tabla; al cambiar de pestaña vuelve el layout normal.",
       "Usa las acciones rápidas para acceder a ubicaciones, activos, usuarios y la ficha empresarial completa, o exporta la Hoja de vida en PDF, Excel o Word compatible.",
     ],
     notes:["La dirección administrativa de la empresa y la dirección operativa de una sede son conceptos distintos."],
@@ -619,6 +619,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Documentos de Empresa con más espacio de trabajo",
+    summary:"La pestaña Documentos usa todo el ancho del perfil: oculta solo el panel lateral interno mientras mantiene los dos headers, tabs, visor y listado existentes.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-25",
     title:"Enrolamiento biométrico móvil con aprobación única",

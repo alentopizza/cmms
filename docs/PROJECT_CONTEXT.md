@@ -403,6 +403,8 @@ The full company page includes:
 
 Corporate documents are stored in `organization_documents` with metadata and durable PostgreSQL file bytes. They are intentionally separate from company logo/cover assets and from maintenance-operation attachments.
 
+The in-page Company profile keeps its standard identity/sidebar layout for Información general, Estadísticas, Ubicaciones, Técnicos and the other normal tabs. **Documentos** is a presentation-only exception because the PDF viewer and document table need substantially more horizontal space: while that tab is active, the Company identity/sidebar card is hidden, the independent Company header remains full width, the same profile tab bar spans the full content width immediately below it, and the existing `CompanyDocumentWorkspace` occupies the released area. No document endpoint, data source, selection state or permission changes for this layout.
+
 
 ### Platform Owner contextual development actions
 

@@ -44,6 +44,7 @@ export default function EntityProfileWorkspace({
   toolbarActions,
   tabs,
   initialTab,
+  fullWidthTabIds = [],
 }: {
   eyebrow: string;
   headingLabel?: string;
@@ -62,6 +63,7 @@ export default function EntityProfileWorkspace({
   toolbarActions?: ReactNode;
   tabs: EntityProfileTab[];
   initialTab?: string;
+  fullWidthTabIds?: string[];
 }) {
   const available = useMemo(() => tabs.filter(tab => Boolean(tab.content)), [tabs]);
   const firstTab = initialTab && available.some(tab => tab.id === initialTab)
@@ -74,8 +76,12 @@ export default function EntityProfileWorkspace({
   }, [firstTab, title]);
 
   const active = available.find(tab => tab.id === activeTab) || available[0];
+  const fullWidthActive = Boolean(active && fullWidthTabIds.includes(active.id));
 
-  return <section className="entity-profile-workspace ds-business-profile">
+  return <section
+    className={"entity-profile-workspace ds-business-profile"+(fullWidthActive?" entity-profile-wide-tab":"")}
+    data-active-tab={active?.id||undefined}
+  >
     <nav className="entity-breadcrumbs" aria-label="Migas de pan">
       {breadcrumbs.map((crumb, index) => <Fragment key={crumb.label + index}>
         {index > 0 && <span className="entity-breadcrumb-separator" aria-hidden="true"><UiIcon name="chevron-right" size={13}/></span>}

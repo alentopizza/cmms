@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-25 — Documentos de Empresa a ancho completo
+
+- La pestaña **Documentos** del perfil de Empresa oculta únicamente el sidebar interno de identidad/estadísticas/acciones rápidas mientras esa tab está activa.
+- Se conservan separados el header global de Administración/Empresas y el header propio de Empresa.
+- La barra de tabs existente y el content-card de Empresa se expanden al ancho disponible solo en Documentos.
+- El mismo `CompanyDocumentWorkspace` conserva visor, selección sincronizada, buscador, filtros, tabla, estados, acciones y paginación; no se creó un segundo componente ni servicio documental.
+- En escritorio el visor y listado aprovechan el espacio con un split equilibrado; en tablet se ajustan proporcionalmente y en móvil se conserva la disposición vertical.
+- Las demás tabs de Empresa mantienen el layout anterior con sidebar.
+- No se modificaron endpoints, permisos, modelos de datos ni lógica documental.
+- Se añadió `scripts/company-documents-fullwidth-smoke.mjs` a CI.
+
 ## 2026-09-25 — Enrolamiento biométrico móvil con aprobación única
 
 - El empleado puede iniciar su primera solicitud biométrica desde su propio celular; la solicitud por sí sola no habilita Asistencia.

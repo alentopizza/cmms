@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada para esta entrega: `65122cbe592d739630bf1494957322948cefb8b6`
+> Base revisada para esta entrega: `bcbab131874f9097af1ac9e1dbccbd86bf892214`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -66,6 +66,29 @@ El repositorio ya contiene, entre otros:
 Las relaciones operativas importantes deben seguir usando sus fuentes autoritativas actuales; no crear tablas paralelas para “simplificar” vistas.
 
 ## 4. Trabajo más reciente en `main`
+
+### Empresa · Documentos a ancho completo
+
+La pestaña **Documentos** del perfil in-page de Empresa usa una excepción visual específica para liberar espacio al visor y al listado sin rehacer la ficha.
+
+- `EntityProfileWorkspace` admite `fullWidthTabIds`; solo la tab activa declarada adopta el modo ancho.
+- `CompanyDirectory` declara exclusivamente `documents` como tab de ancho completo.
+- Cuando Documentos está activa, la tarjeta lateral de identidad/estadísticas/acciones rápidas deja de renderizarse visualmente y el content-card ocupa ambas columnas.
+- El header global del módulo no cambia y el header independiente **Empresa / ...** permanece intacto.
+- La misma barra de tabs existente ocupa todo el ancho inmediatamente debajo del header de Empresa.
+- `CompanyDocumentWorkspace` sigue siendo el único visor/listado; conserva selección de fila, visor PDF/imagen, filtros, tabla, archivo/restauración y acciones.
+- En escritorio el visor/listado aprovecha el ancho con un split aproximadamente 50/50; en anchos intermedios se ajusta y por debajo de 900 px mantiene la disposición vertical existente.
+- Información general, Estadísticas, Ubicaciones, Técnicos y cualquier otra tab conservan el sidebar empresarial normal.
+- No hubo cambios de DB, endpoints, permisos, servicios ni datos.
+- `scripts/company-documents-fullwidth-smoke.mjs` protege que la excepción siga limitada a Documentos y que el workspace documental existente no sea reemplazado.
+
+Archivos clave:
+
+- `components/EntityProfileWorkspace.tsx`
+- `app/dashboard/companies/CompanyDirectory.tsx`
+- `app/business-ui.css`
+- `app/phase6-modules.css`
+- `scripts/company-documents-fullwidth-smoke.mjs`
 
 ### Enrolamiento biométrico móvil · aprobación humana única
 

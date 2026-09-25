@@ -416,6 +416,7 @@ export default function CompanyDirectory({
           <Link href={"/dashboard/companies/"+selected.id}><UiIcon name="file"/> Ficha completa</Link>
         </>}
         initialTab={initialCompanyId===selected.id?initialTab:undefined}
+        fullWidthTabIds={["documents"]}
         tabs={[
           {id:"general",label:"Información general",content:editing?<form
             ref={editFormRef}

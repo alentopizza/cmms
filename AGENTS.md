@@ -124,7 +124,7 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Persisted face embeddings must remain encrypted at rest; production should use a dedicated `BIOMETRIC_ENCRYPTION_KEY`.
 - Geolocation is collected at explicit check-in/check-out events, not continuously in the background.
 - Server-side clock validation must re-check tenant/site scope, GPS accuracy and geofence distance.
-- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every policy/enrollment mutation revalidates that organization and the target user/Site server-side.
+- Platform attendance administration must never infer a customer organization from unrelated UI state. Platform operators explicitly select the organization, and every administrative mutation (policy, supervised biometrics, contingency review and future attendance configuration) revalidates that organization and the target user/Site server-side.
 - Bootstrap Platform Owner has no database user row; supervised enrollment/revocation audit must therefore preserve platform role/email metadata when `actor_user_id` is null.
 - Attendance/activity analytics are descriptive. Do not implement automatic worker rankings, disciplinary scoring, hiring, firing or other employment decisions from biometric/location/productivity data.
 

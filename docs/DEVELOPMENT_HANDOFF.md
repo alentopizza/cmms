@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada antes de este handoff: `b7252924f3ce1e7350a2a2948734a8b3e140dd9f`
+> Base revisada antes de este handoff: `5f9f6ef94f94d1cd2ba3812fc8f610e66679043c`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -77,7 +77,7 @@ Se estableció un patrón común de presentación para los directorios principal
 - Cuando cambia el modo, `CollectionView` emite `cmms:view-mode-change`; `ModuleHeader` usa esa señal para reaplicar búsqueda, estado y facetas sobre la representación recién montada.
 - Empresas, Ubicaciones, Proveedores, Usuarios, Activos, Inventario y Leads reutilizan su colección de tarjetas y adoptan una disposición de una columna en modo listado cuando no existía una tabla autoritativa.
 - Ubicaciones añade una lista explícita con `StaticDataTable` sobre la misma colección de Sites: Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción para abrir la ficha.
-- Cuadrillas reutiliza `ViewModeToggle` con su grid y `StaticDataTable` existentes.
+- Cuadrillas usa `CollectionView` con su grid y `StaticDataTable` existentes, montando el `ViewModeToggle` compartido dentro de su toolbar local de búsqueda/sede/estado.
 - Órdenes de trabajo y Rutinas/Mantenimiento reutilizan sus tarjetas y tablas existentes; el modo elegido por el usuario reemplaza el antiguo switch automático desktop/mobile.
 - La búsqueda/filtros de `ModuleHeader` continúan funcionando sobre `data-module-record`; cambiar de vista no amplía alcance ni vuelve a consultar datos.
 - `scripts/view-mode-toggle-smoke.mjs` protege la implementación transversal y CI lo ejecuta junto con los smokes por fase.

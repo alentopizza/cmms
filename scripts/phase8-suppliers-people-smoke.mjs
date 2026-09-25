@@ -12,6 +12,7 @@ const required=[
   "components/SupervisedBiometricEnrollment.tsx",
   "components/UserStatisticsDashboard.tsx",
   "components/UserAttendanceAuditCenter.tsx",
+  "components/AttendanceOperationalReport.tsx",
   "lib/attendance-context.ts",
   "app/phase8-modules.css",
 ];
@@ -54,10 +55,16 @@ for(const marker of ["phase8-crews","<CrewCard","<Alert","<EmptyState","iconName
 if(crews.includes("♕")||crews.includes('className={"status-badge'))throw new Error("Crews still use legacy leader/status glyphs");
 
 const attendance=fs.readFileSync("app/dashboard/attendance/page.tsx","utf8");
-for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<KpiCard","<StaticDataTable","recordProps","attendance-admin-context","organization_id","initialUserId"]){
+for(const marker of ["phase8-attendance","<ModuleHeader","<Badge","<Alert","<AttendanceOperationalReport","attendance-admin-context","organization_id","initialUserId"]){
   if(!attendance.includes(marker))throw new Error("Attendance Phase 8 orchestration missing "+marker);
 }
-if(attendance.includes('className="table attendance-report-table"'))throw new Error("Attendance report still uses legacy table grammar");
+const attendanceReport=fs.readFileSync("components/AttendanceOperationalReport.tsx","utf8");
+for(const marker of ["<KpiCard","<StaticDataTable","<Tabs","attendance-report-table"]){
+  if(!attendanceReport.includes(marker))throw new Error("Attendance Phase 8 report presentation missing "+marker);
+}
+if(attendance.includes('className="table attendance-report-table"')||attendanceReport.includes('className="table attendance-report-table"')){
+  throw new Error("Attendance report still uses legacy table grammar");
+}
 
 
 const attendanceContext=fs.readFileSync("lib/attendance-context.ts","utf8");

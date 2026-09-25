@@ -73,18 +73,17 @@ export function organizationLocalDate(timezone:string,at=new Date()){
   }
 }
 
-export function weekdayForLocalDate(date:string,timezone:string){
+export function weekdayForLocalDate(date:string){
   try{
-    const instant=new Date(date+"T12:00:00Z");
-    const weekday=new Intl.DateTimeFormat("en-US",{timeZone:timezone,weekday:"short"}).format(instant);
-    return ({Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7} as Record<string,number>)[weekday]||0;
+    const day=new Date(date+"T12:00:00Z").getUTCDay();
+    return day===0?7:day;
   }catch{
     return 0;
   }
 }
 
-export function scheduleDayForDate(schedule:BusinessDaySchedule[],date:string,timezone:string){
-  const day=weekdayForLocalDate(date,timezone);
+export function scheduleDayForDate(schedule:BusinessDaySchedule[],date:string){
+  const day=weekdayForLocalDate(date);
   return schedule.find(item=>item.day===day)||null;
 }
 

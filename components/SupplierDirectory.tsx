@@ -18,6 +18,7 @@ import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
 import { SupplierCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 
@@ -181,7 +182,7 @@ export default function SupplierDirectory({
   if(!selected){
     return <div className="phase8-supplier-directory"><section className="section supplier-directory-modern">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2><p className="muted">Abre una tarjeta para consultar su operación, suministros y requisiciones sin salir del módulo.</p></div></div>
-      {suppliers.length?<div className="supplier-profile-grid">{suppliers.map(s=>{
+      {suppliers.length?<CollectionView storageKey="suppliers" label="Vista de proveedores" grid={<div className="supplier-profile-grid" data-collection-grid>{suppliers.map(s=>{
         const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
         const supplierActivities=activities.filter(item=>item.supplier_id===s.id&&["pending","in_progress"].includes(item.status)).length;
         const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
@@ -222,7 +223,7 @@ export default function SupplierDirectory({
             <button type="button" className="supplier-card-quick-action-v3 danger" title="Eliminar proveedor" data-tooltip="Eliminar proveedor" aria-label="Eliminar proveedor" onClick={()=>setDeleteCandidate(s)}><UiIcon name="trash" size={16}/></button>
           </>}
         />;
-      })}</div>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}
+      })}</div>}/>:<EmptyState icon="file" title="Aún no hay proveedores" description="Registra el primero para asociar servicios, suministros y requisiciones."/>}
       {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}
     </section>
     <ConfirmDialog

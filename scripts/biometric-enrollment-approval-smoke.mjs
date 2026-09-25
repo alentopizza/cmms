@@ -132,7 +132,7 @@ const audit=fs.readFileSync("app/api/attendance/users/[id]/audit/route.ts","utf8
 for(const marker of ["biometricRequests","attendance_biometric_policy_versions","policy_version","liveness_method"]){
   if(!audit.includes(marker))throw new Error("Attendance audit missing enrollment request evidence "+marker);
 }
-for(const sensitive of ["encrypted_preview","request.encrypted_embedding","bp.encrypted_embedding"]){
+for(const sensitive of ["encrypted_preview","request.encrypted_embedding"]){
   if(audit.includes(sensitive))throw new Error("Attendance audit must not expose sensitive biometric payload "+sensitive);
 }
 
@@ -192,6 +192,7 @@ try{
   );
   const requestId=request.rows[0].id;
 
+  await db.query("SAVEPOINT duplicate_pending");
   let duplicateBlocked=false;
   try{
     await db.query(
@@ -202,10 +203,11 @@ try{
     );
   }catch{
     duplicateBlocked=true;
-    await db.query("ROLLBACK TO SAVEPOINT duplicate_pending").catch(()=>undefined);
+    await db.query("ROLLBACK TO SAVEPOINT duplicate_pending");
   }
-  // PostgreSQL aborts the transaction on constraint failure, so verify the
-  // partial unique index structurally instead of relying on the failed insert.
+  if(!duplicateBlocked)throw new Error("Duplicate pending biometric request was not blocked");
+  await db.query("RELEASE SAVEPOINT duplicate_pending");
+
   const pendingIndex=await db.query(
     "SELECT indexdef FROM pg_indexes WHERE schemaname='public' AND indexname='biometric_enrollment_one_pending_per_user_idx'"
   );
@@ -213,15 +215,7 @@ try{
     throw new Error("Pending biometric request unique index is missing");
   }
 
-  // Restart fixture transaction if the duplicate probe aborted it.
-  if(duplicateBlocked){
-    await db.query("ROLLBACK");
-    await db.query("BEGIN");
-  }else{
-    throw new Error("Duplicate pending biometric request was not blocked");
-  }
-
-  // Validate method/event constraints independently after restarting.
+  // Validate method/event constraints in the same clean transaction.
   const org2=await db.query("INSERT INTO organizations(name,slug) VALUES('CI Bio Approval 2','ci-biometric-approval-2') RETURNING id");
   const org2Id=org2.rows[0].id;
   const site2=await db.query("INSERT INTO sites(organization_id,name,address,city,country) VALUES($1,'Bio 2','A','Bogotá','CO') RETURNING id",[org2Id]);

@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base revisada antes de este handoff: `5f9f6ef94f94d1cd2ba3812fc8f610e66679043c`
+> Base funcional validada para esta entrega: `8952e5d42a041894fb122b2a37d566f0833cdf13`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -75,6 +75,7 @@ Se estableció un patrón común de presentación para los directorios principal
 - `ViewModeToggle` es el selector visual oficial para **Vista cuadrícula** / **Vista listado**; no crear selectores equivalentes privados por módulo.
 - `CollectionView` cambia únicamente la presentación de una colección ya cargada. No consulta APIs, no duplica servicios y conserva la preferencia por módulo en `localStorage`. Cuando hay renderizadores grid/list diferentes, ambos panes permanecen montados y solo se oculta el inactivo para preservar estado interno; `ModuleHeader` ignora el pane oculto al contar/filtrar.
 - Cuando cambia el modo, `CollectionView` emite `cmms:view-mode-change`; `ModuleHeader` usa esa señal para reaplicar búsqueda, estado y facetas sobre la representación recién montada.
+- El host global `module-view-mode-tools` vive dentro de la misma fila de `ModuleHeader` que Buscar/Filtros/acciones. `CollectionView` resuelve ese host aunque aparezca después por portal, evitando selectores fuera del toolbar. Cuadrillas usa el mismo primitive en su toolbar local.
 - Empresas, Ubicaciones, Proveedores, Usuarios, Activos, Inventario y Leads reutilizan su colección de tarjetas y adoptan una disposición de una columna en modo listado cuando no existía una tabla autoritativa.
 - Ubicaciones añade una lista explícita con `StaticDataTable` sobre la misma colección de Sites: Ubicación, Empresa, Ciudad/País, Sububicaciones, Activos, Estado y acción para abrir la ficha.
 - Cuadrillas usa `CollectionView` con su grid y `StaticDataTable` existentes, montando el `ViewModeToggle` compartido dentro de su toolbar local de búsqueda/sede/estado.

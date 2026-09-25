@@ -33,9 +33,12 @@ for(const marker of [
 }
 if((controls.match(/export function ViewModeToggle/g)||[]).length!==1)throw new Error("ViewModeToggle must have one implementation");
 if((controls.match(/export function CollectionView/g)||[]).length!==1)throw new Error("CollectionView must have one implementation");
+for(const marker of ['data-view-pane="grid"','data-view-pane="list"','hidden={mode!=="grid"}','hidden={mode!=="list"}']){
+  if(!controls.includes(marker))throw new Error("CollectionView state-preserving pane contract missing "+marker);
+}
 
 const moduleHeader=fs.readFileSync("components/ModuleHeader.tsx","utf8");
-for(const marker of ["cmms:view-mode-change","viewRevision",'querySelectorAll<HTMLElement>("[data-module-record]")']){
+for(const marker of ["cmms:view-mode-change","viewRevision",'querySelectorAll<HTMLElement>("[data-module-record]")','closest<HTMLElement>("[data-view-pane]")']){
   if(!moduleHeader.includes(marker))throw new Error("ModuleHeader view-mode integration missing "+marker);
 }
 

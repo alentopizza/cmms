@@ -11,6 +11,7 @@
 - El modal conserva el documento seleccionado, filtros y estado del listado al cerrarse; usa cierre X/Escape y gestión de foco del componente `Modal` existente.
 - No hubo cambios de base de datos, endpoints, consultas, RBAC ni permisos.
 - `scripts/company-documents-fullwidth-smoke.mjs` protege ahora el split, reutilización del visor, modal y retirada completa de Compartir.
+- Corrección posterior: el estado interno de zoom, ajuste, rotación y carga vuelve a declararse dentro de `DocumentViewer`; esto corrige el fallo de TypeScript detectado en build y el smoke ahora protege ese contrato local.
 ## 2026-09-25 — Rediseño aprobado del directorio de Cuadrillas
 
 - La vista principal de Cuadrillas adopta el layout aprobado sin crear una página, servicio, endpoint ni modelo paralelo.

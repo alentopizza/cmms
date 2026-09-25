@@ -27,6 +27,15 @@ if((workspace.match(/<DocumentViewer/g)||[]).length<2)throw new Error("Context p
 for(const forbidden of ["Compartir documento","shareDocument","shareSelected","shareMessage","navigator.share"]){
   if(workspace.includes(forbidden))throw new Error("Removed Share action leaked into Company Documents: "+forbidden);
 }
+for(const marker of [
+  "const [zoom,setZoom]=useState(100)",
+  "const [fit,setFit]=useState(true)",
+  "const [rotation,setRotation]=useState(0)",
+  "const [previewLoading,setPreviewLoading]=useState(false)",
+  "const [previewError,setPreviewError]=useState(false)",
+]){
+  if(!workspace.includes(marker))throw new Error("DocumentViewer local state contract missing "+marker);
+}
 
 const businessCss=fs.readFileSync("app/business-ui.css","utf8");
 if(/#[0-9a-fA-F]{3,8}\b/.test(businessCss))throw new Error("Business UI CSS must remain token-only");

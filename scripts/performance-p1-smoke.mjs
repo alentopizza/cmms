@@ -21,6 +21,7 @@ const required=[
   "app/api/customization/assets/[asset]/route.ts",
   "lib/db.ts",
   "db/migrations/041_performance_work_order_hot_paths.sql",
+  "db/migrations/042_performance_user_hot_paths.sql",
   "scripts/performance-build-report.mjs",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing performance contract file: "+file);
@@ -152,6 +153,15 @@ for(const marker of [
   "work_order_tasks_work_order_idx",
 ]){
   if(!migration.includes(marker))throw new Error("Audited work-order index missing "+marker);
+}
+
+const userMigration=fs.readFileSync("db/migrations/042_performance_user_hot_paths.sql","utf8");
+for(const marker of [
+  "meter_readings_recorded_by_idx",
+  "work_order_comments_user_idx",
+  "audit_log_user_idx",
+]){
+  if(!userMigration.includes(marker))throw new Error("Audited user activity index missing "+marker);
 }
 
 const buildReport=fs.readFileSync("scripts/performance-build-report.mjs","utf8");

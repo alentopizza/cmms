@@ -157,8 +157,12 @@ export async function GET(
                      THEN checkout_site.name ELSE NULL END check_out_site_name,
                 round(EXTRACT(EPOCH FROM (COALESCE(s.check_out_at,now())-s.check_in_at))/60.0::numeric,1)::text duration_minutes,
                 COALESCE((
-                  SELECT count(*)::int FROM activity_execution_events e
+                  SELECT count(*)::int
+                  FROM activity_execution_events e
+                  JOIN work_order_tasks task ON task.id=e.task_id
+                  JOIN work_orders work_order ON work_order.id=task.work_order_id
                   WHERE e.attendance_shift_id=s.id AND e.event_type='completed'
+                    AND ($4::uuid[] IS NULL OR work_order.site_id=ANY($4::uuid[]))
                 ),0)::int completed_activities,
                 COALESCE((
                   SELECT count(*)::int FROM attendance_shift_segments travel
@@ -185,7 +189,7 @@ export async function GET(
                      THEN 'OT #'||work_order.number::text||' · '||task.description
                      ELSE NULL END destination_task_label,
                 segment.tracking_session_id::text,
-                segment.started_at::text,segment.ended_at::text,
+                segment.started_at::text,segment.ended_at::text,segment.notes,
                 segment.start_accuracy_m,segment.start_distance_m,
                 segment.end_accuracy_m,segment.end_distance_m,
                 COALESCE((

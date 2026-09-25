@@ -143,6 +143,14 @@ Desktop account/help/configuration/logout controls belong in the far-right conte
 - Reaction live tracking remains independent from Attendance. A recent active Reaction session may be correlated with a `travel` segment and its GPS samples may support route evidence, but Reaction must never decide the current Attendance Site or synthesize departure/arrival events.
 - Limited supervisors may only receive travel evidence when the relevant Site scope is authorized. Do not expose the other endpoint of a travel leg merely because one endpoint is visible.
 - Attendance departure/arrival events do not require repeated facial verification inside an already authenticated open jornada; identity continuity comes from the authenticated account and previously opened shift. Check-in/check-out biometric rules remain unchanged.
+- Attendance operational reporting is a scoped composite read model, not a persisted worker score or parallel ledger. It may combine schedules, shifts, Site/Travel segments, activity execution, contingencies and Reaction route evidence only for descriptive human review.
+- Attendance reports require `attendance.reports`. Platform operators must explicitly select the Organization; tenant sessions remain bound to their authenticated Organization. Browser date/person/Site filters may only narrow the authorized dataset.
+- Scheduled-vs-actual variance is calculated only for days with an enabled individual schedule. Real attendance on a day without an enabled schedule must be shown separately as unplanned recorded time rather than silently folded into scheduled variance.
+- A Site-limited supervisor must not receive a partially visible multi-Site shift. Include a shift in reporting only when its origin, final Site and every Site/Travel segment endpoint are all inside the supervisor's authorized Site scope.
+- Attendance report exports (JSON screen data, XLSX, CSV and PDF) must come from the same scoped report dataset and preserve the same Organization/date/person/Site filters. Exports must not re-query with broader scope.
+- Open shifts may contribute elapsed minutes up to `now()` and must remain visibly marked as open/provisional evidence rather than presented as a finalized closed duration.
+- Report output may show biometric verification mode or contingency linkage already present on attendance events, but must not expose encrypted embeddings or raw similarity/liveness scores.
+- Report differences, missing programmed-day markings, unplanned attendance, travel time, activities and contingencies are descriptive facts. Do not convert them into automatic worker ranking, disciplinary scoring or employment decisions.
 
 
 ## Company enterprise-profile invariants

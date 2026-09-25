@@ -28,43 +28,45 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const canWrite=can(session,"maintenance.write");
   const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
-  const creationGate=await getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
+  const creationGatePromise=getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
 
-  const plans = session.platformRole !== "user"
-    ? await query<PlanRow>(
+  const plansPromise = session.platformRole !== "user"
+    ? query<PlanRow>(
         `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
          FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
          ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`)
     : session.accessAllSites
-      ? await query<PlanRow>(
+      ? query<PlanRow>(
           `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
            FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId])
-      : await query<PlanRow>(
+      : query<PlanRow>(
           `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
            FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
            WHERE p.organization_id=$1 AND a.site_id = ANY($2::uuid[])
            ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId, session.siteIds]);
 
-  const assets=canWrite
+  const assetsPromise=canWrite
     ? session.platformRole!=="user"
-      ? await query<AssetOption>(
+      ? query<AssetOption>(
           `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,o.name||' · '||s.name||' · '||a.code||' '||a.name label
            FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
            WHERE a.status<>'retired' ORDER BY o.name,s.name,a.name`)
       : session.accessAllSites
-        ? await query<AssetOption>(
+        ? query<AssetOption>(
             `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,s.name||' · '||a.code||' '||a.name label
              FROM assets a JOIN sites s ON s.id=a.site_id
              WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY s.name,a.name`,
             [session.organizationId])
-        : await query<AssetOption>(
+        : query<AssetOption>(
             `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,s.name||' · '||a.code||' '||a.name label
              FROM assets a JOIN sites s ON s.id=a.site_id
              WHERE a.organization_id=$1 AND a.status<>'retired' AND a.site_id=ANY($2::uuid[])
              ORDER BY s.name,a.name`,
             [session.organizationId,session.siteIds])
-    : {rows:[]} as {rows:AssetOption[]};
+    : Promise.resolve({rows:[]} as {rows:AssetOption[]});
+
+  const [creationGate,plans,assets]=await Promise.all([creationGatePromise,plansPromise,assetsPromise]);
 
   const today=new Date(); today.setHours(0,0,0,0);
   const activeCount=plans.rows.filter(plan=>plan.active).length;

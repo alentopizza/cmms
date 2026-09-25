@@ -15,6 +15,7 @@ import { LocationCard, SubLocationCard } from "@/components/business-ui";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 import { CollectionView, Search } from "@/components/ui-kit/DataControls";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Select } from "@/components/ui-kit/FormControls";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 
@@ -200,7 +201,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
           sublocations:site.location_count,
           assets:site.asset_count,
           status:<Badge variant={site.active?"success":"neutral"}>{site.active?"Activa":"Inactiva"}</Badge>,
-          actions:<button type="button" className="text-button" onClick={()=>openSite(site.id)}>Ver ubicación</button>,
+          actions:<ListQuickActions><button type="button" className="ds-list-action primary" onClick={()=>openSite(site.id)} title="Ver ubicación" data-tooltip="Ver ubicación" aria-label={"Ver ubicación "+site.name}><UiIcon name="eye" size={16}/></button></ListQuickActions>,
         },
       }))}
     />}/>} 

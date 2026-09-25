@@ -33,8 +33,8 @@ function addDays(date:string,days:number){
 }
 
 function sourceLabel(item:AttendanceScheduleRecord){
-  if(item.schedule_source==="organization")return "Copia de empresa";
-  if(item.schedule_source==="site")return item.source_site_name?"Copia de "+item.source_site_name:"Copia de sede";
+  if(item.schedule_source==="organization")return "Plantilla de empresa";
+  if(item.schedule_source==="site")return item.source_site_name?"Plantilla de "+item.source_site_name:"Plantilla de sede";
   return "Personalizado";
 }
 

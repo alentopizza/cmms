@@ -2,15 +2,22 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { attendanceOrganizationId } from "@/lib/attendance-context";
 
 const ROLE_SET = new Set(["admin","manager","technician","provider","external"]);
 
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session || !session.organizationId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
   if (!can(session, "attendance.manage")) return new NextResponse("Forbidden", { status: 403 });
 
   const form = await request.formData();
+  const organizationId = attendanceOrganizationId(session, form.get("organization_id"));
+  if (!organizationId) {
+    return NextResponse.json({ message: "Selecciona una empresa para administrar la asistencia." }, { status: 422 });
+  }
+  const organization = await query("SELECT 1 FROM organizations WHERE id=$1 AND active=true", [organizationId]);
+  if (!organization.rowCount) return new NextResponse("Not found", { status: 404 });
   const enabled = form.get("enabled") === "true";
   const requireFace = form.get("require_face") === "true";
   const requireGeolocation = form.get("require_geolocation") === "true";
@@ -38,8 +45,11 @@ export async function POST(request: Request) {
                    liveness_threshold=EXCLUDED.liveness_threshold,
                    updated_by=EXCLUDED.updated_by,
                    updated_at=now()`,
-    [session.organizationId,enabled,roles,requireFace,requireGeolocation,maxAccuracy,faceThreshold,livenessThreshold,session.userId],
+    [organizationId,enabled,roles,requireFace,requireGeolocation,maxAccuracy,faceThreshold,livenessThreshold,session.userId],
   );
 
-  return NextResponse.redirect(new URL("/dashboard/attendance?saved=policy", request.url), 303);
+  const target = new URL("/dashboard/attendance", request.url);
+  target.searchParams.set("organization_id", organizationId);
+  target.searchParams.set("saved", "policy");
+  return NextResponse.redirect(target, 303);
 }

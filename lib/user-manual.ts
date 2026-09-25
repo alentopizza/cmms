@@ -115,7 +115,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "Configura la sede principal con dirección, ciudad, país y geocerca validada en el mapa.",
       "Crea sedes adicionales cuando corresponda y después sus sububicaciones.",
       "Selecciona la tarjeta de empresa para cambiar el módulo a su perfil en la misma pantalla. Las migas de pan permiten volver al directorio sin cerrar un popup.",
-      "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida. En Documentos el panel lateral interno se oculta temporalmente para dar todo el ancho al visor y a la tabla; al cambiar de pestaña vuelve el layout normal.",
+      "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida. En Documentos el perfil libera todo el ancho: selecciona una fila para previsualizarla a la izquierda, usa Ver para abrir el visor ampliado, Descargar para bajar el archivo directamente y Más acciones para gestionarlo. En escritorio el listado tiene prioridad de espacio y en móvil aparece antes de la previsualización.",
       "Usa las acciones rápidas para acceder a ubicaciones, activos, usuarios y la ficha empresarial completa, o exporta la Hoja de vida en PDF, Excel o Word compatible.",
     ],
     notes:["La dirección administrativa de la empresa y la dirección operativa de una sede son conceptos distintos."],
@@ -628,8 +628,8 @@ export const MANUAL_CHANGES:ManualChange[] = [
   },
   {
     date:"2026-09-25",
-    title:"Documentos de Empresa con más espacio de trabajo",
-    summary:"La pestaña Documentos usa todo el ancho del perfil: oculta solo el panel lateral interno mientras mantiene los dos headers, tabs, visor y listado existentes.",
+    title:"Documentos: previsualización y visor completo",
+    summary:"Documentos separa selección rápida, gestión y visualización completa: clic en fila previsualiza, Ver abre un modal amplio, Descargar baja el archivo directamente y Más acciones conserva la gestión existente. Compartir fue retirado.",
     roles:["all","platform_owner","superadmin","admin","manager"],
   },
   {

@@ -10,6 +10,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 
@@ -105,7 +106,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       <KpiCard label="Próximos 7 días" value={String(dueSoonCount)} hint="vencimientos próximos" icon="clock" tone={dueSoonCount?"warning":"default"}/>
     </MetricGrid>
     <section className="section maintenance-directory-section">
-      <div className="maintenance-mobile-list">
+      <CollectionView storageKey="maintenance" label="Vista de rutinas" grid={<div className="maintenance-mobile-list" data-collection-grid>
         {plans.rows.map(p=><MaintenanceCard
           key={p.id}
           name={p.name}
@@ -131,8 +132,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             {name:"active",label:"Estado",value:p.active,type:"checkbox"},
           ]}/>:undefined}
         />)}
-      </div>
-      <StaticDataTable
+      </div>} list={<StaticDataTable
         className="maintenance-directory-table"
         caption="Rutinas de mantenimiento preventivo"
         columns={[
@@ -162,6 +162,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           ]}/>}:{})
         }}))}
         empty={<EmptyState icon="file" title="No hay rutinas disponibles" description="Cuando existan rutinas visibles para tu alcance aparecerán aquí."/>}
-      /></section>
+      />}/>
+    </section>
   </div>;
 }

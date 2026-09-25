@@ -198,13 +198,38 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     keywords:["cuadrilla","líder","supervisor","técnico","integrantes","equipo"],
   },
   {
+    id:"attendance-configuration-workspace",
+    title:"Configurar Asistencia en cinco pasos",
+    summary:"Organiza la configuración de Asistencia por responsabilidad sin duplicar política, sedes, biometría ni operación diaria.",
+    icon:"▥",
+    module:"Asistencia",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+    href:"/dashboard/attendance?view=setup&step=1",
+    steps:[
+      "Abre Asistencia. Si eres Propietario Desweb o Superadministrador, selecciona primero la empresa que vas a administrar.",
+      "Usa el stepper superior para moverte entre Configuración, Sedes, Enrolamiento, Política y Resumen. Los pasos utilizan la misma página y puedes volver directamente a cualquiera.",
+      "En Configuración revisa empresa, estado, parámetros y roles reales. Esta vista es informativa: los valores se modifican únicamente en Política para evitar dos formularios de configuración.",
+      "En Sedes revisa qué ubicaciones visibles tienen geocerca. Configurar coordenadas y radio sigue realizándose desde la ficha existente de cada sede.",
+      "En Enrolamiento usa el flujo biométrico supervisado existente con persona, sede, verificación presencial, consentimiento, GPS y cámara.",
+      "En Política edita y guarda estado, biometría, geolocalización, precisión GPS, umbrales y roles mediante el mismo endpoint de política existente.",
+      "En Resumen revisa estado general, sedes, enrolamiento, política y contingencias pendientes. No se crea una segunda acción de guardado: la configuración ya fue persistida por sus mecanismos existentes.",
+      "Usa Operación y reportes para abrir presencia diaria, expediente individual, contingencias y reporte programado vs. real sin recorrer nuevamente la configuración.",
+    ],
+    notes:[
+      "El panel lateral y el stepper muestran el mismo estado de progreso; el panel lateral no mantiene una navegación independiente.",
+      "La configuración no modifica automáticamente datos de sedes, biometría o jornadas; cada componente conserva su autoridad y validaciones servidor.",
+      "En móvil el stepper puede desplazarse horizontalmente y el panel de progreso pasa debajo del contenido principal.",
+    ],
+    keywords:["asistencia","configuración","stepper","sedes","geocercas","enrolamiento","política","resumen"],
+  },
+  {
     id:"biometric-enrollment",
     title:"Enrolamiento facial supervisado",
     summary:"Cómo establecer la identidad biométrica inicial de forma presencial.",
     icon:"◎",
     module:"Asistencia",
     roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance",
+    href:"/dashboard/attendance?view=setup&step=3#biometric",
     steps:[
       "El usuario debe existir y tener foto de perfil.",
       "Un Administrador o Manager selecciona al usuario y la sede de enrolamiento. Propietario Desweb y Superadministrador primero seleccionan explícitamente la empresa que están administrando y luego el usuario/sede dentro de ese contexto.",
@@ -227,7 +252,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"◷",
     module:"Asistencia",
     roles:["all","platform_owner","superadmin","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance#attendance-audit",
+    href:"/dashboard/attendance?view=operation#attendance-audit",
     steps:[
       "Un Administrador, Manager, Propietario Desweb o Superadministrador abre Asistencia y selecciona la persona. En la ficha de Usuario también puede administrar la misma jornada desde la pestaña Asistencia.",
       "Selecciona la sede base y la fecha desde la cual entra en vigencia el horario. La fecha final es opcional.",
@@ -278,7 +303,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"▥",
     module:"Asistencia",
     roles:["all","platform_owner","superadmin","admin","manager"],
-    href:"/dashboard/attendance#attendance-report",
+    href:"/dashboard/attendance?view=operation#attendance-report",
     steps:[
       "Abre Asistencia y desplázate a Reporte operativo. Propietario Desweb y Superadministrador deben seleccionar primero la empresa que desean revisar.",
       "Define Desde y Hasta. El reporte permite hasta 366 días por consulta y usa los días locales de la empresa.",
@@ -305,7 +330,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"↝",
     module:"Asistencia",
     roles:["all","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance",
+    href:"/dashboard/attendance?view=operation",
     steps:[
       "Inicia la jornada normalmente en la sede de origen. Debes tener una jornada abierta antes de registrar un desplazamiento.",
       "En Desplazamientos selecciona una sede de destino diferente y, si corresponde, una actividad que tengas asignada en esa sede.",
@@ -331,7 +356,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"◌",
     module:"Asistencia",
     roles:["all","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance",
+    href:"/dashboard/attendance?view=operation",
     steps:[
       "Abre Asistencia desde el celular. Si tienes jornada individual, verás primero el horario esperado de hoy y la sede base configurada.",
       "El sistema obtiene una ubicación GPS precisa y valida la geocerca de la sede.",
@@ -352,7 +377,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     icon:"!",
     module:"Asistencia",
     roles:["all","admin","manager","technician","provider","external"],
-    href:"/dashboard/attendance",
+    href:"/dashboard/attendance?view=operation",
     steps:[
       "Intenta primero el flujo normal de GPS + geocerca + rostro.",
       "Si una falla de cámara, GPS, precisión, geocerca, conectividad o dispositivo lo impide, abre Contingencia de validación.",
@@ -589,6 +614,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-25",
+    title:"Asistencia reorganizada en cinco pasos",
+    summary:"La administración de Asistencia separa Configuración, Sedes, Enrolamiento, Política y Resumen con stepper y progreso sincronizados; Operación, contingencias, expediente y reportes quedan en una vista secundaria sin duplicar lógica.",
+    roles:["all","platform_owner","superadmin","admin","manager"],
+  },
   {
     date:"2026-09-25",
     title:"Reporte operativo de Asistencia programado vs. real",

@@ -17,6 +17,7 @@ import { InventoryCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Card } from "@/components/ui-kit/Card";
 import { KpiCard, MetricGrid, StatTiles } from "@/components/ui-kit/Metrics";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
 
 type Item={
@@ -175,7 +176,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     <section className="section inventory-dashboard-layout phase7-anchor" id="inventory-products">
       <div className="inventory-products-panel">
         <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div></div>
-        {items.rows.length?<div className="inventory-product-grid">{items.rows.map(item=>{
+        {items.rows.length?<CollectionView storageKey="inventory" label="Vista de inventario" grid={<div className="inventory-product-grid" data-collection-grid>{items.rows.map(item=>{
           const state=stockState(item);
           const quantity=Number(item.quantity||0),max=Math.max(Number(item.max_quantity||0),Number(item.min_quantity||0),quantity,1);
           const pct=Math.max(0,Math.min(100,quantity/max*100));
@@ -211,7 +212,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="button secondary">Ver detalles →</Link>}
             </>}
           />;
-        })}</div>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
+        })}</div>}/>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
       </div>
 
       <aside className="inventory-movements-panel card">

@@ -435,6 +435,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const selfScheduledDay=selfScheduleRow
     ? scheduleDayForDate(selfScheduleRow.business_schedule,selfScheduleRow.local_date)
     : null;
+  const selfOpenShift=openShift.rows[0]||null;
+  const selfMovement=selfMovementSegment.rows[0]||null;
 
   return <div className="phase8-attendance">
     <ModuleHeader
@@ -514,18 +516,34 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
                 maxLocationAccuracy={policy.max_location_accuracy_m}
                 livenessThreshold={policy.liveness_threshold}
                 preferredSiteId={selfScheduleRow?.base_site_id||null}
+                inTransit={Boolean(selfOpenShift?.in_transit)}
               />
             </section>
-            {Boolean(enrolled.rowCount) && <AttendanceContingencySelf
+            {selfOpenShift&&selfMovement&&<AttendanceMovement
+              currentSegment={selfMovement}
               sites={sites.rows.map(site=>({
-        id:site.id,
-        name:site.name,
-        city:site.city,
-        latitude:site.latitude,
-        longitude:site.longitude,
-        geofenceRadius:site.geofence_radius_m,
-      }))}
-              openShift={openShift.rows[0]?{site_id:openShift.rows[0].site_id,site_name:openShift.rows[0].site_name}:null}
+                id:site.id,
+                name:site.name,
+                city:site.city,
+                latitude:site.latitude,
+                longitude:site.longitude,
+                geofenceRadius:site.geofence_radius_m,
+                geofenceConfigured:site.latitude!==null&&site.longitude!==null,
+              }))}
+              tasks={selfDestinationTasks.rows}
+              requireGeolocation={policy.require_geolocation}
+              maxLocationAccuracy={policy.max_location_accuracy_m}
+            />}
+            {Boolean(enrolled.rowCount) && !selfOpenShift?.in_transit && <AttendanceContingencySelf
+              sites={sites.rows.map(site=>({
+                id:site.id,
+                name:site.name,
+                city:site.city,
+                latitude:site.latitude,
+                longitude:site.longitude,
+                geofenceRadius:site.geofence_radius_m,
+              }))}
+              openShift={selfOpenShift?{site_id:selfOpenShift.site_id,site_name:selfOpenShift.site_name}:null}
               initialRequest={selfContingency.rows[0]||null}
             />}
           </>

@@ -597,7 +597,7 @@ Multi-Site travel segments inside one jornada remain deferred to a later functio
 The shared `UserAttendanceAuditCenter` is available from the User **Asistencia** tab and the canonical Attendance module. It combines:
 - current/upcoming individual schedule and the existing schedule editor;
 - real attendance shifts with Site, duration, validation mode and GPS evidence;
-- biometric status plus supervised enrollment/reenrollment/revocation lifecycle;
+- biometric status plus request/approval/assisted-recovery/reenrollment/revocation lifecycle;
 - contingency history and review evidence;
 - a chronological timeline that combines attendance, biometric, contingency and schedule-administration events.
 
@@ -1087,7 +1087,7 @@ Supplier and User remain intentionally different visual entities. Supplier is a 
 
 Crews now consume a dedicated CrewCard while keeping actual member roles and explicit leader selection.
 
-Attendance remains privacy-sensitive and server-authoritative. Existing biometric profiles, supervised enrollment, liveness checks, GPS accuracy, Site geofences, contingency approvals and attendance policies were not relaxed or moved into presentation logic. Reporting remains descriptive and is not an automated worker ranking.
+Attendance remains privacy-sensitive and server-authoritative. Biometric profiles, governed enrollment/approval, liveness checks, GPS accuracy, Site geofences, contingency approvals and attendance policies remain outside presentation-only authority. Reporting remains descriptive and is not an automated worker ranking.
 
 No DB schema, API, RBAC, biometric threshold, geofence rule or tenant/Site scope changed.
 

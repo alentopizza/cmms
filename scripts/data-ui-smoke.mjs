@@ -63,6 +63,8 @@ if(!analytics.includes("@/components/ui-kit/Metrics")||!analytics.includes("@/co
 }
 
 const page=fs.readFileSync("app/ui-kit/page.tsx","utf8");
+if(!fs.readFileSync("components/ui-kit/DataPatternsPreview.tsx","utf8").includes("<ViewModeToggle"))throw new Error("/ui-kit Shared Data UI preview must expose ViewModeToggle");
+
 for(const anchor of ["#data-controls","#tables","#metrics","#charts","#progress","DataPatternsPreview"]){
   if(!page.includes(anchor))throw new Error("/ui-kit missing Phase 4 catalog section "+anchor);
 }

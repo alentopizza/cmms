@@ -304,7 +304,7 @@ export default function UserManagement({
   const selectedStatistics=selectedUserId?statisticsByUser[selectedUserId]||null:null;
   const selectedDocuments=useMemo(()=>documents.filter(document=>document.user_id===selectedUserId),[documents,selectedUserId]);
   const selectedEmergencyContact=useMemo(()=>emergencyContacts.find(contact=>contact.user_id===selectedUserId)||null,[emergencyContacts,selectedUserId]);
-  const selectedAttendanceSites=useMemo(()=>selectedUser?.organization_id?sites.filter(site=>site.organization_id===selectedUser.organization_id):[],[sites,selectedUser]);
+  const selectedAttendanceSites=useMemo(()=>selectedUser?.organization_id?sites.filter(site=>site.organization_id===selectedUser.organization_id&&(selectedUser.access_all_sites!==false||(selectedUser.site_ids||[]).includes(site.id))):[],[sites,selectedUser]);
   const selectedAttendanceSchedule=useMemo(()=>selectedUser?.organization_id?attendanceSchedules.filter(item=>item.organization_id===selectedUser.organization_id&&item.user_id===selectedUser.id):[],[attendanceSchedules,selectedUser]);
   const selectedAttendanceThreshold=selectedUser?.organization_id
     ? attendancePolicies.find(item=>item.organization_id===selectedUser.organization_id)?.liveness_threshold??0.60

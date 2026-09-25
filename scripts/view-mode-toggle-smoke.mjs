@@ -68,8 +68,8 @@ const visualListContracts=[
   ["app/dashboard/users/UserManagement.tsx",'list={<StaticDataTable',"has_avatar","EntityIdentityCell","ds-list-action"],
   ["components/CrewDirectory.tsx",'list={<StaticDataTable',"leaderHasAvatar","EntityIdentityCell","Contactar por WhatsApp"],
   ["app/dashboard/assets/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
-  ["app/dashboard/work-orders/page.tsx",'list={<StaticDataTable',"asset_has_image","EntityIdentityCell","Ver actividades"],
-  ["app/dashboard/maintenance/page.tsx",'list={<StaticDataTable',"asset_has_image","EntityIdentityCell","ListQuickActions"],
+  ["app/dashboard/work-orders/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","Ver actividades"],
+  ["app/dashboard/maintenance/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","ListQuickActions"],
   ["app/dashboard/inventory/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
   ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","Enviar correo"],
 ];

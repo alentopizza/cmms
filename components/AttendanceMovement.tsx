@@ -6,6 +6,8 @@ import { Alert } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { Button } from "@/components/ui-kit/Button";
 
+// ── Field movement contracts ────────────────────────────────────────────────
+
 type Site={
   id:string;
   name:string;
@@ -41,6 +43,8 @@ export type AttendanceMovementSegment={
 
 type GpsFix={latitude:number;longitude:number;accuracy:number};
 
+// Browser GPS is advisory evidence. The movement API independently validates
+// precision, tenant/Site scope and geofence distance before persisting events.
 function rawPosition(){
   return new Promise<GeolocationPosition>((resolve,reject)=>{
     if(!navigator.geolocation){
@@ -54,6 +58,8 @@ function rawPosition(){
     });
   });
 }
+
+// ── Departure / arrival client orchestration ───────────────────────────────
 
 export default function AttendanceMovement({
   currentSegment,

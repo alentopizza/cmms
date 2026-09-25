@@ -17,13 +17,13 @@ for(const marker of ["WorkOrderStatusBadge","ActivityStatusBadge","PriorityBadge
 }
 
 const maintenance=fs.readFileSync("app/dashboard/maintenance/page.tsx","utf8");
-for(const marker of ["phase9-maintenance","<MetricGrid","<KpiCard","<StaticDataTable","<Alert","<Badge","icon=\"maintenance\""]){
+for(const marker of ["phase9-maintenance","<MetricGrid","<KpiCard","<CollectionView","<StaticDataTable","<Alert","<Badge","icon=\"maintenance\""]){
   if(!maintenance.includes(marker))throw new Error("Maintenance Phase 9 migration missing "+marker);
 }
 if(maintenance.includes('className="table maintenance-directory-table"'))throw new Error("Maintenance still renders legacy desktop table");
 
 const orders=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
-for(const marker of ["phase9-work-orders","<MetricGrid","<KpiCard","<StaticDataTable","<PriorityBadge","<WorkOrderStatusBadge","iconName=\"work-order\"","icon=\"work-order\""]){
+for(const marker of ["phase9-work-orders","<MetricGrid","<KpiCard","<CollectionView","<StaticDataTable","<PriorityBadge","<WorkOrderStatusBadge","iconName=\"work-order\"","icon=\"work-order\""]){
   if(!orders.includes(marker))throw new Error("Work Orders Phase 9 migration missing "+marker);
 }
 if(orders.includes('className="table work-order-directory-table"'))throw new Error("Work Orders still render legacy desktop table");

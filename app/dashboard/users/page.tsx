@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import UserManagement, { type ManagedUser, type ManagedUserDocument, type ManagedEmergencyContact } from "./UserManagement";
+import UserManagement, { type ManagedUser } from "./UserManagement";
 
 type Organization = { id: string; name: string; country: string };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
@@ -18,7 +18,7 @@ export default async function UsersPage() {
   const isGlobalOperator = isPlatformOperator(session);
   const ownerAccess = isPlatformOwner(session);
 
-  const [users, organizations, sites, serviceSuppliers, documents, emergencyContacts] = await Promise.all([
+  const [users, organizations, sites, serviceSuppliers] = await Promise.all([
     isGlobalOperator
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.country_code,u.identity_document_type,u.identity_document_number,u.preferred_locale,u.active,u.platform_role,u.last_login_at::text,
@@ -156,28 +156,6 @@ export default async function UsersPage() {
            ORDER BY name`,
           [session.organizationId],
         ),
-    isGlobalOperator
-      ? query<ManagedUserDocument>(
-          `SELECT d.id,d.organization_id,d.user_id,d.category,d.display_name,d.reference,d.issue_date::text,d.expires_at::text,
-                  d.file_name,d.file_mime_type,d.archived_at::text,d.created_at::text
-           FROM user_documents d ORDER BY d.created_at DESC LIMIT 1600`,
-        )
-      : query<ManagedUserDocument>(
-          `SELECT d.id,d.organization_id,d.user_id,d.category,d.display_name,d.reference,d.issue_date::text,d.expires_at::text,
-                  d.file_name,d.file_mime_type,d.archived_at::text,d.created_at::text
-           FROM user_documents d WHERE d.organization_id=$1 ORDER BY d.created_at DESC LIMIT 1600`,
-          [session.organizationId],
-        ),
-    isGlobalOperator
-      ? query<ManagedEmergencyContact>(
-          `SELECT user_id,organization_id,full_name,relationship_code,phone,email,notes
-           FROM user_emergency_contacts`,
-        )
-      : query<ManagedEmergencyContact>(
-          `SELECT user_id,organization_id,full_name,relationship_code,phone,email,notes
-           FROM user_emergency_contacts WHERE organization_id=$1`,
-          [session.organizationId],
-        ),
   ]);
 
   return <>
@@ -190,8 +168,6 @@ export default async function UsersPage() {
       fixedOrganizationId={session.organizationId}
       currentUserId={session.userId}
       serviceSuppliers={serviceSuppliers.rows}
-      documents={documents.rows}
-      emergencyContacts={emergencyContacts.rows}
     />
   </>;
 }

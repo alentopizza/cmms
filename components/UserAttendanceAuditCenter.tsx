@@ -119,7 +119,6 @@ type AuditData={
   };
   currentSchedule:AuditSchedule|null;
   upcomingSchedule:AuditSchedule|null;
-  schedules:AuditSchedule[];
   biometric:BiometricProfile;
   biometricEvents:BiometricEvent[];
   shifts:AuditShift[];
@@ -361,7 +360,7 @@ export default function UserAttendanceAuditCenter({
           <div><span>Jornada programada</span><strong>{data.currentSchedule?data.currentSchedule.base_site_name:"Sin vigencia activa"}</strong></div>
         </div>
         {data.currentSchedule
-          ?<><p>{scheduleSummary(data.currentSchedule)}</p><small>{dateOnly(data.currentSchedule.effective_from)}{data.currentSchedule.effective_until?" → "+dateOnly(data.currentSchedule.effective_until):" · vigente hasta nuevo cambio"}</small></>
+          ?<><p>{scheduleSummary(data.currentSchedule)} · {scheduleSource(data.currentSchedule)}</p><small>{dateOnly(data.currentSchedule.effective_from)}{data.currentSchedule.effective_until?" → "+dateOnly(data.currentSchedule.effective_until):" · vigente hasta nuevo cambio"}</small></>
           :<p>No existe una jornada individual activa para la fecha actual.</p>}
         {data.upcomingSchedule&&<small className="attendance-audit-next">Próximo cambio: {dateOnly(data.upcomingSchedule.effective_from)} · {data.upcomingSchedule.base_site_name}</small>}
         <Button size="sm" variant="secondary" iconLeft="edit" onClick={()=>setActiveTab("schedule")}>Administrar jornada</Button>
@@ -429,7 +428,7 @@ export default function UserAttendanceAuditCenter({
         <div><dt>Última verificación</dt><dd>{fmt(data.biometric.last_verified_at)}</dd></div>
         <div><dt>Sede enrolamiento</dt><dd>{data.biometric.enrollment_site_name||"—"}</dd></div>
         <div><dt>Supervisor</dt><dd>{data.biometric.enrolled_by_name||"—"}</dd></div>
-        {data.biometric.revoked_at&&<div><dt>Revocada</dt><dd>{fmt(data.biometric.revoked_at)}{data.biometric.revoked_reason?" · "+data.biometric.revoked_reason:""}</dd></div>}
+        {data.biometric.revoked_at&&<div><dt>Revocada</dt><dd>{fmt(data.biometric.revoked_at)}{data.biometric.revoked_by_name?" · "+data.biometric.revoked_by_name:""}{data.biometric.revoked_reason?" · "+data.biometric.revoked_reason:""}</dd></div>}
       </dl>
       <Link className="button" href={attendanceHref+"#biometric"}><UiIcon name="user" size={14}/>{data.biometric.status==="verified"?"Administrar / reenrolar":"Abrir enrolamiento supervisado"}</Link>
     </article>

@@ -544,7 +544,7 @@ export default function SupplierDirectory({
         </div>}
         <div className="supplier-supply-grid supplier-supply-grid-operational">{selectedItems.length?selectedItems.map(item=><article className={"supplier-supply-card supplier-supply-card-operational"+(item.active===false?" inactive":"")} key={item.id}>
           <div className="supplier-supply-card-head">
-            <span className={"supplier-supply-image"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" />:<UiIcon name="asset" size={30}/>}</span>
+            <span className={"supplier-supply-image"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" loading="lazy" decoding="async" />:<UiIcon name="asset" size={30}/>}</span>
             <div><small>{item.sku}</small><strong>{item.name}</strong><span>{item.category_name||"Sin categoría"} · {item.site_name||"Sin sede"}{item.location_name?" · "+item.location_name:""}</span></div>
             <div className="supplier-supply-state-stack"><span className={Number(item.quantity)<=Number(item.min_quantity)?"inventory-stock-pill low":"inventory-stock-pill ok"}>{Number(item.quantity)<=Number(item.min_quantity)?"Stock bajo":"En stock"}</span>{item.active===false&&<span className="inventory-record-pill">Inactivo</span>}</div>
           </div>

@@ -4,7 +4,7 @@ import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
-import ModuleHeader from "@/components/ModuleHeader";
+import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHeader";
 import { MaintenanceCard } from "@/components/business-ui";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
@@ -14,13 +14,44 @@ import { CollectionView } from "@/components/ui-kit/DataControls";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Badge } from "@/components/ui-kit/Badge";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
+import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
 type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean};
+type RoutineSummary={total_count:number;filtered_count:number;active_count:number;overdue_count:number;due_soon_count:number};
+type RoutineFacetValue={value:string;label:string};
+type RoutineFacetRow={organizations:RoutineFacetValue[];sites:RoutineFacetValue[];frequencies:RoutineFacetValue[]};
+type RoutineSearchParams={
+  created?:string;error?:string;q?:string;status?:string;organization?:string;site?:string;frequency?:string;sort?:string;page?:string;
+};
+
+const ROUTINE_PAGE_SIZE=24;
+const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ROUTINE_STATUSES=new Set(["all","active","inactive"]);
+const ROUTINE_FREQUENCIES=new Set(["day","week","month","year","meter"]);
+const ROUTINE_SORTS=new Set(["due"]);
+
+function safeText(value:string|undefined,max=120){
+  return String(value||"").trim().slice(0,max);
+}
+function safeUuid(value:string|undefined){
+  const normalized=safeText(value,36);
+  return UUID_RE.test(normalized)?normalized:"";
+}
+function safePage(value:string|undefined){
+  const parsed=Number.parseInt(String(value||"1"),10);
+  return Number.isFinite(parsed)&&parsed>0?parsed:1;
+}
+function likePattern(value:string){
+  return "%"+value.replace(/[\\%_]/g,match=>"\\"+match)+"%";
+}
+function frequencyLabel(value:string){
+  return ({day:"Día",week:"Semana",month:"Mes",year:"Año",meter:"Medidor"} as Record<string,string>)[value]||value;
+}
 
 // ── Responsive maintenance directory: desktop table + mobile cards ─────────
 
-export default async function MaintenancePage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
+export default async function MaintenancePage({searchParams}:{searchParams:Promise<RoutineSearchParams>}) {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!can(session, "maintenance.read")) redirect("/dashboard");
@@ -30,21 +61,90 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const owner=isPlatformOwner(session);
   const creationGatePromise=getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
 
-  const plansPromise = session.platformRole !== "user"
-    ? query<PlanRow>(
-        `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-         FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
-         ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`)
-    : session.accessAllSites
-      ? query<PlanRow>(
-          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
-           WHERE p.organization_id=$1 ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId])
-      : query<PlanRow>(
-          `SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at::text,p.active
-           FROM maintenance_plans p JOIN assets a ON a.id=p.asset_id JOIN organizations o ON o.id=p.organization_id JOIN sites s ON s.id=a.site_id
-           WHERE p.organization_id=$1 AND a.site_id = ANY($2::uuid[])
-           ORDER BY p.next_due_at NULLS LAST,p.name LIMIT 200`, [session.organizationId, session.siteIds]);
+  const q=safeText(feedback.q);
+  const status=ROUTINE_STATUSES.has(feedback.status||"")?String(feedback.status):"all";
+  const organization=safeUuid(feedback.organization);
+  const site=safeUuid(feedback.site);
+  const frequency=ROUTINE_FREQUENCIES.has(feedback.frequency||"")?String(feedback.frequency):"";
+  const sort=ROUTINE_SORTS.has(feedback.sort||"")?String(feedback.sort):"due";
+  const requestedPage=safePage(feedback.page);
+
+  const scopeParams:unknown[]=[];
+  const scopeConditions:string[]=[];
+  if(session.platformRole==="user"){
+    scopeParams.push(session.organizationId);
+    scopeConditions.push("p.organization_id=$"+scopeParams.length);
+    if(!session.accessAllSites){
+      scopeParams.push(session.siteIds);
+      scopeConditions.push("a.site_id=ANY($"+scopeParams.length+"::uuid[])");
+    }
+  }
+  const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
+  const scopedSql=`
+    SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,
+           a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at,p.active
+    FROM maintenance_plans p
+    JOIN assets a ON a.id=p.asset_id
+    JOIN organizations o ON o.id=p.organization_id
+    JOIN sites s ON s.id=a.site_id
+    ${scopeWhere}`;
+
+  const filteredParams=[...scopeParams];
+  const filteredConditions:string[]=[];
+  if(q){
+    filteredParams.push(likePattern(q));
+    const token="$"+filteredParams.length;
+    filteredConditions.push(`(name ILIKE ${token} ESCAPE '\\\\' OR asset ILIKE ${token} ESCAPE '\\\\' OR company ILIKE ${token} ESCAPE '\\\\' OR site ILIKE ${token} ESCAPE '\\\\' OR frequency_unit ILIKE ${token} ESCAPE '\\\\')`);
+  }
+  if(status!=="all"){
+    filteredParams.push(status==="active");
+    filteredConditions.push("active=$"+filteredParams.length);
+  }
+  if(organization){
+    filteredParams.push(organization);
+    filteredConditions.push("organization_id=$"+filteredParams.length+"::uuid");
+  }
+  if(site){
+    filteredParams.push(site);
+    filteredConditions.push("site_id=$"+filteredParams.length+"::uuid");
+  }
+  if(frequency){
+    filteredParams.push(frequency);
+    filteredConditions.push("frequency_unit=$"+filteredParams.length);
+  }
+  const filteredWhere=filteredConditions.length?"WHERE "+filteredConditions.join(" AND "):"";
+
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const dueSoonEnd=new Date(today);
+  dueSoonEnd.setDate(dueSoonEnd.getDate()+8);
+  const summaryParams=[...filteredParams,today.toISOString(),dueSoonEnd.toISOString()];
+  const todayToken="$"+(summaryParams.length-1);
+  const dueSoonToken="$"+summaryParams.length;
+
+  const summaryPromise=query<RoutineSummary>(
+    `WITH scoped AS (${scopedSql}),
+          filtered AS (SELECT * FROM scoped ${filteredWhere})
+     SELECT
+       (SELECT count(*)::int FROM scoped) total_count,
+       (SELECT count(*)::int FROM filtered) filtered_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true) active_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true AND next_due_at IS NOT NULL AND next_due_at<${todayToken}::timestamptz) overdue_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true AND next_due_at>=${todayToken}::timestamptz AND next_due_at<${dueSoonToken}::timestamptz) due_soon_count`,
+    summaryParams,
+  );
+
+  const facetsPromise=query<RoutineFacetRow>(
+    `WITH scoped AS (${scopedSql})
+     SELECT
+       COALESCE((SELECT jsonb_agg(row_to_json(value_row) ORDER BY value_row.label)
+                 FROM (SELECT DISTINCT organization_id::text value,company label FROM scoped) value_row),'[]'::jsonb) organizations,
+       COALESCE((SELECT jsonb_agg(row_to_json(value_row) ORDER BY value_row.label)
+                 FROM (SELECT DISTINCT site_id::text value,site label FROM scoped) value_row),'[]'::jsonb) sites,
+       COALESCE((SELECT jsonb_agg(row_to_json(value_row) ORDER BY value_row.label)
+                 FROM (SELECT DISTINCT frequency_unit value,frequency_unit label FROM scoped) value_row),'[]'::jsonb) frequencies`,
+    scopeParams,
+  );
 
   const assetsPromise=canWrite
     ? session.platformRole!=="user"
@@ -66,23 +166,39 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             [session.organizationId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:AssetOption[]});
 
-  const [creationGate,plans,assets]=await Promise.all([creationGatePromise,plansPromise,assetsPromise]);
+  const [creationGate,summaryResult,facetsResult,assets]=await Promise.all([
+    creationGatePromise,summaryPromise,facetsPromise,assetsPromise,
+  ]);
+  const summary=summaryResult.rows[0]||{total_count:0,filtered_count:0,active_count:0,overdue_count:0,due_soon_count:0};
+  const pageCount=Math.max(1,Math.ceil(summary.filtered_count/ROUTINE_PAGE_SIZE));
+  const page=Math.min(requestedPage,pageCount);
+  const pageParams=[...filteredParams,ROUTINE_PAGE_SIZE,(page-1)*ROUTINE_PAGE_SIZE];
+  const limitToken="$"+(pageParams.length-1);
+  const offsetToken="$"+pageParams.length;
+  const orderSql=sort==="due"?"next_due_at ASC NULLS LAST,name ASC,id ASC":"next_due_at ASC NULLS LAST,name ASC,id ASC";
+  const plans=await query<PlanRow>(
+    `WITH scoped AS (${scopedSql})
+     SELECT id,organization_id,site_id,site,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active
+     FROM scoped
+     ${filteredWhere}
+     ORDER BY ${orderSql}
+     LIMIT ${limitToken} OFFSET ${offsetToken}`,
+    pageParams,
+  );
 
-  const today=new Date(); today.setHours(0,0,0,0);
-  const activeCount=plans.rows.filter(plan=>plan.active).length;
-  const overdueCount=plans.rows.filter(plan=>plan.active&&plan.next_due_at&&new Date(plan.next_due_at)<today).length;
-  const dueSoonCount=plans.rows.filter(plan=>{
-    if(!plan.active||!plan.next_due_at)return false;
-    const due=new Date(plan.next_due_at); const diff=(due.getTime()-today.getTime())/86400000;
-    return diff>=0&&diff<=7;
-  }).length;
+  const rawFacets=facetsResult.rows[0]||{organizations:[],sites:[],frequencies:[]};
+  const facetOptions:ModuleFacetOptionMap={
+    organization:Array.isArray(rawFacets.organizations)?rawFacets.organizations:[],
+    site:Array.isArray(rawFacets.sites)?rawFacets.sites:[],
+    frequency:(Array.isArray(rawFacets.frequencies)?rawFacets.frequencies:[]).map(item=>({...item,label:frequencyLabel(item.value)})),
+  };
 
   return <div className="phase9-maintenance">
     <ModuleHeader
       eyebrow="Mantenimiento preventivo"
       title="Rutinas"
       description="Planes por calendario asociados a los activos visibles para tu cuenta."
-      count={plans.rowCount || 0}
+      count={summary.total_count}
       countLabel="rutinas"
       searchPlaceholder="Buscar rutina, empresa, sede o activo"
       facets={[
@@ -90,6 +206,13 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         {key:"site",label:"Sede",allLabel:"Todas las sedes"},
         {key:"frequency",label:"Frecuencia",allLabel:"Todas las frecuencias"},
       ]}
+      serverState={{
+        search:q,
+        filter:status,
+        facetValues:{organization,site,frequency},
+        facetOptions,
+        filteredCount:summary.filtered_count,
+      }}
       action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="section"><Alert variant="success" title="Rutina creada">Rutina creada correctamente.</Alert></div>}
@@ -104,10 +227,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     />}
     {creationGate.ready && <section className="section phase9-maintenance-note"><Alert variant="info" title="Creación contextual">Desde el módulo puedes escoger el activo. Si creas la rutina entrando al activo, esa relación queda preseleccionada automáticamente.</Alert></section>}
     <MetricGrid className="section phase9-kpi-grid">
-      <KpiCard label="Rutinas visibles" value={String(plans.rowCount||0)} hint="según tu alcance" icon="maintenance"/>
-      <KpiCard label="Activas" value={String(activeCount)} hint="planes habilitados" icon="check" tone="success"/>
-      <KpiCard label="Vencidas" value={String(overdueCount)} hint="fecha anterior a hoy" icon="warning" tone={overdueCount?"danger":"success"}/>
-      <KpiCard label="Próximos 7 días" value={String(dueSoonCount)} hint="vencimientos próximos" icon="clock" tone={dueSoonCount?"warning":"default"}/>
+      <KpiCard label="Rutinas visibles" value={String(summary.total_count)} hint="según tu alcance" icon="maintenance"/>
+      <KpiCard label="Activas" value={String(summary.active_count)} hint="planes habilitados" icon="check" tone="success"/>
+      <KpiCard label="Vencidas" value={String(summary.overdue_count)} hint="fecha anterior a hoy" icon="warning" tone={summary.overdue_count?"danger":"success"}/>
+      <KpiCard label="Próximos 7 días" value={String(summary.due_soon_count)} hint="vencimientos próximos" icon="clock" tone={summary.due_soon_count?"warning":"default"}/>
     </MetricGrid>
     <section className="section maintenance-directory-section">
       <CollectionView storageKey="maintenance" label="Vista de rutinas" grid={<div className="maintenance-mobile-list" data-collection-grid>
@@ -179,6 +302,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         }}))}
         empty={<EmptyState icon="file" title="No hay rutinas disponibles" description="Cuando existan rutinas visibles para tu alcance aparecerán aquí."/>}
       />}/>
+      <UrlPagination page={page} pageCount={pageCount} label="Páginas de rutinas"/>
     </section>
   </div>;
 }

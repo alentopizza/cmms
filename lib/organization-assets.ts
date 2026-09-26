@@ -19,7 +19,7 @@ export type ImageUpload = {
 
 function pngDimensions(bytes:Buffer){
   const signature=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);
-  if(bytes.length<24||!bytes.subarray(0,8).equals(signature))return null;
+  if(bytes.length<24||!bytes.subarray(0,8).equals(signature)||bytes.toString("ascii",12,16)!=="IHDR")return null;
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
   return width>0&&height>0?{width,height}:null;
 }
@@ -110,7 +110,12 @@ export async function readImageUpload(
 
   const bytes=Buffer.from(await value.arrayBuffer());
   const dimensions=imageDimensions(bytes,value.type);
-  if(!dimensions||dimensions.width>12000||dimensions.height>12000){
+  if(
+    !dimensions||
+    dimensions.width>12000||
+    dimensions.height>12000||
+    dimensions.width*dimensions.height>80_000_000
+  ){
     throw new ImageUploadError("image-invalid", `${options.label} no contiene una imagen válida o sus dimensiones no son compatibles.`);
   }
 

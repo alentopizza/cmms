@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-26 — Menú de usuario + Personalización de marca PRO
+
+- El dropdown existente del avatar superior conserva Mi configuración, Manual / Ayuda y Configuración, añade **Personalización de marca · PRO** para Administradores de empresa y reemplaza el logout inmediato por confirmación explícita.
+- `/dashboard/brand` es la única experiencia dedicada de marca por empresa; no se agrega al sidebar y no sustituye `/dashboard/personalization`, que continúa siendo la personalización global de plataforma.
+- La edición PRO extiende la tabla y endpoint existentes `organization_branding` / `/api/organization-branding`: esquema, principal/secundario/acento, paleta automática, apariencia, densidad y logo compartido.
+- Los esquemas Predeterminado, Fresco, Luminoso, Azul, Café, Ectoplasma, Medianoche, Océano, Amanecer y Personalizado alimentan un generador central de tokens; éxito, advertencia, error e información conservan sus tokens semánticos.
+- El shell consume tokens de empresa para sidebar, header, acciones, foco y elementos activos. La identidad permanece aislada por `organization_id`; Desweb es el fallback.
+- Apariencia de empresa reutiliza el sistema `data-theme` existente y solo actúa como valor predeterminado cuando el navegador no tiene una preferencia personal `desweb-theme`. La migración 044 conserva el histórico predeterminado claro.
+- Configuración general deja de contener un segundo editor de marca y enlaza a la experiencia dedicada. Planes y suscripciones no cambian: el endpoint sigue exigiendo Administrador + Plan Pro + white label.
+- Mi configuración ahora presenta Perfil, Preferencias, Apariencia, Seguridad e Integraciones. El perfil utiliza el usuario autenticado y una mutación self-service que solo actualiza datos propios/contraseña; no toca rol, empresa, membresías ni alcance.
+- Manual / Ayuda conserva `lib/user-manual.ts` como fuente y añade categorías visuales sobre artículos reales; Video tutoriales queda deshabilitado cuando no existe contenido publicado.
+- Se añadieron las migraciones `043_brand_personalization.sql` y `044_brand_personalization_light_default.sql`, estilos token-only y `scripts/brand-personalization-smoke.mjs`.
+
 ## 2026-09-26 — Ajuste UX/UI · Ubicaciones + Reacción
 
 - Ubicaciones conserva sin cambios su cuadrícula aprobada con fotografía de sede y logo de empresa.

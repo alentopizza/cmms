@@ -54,7 +54,7 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/dashboard/brand/` — organization-scoped PRO identity editor; never a main sidebar module.
 - `components/BrandPersonalization.tsx` — client editor/preview over the existing organization branding source.
 - `lib/brand-theme.ts` — centralized preset/palette → semantic brand-token bridge.
-- `app/api/preferences/profile/` — authenticated self-profile/password mutation; intentionally separate from administrator user-management mutations.
+- `app/api/preferences/profile/` — authenticated self-profile mutation for personal identity/contact/photo fields; intentionally separate from administrator user-management and credential flows.
 - `app/api/customization/` — branding upload and asset delivery routes.
 - `components/ThemePreferences.tsx` — persisted light/dark/system appearance preferences.
 - `components/DashboardNavigation.tsx` — permission-filtered active sidebar/header navigation.

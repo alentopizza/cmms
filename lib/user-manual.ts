@@ -87,7 +87,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     href:"/dashboard/preferences",
     steps:[
       "Abre el menú de usuario desde tu avatar en el extremo superior derecho. Allí permanecen Mi configuración, Manual / Ayuda, Configuración cuando tu rol la permite y Cerrar sesión.",
-      "Mi configuración reúne Perfil, Preferencias, Apariencia, Seguridad e Integraciones. Los usuarios con registro de cuenta pueden actualizar nombre, correo, teléfono, foto y contraseña sin cambiar su rol, empresa ni alcance de sedes.",
+      "Mi configuración reúne Perfil, Preferencias, Apariencia, Seguridad e Integraciones. Los usuarios con registro de cuenta pueden actualizar nombre, correo, teléfono y foto sin cambiar su rol, empresa ni alcance de sedes. Seguridad conserva los flujos de autenticación existentes en lugar de crear un segundo sistema de credenciales.",
       "La apariencia personal reutiliza el tema Claro, Oscuro o Sistema del CMMS. No crea un segundo mecanismo de tema.",
       "Cerrar sesión solicita confirmación y, al confirmar, utiliza el cierre de sesión normal que también finaliza una sesión activa de seguimiento Reacción cuando corresponda.",
       "Administradores de empresa ven Personalización de marca con indicador PRO. Si el plan no la habilita, la pantalla informa que requiere Plan Pro y enlaza a las opciones de plan existentes.",

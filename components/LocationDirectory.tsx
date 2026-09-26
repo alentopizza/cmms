@@ -14,7 +14,7 @@ import { LocationCard, SubLocationCard } from "@/components/business-ui";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 import { CollectionView, Search } from "@/components/ui-kit/DataControls";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
-import { ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Select } from "@/components/ui-kit/FormControls";
 import { StatTiles } from "@/components/ui-kit/Metrics";
 import { Spinner } from "@/components/ui-kit/Feedback";
@@ -202,7 +202,7 @@ export default function LocationDirectory({sites,sublocations,services,technicia
           "data-filter-city-label":site.city||"",
         },
         cells:{
-          location:<span><strong>{site.name}</strong>{site.code&&<small> · {site.code}</small>}</span>,
+          location:<EntityIdentityCell imageSrc={site.has_image?"/api/sites/"+site.id+"/image":null} icon="location" title={site.name} subtitle={site.code||undefined} variant="thumbnail"/>,
           company:site.organization_name,
           city:(site.city||"Sin ciudad")+" · "+countryName(site.country),
           sublocations:site.location_count,

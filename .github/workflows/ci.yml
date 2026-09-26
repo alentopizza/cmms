@@ -61,6 +61,7 @@ jobs:
       - run: node scripts/data-ui-smoke.mjs
       - run: node scripts/view-mode-toggle-smoke.mjs
       - run: node scripts/performance-p1-smoke.mjs
+      - run: node scripts/performance-suppliers-phase2-smoke.mjs
       - run: node scripts/business-ui-smoke.mjs
       - run: node scripts/phase6-modules-smoke.mjs
       - run: node scripts/company-documents-fullwidth-smoke.mjs

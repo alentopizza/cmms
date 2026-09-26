@@ -59,6 +59,14 @@ for(const marker of [
   'demandContent("requisitions"',
   "<CollectionView",
   "<StaticDataTable",
+  '<CollectionView storageKey="suppliers"',
+  "supplier-card-primary-action-v3",
+  "supplier-card-quick-action-v3",
+  "<RequisitionBuilder",
+  "<RequisitionExportMenu",
+  'action="/api/inventory"',
+  'action={"/api/inventory/"+item.id}',
+  '<SupplierDocuments supplier={selected}',
 ]){
   if(!directory.includes(marker))throw new Error("Supplier tab-demand/cache contract missing "+marker);
 }
@@ -82,6 +90,9 @@ for(const marker of [
   'view==="requisitions"',
   "loadSupplierCommercialAnalytics([id])",
   "Promise.all([",
+  "export async function POST",
+  'intent==="delete"',
+  'intent==="financial"',
 ]){
   if(!detailRoute.includes(marker))throw new Error("Supplier on-demand endpoint contract missing "+marker);
 }
@@ -92,6 +103,8 @@ for(const marker of [
   'can(session,"suppliers.manage")',
   "FROM supplier_documents",
   "NextResponse.json({documents:result.rows})",
+  "export async function POST",
+  "INSERT INTO supplier_documents",
 ]){
   if(!documentsRoute.includes(marker))throw new Error("Supplier lazy documents endpoint contract missing "+marker);
 }

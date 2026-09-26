@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-26 — Fase 3 · Activos server-side
+
+- El directorio de Activos migra de `LIMIT 600` + búsqueda/filtros DOM a búsqueda, filtros, orden y paginación server-side sobre todo el scope autorizado.
+- Se conserva el scope existente: plataforma ve el conjunto global; usuarios tenant quedan limitados por organización y, cuando corresponde, por `session.siteIds`.
+- La página visible contiene máximo 24 activos y Grid/List renderizan exactamente la misma colección; cambiar la vista no navega ni modifica `page`.
+- KPI superiores, estados, criticidad, calidad del catálogo, marcas y modelos ya no se calculan desde `assets.rows`; usan agregados sobre el conjunto autorizado completo.
+- `AssetCatalogOverview` mantiene su significado funcional pero recibe summary/marcas/modelos agregados en lugar de la página visible.
+- Los conteos por categoría conservan la taxonomía de la organización y cuentan únicamente activos dentro del scope autorizado de sedes.
+- Creación, edición, importación, exportación, mantenimiento, historial de OT y documentos permanecen en sus fuentes independientes y no dependen de las 24 filas visibles.
+- URL: `q`, estado, empresa, sede, criticidad, categoría, proveedor, sort y page; búsqueda/filtros regresan a página 1.
+- Nuevo `scripts/assets-server-pagination-smoke.mjs` valida página 2, búsqueda completa, filtros, COUNT, facetas, KPI, agregados de catálogo, no fuga y desacople de formularios/acciones.
+- Filas máximas del directorio: 600 → 24 (96% menos filas de activos en la colección inicial). No se atribuyen mejoras de tiempo sin medición productiva.
+- No hubo migraciones, índices, cambios de CSS global, Inventario, Ubicaciones, biometría, RUM ni deployment.
+
 ## 2026-09-26 — Fase 3 · Órdenes de Trabajo server-side
 
 - Órdenes migra de `LIMIT 200` + filtros DOM a búsqueda, filtros y paginación server-side sobre todo el scope autorizado.

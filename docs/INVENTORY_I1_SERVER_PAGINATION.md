@@ -156,8 +156,15 @@ Después:
 `scripts/inventory-server-pagination-smoke.mjs` crea un fixture con 1.005 productos
 autorizados, compara el número de filas transferidas por el patrón legacy
 (`LIMIT 600`) contra la página server-side y registra tiempos reales de ambas
-consultas en CI. Los tiempos se consideran observaciones de ese entorno y no se
-usan para afirmar un speedup universal.
+consultas en CI.
+
+Medición del CI de implementación `fd0c06b98d2feef8eed210692520f8d63f0f6c42`:
+
+- patrón legacy: 600 filas transferidas, 3.40 ms;
+- página server-side: 24 filas transferidas, 2.65 ms.
+
+Son observaciones del entorno CI sobre ese fixture; no se usan para afirmar un
+speedup universal.
 
 ## 9. Pruebas
 
@@ -212,5 +219,25 @@ continúa limitado por bodega/sede.
 
 ## 13. CI y build
 
-El resultado final de CI/build se completa después de ejecutar el pipeline sobre el
-commit de implementación I1.
+Commit de implementación validado:
+
+`fd0c06b98d2feef8eed210692520f8d63f0f6c42`
+
+GitHub Actions: **success**.
+
+Pasaron, entre otros:
+
+- `inventory-server-pagination-smoke.mjs`;
+- `inventory-scope-smoke.mjs`;
+- `inventory-kardex-smoke.mjs`;
+- `unified-inventory-import-smoke.mjs`;
+- `requisition-receipt-smoke.mjs`;
+- `supplier-return-smoke.mjs`;
+- `work-orders-server-pagination-smoke.mjs`;
+- `assets-server-pagination-smoke.mjs`;
+- `phase7-assets-inventory-smoke.mjs`;
+- `npm run build`;
+- `performance-build-report.mjs`.
+
+El build terminó exitosamente y no fue necesario modificar Work Orders, Activos,
+CSS global ni migraciones estructurales.

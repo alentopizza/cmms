@@ -54,10 +54,10 @@ export default function ModuleHeader({
   action?: React.ReactNode;
   serverState?: ModuleHeaderServerState;
 }) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState(filters[0]?.value || "all");
-  const [facetValues,setFacetValues]=useState<Record<string,string>>({});
-  const [facetOptions,setFacetOptions]=useState<FacetOptionMap>({});
+  const [search, setSearch] = useState(serverState?.search||"");
+  const [filter, setFilter] = useState(serverState?.filter||filters[0]?.value||"all");
+  const [facetValues,setFacetValues]=useState<Record<string,string>>(serverState?.facetValues||{});
+  const [facetOptions,setFacetOptions]=useState<FacetOptionMap>(serverState?.facetOptions||{});
   const [visibleCount, setVisibleCount] = useState(serverState?.filteredCount??count);
   const [portalHost,setPortalHost]=useState<HTMLElement|null>(null);
   const [viewRevision,setViewRevision]=useState(0);

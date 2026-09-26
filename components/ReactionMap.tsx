@@ -251,6 +251,29 @@ export default function ReactionMap(){
     let cancelled=false;
     let timer:ReturnType<typeof setInterval>|null=null;
     let refreshing=false;
+    let resizeObserver:ResizeObserver|null=null;
+    let resizeFrame:number|null=null;
+
+    function syncMapViewport(){
+      if(cancelled)return;
+      const google=window.google;
+      const map=mapRef.current;
+      const host=hostRef.current;
+      if(!google?.maps?.event||!map||!host)return;
+      const rect=host.getBoundingClientRect();
+      if(rect.width<2||rect.height<2)return;
+      const center=typeof map.getCenter==="function"?map.getCenter():null;
+      google.maps.event.trigger(map,"resize");
+      if(center&&typeof map.setCenter==="function")map.setCenter(center);
+    }
+
+    function scheduleMapViewportSync(){
+      if(resizeFrame!==null)window.cancelAnimationFrame(resizeFrame);
+      resizeFrame=window.requestAnimationFrame(()=>{
+        resizeFrame=null;
+        syncMapViewport();
+      });
+    }
 
     async function boot(){
       try{
@@ -271,7 +294,14 @@ export default function ReactionMap(){
           gestureHandling:"greedy",
         });
 
+        if(typeof ResizeObserver!=="undefined"){
+          resizeObserver=new ResizeObserver(()=>scheduleMapViewportSync());
+          resizeObserver.observe(hostRef.current);
+        }
+        scheduleMapViewportSync();
+
         await refresh();
+        scheduleMapViewportSync();
         timer=setInterval(()=>void refresh(),5000);
       }catch(cause){
         setStatus(cause instanceof Error?cause.message:"No fue posible iniciar Reacción.");
@@ -392,6 +422,7 @@ export default function ReactionMap(){
       if(fit&&!bounds.isEmpty()){
         map.fitBounds(bounds,70);
         firstFit.current=false;
+        scheduleMapViewportSync();
       }
     }
 
@@ -401,6 +432,8 @@ export default function ReactionMap(){
     return()=>{
       cancelled=true;
       document.removeEventListener("visibilitychange",onVisibilityChange);
+      resizeObserver?.disconnect();
+      if(resizeFrame!==null)window.cancelAnimationFrame(resizeFrame);
       if(timer)clearInterval(timer);
       for(const overlay of overlaysRef.current){
         if("map" in overlay)overlay.map=null;

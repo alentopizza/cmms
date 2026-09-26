@@ -744,7 +744,7 @@ Rules:
 - real-time preview is local unsaved state. Persistence occurs only through the explicit save mutation; Cancel cannot issue a write;
 - restoring the default requires confirmation and removes the Organization override so the DESWEB fallback resumes;
 - general Settings may link to brand personalization but must not maintain another tenant brand editor;
-- self profile changes use a separate self-only account boundary because administrator user-management permissions are intentionally broader. That boundary can change the authenticated user's personal fields/password only, never role, Organization membership or Site scope;
+- self profile changes use a separate self-only account boundary because administrator user-management permissions are intentionally broader. That boundary can change only the authenticated user's personal identity/contact/avatar fields; credential changes remain in existing authentication/user-management flows, and it never changes role, Organization membership or Site scope;
 - logout confirmation is presentation only; confirmed logout continues through the existing authentication/logout route and tracking cleanup.
 
 This keeps white label multi-tenant, entitlement-driven and compatible with the canonical Design System while preserving semantic meaning and existing business authorities.

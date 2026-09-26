@@ -32,9 +32,27 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
     FROM inventory_categories c
     JOIN organizations o ON o.id=c.organization_id
     LEFT JOIN inventory_items i ON i.category_id=c.id AND i.active=true`;
+  const limitedSql=`SELECT c.id,c.organization_id,o.name organization_name,c.code,c.name,c.active,
+      count(i.id)::int item_count,
+      COALESCE(sum(COALESCE(scoped.quantity,0)),0)::text quantity,
+      COALESCE(sum(COALESCE(scoped.quantity,0)*i.unit_cost),0)::text total_value
+    FROM inventory_categories c
+    JOIN organizations o ON o.id=c.organization_id
+    LEFT JOIN inventory_items i
+      ON i.category_id=c.id AND i.active=true AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(sum(sl.quantity),0) quantity
+      FROM inventory_stock_levels sl
+      JOIN inventory_warehouses w ON w.id=sl.warehouse_id
+      WHERE sl.item_id=i.id AND w.organization_id=c.organization_id AND w.site_id=ANY($2::uuid[])
+    ) scoped ON i.id IS NOT NULL
+    WHERE c.organization_id=$1
+    GROUP BY c.id,o.name ORDER BY c.active DESC,c.name`;
   const result=platform
     ?await query<Category>(sql+" GROUP BY c.id,o.name ORDER BY o.name,c.active DESC,c.name")
-    :await query<Category>(sql+" WHERE c.organization_id=$1 GROUP BY c.id,o.name ORDER BY c.active DESC,c.name",[session.organizationId]);
+    :session.accessAllSites
+      ?await query<Category>(sql+" WHERE c.organization_id=$1 GROUP BY c.id,o.name ORDER BY c.active DESC,c.name",[session.organizationId])
+      :await query<Category>(limitedSql,[session.organizationId,session.siteIds]);
 
   const error=feedback.error==="duplicate"?"Ya existe una categoría con ese código o nombre."
     :feedback.error?"Completa los datos requeridos.":"";

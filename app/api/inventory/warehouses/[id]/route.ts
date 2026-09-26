@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { stableCode } from "@/lib/import-workbook";
 import { publicUrl } from "@/lib/urls";
+import { canAccessInventoryWarehouse } from "@/lib/inventory-scope";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -13,9 +14,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
-  const current=await query<{organization_id:string}>("SELECT organization_id FROM inventory_warehouses WHERE id=$1",[id]);
+  const current=await query<{organization_id:string;site_id:string|null}>("SELECT organization_id,site_id FROM inventory_warehouses WHERE id=$1",[id]);
   if(!current.rowCount)return new NextResponse("Almacén no encontrado",{status:404});
-  if(session.platformRole==="user"&&session.organizationId!==current.rows[0].organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessInventoryWarehouse(session,current.rows[0].organization_id,current.rows[0].site_id))return new NextResponse("Forbidden",{status:403});
   const form=await request.formData();
   const intent=String(form.get("intent")||"update");
   if(intent==="toggle"){

@@ -59,13 +59,18 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"inventory.write");
+  const limitedSiteScope=!superadmin&&!session.accessAllSites;
 
   const itemSql=`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,i.category_id,i.warehouse_id,p.supplier_type,
       i.sku,i.name,i.description,i.presentation,o.name company,s.name site,l.name location,c.name category,w.name warehouse,p.name supplier,
-      i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image,i.active
+      ${limitedSiteScope
+        ?`COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($2::uuid[])),0)::text`
+        :"i.quantity::text"} quantity,
+      i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image,i.active
     FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
     LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
-    LEFT JOIN inventory_categories c ON c.id=i.category_id LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
+    LEFT JOIN inventory_categories c ON c.id=i.category_id
+    LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id${limitedSiteScope?" AND w.site_id=ANY($2::uuid[])":""}
     WHERE 1=1`;
   const [items,sites,locations,suppliers,categories,warehouses,movements]=await Promise.all([
     superadmin
@@ -87,13 +92,25 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       ? query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[orgId])
       : Promise.resolve({rows:[]} as {rows:Supplier[]}),
     orgId?query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[orgId]):Promise.resolve({rows:[]} as {rows:Category[]}),
-    orgId?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId]):Promise.resolve({rows:[]} as {rows:Warehouse[]}),
     orgId
-      ? query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
-                         FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
-                         LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
-                         WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId])
-      : Promise.resolve({rows:[]} as {rows:Movement[]}),
+      ?session.accessAllSites
+        ?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+        :query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+      :Promise.resolve({rows:[]} as {rows:Warehouse[]}),
+    orgId
+      ?session.accessAllSites
+        ?query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
+                           FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
+                           LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                           WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId])
+        :query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
+                           FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
+                           JOIN inventory_warehouses w ON w.id=t.warehouse_id
+                           LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                           WHERE t.organization_id=$1 AND w.site_id=ANY($2::uuid[])
+                             AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))
+                           ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId,session.siteIds])
+      :Promise.resolve({rows:[]} as {rows:Movement[]}),
   ]);
 
   const creationGate=await getCreationGateForScope("inventory",session.organizationId,superadmin);

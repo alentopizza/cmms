@@ -39,19 +39,38 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
   if(!result.rowCount)notFound();
   const item=result.rows[0];
   if(session.platformRole==="user"&&(session.organizationId!==item.organization_id||!canAccessSite(session,item.site_id)))notFound();
+  const limitedSiteScope=session.platformRole==="user"&&!session.accessAllSites;
   const [stocks,warehouses,transactions]=await Promise.all([
-    query<Stock>(`SELECT sl.warehouse_id,w.name warehouse,sl.quantity::text,sl.min_quantity::text,sl.max_quantity::text
-                  FROM inventory_stock_levels sl JOIN inventory_warehouses w ON w.id=sl.warehouse_id WHERE sl.item_id=$1 ORDER BY w.name`,[id]),
-    query<Warehouse>("SELECT id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[item.organization_id]),
-    query<Tx>(`SELECT t.id,t.type,t.quantity::text,t.unit_cost::text,t.document_number,t.movement_at::text,w.name warehouse,d.name destination,
-                      t.lot_number,t.expires_at::text,t.cost_center,t.notes,t.requisition_id,r.number::text requisition_number
-               FROM inventory_transactions t
-               LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
-               LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
-               LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
-               WHERE t.item_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 200`,[id]),
+    limitedSiteScope
+      ?query<Stock>(`SELECT sl.warehouse_id,w.name warehouse,sl.quantity::text,sl.min_quantity::text,sl.max_quantity::text
+                      FROM inventory_stock_levels sl JOIN inventory_warehouses w ON w.id=sl.warehouse_id
+                      WHERE sl.item_id=$1 AND w.site_id=ANY($2::uuid[]) ORDER BY w.name`,[id,session.siteIds])
+      :query<Stock>(`SELECT sl.warehouse_id,w.name warehouse,sl.quantity::text,sl.min_quantity::text,sl.max_quantity::text
+                      FROM inventory_stock_levels sl JOIN inventory_warehouses w ON w.id=sl.warehouse_id WHERE sl.item_id=$1 ORDER BY w.name`,[id]),
+    limitedSiteScope
+      ?query<Warehouse>("SELECT id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[item.organization_id,session.siteIds])
+      :query<Warehouse>("SELECT id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[item.organization_id]),
+    limitedSiteScope
+      ?query<Tx>(`SELECT t.id,t.type,t.quantity::text,t.unit_cost::text,t.document_number,t.movement_at::text,w.name warehouse,d.name destination,
+                          t.lot_number,t.expires_at::text,t.cost_center,t.notes,t.requisition_id,r.number::text requisition_number
+                   FROM inventory_transactions t
+                   JOIN inventory_warehouses w ON w.id=t.warehouse_id
+                   LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                   LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
+                   WHERE t.item_id=$1 AND w.site_id=ANY($2::uuid[])
+                     AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))
+                   ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 200`,[id,session.siteIds])
+      :query<Tx>(`SELECT t.id,t.type,t.quantity::text,t.unit_cost::text,t.document_number,t.movement_at::text,w.name warehouse,d.name destination,
+                          t.lot_number,t.expires_at::text,t.cost_center,t.notes,t.requisition_id,r.number::text requisition_number
+                   FROM inventory_transactions t
+                   LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
+                   LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                   LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
+                   WHERE t.item_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 200`,[id]),
   ]);
   const canWrite=can(session,"inventory.write");
+  const visibleQuantity=limitedSiteScope?stocks.rows.reduce((sum,stock)=>sum+Number(stock.quantity||0),0):Number(item.quantity||0);
+  const visiblePrimaryWarehouse=warehouses.rows.find(warehouse=>warehouse.id===item.warehouse_id)||null;
 
   return <div className="phase7-inventory phase7-inventory-detail">
     <nav className="entity-breadcrumbs">
@@ -79,10 +98,10 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
     {feedback.error&&<div className="section"><Alert variant="danger" title="No fue posible completar la operación">Revisa existencias, bodega y datos.</Alert></div>}
 
     <MetricGrid className="section phase7-kpi-grid">
-      <KpiCard label="Existencia total" value={item.quantity+" "+item.unit} hint={money(Number(item.quantity)*Number(item.unit_cost))} icon="inventory"/>
+      <KpiCard label="Existencia total" value={visibleQuantity+" "+item.unit} hint={money(visibleQuantity*Number(item.unit_cost))} icon="inventory"/>
       <KpiCard label="Costo unitario" value={money(Number(item.unit_cost))} hint={item.presentation||item.unit} icon="activity" tone="success"/>
-      <KpiCard label="Stock mínimo" value={item.min_quantity} hint={item.unit} icon="warning" tone={Number(item.quantity)<=Number(item.min_quantity)?"warning":"default"}/>
-      <KpiCard label="Bodega principal" value={item.warehouse||"Sin registrar"} hint={item.site+(item.location?" · "+item.location:"")} icon="location"/>
+      <KpiCard label="Stock mínimo" value={item.min_quantity} hint={item.unit} icon="warning" tone={visibleQuantity<=Number(item.min_quantity)?"warning":"default"}/>
+      <KpiCard label="Bodega principal" value={visiblePrimaryWarehouse?.name||"Sin registrar"} hint={item.site+(item.location?" · "+item.location:"")} icon="location"/>
     </MetricGrid>
 
     <section className="section inventory-detail-grid">
@@ -117,7 +136,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
         {canWrite&&<form className="form-grid inventory-inline-form" method="post" action={"/api/inventory/"+item.id+"/movement"}>
           <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
           <div className="field"><label>Movimiento *</label><select name="movement_type" required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución</option><option value="transfer">Traslado</option></select></div>
-          <div className="field"><label>Bodega origen *</label><select name="warehouse_id" defaultValue={item.warehouse_id||""} required>{warehouses.rows.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
+          <div className="field"><label>Bodega origen *</label><select name="warehouse_id" defaultValue={visiblePrimaryWarehouse?.id||""} required>{warehouses.rows.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
           <div className="field"><label>Bodega destino (traslado)</label><select name="destination_warehouse_id"><option value="">No aplica</option>{warehouses.rows.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
           <div className="field"><label>Cantidad *</label><input name="quantity" type="number" min="0.001" step="0.001" required/></div>
           <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" min="0" step="0.01"/></div>

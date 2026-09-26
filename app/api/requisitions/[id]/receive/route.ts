@@ -104,7 +104,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     const warehouseIds=[...new Set(pendingRows.map(row=>row.warehouseId))];
     const warehouses=session.platformRole==="user"&&!session.accessAllSites
       ?await client.query<{id:string}>(
-        "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) AND (site_id IS NULL OR site_id=ANY($3::uuid[]))",
+        "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) AND site_id=ANY($3::uuid[])",
         [req.organization_id,warehouseIds,session.siteIds],
       )
       :await client.query<{id:string}>(

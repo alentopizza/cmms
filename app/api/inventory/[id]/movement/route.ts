@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { canAccessSite, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
+import { canAccessInventoryItem, canAccessInventoryWarehouse } from "@/lib/inventory-scope";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,10 +24,10 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
-  const item=await query<{organization_id:string;site_id:string;warehouse_id:string|null}>("SELECT organization_id,site_id,warehouse_id FROM inventory_items WHERE id=$1 AND active=true",[id]);
+  const item=await query<{organization_id:string;site_id:string|null;warehouse_id:string|null}>("SELECT organization_id,site_id,warehouse_id FROM inventory_items WHERE id=$1 AND active=true",[id]);
   if(!item.rowCount)return new NextResponse("Artículo no encontrado",{status:404});
   const row=item.rows[0];
-  if(session.platformRole==="user"&&(session.organizationId!==row.organization_id||!canAccessSite(session,row.site_id)))return new NextResponse("Forbidden",{status:403});
+  if(!canAccessInventoryItem(session,row.organization_id,row.site_id))return new NextResponse("Forbidden",{status:403});
 
   const form=await request.formData();
   const action=movement(String(form.get("movement_type")||""));
@@ -48,11 +49,14 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(unitCost!==null&&(!Number.isFinite(unitCost)||unitCost<0))return NextResponse.redirect(target("?error=movement"),303);
   if(expires&&!/^\d{4}-\d{2}-\d{2}$/.test(expires))return NextResponse.redirect(target("?error=movement"),303);
   if(action.type==="transfer"&&(!destinationId||destinationId===warehouseId))return NextResponse.redirect(target("?error=movement"),303);
-  const warehouses=await query<{id:string}>(
-    "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
-    [row.organization_id,[warehouseId,...(destinationId?[destinationId]:[])]],
+  const warehouseIds=[warehouseId,...(destinationId?[destinationId]:[])];
+  const warehouses=await query<{id:string;organization_id:string;site_id:string|null}>(
+    "SELECT id,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
+    [row.organization_id,warehouseIds],
   );
-  if(warehouses.rowCount!==(destinationId?2:1))return NextResponse.redirect(target("?error=relation"),303);
+  if(warehouses.rowCount!==warehouseIds.length||warehouses.rows.some(warehouse=>!canAccessInventoryWarehouse(session,warehouse.organization_id,warehouse.site_id))){
+    return NextResponse.redirect(target("?error=relation"),303);
+  }
   try{
     await query(
       `INSERT INTO inventory_transactions(

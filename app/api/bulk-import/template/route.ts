@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 
 type Named={id:string;name:string};
 type Site={id:string;name:string};
@@ -69,38 +70,74 @@ export async function GET(request:Request){
   }
   if(!organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
 
+  const limitedInventoryScope=entity==="inventory"&&hasLimitedInventorySiteScope(session);
   const [org,sites,locations,suppliers,categories,warehouses,presentations,subcategories,inventoryRows]=await Promise.all([
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),
-    query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Location>("SELECT l.id,l.name,s.name site_name FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[organizationId]),
+    limitedInventoryScope
+      ?query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+      :query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    limitedInventoryScope
+      ?query<Location>("SELECT l.id,l.name,s.name site_name FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[organizationId,session.siteIds])
+      :query<Location>("SELECT l.id,l.name,s.name site_name FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[organizationId]),
     query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Warehouse>(
-      `SELECT w.id,w.code,w.name,w.type,w.responsible,w.capacity::text,w.active,w.location_detail,w.notes,
-              s.name site_name,l.name location_name
-       FROM inventory_warehouses w
-       LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id
-       WHERE w.organization_id=$1 AND w.active=true ORDER BY w.name`,
-      [organizationId],
-    ),
-    query<{value:string}>("SELECT DISTINCT presentation value FROM inventory_items WHERE organization_id=$1 AND presentation IS NOT NULL AND btrim(presentation)<>'' ORDER BY presentation",[organizationId]),
-    query<{value:string}>("SELECT DISTINCT subcategory value FROM inventory_items WHERE organization_id=$1 AND subcategory IS NOT NULL AND btrim(subcategory)<>'' ORDER BY subcategory",[organizationId]),
-    dataMode==="current"
-      ?query<InventoryRow>(
-        `SELECT i.supplier_id,s.code supplier_code,s.tax_id supplier_tax_id,s.name supplier_name,i.sku,i.name,i.description,
-                c.name category,i.subcategory,i.brand,i.model,i.presentation,i.unit,i.barcode,site.name site_name,l.name location_name,
-                w.name warehouse_name,i.min_quantity::text,i.max_quantity::text,i.quantity::text,i.unit_cost::text,
-                i.reference_price::text,i.tax_rate::text,i.active
-         FROM inventory_items i
-         LEFT JOIN suppliers s ON s.id=i.supplier_id
-         LEFT JOIN inventory_categories c ON c.id=i.category_id
-         LEFT JOIN sites site ON site.id=i.site_id
-         LEFT JOIN locations l ON l.id=i.location_id
-         LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
-         WHERE i.organization_id=$1 AND ($2::uuid IS NULL OR i.supplier_id=$2::uuid)
-         ORDER BY s.name,i.sku`,
-        [organizationId,contextSupplierId||null],
+    limitedInventoryScope
+      ?query<Warehouse>(
+        `SELECT w.id,w.code,w.name,w.type,w.responsible,w.capacity::text,w.active,w.location_detail,w.notes,
+                s.name site_name,l.name location_name
+         FROM inventory_warehouses w
+         LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id
+         WHERE w.organization_id=$1 AND w.active=true AND w.site_id=ANY($2::uuid[]) ORDER BY w.name`,
+        [organizationId,session.siteIds],
       )
+      :query<Warehouse>(
+        `SELECT w.id,w.code,w.name,w.type,w.responsible,w.capacity::text,w.active,w.location_detail,w.notes,
+                s.name site_name,l.name location_name
+         FROM inventory_warehouses w
+         LEFT JOIN sites s ON s.id=w.site_id LEFT JOIN locations l ON l.id=w.location_id
+         WHERE w.organization_id=$1 AND w.active=true ORDER BY w.name`,
+        [organizationId],
+      ),
+    limitedInventoryScope
+      ?query<{value:string}>("SELECT DISTINCT presentation value FROM inventory_items WHERE organization_id=$1 AND (site_id IS NULL OR site_id=ANY($2::uuid[])) AND presentation IS NOT NULL AND btrim(presentation)<>'' ORDER BY presentation",[organizationId,session.siteIds])
+      :query<{value:string}>("SELECT DISTINCT presentation value FROM inventory_items WHERE organization_id=$1 AND presentation IS NOT NULL AND btrim(presentation)<>'' ORDER BY presentation",[organizationId]),
+    limitedInventoryScope
+      ?query<{value:string}>("SELECT DISTINCT subcategory value FROM inventory_items WHERE organization_id=$1 AND (site_id IS NULL OR site_id=ANY($2::uuid[])) AND subcategory IS NOT NULL AND btrim(subcategory)<>'' ORDER BY subcategory",[organizationId,session.siteIds])
+      :query<{value:string}>("SELECT DISTINCT subcategory value FROM inventory_items WHERE organization_id=$1 AND subcategory IS NOT NULL AND btrim(subcategory)<>'' ORDER BY subcategory",[organizationId]),
+    dataMode==="current"
+      ?limitedInventoryScope
+        ?query<InventoryRow>(
+          `SELECT i.supplier_id,s.code supplier_code,s.tax_id supplier_tax_id,s.name supplier_name,i.sku,i.name,i.description,
+                  c.name category,i.subcategory,i.brand,i.model,i.presentation,i.unit,i.barcode,site.name site_name,l.name location_name,
+                  w.name warehouse_name,i.min_quantity::text,i.max_quantity::text,
+                  COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($3::uuid[])),0)::text quantity,
+                  i.unit_cost::text,i.reference_price::text,i.tax_rate::text,i.active
+           FROM inventory_items i
+           LEFT JOIN suppliers s ON s.id=i.supplier_id
+           LEFT JOIN inventory_categories c ON c.id=i.category_id
+           LEFT JOIN sites site ON site.id=i.site_id
+           LEFT JOIN locations l ON l.id=i.location_id
+           LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id AND w.site_id=ANY($3::uuid[])
+           WHERE i.organization_id=$1 AND ($2::uuid IS NULL OR i.supplier_id=$2::uuid)
+             AND (i.site_id IS NULL OR i.site_id=ANY($3::uuid[]))
+           ORDER BY s.name,i.sku`,
+          [organizationId,contextSupplierId||null,session.siteIds],
+        )
+        :query<InventoryRow>(
+          `SELECT i.supplier_id,s.code supplier_code,s.tax_id supplier_tax_id,s.name supplier_name,i.sku,i.name,i.description,
+                  c.name category,i.subcategory,i.brand,i.model,i.presentation,i.unit,i.barcode,site.name site_name,l.name location_name,
+                  w.name warehouse_name,i.min_quantity::text,i.max_quantity::text,i.quantity::text,i.unit_cost::text,
+                  i.reference_price::text,i.tax_rate::text,i.active
+           FROM inventory_items i
+           LEFT JOIN suppliers s ON s.id=i.supplier_id
+           LEFT JOIN inventory_categories c ON c.id=i.category_id
+           LEFT JOIN sites site ON site.id=i.site_id
+           LEFT JOIN locations l ON l.id=i.location_id
+           LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id
+           WHERE i.organization_id=$1 AND ($2::uuid IS NULL OR i.supplier_id=$2::uuid)
+           ORDER BY s.name,i.sku`,
+          [organizationId,contextSupplierId||null],
+        )
       :Promise.resolve({rows:[]} as {rows:InventoryRow[]}),
   ]);
 

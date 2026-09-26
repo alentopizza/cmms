@@ -39,16 +39,22 @@ export default async function InventoryWarehousesPage({searchParams}:{searchPara
   const [warehouses,sites,locations]=await Promise.all([
     platform
       ?query<Warehouse>(warehouseSql+" GROUP BY w.id,o.name,s.name,l.name ORDER BY o.name,w.active DESC,w.name")
-      :query<Warehouse>(warehouseSql+" WHERE w.organization_id=$1 GROUP BY w.id,o.name,s.name,l.name ORDER BY w.active DESC,w.name",[orgId]),
+      :session.accessAllSites
+        ?query<Warehouse>(warehouseSql+" WHERE w.organization_id=$1 GROUP BY w.id,o.name,s.name,l.name ORDER BY w.active DESC,w.name",[orgId])
+        :query<Warehouse>(warehouseSql+" WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[]) GROUP BY w.id,o.name,s.name,l.name ORDER BY w.active DESC,w.name",[orgId,session.siteIds]),
     canWrite
       ?platform
         ?query<Site>("SELECT id,organization_id,name FROM sites WHERE active=true ORDER BY organization_id,name")
-        :query<Site>("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+        :session.accessAllSites
+          ?query<Site>("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+          :query<Site>("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
       :Promise.resolve({rows:[]} as {rows:Site[]}),
     canWrite
       ?platform
         ?query<Location>("SELECT id,organization_id,site_id,name FROM locations WHERE active=true ORDER BY organization_id,site_id,name")
-        :query<Location>("SELECT id,organization_id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+        :session.accessAllSites
+          ?query<Location>("SELECT id,organization_id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+          :query<Location>("SELECT id,organization_id,site_id,name FROM locations WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
       :Promise.resolve({rows:[]} as {rows:Location[]}),
   ]);
   const error=feedback.error==="duplicate"?"Ya existe un almacén con ese código."

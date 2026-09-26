@@ -8,6 +8,7 @@ import { canCreateInventoryItem } from "@/lib/resource-limits";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { stableCode } from "@/lib/import-workbook";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { canAccessInventoryWarehouse } from "@/lib/inventory-scope";
 
 export async function POST(request:Request) {
   const session=await getSession();
@@ -71,6 +72,19 @@ export async function POST(request:Request) {
     query("SELECT 1 FROM locations WHERE id=$1 AND organization_id=$2 AND site_id=$3 AND active=true",[locationId,organizationId,siteId]),
   ]);
   if(!site.rowCount||!location.rowCount) return NextResponse.redirect(errorTarget("relation"),303);
+  if(warehouseIdInput){
+    const warehouseScope=await query<{organization_id:string;site_id:string|null;location_id:string|null}>(
+      "SELECT organization_id,site_id,location_id FROM inventory_warehouses WHERE id=$1 AND organization_id=$2 AND active=true",
+      [warehouseIdInput,organizationId],
+    );
+    const warehouse=warehouseScope.rows[0];
+    if(!warehouse
+      ||!canAccessInventoryWarehouse(session,warehouse.organization_id,warehouse.site_id)
+      ||warehouse.site_id!==siteId
+      ||(warehouse.location_id!==null&&warehouse.location_id!==locationId)){
+      return NextResponse.redirect(errorTarget("relation"),303);
+    }
+  }
 
   const client=await pool.connect();
   try{
@@ -86,8 +100,14 @@ export async function POST(request:Request) {
 
     let warehouseId=warehouseIdInput;
     if(warehouseId){
-      const warehouse=await client.query("SELECT 1 FROM inventory_warehouses WHERE id=$1 AND organization_id=$2 AND active=true",[warehouseId,organizationId]);
-      if(!warehouse.rowCount)warehouseId="";
+      const warehouse=await client.query(
+        "SELECT 1 FROM inventory_warehouses WHERE id=$1 AND organization_id=$2 AND active=true AND site_id=$3 AND (location_id IS NULL OR location_id=$4)",
+        [warehouseId,organizationId,siteId,locationId],
+      );
+      if(!warehouse.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.redirect(errorTarget("relation"),303);
+      }
     }
     if(!warehouseId){
       const existing=await client.query<{id:string}>(

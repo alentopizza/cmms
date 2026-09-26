@@ -85,15 +85,20 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   }else{
     const values:unknown[]=[orgId];
     let where=" WHERE t.organization_id=$1";
-    if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))";}
+    if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) AND w.site_id=ANY($2::uuid[]) AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))";}
     if(requestedType){values.push(requestedType);where+=" AND t.type=$"+values.length;}
     transactions=await query<Tx>(base+where+" ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 1000",values);
   }
 
   const [items,warehouses]=orgId?await Promise.all([
-    query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
-                 WHERE organization_id=$1 AND active=true ORDER BY name`,[orgId]),
-    query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId]),
+    session.accessAllSites
+      ?query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
+                    WHERE organization_id=$1 AND active=true ORDER BY name`,[orgId])
+      :query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
+                    WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=ANY($2::uuid[])) ORDER BY name`,[orgId,session.siteIds]),
+    session.accessAllSites
+      ?query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+      :query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds]),
   ]):[{rows:[]} as {rows:Item[]},{rows:[]} as {rows:Warehouse[]}];
 
   const error=params.error==="stock"?"El movimiento fue rechazado porque dejaría existencias negativas o incumple las reglas del Kardex."

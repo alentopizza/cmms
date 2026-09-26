@@ -4,6 +4,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
+import { hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 
 type Row=Record<string,string|number|null>;
 
@@ -14,14 +15,18 @@ function csvCell(value:unknown){
 function safeName(value:string){return value.replace(/[^a-zA-Z0-9_-]+/g,"-").replace(/-+/g,"-").toLowerCase();}
 
 async function inventoryRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>){
+  const limited=hasLimitedInventorySiteScope(session);
+  const quantitySql=limited
+    ?"COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($2::uuid[])),0)::text"
+    :"i.quantity::text";
   const base=`SELECT i.sku,i.name,COALESCE(i.description,'') description,COALESCE(c.name,'') category,
-    COALESCE(i.presentation,'') presentation,i.unit,i.quantity::text quantity,i.min_quantity::text min_quantity,i.max_quantity::text max_quantity,
+    COALESCE(i.presentation,'') presentation,i.unit,${quantitySql} quantity,i.min_quantity::text min_quantity,i.max_quantity::text max_quantity,
     i.unit_cost::text unit_cost,o.name company,COALESCE(s.name,'') site,COALESCE(l.name,'') location,COALESCE(w.name,'') warehouse,
     COALESCE(p.name,'') supplier,CASE WHEN i.active THEN 'Activo' ELSE 'Inactivo' END status
     FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
     LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id
     LEFT JOIN suppliers p ON p.id=i.supplier_id LEFT JOIN inventory_categories c ON c.id=i.category_id
-    LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id`;
+    LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id${limited?" AND w.site_id=ANY($2::uuid[])":""}`;
   if(session.platformRole!=="user")return query<Row>(base+" ORDER BY o.name,i.name");
   if(session.accessAllSites)return query<Row>(base+" WHERE i.organization_id=$1 ORDER BY i.name",[session.organizationId]);
   return query<Row>(base+" WHERE i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) ORDER BY i.name",[session.organizationId,session.siteIds]);
@@ -82,7 +87,7 @@ async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSessi
   }
   const values:unknown[]=[session.organizationId];
   let where=" WHERE t.organization_id=$1";
-  if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))";}
+  if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) AND w.site_id=ANY($2::uuid[]) AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))";}
   if(filter){values.push(filter);where+=" AND t.type=$"+values.length;}
   return query<Row>(base+where+" ORDER BY t.movement_at DESC,t.created_at DESC",values);
 }

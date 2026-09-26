@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { canAccessSite,getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
+import { canAccessInventoryItem, canAccessInventoryWarehouse } from "@/lib/inventory-scope";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,12 +24,12 @@ export async function POST(request:Request){
   const form=await request.formData();
   const itemId=String(form.get("item_id")||"");
   if(!UUID.test(itemId))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=required",request.url),303);
-  const item=await query<{organization_id:string;site_id:string;warehouse_id:string|null}>(
+  const item=await query<{organization_id:string;site_id:string|null;warehouse_id:string|null}>(
     "SELECT organization_id,site_id,warehouse_id FROM inventory_items WHERE id=$1 AND active=true",[itemId],
   );
   if(!item.rowCount)return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=required",request.url),303);
   const row=item.rows[0];
-  if(session.platformRole==="user"&&(session.organizationId!==row.organization_id||!canAccessSite(session,row.site_id)))return new NextResponse("Forbidden",{status:403});
+  if(!canAccessInventoryItem(session,row.organization_id,row.site_id))return new NextResponse("Forbidden",{status:403});
 
   const action=movement(String(form.get("movement_type")||""));
   const quantity=Number(form.get("quantity")||0);
@@ -49,11 +50,13 @@ export async function POST(request:Request){
   if(action.type==="transfer"&&(!destinationId||destinationId===warehouseId))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement",request.url),303);
 
   const warehouseIds=[warehouseId,...(destinationId?[destinationId]:[])];
-  const warehouses=await query<{id:string}>(
-    "SELECT id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
+  const warehouses=await query<{id:string;organization_id:string;site_id:string|null}>(
+    "SELECT id,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[])",
     [row.organization_id,warehouseIds],
   );
-  if(warehouses.rowCount!==warehouseIds.length)return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=relation",request.url),303);
+  if(warehouses.rowCount!==warehouseIds.length||warehouses.rows.some(warehouse=>!canAccessInventoryWarehouse(session,warehouse.organization_id,warehouse.site_id))){
+    return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=relation",request.url),303);
+  }
 
   try{
     await query(

@@ -117,10 +117,13 @@ export async function GET(request:Request,{params}:{params:Promise<{id:string}>}
   }
 
   if(view==="inventory"){
-    const [items,sites,locations,categories,warehouses]=await Promise.all([
-      query(
-        `SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,
-                i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.site_id,i.location_id,i.category_id,i.warehouse_id,
+    const limitedInventoryScope=session.platformRole==="user"&&!session.accessAllSites;
+    const itemQuantitySql=limitedInventoryScope
+      ?"COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($3::uuid[])),0)::text"
+      :"i.quantity::text";
+    const itemSql=`SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,
+                ${itemQuantitySql} quantity,i.min_quantity::text,i.max_quantity::text,i.site_id,i.location_id,i.category_id,
+                CASE WHEN warehouse.id IS NULL THEN NULL ELSE i.warehouse_id END warehouse_id,
                 i.storage_location,c.name category_name,warehouse.name warehouse_name,site.name site_name,l.name location_name,
                 i.active,(i.image_data IS NOT NULL) has_image
          FROM inventory_items i
@@ -128,20 +131,32 @@ export async function GET(request:Request,{params}:{params:Promise<{id:string}>}
          LEFT JOIN sites site ON site.id=i.site_id
          LEFT JOIN locations l ON l.id=i.location_id
          LEFT JOIN inventory_categories c ON c.id=i.category_id
-         LEFT JOIN inventory_warehouses warehouse ON warehouse.id=i.warehouse_id
+         LEFT JOIN inventory_warehouses warehouse ON warehouse.id=i.warehouse_id${limitedInventoryScope?" AND warehouse.site_id=ANY($3::uuid[])":""}
          WHERE i.supplier_id=$1 AND i.organization_id=$2 AND p.active=true AND p.supplier_type IN ('materials','both')
-         ORDER BY i.name`,
-        [id,organizationId],
-      ),
-      query("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-      query(
-        `SELECT l.id,l.organization_id,l.site_id,l.name,site.name||' · '||l.name label
-         FROM locations l JOIN sites site ON site.id=l.site_id
-         WHERE l.organization_id=$1 AND l.active=true ORDER BY site.name,l.name`,
-        [organizationId],
-      ),
+           ${limitedInventoryScope?"AND (i.site_id IS NULL OR i.site_id=ANY($3::uuid[]))":""}
+         ORDER BY i.name`;
+    const [items,sites,locations,categories,warehouses]=await Promise.all([
+      limitedInventoryScope?query(itemSql,[id,organizationId,session.siteIds]):query(itemSql,[id,organizationId]),
+      limitedInventoryScope
+        ?query("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+        :query("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+      limitedInventoryScope
+        ?query(
+          `SELECT l.id,l.organization_id,l.site_id,l.name,site.name||' · '||l.name label
+           FROM locations l JOIN sites site ON site.id=l.site_id
+           WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY site.name,l.name`,
+          [organizationId,session.siteIds],
+        )
+        :query(
+          `SELECT l.id,l.organization_id,l.site_id,l.name,site.name||' · '||l.name label
+           FROM locations l JOIN sites site ON site.id=l.site_id
+           WHERE l.organization_id=$1 AND l.active=true ORDER BY site.name,l.name`,
+          [organizationId],
+        ),
       query("SELECT id,organization_id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-      query("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+      limitedInventoryScope
+        ?query("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+        :query("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     ]);
     return NextResponse.json({
       items:items.rows,sites:sites.rows,locations:locations.rows,categories:categories.rows,warehouses:warehouses.rows,

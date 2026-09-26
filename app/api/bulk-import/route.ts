@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { getSession, canAccessSite } from "@/lib/auth";
+import { canAccessInventoryItem, canAccessInventoryWarehouse, hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 import { can } from "@/lib/permissions";
 import { pool, query } from "@/lib/db";
 import {
@@ -189,25 +190,57 @@ function validateRowLimit(issues:Issue[],sheetName:string,rows:unknown[],max=500
   }
 }
 function findByName<T extends {name:string}>(rows:T[],value:string){return rows.find(row=>key(row.name)===key(value))||null;}
-async function catalogs(organizationId:string){
+async function catalogs(
+  organizationId:string,
+  session:NonNullable<Awaited<ReturnType<typeof getSession>>>,
+  applyInventoryScope:boolean,
+){
+  const limited=applyInventoryScope&&hasLimitedInventorySiteScope(session);
   const [suppliers,sites,locations,warehouses,items,categories,limits,counts,movementIds,stockLevels]=await Promise.all([
     query<Supplier>("SELECT id,code,name,tax_id,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
-    query<Item>("SELECT i.id,i.sku,i.name,i.unit,i.unit_cost::text,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
+    limited
+      ?query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+      :query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    limited
+      ?query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+      :query<Location>("SELECT id,site_id,name FROM locations WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    limited
+      ?query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
+      :query<Warehouse>("SELECT id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    limited
+      ?query<Item>(
+        `SELECT i.id,i.sku,i.name,i.unit,i.unit_cost::text,i.site_id,i.location_id,
+                CASE WHEN w.id IS NULL THEN NULL ELSE i.warehouse_id END warehouse_id,
+                COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($2::uuid[])),0)::text quantity,
+                i.supplier_id,s.name supplier_name,i.active
+         FROM inventory_items i
+         LEFT JOIN suppliers s ON s.id=i.supplier_id
+         LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id AND w.site_id=ANY($2::uuid[])
+         WHERE i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[]))`,
+        [organizationId,session.siteIds],
+      )
+      :query<Item>("SELECT i.id,i.sku,i.name,i.unit,i.unit_cost::text,i.site_id,i.location_id,i.warehouse_id,i.quantity::text,i.supplier_id,s.name supplier_name,i.active FROM inventory_items i LEFT JOIN suppliers s ON s.id=i.supplier_id WHERE i.organization_id=$1",[organizationId]),
     query<{id:string;name:string}>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
     query<{max_assets:number;max_inventory_items:number}>("SELECT max_assets,max_inventory_items FROM organization_limits WHERE organization_id=$1",[organizationId]),
     query<{assets:number;inventory:number}>("SELECT (SELECT count(*)::int FROM assets WHERE organization_id=$1) assets,(SELECT count(*)::int FROM inventory_items WHERE organization_id=$1 AND active=true) inventory",[organizationId]),
     query<{source_movement_id:string}>("SELECT source_movement_id FROM inventory_transactions WHERE organization_id=$1 AND source_movement_id IS NOT NULL",[organizationId]),
-    query<{sku:string;warehouse_name:string;quantity:string}>(
-      `SELECT i.sku,w.name warehouse_name,s.quantity::text
-       FROM inventory_stock_levels s
-       JOIN inventory_items i ON i.id=s.item_id
-       JOIN inventory_warehouses w ON w.id=s.warehouse_id
-       WHERE s.organization_id=$1`,
-      [organizationId],
-    ),
+    limited
+      ?query<{sku:string;warehouse_name:string;quantity:string}>(
+        `SELECT i.sku,w.name warehouse_name,s.quantity::text
+         FROM inventory_stock_levels s
+         JOIN inventory_items i ON i.id=s.item_id
+         JOIN inventory_warehouses w ON w.id=s.warehouse_id
+         WHERE s.organization_id=$1 AND w.site_id=ANY($2::uuid[])`,
+        [organizationId,session.siteIds],
+      )
+      :query<{sku:string;warehouse_name:string;quantity:string}>(
+        `SELECT i.sku,w.name warehouse_name,s.quantity::text
+         FROM inventory_stock_levels s
+         JOIN inventory_items i ON i.id=s.item_id
+         JOIN inventory_warehouses w ON w.id=s.warehouse_id
+         WHERE s.organization_id=$1`,
+        [organizationId],
+      ),
   ]);
   return {
     suppliers:suppliers.rows,sites:sites.rows,locations:locations.rows,warehouses:warehouses.rows,items:items.rows,
@@ -534,7 +567,7 @@ export async function POST(request:Request){
   }catch{
     return NextResponse.json({error:"No se pudo leer el archivo. Verifica que sea un Excel .xlsx válido y no esté protegido o dañado."},{status:400});
   }
-  const catalog=await catalogs(organizationId);
+  const catalog=await catalogs(organizationId,session,entity==="inventory");
   const fixedSupplier=fixedSupplierId?catalog.suppliers.find(supplier=>supplier.id===fixedSupplierId)||null:null;
   if(fixedSupplierId&&!fixedSupplier)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
   const issues:Issue[]=[];
@@ -793,8 +826,8 @@ export async function POST(request:Request){
       if(!row.active){
         issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","Una bodega utilizada por Inventario/Kardex no puede quedar inactiva.","ESTADO","INACTIVA","Marca la bodega como ACTIVA o retírala de las filas que se van a importar.");
       }
-      if(row.site&&!canAccessSite(session,row.site.id)){
-        issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","No tienes autorización para administrar esta bodega.","SEDE",row.site.name,"Solicita acceso o retira la bodega del alcance.");
+      if(hasLimitedInventorySiteScope(session)&&(!row.site||!canAccessInventoryWarehouse(session,organizationId,row.site.id))){
+        issue(issues,warehouseSheet?.name||"BODEGAS",row.row,"error","No tienes autorización para administrar esta bodega.","SEDE",row.site?.name||"Sin sede","Solicita acceso o retira la bodega del alcance.");
       }
     }
 
@@ -980,9 +1013,10 @@ export async function POST(request:Request){
           }
         }
 
-        const existing=await client.query<{id:string}>("SELECT id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);
+        const existing=await client.query<{id:string;site_id:string|null}>("SELECT id,site_id FROM inventory_items WHERE organization_id=$1 AND upper(sku)=upper($2)",[organizationId,row.sku]);
         let itemId:string;
         if(existing.rowCount){
+          if(!canAccessInventoryItem(session,organizationId,existing.rows[0].site_id))throw new Error("SKU no disponible en el alcance autorizado.");
           itemId=existing.rows[0].id;
           await client.query(
             `UPDATE inventory_items SET
@@ -1042,8 +1076,10 @@ export async function POST(request:Request){
 
         const source=findByName(warehouseCache,row.warehouseName);
         if(!source)throw new Error("Bodega origen no resuelta: "+row.warehouseName);
+        if(!canAccessInventoryWarehouse(session,organizationId,source.site_id))throw new Error("Bodega origen fuera del alcance autorizado.");
         const destination=row.movement.type==="transfer"?findByName(warehouseCache,row.destination):null;
         if(row.movement.type==="transfer"&&!destination)throw new Error("Bodega destino no resuelta: "+row.destination);
+        if(destination&&!canAccessInventoryWarehouse(session,organizationId,destination.site_id))throw new Error("Bodega destino fuera del alcance autorizado.");
 
         const signed=row.quantity*row.movement.sign;
         const auditNote=[row.notes,row.sourceUser?"Responsable origen archivo: "+row.sourceUser:""].filter(Boolean).join(" · ");

@@ -39,8 +39,18 @@ if(!detail.includes("w.requested_at::text"))throw new Error("Work Order timeline
 const reactionPage=fs.readFileSync("app/dashboard/reaction/page.tsx","utf8");
 if(!reactionPage.includes("phase9-reaction"))throw new Error("Reaction page is not scoped to Phase 9");
 const reaction=fs.readFileSync("components/ReactionMap.tsx","utf8");
-for(const marker of ["<Search","<Select","<Button","<Badge","<EmptyState","<Drawer","<PriorityBadge","<ActivityStatusBadge"]){
+for(const marker of ["<Search","<Select","<Button","<Badge","<EmptyState","<Drawer","<PriorityBadge","<ActivityStatusBadge",'className="reaction-map-layout"']){
   if(!reaction.includes(marker))throw new Error("Reaction shared-pattern migration missing "+marker);
+}
+for(const forbidden of ["reaction-left-panel","reaction-results-panel","reaction-map-sidebar","reaction-map-placeholder"]){
+  if(reaction.includes(forbidden))throw new Error("Reaction must not render a non-functional left-side map container: "+forbidden);
+}
+const mapLayoutStart=reaction.indexOf('className="reaction-map-layout"');
+const mapStageIndex=reaction.indexOf('className="reaction-map-stage"',mapLayoutStart);
+const alertPanelIndex=reaction.indexOf('className="reaction-side-panel"',mapLayoutStart);
+const drawerIndex=reaction.indexOf("<Drawer",mapLayoutStart);
+if(mapLayoutStart<0||mapStageIndex<mapLayoutStart||alertPanelIndex<mapStageIndex||drawerIndex<alertPanelIndex){
+  throw new Error("Reaction workspace must contain map then right alerts before the portal Drawer");
 }
 if(reaction.includes("reaction-detail-backdrop")||reaction.includes("reaction-detail-modal"))throw new Error("Reaction still uses the legacy contextual modal");
 for(const glyph of ["⌕","×","↺","☎"])if(reaction.includes(glyph))throw new Error("Reaction still contains legacy glyph "+glyph);
@@ -56,7 +66,7 @@ const css=fs.readFileSync("app/phase9-modules.css","utf8");
 for(const selector of [".phase9-maintenance",".phase9-work-orders",".phase9-work-order-detail",".phase9-reaction",":focus-visible","@media(max-width:760px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 9 CSS missing "+selector);
 }
-for(const marker of ["grid-template-columns:minmax(0,3fr) minmax(280px,1fr)","height:calc(100dvh - 170px)","position:absolute;z-index:30","width:min(88%,calc(100% - var(--space-8)))","reaction-google-map{width:100%;height:100%;min-height:0}","@media(max-width:1180px)"]){
+for(const marker of [".phase9-reaction .reaction-workspace{","display:block;width:100%;min-width:0;height:calc(100dvh - 170px)",".phase9-reaction .reaction-map-layout{","grid-template-columns:minmax(0,3fr) minmax(280px,1fr)","width:100%;height:100%;min-width:0;min-height:0","position:absolute;z-index:30","width:min(88%,calc(100% - var(--space-8)))","reaction-google-map{width:100%;height:100%;min-height:0}","@media(max-width:1180px)"]){
   if(!css.includes(marker))throw new Error("Reaction map workspace UX contract missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 9 CSS must use Design Tokens only");

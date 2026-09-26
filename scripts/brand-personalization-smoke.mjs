@@ -27,8 +27,15 @@ for(const marker of [
   if(!chrome.includes(marker))throw new Error("User menu contract missing "+marker);
 }
 const navigation=fs.readFileSync("components/DashboardNavigation.tsx","utf8");
-if(navigation.includes('href:"/dashboard/brand"')||navigation.includes('href: "/dashboard/brand"')){
+const dashboardLayout=fs.readFileSync("app/dashboard/layout.tsx","utf8");
+if(
+  navigation.includes('href:"/dashboard/brand"')||navigation.includes('href: "/dashboard/brand"')
+  || dashboardLayout.includes('id: "brand"') || dashboardLayout.includes('id:"brand"')
+){
   throw new Error("Brand personalization must not become a permanent sidebar module");
+}
+if(!dashboardLayout.includes("organizationBranding.autoPalette")){
+  throw new Error("Saved automatic-palette preference must reach the dashboard shell");
 }
 
 const brand=fs.readFileSync("components/BrandPersonalization.tsx","utf8");
@@ -38,7 +45,7 @@ for(const marker of [
   "Color principal","Color secundario","Color de acento",
   "Generar paleta automáticamente","Vista previa en tiempo real",
   "Guardar identidad visual","Restaurar predeterminado","cancelChanges",
-  'variant="success"',
+  "brand-preview-tabs","brand-preview-filter",'variant="success"',
 ]){
   if(!brand.includes(marker))throw new Error("Brand workspace contract missing "+marker);
 }
@@ -74,8 +81,8 @@ for(const marker of ["Perfil","Preferencias","Apariencia","Seguridad","Integraci
   if(!preferences.includes(marker))throw new Error("Mi configuración contract missing "+marker);
 }
 const profileApi=fs.readFileSync("app/api/preferences/profile/route.ts","utf8");
-if(!profileApi.includes("session.userId")||profileApi.includes("organization_members")){
-  throw new Error("Self profile boundary must update only the authenticated user, never role/scope membership");
+if(!profileApi.includes("session.userId")||profileApi.includes("organization_members")||profileApi.includes("hashPassword")){
+  throw new Error("Self profile boundary must update only personal fields of the authenticated user, never credentials or role/scope membership");
 }
 
 const help=fs.readFileSync("components/UserManual.tsx","utf8");

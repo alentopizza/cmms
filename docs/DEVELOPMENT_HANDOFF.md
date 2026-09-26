@@ -28,7 +28,7 @@ La documentación del repositorio es la fuente de continuidad. Las conversacione
 - Solo `role=admin` con `planCode=pro` y `whiteLabel=true` puede mutar `/api/organization-branding`. La pantalla puede mostrarse a un Administrador sin Pro como gateway de upgrade, sin alterar suscripción.
 - `lib/brand-theme.ts` genera el puente de tokens de marca. Nunca sobrescribir los tokens semánticos success/warning/danger/info.
 - La preferencia personal de tema guardada en `desweb-theme` prevalece sobre el estilo predeterminado de empresa. Si no existe preferencia personal, `BrandThemeSync` usa la apariencia de empresa.
-- `app/api/preferences/profile` es self-service y solo puede actualizar al `session.userId`: nombre, correo, teléfono, avatar o contraseña. No debe mutar `organization_members`, roles ni Site scope. El bootstrap Platform Owner sigue sin user row editable.
+- `app/api/preferences/profile` es self-service y solo puede actualizar al `session.userId`: nombre, correo, teléfono y avatar. No debe mutar contraseñas, `organization_members`, roles ni Site scope. Seguridad conserva los flujos de autenticación existentes. El bootstrap Platform Owner sigue sin user row editable.
 - Logout desde el menú de cuenta y el sheet móvil solicita confirmación y después usa `/api/auth/logout`; no duplicar cierre de sesión.
 - `scripts/brand-personalization-smoke.mjs` protege estas fronteras.
 

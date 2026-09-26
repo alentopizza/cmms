@@ -172,6 +172,20 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const summary=summaryResult.rows[0]||{total_count:0,filtered_count:0,active_count:0,overdue_count:0,due_soon_count:0};
   const pageCount=Math.max(1,Math.ceil(summary.filtered_count/ROUTINE_PAGE_SIZE));
   const page=Math.min(requestedPage,pageCount);
+  if(requestedPage!==page){
+    const canonical=new URLSearchParams();
+    if(feedback.created)canonical.set("created",feedback.created);
+    if(feedback.error)canonical.set("error",feedback.error);
+    if(q)canonical.set("q",q);
+    if(status!=="all")canonical.set("status",status);
+    if(organization)canonical.set("organization",organization);
+    if(site)canonical.set("site",site);
+    if(frequency)canonical.set("frequency",frequency);
+    if(sort!=="due")canonical.set("sort",sort);
+    if(page>1)canonical.set("page",String(page));
+    const queryString=canonical.toString();
+    redirect(queryString?"/dashboard/maintenance?"+queryString:"/dashboard/maintenance");
+  }
   const pageParams=[...filteredParams,ROUTINE_PAGE_SIZE,(page-1)*ROUTINE_PAGE_SIZE];
   const limitToken="$"+(pageParams.length-1);
   const offsetToken="$"+pageParams.length;

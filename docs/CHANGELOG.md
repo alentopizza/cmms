@@ -13,6 +13,10 @@
 - Mi configuración ahora presenta Perfil, Preferencias, Apariencia, Seguridad e Integraciones. El perfil utiliza el usuario autenticado y una mutación self-service que solo actualiza nombre, correo, teléfono y avatar propios; Seguridad conserva los flujos de credenciales existentes y no toca rol, empresa, membresías ni alcance.
 - Manual / Ayuda conserva `lib/user-manual.ts` como fuente y añade categorías visuales sobre artículos reales; Video tutoriales queda deshabilitado cuando no existe contenido publicado.
 - Se añadieron las migraciones `043_brand_personalization.sql`, `044_brand_personalization_light_default.sql` y `045_brand_legacy_scheme.sql`; esta última clasifica como Personalizado los colores white-label anteriores a los presets. También se añadieron estilos token-only y `scripts/brand-personalization-smoke.mjs`.
+- La vista previa usa contexto real de la empresa (estado, sedes y una ciudad registrada) y no contiene KPIs ficticios. Clara/Oscura se aíslan del tema actual para que la comparación sea fiable.
+- La eliminación del logo personalizado ahora se prepara localmente y se persiste atómicamente solo al pulsar **Guardar identidad visual**; Cancelar restaura el estado anterior. El servidor valida firma y dimensiones reales de PNG/JPG/WebP.
+- Los tabs de marca soportan semántica ARIA y navegación por flechas/Home/End. Manual / Ayuda mantiene la categoría Video tutoriales explorable aunque no tenga contenido, mostrando un estado vacío en vez de inventar material.
+- La apariencia de empresa actúa como valor heredado: abrir Mi configuración ya no crea automáticamente una preferencia personal; un valor explícito del usuario continúa teniendo prioridad.
 
 ## 2026-09-26 — Ajuste UX/UI · Ubicaciones + Reacción
 

@@ -75,8 +75,14 @@ for(const marker of ["phase6-location-directory","<LocationCard","<SubLocationCa
 if(locations.includes("function MetricCard"))throw new Error("Locations still defines private metric cards");
 
 const business=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
-for(const marker of ["export function CompanyCard","export function SubLocationCard"]){
+for(const marker of ["export function CompanyCard","export function LocationCard","export function SubLocationCard"]){
   if(!business.includes(marker))throw new Error("Business UI extension missing "+marker);
+}
+for(const marker of ['site-visual-cover ds-business-banner','site-company-logo ds-business-logo','ds-location-status']){
+  if(!business.includes(marker))throw new Error("LocationCard visual hierarchy missing "+marker);
+}
+if(business.includes('</div>\n      <div className="site-company-logo ds-business-logo">')){
+  throw new Error("LocationCard company logo must remain inside the site photo, not between photo and information");
 }
 
 const prerequisite=fs.readFileSync("components/CreationPrerequisiteState.tsx","utf8");
@@ -89,6 +95,9 @@ if(!staticTable.includes('className="ds-data-table"'))throw new Error("StaticDat
 const css=fs.readFileSync("app/phase6-modules.css","utf8");
 for(const selector of [".phase6-dashboard",".phase6-company-directory",".phase6-location-directory",".company-related-location-grid",".company-technician-card-grid",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 6 CSS missing "+selector);
+}
+for(const marker of ["position:absolute;z-index:2;top:var(--space-3);left:var(--space-3);transform:none","object-fit:contain"]){
+  if(!css.includes(marker))throw new Error("Location grid logo placement contract missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 6 CSS must use Design Tokens only");
 const documentCss=fs.readFileSync("app/document-workspace.css","utf8");

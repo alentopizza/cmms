@@ -16,6 +16,11 @@ for(const marker of [
   "directory_requisition_count",
   "open_requisition_count",
   "active_document_count",
+  '($1::uuid IS NULL OR work_order.organization_id=$1)',
+  '($1::uuid IS NULL OR i.organization_id=$1)',
+  '($1::uuid IS NULL OR r.organization_id=$1)',
+  '($1::uuid IS NULL OR d.organization_id=$1)',
+  '($1::uuid IS NULL OR s.organization_id=$1)',
   'getCreationGateForScope("supplier"',
   "<SupplierDirectory",
 ]){

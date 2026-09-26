@@ -723,3 +723,28 @@ Rules:
 - the audit dossier may expose request lifecycle, accepted policy version, consent timestamp, Site/location summary, liveness method and reviewer/decision metadata, but never raw embeddings, transient preview after decision, or raw biometric scores.
 
 This model separates **identity establishment** (one human decision) from **routine presence verification** (automatic and server-validated), making the flow operationally viable for large employee populations while retaining an auditable consent and approval chain.
+
+
+## ADR-045 — Organization brand personalization extends existing white-label state and Design Tokens
+
+Status: accepted.
+
+Organization branding is a Pro tenant capability and must personalize CMMS without creating a parallel application theme, settings stack or authentication model.
+
+Rules:
+- `organization_branding` remains the single tenant white-label record; migrations 043–044 extend it instead of creating another theme table;
+- `/dashboard/brand` is the dedicated Organization brand experience and is intentionally absent from permanent sidebar navigation;
+- `/dashboard/personalization` remains the platform-global asset customization surface. Tenant brand configuration must never write to `app_customization`;
+- the existing `/api/organization-branding` route remains the mutation authority and requires authenticated Organization Administrator + plan `pro` + `white_label` entitlement;
+- server scope always comes from `session.organizationId`; a browser-supplied Organization id is not accepted to choose the branding target;
+- `lib/brand-theme.ts` owns preset palettes and derived brand tokens. Runtime components consume tokens rather than calculating or querying branding independently;
+- Organization colors may control navigation, primary actions, active controls, focus and structural accents, but cannot replace success/warning/danger/info semantic colors;
+- Organization appearance reuses the existing light/dark/system theme contract. A user's explicit `desweb-theme` browser preference has precedence over the Organization default;
+- density is a presentation preference only and cannot change authorization, data or business workflows;
+- real-time preview is local unsaved state. Persistence occurs only through the explicit save mutation; Cancel cannot issue a write;
+- restoring the default requires confirmation and removes the Organization override so the DESWEB fallback resumes;
+- general Settings may link to brand personalization but must not maintain another tenant brand editor;
+- self profile changes use a separate self-only account boundary because administrator user-management permissions are intentionally broader. That boundary can change the authenticated user's personal fields/password only, never role, Organization membership or Site scope;
+- logout confirmation is presentation only; confirmed logout continues through the existing authentication/logout route and tracking cleanup.
+
+This keeps white label multi-tenant, entitlement-driven and compatible with the canonical Design System while preserving semantic meaning and existing business authorities.

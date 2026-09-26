@@ -116,36 +116,45 @@ export function buildBrandPalette(input:BrandPaletteInput):BrandPalette{
   };
 }
 
-export function brandCssVariables(input:BrandPaletteInput):Record<string,string>{
+export function brandCssVariables(input:BrandPaletteInput,autoPalette=true):Record<string,string>{
   const palette=buildBrandPalette(input);
+  const structural=autoPalette?palette:buildBrandPalette(DEFAULT_BRAND_SCHEME);
   return {
     "--brand-primary":palette.primary,
-    "--brand-primary-hover":palette.primaryHover,
-    "--brand-primary-soft":palette.primarySoft,
+    "--brand-primary-hover":autoPalette?palette.primaryHover:structural.primaryHover,
+    "--brand-primary-soft":autoPalette?palette.primarySoft:structural.primarySoft,
     "--brand-secondary":palette.secondary,
-    "--brand-secondary-hover":palette.secondaryHover,
-    "--brand-secondary-soft":palette.secondarySoft,
+    "--brand-secondary-hover":autoPalette?palette.secondaryHover:structural.secondaryHover,
+    "--brand-secondary-soft":autoPalette?palette.secondarySoft:structural.secondarySoft,
     "--brand-accent":palette.accent,
-    "--brand-accent-soft":palette.accentSoft,
-    "--brand-sidebar":palette.sidebar,
-    "--brand-sidebar-hover":palette.sidebarHover,
-    "--brand-sidebar-active":palette.sidebarActive,
-    "--brand-background":`color-mix(in srgb,${palette.primary} 5%,var(--color-bg))`,
-    "--brand-surface":`color-mix(in srgb,${palette.primary} 2%,var(--color-surface))`,
-    "--brand-border":`color-mix(in srgb,${palette.primary} 16%,var(--color-border-subtle))`,
+    "--brand-accent-soft":autoPalette?palette.accentSoft:structural.accentSoft,
+    "--brand-sidebar":autoPalette?palette.sidebar:structural.sidebar,
+    "--brand-sidebar-hover":autoPalette?palette.sidebarHover:structural.sidebarHover,
+    "--brand-sidebar-active":palette.primary,
+    "--brand-background":autoPalette
+      ? `color-mix(in srgb,${palette.primary} 5%,var(--color-bg))`
+      : "var(--color-bg)",
+    "--brand-surface":autoPalette
+      ? `color-mix(in srgb,${palette.primary} 2%,var(--color-surface))`
+      : "var(--color-surface)",
+    "--brand-border":autoPalette
+      ? `color-mix(in srgb,${palette.primary} 16%,var(--color-border-subtle))`
+      : "var(--color-border-subtle)",
     "--brand-text":"var(--color-text-primary)",
     "--brand-text-secondary":"var(--color-text-secondary)",
     "--color-action-primary":palette.primary,
-    "--color-action-primary-hover":palette.primaryHover,
+    "--color-action-primary-hover":autoPalette?palette.primaryHover:structural.primaryHover,
     "--color-action-primary-active":palette.secondary,
     "--color-action-accent":palette.accent,
     "--color-focus-ring":palette.accent,
     "--color-border-active":palette.primary,
-    "--color-surface-teal":`color-mix(in srgb,${palette.primary} 10%,var(--color-surface))`,
+    "--color-surface-teal":autoPalette
+      ? `color-mix(in srgb,${palette.primary} 10%,var(--color-surface))`
+      : "var(--color-surface-soft)",
     "--color-brand-secondary":palette.primary,
     "--color-brand-primary":palette.accent,
     "--brand-teal":palette.primary,
-    "--brand-teal-hover":palette.primaryHover,
+    "--brand-teal-hover":autoPalette?palette.primaryHover:structural.primaryHover,
     "--brand-mint":palette.accent,
   };
 }

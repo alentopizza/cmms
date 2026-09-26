@@ -32,14 +32,18 @@ if(navigation.includes('href:"/dashboard/brand"')||navigation.includes('href: "/
 }
 
 const brand=fs.readFileSync("components/BrandPersonalization.tsx","utf8");
+const brandTheme=fs.readFileSync("lib/brand-theme.ts","utf8");
 for(const marker of [
   '"Esquema de color"','"Logo e identidad"','"Apariencia"','"Vista previa"',
-  "Predeterminado","Personalizado","Color principal","Color secundario","Color de acento",
+  "Color principal","Color secundario","Color de acento",
   "Generar paleta automáticamente","Vista previa en tiempo real",
   "Guardar identidad visual","Restaurar predeterminado","cancelChanges",
   'variant="success"',
 ]){
   if(!brand.includes(marker))throw new Error("Brand workspace contract missing "+marker);
+}
+for(const marker of ["Predeterminado","Fresco","Luminoso","Azul","Café","Ectoplasma","Medianoche","Océano","Amanecer","Personalizado"]){
+  if(!brandTheme.includes(marker))throw new Error("Brand preset missing "+marker);
 }
 if(brand.includes("/api/brand")||brand.includes("/api/personalization/brand")){
   throw new Error("Brand workspace introduced a parallel branding endpoint");

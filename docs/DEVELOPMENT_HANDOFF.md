@@ -20,6 +20,18 @@ Antes de modificar código:
 
 La documentación del repositorio es la fuente de continuidad. Las conversaciones sirven para intención y referencias visuales, pero las reglas permanentes deben quedar expresadas aquí, en `AGENTS.md` o en la documentación temática.
 
+## Menú de usuario + Personalización de marca PRO
+
+- El acceso continúa en el avatar del header. No añadir Personalización de marca al sidebar.
+- `/dashboard/preferences` es la configuración personal; `/dashboard/help` usa el manual real; `/dashboard/settings` es configuración general; `/dashboard/brand` es marca PRO por empresa; `/dashboard/personalization` permanece reservado a recursos globales de plataforma.
+- La marca PRO persiste exclusivamente en `organization_branding`. Migraciones 043/044 amplían esa tabla; no crear una segunda tabla/API de temas.
+- Solo `role=admin` con `planCode=pro` y `whiteLabel=true` puede mutar `/api/organization-branding`. La pantalla puede mostrarse a un Administrador sin Pro como gateway de upgrade, sin alterar suscripción.
+- `lib/brand-theme.ts` genera el puente de tokens de marca. Nunca sobrescribir los tokens semánticos success/warning/danger/info.
+- La preferencia personal de tema guardada en `desweb-theme` prevalece sobre el estilo predeterminado de empresa. Si no existe preferencia personal, `BrandThemeSync` usa la apariencia de empresa.
+- `app/api/preferences/profile` es self-service y solo puede actualizar al `session.userId`: nombre, correo, teléfono, avatar o contraseña. No debe mutar `organization_members`, roles ni Site scope. El bootstrap Platform Owner sigue sin user row editable.
+- Logout desde el menú de cuenta y el sheet móvil solicita confirmación y después usa `/api/auth/logout`; no duplicar cierre de sesión.
+- `scripts/brand-personalization-smoke.mjs` protege estas fronteras.
+
 ## Ajuste UX/UI · Ubicaciones + Reacción
 
 - `components/LocationDirectory.tsx` conserva la cuadrícula de `LocationCard` y reutiliza `EntityIdentityCell` en el listado para mostrar la fotografía real de cada Site. No sustituir esa imagen por el logo de empresa: fotografía = sede física; logo = empresa.

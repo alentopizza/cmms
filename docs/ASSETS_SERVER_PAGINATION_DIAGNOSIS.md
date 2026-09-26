@@ -1,7 +1,7 @@
 # Fase 3 — Diagnóstico server-side de Activos
 
 Fecha: 2026-09-26  
-Estado: diagnóstico previo a implementación  
+Estado: diagnóstico completado; implementación validada en `72f5327c00be6dd464b71399bb760378d161157a`  
 Alcance: `/dashboard/assets` y dependencias directas del módulo. No incluye Inventario, Ubicaciones, CSS global, índices, biometría, RUM ni deployment.
 
 ## 1. Scope RBAC actual
@@ -336,3 +336,21 @@ No se modificarán en esta fase:
 - deployment.
 
 Si una consulta demuestra necesidad de índice, se documentará para Fase 5 y no se añadirá por intuición.
+
+
+## 20. Resultado de implementación
+
+La implementación confirmó el diseño del diagnóstico sin reintroducir una colección completa de activos:
+
+- `assets.rows` quedó reservado para la página visible de 24 registros.
+- `summaryPromise` calcula total, total filtrado, estados, criticidad y calidad sobre el scope autorizado completo.
+- `facetsPromise` genera empresa, sede, criticidad, categoría y proveedor desde el scope completo.
+- marcas y modelos se resuelven con consultas agregadas/definidas sobre el mismo scope.
+- `AssetCatalogOverview` recibe `summary`, `brands` y `models`, no `assets.rows`.
+- `catalogCategoriesPromise` conserva las categorías de la organización, pero cuenta activos únicamente desde el CTE autorizado.
+- creación, edición, importación, exportación, mantenimiento, historial y documentos permanecen desacoplados de la página.
+- `UrlPagination` reutiliza el `Pagination` existente; `CollectionView` no fue modificado.
+- el smoke `scripts/assets-server-pagination-smoke.mjs` quedó agregado a CI y pasó junto con build y regresiones existentes.
+- no se añadieron índices ni se modificaron los módulos excluidos.
+
+Comparación principal: hasta 600 activos cargados en el directorio → máximo 24 por página, sin limitar búsqueda, filtros, facetas, KPI ni catálogo al subconjunto visible.

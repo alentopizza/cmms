@@ -611,7 +611,7 @@ export default function SupplierDirectory({
             <div className="entity-info-field"><span>Correo de pagos</span><strong>{detail.payment_email||"Sin registrar"}</strong></div>
             <div className="entity-info-field entity-financial-notes"><span>Observaciones</span><strong>{detail.payment_notes||"Sin observaciones"}</strong></div>
           </div>
-        <</div>)},
+        </div>)},
 
       ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:demandContent("activities",<div className="supplier-activity-list">
         {selectedActivities.length?selectedActivities.map(activity=><article className="supplier-activity-row" key={activity.id}>

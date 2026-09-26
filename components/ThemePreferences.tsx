@@ -6,29 +6,40 @@ import { Badge } from "@/components/ui-kit/Badge";
 
 type ThemePreference = "light" | "dark" | "system";
 
-function applyPreference(preference: ThemePreference) {
+function isThemePreference(value:string|null|undefined):value is ThemePreference{
+  return value==="light"||value==="dark"||value==="system";
+}
+
+function applyPreference(preference: ThemePreference, persist=true) {
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const resolved = preference === "system" ? (systemDark ? "dark" : "light") : preference;
   document.documentElement.dataset.theme = resolved;
   document.documentElement.dataset.themePreference = preference;
-  localStorage.setItem("desweb-theme", preference);
+  if(persist)localStorage.setItem("desweb-theme", preference);
 }
 
 export default function ThemePreferences() {
   const [preference, setPreference] = useState<ThemePreference>("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("desweb-theme");
-    const current: ThemePreference = saved === "light" || saved === "dark" || saved === "system" ? saved : "light";
+    const saved=localStorage.getItem("desweb-theme");
+    const inherited=document.documentElement.dataset.themePreference;
+    const current:ThemePreference=isThemePreference(saved)
+      ? saved
+      : isThemePreference(inherited)
+        ? inherited
+        : "light";
     setPreference(current);
-    applyPreference(current);
+    applyPreference(current,false);
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => {
-      if (localStorage.getItem("desweb-theme") === "system") applyPreference("system");
+    const media=window.matchMedia("(prefers-color-scheme: dark)");
+    const update=()=>{
+      const explicit=localStorage.getItem("desweb-theme");
+      const active=isThemePreference(explicit)?explicit:document.documentElement.dataset.themePreference;
+      if(active==="system")applyPreference("system",isThemePreference(explicit));
     };
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    media.addEventListener("change",update);
+    return()=>media.removeEventListener("change",update);
   }, []);
 
   const options: Array<{ value: ThemePreference; title: string; description: string; icon: UiIconName }> = [

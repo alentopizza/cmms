@@ -16,6 +16,7 @@ export { FileUpload } from "./FileUpload";
 export { Search, FilterPanel, FilterGroup, ViewModeToggle, CollectionView } from "./DataControls";
 export type { ViewMode } from "./DataControls";
 export { DataTable, Pagination, RowActions } from "./DataTable";
+export { UrlPagination } from "./UrlPagination";
 export type { DataTableColumn, DataTableBulkAction } from "./DataTable";
 export { KpiCard, MetricGrid, StatTiles } from "./Metrics";
 export type { KpiTone, KpiDirection, KpiCardProps } from "./Metrics";

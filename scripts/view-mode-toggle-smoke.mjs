@@ -88,7 +88,7 @@ for(const marker of ["EntityIdentityCell","ListQuickActions",'variant?:"avatar"|
 }
 
 const locations=fs.readFileSync("components/LocationDirectory.tsx","utf8");
-for(const marker of ["<StaticDataTable","Listado de ubicaciones","Ver ubicación","ds-list-action"]){
+for(const marker of ["<StaticDataTable","Listado de ubicaciones","EntityIdentityCell","site.has_image","/api/sites/","icon=\"location\"","Ver ubicación","ds-list-action"]){
   if(!locations.includes(marker))throw new Error("Locations approved list view missing "+marker);
 }
 

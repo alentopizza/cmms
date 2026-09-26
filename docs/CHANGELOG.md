@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-26 — Fase 3 · Órdenes de Trabajo server-side
+
+- Órdenes migra de `LIMIT 200` + filtros DOM a búsqueda, filtros y paginación server-side sobre todo el scope autorizado.
+- Se preservaron literalmente los scopes plataforma, requester, provider, external e interno, incluyendo acceso limitado por sedes.
+- Provider conserva asignación directa o mediante actividades; External conserva asignación directa, actividad individual o actividad de cuadrilla.
+- KPI y facetas se calculan sobre el conjunto autorizado completo; la página visible contiene máximo 24 OT.
+- URL: `q`, estado, empresa, sede, prioridad, tipo, sort y page. Búsqueda/filtros regresan a página 1.
+- Grid/List continúa usando `CollectionView`; cambiar vista no navega ni consulta de nuevo.
+- El catálogo de activos para creación continúa independiente.
+- Smoke PostgreSQL valida scopes de todos los roles, ID conocido fuera de scope, búsqueda, COUNT, facetas y página 2.
+- Filas máximas del directorio: 200 → 24. No se atribuyen mejoras de tiempo sin medición real.
+- Base funcional validada: `8f3063d68d8882973a4b10b750a9eda38fa11f52`.
+
 ## 2026-09-26 — Auditoría de rendimiento · Fase 3 piloto Rutinas
 
 - Rutinas migra de filtrado DOM sobre hasta 200 filas a búsqueda, filtros, orden y paginación server-side sobre el conjunto autorizado completo.

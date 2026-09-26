@@ -60,6 +60,14 @@ Core stack:
 
 The application runs pending migrations before starting the production server.
 
+### Account experience and PRO organization identity — 2026-09-26
+
+The existing top-right account menu is now the single entry point for personal configuration, help, organization brand personalization, general settings and confirmed logout. Personalization of brand is not a sidebar module.
+
+Organization Pro white label now extends the existing `organization_branding` source with predefined/custom palettes, accent color, automatic derived tokens, logo identity, interface default and density, plus an unsaved real-time preview. The runtime applies organization brand tokens through the Design System shell while retaining semantic status colors and tenant isolation.
+
+Personal theme preference remains browser-local and takes precedence over the organization default. Account self-editing is restricted to personal identity/password fields and does not change RBAC or memberships. Help continues to be generated from the checked-in `lib/user-manual.ts` content.
+
 ## Implemented product foundation
 
 ### Multi-tenancy and companies

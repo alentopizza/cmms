@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base funcional validada para esta entrega: `1591b2ebee7272b9156299a4f4a0470c80bbb167`
+> Base funcional validada para esta entrega: `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -35,6 +35,27 @@ Fase funcional cerrada sobre `1591b2ebee7272b9156299a4f4a0470c80bbb167`.
 - No hubo migraciones, cambios de relaciones ni cambios de modelo.
 - El guard oficial es `scripts/performance-suppliers-phase2-smoke.mjs`.
 - Pendientes de otras fases: paginación server-side (Fase 3), CSS global (Fase 4), índices/EXPLAIN basados en slow-query telemetry (Fase 5), RUM y despliegue (Fase 6).
+
+## Auditoría de rendimiento · Fase 3 piloto Rutinas
+
+Piloto server-side validado sobre `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`.
+
+- Solo Rutinas/Mantenimiento está migrado en esta etapa. Órdenes, Activos, Inventario y Ubicaciones permanecen sin cambios.
+- `ModuleHeader` soporta `serverState` opcional. Sin ese prop conserva el filtrado DOM anterior.
+- Estado URL del piloto: `q`, `status`, `organization`, `site`, `frequency`, `sort`, `page`.
+- Búsqueda/filtros eliminan `page` para regresar a la primera página; una página fuera de rango se canonicaliza.
+- El scope de organización/sedes se construye antes de aplicar filtros de usuario.
+- Facetas y KPIs usan todo el conjunto autorizado; la página visible usa 24 filas.
+- Orden default preservado: próxima ejecución `NULLS LAST`, nombre e id estable.
+- `routinePageWindow()` encapsula `LIMIT/OFFSET` para que un futuro cambio a cursor/keyset no quede disperso.
+- `UrlPagination` envuelve el `Pagination` existente; no introduce un segundo sistema visual.
+- `CollectionView` no cambió. Grid/List sigue siendo local y no modifica URL/página.
+- Catálogo de activos, creación, edición y `OwnerRecordActions` siguen independientes de la colección paginada.
+- `scripts/maintenance-server-pagination-smoke.mjs` prueba con PostgreSQL página 2, búsqueda fuera de primera página, filtros combinados, COUNT, facetas y scope de sede.
+- Antes: hasta 200 rutinas transferidas. Después: máximo 24 filas de rutina + una fila summary + una fila facetas.
+- Runtime SQL del directorio: antes 1 query de planes (+ activos si write); después summary + facetas + página (+ activos si write). El aumento es deliberado para obtener semántica completa.
+- No hubo migraciones, índices, CSS global ni cambios en otros módulos.
+- Siguiente candidato únicamente después de revisión: Órdenes de trabajo.
 
 ## 2. Estado técnico actual
 

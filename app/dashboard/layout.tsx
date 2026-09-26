@@ -80,7 +80,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         primary: organizationBranding.primaryColor,
         secondary: organizationBranding.secondaryColor,
         accent: organizationBranding.accentColor,
-      }) as React.CSSProperties
+      },organizationBranding.autoPalette) as React.CSSProperties
     : undefined;
   const sidebarLogo = organizationBranding?.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"

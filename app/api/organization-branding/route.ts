@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const accentColor = String(form.get("accent_color") || previous?.accent_color || DEFAULT_BRAND_SCHEME.accent).trim();
     const schemeKey=String(form.get("scheme_key")||previous?.scheme_key||"default");
     const autoPalette=String(form.get("auto_palette")||"")!=="off";
-    const interfaceStyle=String(form.get("interface_style")||previous?.interface_style||"system");
+    const interfaceStyle=String(form.get("interface_style")||previous?.interface_style||"light");
     const interfaceDensity=String(form.get("interface_density")||previous?.interface_density||"normal");
     const advanced=String(form.get("branding_form")||"")==="advanced";
     const showDeswebBranding=advanced

@@ -56,8 +56,11 @@ For larger operations and customers who require their own visual identity.
 - monthly subscription;
 - organization white label;
 - custom application name;
-- tenant colors;
-- light/dark logos;
+- predefined or custom tenant palette with principal, secondary and accent colors;
+- automatic derived brand/navigation tokens while semantic status colors remain fixed;
+- organization logo identity using the existing white-label asset storage;
+- organization default interface appearance and density with personal theme preference taking precedence;
+- real-time preview before saving;
 - optional Desweb signature.
 
 Prices are intentionally not hard-coded yet. Pricing is a commercial decision and should be populated only after approval.
@@ -208,3 +211,8 @@ Future commercial data should support:
 - approved discount workflows.
 
 These commercial relationships must remain separate from tenant operational authorization.
+
+
+### Pro brand-personalization entitlement
+
+The dedicated Organization brand editor is a Pro surface, but it does not define the entitlement. Authorization continues to come from the existing subscription/plan model: the authenticated Organization must be on plan code `pro`, the plan must expose `white_label`, and the actor must be the Organization Administrator. Non-Pro administrators may see the feature entry point and existing plan options, but cannot persist brand settings. No new payment or subscription flow is introduced by the UI.

@@ -68,8 +68,9 @@ for(const marker of [
 
 const theme=fs.readFileSync("lib/brand-theme.ts","utf8");
 for(const marker of [
-  "--brand-primary","--brand-secondary","--brand-accent","--brand-sidebar",
-  "--color-action-primary","--color-focus-ring","buildBrandPalette",
+  "--brand-primary","--brand-on-primary","--brand-secondary","--brand-accent","--brand-on-accent",
+  "--brand-sidebar","--brand-on-sidebar","--brand-on-sidebar-active",
+  "--color-action-primary","--color-focus-ring","buildBrandPalette","readableBrandText","darkenForLightText",
 ]){
   if(!theme.includes(marker))throw new Error("Central brand token bridge missing "+marker);
 }

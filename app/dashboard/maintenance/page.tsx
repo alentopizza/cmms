@@ -94,7 +94,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   if(q){
     filteredParams.push(likePattern(q));
     const token="$"+filteredParams.length;
-    filteredConditions.push(`(name ILIKE ${token} ESCAPE '\\\\' OR asset ILIKE ${token} ESCAPE '\\\\' OR company ILIKE ${token} ESCAPE '\\\\' OR site ILIKE ${token} ESCAPE '\\\\' OR frequency_unit ILIKE ${token} ESCAPE '\\\\')`);
+    filteredConditions.push(`(name ILIKE ${token} ESCAPE E'\\\\' OR asset ILIKE ${token} ESCAPE E'\\\\' OR company ILIKE ${token} ESCAPE E'\\\\' OR site ILIKE ${token} ESCAPE E'\\\\' OR frequency_unit ILIKE ${token} ESCAPE E'\\\\')`);
   }
   if(status!=="all"){
     filteredParams.push(status==="active");

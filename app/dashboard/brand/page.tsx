@@ -32,6 +32,17 @@ export default async function BrandPage({
   const org=organization.rows[0];
   const branding=await getOrganizationBranding(session.organizationId);
   const proEnabled=session.planCode==="pro"&&session.whiteLabel;
+  const brandingErrorMessage=params.branding_error==="image-type"
+    ?"El logo debe ser PNG, JPG o WebP."
+    :params.branding_error==="image-size"
+      ?"El logo supera el tamaño máximo permitido de 2 MB."
+      :params.branding_error==="image-invalid"
+        ?"El archivo no contiene una imagen válida o sus dimensiones no son compatibles."
+        :params.branding_error==="invalid"
+          ?"Revisa los colores HEX y las opciones de apariencia seleccionadas."
+          :params.branding_error
+            ?"No fue posible guardar la identidad visual. Intenta nuevamente."
+            :"";
   const logoSrc=branding.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"
     : branding.hasLogoOnLight
@@ -51,7 +62,7 @@ export default async function BrandPage({
 
     {params.branding_saved==="1"&&<Alert variant="success" title="Identidad visual actualizada">La configuración de marca de {org.name} quedó guardada.</Alert>}
     {params.branding_reset==="1"&&<Alert variant="success" title="Identidad restaurada">La empresa volvió a utilizar la identidad predeterminada de Desweb CMMS.</Alert>}
-    {params.branding_error&&<Alert variant="danger" title="No fue posible guardar la identidad visual">Revisa los colores y el archivo de logo antes de intentar nuevamente.</Alert>}
+    {params.branding_error&&<Alert variant="danger" title="No fue posible guardar la identidad visual">{brandingErrorMessage}</Alert>}
 
     {!proEnabled?<section className="brand-upgrade-card">
       <span className="brand-upgrade-icon"><UiIcon name="company" size={24}/></span>

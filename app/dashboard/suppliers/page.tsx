@@ -58,27 +58,37 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code
       WHERE ss.supplier_id=s.id
     ) specialties ON true
-    LEFT JOIN LATERAL (
-      SELECT count(*)::int activity_count,
+    LEFT JOIN (
+      SELECT wt.service_supplier_id supplier_id,
+             count(*)::int activity_count,
              count(*) FILTER (WHERE wt.status IN ('pending','in_progress'))::int active_activity_count
-      FROM work_order_tasks wt WHERE wt.service_supplier_id=s.id
-    ) activity_stats ON true
-    LEFT JOIN LATERAL (
-      SELECT count(*)::int item_count,
+      FROM work_order_tasks wt
+      WHERE wt.service_supplier_id IS NOT NULL
+      GROUP BY wt.service_supplier_id
+    ) activity_stats ON activity_stats.supplier_id=s.id
+    LEFT JOIN (
+      SELECT i.supplier_id,
+             count(*)::int item_count,
              count(*) FILTER (WHERE i.active<>false)::int active_item_count
-      FROM inventory_items i WHERE i.supplier_id=s.id
-    ) item_stats ON true
-    LEFT JOIN LATERAL (
-      SELECT count(*)::int requisition_count,
+      FROM inventory_items i
+      WHERE i.supplier_id IS NOT NULL
+      GROUP BY i.supplier_id
+    ) item_stats ON item_stats.supplier_id=s.id
+    LEFT JOIN (
+      SELECT r.supplier_id,
+             count(*)::int requisition_count,
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled'))::int directory_requisition_count,
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled','fulfilled'))::int open_requisition_count
-      FROM supplier_requisitions r WHERE r.supplier_id=s.id
-    ) req_stats ON true
-    LEFT JOIN LATERAL (
-      SELECT count(*)::int document_count,
+      FROM supplier_requisitions r
+      GROUP BY r.supplier_id
+    ) req_stats ON req_stats.supplier_id=s.id
+    LEFT JOIN (
+      SELECT d.supplier_id,
+             count(*)::int document_count,
              count(*) FILTER (WHERE d.archived_at IS NULL)::int active_document_count
-      FROM supplier_documents d WHERE d.supplier_id=s.id
-    ) document_stats ON true`;
+      FROM supplier_documents d
+      GROUP BY d.supplier_id
+    ) document_stats ON document_stats.supplier_id=s.id`;
 
   const [suppliers,organizations,capabilityCatalog,specialtyCatalog,creationGate]=await Promise.all([
     platform

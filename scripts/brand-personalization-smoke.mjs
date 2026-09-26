@@ -15,6 +15,7 @@ const required=[
   "app/account-experience.css",
   "db/migrations/043_brand_personalization.sql",
   "db/migrations/044_brand_personalization_light_default.sql",
+  "db/migrations/045_brand_legacy_scheme.sql",
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing account/brand file: "+file);
 

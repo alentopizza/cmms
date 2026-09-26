@@ -45,7 +45,7 @@ for(const marker of [
   '"Esquema de color"','"Logo e identidad"','"Apariencia"','"Vista previa"',
   "Color principal","Color secundario","Color de acento",
   "Generar paleta automáticamente","Vista previa en tiempo real",
-  "Guardar identidad visual","Restaurar predeterminado","cancelChanges",
+  "Guardar identidad visual","Restaurar predeterminado","cancelChanges","removeLogoOverride",'name="remove_logo"',
   "brand-preview-tabs","brand-preview-filter","role=\"tablist\"","onTabKeyDown",'previewData.active?"success":"neutral"',
 ]){
   if(!brand.includes(marker))throw new Error("Brand workspace contract missing "+marker);
@@ -72,7 +72,7 @@ const api=fs.readFileSync("app/api/organization-branding/route.ts","utf8");
 for(const marker of [
   'session.whiteLabel','session.planCode !== "pro"','session.role !== "admin"',
   "organization_branding","accent_color","scheme_key","interface_style","interface_density",
-  'intent==="reset"','intent==="remove_logo"',"session.organizationId",
+  'intent==="reset"','intent==="remove_logo"',"removeLogo","session.organizationId",
 ]){
   if(!api.includes(marker))throw new Error("Existing branding mutation extension missing "+marker);
 }

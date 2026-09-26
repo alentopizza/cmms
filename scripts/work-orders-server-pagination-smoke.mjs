@@ -103,6 +103,8 @@ try{
   const requester=scope("requester",true);
   const search=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE title ILIKE $3 LIMIT 24 OFFSET 0`,[...requester.params,"%Fuera organización%"]);
   if(search.rowCount!==0)throw new Error("Search leaked work order outside requester scope");
+  const knownOutside=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE id=$3::uuid`,[...requester.params,wid(11)]);
+  if(knownOutside.rowCount!==0)throw new Error("Known work-order ID bypassed requester scope");
   const count=await db.query(`WITH scoped AS (${requester.sql}) SELECT count(*)::int total FROM scoped`,requester.params);
   if(count.rows[0].total!==1)throw new Error("Requester COUNT includes work outside scope");
   const facets=await db.query(`WITH scoped AS (${requester.sql}) SELECT array_agg(DISTINCT site_id::text) sites,array_agg(DISTINCT priority) priorities FROM scoped`,requester.params);
@@ -114,12 +116,14 @@ try{
   );
   const internal=scope("internal",true);
   const first=await db.query(`WITH scoped AS (${internal.sql}) SELECT id,site_id FROM scoped ORDER BY requested_at DESC,id DESC LIMIT $3 OFFSET $4`,[...internal.params,24,0]);
-  const second=await db.query(`WITH scoped AS (${internal.sql}) SELECT id,site_id FROM scoped ORDER BY requested_at DESC,id DESC LIMIT $3 OFFSET $4`,[...internal.params,24,24]);
+  const second=await db.query(`WITH scoped AS (${internal.sql}) SELECT id,site_id,title FROM scoped ORDER BY requested_at DESC,id DESC LIMIT $3 OFFSET $4`,[...internal.params,24,24]);
   if(first.rowCount!==24||second.rowCount<1)throw new Error("Pagination fixture did not create page 2");
   if([...first.rows,...second.rows].some(row=>row.site_id!==I.sa))throw new Error("Changing page expanded limited-site scope");
-  const target=second.rows[0].id;
-  const found=await db.query(`WITH scoped AS (${internal.sql}) SELECT id FROM scoped WHERE id=$3::uuid LIMIT $4 OFFSET 0`,[...internal.params,target,24]);
-  if(found.rowCount!==1||found.rows[0].id!==target)throw new Error("Server filter did not recover row outside first page");
+  const target=second.rows[0];
+  const found=await db.query(`WITH scoped AS (${internal.sql}) SELECT id FROM scoped WHERE title ILIKE $3 ORDER BY requested_at DESC,id DESC LIMIT $4 OFFSET 0`,[...internal.params,"%"+target.title+"%",24]);
+  if(found.rowCount<1||!found.rows.some(row=>row.id===target.id))throw new Error("Server search did not recover work order outside first page");
+  const combined=await db.query(`WITH scoped AS (${internal.sql}) SELECT id FROM scoped WHERE status=$3 AND priority=$4 AND site_id=$5::uuid ORDER BY requested_at DESC,id DESC LIMIT $6 OFFSET 0`,[...internal.params,"open","medium",I.sa,24]);
+  if(combined.rowCount<1)throw new Error("Combined work-order filters returned no authorized rows");
 
   console.log("Work-order RBAC scopes passed: platform, requester, provider, external and internal, including limited-site variants.");
   console.log("Search, COUNT, facets and page navigation remain inside the authorized scope.");

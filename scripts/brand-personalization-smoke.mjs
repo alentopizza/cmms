@@ -46,7 +46,7 @@ for(const marker of [
   "Color principal","Color secundario","Color de acento",
   "Generar paleta automáticamente","Vista previa en tiempo real",
   "Guardar identidad visual","Restaurar predeterminado","cancelChanges",
-  "brand-preview-tabs","brand-preview-filter",'variant="success"',
+  "brand-preview-tabs","brand-preview-filter",'previewData.active?"success":"neutral"',
 ]){
   if(!brand.includes(marker))throw new Error("Brand workspace contract missing "+marker);
 }

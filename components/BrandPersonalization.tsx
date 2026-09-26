@@ -19,7 +19,8 @@ type BrandInitial={
   autoPalette:boolean;
   interfaceStyle:InterfaceStyle;
   interfaceDensity:Density;
-  hasLogo:boolean;
+  hasBrandLogo:boolean;
+  hasCompanyLogo:boolean;
 };
 
 const tabs:Array<{id:Tab;label:string;icon:"preferences"|"company"|"system"|"eye"}>=[
@@ -185,8 +186,21 @@ export default function BrandPersonalization({
         <article className="brand-section-card">
           <div className="brand-section-heading"><span><UiIcon name="company" size={18}/></span><div><h2>Logo de la empresa</h2><p>Usa la identidad gráfica de {organizationName} sin crear un segundo almacén de archivos.</p></div></div>
           <div className="brand-logo-preview"><img src={logoPreview} alt={"Logo actual de "+organizationName}/></div>
-          <FileDropzone key={fileVersion} name="logo" label="Cambiar logo" description="PNG, JPG o WebP · máximo 2 MB. El logo se mantiene sin deformación." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" compact existingFileName={initial.hasLogo?"Logo de marca actual":null} existingPreviewUrl={logoSrc} onFileChange={onLogoChange}/>
-          {initial.hasLogo&&<Button type="submit" name="intent" value="remove_logo" variant="danger" iconLeft="trash">Eliminar logo de marca</Button>}
+          <FileDropzone
+            key={fileVersion}
+            name="logo"
+            label="Cambiar logo"
+            description="PNG, JPG o WebP · máximo 2 MB. El logo se mantiene sin deformación."
+            accept="image/png,image/jpeg,image/webp"
+            maxSizeMb={2}
+            kind="image"
+            compact
+            existingFileName={initial.hasBrandLogo?"Logo de marca actual":initial.hasCompanyLogo?"Logo existente de la empresa":null}
+            existingPreviewUrl={logoSrc}
+            onFileChange={onLogoChange}
+          />
+          {!initial.hasBrandLogo&&initial.hasCompanyLogo&&<div className="brand-semantic-note"><UiIcon name="info" size={17}/><span>Se reutiliza el logo existente de la empresa. Al guardar la identidad se usará como fallback sin duplicar el archivo.</span></div>}
+          {initial.hasBrandLogo&&<Button type="submit" name="intent" value="remove_logo" variant="danger" iconLeft="trash">Eliminar logo de marca</Button>}
         </article>
 
         <article className="brand-section-card">

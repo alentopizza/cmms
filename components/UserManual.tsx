@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import {
   MANUAL_CHANGES,
   MANUAL_LAST_REVIEW,
@@ -20,16 +21,32 @@ export default function UserManual({
 }){
   const [role,setRole]=useState<ManualRole>(initialRole);
   const [query,setQuery]=useState("");
+  const [category,setCategory]=useState("all");
 
+  const categoryOptions:Array<{id:string;label:string;icon:UiIconName;matches:(article:ReturnType<typeof articlesForRole>[number])=>boolean}>=[
+    {id:"all",label:"Todos",icon:"dashboard",matches:()=>true},
+    {id:"starter",label:"Primeros pasos",icon:"file",matches:article=>["navigation","role-dashboard","company-setup"].includes(article.id)},
+    {id:"administration",label:"Administración",icon:"user",matches:article=>["Administración","Usuarios","Ubicaciones","Cuadrillas"].includes(article.module)},
+    {id:"assets",label:"Gestión de activos",icon:"asset",matches:article=>article.module==="Activos"||article.keywords.includes("activos")},
+    {id:"work-orders",label:"Órdenes de trabajo",icon:"work-order",matches:article=>article.module.includes("Órdenes")||article.keywords.includes("ot")},
+    {id:"maintenance",label:"Rutinas de mantenimiento",icon:"maintenance",matches:article=>article.module.includes("Rutinas")||article.keywords.includes("rutina")},
+    {id:"inventory",label:"Inventario",icon:"inventory",matches:article=>["Inventario","Requisiciones","Proveedores"].includes(article.module)},
+    {id:"reports",label:"Reportes",icon:"report",matches:article=>article.module==="Reportes"||article.keywords.includes("reportes")||article.keywords.includes("reporte")},
+    {id:"videos",label:"Video tutoriales",icon:"eye",matches:article=>article.keywords.includes("video")||article.keywords.includes("tutorial")},
+  ];
+
+  const roleArticles=useMemo(()=>articlesForRole(role),[role]);
   const articles=useMemo(()=>{
     const normalized=query.trim().toLowerCase();
-    return articlesForRole(role).filter(article=>{
+    const categoryMeta=categoryOptions.find(item=>item.id===category)||categoryOptions[0];
+    return roleArticles.filter(article=>{
+      if(!categoryMeta.matches(article))return false;
       if(!normalized)return true;
       return [
         article.title,article.summary,article.module,...article.keywords,...article.steps,...(article.notes||[])
       ].join(" ").toLowerCase().includes(normalized);
     });
-  },[role,query]);
+  },[roleArticles,query,category]);
 
   const changes=changesForRole(role);
   const roleMeta=MANUAL_ROLES.find(item=>item.id===role)||MANUAL_ROLES[0];
@@ -37,9 +54,9 @@ export default function UserManual({
   return <div className="manual-page">
     <section className="manual-hero">
       <div className="manual-hero-copy">
-        <span className="eyebrow">Centro de ayuda</span>
-        <h1>Manual de usuario Desweb CMMS</h1>
-        <p>Entiende primero lo que corresponde a tu rol y, cuando lo necesites, explora el alcance completo de la plataforma.</p>
+        <span className="eyebrow">MANUAL / AYUDA</span>
+        <h1>Manual / Ayuda</h1>
+        <p>Encuentra guías, tutoriales y documentación según tu rol.</p>
         <div className="manual-hero-actions">
           {authenticated
             ? <Link className="button" href="/dashboard">Volver al panel</Link>
@@ -74,12 +91,26 @@ export default function UserManual({
       <article><span>3</span><div><strong>Consulta cambios</strong><small>Las novedades importantes se reflejan aquí junto con el producto.</small></div></article>
     </section>
 
+    <section className="manual-category-section" aria-label="Categorías del manual">
+      <div className="manual-category-heading"><span className="eyebrow">Categorías</span><h2>Explora por tema</h2><p>Las categorías organizan únicamente las guías reales disponibles para tu rol.</p></div>
+      <div className="manual-category-grid">
+        {categoryOptions.map(option=>{
+          const count=roleArticles.filter(option.matches).length;
+          return <button key={option.id} type="button" className={category===option.id?"active":""} onClick={()=>setCategory(option.id)} aria-pressed={category===option.id} disabled={option.id==="videos"&&count===0}>
+            <span><UiIcon name={option.icon} size={18}/></span>
+            <strong>{option.label}</strong>
+            <small>{count} {count===1?"artículo":"artículos"}</small>
+          </button>;
+        })}
+      </div>
+    </section>
+
     <section className="manual-section">
       <div className="section-heading">
         <div><span className="eyebrow">Guías</span><h2>{role==="all"?"Procesos de la plataforma":"Procesos para "+roleMeta.label}</h2><p className="muted">{articles.length} guías disponibles con el filtro actual.</p></div>
       </div>
 
-      {articles.length===0 ? <div className="card empty-state"><strong>No encontramos resultados.</strong><span>Prueba otra palabra o cambia el rol seleccionado.</span></div> :
+      {articles.length===0 ? <div className="card empty-state"><strong>No encontramos contenido publicado para este filtro.</strong><span>{category==="videos"?"Actualmente no hay video tutoriales publicados en el manual; no se generan contenidos ficticios.":"Prueba otra palabra, categoría o cambia el rol seleccionado."}</span></div> :
       <div className="manual-article-grid">
         {articles.map(article=><details key={article.id} className="manual-article-card">
           <summary>

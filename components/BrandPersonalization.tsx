@@ -140,7 +140,7 @@ export default function BrandPersonalization({
               ["Color de acento",accent,setAccent,initial.accentColor],
             ].map(([label,value,setter,fallback])=><label className="brand-color-field" key={String(label)}>
               <span>{String(label)}</span>
-              <div><input type="color" value={validColor(String(value),String(fallback))} onChange={event=>(setter as (value:string)=>void)(event.target.value.toUpperCase())}/><input aria-label={String(label)+" HEX"} value={String(value)} onChange={event=>(setter as (value:string)=>void)(event.target.value.toUpperCase())} onBlur={()=>(setter as (value:string)=>void)(normalizeBrandHex(String(value),String(fallback)))} maxLength={7}/></div>
+              <div><input type="color" value={validColor(String(value),String(fallback))} onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}}/><input aria-label={String(label)+" HEX"} value={String(value)} onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}} onBlur={()=>{(setter as (value:string)=>void)(normalizeBrandHex(String(value),String(fallback)));}} maxLength={7}/></div>
             </label>)}
           </div>
           <label className="brand-auto-palette">

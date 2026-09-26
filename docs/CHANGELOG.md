@@ -9,7 +9,7 @@
 - El shell consume tokens de empresa para sidebar, header, acciones, foco y elementos activos. La identidad permanece aislada por `organization_id`; Desweb es el fallback.
 - Apariencia de empresa reutiliza el sistema `data-theme` existente y solo actúa como valor predeterminado cuando el navegador no tiene una preferencia personal `desweb-theme`. La migración 044 conserva el histórico predeterminado claro.
 - Configuración general deja de contener un segundo editor de marca y enlaza a la experiencia dedicada. Planes y suscripciones no cambian: el endpoint sigue exigiendo Administrador + Plan Pro + white label.
-- Mi configuración ahora presenta Perfil, Preferencias, Apariencia, Seguridad e Integraciones. El perfil utiliza el usuario autenticado y una mutación self-service que solo actualiza datos propios/contraseña; no toca rol, empresa, membresías ni alcance.
+- Mi configuración ahora presenta Perfil, Preferencias, Apariencia, Seguridad e Integraciones. El perfil utiliza el usuario autenticado y una mutación self-service que solo actualiza nombre, correo, teléfono y avatar propios; Seguridad conserva los flujos de credenciales existentes y no toca rol, empresa, membresías ni alcance.
 - Manual / Ayuda conserva `lib/user-manual.ts` como fuente y añade categorías visuales sobre artículos reales; Video tutoriales queda deshabilitado cuando no existe contenido publicado.
 - Se añadieron las migraciones `043_brand_personalization.sql` y `044_brand_personalization_light_default.sql`, estilos token-only y `scripts/brand-personalization-smoke.mjs`.
 

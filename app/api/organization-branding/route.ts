@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     const interfaceStyle=String(form.get("interface_style")||previous?.interface_style||"light");
     const interfaceDensity=String(form.get("interface_density")||previous?.interface_density||"normal");
     const advanced=String(form.get("branding_form")||"")==="advanced";
+    const removeLogo=String(form.get("remove_logo")||"")==="on";
     const showDeswebBranding=advanced
       ? (previous?.show_desweb_branding??false)
       : String(form.get("show_desweb_branding")||"")==="on";
@@ -110,6 +111,16 @@ export async function POST(request: Request) {
         showDeswebBranding,
       ],
     );
+
+    if(removeLogo&&!sharedLogo&&!logoOnLight&&!logoOnDark){
+      await query(
+        `UPDATE organization_branding
+         SET logo_on_light=NULL,logo_on_light_mime=NULL,logo_on_light_name=NULL,
+             logo_on_dark=NULL,logo_on_dark_mime=NULL,logo_on_dark_name=NULL,updated_at=now()
+         WHERE organization_id=$1`,
+        [session.organizationId],
+      );
+    }
 
     return redirectTarget(request,returnTo,"?branding_saved=1");
   } catch (error) {

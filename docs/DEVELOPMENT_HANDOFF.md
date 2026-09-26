@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base funcional validada para esta entrega: `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`
+> Base funcional validada para esta entrega: `8f3063d68d8882973a4b10b750a9eda38fa11f52`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -56,6 +56,23 @@ Piloto server-side validado sobre `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`.
 - Runtime SQL del directorio: antes 1 query de planes (+ activos si write); después summary + facetas + página (+ activos si write). El aumento es deliberado para obtener semántica completa.
 - No hubo migraciones, índices, CSS global ni cambios en otros módulos.
 - Siguiente candidato únicamente después de revisión: Órdenes de trabajo.
+
+## Fase 3 · Órdenes de Trabajo server-side
+
+Validado sobre `8f3063d68d8882973a4b10b750a9eda38fa11f52`.
+
+- Solo Órdenes de Trabajo se añadió a la migración server-side en este tramo; Activos, Inventario y Ubicaciones permanecen sin cambios.
+- El antiguo `loadOrders()` fue reemplazado por un único `scopedSql` que conserva sus ramas de plataforma/requester/provider/external/interno y alcance por sedes.
+- Summary/KPI, facetas y página consumen ese mismo scope. No mantener scopes duplicados.
+- Estado URL: `q`, `status`, `organization`, `site`, `priority`, `type`, `sort`, `page`.
+- Página visible: 24 OT mediante `workOrderPageWindow()`; default sort: `requested_at DESC, id DESC`.
+- `ModuleHeader.serverState`, `UrlPagination` y `CollectionView` reutilizan el patrón validado en Rutinas.
+- Provider ve asignación directa o por tarea del proveedor; External ve asignación directa, tarea individual o tarea por cuadrilla; Requester conserva `requested_by`.
+- El catálogo de activos para crear OT continúa independiente de la página paginada.
+- `scripts/work-orders-server-pagination-smoke.mjs` cubre todos los scopes, limitación por sede, ID conocido fuera de scope, búsqueda, COUNT, facetas y página 2.
+- Antes: hasta 200 OT transferidas. Después: máximo 24 OT + una fila summary + una fila facetas.
+- No hubo migraciones, índices, CSS global ni cambios en Activos/Inventario/Ubicaciones.
+- Siguiente módulo de Fase 3: **Activos**, solo después de revisión expresa.
 
 ## 2. Estado técnico actual
 

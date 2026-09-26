@@ -8,17 +8,25 @@ export function UrlPagination({
   pageCount,
   param="page",
   label="Paginación",
+  pageSize,
+  pageSizeOptions,
+  pageSizeParam="pageSize",
+  total,
 }:{
   page:number;
   pageCount:number;
   param?:string;
   label?:string;
+  pageSize?:number;
+  pageSizeOptions?:number[];
+  pageSizeParam?:string;
+  total?:number;
 }){
   const router=useRouter();
   const pathname=usePathname();
   const searchParams=useSearchParams();
 
-  return <Pagination
+  const pagination=<Pagination
     page={page}
     pageCount={pageCount}
     label={label}
@@ -29,4 +37,31 @@ export function UrlPagination({
       router.push(query?pathname+"?"+query:pathname,{scroll:false});
     }}
   />;
+
+  if(!pageSize||!pageSizeOptions?.length)return pagination;
+
+  return <div className="ds-pagination-layout">
+    <div className="ds-pagination-meta">
+      <span>{typeof total==="number"?total+" resultados · ":""}Página {Math.min(Math.max(1,page),Math.max(1,pageCount))} de {Math.max(1,pageCount)}</span>
+      <label>
+        <span>Por página</span>
+        <select
+          className="ds-input ds-select"
+          value={pageSize}
+          aria-label="Tamaño de página"
+          onChange={event=>{
+            const next=new URLSearchParams(searchParams.toString());
+            const value=event.target.value;
+            next.set(pageSizeParam,value);
+            next.delete(param);
+            const query=next.toString();
+            router.push(query?pathname+"?"+query:pathname,{scroll:false});
+          }}
+        >
+          {pageSizeOptions.map(value=><option key={value} value={value}>{value}</option>)}
+        </select>
+      </label>
+    </div>
+    {pagination}
+  </div>;
 }

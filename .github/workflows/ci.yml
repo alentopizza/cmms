@@ -40,6 +40,9 @@ jobs:
       - run: node scripts/inventory-scope-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/inventory-server-pagination-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: node scripts/unified-inventory-import-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

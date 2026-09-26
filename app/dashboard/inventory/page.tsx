@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
-import ModuleHeader from "@/components/ModuleHeader";
+import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import RequisitionBuilder from "@/components/RequisitionBuilder";
@@ -21,6 +21,8 @@ import { CollectionView } from "@/components/ui-kit/DataControls";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import { UrlPagination } from "@/components/ui-kit/UrlPagination";
+import { inventoryItemSqlScope } from "@/lib/inventory-scope";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -33,6 +35,45 @@ type Supplier={id:string;name:string;supplier_type:string};
 type Category={id:string;name:string};
 type Warehouse={id:string;name:string;site_id:string|null;location_id:string|null};
 type Movement={id:string;type:string;quantity:string;sku:string;name:string;warehouse:string|null;destination:string|null;movement_at:string;document_number:string|null};
+type InventorySummary={
+  total_count:number;filtered_count:number;active_count:number;total_value:string;
+  in_stock_count:number;low_stock_count:number;out_stock_count:number;
+};
+type InventoryFacetValue={value:string;label:string};
+type InventoryFacetRow={
+  organizations:InventoryFacetValue[];sites:InventoryFacetValue[];categories:InventoryFacetValue[];
+  suppliers:InventoryFacetValue[];warehouses:InventoryFacetValue[];records:InventoryFacetValue[];
+};
+type InventorySearchParams={
+  created?:string;updated?:string;movement?:string;error?:string;requisition_created?:string;
+  q?:string;status?:string;organization?:string;site?:string;category?:string;supplier?:string;warehouse?:string;record?:string;
+  sortBy?:string;sortDirection?:string;page?:string;pageSize?:string;
+};
+
+const INVENTORY_DEFAULT_PAGE_SIZE=24;
+const INVENTORY_PAGE_SIZES=new Set([24,40,80]);
+const INVENTORY_STOCK_FILTERS=new Set(["all","ok","low","out"]);
+const INVENTORY_RECORD_FILTERS=new Set(["active","inactive"]);
+const INVENTORY_SORT_FIELDS:Record<string,string>={name:"name",sku:"sku"};
+
+function safeText(value:string|undefined,max=120){
+  return String(value||"").trim().slice(0,max);
+}
+function safeUuid(value:string|undefined){
+  const normalized=safeText(value,36);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)?normalized:"";
+}
+function safePage(value:string|undefined){
+  const parsed=Number.parseInt(String(value||"1"),10);
+  return Number.isFinite(parsed)&&parsed>0?parsed:1;
+}
+function safePageSize(value:string|undefined){
+  const parsed=Number.parseInt(String(value||INVENTORY_DEFAULT_PAGE_SIZE),10);
+  return INVENTORY_PAGE_SIZES.has(parsed)?parsed:INVENTORY_DEFAULT_PAGE_SIZE;
+}
+function likePattern(value:string){
+  return "%"+value.replace(/[\\%_]/g,match=>"\\"+match)+"%";
+}
 
 function money(value:number){
   return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(value);
@@ -51,7 +92,7 @@ function movementLabel(type:string,quantity:number){
   return quantity<0?"Ajuste -":"Ajuste +";
 }
 
-export default async function InventoryPage({searchParams}:{searchParams:Promise<{created?:string;updated?:string;movement?:string;error?:string;requisition_created?:string}>}) {
+export default async function InventoryPage({searchParams}:{searchParams:Promise<InventorySearchParams>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"inventory.read")) redirect("/dashboard");
@@ -59,61 +100,235 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const superadmin=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"inventory.write");
-  const limitedSiteScope=!superadmin&&!session.accessAllSites;
+  const canCreateRequisitions=can(session,"requisitions.write");
 
-  const itemSql=`SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,i.category_id,i.warehouse_id,p.supplier_type,
-      i.sku,i.name,i.description,i.presentation,o.name company,s.name site,l.name location,c.name category,w.name warehouse,p.name supplier,
-      ${limitedSiteScope
-        ?`COALESCE((SELECT sum(sl.quantity) FROM inventory_stock_levels sl JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id WHERE sl.item_id=i.id AND sw.site_id=ANY($2::uuid[])),0)::text`
-        :"i.quantity::text"} quantity,
-      i.min_quantity::text,i.max_quantity::text,i.unit,i.unit_cost::text,i.storage_location,(i.image_data IS NOT NULL) has_image,i.active
-    FROM inventory_items i JOIN organizations o ON o.id=i.organization_id
-    LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
+  const q=safeText(params.q);
+  const stockStatus=INVENTORY_STOCK_FILTERS.has(params.status||"")?String(params.status):"all";
+  const organization=safeUuid(params.organization);
+  const site=safeUuid(params.site);
+  const category=safeUuid(params.category);
+  const supplier=safeUuid(params.supplier);
+  const warehouse=safeUuid(params.warehouse);
+  const record=INVENTORY_RECORD_FILTERS.has(params.record||"")?String(params.record):"";
+  const sortBy=INVENTORY_SORT_FIELDS[params.sortBy||""]?String(params.sortBy):"name";
+  const sortDirection=params.sortDirection==="desc"?"desc":"asc";
+  const requestedPage=safePage(params.page);
+  const pageSize=safePageSize(params.pageSize);
+
+  const itemScope=inventoryItemSqlScope(session);
+  const scopeParams=[...itemScope.params];
+  const limitedSiteScope=itemScope.limitedSiteScope;
+  const siteScopeToken=itemScope.siteParamToken;
+  if(limitedSiteScope&&!siteScopeToken)throw new Error("Inventory site scope token is required for limited sessions");
+
+  const quantitySql=limitedSiteScope
+    ?`COALESCE((
+        SELECT sum(sl.quantity)
+        FROM inventory_stock_levels sl
+        JOIN inventory_warehouses sw ON sw.id=sl.warehouse_id
+        WHERE sl.item_id=i.id AND sw.organization_id=i.organization_id AND sw.site_id=ANY(${siteScopeToken}::uuid[])
+      ),0)`
+    :"i.quantity";
+  const warehouseJoin=limitedSiteScope
+    ?`LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id AND w.organization_id=i.organization_id AND w.site_id=ANY(${siteScopeToken}::uuid[])`
+    :"LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id";
+
+  const scopedSql=`
+    SELECT i.id,i.organization_id,i.site_id,i.location_id,i.supplier_id,i.category_id,
+           CASE WHEN w.id IS NULL THEN NULL ELSE i.warehouse_id END warehouse_id,
+           p.supplier_type,i.sku,i.name,i.description,i.presentation,o.name company,s.name site,l.name location,c.name category,w.name warehouse,p.name supplier,
+           ${quantitySql} quantity,i.min_quantity,i.max_quantity,i.unit,i.unit_cost,i.storage_location,
+           (i.image_data IS NOT NULL) has_image,i.active
+    FROM inventory_items i
+    JOIN organizations o ON o.id=i.organization_id
+    LEFT JOIN sites s ON s.id=i.site_id
+    LEFT JOIN locations l ON l.id=i.location_id
+    LEFT JOIN suppliers p ON p.id=i.supplier_id
     LEFT JOIN inventory_categories c ON c.id=i.category_id
-    LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id${limitedSiteScope?" AND w.site_id=ANY($2::uuid[])":""}
-    WHERE 1=1`;
-  const [items,sites,locations,suppliers,categories,warehouses,movements]=await Promise.all([
-    superadmin
-      ? query<Item>(itemSql+" ORDER BY i.name LIMIT 600")
-      : session.accessAllSites
-        ? query<Item>(itemSql+" AND i.organization_id=$1 ORDER BY i.name LIMIT 600",[orgId])
-        : query<Item>(itemSql+" AND i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) ORDER BY i.name LIMIT 600",[orgId,session.siteIds]),
-    canWrite && orgId
-      ? session.accessAllSites
-        ? query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-        : query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
-      : Promise.resolve({rows:[]} as {rows:Site[]}),
-    canWrite && orgId
-      ? session.accessAllSites
-        ? query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[orgId])
-        : query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[orgId,session.siteIds])
-      : Promise.resolve({rows:[]} as {rows:Location[]}),
-    canWrite && orgId
-      ? query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[orgId])
-      : Promise.resolve({rows:[]} as {rows:Supplier[]}),
-    orgId?query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[orgId]):Promise.resolve({rows:[]} as {rows:Category[]}),
-    orgId
-      ?session.accessAllSites
-        ?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-        :query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
-      :Promise.resolve({rows:[]} as {rows:Warehouse[]}),
-    orgId
-      ?session.accessAllSites
-        ?query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
-                           FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
-                           LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
-                           WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId])
-        :query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
-                           FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
-                           JOIN inventory_warehouses w ON w.id=t.warehouse_id
-                           LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
-                           WHERE t.organization_id=$1 AND w.site_id=ANY($2::uuid[])
-                             AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))
-                           ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId,session.siteIds])
-      :Promise.resolve({rows:[]} as {rows:Movement[]}),
+    ${warehouseJoin}
+    ${itemScope.where}`;
+
+  const filteredParams=[...scopeParams];
+  const filteredConditions:string[]=[];
+  if(q){
+    filteredParams.push(likePattern(q));
+    const token="$"+filteredParams.length;
+    filteredConditions.push(`(
+      sku ILIKE ${token} ESCAPE E'\\\\' OR
+      name ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(description,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      company ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(site,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(location,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(category,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(warehouse,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(supplier,'') ILIKE ${token} ESCAPE E'\\\\'
+    )`);
+  }
+  if(stockStatus==="ok")filteredConditions.push("quantity>min_quantity AND quantity>0");
+  if(stockStatus==="low")filteredConditions.push("quantity>0 AND quantity<=min_quantity");
+  if(stockStatus==="out")filteredConditions.push("quantity<=0");
+  if(organization){
+    filteredParams.push(organization);
+    filteredConditions.push("organization_id=$"+filteredParams.length+"::uuid");
+  }
+  if(site){
+    filteredParams.push(site);
+    filteredConditions.push("site_id=$"+filteredParams.length+"::uuid");
+  }
+  if(category){
+    filteredParams.push(category);
+    filteredConditions.push("category_id=$"+filteredParams.length+"::uuid");
+  }
+  if(supplier){
+    filteredParams.push(supplier);
+    filteredConditions.push("supplier_id=$"+filteredParams.length+"::uuid");
+  }
+  if(warehouse){
+    filteredParams.push(warehouse);
+    filteredConditions.push("warehouse_id=$"+filteredParams.length+"::uuid");
+  }
+  if(record==="active")filteredConditions.push("active=true");
+  if(record==="inactive")filteredConditions.push("active=false");
+  const filteredWhere=filteredConditions.length?"WHERE "+filteredConditions.join(" AND "):"";
+
+  const summaryPromise=query<InventorySummary>(
+    `WITH scoped AS (${scopedSql}),
+          filtered AS (SELECT * FROM scoped ${filteredWhere})
+     SELECT
+       (SELECT count(*)::int FROM scoped) total_count,
+       (SELECT count(*)::int FROM filtered) filtered_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true) active_count,
+       COALESCE((SELECT sum(quantity*unit_cost) FROM scoped WHERE active=true),0)::text total_value,
+       (SELECT count(*)::int FROM scoped WHERE active=true AND quantity>min_quantity AND quantity>0) in_stock_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true AND quantity>0 AND quantity<=min_quantity) low_stock_count,
+       (SELECT count(*)::int FROM scoped WHERE active=true AND quantity<=0) out_stock_count`,
+    filteredParams,
+  );
+
+  const facetsPromise=query<InventoryFacetRow>(
+    `WITH scoped AS (${scopedSql})
+     SELECT
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (SELECT DISTINCT organization_id::text value,company label FROM scoped) v),'[]'::jsonb) organizations,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (SELECT DISTINCT site_id::text value,site label FROM scoped WHERE site_id IS NOT NULL AND site IS NOT NULL) v),'[]'::jsonb) sites,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (SELECT DISTINCT category_id::text value,category label FROM scoped WHERE category_id IS NOT NULL AND category IS NOT NULL) v),'[]'::jsonb) categories,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (SELECT DISTINCT supplier_id::text value,supplier label FROM scoped WHERE supplier_id IS NOT NULL AND supplier IS NOT NULL) v),'[]'::jsonb) suppliers,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (SELECT DISTINCT warehouse_id::text value,warehouse label FROM scoped WHERE warehouse_id IS NOT NULL AND warehouse IS NOT NULL) v),'[]'::jsonb) warehouses,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.value) FROM (
+         SELECT DISTINCT CASE WHEN active THEN 'active' ELSE 'inactive' END value,
+                         CASE WHEN active THEN 'Activo' ELSE 'Inactivo' END label FROM scoped
+       ) v),'[]'::jsonb) records`,
+    scopeParams,
+  );
+
+  const sitesPromise=canWrite&&orgId
+    ?session.accessAllSites
+      ?query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+      :query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Site[]});
+  const locationsPromise=canWrite&&orgId
+    ?session.accessAllSites
+      ?query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[orgId])
+      :query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Location[]});
+  const suppliersPromise=canWrite&&orgId
+    ?query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[orgId])
+    :Promise.resolve({rows:[]} as {rows:Supplier[]});
+  const categoriesPromise=orgId
+    ?query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+    :Promise.resolve({rows:[]} as {rows:Category[]});
+  const warehousesPromise=orgId
+    ?session.accessAllSites
+      ?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+      :query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Warehouse[]});
+  const movementsPromise=orgId
+    ?session.accessAllSites
+      ?query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
+                         FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
+                         LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                         WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId])
+      :query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
+                         FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
+                         JOIN inventory_warehouses w ON w.id=t.warehouse_id
+                         LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+                         WHERE t.organization_id=$1 AND w.site_id=ANY($2::uuid[])
+                           AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))
+                         ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Movement[]});
+  const requisitionItemsPromise=canCreateRequisitions
+    ?query<Item>(
+      `WITH scoped AS (${scopedSql})
+       SELECT id,organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,supplier_type,sku,name,description,presentation,
+              company,site,location,category,warehouse,supplier,quantity::text,min_quantity::text,max_quantity::text,unit,unit_cost::text,
+              storage_location,has_image,active
+       FROM scoped
+       WHERE active=true AND supplier_id IS NOT NULL AND supplier_type IN ('materials','both')
+       ORDER BY name,id`,
+      scopeParams,
+    )
+    :Promise.resolve({rows:[]} as {rows:Item[]});
+  const creationGatePromise=getCreationGateForScope("inventory",session.organizationId,superadmin);
+
+  const [summaryResult,facetsResult,sites,locations,suppliers,categories,warehouses,movements,requisitionItems,creationGate]=await Promise.all([
+    summaryPromise,facetsPromise,sitesPromise,locationsPromise,suppliersPromise,categoriesPromise,warehousesPromise,movementsPromise,requisitionItemsPromise,creationGatePromise,
   ]);
 
-  const creationGate=await getCreationGateForScope("inventory",session.organizationId,superadmin);
+  const summary=summaryResult.rows[0]||{
+    total_count:0,filtered_count:0,active_count:0,total_value:"0",in_stock_count:0,low_stock_count:0,out_stock_count:0,
+  };
+  const pageCount=Math.max(1,Math.ceil(summary.filtered_count/pageSize));
+  const page=Math.min(requestedPage,pageCount);
+  if(requestedPage!==page){
+    const canonical=new URLSearchParams();
+    if(params.created)canonical.set("created",params.created);
+    if(params.updated)canonical.set("updated",params.updated);
+    if(params.movement)canonical.set("movement",params.movement);
+    if(params.error)canonical.set("error",params.error);
+    if(params.requisition_created)canonical.set("requisition_created",params.requisition_created);
+    if(q)canonical.set("q",q);
+    if(stockStatus!=="all")canonical.set("status",stockStatus);
+    if(organization)canonical.set("organization",organization);
+    if(site)canonical.set("site",site);
+    if(category)canonical.set("category",category);
+    if(supplier)canonical.set("supplier",supplier);
+    if(warehouse)canonical.set("warehouse",warehouse);
+    if(record)canonical.set("record",record);
+    if(sortBy!=="name")canonical.set("sortBy",sortBy);
+    if(sortDirection!=="asc")canonical.set("sortDirection",sortDirection);
+    if(pageSize!==INVENTORY_DEFAULT_PAGE_SIZE)canonical.set("pageSize",String(pageSize));
+    if(page>1)canonical.set("page",String(page));
+    const queryString=canonical.toString();
+    redirect(queryString?"/dashboard/inventory?"+queryString:"/dashboard/inventory");
+  }
+
+  const pageParams=[...filteredParams,pageSize,(page-1)*pageSize];
+  const limitToken="$"+(pageParams.length-1);
+  const offsetToken="$"+pageParams.length;
+  const orderColumn=INVENTORY_SORT_FIELDS[sortBy]||INVENTORY_SORT_FIELDS.name;
+  const orderDirection=sortDirection==="desc"?"DESC":"ASC";
+  const items=await query<Item>(
+    `WITH scoped AS (${scopedSql})
+     SELECT id,organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,supplier_type,sku,name,description,presentation,
+            company,site,location,category,warehouse,supplier,quantity::text,min_quantity::text,max_quantity::text,unit,unit_cost::text,
+            storage_location,has_image,active
+     FROM scoped
+     ${filteredWhere}
+     ORDER BY ${orderColumn} ${orderDirection},id ${orderDirection}
+     LIMIT ${limitToken} OFFSET ${offsetToken}`,
+    pageParams,
+  );
+
+  const rawFacets=facetsResult.rows[0]||{organizations:[],sites:[],categories:[],suppliers:[],warehouses:[],records:[]};
+  const facetOptions:ModuleFacetOptionMap={
+    organization:Array.isArray(rawFacets.organizations)?rawFacets.organizations:[],
+    site:Array.isArray(rawFacets.sites)?rawFacets.sites:[],
+    category:Array.isArray(rawFacets.categories)?rawFacets.categories:[],
+    supplier:Array.isArray(rawFacets.suppliers)?rawFacets.suppliers:[],
+    warehouse:Array.isArray(rawFacets.warehouses)?rawFacets.warehouses:[],
+    record:Array.isArray(rawFacets.records)?rawFacets.records:[],
+  };
+
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="limit" ? "La empresa alcanzó el límite de artículos de inventario."
     : params.error==="sku" ? "El SKU ya existe dentro de la empresa."
@@ -121,18 +336,17 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     : params.error==="movement" ? "Revisa el tipo de movimiento, cantidad y bodega."
     : params.error ? "Revisa la información del inventario." : "";
 
-  const activeItems=items.rows.filter(item=>item.active);
-  const totalValue=activeItems.reduce((sum,item)=>sum+Number(item.quantity||0)*Number(item.unit_cost||0),0);
-  const inStock=activeItems.filter(item=>Number(item.quantity)>Number(item.min_quantity)&&Number(item.quantity)>0).length;
-  const lowStock=activeItems.filter(item=>Number(item.quantity)>0&&Number(item.quantity)<=Number(item.min_quantity)).length;
-  const outStock=activeItems.filter(item=>Number(item.quantity)<=0).length;
+  const totalValue=Number(summary.total_value||0);
+  const inStock=summary.in_stock_count;
+  const lowStock=summary.low_stock_count;
+  const outStock=summary.out_stock_count;
 
   return <div className="phase7-inventory">
     <ModuleHeader
       eyebrow="Abastecimiento"
       title="Inventario"
       description="Productos, repuestos y suministros con trazabilidad por proveedor, ubicación, bodega y Kardex."
-      count={items.rowCount || 0}
+      count={summary.total_count}
       countLabel="artículos"
       searchPlaceholder="Buscar SKU, artículo, categoría, ubicación o proveedor"
       filters={[{value:"all",label:"Todos"},{value:"ok",label:"En stock"},{value:"low",label:"Stock bajo"},{value:"out",label:"Sin stock"}]}
@@ -144,6 +358,23 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {key:"warehouse",label:"Bodega",allLabel:"Todas las bodegas"},
         {key:"record",label:"Registro",allLabel:"Todos los registros"},
       ]}
+      serverState={{
+        search:q,
+        filter:stockStatus,
+        facetValues:{
+          organization:organization||"all",
+          site:site||"all",
+          category:category||"all",
+          supplier:supplier||"all",
+          warehouse:warehouse||"all",
+          record:record||"all",
+        },
+        facetOptions,
+        filteredCount:summary.filtered_count,
+        searchParam:"q",
+        filterParam:"status",
+        pageParam:"page",
+      }}
       action={<div className="module-header-action-group">
         {canWrite&&orgId&&<BulkImportModal entity="inventory"/>}
         <ModuleExportMenu entity="inventory"/>
@@ -186,15 +417,15 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     />}
 
     <MetricGrid className="section phase7-kpi-grid">
-      <KpiCard label="Valor total inventario" value={money(totalValue)} hint={activeItems.length+" productos activos"} icon="inventory"/>
-      <KpiCard label="Productos en stock" value={String(inStock)} hint={(activeItems.length?Math.round(inStock/activeItems.length*100):0)+"% del total activo"} icon="check" tone="success"/>
-      <KpiCard label="Stock bajo" value={String(lowStock)} hint={(activeItems.length?Math.round(lowStock/activeItems.length*100):0)+"% del total activo"} icon="warning" tone="warning"/>
-      <KpiCard label="Sin stock" value={String(outStock)} hint={(activeItems.length?Math.round(outStock/activeItems.length*100):0)+"% del total activo"} icon="error" tone="danger"/>
+      <KpiCard label="Valor total inventario" value={money(totalValue)} hint={summary.active_count+" productos activos"} icon="inventory"/>
+      <KpiCard label="Productos en stock" value={String(inStock)} hint={(summary.active_count?Math.round(inStock/summary.active_count*100):0)+"% del total activo"} icon="check" tone="success"/>
+      <KpiCard label="Stock bajo" value={String(lowStock)} hint={(summary.active_count?Math.round(lowStock/summary.active_count*100):0)+"% del total activo"} icon="warning" tone="warning"/>
+      <KpiCard label="Sin stock" value={String(outStock)} hint={(summary.active_count?Math.round(outStock/summary.active_count*100):0)+"% del total activo"} icon="error" tone="danger"/>
     </MetricGrid>
 
     <section className="section inventory-dashboard-layout phase7-anchor" id="inventory-products">
       <div className="inventory-products-panel">
-        <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div></div>
+        <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas. {summary.filtered_count} resultado{summary.filtered_count===1?"":"s"} · página {page} de {pageCount} · {pageSize} por página.</p></div></div>
         {items.rows.length?<CollectionView storageKey="inventory" label="Vista de inventario" grid={<div className="inventory-product-grid" data-collection-grid>{items.rows.map(item=>{
           const state=stockState(item);
           const quantity=Number(item.quantity||0),max=Math.max(Number(item.max_quantity||0),Number(item.min_quantity||0),quantity,1);
@@ -282,7 +513,15 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               },
             };
           })}
-        />}/>:<EmptyState icon="asset" title="Aún no hay artículos" description="Usa Nuevo producto o Importar para comenzar."/>}
+        />}/>:<EmptyState icon="asset" title={summary.total_count?"No hay artículos con estos filtros":"Aún no hay artículos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros productos.":"Usa Nuevo producto o Importar para comenzar."}/>}
+        <UrlPagination
+          page={page}
+          pageCount={pageCount}
+          label="Paginación de inventario"
+          pageSize={pageSize}
+          pageSizeOptions={[24,40,80]}
+          total={summary.filtered_count}
+        />
       </div>
 
       <aside className="inventory-movements-panel card">
@@ -300,9 +539,9 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       </aside>
     </section>
 
-    {can(session,"requisitions.write")&&<section className="card section" id="crear-requisicion">
+    {canCreateRequisitions&&<section className="card section" id="crear-requisicion">
       <RequisitionBuilder
-        items={items.rows.filter(item=>item.active&&Boolean(item.supplier_id)&&["materials","both"].includes(item.supplier_type||"")).map(item=>({
+        items={requisitionItems.rows.map(item=>({
           id:item.id,supplier_id:item.supplier_id||"",supplier_name:item.supplier||"Proveedor",sku:item.sku,name:item.name,unit:item.unit,
           unit_cost:item.unit_cost,quantity:item.quantity,min_quantity:item.min_quantity,site_name:item.site,location_name:item.location,
         }))}

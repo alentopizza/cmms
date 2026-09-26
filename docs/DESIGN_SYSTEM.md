@@ -754,14 +754,14 @@ See `docs/DESIGN_AUDIT_FINAL.md` for the closure audit.
 The immutable DESWEB palette remains the fallback/product identity. Pro Organization white label customizes the semantic **brand overlay**, not the semantic status system.
 
 Runtime tenant tokens:
-- `--brand-primary`, `--brand-primary-hover`, `--brand-primary-soft`;
+- `--brand-primary`, `--brand-on-primary`, `--brand-primary-hover`, `--brand-primary-soft`;
 - `--brand-secondary`, `--brand-secondary-hover`, `--brand-secondary-soft`;
-- `--brand-accent`, `--brand-accent-soft`;
-- `--brand-sidebar`, `--brand-sidebar-hover`, `--brand-sidebar-active`;
+- `--brand-accent`, `--brand-on-accent`, `--brand-accent-soft`;
+- `--brand-sidebar`, `--brand-on-sidebar`, `--brand-sidebar-hover`, `--brand-sidebar-active`, `--brand-on-sidebar-active`;
 - `--brand-background`, `--brand-surface`, `--brand-border`;
 - `--brand-text`, `--brand-text-secondary`.
 
-`lib/brand-theme.ts` is the only palette generator. It bridges Organization colors into action/focus/navigation tokens. Components must consume semantic tokens; they must not query branding records or calculate tenant colors independently.
+`lib/brand-theme.ts` is the only palette generator. It bridges Organization colors into action/focus/navigation tokens. Components must consume semantic tokens; they must not query branding records or calculate tenant colors independently. It also derives readable foregrounds and darkens structural sidebar surfaces when needed so tenant colors do not silently destroy control/navigation contrast.
 
 Never override `--color-success-*`, `--color-warning-*`, `--color-danger-*` or `--color-info-*` from Organization branding. Status meaning must remain recognizable and accessible.
 

@@ -104,8 +104,17 @@ export default function BrandPersonalization({
   const previewClass=`brand-preview-shell brand-preview-${interfaceStyle} density-${density}`;
 
   return <div className="brand-personalization-workspace">
-    <nav className="brand-tabs" aria-label="Secciones de personalización">
-      {tabs.map(tab=><button key={tab.id} type="button" className={active===tab.id?"active":""} onClick={()=>setActive(tab.id)} aria-current={active===tab.id?"page":undefined}>
+    <nav className="brand-tabs" aria-label="Secciones de personalización" role="tablist">
+      {tabs.map(tab=><button
+        key={tab.id}
+        id={"brand-tab-"+tab.id}
+        type="button"
+        role="tab"
+        aria-selected={active===tab.id}
+        aria-controls={"brand-panel-"+tab.id}
+        className={active===tab.id?"active":""}
+        onClick={()=>setActive(tab.id)}
+      >
         <UiIcon name={tab.icon} size={16}/><span>{tab.label}</span>
       </button>)}
     </nav>
@@ -122,7 +131,7 @@ export default function BrandPersonalization({
       <input type="hidden" name="interface_style" value={interfaceStyle}/>
       <input type="hidden" name="interface_density" value={density}/>
 
-      {active==="colors"&&<section className="brand-tab-panel brand-color-layout">
+      {active==="colors"&&<section id="brand-panel-colors" className="brand-tab-panel brand-color-layout" role="tabpanel" aria-labelledby="brand-tab-colors">
         <article className="brand-section-card">
           <div className="brand-section-heading"><span>1</span><div><h2>Selecciona un esquema predefinido</h2><p>Elige un esquema de color o crea uno personalizado con los colores de tu marca.</p></div></div>
           <div className="brand-scheme-grid">
@@ -155,7 +164,7 @@ export default function BrandPersonalization({
         </article>
       </section>}
 
-      {active==="logo"&&<section className="brand-tab-panel brand-logo-layout">
+      {active==="logo"&&<section id="brand-panel-logo" className="brand-tab-panel brand-logo-layout" role="tabpanel" aria-labelledby="brand-tab-logo">
         <article className="brand-section-card">
           <div className="brand-section-heading"><span><UiIcon name="company" size={18}/></span><div><h2>Logo de la empresa</h2><p>Usa la identidad gráfica de {organizationName} sin crear un segundo almacén de archivos.</p></div></div>
           <div className="brand-logo-preview"><img src={logoPreview} alt={"Logo actual de "+organizationName}/></div>
@@ -176,7 +185,7 @@ export default function BrandPersonalization({
         </article>
       </section>}
 
-      {active==="appearance"&&<section className="brand-tab-panel">
+      {active==="appearance"&&<section id="brand-panel-appearance" className="brand-tab-panel" role="tabpanel" aria-labelledby="brand-tab-appearance">
         <article className="brand-section-card">
           <div className="brand-section-heading"><span><UiIcon name="system" size={18}/></span><div><h2>Estilo de interfaz</h2><p>Define la apariencia predeterminada de la experiencia de marca. La preferencia personal del usuario puede seguir usando el sistema de tema existente.</p></div></div>
           <div className="brand-appearance-grid">
@@ -206,7 +215,7 @@ export default function BrandPersonalization({
         </article>
       </section>}
 
-      {active==="preview"&&<section className="brand-tab-panel">
+      {active==="preview"&&<section id="brand-panel-preview" className="brand-tab-panel" role="tabpanel" aria-labelledby="brand-tab-preview">
         <article className="brand-section-card brand-preview-card">
           <div className="brand-section-heading"><span><UiIcon name="eye" size={18}/></span><div><h2>Vista previa en tiempo real</h2><p>Así se verá CMMS con la identidad visual seleccionada. Los cambios todavía no están guardados.</p></div></div>
           <div className={previewClass} style={previewVars}>

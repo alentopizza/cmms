@@ -51,6 +51,10 @@ No ORM is currently used. SQL is explicit and versioned under `db/migrations/`.
 - `app/api/sites/[id]/` — site updates and status changes.
 - `app/dashboard/settings/` — role-aware settings: global platform settings for superadministrators and read-only organization capacity/information for company administrators.
 - `app/dashboard/personalization/` — global visual branding resources, linked from settings.
+- `app/dashboard/brand/` — organization-scoped PRO identity editor; never a main sidebar module.
+- `components/BrandPersonalization.tsx` — client editor/preview over the existing organization branding source.
+- `lib/brand-theme.ts` — centralized preset/palette → semantic brand-token bridge.
+- `app/api/preferences/profile/` — authenticated self-profile/password mutation; intentionally separate from administrator user-management mutations.
 - `app/api/customization/` — branding upload and asset delivery routes.
 - `components/ThemePreferences.tsx` — persisted light/dark/system appearance preferences.
 - `components/DashboardNavigation.tsx` — permission-filtered active sidebar/header navigation.
@@ -956,3 +960,16 @@ The Company quick profile does not introduce new domain APIs. Its related-manage
 The document manager uses the existing authenticated inline file endpoint for PDF/image preview. The new 40/60 presentation, filters, selection and viewer controls are client presentation only.
 
 Organization document POST routes now honor a sanitized dashboard `return_to` value, preserving their previous Company-detail fallback when no contextual return is provided.
+
+
+### Organization brand personalization
+
+`organization_branding` remains the single organization-level white-label record introduced by migration 009. Migrations 043–044 extend that record with accent color, scheme key, automatic-palette preference, default interface style and density; no parallel theme table exists.
+
+`/dashboard/brand` is a presentation surface. It reads the authenticated Organization and existing subscription fields, and posts to the established `/api/organization-branding` boundary. Server mutation requires tenant Administrator + Pro + white-label entitlement and always uses `session.organizationId`; browser Organization identifiers are not accepted as authorization.
+
+`lib/brand-theme.ts` derives navigation/action/surface tokens from principal, secondary and accent inputs. The dashboard shell injects those tokens only for the authenticated white-label Organization. Semantic success, warning, danger and info tokens remain Design System authority and are never derived from tenant colors.
+
+The organization interface-style preference is a default, not a second theme implementation. `BrandThemeSync` reuses the existing `html[data-theme]` contract; an explicit browser `desweb-theme` preference wins. Density is likewise a shell presentation class over existing components and does not alter domain data or permissions.
+
+Personal profile editing uses `/api/preferences/profile`, restricted to `session.userId`. It updates only personal account fields/avatar/password and cannot alter membership, role, organization or Site scope. The environment bootstrap Platform Owner has no normal user row and remains non-editable through this boundary.

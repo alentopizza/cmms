@@ -5,6 +5,7 @@ import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
+import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -19,6 +20,173 @@ function legacySupplierType(capabilities:string[]){
   const services=capabilities.some(code=>code!=="materials");
   if(materials&&services)return "both";
   return materials?"materials":"services";
+}
+
+async function accessibleSupplier(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>){
+  return query<{id:string;organization_id:string}>(
+    `SELECT id,organization_id
+     FROM suppliers
+     WHERE id=$1 AND ($2::uuid IS NULL OR organization_id=$2)`,
+    [id,session.platformRole==="user"?session.organizationId:null],
+  );
+}
+
+export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){
+  const session=await getSession();
+  if(!session)return new NextResponse("Unauthorized",{status:401});
+  if(!can(session,"suppliers.manage"))return new NextResponse("Forbidden",{status:403});
+  const {id}=await params;
+  if(!UUID.test(id))return new NextResponse("Proveedor inválido",{status:400});
+  const supplierScope=await accessibleSupplier(id,session);
+  if(!supplierScope.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
+  const organizationId=supplierScope.rows[0].organization_id;
+  const view=new URL(request.url).searchParams.get("view")||"general";
+
+  if(view==="general"){
+    const result=await query(
+      `SELECT s.id,s.organization_id,o.name organization_name,COALESCE(o.default_country,o.legal_country) organization_country,
+              s.code,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,s.city,s.address,s.website,s.supplier_type,
+              s.service_category,s.contact_name,s.contact_title,s.email,s.phone,s.notes,s.active,(s.logo_data IS NOT NULL) has_logo,
+              COALESCE(capabilities.codes,ARRAY[]::text[]) capability_codes,
+              COALESCE(capabilities.labels,ARRAY[]::text[]) capability_labels,
+              COALESCE(specialties.codes,ARRAY[]::text[]) specialty_codes,
+              COALESCE(specialties.labels,ARRAY[]::text[]) specialty_labels,
+              sf.bank_name,sf.account_type,sf.account_number,sf.account_holder,sf.account_holder_tax_id,sf.payment_terms_days,
+              sf.currency_code,sf.payment_email,sf.payment_notes
+       FROM suppliers s
+       JOIN organizations o ON o.id=s.organization_id
+       LEFT JOIN supplier_financial_profiles sf ON sf.supplier_id=s.id
+       LEFT JOIN LATERAL (
+         SELECT array_agg(sc.capability_code ORDER BY cc.sort_order,cc.label) codes,
+                array_agg(cc.label ORDER BY cc.sort_order,cc.label) labels
+         FROM supplier_capabilities sc
+         JOIN supplier_capability_catalog cc ON cc.code=sc.capability_code
+         WHERE sc.supplier_id=s.id
+       ) capabilities ON true
+       LEFT JOIN LATERAL (
+         SELECT array_agg(ss.specialty_code ORDER BY cs.sort_order,cs.label) codes,
+                array_agg(cs.label ORDER BY cs.sort_order,cs.label) labels
+         FROM supplier_specialties ss
+         JOIN supplier_specialty_catalog cs ON cs.code=ss.specialty_code
+         WHERE ss.supplier_id=s.id
+       ) specialties ON true
+       WHERE s.id=$1 AND s.organization_id=$2`,
+      [id,organizationId],
+    );
+    return NextResponse.json({supplier:result.rows[0]||null});
+  }
+
+  if(view==="statistics"){
+    const [operational,commercial]=await Promise.all([
+      query<{
+        supplier_return_count:number;supplier_return_quantity:string;procurement_document_count:number;
+        procurement_document_pending:number;procurement_document_disputed:number;
+      }>(
+        `SELECT
+           (SELECT count(*)::int FROM supplier_returns sr WHERE sr.supplier_id=$1) supplier_return_count,
+           COALESCE((SELECT sum(sri.quantity) FROM supplier_returns sr JOIN supplier_return_items sri ON sri.return_id=sr.id WHERE sr.supplier_id=$1),0)::text supplier_return_quantity,
+           (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=$1 AND pd.voided_at IS NULL) procurement_document_count,
+           (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=$1 AND pd.voided_at IS NULL AND pd.review_status='pending') procurement_document_pending,
+           (SELECT count(*)::int FROM procurement_documents pd WHERE pd.supplier_id=$1 AND pd.voided_at IS NULL AND pd.review_status='disputed') procurement_document_disputed`,
+        [id],
+      ),
+      loadSupplierCommercialAnalytics([id]),
+    ]);
+    return NextResponse.json({
+      operational:operational.rows[0],
+      commercial:commercial.summaries[0]||null,
+      trends:commercial.trends,
+      requisitions:commercial.requisitions,
+    });
+  }
+
+  if(view==="activities"){
+    const result=await query(
+      `SELECT wt.id,wt.service_supplier_id supplier_id,w.id work_order_id,w.number::text order_number,w.title order_title,
+              wt.description,wt.status,wt.due_date::text,site.name site_name,l.name location_name
+       FROM work_order_tasks wt
+       JOIN work_orders w ON w.id=wt.work_order_id
+       JOIN sites site ON site.id=w.site_id
+       LEFT JOIN assets a ON a.id=w.asset_id
+       LEFT JOIN locations l ON l.id=COALESCE(w.location_id,a.location_id)
+       WHERE wt.service_supplier_id=$1 AND w.organization_id=$2
+       ORDER BY w.requested_at DESC,wt.sort_order`,
+      [id,organizationId],
+    );
+    return NextResponse.json({activities:result.rows});
+  }
+
+  if(view==="inventory"){
+    const [items,sites,locations,categories,warehouses]=await Promise.all([
+      query(
+        `SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,
+                i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.site_id,i.location_id,i.category_id,i.warehouse_id,
+                i.storage_location,c.name category_name,warehouse.name warehouse_name,site.name site_name,l.name location_name,
+                i.active,(i.image_data IS NOT NULL) has_image
+         FROM inventory_items i
+         JOIN suppliers p ON p.id=i.supplier_id
+         LEFT JOIN sites site ON site.id=i.site_id
+         LEFT JOIN locations l ON l.id=i.location_id
+         LEFT JOIN inventory_categories c ON c.id=i.category_id
+         LEFT JOIN inventory_warehouses warehouse ON warehouse.id=i.warehouse_id
+         WHERE i.supplier_id=$1 AND i.organization_id=$2 AND p.active=true AND p.supplier_type IN ('materials','both')
+         ORDER BY i.name`,
+        [id,organizationId],
+      ),
+      query("SELECT id,organization_id,name FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+      query(
+        `SELECT l.id,l.organization_id,l.site_id,l.name,site.name||' · '||l.name label
+         FROM locations l JOIN sites site ON site.id=l.site_id
+         WHERE l.organization_id=$1 AND l.active=true ORDER BY site.name,l.name`,
+        [organizationId],
+      ),
+      query("SELECT id,organization_id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+      query("SELECT id,organization_id,site_id,location_id,name FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[organizationId]),
+    ]);
+    return NextResponse.json({
+      items:items.rows,sites:sites.rows,locations:locations.rows,categories:categories.rows,warehouses:warehouses.rows,
+    });
+  }
+
+  if(view==="requisitions"){
+    const [requisitions,items]=await Promise.all([
+      query(
+        `SELECT r.id,r.supplier_id,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.approval_required,r.approval_state,
+                count(ri.id)::int item_count,COALESCE(sum(ri.quantity_requested*ri.unit_cost_estimated),0)::text total_estimated,
+                COALESCE(sum(ri.quantity_requested),0)::text quantity_requested,
+                COALESCE(sum(ri.quantity_received),0)::text quantity_received,
+                COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri JOIN supplier_returns sr ON sr.id=sri.return_id WHERE sr.requisition_id=r.id),0)::text quantity_returned,
+                (SELECT count(*)::int FROM supplier_returns sr WHERE sr.requisition_id=r.id) return_count,
+                (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL) document_count,
+                (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='pending') document_pending_review,
+                (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL AND pd.review_status='disputed') document_disputed
+         FROM supplier_requisitions r
+         LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id
+         WHERE r.supplier_id=$1 AND r.organization_id=$2
+         GROUP BY r.id
+         ORDER BY r.created_at DESC`,
+        [id,organizationId],
+      ),
+      query(
+        `SELECT i.id,i.supplier_id,p.name supplier_name,i.sku,i.name,i.description,i.presentation,i.unit,i.unit_cost::text,
+                i.quantity::text,i.min_quantity::text,i.max_quantity::text,i.site_id,i.location_id,i.category_id,i.warehouse_id,
+                i.storage_location,c.name category_name,warehouse.name warehouse_name,site.name site_name,l.name location_name,
+                i.active,(i.image_data IS NOT NULL) has_image
+         FROM inventory_items i
+         JOIN suppliers p ON p.id=i.supplier_id
+         LEFT JOIN sites site ON site.id=i.site_id
+         LEFT JOIN locations l ON l.id=i.location_id
+         LEFT JOIN inventory_categories c ON c.id=i.category_id
+         LEFT JOIN inventory_warehouses warehouse ON warehouse.id=i.warehouse_id
+         WHERE i.supplier_id=$1 AND i.organization_id=$2 AND p.active=true AND p.supplier_type IN ('materials','both')
+         ORDER BY i.name`,
+        [id,organizationId],
+      ),
+    ]);
+    return NextResponse.json({requisitions:requisitions.rows,items:items.rows});
+  }
+
+  return new NextResponse("Vista no soportada",{status:400});
 }
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){

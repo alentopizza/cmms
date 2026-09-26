@@ -72,7 +72,7 @@ const api=fs.readFileSync("app/api/organization-branding/route.ts","utf8");
 for(const marker of [
   'session.whiteLabel','session.planCode !== "pro"','session.role !== "admin"',
   "organization_branding","accent_color","scheme_key","interface_style","interface_density",
-  'intent==="reset"',"removeLogo","session.organizationId",
+  'intent==="reset"',"removeLogo","clearLogo","CASE WHEN $17::boolean","session.organizationId",
 ]){
   if(!api.includes(marker))throw new Error("Existing branding mutation extension missing "+marker);
 }

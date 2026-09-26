@@ -193,8 +193,8 @@ export function brandCssVariables(input:BrandPaletteInput,autoPalette=true):Reco
     "--color-surface-teal":autoPalette
       ? `color-mix(in srgb,${palette.primary} 10%,var(--color-surface))`
       : "var(--color-surface-soft)",
-    "--color-brand-secondary":palette.primary,
-    "--color-brand-primary":palette.accent,
+    "--color-brand-secondary":`color-mix(in srgb,${palette.primary} 72%,var(--color-text-primary))`,
+    "--color-brand-primary":`color-mix(in srgb,${palette.accent} 72%,var(--color-text-primary))`,
     "--brand-teal":palette.primary,
     "--brand-teal-hover":autoPalette?palette.primaryHover:structural.primaryHover,
     "--brand-mint":palette.accent,

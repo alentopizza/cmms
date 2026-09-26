@@ -385,6 +385,93 @@ No existe medición RUM/FCP/LCP/INP ni bytes RSC productivos para este cambio. N
 
 `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`: CI completo, smoke SQL, Data UI, view-mode, Phase 9 y build exitosos.
 
+### P1 — Fase 3 · Órdenes de Trabajo — validado
+
+**Objetivo**
+
+Migrar Órdenes de Trabajo al patrón server-side probado en Rutinas sin alterar su RBAC especializado para plataforma, requester, provider, external, usuario interno ni alcance por sedes.
+
+**Scope preservado**
+
+El antiguo `loadOrders()` tenía cinco ramas. La migración conserva exactamente estas reglas dentro de un único `scopedSql` compartido por summary/KPI, facetas y página:
+
+- plataforma: todas las OT;
+- requester: misma organización + `requested_by=userId`, y sedes autorizadas cuando `accessAllSites=false`;
+- provider: misma organización + proveedor externo válido + asignación directa en `work_orders.service_supplier_id` o en alguna `work_order_task.service_supplier_id`, más sedes cuando corresponde;
+- external: misma organización + asignación directa, tarea asignada al usuario o tarea de una cuadrilla donde el usuario pertenece, más sedes cuando corresponde;
+- interno: misma organización y, cuando aplica, únicamente `siteIds`.
+
+El orden de aplicación es: **scope RBAC → búsqueda/filtros → orden → LIMIT/OFFSET**.
+
+**Estado URL**
+
+`q`, `status`, `organization`, `site`, `priority`, `type`, `sort`, `page`.
+
+Estado/prioridad/tipo/sort usan allowlists; organización/sede requieren UUID válido; página se normaliza a entero positivo.
+
+**Antes vs. después**
+
+| Métrica | Antes | Después |
+| --- | ---: | ---: |
+| OT máximas transferidas al directorio | 200 | 24 |
+| Truncamiento fijo | Sí, `LIMIT 200` | No |
+| Búsqueda fuera de primeras 200 | No | Sí |
+| Filtros fuera de primeras 200 | No | Sí |
+| Paginación real | No | Sí |
+| KPI sobre scope completo | No | Sí |
+| Facetas sobre scope completo | No | Sí |
+| Colección Grid/List | mismas hasta 200 filas | misma página de 24 |
+
+Reducción máxima de filas de OT transferidas inicialmente: 200 → 24, equivalente a 88%.
+
+Sin contar `getCreationGateForScope`, antes el directorio ejecutaba una query de OT (+ catálogo de activos para usuarios con escritura). Después ejecuta summary/count + facetas + página (+ catálogo de activos cuando aplica). El aumento deliberado de queries permite semántica completa del conjunto autorizado; summary y facetas devuelven una sola fila cada una.
+
+Los KPI `active_count`, `in_progress_count`, `urgent_count` y `completed_count` se calculan desde el CTE autorizado completo, no desde la página visible.
+
+**Prueba RBAC reproducible**
+
+`scripts/work-orders-server-pagination-smoke.mjs` crea fixtures dentro de una transacción y valida:
+
+- plataforma;
+- requester con acceso total y limitado por sede;
+- provider con acceso total y limitado por sede;
+- external con acceso total y limitado por sede;
+- usuario interno con acceso total y limitado por sede;
+- asignación provider directa y por tarea;
+- asignación external directa, por tarea y por cuadrilla;
+- una OT de ID conocido fuera de scope no puede recuperarse;
+- búsqueda no descubre OT fuera de scope;
+- COUNT no incluye OT fuera de scope;
+- facetas no revelan sedes fuera de scope;
+- cambiar de página no amplía el scope;
+- una OT ubicada en página 2 puede encontrarse mediante búsqueda server-side;
+- filtros combinados permanecen dentro del scope.
+
+Todos los datos de prueba se revierten con `ROLLBACK`.
+
+**Compatibilidad**
+
+- `ModuleHeader.serverState` y `UrlPagination` se reutilizan; no se creó otra arquitectura.
+- `CollectionView` no cambió.
+- Grid/List no modifica URL ni página.
+- No existe selección múltiple/acción masiva en el directorio y no se añadió.
+- `CreateRecordModal` conserva catálogo de activos independiente.
+- `OwnerRecordActions` y acceso a actividades por fila permanecen.
+- `work_orders.read`, `work_orders.write`, `assets.read`, organización, roles y sedes mantienen su comportamiento.
+- No hubo migraciones, índices, CSS global ni cambios en otros módulos.
+
+**Bundle medido**
+
+Antes: 105,513 bytes JS / 746,070 bytes CSS para `/dashboard/work-orders`.
+
+Después: 114,675 bytes JS / 746,070 bytes CSS.
+
+Incremento JS: 9,162 bytes (~8.7%); CSS sin cambios. No se atribuyen mejoras de FCP/LCP/INP ni milisegundos sin RUM.
+
+**Base funcional validada**
+
+`8f3063d68d8882973a4b10b750a9eda38fa11f52`: smoke RBAC, Phase 9, build y reporte de bundle exitosos.
+
 ### P1 — Directorios con límites grandes — pendiente de migración server-side
 
 Límites observados:
@@ -392,7 +479,6 @@ Límites observados:
 - Activos: hasta 600
 - Inventario: hasta 600
 - Ubicaciones/servicios: hasta 500
-- Work Orders: 200
 - Usuarios (antes de lazy detail): documentos hasta 1,600
 
 **Diagnóstico**  
@@ -408,7 +494,7 @@ Migrar módulo por módulo a parámetros URL server-side:
 5. total
 6. misma colección para Grid/List
 
-Piloto Rutinas validado. Orden restante propuesto: Work Orders → Activos → Inventario → Ubicaciones.
+Rutinas y Work Orders validados. Orden restante propuesto: Activos → Inventario → Ubicaciones.
 
 ### P2 — Dashboard: alto número de consultas
 

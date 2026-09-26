@@ -1,9 +1,9 @@
 # Development handoff
 
-> Última revisión: 2026-09-25  
+> Última revisión: 2026-09-26  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base funcional validada para esta entrega: `8f3063d68d8882973a4b10b750a9eda38fa11f52`
+> Base funcional validada para esta entrega: `72f5327c00be6dd464b71399bb760378d161157a`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -73,6 +73,28 @@ Validado sobre `8f3063d68d8882973a4b10b750a9eda38fa11f52`.
 - Antes: hasta 200 OT transferidas. Después: máximo 24 OT + una fila summary + una fila facetas.
 - No hubo migraciones, índices, CSS global ni cambios en Activos/Inventario/Ubicaciones.
 - Siguiente módulo de Fase 3: **Activos**, solo después de revisión expresa.
+
+## Fase 3 · Activos server-side
+
+Validado sobre `72f5327c00be6dd464b71399bb760378d161157a`.
+
+- El diagnóstico previo está en `docs/ASSETS_SERVER_PAGINATION_DIAGNOSIS.md`; se realizó antes de modificar el directorio.
+- `app/dashboard/assets/page.tsx` ya no carga hasta 600 activos para resolver búsqueda/filtros. La página visible contiene 24 registros.
+- El scope autorizado se centraliza en un único `scopedSql`: plataforma global; tenant por organización; tenant limitado por organización + `siteIds`.
+- Orden obligatorio: scope → búsqueda → filtros → sort → paginación.
+- Estado URL: `q`, `status`, `organization`, `site`, `criticality`, `category`, `supplier`, `sort`, `page`.
+- Summary/KPI, facetas, marcas, modelos y calidad de catálogo se calculan sobre todo el scope autorizado, no sobre las 24 filas.
+- `AssetCatalogOverview` conserva su significado, pero ya no recibe `assets.rows`; consume agregados server-side.
+- El conteo por categoría usa la taxonomía de la organización y cuenta solo activos autorizados por sede.
+- Grid/List consumen exactamente `assets.rows` de la página y `CollectionView` sigue siendo local; cambiar vista no navega.
+- Creación conserva catálogos independientes de sedes/sububicaciones/proveedores.
+- Edición individual, importación, exportación, mantenimiento, historial de OT y documentos siguen usando sus consultas/endpoints propios y no dependen de la página visible.
+- `scripts/assets-server-pagination-smoke.mjs` valida página 2, búsqueda, filtros, COUNT, facetas, KPI, agregados, no fuga y desacople funcional.
+- CI mantiene también `scripts/work-orders-server-pagination-smoke.mjs` como regresión permanente.
+- Antes: hasta 600 activos en la colección principal. Después: máximo 24, reducción del 96%.
+- Bundle medido: 200,722 → 207,140 bytes JS (~+3.2%); CSS permanece en 746,070 bytes.
+- No hubo migraciones, índices, CSS global ni cambios en Inventario/Ubicaciones/biometría/RUM/deployment.
+- **No avanzar a Inventario hasta revisión expresa del resultado de Activos.**
 
 ## 2. Estado técnico actual
 

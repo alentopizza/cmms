@@ -4,6 +4,7 @@ const required=[
   "app/dashboard/reports/page.tsx",
   "app/dashboard/settings/page.tsx",
   "app/dashboard/personalization/page.tsx",
+  "app/dashboard/brand/page.tsx",
   "components/ThemePreferences.tsx",
   "app/phase10-modules.css",
 ];
@@ -16,9 +17,11 @@ for(const marker of ["phase10-reports","<DashboardControls","<ModuleExportMenu",
 if(/\b(INSERT|UPDATE|DELETE)\b/i.test(reports))throw new Error("Reports center must not introduce a second write/data authority");
 
 const settings=fs.readFileSync("app/dashboard/settings/page.tsx","utf8");
-for(const marker of ["phase10-settings","<Alert","<Badge","<ProgressBar","<UiIcon","<Button","/api/organization-branding","/api/customization","<ThemePreferences"]){
+for(const marker of ["phase10-settings","<Alert","<Badge","<ProgressBar","<UiIcon","<Button","/dashboard/brand","/api/customization","<ThemePreferences"]){
   if(!settings.includes(marker))throw new Error("Settings Phase 10 migration missing "+marker);
 }
+const brandPage=fs.readFileSync("app/dashboard/brand/page.tsx","utf8");
+if(!brandPage.includes("BrandPersonalization")||!brandPage.includes("Personalización de marca"))throw new Error("Dedicated Organization brand experience missing");
 if(settings.includes('className="notice '))throw new Error("Settings still renders legacy notice feedback");
 
 const personalization=fs.readFileSync("app/dashboard/personalization/page.tsx","utf8");

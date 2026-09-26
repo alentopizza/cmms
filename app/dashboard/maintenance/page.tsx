@@ -48,6 +48,9 @@ function likePattern(value:string){
 function frequencyLabel(value:string){
   return ({day:"Día",week:"Semana",month:"Mes",year:"Año",meter:"Medidor"} as Record<string,string>)[value]||value;
 }
+function routinePageWindow(page:number){
+  return {limit:ROUTINE_PAGE_SIZE,offset:(page-1)*ROUTINE_PAGE_SIZE};
+}
 
 // ── Responsive maintenance directory: desktop table + mobile cards ─────────
 
@@ -186,7 +189,8 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     const queryString=canonical.toString();
     redirect(queryString?"/dashboard/maintenance?"+queryString:"/dashboard/maintenance");
   }
-  const pageParams=[...filteredParams,ROUTINE_PAGE_SIZE,(page-1)*ROUTINE_PAGE_SIZE];
+  const pageWindow=routinePageWindow(page);
+  const pageParams=[...filteredParams,pageWindow.limit,pageWindow.offset];
   const limitToken="$"+(pageParams.length-1);
   const offsetToken="$"+pageParams.length;
   const orderSql=sort==="due"?"next_due_at ASC NULLS LAST,name ASC,id ASC":"next_due_at ASC NULLS LAST,name ASC,id ASC";

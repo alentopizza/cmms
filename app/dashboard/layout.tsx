@@ -9,6 +9,8 @@ import DashboardSidebar, { type ReorderableNavItem } from "@/components/Dashboar
 import { query } from "@/lib/db";
 import { getOrganizationBranding } from "@/lib/organization-branding";
 import TechnicianLocationTracker from "@/components/TechnicianLocationTracker";
+import BrandThemeSync from "@/components/BrandThemeSync";
+import { brandCssVariables } from "@/lib/brand-theme";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   );
   const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({ id, icon, label, href }));
   const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
+  const canBrandPersonalization = Boolean(session.organizationId && session.role === "admin");
+  const brandPersonalizationEnabled = Boolean(canBrandPersonalization && session.planCode === "pro" && session.whiteLabel);
 
   const [customization, organizationBranding, preferenceResult, identityResult] = await Promise.all([
     getCustomizationSummary(),
@@ -69,18 +73,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? `/api/users/${session.userId}/avatar`
     : null;
 
-  // Keep organization white-label compatible with both legacy aliases and
-  // the DESWEB V2 semantic action tokens during the phased UI migration.
-  const shellStyle = organizationBranding ? {
-    ...(organizationBranding.primaryColor ? {
-      "--brand-teal": organizationBranding.primaryColor,
-      "--color-action-primary": organizationBranding.primaryColor,
-    } : {}),
-    ...(organizationBranding.secondaryColor ? {
-      "--brand-mint": organizationBranding.secondaryColor,
-      "--color-action-accent": organizationBranding.secondaryColor,
-    } : {}),
-  } as React.CSSProperties : undefined;
+  // Organization identity extends the existing semantic token bridge.
+  // Status colors remain untouched; only brand/navigation tokens are overridden.
+  const shellStyle = organizationBranding
+    ? brandCssVariables({
+        primary: organizationBranding.primaryColor,
+        secondary: organizationBranding.secondaryColor,
+        accent: organizationBranding.accentColor,
+      }) as React.CSSProperties
+    : undefined;
   const sidebarLogo = organizationBranding?.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"
     : logoOnDarkSrc(customization);
@@ -89,7 +90,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? "field"
     : "drawer";
 
-  return <div className={"shell desweb-shell-v2 mobile-nav-" + mobileNavigationMode} style={shellStyle}>
+  const densityClass=organizationBranding ? " brand-density-"+organizationBranding.interfaceDensity : "";
+  return <div className={"shell desweb-shell-v2 mobile-nav-" + mobileNavigationMode + densityClass} style={shellStyle}>
+    {organizationBranding&&<BrandThemeSync organizationDefault={organizationBranding.interfaceStyle}/>}
     {can(session,"reaction.track") && <TechnicianLocationTracker userName={session.fullName} />}
     <DashboardSidebar
       items={navigationItems}
@@ -111,6 +114,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         fullName={session.fullName}
         role={roleLabel(session)}
         canConfigure={canConfigure}
+        canBrandPersonalization={canBrandPersonalization}
+        brandPersonalizationEnabled={brandPersonalizationEnabled}
         avatarSrc={accountAvatarSrc}
       />
       <div className="workspace-content">{children}</div>

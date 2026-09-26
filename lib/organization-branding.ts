@@ -13,6 +13,7 @@ export type OrganizationBrandingSummary = {
   interfaceDensity: "compact"|"normal"|"comfortable";
   hasLogoOnLight: boolean;
   hasLogoOnDark: boolean;
+  hasOrganizationLogo: boolean;
   showDeswebBranding: boolean;
 };
 
@@ -28,12 +29,15 @@ async function resolveOrganizationBranding(organizationId: string): Promise<Orga
     interface_density: "compact"|"normal"|"comfortable"|null;
     logo_on_light_mime: string | null;
     logo_on_dark_mime: string | null;
-    show_desweb_branding: boolean;
+    show_desweb_branding: boolean | null;
+    organization_has_logo: boolean;
   }>(
-    `SELECT app_name,primary_color,secondary_color,accent_color,scheme_key,auto_palette,
-            interface_style,interface_density,logo_on_light_mime,logo_on_dark_mime,show_desweb_branding
-     FROM organization_branding
-     WHERE organization_id=$1`,
+    `SELECT ob.app_name,ob.primary_color,ob.secondary_color,ob.accent_color,ob.scheme_key,ob.auto_palette,
+            ob.interface_style,ob.interface_density,ob.logo_on_light_mime,ob.logo_on_dark_mime,ob.show_desweb_branding,
+            (o.logo_data IS NOT NULL) organization_has_logo
+     FROM organizations o
+     LEFT JOIN organization_branding ob ON ob.organization_id=o.id
+     WHERE o.id=$1`,
     [organizationId],
   );
   const row=result.rows[0];
@@ -48,6 +52,7 @@ async function resolveOrganizationBranding(organizationId: string): Promise<Orga
     interfaceDensity: row?.interface_density || "normal",
     hasLogoOnLight: Boolean(row?.logo_on_light_mime),
     hasLogoOnDark: Boolean(row?.logo_on_dark_mime),
+    hasOrganizationLogo: Boolean(row?.organization_has_logo),
     showDeswebBranding: row?.show_desweb_branding ?? false,
   };
 }

@@ -5,6 +5,7 @@ import UiIcon from "@/components/UiIcon";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { roleLabel } from "@/lib/permissions";
+import { getOrganizationBranding } from "@/lib/organization-branding";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Button } from "@/components/ui-kit/Button";
 
@@ -29,7 +30,7 @@ export default async function PreferencesPage({
   if (!session) redirect("/login");
   const params=await searchParams;
 
-  const [profileResult,organizationResult]=await Promise.all([
+  const [profileResult,organizationResult,organizationBranding]=await Promise.all([
     session.userId
       ? query<ProfileRow>(
           `SELECT full_name,email,phone,(avatar_data IS NOT NULL) has_avatar,last_login_at::text
@@ -40,6 +41,9 @@ export default async function PreferencesPage({
     session.organizationId
       ? query<{timezone:string}>("SELECT timezone FROM organizations WHERE id=$1 LIMIT 1",[session.organizationId])
       : Promise.resolve({rows:[] as {timezone:string}[],rowCount:0}),
+    session.organizationId&&session.whiteLabel
+      ? getOrganizationBranding(session.organizationId)
+      : Promise.resolve(null),
   ]);
 
   const profile=profileResult.rows[0]||{
@@ -114,7 +118,7 @@ export default async function PreferencesPage({
 
         <section id="appearance" className="account-settings-card">
           <div className="account-card-heading"><div><span className="eyebrow">Apariencia</span><h2>Tema de la interfaz</h2><p>Elige una preferencia personal. Esta opción utiliza el sistema claro, oscuro y automático existente.</p></div></div>
-          <ThemePreferences/>
+          <ThemePreferences organizationDefault={organizationBranding?.interfaceStyle}/>
         </section>
 
         <section id="security" className="account-settings-card">

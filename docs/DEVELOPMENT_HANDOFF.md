@@ -20,6 +20,16 @@ Antes de modificar código:
 
 La documentación del repositorio es la fuente de continuidad. Las conversaciones sirven para intención y referencias visuales, pero las reglas permanentes deben quedar expresadas aquí, en `AGENTS.md` o en la documentación temática.
 
+## Ajuste UX/UI · Ubicaciones + Reacción
+
+- `components/LocationDirectory.tsx` conserva la cuadrícula de `LocationCard` y reutiliza `EntityIdentityCell` en el listado para mostrar la fotografía real de cada Site. No sustituir esa imagen por el logo de empresa: fotografía = sede física; logo = empresa.
+- El fallback del listado es el icono institucional de ubicación del UI Kit; no generar imágenes ficticias ni introducir un componente paralelo.
+- La tabla de Ubicaciones conserva Empresa, Ciudad/País, Sububicaciones, Activos, Estado y Acciones; el cambio visual no altera `CollectionView`, filtros DOM ni scope.
+- `app/phase9-modules.css` convierte Reacción en un workspace con mapa dominante y panel de alertas secundario. Escritorio usa 3fr/1fr; tablet 2fr/1fr; móvil apila el panel debajo.
+- La altura de escritorio se deriva de `100dvh - 170px`; `.reaction-google-map` ocupa 100% de ancho y alto del stage.
+- La barra `.reaction-filter-bar` permanece sobre el mismo estado/filtros de `ReactionMap`, pero ahora es flotante, compacta y responsive. No mover la lógica de búsqueda, filtros o snapshot a CSS/componentes nuevos.
+- Marcadores, rutas, sesiones de tracking, Google Maps, drawer de detalle, alertas y autorización permanecen sin cambios.
+
 ## Auditoría de rendimiento · Fase 2 Proveedores
 
 Fase funcional cerrada sobre `1591b2ebee7272b9156299a4f4a0470c80bbb167`.

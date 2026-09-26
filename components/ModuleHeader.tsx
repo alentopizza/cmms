@@ -82,6 +82,10 @@ export default function ModuleHeader({
   function replaceServerParams(updates:Record<string,string|null>,resetPage=true){
     if(!serverState)return;
     const next=new URLSearchParams(urlSignature);
+    const searchKey=serverState.searchParam||"q";
+    if(search!==serverState.search){
+      if(search)next.set(searchKey,search);else next.delete(searchKey);
+    }
     for(const [key,value] of Object.entries(updates)){
       if(!value||value==="all")next.delete(key);else next.set(key,value);
     }

@@ -293,6 +293,98 @@ No existe todavía una medición RUM/p50/p95 de navegación productiva ni una me
 
 `scripts/performance-suppliers-phase2-smoke.mjs` protege la separación de datos, caché por pestaña, alcance tenant y funciones existentes.
 
+### P1 — Fase 3 piloto · Rutinas / Mantenimiento — validado
+
+**Objetivo del piloto**
+
+Validar un patrón reutilizable de búsqueda, filtros, orden y paginación server-side sin cambiar Grid/List, permisos, creación, acciones por fila ni el catálogo de activos utilizado por la creación de rutinas.
+
+**Estado anterior**
+
+- la colección principal ejecutaba `LIMIT 200`;
+- búsqueda, estado y facetas dependían de los `[data-module-record]` ya montados;
+- una rutina fuera de las primeras 200 filas no podía encontrarse desde el directorio;
+- los KPI se calculaban desde `plans.rows`, por lo que representaban el subconjunto truncado;
+- no existía paginación real.
+
+**Patrón implementado**
+
+- URL como fuente de estado: `q`, `status`, `organization`, `site`, `frequency`, `sort`, `page`;
+- validación explícita para estado, frecuencia, sort, UUID y página;
+- scope RBAC en el CTE `scoped` antes de búsqueda/filtros/paginación;
+- búsqueda y filtros parametrizados en SQL;
+- orden predeterminado preservado: `next_due_at ASC NULLS LAST, name ASC, id ASC`;
+- página de 24 rutinas mediante `routinePageWindow()`, que encapsula `LIMIT/OFFSET`;
+- `ModuleHeader` incorpora `serverState` opcional. Sin ese prop conserva el filtrado DOM anterior para los módulos todavía no migrados;
+- filtros/search eliminan `page` de la URL y regresan a página 1;
+- `UrlPagination` reutiliza el primitive `Pagination` existente;
+- `CollectionView` permanece intacto. Grid/List muestra la misma página y su cambio sigue siendo local, sin navegación;
+- facetas se calculan sobre todo el conjunto autorizado, no sobre la página;
+- KPI se calculan sobre todo el scope autorizado, no sobre la página filtrada;
+- el catálogo de activos de `RoutineCreateModal` continúa como query independiente.
+
+**SQL por entrada**
+
+Sin contar `getCreationGateForScope`, que existe antes y después:
+
+- antes, lectura: 1 query de rutinas; escritura: 1 query de rutinas + 1 query de activos;
+- después, lectura: 1 summary/count + 1 facetas + 1 página = 3 queries;
+- después, escritura: las tres anteriores + catálogo de activos = 4 queries.
+
+El piloto aumenta deliberadamente el número de consultas para dejar de transferir hasta 200 filas y obtener conteos/facetas correctos sobre el conjunto completo. Summary y facetas devuelven una sola fila cada uno.
+
+**Filas de colección**
+
+| Métrica | Antes | Después |
+| --- | ---: | ---: |
+| Rutinas máximas transferidas al directorio | 200 | 24 |
+| Truncamiento fijo de colección | Sí | No |
+| COUNT/KPI del conjunto autorizado | No | Sí, 1 fila |
+| Facetas del conjunto autorizado | No | Sí, 1 fila JSON |
+| Búsqueda fuera de la primera página | No | Sí |
+| Filtros combinados fuera de página | No | Sí |
+| Navegación a página posterior | No | Sí |
+
+La reducción máxima de filas de rutina en el render inicial es 200 → 24, equivalente a 88% menos filas de la colección principal. El catálogo de activos para creación no se incluye en esa comparación porque se conserva independiente antes/después.
+
+**Prueba SQL reproducible**
+
+`scripts/maintenance-server-pagination-smoke.mjs` abre una transacción, crea 30 rutinas autorizadas y otra rutina homónima en una sede fuera del scope, y demuestra que:
+
+1. la rutina objetivo no está en la primera página de 24;
+2. aparece al navegar a página 2;
+3. una búsqueda por nombre la recupera en página 1;
+4. filtros combinados `active + year + site` la recuperan;
+5. COUNT usa las 30 rutinas autorizadas;
+6. las facetas incluyen mes/año del scope completo pero excluyen la frecuencia de la sede no autorizada;
+7. no se filtra información de la sede fuera de scope.
+
+El smoke revierte todos los datos de prueba con `ROLLBACK`.
+
+**Compatibilidad**
+
+- `CollectionView` y el storage de Grid/List no cambiaron;
+- no existe selección múltiple en Rutinas y no se añadió;
+- `OwnerRecordActions` continúa por fila;
+- `RoutineCreateModal` y su catálogo de activos permanecen;
+- edición/activación/desactivación conserva el flujo anterior;
+- `maintenance.read`, `maintenance.write`, `assets.read`, scope de organización y scope de sedes permanecen;
+- los demás módulos continúan usando el modo DOM de `ModuleHeader`.
+
+**Bundle medido**
+
+Antes: 177,431 bytes JS / 746,070 bytes CSS referenciados por `/dashboard/maintenance`.
+
+Después del modo server-side: 187,455 bytes JS / 746,070 bytes CSS.
+
+Incremento JS: 10,024 bytes (~5.6%); CSS sin cambios. La mejora demostrada en este piloto está en semántica de búsqueda/filtro y reducción de filas transferidas, no en tamaño JS.
+
+No existe medición RUM/FCP/LCP/INP ni bytes RSC productivos para este cambio. No se atribuyen mejoras de tiempo no medidas.
+
+**Base funcional validada**
+
+`c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`: CI completo, smoke SQL, Data UI, view-mode, Phase 9 y build exitosos.
+
 ### P1 — Directorios con límites grandes — pendiente de migración server-side
 
 Límites observados:
@@ -301,7 +393,6 @@ Límites observados:
 - Inventario: hasta 600
 - Ubicaciones/servicios: hasta 500
 - Work Orders: 200
-- Rutinas: 200
 - Usuarios (antes de lazy detail): documentos hasta 1,600
 
 **Diagnóstico**  
@@ -317,7 +408,7 @@ Migrar módulo por módulo a parámetros URL server-side:
 5. total
 6. misma colección para Grid/List
 
-Prioridad sugerida restante: Activos → Inventario → Ubicaciones → Work Orders/Rutinas.
+Piloto Rutinas validado. Orden restante propuesto: Work Orders → Activos → Inventario → Ubicaciones.
 
 ### P2 — Dashboard: alto número de consultas
 

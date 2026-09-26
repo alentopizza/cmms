@@ -68,6 +68,7 @@ export async function POST(request: Request) {
           readImageUpload(form.get("logo_on_light"), { maxBytes: 2 * 1024 * 1024, label: "el logo para fondo claro" }),
           readImageUpload(form.get("logo_on_dark"), { maxBytes: 2 * 1024 * 1024, label: "el logo para fondo oscuro" }),
         ]);
+    const clearLogo=removeLogo&&!sharedLogo&&!logoOnLight&&!logoOnDark;
 
     await query(
       `INSERT INTO organization_branding(
@@ -85,31 +86,21 @@ export async function POST(request: Request) {
         auto_palette=EXCLUDED.auto_palette,
         interface_style=EXCLUDED.interface_style,
         interface_density=EXCLUDED.interface_density,
-        logo_on_light=COALESCE(EXCLUDED.logo_on_light,organization_branding.logo_on_light),
-        logo_on_light_mime=COALESCE(EXCLUDED.logo_on_light_mime,organization_branding.logo_on_light_mime),
-        logo_on_light_name=COALESCE(EXCLUDED.logo_on_light_name,organization_branding.logo_on_light_name),
-        logo_on_dark=COALESCE(EXCLUDED.logo_on_dark,organization_branding.logo_on_dark),
-        logo_on_dark_mime=COALESCE(EXCLUDED.logo_on_dark_mime,organization_branding.logo_on_dark_mime),
-        logo_on_dark_name=COALESCE(EXCLUDED.logo_on_dark_name,organization_branding.logo_on_dark_name),
+        logo_on_light=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_light,organization_branding.logo_on_light) END,
+        logo_on_light_mime=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_light_mime,organization_branding.logo_on_light_mime) END,
+        logo_on_light_name=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_light_name,organization_branding.logo_on_light_name) END,
+        logo_on_dark=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_dark,organization_branding.logo_on_dark) END,
+        logo_on_dark_mime=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_dark_mime,organization_branding.logo_on_dark_mime) END,
+        logo_on_dark_name=CASE WHEN $17::boolean THEN NULL ELSE COALESCE(EXCLUDED.logo_on_dark_name,organization_branding.logo_on_dark_name) END,
         show_desweb_branding=EXCLUDED.show_desweb_branding,
         updated_at=now()`,
       [
         session.organizationId,appName,primaryColor,secondaryColor,accentColor,schemeKey,autoPalette,interfaceStyle,interfaceDensity,
         logoOnLight?.bytes||null,logoOnLight?.mime||null,logoOnLight?.name||null,
         logoOnDark?.bytes||null,logoOnDark?.mime||null,logoOnDark?.name||null,
-        showDeswebBranding,
+        showDeswebBranding,clearLogo,
       ],
     );
-
-    if(removeLogo&&!sharedLogo&&!logoOnLight&&!logoOnDark){
-      await query(
-        `UPDATE organization_branding
-         SET logo_on_light=NULL,logo_on_light_mime=NULL,logo_on_light_name=NULL,
-             logo_on_dark=NULL,logo_on_dark_mime=NULL,logo_on_dark_name=NULL,updated_at=now()
-         WHERE organization_id=$1`,
-        [session.organizationId],
-      );
-    }
 
     return redirectTarget(request,returnTo,"?branding_saved=1");
   } catch (error) {

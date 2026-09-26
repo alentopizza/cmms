@@ -623,6 +623,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 
 export const MANUAL_CHANGES:ManualChange[] = [
   {
+    date:"2026-09-26",
+    title:"Rutinas con búsqueda y paginación sobre todo el catálogo",
+    summary:"Rutinas ahora busca y filtra en el servidor sobre todas las rutinas autorizadas, no solo sobre las visibles en la primera página. La navegación usa páginas de 24 registros y conserva el selector Cuadrícula/Listado sin cambiar creación, edición ni permisos.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
+  },
+  {
     date:"2026-09-25",
     title:"Vista cuadrícula / listado en directorios",
     summary:"Empresas, Ubicaciones, Proveedores, Usuarios, Cuadrillas, Activos, Órdenes, Rutinas, Inventario y Leads comparten el selector visual. El listado conserva logo, avatar, foto o icono de cada entidad y muestra acciones rápidas aplicables sin volver a consultar la colección ni perder búsqueda/filtros.",

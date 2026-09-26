@@ -88,6 +88,9 @@ jobs:
       - run: node scripts/maintenance-server-pagination-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/work-orders-server-pagination-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: node scripts/phase10-final-smoke.mjs
       - run: node scripts/design-system-final-audit.mjs
       - run: npm run build

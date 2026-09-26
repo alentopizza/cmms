@@ -63,15 +63,11 @@ for(const marker of [
   if(!directory.includes(marker))throw new Error("Supplier tab-demand/cache contract missing "+marker);
 }
 for(const forbidden of [
-  "activities:SupplierActivity[];",
-  "items:RequisitionSelectableItem[];",
-  "requisitions:SupplierRequisition[];",
-  "documents:SupplierDocument[];",
-  "commercialAnalytics:SupplierCommercialAnalytics[];",
-  "commercialTrends:SupplierCommercialTrend[];",
-  "commercialRequisitions:SupplierRequisitionPerformance[];",
+  "suppliers,activities,items,requisitions,documents",
+  "commercialAnalytics,commercialTrends,commercialRequisitions",
+  "inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses,canInventoryWrite",
 ]){
-  if(directory.includes(forbidden))throw new Error("SupplierDirectory still requires globally preloaded detail prop "+forbidden);
+  if(directory.includes(forbidden))throw new Error("SupplierDirectory still requires globally preloaded detail props: "+forbidden);
 }
 
 const detailRoute=fs.readFileSync("app/api/suppliers/[id]/route.ts","utf8");

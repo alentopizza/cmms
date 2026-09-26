@@ -45,13 +45,14 @@ export default async function BrandPage({
           :params.branding_error
             ?"No fue posible guardar la identidad visual. Intenta nuevamente."
             :"";
+  const logoFallbackSrc=org.has_logo
+    ? `/api/organizations/${session.organizationId}/assets/logo`
+    : "/brand/desweb-logo-dark.webp";
   const logoSrc=branding.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"
     : branding.hasLogoOnLight
       ? "/api/organization-branding/logo/light"
-      : org.has_logo
-        ? `/api/organizations/${session.organizationId}/assets/logo`
-        : "/brand/desweb-logo-dark.webp";
+      : logoFallbackSrc;
 
   return <div className="phase-brand-personalization">
     <header className="brand-page-header">
@@ -73,6 +74,7 @@ export default async function BrandPage({
     </section>:<BrandPersonalization
       organizationName={org.name}
       logoSrc={logoSrc}
+      logoFallbackSrc={logoFallbackSrc}
       previewData={{city:org.city,siteCount:org.site_count,active:org.active}}
       initial={{
         appName:branding.appName||`${org.name} CMMS`,

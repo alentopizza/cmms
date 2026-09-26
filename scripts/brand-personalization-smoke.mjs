@@ -95,6 +95,11 @@ for(const forbidden of ["--color-success-","--color-warning-","--color-danger-",
   if(theme.includes(forbidden))throw new Error("Brand palette must not override semantic status tokens: "+forbidden);
 }
 
+const themePreferences=fs.readFileSync("components/ThemePreferences.tsx","utf8");
+for(const marker of ["applyPreference(current,false)","document.documentElement.dataset.themePreference","localStorage.setItem(\"desweb-theme\""]){
+  if(!themePreferences.includes(marker))throw new Error("Theme preference inheritance contract missing "+marker);
+}
+
 const preferences=fs.readFileSync("app/dashboard/preferences/page.tsx","utf8");
 for(const marker of ["Perfil","Preferencias","Apariencia","Seguridad","Integraciones","Información personal","Zona horaria","ThemePreferences","/api/preferences/profile"]){
   if(!preferences.includes(marker))throw new Error("Mi configuración contract missing "+marker);

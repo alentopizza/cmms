@@ -114,7 +114,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
       "El checkout de prueba aplica la misma regla País → Ciudad y toma como punto de partida el País/Idioma configurado en la plataforma.",
       "Configura la sede principal con dirección, ciudad, país y geocerca validada en el mapa.",
       "Crea sedes adicionales cuando corresponda y después sus sububicaciones.",
-      "En los directorios principales puedes alternar entre Vista cuadrícula y Vista listado con el selector del encabezado. El cambio conserva la búsqueda, filtros y datos ya cargados; en Ubicaciones la vista listado resume sede, empresa, ciudad, recursos, estado y acceso a la ficha.",
+      "En los directorios principales puedes alternar entre Vista cuadrícula y Vista listado con el selector del encabezado. El cambio conserva la búsqueda, filtros y datos ya cargados; en Ubicaciones la vista listado mantiene una miniatura compacta de la fotografía propia de la sede y resume empresa, ciudad, recursos, estado y acceso a la ficha.",
       "En Vista listado la primera columna conserva la identidad del registro con logo, avatar, foto o icono existente y las acciones rápidas aparecen al final según los permisos y funciones reales de cada módulo.",
       "Selecciona la tarjeta de empresa para cambiar el módulo a su perfil en la misma pantalla. Las migas de pan permiten volver al directorio sin cerrar un popup.",
       "En la ficha de empresa usa las pestañas Información general, Estadísticas, Ubicaciones, Documentos, Técnicos y Hoja de vida. En Documentos el perfil libera todo el ancho: selecciona una fila para previsualizarla a la izquierda, usa Ver para abrir el visor ampliado, Descargar para bajar el archivo directamente y Más acciones para gestionarlo. En escritorio el listado tiene prioridad de espacio y en móvil aparece antes de la previsualización.",
@@ -417,7 +417,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     ],
     notes:[
       "El seguimiento de Reacción es independiente de marcar entrada/salida en Asistencia. Cuando existe un desplazamiento de Asistencia activo, Reacción puede mostrar la sede destino y correlacionar el trayecto sin convertirse en la autoridad de salida/llegada.",
-      "Reacción mantiene Empresas y Sedes visibles y permite filtrar por Empresa, Sede, Técnico y Horario desde una sola barra.",
+      "Reacción mantiene el mapa como área principal de trabajo, con Empresa, Sede, Técnico y Horario en una barra compacta flotante; el panel derecho concentra las actividades pendientes y en móvil aparece debajo del mapa.",
       "Puedes buscar técnicos, empresas y sedes por nombre y por información relacionada como correo, teléfono, dirección, ciudad o identificación disponible. El botón Borrar filtros restablece el mapa y el panel a su vista operativa inicial.",
       "El selector Empresa limita el mapa y las sedes disponibles. Al hacer clic en una empresa, sede o técnico se abre su ficha encima de Reacción sin abandonar la pantalla.",
       "Las fichas de empresa, sede y técnico muestran todas sus actividades pendientes. El panel derecho mantiene aparte su filtro por fecha.",

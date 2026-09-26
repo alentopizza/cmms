@@ -20,8 +20,11 @@ export default async function BrandPage({
   if(!session.organizationId||session.role!=="admin")redirect("/dashboard/settings");
 
   const params=await searchParams;
-  const organization=await query<{name:string;has_logo:boolean}>(
-    "SELECT name,(logo_data IS NOT NULL) has_logo FROM organizations WHERE id=$1 LIMIT 1",
+  const organization=await query<{name:string;has_logo:boolean;active:boolean;site_count:number;city:string|null}>(
+    `SELECT o.name,(o.logo_data IS NOT NULL) has_logo,o.active,
+            (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id) site_count,
+            (SELECT s.city FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1) city
+     FROM organizations o WHERE o.id=$1 LIMIT 1`,
     [session.organizationId],
   );
   if(!organization.rowCount)redirect("/dashboard");
@@ -57,6 +60,7 @@ export default async function BrandPage({
     </section>:<BrandPersonalization
       organizationName={org.name}
       logoSrc={logoSrc}
+      previewData={{city:org.city,siteCount:org.site_count,active:org.active}}
       initial={{
         appName:branding.appName||`${org.name} CMMS`,
         primaryColor:branding.primaryColor,

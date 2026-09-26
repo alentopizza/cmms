@@ -101,9 +101,9 @@ try{
   await expectScope("internal",true,[1,3,4,6,7,9]);
 
   const requester=scope("requester",true);
-  const search=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE title ILIKE $3 LIMIT 24 OFFSET 0`,[...requester.params,"%Fuera organización%"]);
+  const search=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE title ILIKE $4 LIMIT 24 OFFSET 0`,[...requester.params,"%Fuera organización%"]);
   if(search.rowCount!==0)throw new Error("Search leaked work order outside requester scope");
-  const knownOutside=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE id=$3::uuid`,[...requester.params,wid(11)]);
+  const knownOutside=await db.query(`WITH scoped AS (${requester.sql}) SELECT id FROM scoped WHERE id=$4::uuid`,[...requester.params,wid(11)]);
   if(knownOutside.rowCount!==0)throw new Error("Known work-order ID bypassed requester scope");
   const count=await db.query(`WITH scoped AS (${requester.sql}) SELECT count(*)::int total FROM scoped`,requester.params);
   if(count.rows[0].total!==1)throw new Error("Requester COUNT includes work outside scope");

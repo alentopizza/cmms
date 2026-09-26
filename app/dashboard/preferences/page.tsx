@@ -23,7 +23,6 @@ export default async function PreferencesPage({
 }:{
   searchParams:Promise<{
     profile_saved?:string;profile_error?:string;
-    security_saved?:string;security_error?:string;
   }>;
 }) {
   const session = await getSession();
@@ -60,12 +59,6 @@ export default async function PreferencesPage({
           :params.profile_error
             ? decodeURIComponent(params.profile_error)
             : "";
-  const securityError=params.security_error==="length"
-    ?"La nueva contraseña debe tener al menos 8 caracteres."
-    :params.security_error==="match"
-      ?"La confirmación no coincide con la nueva contraseña."
-      :"";
-
   const nav=[
     {href:"#profile",label:"Perfil",description:"Tu información personal",icon:"user" as const},
     {href:"#preferences",label:"Preferencias",description:"Navegación y opciones",icon:"preferences" as const},
@@ -84,8 +77,6 @@ export default async function PreferencesPage({
 
     {params.profile_saved==="1"&&<Alert variant="success" title="Cambios guardados">Tu información personal quedó actualizada.</Alert>}
     {profileError&&<Alert variant="danger" title="No fue posible guardar el perfil">{profileError}</Alert>}
-    {params.security_saved==="1"&&<Alert variant="success" title="Contraseña actualizada">Tu nueva contraseña quedó guardada.</Alert>}
-    {securityError&&<Alert variant="danger" title="No fue posible actualizar la contraseña">{securityError}</Alert>}
 
     <div className="account-settings-layout">
       <aside className="account-settings-nav" aria-label="Secciones de Mi configuración">
@@ -127,13 +118,8 @@ export default async function PreferencesPage({
         </section>
 
         <section id="security" className="account-settings-card">
-          <div className="account-card-heading"><div><span className="eyebrow">Seguridad</span><h2>Contraseña y sesión</h2><p>Actualiza tu contraseña sin cambiar tu rol, empresa o alcance de sedes.</p></div></div>
-          {editable?<form method="post" action="/api/preferences/profile" className="account-security-form">
-            <input type="hidden" name="intent" value="security"/>
-            <label><span>Nueva contraseña</span><input name="password" type="password" minLength={8} autoComplete="new-password" required/><small>Mínimo 8 caracteres.</small></label>
-            <label><span>Confirmar contraseña</span><input name="password_confirmation" type="password" minLength={8} autoComplete="new-password" required/></label>
-            <div className="account-form-actions"><Button type="submit" iconLeft="check">Actualizar contraseña</Button></div>
-          </form>:<Alert variant="info" title="Cuenta gestionada por entorno">La credencial del Propietario Desweb se administra fuera del registro normal de usuarios.</Alert>}
+          <div className="account-card-heading"><div><span className="eyebrow">Seguridad</span><h2>Seguridad y sesión</h2><p>Consulta información de acceso sin crear un segundo flujo de autenticación o credenciales.</p></div></div>
+          <Alert variant="info" title="Seguridad administrada por el sistema existente">Los cambios de credenciales y controles de acceso continúan en las superficies autorizadas del CMMS; Mi configuración no modifica roles, permisos, empresa ni alcance de sedes.</Alert>
           {profile.last_login_at&&<small className="account-last-login">Último acceso registrado: {new Date(profile.last_login_at).toLocaleString("es-CO")}</small>}
         </section>
 

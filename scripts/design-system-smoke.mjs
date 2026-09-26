@@ -3,6 +3,7 @@ import fs from "node:fs";
 const tokens=fs.readFileSync("app/design-tokens.css","utf8");
 const layout=fs.readFileSync("app/layout.tsx","utf8");
 const dashboard=fs.readFileSync("app/dashboard/layout.tsx","utf8");
+const brandTheme=fs.readFileSync("lib/brand-theme.ts","utf8");
 const uiKit=fs.readFileSync("app/ui-kit/page.tsx","utf8");
 
 const required=[
@@ -40,8 +41,9 @@ if(legacyImport<0||tokenImport<0||tokenImport<legacyImport){
   throw new Error("design-tokens.css must load after globals.css");
 }
 
+if(!dashboard.includes("brandCssVariables"))throw new Error("Dashboard must consume the centralized organization brand bridge");
 for(const variable of ["--color-action-primary","--color-action-accent","--brand-teal","--brand-mint"]){
-  if(!dashboard.includes(variable))throw new Error("White-label bridge missing "+variable);
+  if(!brandTheme.includes(variable))throw new Error("White-label bridge missing "+variable);
 }
 
 if(!uiKit.includes('getSession()')||!uiKit.includes('FoundationPreview')){

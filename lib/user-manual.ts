@@ -492,6 +492,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "Abre Órdenes para ver únicamente las OT autorizadas para tu rol y alcance.",
       "Usa búsqueda y filtros para localizar la orden.",
+      "La búsqueda y los filtros recorren todas las OT autorizadas, aunque el registro esté en otra página; la paginación muestra 24 órdenes por página sin ampliar tu alcance.",
       "En celular las OT se muestran como tarjetas con número, activo, empresa, prioridad y estado.",
       "Abre una OT para consultar sus actividades y acciones disponibles según tu rol.",
     ],
@@ -622,6 +623,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-26",
+    title:"Órdenes con búsqueda y paginación sobre todo el alcance autorizado",
+    summary:"Órdenes de Trabajo ahora busca y filtra en el servidor sobre todo el conjunto permitido para plataforma, solicitantes, proveedores, externos e internos. La navegación usa páginas de 24 registros y conserva Cuadrícula/Listado, creación, actividades y permisos.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","requester","viewer","provider","external"],
+  },
   {
     date:"2026-09-26",
     title:"Rutinas con búsqueda y paginación sobre todo el catálogo",

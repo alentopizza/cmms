@@ -472,11 +472,111 @@ Incremento JS: 9,162 bytes (~8.7%); CSS sin cambios. No se atribuyen mejoras de 
 
 `8f3063d68d8882973a4b10b750a9eda38fa11f52`: smoke RBAC, Phase 9, build y reporte de bundle exitosos.
 
+### P1 — Fase 3 · Activos — implementado y validado
+
+**Diagnóstico previo**
+
+El diagnóstico específico quedó registrado antes de modificar el directorio en `docs/ASSETS_SERVER_PAGINATION_DIAGNOSIS.md`. La dependencia crítica era real: `AssetCatalogOverview` recibía `assets.rows` y derivaba desde esa colección marcas, modelos, estados, criticidad y calidad; además los KPI superiores se calculaban con la misma colección truncada por `LIMIT 600`.
+
+**Scope preservado**
+
+Un único `scopedSql` conserva el alcance previo:
+
+- plataforma: todos los activos;
+- tenant con acceso total a sedes: `organization_id=session.organizationId`;
+- tenant con acceso limitado: misma organización + `site_id=ANY(session.siteIds)`.
+
+No se añadieron ramas de rol paralelas. El permiso de entrada sigue siendo `assets.read`; escritura/importación sigue usando `assets.write`.
+
+El orden de evaluación es: **scope autorizado → búsqueda → filtros → sort → LIMIT/OFFSET**.
+
+**Estado URL**
+
+`q`, `status`, `organization`, `site`, `criticality`, `category`, `supplier`, `sort`, `page`.
+
+Estado/criticidad/sort usan allowlists; IDs de empresa/sede/categoría/proveedor requieren UUID válido; la página se normaliza a entero positivo. El sort por defecto conserva la semántica previa: `created_at DESC, id DESC`.
+
+**Separación de fuentes**
+
+Solo la representación Grid/List consume la página de 24 activos.
+
+Sobre el conjunto completo autorizado se calculan mediante SQL:
+
+- total y COUNT filtrado;
+- KPI por estado;
+- criticidad crítica y alta/crítica;
+- calidad: con categoría, fabricante y modelo;
+- facetas;
+- marcas con conteo;
+- modelos distintos;
+- conteo de activos por categoría.
+
+`AssetCatalogOverview` ya no recibe la página visible. Mantiene la misma semántica visual mediante `summary`, marcas y modelos agregados.
+
+Las siguientes fuentes permanecen independientes de la página:
+
+- sedes, sububicaciones y proveedores para creación;
+- ficha/edición individual;
+- importación masiva;
+- exportación XLSX/CSV/PDF;
+- mantenimiento preventivo;
+- historial de OT;
+- documentos.
+
+Se corrigió además un riesgo de información: para usuarios limitados por sede, la taxonomía de categorías de su organización sigue visible, pero `asset_count` se calcula únicamente con activos dentro del scope autorizado.
+
+**Antes vs. después**
+
+| Métrica | Antes | Después |
+| --- | ---: | ---: |
+| Activos máximos en colección principal | 600 | 24 |
+| Truncamiento fijo del catálogo | Sí, `LIMIT 600` | No |
+| Búsqueda fuera de primeras 600 | No | Sí |
+| Filtros fuera de primeras 600 | No | Sí |
+| Paginación real | No | Sí |
+| KPI sobre catálogo completo autorizado | No | Sí |
+| Facetas sobre catálogo completo autorizado | No | Sí |
+| Marcas/modelos/calidad independientes de página | No | Sí |
+| Grid/List | misma colección de hasta 600 | misma página de 24 |
+| Creación/import/export dependientes de página | No | No |
+
+La colección principal baja de 600 a 24 filas máximas, una reducción del 96%. El número de lecturas del directorio aumenta deliberadamente: la antigua consulta monolítica de activos se separa en summary, facetas, marcas, modelos y página; categorías, mantenimiento, historial, documentos y catálogos de formularios ya eran fuentes separadas. No se intentó fusionar estas responsabilidades a costa de semántica o RBAC.
+
+**Prueba reproducible**
+
+`scripts/assets-server-pagination-smoke.mjs` crea fixtures dentro de una transacción y valida:
+
+- plataforma, tenant completo y tenant limitado por sede;
+- búsqueda de un activo ubicado en página 2;
+- filtros combinados sobre todo el scope;
+- COUNT completo;
+- facetas sin fuga de organización/sede;
+- KPI sobre todo el conjunto, no la página;
+- agregados de marcas y categorías sin fuga;
+- Grid/List sobre las mismas `assets.rows`;
+- selector Grid/List sin navegación;
+- creación, edición, importación y exportación desacopladas de la página;
+- mantenimiento, documentos e historial desacoplados;
+- permisos `assets.read` / `assets.write`;
+- ID conocido fuera de sede/organización no recuperable;
+- acciones por fila preservadas.
+
+Los fixtures terminan con `ROLLBACK`.
+
+**Bundle medido**
+
+Antes de Activos server-side: 200,722 bytes JS / 746,070 bytes CSS para `/dashboard/assets`.
+
+Después de la implementación: 207,140 bytes JS / 746,070 bytes CSS.
+
+Incremento JS: 6,418 bytes (~3.2%); CSS sin cambios. La mejora demostrada de esta fase es semántica completa + reducción de filas de la colección, no una reducción del bundle. No se atribuyen mejoras de FCP/LCP/INP ni milisegundos sin RUM.
+
+No se añadieron índices. Si summary/facetas/agregados aparecen como lentos en `DB_SLOW_QUERY_MS`, deben analizarse en Fase 5 con `EXPLAIN (ANALYZE, BUFFERS)` antes de modificar PostgreSQL.
+
 ### P1 — Directorios con límites grandes — pendiente de migración server-side
 
 Límites observados:
 
-- Activos: hasta 600
 - Inventario: hasta 600
 - Ubicaciones/servicios: hasta 500
 - Usuarios (antes de lazy detail): documentos hasta 1,600
@@ -494,7 +594,7 @@ Migrar módulo por módulo a parámetros URL server-side:
 5. total
 6. misma colección para Grid/List
 
-Rutinas y Work Orders validados. Orden restante propuesto: Activos → Inventario → Ubicaciones.
+Rutinas, Work Orders y Activos migrados. Orden restante propuesto: Inventario → Ubicaciones, únicamente después de revisión expresa de Activos.
 
 ### P2 — Dashboard: alto número de consultas
 

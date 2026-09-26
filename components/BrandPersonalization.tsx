@@ -214,6 +214,18 @@ export default function BrandPersonalization({
             <main>
               <header><div><UiIcon name="company" size={18}/><span><small>MÓDULO DE EJEMPLO</small><strong>Empresas</strong></span></div><Button size="sm" iconLeft="plus">Agregar</Button></header>
               <section><h3>Empresas</h3><p>Gestiona las empresas del sistema.</p>
+                <div className="brand-preview-toolbar">
+                  <div className="brand-preview-tabs" aria-label="Tabs de ejemplo">
+                    <button type="button" className="active">Resumen</button>
+                    <button type="button">Empresas</button>
+                    <button type="button">Actividad</button>
+                  </div>
+                  <div className="brand-preview-filter">
+                    <UiIcon name="search" size={13}/>
+                    <span>Buscar...</span>
+                    <button type="button" aria-label="Filtro de ejemplo"><UiIcon name="filter" size={13}/></button>
+                  </div>
+                </div>
                 <div className="brand-preview-kpis"><article><small>Total de empresas</small><strong>12</strong></article><article><small>Activas</small><strong>10</strong></article><article><small>Inactivas</small><strong>2</strong></article></div>
                 <div className="brand-preview-table"><div className="head"><span>EMPRESA</span><span>CIUDAD</span><span>ESTADO</span><span>ACCIONES</span></div><div><strong>{organizationName}</strong><span>Bogotá</span><Badge variant="success">Activa</Badge><button type="button" aria-label="Vista de ejemplo"><UiIcon name="eye" size={14}/></button></div></div>
               </section>

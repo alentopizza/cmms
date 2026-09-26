@@ -71,6 +71,7 @@ export default function BrandPersonalization({
       setPrimary(scheme.primary);
       setSecondary(scheme.secondary);
       setAccent(scheme.accent);
+      setAutoPalette(true);
     }
   }
 

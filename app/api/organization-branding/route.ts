@@ -18,9 +18,10 @@ export async function POST(request: Request) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
+  let returnTo="settings";
   try {
     const form = await request.formData();
-    const returnTo=String(form.get("return_to")||"settings");
+    returnTo=String(form.get("return_to")||"settings");
     const intent=String(form.get("intent")||"save");
 
     if(intent==="reset"){
@@ -113,8 +114,6 @@ export async function POST(request: Request) {
     return redirectTarget(request,returnTo,"?branding_saved=1");
   } catch (error) {
     const code = error instanceof ImageUploadError ? error.code : "save";
-    const url = new URL(request.url);
-    const returnTo=url.searchParams.get("return_to")||"brand";
     return redirectTarget(request,returnTo,`?branding_error=${code}`);
   }
 }

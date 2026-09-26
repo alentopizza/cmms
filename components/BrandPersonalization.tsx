@@ -36,10 +36,12 @@ function validColor(value:string,fallback:string){
 export default function BrandPersonalization({
   organizationName,
   logoSrc,
+  previewData,
   initial,
 }:{
   organizationName:string;
   logoSrc:string;
+  previewData:{city:string|null;siteCount:number;active:boolean};
   initial:BrandInitial;
 }){
   const [active,setActive]=useState<Tab>("colors");
@@ -227,8 +229,12 @@ export default function BrandPersonalization({
                     <button type="button" aria-label="Filtro de ejemplo"><UiIcon name="filter" size={13}/></button>
                   </div>
                 </div>
-                <div className="brand-preview-kpis"><article><small>Total de empresas</small><strong>12</strong></article><article><small>Activas</small><strong>10</strong></article><article><small>Inactivas</small><strong>2</strong></article></div>
-                <div className="brand-preview-table"><div className="head"><span>EMPRESA</span><span>CIUDAD</span><span>ESTADO</span><span>ACCIONES</span></div><div><strong>{organizationName}</strong><span>Bogotá</span><Badge variant="success">Activa</Badge><button type="button" aria-label="Vista de ejemplo"><UiIcon name="eye" size={14}/></button></div></div>
+                <div className="brand-preview-kpis">
+                  <article><small>Sedes registradas</small><strong>{previewData.siteCount}</strong></article>
+                  <article><small>Estado de empresa</small><strong>{previewData.active?"Activa":"Inactiva"}</strong></article>
+                  <article><small>Ciudad principal</small><strong>{previewData.city||"Sin ciudad"}</strong></article>
+                </div>
+                <div className="brand-preview-table"><div className="head"><span>EMPRESA</span><span>CIUDAD</span><span>ESTADO</span><span>ACCIONES</span></div><div><strong>{organizationName}</strong><span>{previewData.city||"Sin ciudad"}</span><Badge variant={previewData.active?"success":"neutral"}>{previewData.active?"Activa":"Inactiva"}</Badge><button type="button" aria-label="Vista de ejemplo"><UiIcon name="eye" size={14}/></button></div></div>
               </section>
             </main>
           </div>

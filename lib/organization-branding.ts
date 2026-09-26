@@ -44,7 +44,7 @@ async function resolveOrganizationBranding(organizationId: string): Promise<Orga
     accentColor: row?.accent_color || DEFAULT_BRAND_SCHEME.accent,
     schemeKey: row?.scheme_key || "default",
     autoPalette: row?.auto_palette ?? true,
-    interfaceStyle: row?.interface_style || "system",
+    interfaceStyle: row?.interface_style || "light",
     interfaceDensity: row?.interface_density || "normal",
     hasLogoOnLight: Boolean(row?.logo_on_light_mime),
     hasLogoOnDark: Boolean(row?.logo_on_dark_mime),

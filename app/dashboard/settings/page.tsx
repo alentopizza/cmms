@@ -191,29 +191,20 @@ function CompanySettings({
       </div>
     </section>
 
-    {company.white_label && <section className="card section white-label-panel">
+    <section className="card section settings-panel settings-panel-wide brand-settings-gateway">
       <div className="settings-panel-head">
         <div>
-          <span className="settings-kicker">Pro · Marca blanca</span>
-          <h2>Identidad de tu plataforma</h2>
-          <p>Personaliza el nombre, colores y logos visibles dentro del panel de tu empresa.</p>
+          <span className="settings-kicker">Identidad visual</span>
+          <h2>Personalización de marca <Badge variant="brand">PRO</Badge></h2>
+          <p>La identidad visual de la empresa se administra en una experiencia independiente para no mezclar marca con la configuración operativa.</p>
         </div>
-        <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="company" size={20}/></span>
+        <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="preferences" size={20}/></span>
       </div>
-      {brandingSaved&&<Alert variant="success" title="Identidad visual actualizada">La identidad visual de tu empresa se actualizó correctamente.</Alert>}
-      {brandingError&&<Alert variant="danger" title="No fue posible guardar la personalización">Revisa colores y archivos.</Alert>}
-      <form className="white-label-form" method="post" action="/api/organization-branding" encType="multipart/form-data">
-        <div className="form-grid">
-          <div className="field form-span-2"><label>Nombre de la plataforma</label><input name="app_name" defaultValue={company.branding_app_name || `${company.name} CMMS`} required /></div>
-          <div className="field"><label>Color principal</label><input name="primary_color" type="color" defaultValue={company.branding_primary_color || "#38B2A9"} required /></div>
-          <div className="field"><label>Color secundario</label><input name="secondary_color" type="color" defaultValue={company.branding_secondary_color || "#79CAC4"} required /></div>
-          <FileDropzone name="logo_on_light" label="Logo para fondo claro" description="Versión principal para superficies claras." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={company.branding_logo_light ? "Logo personalizado actual" : null} compact />
-          <FileDropzone name="logo_on_dark" label="Logo para fondo oscuro" description="Versión clara/negativa para superficies oscuras." accept="image/png,image/jpeg,image/webp" maxSizeMb={2} kind="image" existingFileName={company.branding_logo_dark ? "Logo personalizado actual" : null} compact />
-          <label className="white-label-checkbox form-span-2"><input name="show_desweb_branding" type="checkbox" defaultChecked={company.show_desweb_branding} /><span>Mostrar “Desweb · Desarrollo de Soluciones” en el pie del panel.</span></label>
-        </div>
-        <div className="form-actions"><Button type="submit" iconLeft="check">Guardar identidad visual</Button></div>
-      </form>
-    </section>}
+      <Link className="settings-link-card" href="/dashboard/brand">
+        <div><strong>{company.plan_code==="pro"&&company.white_label?"Abrir Personalización de marca":"Conocer Personalización de marca"}</strong><span>{company.plan_code==="pro"&&company.white_label?"Esquemas, logo, apariencia y vista previa":"Funcionalidad disponible con Plan Pro"}</span></div>
+        <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
+      </Link>
+    </section>
 
     <section className="card section settings-panel settings-panel-wide international-settings-panel">
       <div className="settings-panel-head">

@@ -4,6 +4,7 @@ import { DEFAULT_BRAND_SCHEME, type BrandSchemeKey } from "@/lib/brand-theme";
 
 export type OrganizationBrandingSummary = {
   appName: string | null;
+  hasBrandingRecord: boolean;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -31,10 +32,12 @@ async function resolveOrganizationBranding(organizationId: string): Promise<Orga
     logo_on_dark_mime: string | null;
     show_desweb_branding: boolean | null;
     organization_has_logo: boolean;
+    has_branding_record: boolean;
   }>(
     `SELECT ob.app_name,ob.primary_color,ob.secondary_color,ob.accent_color,ob.scheme_key,ob.auto_palette,
             ob.interface_style,ob.interface_density,ob.logo_on_light_mime,ob.logo_on_dark_mime,ob.show_desweb_branding,
-            (o.logo_data IS NOT NULL) organization_has_logo
+            (o.logo_data IS NOT NULL) organization_has_logo,
+            (ob.organization_id IS NOT NULL) has_branding_record
      FROM organizations o
      LEFT JOIN organization_branding ob ON ob.organization_id=o.id
      WHERE o.id=$1`,
@@ -43,6 +46,7 @@ async function resolveOrganizationBranding(organizationId: string): Promise<Orga
   const row=result.rows[0];
   return {
     appName: row?.app_name || null,
+    hasBrandingRecord: Boolean(row?.has_branding_record),
     primaryColor: row?.primary_color || DEFAULT_BRAND_SCHEME.primary,
     secondaryColor: row?.secondary_color || DEFAULT_BRAND_SCHEME.secondary,
     accentColor: row?.accent_color || DEFAULT_BRAND_SCHEME.accent,

@@ -11,7 +11,7 @@
 - Configuración general deja de contener un segundo editor de marca y enlaza a la experiencia dedicada. Planes y suscripciones no cambian: el endpoint sigue exigiendo Administrador + Plan Pro + white label.
 - Mi configuración ahora presenta Perfil, Preferencias, Apariencia, Seguridad e Integraciones. El perfil utiliza el usuario autenticado y una mutación self-service que solo actualiza nombre, correo, teléfono y avatar propios; Seguridad conserva los flujos de credenciales existentes y no toca rol, empresa, membresías ni alcance.
 - Manual / Ayuda conserva `lib/user-manual.ts` como fuente y añade categorías visuales sobre artículos reales; Video tutoriales queda deshabilitado cuando no existe contenido publicado.
-- Se añadieron las migraciones `043_brand_personalization.sql` y `044_brand_personalization_light_default.sql`, estilos token-only y `scripts/brand-personalization-smoke.mjs`.
+- Se añadieron las migraciones `043_brand_personalization.sql`, `044_brand_personalization_light_default.sql` y `045_brand_legacy_scheme.sql`; esta última clasifica como Personalizado los colores white-label anteriores a los presets. También se añadieron estilos token-only y `scripts/brand-personalization-smoke.mjs`.
 
 ## 2026-09-26 — Ajuste UX/UI · Ubicaciones + Reacción
 

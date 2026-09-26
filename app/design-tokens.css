@@ -130,6 +130,10 @@
 
   /* Organization brand bridge. These tokens may be overridden per tenant. */
   --brand-primary:var(--color-action-primary);
+  --brand-on-primary:var(--color-text-inverse);
+  --brand-on-accent:var(--color-text-primary);
+  --brand-on-sidebar:var(--color-text-inverse);
+  --brand-on-sidebar-active:var(--color-text-inverse);
   --brand-primary-hover:var(--color-action-primary-hover);
   --brand-primary-soft:var(--color-surface-teal);
   --brand-secondary:var(--color-brand-dark);

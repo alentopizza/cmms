@@ -107,7 +107,7 @@ for(const marker of [".ds-collection-view.is-grid .maintenance-mobile-list",".ds
 }
 
 const coreCss=fs.readFileSync("app/ui-kit-core.css","utf8");
-for(const marker of [".ds-view-mode-toggle",".module-page-tools .module-view-mode-tools",".ds-collection-view.is-list [data-collection-grid]",".ds-list-identity-media",".ds-list-quick-actions",".ds-list-action","background:var(--color-brand-secondary)","color:var(--color-text-inverse)"]){
+for(const marker of [".ds-view-mode-toggle",".module-page-tools .module-view-mode-tools",".ds-collection-view.is-list [data-collection-grid]",".ds-list-identity-media",".ds-list-quick-actions",".ds-list-action","background:var(--brand-primary)","color:var(--brand-on-primary)"]){
   if(!coreCss.includes(marker))throw new Error("Shared view-mode styling missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(coreCss))throw new Error("UI Kit core CSS must remain token-only");

@@ -36,6 +36,15 @@ Desweb CMMS is not being built as a one-off internal application. The product di
 
 The repository documentation is intentionally maintained as the source of truth so future AI agents and developers can resume without reconstructing decisions from conversations.
 
+
+### Current performance migration state — 2026-09-26
+
+The server-side directory migration has been validated for **Maintenance/Routines, Work Orders and Assets**.
+
+For Assets, the visible Grid/List collection is now paginated to 24 rows while KPI, facets, brands, models, category counts and catalogue-quality indicators are calculated from the complete authorized Asset scope. `AssetCatalogOverview` no longer treats the visible page as the catalogue authority. Creation/edit catalogues, import/export, maintenance, Work Order history and documents remain independent data sources.
+
+The permanent regression guard is `scripts/assets-server-pagination-smoke.mjs`, alongside the already-required Maintenance and Work Order pagination smokes. Inventory and Locations have not been migrated in this phase and must not be changed until the Asset result is explicitly reviewed.
+
 ## Current architecture
 
 Core stack:

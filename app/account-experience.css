@@ -1,0 +1,92 @@
+/* ==========================================================================
+   Account + Help experience
+   Mi configuración and Manual/Ayuda evolve existing sources without creating
+   parallel preference, theme, documentation or authentication systems.
+   ========================================================================== */
+
+.account-preferences-page{display:grid;gap:var(--space-4)}
+.account-page-header{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:var(--space-4);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.account-page-heading{display:flex;align-items:flex-start;gap:var(--space-3)}
+.account-page-icon{width:42px;height:42px;display:grid;place-items:center;flex:0 0 42px;border-radius:var(--radius-xl);background:var(--color-surface-teal);color:var(--color-action-primary)}
+.account-page-heading>div{display:grid;gap:2px}.account-page-heading h1{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h2)}
+.account-page-heading p{margin:0;color:var(--color-text-muted)}
+.account-settings-layout{display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);gap:var(--space-4);align-items:start}
+.account-settings-nav{
+  position:sticky;top:100px;display:grid;gap:var(--space-1);padding:var(--space-2);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.account-settings-nav a{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);align-items:center;min-height:54px;padding:var(--space-2);border-radius:var(--radius-xl);color:var(--color-text-secondary);text-decoration:none}
+.account-settings-nav a:hover,.account-settings-nav a:focus-visible{background:var(--color-surface-teal);color:var(--color-action-primary)}
+.account-settings-nav a>span:first-child{width:34px;height:34px;display:grid;place-items:center;border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-action-primary)}
+.account-settings-nav a>span:last-child{display:grid;gap:1px}.account-settings-nav strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}.account-settings-nav small{color:var(--color-text-muted);font-size:9px}
+.account-settings-content{display:grid;gap:var(--space-4);min-width:0}
+.account-settings-card{scroll-margin-top:100px;display:grid;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);box-shadow:var(--shadow-xs)}
+.account-card-heading>div{display:grid;gap:2px}.account-card-heading h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h4)}.account-card-heading p{margin:0;color:var(--color-text-muted);font-size:var(--font-size-body-sm)}
+.account-profile-form{display:grid;grid-template-columns:minmax(190px,240px) minmax(0,1fr);gap:var(--space-4)}
+.account-profile-photo{display:grid;align-content:start;gap:var(--space-3)}
+.account-profile-avatar{width:86px;height:86px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:50%;background:var(--color-surface-teal);color:var(--color-action-primary)}
+.account-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.account-profile-photo>small{color:var(--color-text-muted);font-size:var(--font-size-body-sm);line-height:1.45}
+.account-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+.account-form-grid label,.account-security-form label{display:grid;gap:var(--space-2);color:var(--color-text-primary);font-size:var(--font-size-label);font-weight:var(--font-weight-semibold)}
+.account-form-grid input,.account-security-form input{
+  width:100%;min-height:42px;padding:0 var(--space-3);border:1px solid var(--color-border-default);border-radius:var(--radius-md);
+  background:var(--color-surface);color:var(--color-text-primary);font:inherit
+}
+.account-form-grid input:read-only{background:var(--color-surface-soft);color:var(--color-text-secondary)}
+.account-form-grid input:focus-visible,.account-security-form input:focus-visible{outline:3px solid color-mix(in srgb,var(--color-focus-ring) 35%,transparent);outline-offset:2px}
+.account-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end}
+.account-preference-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+.account-preference-facts article{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft)}
+.account-preference-facts article>span{width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-action-primary)}
+.account-preference-facts article>div{display:grid;gap:2px}.account-preference-facts strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}.account-preference-facts p{margin:0;color:var(--color-text-muted);font-size:10px;line-height:1.45}
+.account-preferences-page .theme-preference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)}
+.account-preferences-page .theme-preference-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:start;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface);color:var(--color-text-secondary);text-align:left;cursor:pointer}
+.account-preferences-page .theme-preference-card.active{border-color:var(--color-border-active);background:var(--color-surface-teal)}
+.account-preferences-page .theme-preference-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-lg);background:var(--color-surface-soft);color:var(--color-action-primary)}
+.account-preferences-page .theme-preference-copy{display:grid;gap:2px}.account-preferences-page .theme-preference-copy strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}.account-preferences-page .theme-preference-copy small{color:var(--color-text-muted);font-size:10px;line-height:1.4}
+.account-preferences-page .theme-preference-check{grid-column:1/-1}
+.account-security-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+.account-security-form label small,.account-last-login{color:var(--color-text-muted);font-size:10px}
+.account-last-login{display:block}
+.account-settings-card .ds-empty-state{min-height:160px}
+
+/* Role-aware manual category navigation over the existing manual content. */
+.manual-category-section{display:grid;gap:var(--space-3);margin-top:var(--space-5)}
+.manual-category-heading{display:grid;gap:2px}.manual-category-heading h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h3)}.manual-category-heading p{margin:0;color:var(--color-text-muted);font-size:var(--font-size-body-sm)}
+.manual-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}
+.manual-category-grid button{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;gap:2px var(--space-2);align-items:center;min-height:76px;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface);color:var(--color-text-secondary);text-align:left;cursor:pointer}
+.manual-category-grid button>span{grid-row:1/-1;width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-lg);background:var(--color-surface-teal);color:var(--color-action-primary)}
+.manual-category-grid button strong{color:var(--color-text-primary);font-size:var(--font-size-body-sm)}.manual-category-grid button small{color:var(--color-text-muted);font-size:10px}
+.manual-category-grid button:hover:not(:disabled){border-color:var(--color-border-default);background:var(--color-surface-soft)}
+.manual-category-grid button.active{border-color:var(--color-border-active);background:var(--color-surface-teal);box-shadow:0 0 0 2px color-mix(in srgb,var(--color-focus-ring) 14%,transparent)}
+.manual-category-grid button:disabled{opacity:.55;cursor:not-allowed}
+.manual-category-grid button:focus-visible{outline:3px solid color-mix(in srgb,var(--color-focus-ring) 38%,transparent);outline-offset:2px}
+
+/* Semantic logout confirmation reuses the UI Kit modal. */
+.logout-confirm-modal .ds-overlay-body{display:grid;place-items:center}
+.logout-confirm-icon{width:72px;height:72px;display:grid;place-items:center;border-radius:var(--radius-2xl);background:var(--color-danger-surface);color:var(--color-danger-text)}
+
+@media(max-width:1050px){
+  .manual-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .account-settings-layout{grid-template-columns:200px minmax(0,1fr)}
+  .account-profile-form{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .account-settings-layout{grid-template-columns:1fr}
+  .account-settings-nav{position:static;display:flex;overflow:auto;scrollbar-width:none}
+  .account-settings-nav a{flex:0 0 170px}
+  .account-form-grid,.account-security-form,.account-preference-facts,.account-preferences-page .theme-preference-grid{grid-template-columns:1fr}
+  .manual-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  .account-page-header{padding:var(--space-3)}
+  .account-settings-card{padding:var(--space-3)}
+  .manual-category-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .account-preferences-page *,.manual-category-grid *{transition:none!important;scroll-behavior:auto!important}
+}

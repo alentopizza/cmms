@@ -96,7 +96,7 @@ export default function UserManual({
       <div className="manual-category-grid">
         {categoryOptions.map(option=>{
           const count=roleArticles.filter(option.matches).length;
-          return <button key={option.id} type="button" className={category===option.id?"active":""} onClick={()=>setCategory(option.id)} aria-pressed={category===option.id} disabled={option.id==="videos"&&count===0}>
+          return <button key={option.id} type="button" className={category===option.id?"active":""} onClick={()=>setCategory(option.id)} aria-pressed={category===option.id}>
             <span><UiIcon name={option.icon} size={18}/></span>
             <strong>{option.label}</strong>
             <small>{count} {count===1?"artículo":"artículos"}</small>

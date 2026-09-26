@@ -250,6 +250,27 @@ No existe acción masiva sobre la colección.
 
 Solo requieren la fila visible, no el catálogo completo.
 
+## 15.1. Permisos por lectura/acción
+
+| Superficie / consulta | Permiso o guard efectivo |
+| --- | --- |
+| directorio, summary/KPI, facetas, marcas, modelos y conteos de categoría | entrada de página exige `assets.read`; scope por plataforma/organización/sedes |
+| mantenimiento resumido dentro de Activos | misma entrada `assets.read`; conserva organización/sedes de la página |
+| historial de OT resumido dentro de Activos | misma entrada `assets.read`; conserva organización/sedes de la página |
+| documentos resumidos dentro de Activos | misma entrada `assets.read`; conserva organización/sedes de la página |
+| catálogos de creación (sedes/sububicaciones/proveedores) | solo se consultan cuando `assets.write`; sedes/sububicaciones respetan scope de sedes |
+| creación de activo | `assets.write` + validaciones server-side del flujo existente |
+| ficha individual | `assets.read` + organización + `canAccessSite` para tenant |
+| catálogos de edición individual | `assets.write` |
+| POST de edición | `assets.write` + `canAccessSite` para la sede destino + validación de relaciones |
+| importación masiva | `assets.write`; el commit revalida `canAccessSite` por fila |
+| plantilla de importación | `assets.write` |
+| exportación XLSX/CSV/PDF | `assets.read` en endpoint independiente + scope plataforma/organización/sedes |
+| crear rutina desde la ficha | `maintenance.write` además del acceso a la ficha |
+| `OwnerRecordActions` en directorio | solo se presenta a Platform Owner; la mutación conserva su autorización server-side existente |
+
+La paginación no se usa como fuente de autorización en ninguna de estas superficies.
+
 ## 16. Separación objetivo
 
 ### Solo página visible

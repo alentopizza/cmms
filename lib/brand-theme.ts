@@ -65,6 +65,35 @@ export function mixBrandHex(a:string,b:string,weight:number){
   return "#"+first.map((value,index)=>toHex(value*(1-ratio)+second[index]*ratio)).join("");
 }
 
+function relativeLuminance(hex:string){
+  const rgb=parseHex(hex).map(value=>{
+    const channel=value/255;
+    return channel<=0.04045?channel/12.92:Math.pow((channel+0.055)/1.055,2.4);
+  });
+  return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
+}
+
+function contrastRatio(a:string,b:string){
+  const first=relativeLuminance(a),second=relativeLuminance(b);
+  const lighter=Math.max(first,second),darker=Math.min(first,second);
+  return (lighter+0.05)/(darker+0.05);
+}
+
+function readableBrandText(background:string){
+  const light="#FFFFFF",dark="#1D1D2C";
+  return contrastRatio(background,light)>=contrastRatio(background,dark)?light:dark;
+}
+
+function darkenForLightText(background:string,minRatio=4.5){
+  let candidate=normalizeBrandHex(background,"#1D1D2C");
+  if(contrastRatio(candidate,"#FFFFFF")>=minRatio)return candidate;
+  for(let weight=0.08;weight<=0.84;weight+=0.08){
+    candidate=mixBrandHex(background,"#000000",weight);
+    if(contrastRatio(candidate,"#FFFFFF")>=minRatio)return candidate;
+  }
+  return "#1D1D2C";
+}
+
 export function brandSchemeByKey(key:string|undefined|null){
   return BRAND_SCHEMES.find(item=>item.key===key)||DEFAULT_BRAND_SCHEME;
 }
@@ -76,6 +105,10 @@ export type BrandPaletteInput={
 };
 
 export type BrandPalette=BrandPaletteInput&{
+  onPrimary:string;
+  onAccent:string;
+  onSidebar:string;
+  onSidebarActive:string;
   primaryHover:string;
   primarySoft:string;
   secondaryHover:string;
@@ -95,19 +128,24 @@ export function buildBrandPalette(input:BrandPaletteInput):BrandPalette{
   const primary=normalizeBrandHex(input.primary,DEFAULT_BRAND_SCHEME.primary);
   const secondary=normalizeBrandHex(input.secondary,DEFAULT_BRAND_SCHEME.secondary);
   const accent=normalizeBrandHex(input.accent,DEFAULT_BRAND_SCHEME.accent);
-  const sidebar=mixBrandHex(secondary,"#000000",0.18);
+  const sidebar=darkenForLightText(mixBrandHex(secondary,"#000000",0.18),4.5);
+  const sidebarActive=darkenForLightText(mixBrandHex(sidebar,primary,0.32),4.5);
   return {
     primary,
     secondary,
     accent,
+    onPrimary:readableBrandText(primary),
+    onAccent:readableBrandText(accent),
+    onSidebar:"#FFFFFF",
+    onSidebarActive:"#FFFFFF",
     primaryHover:mixBrandHex(primary,"#000000",0.12),
     primarySoft:mixBrandHex(primary,"#FFFFFF",0.88),
     secondaryHover:mixBrandHex(secondary,"#000000",0.10),
     secondarySoft:mixBrandHex(secondary,"#FFFFFF",0.90),
     accentSoft:mixBrandHex(accent,"#FFFFFF",0.84),
     sidebar,
-    sidebarHover:mixBrandHex(sidebar,primary,0.18),
-    sidebarActive:primary,
+    sidebarHover:darkenForLightText(mixBrandHex(sidebar,primary,0.16),4.5),
+    sidebarActive,
     background:mixBrandHex(primary,"#FFFFFF",0.96),
     surface:"#FFFFFF",
     border:mixBrandHex(primary,"#FFFFFF",0.82),
@@ -121,6 +159,10 @@ export function brandCssVariables(input:BrandPaletteInput,autoPalette=true):Reco
   const structural=autoPalette?palette:buildBrandPalette(DEFAULT_BRAND_SCHEME);
   return {
     "--brand-primary":palette.primary,
+    "--brand-on-primary":palette.onPrimary,
+    "--brand-on-accent":palette.onAccent,
+    "--brand-on-sidebar":autoPalette?palette.onSidebar:structural.onSidebar,
+    "--brand-on-sidebar-active":autoPalette?palette.onSidebarActive:structural.onSidebarActive,
     "--brand-primary-hover":autoPalette?palette.primaryHover:structural.primaryHover,
     "--brand-primary-soft":autoPalette?palette.primarySoft:structural.primarySoft,
     "--brand-secondary":palette.secondary,

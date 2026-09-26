@@ -75,7 +75,19 @@ const css=fs.readFileSync("app/phase9-modules.css","utf8");
 for(const selector of [".phase9-maintenance",".phase9-work-orders",".phase9-work-order-detail",".phase9-reaction",":focus-visible","@media(max-width:760px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 9 CSS missing "+selector);
 }
-for(const marker of [".phase9-reaction .reaction-workspace{","display:block;width:100%;min-width:0;height:calc(100dvh - 170px)",".phase9-reaction .reaction-map-layout{","grid-template-columns:minmax(0,3fr) minmax(280px,1fr)","width:100%;height:100%;min-width:0;min-height:0","isolation:isolate;background:transparent","position:absolute;z-index:30","width:min(88%,calc(100% - var(--space-8)))","position:absolute;inset:0;z-index:0;width:100%;height:100%","@media(max-width:1180px)"]){
+for(const marker of [
+  ".phase9-reaction .reaction-workspace{",
+  "display:block;width:100%;min-width:0;height:calc(100dvh - 170px)",
+  ".phase9-reaction .reaction-map-layout{",
+  "grid-template-columns:minmax(0,3fr) minmax(280px,1fr)",
+  "width:100%;height:100%;min-width:0;min-height:0",
+  "isolation:isolate;background:transparent",
+  "top:var(--space-4);right:auto;bottom:auto;left:var(--space-4)",
+  "top:auto;right:auto;bottom:var(--space-4);left:var(--space-4)",
+  "width:auto;height:auto;min-width:0;min-height:0;transform:none",
+  "position:absolute;inset:0;z-index:0;width:100%;height:100%",
+  "@media(max-width:1180px)",
+]){
   if(!css.includes(marker))throw new Error("Reaction map workspace UX contract missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 9 CSS must use Design Tokens only");

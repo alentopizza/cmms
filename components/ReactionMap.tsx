@@ -563,7 +563,8 @@ export default function ReactionMap(){
   const detailActivity=detail?.kind==="activity"?snapshot.activities.find(item=>item.id===detail.id):undefined;
 
   return <>
-    <div className="reaction-map-stage">
+    <div className="reaction-map-layout">
+      <div className="reaction-map-stage">
       <div className="reaction-filter-bar" aria-label="Filtros del mapa de Reacción">
         <div className="reaction-global-search">
           <Search value={search} onValueChange={setSearch} placeholder="Buscar técnico, empresa, sede, correo, teléfono, dirección…" ariaLabel="Buscar en Reacción"/>
@@ -647,6 +648,7 @@ export default function ReactionMap(){
         {!filteredActivities.length&&<EmptyState icon="file" title="Sin alertas para este filtro" description="No hay actividades pendientes que coincidan con empresa, sede y fecha seleccionadas."/>}
       </div>
     </aside>
+    </div>
 
     <Drawer
       open={Boolean(detail)}

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-26 — Auditoría de rendimiento · Fase 2 Proveedores
+
+- El directorio de Proveedores deja de precargar hasta 600 actividades, 800 suministros, 600 requisiciones y 800 documentos.
+- La carga inicial conserva identidad, filtros, acciones y conteos resumidos; los conteos se agregan una sola vez por tabla y respetan alcance tenant.
+- Información general/financiera, Estadísticas, Actividades, Inventario, Requisiciones y Documentos cargan únicamente al abrir su pestaña.
+- `SupplierDirectory` cachea cada vista por proveedor mientras la pantalla permanece montada, evitando requests duplicados al volver a una pestaña.
+- Se reutilizaron `/api/suppliers/[id]` y `/api/suppliers/[id]/documents` mediante GET autorizados; los POST existentes no cambiaron.
+- Grid/List, búsqueda, filtros, acciones rápidas, inventario, documentos, requisiciones y RBAC mantienen su comportamiento.
+- Consultas iniciales de módulo, excluyendo el creation gate sin cambios: 15 → 4. Las cuatro colecciones detalladas pasan a 0 registros en el RSC inicial.
+- Nuevo guard `scripts/performance-suppliers-phase2-smoke.mjs` incorporado a CI.
+- No hubo migraciones ni cambios de modelo de datos.
+
 ## 2026-09-25 — Listados ERP con identidad visual y acciones rápidas
 
 - El modo **Listado** deja de representar Empresas, Proveedores, Usuarios, Activos, Inventario y Leads como tarjetas de una sola columna; ahora utiliza `StaticDataTable` sobre la misma colección ya cargada.

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
 import UiIcon from "@/components/UiIcon";
+import { Button } from "@/components/ui-kit/Button";
+import { Modal } from "@/components/ui-kit/Overlay";
 
 export type ReorderableNavItem = DashboardNavItem & { id: string };
 
@@ -64,6 +66,7 @@ export default function DashboardSidebar({
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [logoutConfirm,setLogoutConfirm]=useState(false);
   const [organizing, setOrganizing] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -287,11 +290,9 @@ export default function DashboardSidebar({
             {canConfigure && <Link href="/dashboard/settings" onClick={()=>setMobileMoreOpen(false)}>
               <span><UiIcon name="settings" size={18}/></span><div><strong>Configuración</strong><small>Empresa, cuenta y preferencias</small></div>
             </Link>}
-            <form method="post" action="/api/auth/logout">
-              <button type="submit">
-                <span><UiIcon name="logout" size={18}/></span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
-              </button>
-            </form>
+            <button type="button" onClick={()=>{setMobileMoreOpen(false);setLogoutConfirm(true);}}>
+              <span><UiIcon name="logout" size={18}/></span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
+            </button>
           </div>
         </div>
       </section>
@@ -410,5 +411,21 @@ export default function DashboardSidebar({
         </div>}
       </div>
     </aside>
+
+    <Modal
+      open={logoutConfirm}
+      onClose={()=>setLogoutConfirm(false)}
+      title="¿Cerrar sesión?"
+      description="Se cerrará tu sesión actual de Desweb CMMS. Deberás iniciar sesión nuevamente para continuar."
+      size="sm"
+      role="alertdialog"
+      className="logout-confirm-modal"
+      footer={<>
+        <Button variant="secondary" onClick={()=>setLogoutConfirm(false)}>Cancelar</Button>
+        <form method="post" action="/api/auth/logout"><Button type="submit" variant="danger" iconLeft="logout">Cerrar sesión</Button></form>
+      </>}
+    >
+      <div className="logout-confirm-icon"><UiIcon name="logout" size={28}/></div>
+    </Modal>
   </>;
 }

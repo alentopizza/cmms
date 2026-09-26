@@ -12,6 +12,28 @@ function target(id:string,url:string,suffix:string){
   return NextResponse.redirect(publicUrl(`/dashboard/suppliers?supplier=${encodeURIComponent(id)}&tab=documents&${suffix}`,url),303);
 }
 
+export async function GET(_request:Request,{params}:{params:Promise<{id:string}>}){
+  const session=await getSession();
+  if(!session)return new NextResponse("Unauthorized",{status:401});
+  if(!can(session,"suppliers.manage"))return new NextResponse("Forbidden",{status:403});
+  const {id}=await params;
+  if(!UUID.test(id))return new NextResponse("Proveedor inválido",{status:400});
+  const supplier=await query<{organization_id:string}>(
+    `SELECT organization_id FROM suppliers
+     WHERE id=$1 AND ($2::uuid IS NULL OR organization_id=$2)`,
+    [id,session.platformRole==="user"?session.organizationId:null],
+  );
+  if(!supplier.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
+  const result=await query(
+    `SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
+     FROM supplier_documents
+     WHERE supplier_id=$1 AND organization_id=$2
+     ORDER BY created_at DESC`,
+    [id,supplier.rows[0].organization_id],
+  );
+  return NextResponse.json({documents:result.rows});
+}
+
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const session=await getSession();
   if(!session)return new NextResponse("Unauthorized",{status:401});

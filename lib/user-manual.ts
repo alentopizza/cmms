@@ -55,7 +55,7 @@ export const MANUAL_ROLES:Array<{id:ManualRole;label:string;summary:string}> = [
   {id:"external",label:"Colaborador externo",summary:"Trabajo de campo asignado directamente o mediante cuadrilla."},
 ];
 
-export const MANUAL_LAST_REVIEW = "2026-09-25";
+export const MANUAL_LAST_REVIEW = "2026-09-26";
 
 // ── User-facing articles ────────────────────────────────────────────────────
 
@@ -474,6 +474,7 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
     steps:[
       "Busca por código, activo, empresa, ubicación o proveedor.",
       "Usa el filtro de estado cuando necesites reducir el listado.",
+      "La búsqueda y los filtros recorren todo tu catálogo autorizado, aunque el activo esté en otra página; cada página muestra hasta 24 activos sin ampliar tu alcance.",
       "Cada activo aparece como una tarjeta visual con código, ubicación, proveedor, estado, criticidad y fabricante/modelo; el diseño se adapta a celular.",
       "Usa Importar para descargar una plantilla Excel contextual, validar la carga y crear o actualizar activos por Código.",
       "Usa Exportar para descargar la base de Activos en Excel, CSV o PDF.",
@@ -623,6 +624,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-26",
+    title:"Activos con búsqueda completa y catálogo independiente de la página",
+    summary:"Activos ahora busca, filtra y pagina en el servidor sobre todo el alcance autorizado. Cada página muestra hasta 24 equipos, mientras KPI, marcas, modelos, categorías y calidad continúan representando el catálogo completo; creación, edición, importación, exportación, mantenimiento, historial y documentos conservan sus flujos.",
+    roles:["all","platform_owner","superadmin","admin","manager","technician","viewer","provider","external"],
+  },
   {
     date:"2026-09-26",
     title:"Órdenes con búsqueda y paginación sobre todo el alcance autorizado",

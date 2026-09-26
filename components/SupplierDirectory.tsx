@@ -378,65 +378,87 @@ export default function SupplierDirectory({
     /></div>;
   }
 
-  const activeActivities=selectedActivities.filter(item=>["pending","in_progress"].includes(item.status)).length;
-  const openReqs=selectedReqs.filter(item=>!["closed","cancelled","fulfilled"].includes(item.status)).length;
-  const activeDocs=selectedDocs.filter(item=>!item.archived_at).length;
+  const detail=selectedDetail||selected;
+  const activeActivities=selected.active_activity_count;
+  const openReqs=selected.open_requisition_count;
+  const activeDocs=selected.active_document_count;
+  const selectedItems=selectedInventoryItems;
+  const selectedActiveItems=selectedActiveRequisitionItems;
+  const inventorySites=selectedInventory?.sites||[];
+  const inventoryLocations=selectedInventory?.locations||[];
+  const inventoryCategories=selectedInventory?.categories||[];
+  const inventoryWarehouses=selectedInventory?.warehouses||[];
 
-  const general=editing?<form className="entity-edit-form" method="post" action={"/api/suppliers/"+selected.id} encType="multipart/form-data">
+  function demandContent(view:SupplierDataView,content:ReactNode){
+    const loaded=view==="general"?Object.prototype.hasOwnProperty.call(detailsBySupplier,selected.id)
+      :view==="statistics"?Object.prototype.hasOwnProperty.call(statisticsBySupplier,selected.id)
+      :view==="documents"?Object.prototype.hasOwnProperty.call(documentsBySupplier,selected.id)
+      :view==="activities"?Object.prototype.hasOwnProperty.call(activitiesBySupplier,selected.id)
+      :view==="inventory"?Object.prototype.hasOwnProperty.call(inventoryBySupplier,selected.id)
+      :Object.prototype.hasOwnProperty.call(requisitionsBySupplier,selected.id);
+    if(loaded)return content;
+    const key=selected.id+":"+view;
+    const error=loadErrors[key];
+    return <div className="entity-panel supplier-demand-state">
+      {error?<Alert variant="danger" title="No fue posible cargar la sección">{error}</Alert>:<Spinner label={loadingKeys[key]?"Cargando información del proveedor…":"Preparando información del proveedor…"}/>}
+    </div>;
+  }
+
+  const general=editing?<form className="entity-edit-form" method="post" action={"/api/suppliers/"+detail.id} encType="multipart/form-data">
     <input type="hidden" name="intent" value="update"/>
     <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Editar proveedor</h3><div className="form-grid">
-      <div className="field"><label>Nombre comercial *</label><input name="name" defaultValue={selected.name} required/></div>
-      <div className="field"><label>Razón social *</label><input name="legal_name" defaultValue={selected.legal_name||""} required/></div>
-      <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityOptions} defaultValues={selected.capability_codes||[]} required help="Puedes seleccionar múltiples capacidades normalizadas."/>
-      <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyOptions} defaultValues={selected.specialty_codes||[]} help="Catálogo estándar para mantener consistencia en filtros, importaciones y exportaciones."/>
-      <TaxIdentificationTypeSelect id="supplier-edit-tax-type" name="tax_id_type" countryInputId="supplier-edit-country" countryCode={selected.country_code||"CO"} defaultValue={selected.tax_id_type||""}/>
-      <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={selected.tax_id||""}/></div>
-      <CountryCityFields countryId="supplier-edit-country" countryName="country_code" cityId="supplier-edit-city" cityName="city" defaultCountry={selected.country_code||"CO"} defaultCity={selected.city||""} required/>
-      <div className="field form-span-2"><label>Dirección *</label><input name="address" defaultValue={selected.address||""} required/></div>
-      <div className="field"><label>Sitio web</label><input type="url" name="website" defaultValue={selected.website||""}/></div>
-      <div className="field"><label>Contacto principal</label><input name="contact_name" defaultValue={selected.contact_name||""}/></div>
-      <div className="field"><label>Cargo</label><input name="contact_title" defaultValue={selected.contact_title||""}/></div>
-      <div className="field"><label>Correo</label><input type="email" name="email" defaultValue={selected.email||""}/></div>
-      <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={selected.country_code||"CO"} countryInputId="supplier-edit-country" defaultValue={selected.phone}/>
-      <div className="field"><label>Estado</label><select name="active" defaultValue={selected.active?"on":"off"}><option value="on">Activo</option><option value="off">Inactivo</option></select></div>
-      <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} defaultValue={selected.notes||""}/></div>
-      <div className="form-span-2"><FileDropzone name="logo" label="Logo del proveedor" accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingPreviewUrl={selected.has_logo?"/api/suppliers/"+selected.id+"/logo":null} description="Puedes reemplazar el logo actual."/></div>
+      <div className="field"><label>Nombre comercial *</label><input name="name" defaultValue={detail.name} required/></div>
+      <div className="field"><label>Razón social *</label><input name="legal_name" defaultValue={detail.legal_name||""} required/></div>
+      <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityOptions} defaultValues={detail.capability_codes||[]} required help="Puedes seleccionar múltiples capacidades normalizadas."/>
+      <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyOptions} defaultValues={detail.specialty_codes||[]} help="Catálogo estándar para mantener consistencia en filtros, importaciones y exportaciones."/>
+      <TaxIdentificationTypeSelect id="supplier-edit-tax-type" name="tax_id_type" countryInputId="supplier-edit-country" countryCode={detail.country_code||"CO"} defaultValue={detail.tax_id_type||""}/>
+      <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={detail.tax_id||""}/></div>
+      <CountryCityFields countryId="supplier-edit-country" countryName="country_code" cityId="supplier-edit-city" cityName="city" defaultCountry={detail.country_code||"CO"} defaultCity={detail.city||""} required/>
+      <div className="field form-span-2"><label>Dirección *</label><input name="address" defaultValue={detail.address||""} required/></div>
+      <div className="field"><label>Sitio web</label><input type="url" name="website" defaultValue={detail.website||""}/></div>
+      <div className="field"><label>Contacto principal</label><input name="contact_name" defaultValue={detail.contact_name||""}/></div>
+      <div className="field"><label>Cargo</label><input name="contact_title" defaultValue={detail.contact_title||""}/></div>
+      <div className="field"><label>Correo</label><input type="email" name="email" defaultValue={detail.email||""}/></div>
+      <PhoneField name="phone" label="Teléfono / WhatsApp" countryCode={detail.country_code||"CO"} countryInputId="supplier-edit-country" defaultValue={detail.phone}/>
+      <div className="field"><label>Estado</label><select name="active" defaultValue={detail.active?"on":"off"}><option value="on">Activo</option><option value="off">Inactivo</option></select></div>
+      <div className="field form-span-2"><label>Notas</label><textarea name="notes" rows={3} defaultValue={detail.notes||""}/></div>
+      <div className="form-span-2"><FileDropzone name="logo" label="Logo del proveedor" accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingPreviewUrl={detail.has_logo?"/api/suppliers/"+detail.id+"/logo":null} description="Puedes reemplazar el logo actual."/></div>
       <div className="form-span-2 form-actions"><button className="button secondary" type="button" onClick={()=>setEditing(false)}>Cancelar</button><button className="button" type="submit">Guardar cambios</button></div>
     </div></div>
   </form>:<div className="entity-section-stack">
     <div className="entity-approved-columns">
       <div className="entity-approved-column">
         <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos del proveedor</h3><div className="entity-info-grid">
-          <div className="entity-info-field"><span>Nombre comercial</span><strong>{selected.name}</strong></div>
-          <div className="entity-info-field"><span>Razón social</span><strong>{selected.legal_name||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Tipo</span><strong>{(selected.capability_labels||[]).join(", ")||typeLabel(selected.supplier_type)}</strong></div>
-          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{(selected.specialty_labels||[]).join(", ")||selected.service_category||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Identificación</span><strong>{selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>País</span><strong>{countryName(selected.country_code)||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Ciudad</span><strong>{selected.city||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Dirección</span><strong>{selected.address||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Sitio web</span><strong>{selected.website?<a href={selected.website} target="_blank" rel="noreferrer">{selected.website}</a>:"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Nombre comercial</span><strong>{detail.name}</strong></div>
+          <div className="entity-info-field"><span>Razón social</span><strong>{detail.legal_name||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Tipo</span><strong>{(detail.capability_labels||[]).join(", ")||typeLabel(detail.supplier_type)}</strong></div>
+          <div className="entity-info-field"><span>Especialidad / categoría</span><strong>{(detail.specialty_labels||[]).join(", ")||detail.service_category||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Identificación</span><strong>{detail.tax_id?(detail.tax_id_type||"ID")+" "+detail.tax_id:"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>País</span><strong>{countryName(detail.country_code)||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Ciudad</span><strong>{detail.city||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Dirección</span><strong>{detail.address||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Sitio web</span><strong>{detail.website?<a href={detail.website} target="_blank" rel="noreferrer">{detail.website}</a>:"Sin registrar"}</strong></div>
         </div></div>
         <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="phone"/></span>Contacto</h3><div className="entity-info-grid">
-          <div className="entity-info-field"><span>Contacto principal</span><strong>{selected.contact_name||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Cargo</span><strong>{selected.contact_title||"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Correo</span><strong>{selected.email?<a href={"mailto:"+selected.email}>{selected.email}</a>:"Sin registrar"}</strong></div>
-          <div className="entity-info-field"><span>Teléfono / WhatsApp</span><strong>{selected.phone||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Contacto principal</span><strong>{detail.contact_name||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Cargo</span><strong>{detail.contact_title||"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Correo</span><strong>{detail.email?<a href={"mailto:"+detail.email}>{detail.email}</a>:"Sin registrar"}</strong></div>
+          <div className="entity-info-field"><span>Teléfono / WhatsApp</span><strong>{detail.phone||"Sin registrar"}</strong></div>
         </div></div>
-        <div className="entity-panel entity-approved-notes"><h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3><p>{selected.notes||"Sin notas registradas para este proveedor."}</p></div>
+        <div className="entity-panel entity-approved-notes"><h3><span className="entity-section-icon"><UiIcon name="file"/></span>Notas adicionales</h3><p>{detail.notes||"Sin notas registradas para este proveedor."}</p></div>
       </div>
       <div className="entity-approved-column">
         <div className="entity-panel supplier-capability-panel"><h3><span className="entity-section-icon"><UiIcon name="activity"/></span>Relación operativa</h3>
           <div className="supplier-capability-list">
-            <span className={(selected.supplier_type==="services"||selected.supplier_type==="both")?"enabled":""}><UiIcon name="work-order"/> Servicios y actividades<b>{selectedActivities.length}</b></span>
-            <span className={(selected.supplier_type==="materials"||selected.supplier_type==="both")?"enabled":""}><UiIcon name="asset"/> Inventarios y suministros<b>{selectedItems.length}</b></span>
-            <span className="enabled"><UiIcon name="file"/> Requisiciones<b>{selectedReqs.length}</b></span>
+            <span className={(detail.supplier_type==="services"||detail.supplier_type==="both")?"enabled":""}><UiIcon name="work-order"/> Servicios y actividades<b>{selected.activity_count}</b></span>
+            <span className={(detail.supplier_type==="materials"||detail.supplier_type==="both")?"enabled":""}><UiIcon name="asset"/> Inventarios y suministros<b>{selected.item_count}</b></span>
+            <span className="enabled"><UiIcon name="file"/> Requisiciones<b>{selected.requisition_count}</b></span>
             <span className="enabled"><UiIcon name="file"/> Documentos<b>{activeDocs}</b></span>
           </div>
         </div>
         <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="check"/></span>Estado comercial</h3><div className="entity-info-grid">
-          <div className="entity-info-field"><span>Estado</span><strong>{selected.active?"Proveedor activo":"Proveedor inactivo"}</strong></div>
-          <div className="entity-info-field"><span>Empresa cliente</span><strong>{selected.organization_name}</strong></div>
+          <div className="entity-info-field"><span>Estado</span><strong>{detail.active?"Proveedor activo":"Proveedor inactivo"}</strong></div>
+          <div className="entity-info-field"><span>Empresa cliente</span><strong>{detail.organization_name}</strong></div>
           <div className="entity-info-field"><span>Actividades abiertas</span><strong>{activeActivities}</strong></div>
           <div className="entity-info-field"><span>Requisiciones abiertas</span><strong>{openReqs}</strong></div>
         </div></div>
@@ -457,8 +479,8 @@ export default function SupplierDirectory({
     meta={[(selected.capability_labels||[]).join(" · ")||typeLabel(selected.supplier_type),selected.tax_id?(selected.tax_id_type||"ID")+" "+selected.tax_id:"Sin identificación",[selected.city,countryName(selected.country_code)].filter(Boolean).join(" · ")]}
     stats={[
       {label:"Actividades",value:activeActivities,icon:"work-order",hint:"activas"},
-      {label:"Suministros",value:selectedActiveItems.length,icon:"asset"},
-      {label:"Requisiciones",value:selectedReqs.length,icon:"file",hint:openReqs+" abiertas"},
+      {label:"Suministros",value:selected.active_item_count,icon:"asset"},
+      {label:"Requisiciones",value:selected.requisition_count,icon:"file",hint:openReqs+" abiertas"},
       {label:"Documentos",value:activeDocs,icon:"file"},
     ]}
     quickActions={<>
@@ -474,16 +496,17 @@ export default function SupplierDirectory({
       <button className="button danger-secondary entity-action-button" type="button" onClick={()=>setDeleteCandidate(selected)}><UiIcon name="trash"/><span>Eliminar</span></button>
     </>}
     initialTab={preferredTab}
+    onTabChange={setPreferredTab}
     tabs={[
-      {id:"general",label:"Información general",content:general},
+      {id:"general",label:"Información general",content:demandContent("general",general)},
       {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack supplier-commercial-analytics">
         <StatTiles className="entity-stat-grid" items={[
-          {label:"Actividades totales",value:String(selectedActivities.length),hint:activeActivities+" activas"},
-          {label:"Suministros asociados",value:String(selectedActiveItems.length),hint:(selectedItems.length-selectedActiveItems.length)+" inactivos conservados"},
-          {label:"Requisiciones",value:String(selectedReqs.length),hint:openReqs+" abiertas"},
-          {label:"Documentos vigentes",value:String(activeDocs),hint:(selectedDocs.length-activeDocs)+" archivados"},
-          {label:"Devoluciones a proveedor",value:String(selected.supplier_return_count||0),hint:Number(selected.supplier_return_quantity||0).toLocaleString("es-CO")+" unidades registradas",tone:(selected.supplier_return_count||0)>0?"warning":"default"},
-          {label:"Documentos de compra",value:String(selected.procurement_document_count||0),hint:selected.procurement_document_disputed>0?selected.procurement_document_disputed+" en disputa":selected.procurement_document_pending>0?selected.procurement_document_pending+" pendientes de revisión":"Sin pendientes",tone:selected.procurement_document_disputed>0?"danger":selected.procurement_document_pending>0?"warning":"success"},
+          {label:"Actividades totales",value:String(selected.activity_count),hint:activeActivities+" activas"},
+          {label:"Suministros asociados",value:String(selected.active_item_count),hint:(selected.item_count-selected.active_item_count)+" inactivos conservados"},
+          {label:"Requisiciones",value:String(selected.requisition_count),hint:openReqs+" abiertas"},
+          {label:"Documentos vigentes",value:String(activeDocs),hint:(selected.document_count-activeDocs)+" archivados"},
+          {label:"Devoluciones a proveedor",value:String(selectedStatistics?.operational?.supplier_return_count||0),hint:Number(selectedStatistics?.operational?.supplier_return_quantity||0).toLocaleString("es-CO")+" unidades registradas",tone:(selectedStatistics?.operational?.supplier_return_count||0)>0?"warning":"default"},
+          {label:"Documentos de compra",value:String(selectedStatistics?.operational?.procurement_document_count||0),hint:(selectedStatistics?.operational?.procurement_document_disputed||0)>0?(selectedStatistics?.operational?.procurement_document_disputed||0)+" en disputa":(selectedStatistics?.operational?.procurement_document_pending||0)>0?(selectedStatistics?.operational?.procurement_document_pending||0)+" pendientes de revisión":"Sin pendientes",tone:(selectedStatistics?.operational?.procurement_document_disputed||0)>0?"danger":(selectedStatistics?.operational?.procurement_document_pending||0)>0?"warning":"success"},
         ]}/>
 
         <div className="entity-panel supplier-commercial-panel">
@@ -551,7 +574,7 @@ export default function SupplierDirectory({
           </tbody></table></div></div>:<EmptyState icon="file" title="No hay requisiciones con recepción" description="El historial comercial aparecerá cuando existan recepciones físicas enlazadas."/>}
         </div>
       </div>},
-      {id:"documents",label:"Documentos",content:<SupplierDocuments supplier={selected} documents={selectedDocs}/>},
+      {id:"documents",label:"Documentos",content:demandContent("documents",<SupplierDocuments supplier={selected} documents={selectedDocs}/>)},
       {id:"financial",label:"Información financiera",content:financialEditing
         ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>
           <input type="hidden" name="intent" value="financial"/>

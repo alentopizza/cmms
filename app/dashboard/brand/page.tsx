@@ -23,7 +23,9 @@ export default async function BrandPage({
   const organization=await query<{name:string;has_logo:boolean;active:boolean;site_count:number;city:string|null}>(
     `SELECT o.name,(o.logo_data IS NOT NULL) has_logo,o.active,
             (SELECT count(*)::int FROM sites s WHERE s.organization_id=o.id) site_count,
-            (SELECT s.city FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1) city
+            (SELECT s.city FROM sites s
+             WHERE s.organization_id=o.id AND nullif(trim(s.city),'') IS NOT NULL
+             ORDER BY s.created_at ASC LIMIT 1) city
      FROM organizations o WHERE o.id=$1 LIMIT 1`,
     [session.organizationId],
   );

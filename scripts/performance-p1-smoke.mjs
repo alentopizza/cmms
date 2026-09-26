@@ -146,10 +146,13 @@ for(const marker of [
 const workOrders=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
 for(const marker of [
   'const creationGatePromise=getCreationGateForScope("work_order"',
-  "async function loadOrders()",
-  "const [creationGate,orders,assets]=await Promise.all",
+  "const summaryPromise",
+  "const facetsPromise",
+  "const assetsPromise",
+  "const [creationGate,summaryResult,facetsResult,assets]=await Promise.all",
+  "const orders=await query<OrderRow>",
 ]){
-  if(!workOrders.includes(marker))throw new Error("Work Orders parallel-read contract missing "+marker);
+  if(!workOrders.includes(marker))throw new Error("Work Orders server-read contract missing "+marker);
 }
 
 const maintenance=fs.readFileSync("app/dashboard/maintenance/page.tsx","utf8");

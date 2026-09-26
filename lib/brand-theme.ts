@@ -172,7 +172,7 @@ export function brandCssVariables(input:BrandPaletteInput,autoPalette=true):Reco
     "--brand-accent-soft":autoPalette?palette.accentSoft:structural.accentSoft,
     "--brand-sidebar":autoPalette?palette.sidebar:structural.sidebar,
     "--brand-sidebar-hover":autoPalette?palette.sidebarHover:structural.sidebarHover,
-    "--brand-sidebar-active":palette.primary,
+    "--brand-sidebar-active":autoPalette?palette.sidebarActive:structural.sidebarActive,
     "--brand-background":autoPalette
       ? `color-mix(in srgb,${palette.primary} 5%,var(--color-bg))`
       : "var(--color-bg)",

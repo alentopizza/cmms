@@ -96,12 +96,12 @@ for(const forbidden of ["--color-success-","--color-warning-","--color-danger-",
 }
 
 const themePreferences=fs.readFileSync("components/ThemePreferences.tsx","utf8");
-for(const marker of ["applyPreference(current,false)","document.documentElement.dataset.themePreference","localStorage.setItem(\"desweb-theme\""]){
+for(const marker of ["applyPreference(current,false)","document.documentElement.dataset.themePreference","organizationDefault","localStorage.setItem(\"desweb-theme\""]){
   if(!themePreferences.includes(marker))throw new Error("Theme preference inheritance contract missing "+marker);
 }
 
 const preferences=fs.readFileSync("app/dashboard/preferences/page.tsx","utf8");
-for(const marker of ["Perfil","Preferencias","Apariencia","Seguridad","Integraciones","Información personal","Zona horaria","ThemePreferences","/api/preferences/profile"]){
+for(const marker of ["Perfil","Preferencias","Apariencia","Seguridad","Integraciones","Información personal","Zona horaria","ThemePreferences","organizationDefault={organizationBranding?.interfaceStyle}","/api/preferences/profile"]){
   if(!preferences.includes(marker))throw new Error("Mi configuración contract missing "+marker);
 }
 const profileApi=fs.readFileSync("app/api/preferences/profile/route.ts","utf8");

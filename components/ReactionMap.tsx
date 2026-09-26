@@ -298,6 +298,7 @@ export default function ReactionMap(){
           resizeObserver=new ResizeObserver(()=>scheduleMapViewportSync());
           resizeObserver.observe(hostRef.current);
         }
+        window.addEventListener("resize",scheduleMapViewportSync);
         scheduleMapViewportSync();
 
         await refresh();
@@ -432,6 +433,7 @@ export default function ReactionMap(){
     return()=>{
       cancelled=true;
       document.removeEventListener("visibilitychange",onVisibilityChange);
+      window.removeEventListener("resize",scheduleMapViewportSync);
       resizeObserver?.disconnect();
       if(resizeFrame!==null)window.cancelAnimationFrame(resizeFrame);
       if(timer)clearInterval(timer);

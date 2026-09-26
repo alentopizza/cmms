@@ -96,7 +96,7 @@
 .ds-badge-danger{background:var(--color-danger-surface);color:var(--color-danger-text);border-color:var(--color-danger-border)}
 .ds-badge-info{background:var(--color-info-surface);color:var(--color-info-text);border-color:var(--color-info-border)}
 .ds-badge-neutral{background:var(--color-surface-soft);color:var(--color-text-secondary);border-color:var(--color-border-subtle)}
-.ds-badge-brand{background:var(--color-surface-teal);color:var(--color-brand-secondary);border-color:var(--color-teal-100)}
+.ds-badge-brand{background:var(--color-surface-teal);color:var(--color-brand-secondary);border-color:var(--brand-border)}
 .ds-status-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
 .ds-status-success{color:var(--color-success-600)}.ds-status-warning{color:var(--color-warning-600)}.ds-status-danger{color:var(--color-danger-600)}.ds-status-info{color:var(--color-info-600)}.ds-status-brand{color:var(--color-brand-secondary)}.ds-status-neutral{color:var(--color-text-muted)}
 
@@ -313,7 +313,7 @@
   background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:background var(--motion-fast) ease,color var(--motion-fast) ease,box-shadow var(--motion-fast) ease;
 }
 .ds-view-mode-toggle button:hover{background:var(--color-surface);color:var(--color-brand-secondary)}
-.ds-view-mode-toggle button.active{background:var(--color-brand-secondary);color:var(--brand-on-primary);box-shadow:var(--shadow-xs)}
+.ds-view-mode-toggle button.active{background:var(--brand-primary);color:var(--brand-on-primary);box-shadow:var(--shadow-xs)}
 .ds-view-mode-toggle button:focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
 .ds-collection-view{min-width:0}
 .ds-collection-view.is-list [data-collection-grid]{grid-template-columns:1fr!important}

@@ -155,9 +155,9 @@ export default function BrandPersonalization({
       <input type="hidden" name="branding_form" value="advanced"/>
       <input type="hidden" name="app_name" value={initial.appName}/>
       <input type="hidden" name="scheme_key" value={schemeKey}/>
-      <input type="hidden" name="primary_color" value={normalizeBrandHex(primary,initial.primaryColor)}/>
-      <input type="hidden" name="secondary_color" value={normalizeBrandHex(secondary,initial.secondaryColor)}/>
-      <input type="hidden" name="accent_color" value={normalizeBrandHex(accent,initial.accentColor)}/>
+      <input type="hidden" name="primary_color" value={primary}/>
+      <input type="hidden" name="secondary_color" value={secondary}/>
+      <input type="hidden" name="accent_color" value={accent}/>
       <input type="hidden" name="auto_palette" value={autoPalette?"on":"off"}/>
       <input type="hidden" name="interface_style" value={interfaceStyle}/>
       <input type="hidden" name="interface_density" value={density}/>
@@ -184,7 +184,20 @@ export default function BrandPersonalization({
               ["Color de acento",accent,setAccent,initial.accentColor],
             ].map(([label,value,setter,fallback])=><label className="brand-color-field" key={String(label)}>
               <span>{String(label)}</span>
-              <div><input type="color" value={validColor(String(value),String(fallback))} onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}}/><input aria-label={String(label)+" HEX"} value={String(value)} onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}} onBlur={()=>{(setter as (value:string)=>void)(normalizeBrandHex(String(value),String(fallback)));}} maxLength={7}/></div>
+              <div>
+                <input type="color" value={validColor(String(value),String(fallback))} onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}}/>
+                <input
+                  type="text"
+                  aria-label={String(label)+" HEX"}
+                  value={String(value)}
+                  onChange={event=>{setSchemeKey("custom");(setter as (value:string)=>void)(event.target.value.toUpperCase());}}
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  minLength={7}
+                  maxLength={7}
+                  required
+                  title="Usa un color HEX de 6 dígitos, por ejemplo #0F766E"
+                />
+              </div>
             </label>)}
           </div>
           <label className="brand-auto-palette">

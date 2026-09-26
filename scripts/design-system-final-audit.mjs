@@ -16,7 +16,7 @@ function read(file){return fs.readFileSync(file,"utf8");}
 const v2Css=[
   "app/business-ui.css","app/data-ui.css","app/phase6-modules.css","app/phase7-modules.css",
   "app/phase8-modules.css","app/phase9-modules.css","app/phase10-modules.css","app/document-workspace.css","app/shell-v2.css",
-  "app/ui-kit-core.css","app/ui-kit/ui-kit.css",
+  "app/brand-personalization.css","app/account-experience.css","app/ui-kit-core.css","app/ui-kit/ui-kit.css",
 ];
 for(const file of v2Css){
   const src=read(file);

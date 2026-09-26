@@ -39,7 +39,7 @@ if(!detail.includes("w.requested_at::text"))throw new Error("Work Order timeline
 const reactionPage=fs.readFileSync("app/dashboard/reaction/page.tsx","utf8");
 if(!reactionPage.includes("phase9-reaction"))throw new Error("Reaction page is not scoped to Phase 9");
 const reaction=fs.readFileSync("components/ReactionMap.tsx","utf8");
-for(const marker of ["<Search","<Select","<Button","<Badge","<EmptyState","<Drawer","<PriorityBadge","<ActivityStatusBadge",'className="reaction-map-layout"']){
+for(const marker of ["<Search","<Select","<Button","<Badge","<EmptyState","<Drawer","<PriorityBadge","<ActivityStatusBadge",'className="reaction-map-layout"',"ResizeObserver","scheduleMapViewportSync",'google.maps.event.trigger(map,"resize")']){
   if(!reaction.includes(marker))throw new Error("Reaction shared-pattern migration missing "+marker);
 }
 for(const forbidden of ["reaction-left-panel","reaction-results-panel","reaction-map-sidebar","reaction-map-placeholder"]){

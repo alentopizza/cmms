@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -31,12 +31,14 @@ const BulkImportModal=dynamic(()=>import("@/components/BulkImportModal"));
 
 export type SupplierDirectoryItem={
   id:string;organization_id:string;organization_name:string;organization_country:string|null;code:string|null;name:string;legal_name:string|null;tax_id:string|null;tax_id_type:string|null;
-  country_code:string|null;city:string|null;address:string|null;website:string|null;supplier_type:"materials"|"services"|"both";
-  service_category:string|null;contact_name:string|null;contact_title:string|null;email:string|null;phone:string|null;notes:string|null;
+  country_code:string|null;city:string|null;supplier_type:"materials"|"services"|"both";service_category:string|null;contact_name:string|null;email:string|null;phone:string|null;
   capability_codes:string[];capability_labels:string[];specialty_codes:string[];specialty_labels:string[];
-  bank_name:string|null;account_type:string|null;account_number:string|null;account_holder:string|null;account_holder_tax_id:string|null;
-  payment_terms_days:number|null;currency_code:string|null;payment_email:string|null;payment_notes:string|null;
-  supplier_return_count:number;supplier_return_quantity:string;procurement_document_count:number;procurement_document_pending:number;procurement_document_disputed:number;active:boolean;has_logo:boolean;
+  activity_count:number;active_activity_count:number;item_count:number;active_item_count:number;
+  requisition_count:number;directory_requisition_count:number;open_requisition_count:number;document_count:number;active_document_count:number;
+  active:boolean;has_logo:boolean;
+  address?:string|null;website?:string|null;contact_title?:string|null;notes?:string|null;
+  bank_name?:string|null;account_type?:string|null;account_number?:string|null;account_holder?:string|null;account_holder_tax_id?:string|null;
+  payment_terms_days?:number|null;currency_code?:string|null;payment_email?:string|null;payment_notes?:string|null;
 };
 export type SupplierActivity={
   id:string;supplier_id:string;work_order_id:string;order_number:string;order_title:string;description:string;status:string;due_date:string|null;
@@ -54,6 +56,31 @@ type InventorySiteOption={id:string;organization_id:string;name:string};
 type InventoryLocationOption={id:string;organization_id:string;site_id:string;name:string;label:string};
 type InventoryCategoryOption={id:string;organization_id:string;name:string};
 type InventoryWarehouseOption={id:string;organization_id:string;site_id:string|null;location_id:string|null;name:string};
+
+type SupplierStatisticsData={
+  operational:{
+    supplier_return_count:number;supplier_return_quantity:string;procurement_document_count:number;
+    procurement_document_pending:number;procurement_document_disputed:number;
+  };
+  commercial:SupplierCommercialAnalytics|null;
+  trends:SupplierCommercialTrend[];
+  requisitions:SupplierRequisitionPerformance[];
+};
+type SupplierInventoryData={
+  items:RequisitionSelectableItem[];
+  sites:InventorySiteOption[];
+  locations:InventoryLocationOption[];
+  categories:InventoryCategoryOption[];
+  warehouses:InventoryWarehouseOption[];
+};
+type SupplierRequisitionData={requisitions:SupplierRequisition[];items:RequisitionSelectableItem[]};
+type SupplierDataView="general"|"statistics"|"documents"|"activities"|"inventory"|"requisitions";
+
+function dataViewForTab(tab:string):SupplierDataView|null{
+  if(tab==="financial")return "general";
+  if(["general","statistics","documents","activities","inventory","requisitions"].includes(tab))return tab as SupplierDataView;
+  return null;
+}
 
 function typeLabel(type:SupplierDirectoryItem["supplier_type"]){
   if(type==="services")return "Servicios";
@@ -119,22 +146,11 @@ function SupplierDocuments({supplier,documents}:{supplier:SupplierDirectoryItem;
 }
 
 export default function SupplierDirectory({
-  suppliers,activities,items,requisitions,documents,commercialAnalytics,commercialTrends,commercialRequisitions,capabilityOptions,specialtyOptions,inventorySites,inventoryLocations,inventoryCategories,inventoryWarehouses,canInventoryWrite,initialSelectedId="",initialTab="general",
+  suppliers,capabilityOptions,specialtyOptions,canInventoryWrite,initialSelectedId="",initialTab="general",
 }:{
   suppliers:SupplierDirectoryItem[];
-  activities:SupplierActivity[];
-  items:RequisitionSelectableItem[];
-  requisitions:SupplierRequisition[];
-  documents:SupplierDocument[];
-  commercialAnalytics:SupplierCommercialAnalytics[];
-  commercialTrends:SupplierCommercialTrend[];
-  commercialRequisitions:SupplierRequisitionPerformance[];
   capabilityOptions:MultiSelectOption[];
   specialtyOptions:MultiSelectOption[];
-  inventorySites:InventorySiteOption[];
-  inventoryLocations:InventoryLocationOption[];
-  inventoryCategories:InventoryCategoryOption[];
-  inventoryWarehouses:InventoryWarehouseOption[];
   canInventoryWrite:boolean;
   initialSelectedId?:string;
   initialTab?:string;
@@ -146,16 +162,28 @@ export default function SupplierDirectory({
   const [preferredTab,setPreferredTab]=useState(initialTab||"general");
   const [deleteCandidate,setDeleteCandidate]=useState<SupplierDirectoryItem|null>(null);
   const [deleteError,setDeleteError]=useState("");
+  const [detailsBySupplier,setDetailsBySupplier]=useState<Record<string,Partial<SupplierDirectoryItem>>>({});
+  const [statisticsBySupplier,setStatisticsBySupplier]=useState<Record<string,SupplierStatisticsData>>({});
+  const [documentsBySupplier,setDocumentsBySupplier]=useState<Record<string,SupplierDocument[]>>({});
+  const [activitiesBySupplier,setActivitiesBySupplier]=useState<Record<string,SupplierActivity[]>>({});
+  const [inventoryBySupplier,setInventoryBySupplier]=useState<Record<string,SupplierInventoryData>>({});
+  const [requisitionsBySupplier,setRequisitionsBySupplier]=useState<Record<string,SupplierRequisitionData>>({});
+  const [loadingKeys,setLoadingKeys]=useState<Record<string,boolean>>({});
+  const [loadErrors,setLoadErrors]=useState<Record<string,string>>({});
   const selected=suppliers.find(item=>item.id===selectedId)||null;
-
-  const selectedActivities=useMemo(()=>activities.filter(item=>item.supplier_id===selectedId),[activities,selectedId]);
-  const selectedItems=useMemo(()=>items.filter(item=>item.supplier_id===selectedId),[items,selectedId]);
-  const selectedActiveItems=useMemo(()=>selectedItems.filter(item=>item.active!==false),[selectedItems]);
-  const selectedReqs=useMemo(()=>requisitions.filter(item=>item.supplier_id===selectedId),[requisitions,selectedId]);
-  const selectedDocs=useMemo(()=>documents.filter(item=>item.supplier_id===selectedId),[documents,selectedId]);
-  const selectedCommercial=commercialAnalytics.find(item=>item.supplier_id===selectedId)||null;
-  const selectedCommercialTrend=useMemo(()=>commercialTrends.filter(item=>item.supplier_id===selectedId),[commercialTrends,selectedId]);
-  const selectedCommercialReqs=useMemo(()=>commercialRequisitions.filter(item=>item.supplier_id===selectedId),[commercialRequisitions,selectedId]);
+  const selectedDetail=selected?{...selected,...(detailsBySupplier[selected.id]||{})}:null;
+  const selectedStatistics=selectedId?statisticsBySupplier[selectedId]||null:null;
+  const selectedDocs=selectedId?documentsBySupplier[selectedId]||[]:[];
+  const selectedActivities=selectedId?activitiesBySupplier[selectedId]||[]:[];
+  const selectedInventory=selectedId?inventoryBySupplier[selectedId]||null:null;
+  const selectedRequisitionData=selectedId?requisitionsBySupplier[selectedId]||null:null;
+  const selectedInventoryItems=selectedInventory?.items||[];
+  const selectedRequisitionItems=selectedRequisitionData?.items||[];
+  const selectedActiveRequisitionItems=useMemo(()=>selectedRequisitionItems.filter(item=>item.active!==false),[selectedRequisitionItems]);
+  const selectedReqs=selectedRequisitionData?.requisitions||[];
+  const selectedCommercial=selectedStatistics?.commercial||null;
+  const selectedCommercialTrend=selectedStatistics?.trends||[];
+  const selectedCommercialReqs=selectedStatistics?.requisitions||[];
 
   function open(id:string,tab="general",edit=false){
     setSelectedId(id);
@@ -164,6 +192,58 @@ export default function SupplierDirectory({
     setFinancialEditing(false);
     window.scrollTo({top:0,behavior:"smooth"});
   }
+
+  useEffect(()=>{
+    if(!selectedId)return;
+    const view=dataViewForTab(preferredTab);
+    if(!view)return;
+    const loaded=view==="general"?Object.prototype.hasOwnProperty.call(detailsBySupplier,selectedId)
+      :view==="statistics"?Object.prototype.hasOwnProperty.call(statisticsBySupplier,selectedId)
+      :view==="documents"?Object.prototype.hasOwnProperty.call(documentsBySupplier,selectedId)
+      :view==="activities"?Object.prototype.hasOwnProperty.call(activitiesBySupplier,selectedId)
+      :view==="inventory"?Object.prototype.hasOwnProperty.call(inventoryBySupplier,selectedId)
+      :Object.prototype.hasOwnProperty.call(requisitionsBySupplier,selectedId);
+    if(loaded)return;
+
+    const key=selectedId+":"+view;
+    const controller=new AbortController();
+    setLoadingKeys(previous=>({...previous,[key]:true}));
+    setLoadErrors(previous=>({...previous,[key]:""}));
+    const url=view==="documents"
+      ?"/api/suppliers/"+selectedId+"/documents"
+      :"/api/suppliers/"+selectedId+"?view="+encodeURIComponent(view);
+
+    fetch(url,{headers:{Accept:"application/json"},signal:controller.signal})
+      .then(async response=>{
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(payload?.message||"No fue posible cargar la información del proveedor.");
+        if(view==="general")setDetailsBySupplier(previous=>({...previous,[selectedId]:payload?.supplier||{}}));
+        else if(view==="statistics")setStatisticsBySupplier(previous=>({...previous,[selectedId]:payload as SupplierStatisticsData}));
+        else if(view==="documents")setDocumentsBySupplier(previous=>({...previous,[selectedId]:Array.isArray(payload?.documents)?payload.documents:[]}));
+        else if(view==="activities")setActivitiesBySupplier(previous=>({...previous,[selectedId]:Array.isArray(payload?.activities)?payload.activities:[]}));
+        else if(view==="inventory")setInventoryBySupplier(previous=>({...previous,[selectedId]:{
+          items:Array.isArray(payload?.items)?payload.items:[],
+          sites:Array.isArray(payload?.sites)?payload.sites:[],
+          locations:Array.isArray(payload?.locations)?payload.locations:[],
+          categories:Array.isArray(payload?.categories)?payload.categories:[],
+          warehouses:Array.isArray(payload?.warehouses)?payload.warehouses:[],
+        }}));
+        else setRequisitionsBySupplier(previous=>({...previous,[selectedId]:{
+          requisitions:Array.isArray(payload?.requisitions)?payload.requisitions:[],
+          items:Array.isArray(payload?.items)?payload.items:[],
+        }}));
+      })
+      .catch(error=>{
+        if(error instanceof DOMException&&error.name==="AbortError")return;
+        setLoadErrors(previous=>({...previous,[key]:error instanceof Error?error.message:"No fue posible cargar la información del proveedor."}));
+      })
+      .finally(()=>setLoadingKeys(previous=>({...previous,[key]:false})));
+
+    return()=>controller.abort();
+  },[
+    selectedId,preferredTab,detailsBySupplier,statisticsBySupplier,documentsBySupplier,
+    activitiesBySupplier,inventoryBySupplier,requisitionsBySupplier,
+  ]);
 
   async function confirmSupplierDelete(){
     if(!deleteCandidate)return;

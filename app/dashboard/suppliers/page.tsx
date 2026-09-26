@@ -63,7 +63,9 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*)::int activity_count,
              count(*) FILTER (WHERE wt.status IN ('pending','in_progress'))::int active_activity_count
       FROM work_order_tasks wt
+      JOIN work_orders work_order ON work_order.id=wt.work_order_id
       WHERE wt.service_supplier_id IS NOT NULL
+        AND ($1::uuid IS NULL OR work_order.organization_id=$1)
       GROUP BY wt.service_supplier_id
     ) activity_stats ON activity_stats.supplier_id=s.id
     LEFT JOIN (
@@ -72,6 +74,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*) FILTER (WHERE i.active<>false)::int active_item_count
       FROM inventory_items i
       WHERE i.supplier_id IS NOT NULL
+        AND ($1::uuid IS NULL OR i.organization_id=$1)
       GROUP BY i.supplier_id
     ) item_stats ON item_stats.supplier_id=s.id
     LEFT JOIN (
@@ -80,6 +83,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled'))::int directory_requisition_count,
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled','fulfilled'))::int open_requisition_count
       FROM supplier_requisitions r
+      WHERE ($1::uuid IS NULL OR r.organization_id=$1)
       GROUP BY r.supplier_id
     ) req_stats ON req_stats.supplier_id=s.id
     LEFT JOIN (
@@ -87,13 +91,16 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*)::int document_count,
              count(*) FILTER (WHERE d.archived_at IS NULL)::int active_document_count
       FROM supplier_documents d
+      WHERE ($1::uuid IS NULL OR d.organization_id=$1)
       GROUP BY d.supplier_id
-    ) document_stats ON document_stats.supplier_id=s.id`;
+    ) document_stats ON document_stats.supplier_id=s.id
+    WHERE ($1::uuid IS NULL OR s.organization_id=$1)`;
 
   const [suppliers,organizations,capabilityCatalog,specialtyCatalog,creationGate]=await Promise.all([
-    platform
-      ? query<SupplierDirectoryItem>(supplierSql+" ORDER BY o.name,s.active DESC,s.name")
-      : query<SupplierDirectoryItem>(supplierSql+" WHERE s.organization_id=$1 ORDER BY s.active DESC,s.name",[session.organizationId]),
+    query<SupplierDirectoryItem>(
+      supplierSql+" ORDER BY o.name,s.active DESC,s.name",
+      [platform?null:session.organizationId],
+    ),
     platform
       ? query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
       : query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1",[session.organizationId]),

@@ -56,6 +56,9 @@ const css=fs.readFileSync("app/phase9-modules.css","utf8");
 for(const selector of [".phase9-maintenance",".phase9-work-orders",".phase9-work-order-detail",".phase9-reaction",":focus-visible","@media(max-width:760px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 9 CSS missing "+selector);
 }
+for(const marker of ["grid-template-columns:minmax(0,3fr) minmax(280px,1fr)","height:calc(100dvh - 170px)","position:absolute;z-index:30","width:min(88%,calc(100% - var(--space-8)))","reaction-google-map{width:100%;height:100%;min-height:0}","@media(max-width:1180px)"]){
+  if(!css.includes(marker))throw new Error("Reaction map workspace UX contract missing "+marker);
+}
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 9 CSS must use Design Tokens only");
 
 const layout=fs.readFileSync("app/layout.tsx","utf8");

@@ -31,9 +31,9 @@ Desweb CMMS distinguishes two logo roles:
 - **Logo on light:** dark-wordmark variant for white/light backgrounds.
 - **Logo on dark:** white/light-wordmark variant for dark backgrounds and dark theme.
 
-The application includes a fallback repository asset, but production branding should be managed from **Personalización**.
+The application includes a fallback repository asset. Platform-wide DESWEB assets continue to be managed from the existing **Personalización** surface, while a customer Organization on Plan Pro manages its own white-label identity from **Personalización de marca** in the user menu.
 
-Configured logo files are stored in PostgreSQL and delivered through application asset routes.
+Configured logo files are stored in the existing PostgreSQL branding/organization asset model and delivered through application asset routes. Tenant branding does not introduce a second external file store.
 
 ## Favicon
 
@@ -52,21 +52,21 @@ If no custom favicon exists, the application serves a generated Desweb fallback 
 
 ## Personalization direction
 
-The personalization module is the canonical future home for visual brand settings.
+Two scopes are intentionally separate:
 
-Current scope:
-- light-background logo;
-- dark-background logo;
-- favicon.
+- **Platform Personalización** (`/dashboard/personalization`) owns DESWEB-wide assets such as the canonical light/dark logos and favicon.
+- **Organization Personalización de marca · PRO** (`/dashboard/brand`) owns tenant identity stored in the existing `organization_branding` record.
 
-Future scope may include:
-- brand colors;
-- product name;
-- login background;
-- typography;
-- email/report branding.
+Organization Pro scope includes:
+- predefined or custom principal, secondary and accent colors;
+- generated brand/navigation tokens;
+- tenant logo overrides with the existing company logo as a reusable fallback;
+- organization default interface appearance and density;
+- real-time unsaved preview before persistence.
 
-Future work should extend the existing module and storage model rather than hardcoding per-screen branding.
+Tenant colors may style navigation, primary actions, active controls, focus and structural highlights. They must not replace the semantic success, warning, danger or information palettes.
+
+Future work should extend these existing scopes and storage models rather than hardcoding per-screen branding or introducing a parallel theme service.
 
 
 ## Technology-forward expression
@@ -114,3 +114,10 @@ Global Desweb branding assets are persisted in PostgreSQL and survive redeploys.
 - Favicons should be square; 64×64 or 128×128 px is recommended.
 
 The Superadministrator edits these assets directly from Configuración, with previews for light, dark and browser-icon contexts.
+
+
+## Organization Pro upload constraints
+
+The Organization brand editor accepts PNG, JPG/JPEG and WebP logos up to 2 MB. The server validates the declared type against image bytes, extracts non-zero dimensions and rejects malformed or implausibly large images. Logo presentation always preserves aspect ratio with contained rendering; the editor does not stretch a tenant mark.
+
+Removing a tenant logo override returns to the existing Organization logo when available, otherwise to the DESWEB fallback. This does not delete the company's canonical Organization record or create a new image-storage system.

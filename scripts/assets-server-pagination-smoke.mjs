@@ -23,6 +23,7 @@ for(const marker of [
   'redirect(queryString?"/dashboard/assets?"+queryString:"/dashboard/assets")',
   "<AssetCreateModal",'BulkImportModal entity="assets"','ModuleExportMenu entity="assets"',
   '<OwnerRecordActions table="assets"',"LIMIT ${limitToken} OFFSET ${offsetToken}",
+  "sitesPromise","locationsPromise","suppliersPromise","sites={sites.rows.map","locations={locations.rows.map","suppliers={suppliers.rows}",
   "maintenancePromise","historyPromise","documentsPromise",
 ])if(!page.includes(marker))throw new Error("Asset pagination contract missing "+marker);
 

@@ -29,17 +29,6 @@ export async function POST(request: Request) {
       return redirectTarget(request,returnTo,"?branding_reset=1");
     }
 
-    if(intent==="remove_logo"){
-      await query(
-        `UPDATE organization_branding
-         SET logo_on_light=NULL,logo_on_light_mime=NULL,logo_on_light_name=NULL,
-             logo_on_dark=NULL,logo_on_dark_mime=NULL,logo_on_dark_name=NULL,updated_at=now()
-         WHERE organization_id=$1`,
-        [session.organizationId],
-      );
-      return redirectTarget(request,returnTo,"?branding_saved=1");
-    }
-
     const current=await query<{
       app_name:string|null;primary_color:string|null;secondary_color:string|null;accent_color:string|null;
       show_desweb_branding:boolean;scheme_key:string|null;auto_palette:boolean|null;

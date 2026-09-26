@@ -18,7 +18,7 @@ function applyPreference(preference: ThemePreference, persist=true) {
   if(persist)localStorage.setItem("desweb-theme", preference);
 }
 
-export default function ThemePreferences() {
+export default function ThemePreferences({organizationDefault}:{organizationDefault?:ThemePreference}={}) {
   const [preference, setPreference] = useState<ThemePreference>("light");
 
   useEffect(() => {
@@ -26,9 +26,11 @@ export default function ThemePreferences() {
     const inherited=document.documentElement.dataset.themePreference;
     const current:ThemePreference=isThemePreference(saved)
       ? saved
-      : isThemePreference(inherited)
-        ? inherited
-        : "light";
+      : organizationDefault
+        ? organizationDefault
+        : isThemePreference(inherited)
+          ? inherited
+          : "light";
     setPreference(current);
     applyPreference(current,false);
 
@@ -40,7 +42,7 @@ export default function ThemePreferences() {
     };
     media.addEventListener("change",update);
     return()=>media.removeEventListener("change",update);
-  }, []);
+  }, [organizationDefault]);
 
   const options: Array<{ value: ThemePreference; title: string; description: string; icon: UiIconName }> = [
     { value: "light", title: "Claro", description: "Interfaz luminosa para espacios con buena iluminación.", icon: "sun" },

@@ -1,37 +1,147 @@
 import { redirect } from "next/navigation";
 import ThemePreferences from "@/components/ThemePreferences";
+import FileDropzone from "@/components/FileDropzone";
+import UiIcon from "@/components/UiIcon";
 import { getSession } from "@/lib/auth";
+import { query } from "@/lib/db";
+import { roleLabel } from "@/lib/permissions";
+import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
+import { Button } from "@/components/ui-kit/Button";
 
 export const dynamic = "force-dynamic";
 
-// ── Personal settings available to every authenticated user ─────────────────
+type ProfileRow={
+  full_name:string;
+  email:string;
+  phone:string|null;
+  has_avatar:boolean;
+  last_login_at:string|null;
+};
 
-export default async function PreferencesPage() {
+export default async function PreferencesPage({
+  searchParams,
+}:{
+  searchParams:Promise<{
+    profile_saved?:string;profile_error?:string;
+    security_saved?:string;security_error?:string;
+  }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const params=await searchParams;
 
-  return <>
-    <header className="page-header settings-page-header">
-      <div>
-        <span className="eyebrow">Cuenta</span>
-        <h1 className="page-title">Mi configuración</h1>
-        <p className="muted">Preferencias personales de tu sesión. Estas opciones no cambian la configuración de la empresa.</p>
+  const [profileResult,organizationResult]=await Promise.all([
+    session.userId
+      ? query<ProfileRow>(
+          `SELECT full_name,email,phone,(avatar_data IS NOT NULL) has_avatar,last_login_at::text
+           FROM users WHERE id=$1 LIMIT 1`,
+          [session.userId],
+        )
+      : Promise.resolve({rows:[] as ProfileRow[],rowCount:0}),
+    session.organizationId
+      ? query<{timezone:string}>("SELECT timezone FROM organizations WHERE id=$1 LIMIT 1",[session.organizationId])
+      : Promise.resolve({rows:[] as {timezone:string}[],rowCount:0}),
+  ]);
+
+  const profile=profileResult.rows[0]||{
+    full_name:session.fullName,email:session.email,phone:null,has_avatar:false,last_login_at:null,
+  };
+  const timezone=organizationResult.rows[0]?.timezone||"Sin zona horaria de empresa asociada";
+  const editable=Boolean(session.userId);
+
+  const profileError=params.profile_error==="managed"
+    ?"La cuenta Propietario Desweb se administra mediante la configuración segura del entorno y no tiene un registro de usuario editable."
+    :params.profile_error==="name"
+      ?"Ingresa tu nombre completo."
+      :params.profile_error==="email"
+        ?"Ingresa un correo electrónico válido."
+        :params.profile_error==="duplicate"
+          ?"Ese correo ya pertenece a otra cuenta."
+          :params.profile_error
+            ? decodeURIComponent(params.profile_error)
+            : "";
+  const securityError=params.security_error==="length"
+    ?"La nueva contraseña debe tener al menos 8 caracteres."
+    :params.security_error==="match"
+      ?"La confirmación no coincide con la nueva contraseña."
+      :"";
+
+  const nav=[
+    {href:"#profile",label:"Perfil",description:"Tu información personal",icon:"user" as const},
+    {href:"#preferences",label:"Preferencias",description:"Navegación y opciones",icon:"preferences" as const},
+    {href:"#appearance",label:"Apariencia",description:"Tema y vista del sistema",icon:"system" as const},
+    {href:"#security",label:"Seguridad",description:"Contraseña y sesiones",icon:"settings" as const},
+    {href:"#integrations",label:"Integraciones",description:"Conexiones externas",icon:"share" as const},
+  ];
+
+  return <div className="account-preferences-page">
+    <header className="account-page-header">
+      <div className="account-page-heading">
+        <span className="account-page-icon"><UiIcon name="user" size={19}/></span>
+        <div><span className="eyebrow">MI CONFIGURACIÓN</span><h1>Mi configuración</h1><p>Administra tu perfil, preferencias de visualización y opciones personales.</p></div>
       </div>
-      <span className="settings-status"><i /> Preferencias personales</span>
     </header>
 
-    <section className="settings-grid section">
-      <article className="card settings-panel settings-panel-wide">
-        <div className="settings-panel-head">
-          <div>
-            <span className="settings-kicker">Apariencia</span>
-            <h2>Tema de la interfaz</h2>
-            <p>El tema claro es la apariencia predeterminada. Puedes cambiar a oscuro o seguir el sistema si lo prefieres.</p>
+    {params.profile_saved==="1"&&<Alert variant="success" title="Cambios guardados">Tu información personal quedó actualizada.</Alert>}
+    {profileError&&<Alert variant="danger" title="No fue posible guardar el perfil">{profileError}</Alert>}
+    {params.security_saved==="1"&&<Alert variant="success" title="Contraseña actualizada">Tu nueva contraseña quedó guardada.</Alert>}
+    {securityError&&<Alert variant="danger" title="No fue posible actualizar la contraseña">{securityError}</Alert>}
+
+    <div className="account-settings-layout">
+      <aside className="account-settings-nav" aria-label="Secciones de Mi configuración">
+        {nav.map(item=><a key={item.href} href={item.href}><span><UiIcon name={item.icon} size={16}/></span><span><strong>{item.label}</strong><small>{item.description}</small></span></a>)}
+      </aside>
+
+      <main className="account-settings-content">
+        <section id="profile" className="account-settings-card">
+          <div className="account-card-heading"><div><span className="eyebrow">Perfil</span><h2>Información personal</h2><p>Los datos provienen de tu cuenta autenticada y de la empresa a la que perteneces.</p></div></div>
+          <form method="post" action="/api/preferences/profile" encType="multipart/form-data" className="account-profile-form">
+            <input type="hidden" name="intent" value="profile"/>
+            <div className="account-profile-photo">
+              <span className="account-profile-avatar">{profile.has_avatar&&session.userId?<img src={"/api/users/"+session.userId+"/avatar"} alt={"Foto de "+profile.full_name}/>:<UiIcon name="user" size={28}/>}</span>
+              {editable?<FileDropzone name="avatar" label="Cambiar foto" description="PNG, JPG o WebP. Se reutiliza tu foto de usuario existente." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" compact existingFileName={profile.has_avatar?"Foto de perfil actual":null} existingPreviewUrl={profile.has_avatar&&session.userId?"/api/users/"+session.userId+"/avatar":null}/>:<small>Esta identidad de plataforma no tiene un perfil de base de datos editable.</small>}
+            </div>
+            <div className="account-form-grid">
+              <label><span>Nombre completo</span><input name="full_name" defaultValue={profile.full_name} readOnly={!editable} required/></label>
+              <label><span>Rol</span><input value={roleLabel(session)} readOnly/></label>
+              <label><span>Correo electrónico</span><input name="email" type="email" defaultValue={profile.email} readOnly={!editable} required/></label>
+              <label><span>Empresa</span><input value={session.organizationName||"Plataforma Desweb"} readOnly/></label>
+              <label><span>Teléfono</span><input name="phone" defaultValue={profile.phone||""} readOnly={!editable} placeholder={editable?"Número de contacto":"Sin registrar"}/></label>
+              <label><span>Zona horaria</span><input value={timezone} readOnly/></label>
+            </div>
+            {editable&&<div className="account-form-actions"><Button type="submit" iconLeft="check">Guardar cambios</Button></div>}
+          </form>
+        </section>
+
+        <section id="preferences" className="account-settings-card">
+          <div className="account-card-heading"><div><span className="eyebrow">Preferencias</span><h2>Navegación personal</h2><p>Estas opciones aprovechan el comportamiento que ya tiene tu panel.</p></div></div>
+          <div className="account-preference-facts">
+            <article><span><UiIcon name="reorder" size={18}/></span><div><strong>Orden del menú</strong><p>Usa Organizar menú en el sidebar para mover los módulos. El orden se guarda con tu preferencia actual.</p></div></article>
+            <article><span><UiIcon name="chevron-left" size={18}/></span><div><strong>Sidebar contraído</strong><p>El estado expandido o contraído se conserva mediante la preferencia de navegación ya existente.</p></div></article>
           </div>
-          <span className="settings-panel-icon" aria-hidden="true">◐</span>
-        </div>
-        <ThemePreferences />
-      </article>
-    </section>
-  </>;
+        </section>
+
+        <section id="appearance" className="account-settings-card">
+          <div className="account-card-heading"><div><span className="eyebrow">Apariencia</span><h2>Tema de la interfaz</h2><p>Elige una preferencia personal. Esta opción utiliza el sistema claro, oscuro y automático existente.</p></div></div>
+          <ThemePreferences/>
+        </section>
+
+        <section id="security" className="account-settings-card">
+          <div className="account-card-heading"><div><span className="eyebrow">Seguridad</span><h2>Contraseña y sesión</h2><p>Actualiza tu contraseña sin cambiar tu rol, empresa o alcance de sedes.</p></div></div>
+          {editable?<form method="post" action="/api/preferences/profile" className="account-security-form">
+            <input type="hidden" name="intent" value="security"/>
+            <label><span>Nueva contraseña</span><input name="password" type="password" minLength={8} autoComplete="new-password" required/><small>Mínimo 8 caracteres.</small></label>
+            <label><span>Confirmar contraseña</span><input name="password_confirmation" type="password" minLength={8} autoComplete="new-password" required/></label>
+            <div className="account-form-actions"><Button type="submit" iconLeft="check">Actualizar contraseña</Button></div>
+          </form>:<Alert variant="info" title="Cuenta gestionada por entorno">La credencial del Propietario Desweb se administra fuera del registro normal de usuarios.</Alert>}
+          {profile.last_login_at&&<small className="account-last-login">Último acceso registrado: {new Date(profile.last_login_at).toLocaleString("es-CO")}</small>}
+        </section>
+
+        <section id="integrations" className="account-settings-card">
+          <div className="account-card-heading"><div><span className="eyebrow">Integraciones</span><h2>Conexiones personales</h2><p>Esta sección no crea conexiones nuevas: refleja el alcance disponible actualmente para tu cuenta.</p></div></div>
+          <EmptyState icon="share" title="Sin integraciones personales configurables" description="Las integraciones operativas y de plataforma continúan administrándose desde sus superficies autorizadas; no existe una segunda configuración personal."/>
+        </section>
+      </main>
+    </div>
+  </div>;
 }

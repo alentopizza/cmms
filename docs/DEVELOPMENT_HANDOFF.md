@@ -3,7 +3,7 @@
 > Última revisión: 2026-09-25  
 > Repositorio: `alentopizza/cmms`  
 > Rama de trabajo/despliegue: `main`  
-> Base funcional validada para esta entrega: `1d1aa9a2536215c60dc09a4b109c0275c605583f`
+> Base funcional validada para esta entrega: `1591b2ebee7272b9156299a4f4a0470c80bbb167`
 
 Este documento es el punto de entrada operativo para una IA o desarrollador que retome Desweb CMMS. No reemplaza la documentación temática; resume **dónde está el producto hoy, qué se acaba de tocar, qué invariantes no deben romperse y cómo continuar sin depender del historial de conversación**.
 
@@ -19,6 +19,22 @@ Antes de modificar código:
 6. Cuando el cambio sea visible para el usuario, revisar también `lib/user-manual.ts`.
 
 La documentación del repositorio es la fuente de continuidad. Las conversaciones sirven para intención y referencias visuales, pero las reglas permanentes deben quedar expresadas aquí, en `AGENTS.md` o en la documentación temática.
+
+## Auditoría de rendimiento · Fase 2 Proveedores
+
+Fase funcional cerrada sobre `1591b2ebee7272b9156299a4f4a0470c80bbb167`.
+
+- `app/dashboard/suppliers/page.tsx` ya no precarga actividades, suministros, requisiciones, documentos, catálogos de inventario ni analítica comercial de todos los proveedores.
+- El directorio recibe una colección resumida con identidad, filtros y conteos agregados. Grid/List, búsqueda, filtros, selección y acciones rápidas conservan el contrato existente.
+- Los conteos de actividades, inventario, requisiciones y documentos se agregan una vez por tabla y se limitan por organización para sesiones tenant.
+- `GET /api/suppliers/[id]?view=general|statistics|activities|inventory|requisitions` entrega únicamente la vista solicitada y conserva `suppliers.manage` + alcance por empresa.
+- `GET /api/suppliers/[id]/documents` entrega únicamente documentos del proveedor seleccionado; los POST existentes no cambiaron.
+- `SupplierDirectory` conserva caches separados por proveedor/vista. Volver a una pestaña ya cargada no genera otro request mientras el componente permanezca montado.
+- General e Información financiera comparten el mismo cache `general`; Requisiciones obtiene también los artículos necesarios para `RequisitionBuilder`; Inventario obtiene sus catálogos únicamente al abrir esa pestaña.
+- Comparación estructural del render inicial, excluyendo el creation gate que existe antes y después: 15 consultas SQL de módulo → 4; hasta 2.800 filas detalladas precargadas → 0.
+- No hubo migraciones, cambios de relaciones ni cambios de modelo.
+- El guard oficial es `scripts/performance-suppliers-phase2-smoke.mjs`.
+- Pendientes de otras fases: paginación server-side (Fase 3), CSS global (Fase 4), índices/EXPLAIN basados en slow-query telemetry (Fase 5), RUM y despliegue (Fase 6).
 
 ## 2. Estado técnico actual
 

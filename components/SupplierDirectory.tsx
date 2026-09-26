@@ -499,7 +499,7 @@ export default function SupplierDirectory({
     onTabChange={setPreferredTab}
     tabs={[
       {id:"general",label:"Información general",content:demandContent("general",general)},
-      {id:"statistics",label:"Estadísticas",content:<div className="entity-section-stack supplier-commercial-analytics">
+      {id:"statistics",label:"Estadísticas",content:demandContent("statistics",<div className="entity-section-stack supplier-commercial-analytics">
         <StatTiles className="entity-stat-grid" items={[
           {label:"Actividades totales",value:String(selected.activity_count),hint:activeActivities+" activas"},
           {label:"Suministros asociados",value:String(selected.active_item_count),hint:(selected.item_count-selected.active_item_count)+" inactivos conservados"},
@@ -573,20 +573,20 @@ export default function SupplierDirectory({
             </tr>)}
           </tbody></table></div></div>:<EmptyState icon="file" title="No hay requisiciones con recepción" description="El historial comercial aparecerá cuando existan recepciones físicas enlazadas."/>}
         </div>
-      </div>},
+      </div>)},
       {id:"documents",label:"Documentos",content:demandContent("documents",<SupplierDocuments supplier={selected} documents={selectedDocs}/>)},
-      {id:"financial",label:"Información financiera",content:financialEditing
-        ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+selected.id}>
+      {id:"financial",label:"Información financiera",content:demandContent("general",financialEditing
+        ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+detail.id}>
           <input type="hidden" name="intent" value="financial"/>
-          <div className="field"><label>Banco</label><input name="bank_name" defaultValue={selected.bank_name||""} placeholder="Ej. Bancolombia"/></div>
-          <div className="field"><label>Tipo de cuenta</label><select name="account_type" defaultValue={selected.account_type||""}><option value="">Selecciona</option><option value="savings">Ahorros</option><option value="checking">Corriente</option><option value="other">Otra</option></select></div>
-          <div className="field"><label>Número de cuenta</label><input name="account_number" defaultValue={selected.account_number||""} autoComplete="off"/></div>
-          <div className="field"><label>Titular de la cuenta</label><input name="account_holder" defaultValue={selected.account_holder||selected.legal_name||""}/></div>
-          <div className="field"><label>Identificación del titular</label><input name="account_holder_tax_id" defaultValue={selected.account_holder_tax_id||selected.tax_id||""}/></div>
-          <div className="field"><label>Moneda</label><select name="currency_code" defaultValue={selected.currency_code||"COP"}><option value="COP">COP · Peso colombiano</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="MXN">MXN · Peso mexicano</option><option value="PEN">PEN · Sol peruano</option><option value="CLP">CLP · Peso chileno</option></select></div>
-          <div className="field"><label>Plazo de pago (días)</label><input name="payment_terms_days" type="number" min="0" max="365" defaultValue={selected.payment_terms_days??""}/></div>
-          <div className="field"><label>Correo para pagos</label><input name="payment_email" type="email" defaultValue={selected.payment_email||""}/></div>
-          <div className="field form-span-2"><label>Observaciones de pago</label><textarea name="payment_notes" rows={3} defaultValue={selected.payment_notes||""} placeholder="Condiciones, referencia, instrucciones administrativas."/></div>
+          <div className="field"><label>Banco</label><input name="bank_name" defaultValue={detail.bank_name||""} placeholder="Ej. Bancolombia"/></div>
+          <div className="field"><label>Tipo de cuenta</label><select name="account_type" defaultValue={detail.account_type||""}><option value="">Selecciona</option><option value="savings">Ahorros</option><option value="checking">Corriente</option><option value="other">Otra</option></select></div>
+          <div className="field"><label>Número de cuenta</label><input name="account_number" defaultValue={detail.account_number||""} autoComplete="off"/></div>
+          <div className="field"><label>Titular de la cuenta</label><input name="account_holder" defaultValue={detail.account_holder||detail.legal_name||""}/></div>
+          <div className="field"><label>Identificación del titular</label><input name="account_holder_tax_id" defaultValue={detail.account_holder_tax_id||detail.tax_id||""}/></div>
+          <div className="field"><label>Moneda</label><select name="currency_code" defaultValue={detail.currency_code||"COP"}><option value="COP">COP · Peso colombiano</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="MXN">MXN · Peso mexicano</option><option value="PEN">PEN · Sol peruano</option><option value="CLP">CLP · Peso chileno</option></select></div>
+          <div className="field"><label>Plazo de pago (días)</label><input name="payment_terms_days" type="number" min="0" max="365" defaultValue={detail.payment_terms_days??""}/></div>
+          <div className="field"><label>Correo para pagos</label><input name="payment_email" type="email" defaultValue={detail.payment_email||""}/></div>
+          <div className="field form-span-2"><label>Observaciones de pago</label><textarea name="payment_notes" rows={3} defaultValue={detail.payment_notes||""} placeholder="Condiciones, referencia, instrucciones administrativas."/></div>
           <div className="form-span-2 form-actions">
             <button className="button secondary" type="button" onClick={()=>setFinancialEditing(false)}>Cancelar</button>
             <button className="button" type="submit">Guardar información financiera</button>
@@ -601,26 +601,26 @@ export default function SupplierDirectory({
             <button className="button secondary entity-financial-edit-button" type="button" onClick={()=>setFinancialEditing(true)}><UiIcon name="edit" size={15}/> Editar</button>
           </div>
           <div className="entity-info-grid entity-financial-summary">
-            <div className="entity-info-field"><span>Banco</span><strong>{selected.bank_name||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{selected.account_type==="savings"?"Ahorros":selected.account_type==="checking"?"Corriente":selected.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Número de cuenta</span><strong>{selected.account_number?("•••• "+selected.account_number.slice(-4)):"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Titular</span><strong>{selected.account_holder||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Identificación titular</span><strong>{selected.account_holder_tax_id||"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Moneda</span><strong>{selected.currency_code||"COP"}</strong></div>
-            <div className="entity-info-field"><span>Plazo de pago</span><strong>{selected.payment_terms_days!=null?selected.payment_terms_days+" días":"Sin registrar"}</strong></div>
-            <div className="entity-info-field"><span>Correo de pagos</span><strong>{selected.payment_email||"Sin registrar"}</strong></div>
-            <div className="entity-info-field entity-financial-notes"><span>Observaciones</span><strong>{selected.payment_notes||"Sin observaciones"}</strong></div>
+            <div className="entity-info-field"><span>Banco</span><strong>{detail.bank_name||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{detail.account_type==="savings"?"Ahorros":detail.account_type==="checking"?"Corriente":detail.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Número de cuenta</span><strong>{detail.account_number?("•••• "+detail.account_number.slice(-4)):"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Titular</span><strong>{detail.account_holder||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Identificación titular</span><strong>{detail.account_holder_tax_id||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Moneda</span><strong>{detail.currency_code||"COP"}</strong></div>
+            <div className="entity-info-field"><span>Plazo de pago</span><strong>{detail.payment_terms_days!=null?detail.payment_terms_days+" días":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Correo de pagos</span><strong>{detail.payment_email||"Sin registrar"}</strong></div>
+            <div className="entity-info-field entity-financial-notes"><span>Observaciones</span><strong>{detail.payment_notes||"Sin observaciones"}</strong></div>
           </div>
-        </div>},
+        <</div>)},
 
-      ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:<div className="supplier-activity-list">
+      ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:demandContent("activities",<div className="supplier-activity-list">
         {selectedActivities.length?selectedActivities.map(activity=><article className="supplier-activity-row" key={activity.id}>
           <span className={"activity-status activity-status-"+activity.status}>{activity.status}</span>
           <div><strong>{activity.description}</strong><span>OT #{activity.order_number} · {activity.order_title}</span><small>{activity.site_name}{activity.location_name?" · "+activity.location_name:""}{activity.due_date?" · compromiso "+new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):""}</small></div>
           <Link href={"/dashboard/work-orders/"+activity.work_order_id}>Ver OT</Link>
         </article>):<div className="location-detail-empty">No hay actividades asignadas a este proveedor de servicios.</div>}
-      </div>}]:[]),
-      ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:<div className="entity-section-stack supplier-operational-tab">
+      </div>)}]:[]),
+      ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:demandContent("inventory",<div className="entity-section-stack supplier-operational-tab">
         <div className="entity-panel supplier-tab-toolbar">
           <div><h3><span className="entity-section-icon"><UiIcon name="asset"/></span>Inventario del proveedor</h3><p className="entity-panel-copy">Crea, importa, edita y consulta los artículos suministrados por este proveedor. El Kardex permanece centralizado en Inventario.</p></div>
           <div className="supplier-tab-actions">
@@ -679,8 +679,8 @@ export default function SupplierDirectory({
             </form>}
           </div>
         </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor. Puedes crearlos o importarlos desde aquí.</div>}</div>
-      </div>}]:[]),
-      {id:"requisitions",label:"Requisiciones",content:<div className="entity-section-stack supplier-operational-tab">
+      </div>)}]:[]),
+      {id:"requisitions",label:"Requisiciones",content:demandContent("requisitions",<div className="entity-section-stack supplier-operational-tab">
         {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedActiveItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title={"Nueva requisición · "+selected.name} description="Selecciona los insumos y cantidades. Esta ficha genera una requisición directamente para este proveedor."/></div>}
         <div className="entity-panel">
           <div className="entity-panel-heading-row"><div><h3>Historial de requisiciones</h3><p className="entity-panel-copy">Consulta, actualiza y exporta cada requisición sin perder la relación con el proveedor.</p></div><Link className="button secondary" href="/dashboard/requisitions">Ver módulo completo</Link></div>
@@ -700,7 +700,7 @@ export default function SupplierDirectory({
             </article>;
           })}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}
         </div>
-      </div>},
+      </div>)},
     ]}
   />
   {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}

@@ -8,6 +8,7 @@ import "./phase7-modules.css";
 import "./phase8-modules.css";
 import "./phase9-modules.css";
 import "./phase10-modules.css";
+import "./brand-personalization.css";
 import "./document-workspace.css";
 import "./shell-v2.css";
 

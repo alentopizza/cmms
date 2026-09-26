@@ -6,6 +6,7 @@
 - `/dashboard/brand` es la única experiencia dedicada de marca por empresa; no se agrega al sidebar y no sustituye `/dashboard/personalization`, que continúa siendo la personalización global de plataforma.
 - La edición PRO extiende la tabla y endpoint existentes `organization_branding` / `/api/organization-branding`: esquema, principal/secundario/acento, paleta automática, apariencia, densidad y logo compartido.
 - Los esquemas Predeterminado, Fresco, Luminoso, Azul, Café, Ectoplasma, Medianoche, Océano, Amanecer y Personalizado alimentan un generador central de tokens; éxito, advertencia, error e información conservan sus tokens semánticos.
+- El generador central calcula además foregrounds legibles para acciones y navegación y asegura contraste del sidebar; los tres colores de marca no sustituyen los colores semánticos.
 - El shell consume tokens de empresa para sidebar, header, acciones, foco y elementos activos. La identidad permanece aislada por `organization_id`; Desweb es el fallback.
 - Apariencia de empresa reutiliza el sistema `data-theme` existente y solo actúa como valor predeterminado cuando el navegador no tiene una preferencia personal `desweb-theme`. La migración 044 conserva el histórico predeterminado claro.
 - Configuración general deja de contener un segundo editor de marca y enlaza a la experiencia dedicada. Planes y suscripciones no cambian: el endpoint sigue exigiendo Administrador + Plan Pro + white label.

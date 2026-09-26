@@ -37,11 +37,13 @@ function validColor(value:string,fallback:string){
 export default function BrandPersonalization({
   organizationName,
   logoSrc,
+  logoFallbackSrc,
   previewData,
   initial,
 }:{
   organizationName:string;
   logoSrc:string;
+  logoFallbackSrc:string;
   previewData:{city:string|null;siteCount:number;active:boolean};
   initial:BrandInitial;
 }){
@@ -54,6 +56,7 @@ export default function BrandPersonalization({
   const [interfaceStyle,setInterfaceStyle]=useState<InterfaceStyle>(initial.interfaceStyle);
   const [density,setDensity]=useState<Density>(initial.interfaceDensity);
   const [logoFile,setLogoFile]=useState<File|null>(null);
+  const [removeExistingLogo,setRemoveExistingLogo]=useState(false);
   const [fileVersion,setFileVersion]=useState(0);
   const [resetOpen,setResetOpen]=useState(false);
   const logoObjectUrlRef=useRef<string|null>(null);
@@ -82,10 +85,19 @@ export default function BrandPersonalization({
     setLogoFile(file);
     if(logoObjectUrlRef.current){URL.revokeObjectURL(logoObjectUrlRef.current);logoObjectUrlRef.current=null;}
     if(file){
+      setRemoveExistingLogo(false);
       const next=URL.createObjectURL(file);
       logoObjectUrlRef.current=next;
       setLogoPreview(next);
-    }else setLogoPreview(logoSrc);
+    }else setLogoPreview(removeExistingLogo?logoFallbackSrc:logoSrc);
+  }
+
+  function removeLogoOverride(){
+    setLogoFile(null);
+    if(logoObjectUrlRef.current){URL.revokeObjectURL(logoObjectUrlRef.current);logoObjectUrlRef.current=null;}
+    setRemoveExistingLogo(true);
+    setLogoPreview(logoFallbackSrc);
+    setFileVersion(value=>value+1);
   }
 
   function selectTab(next:Tab){
@@ -112,6 +124,7 @@ export default function BrandPersonalization({
     setInterfaceStyle(initial.interfaceStyle);
     setDensity(initial.interfaceDensity);
     setLogoFile(null);
+    setRemoveExistingLogo(false);
     if(logoObjectUrlRef.current){URL.revokeObjectURL(logoObjectUrlRef.current);logoObjectUrlRef.current=null;}
     setLogoPreview(logoSrc);
     setFileVersion(value=>value+1);
@@ -148,6 +161,7 @@ export default function BrandPersonalization({
       <input type="hidden" name="auto_palette" value={autoPalette?"on":"off"}/>
       <input type="hidden" name="interface_style" value={interfaceStyle}/>
       <input type="hidden" name="interface_density" value={density}/>
+      <input type="hidden" name="remove_logo" value={removeExistingLogo?"on":"off"}/>
 
       {active==="colors"&&<section id="brand-panel-colors" className="brand-tab-panel brand-color-layout" role="tabpanel" aria-labelledby="brand-tab-colors">
         <article className="brand-section-card">
@@ -195,12 +209,18 @@ export default function BrandPersonalization({
             maxSizeMb={2}
             kind="image"
             compact
-            existingFileName={initial.hasBrandLogo?"Logo de marca actual":initial.hasCompanyLogo?"Logo existente de la empresa":null}
-            existingPreviewUrl={logoSrc}
+            existingFileName={removeExistingLogo
+              ? (initial.hasCompanyLogo?"Logo existente de la empresa":null)
+              : initial.hasBrandLogo
+                ? "Logo de marca actual"
+                : initial.hasCompanyLogo
+                  ? "Logo existente de la empresa"
+                  : null}
+            existingPreviewUrl={logoPreview}
             onFileChange={onLogoChange}
           />
-          {!initial.hasBrandLogo&&initial.hasCompanyLogo&&<div className="brand-semantic-note"><UiIcon name="info" size={17}/><span>Se reutiliza el logo existente de la empresa. Al guardar la identidad se usará como fallback sin duplicar el archivo.</span></div>}
-          {initial.hasBrandLogo&&<Button type="submit" name="intent" value="remove_logo" variant="danger" iconLeft="trash">Eliminar logo de marca</Button>}
+          {(!initial.hasBrandLogo||removeExistingLogo)&&initial.hasCompanyLogo&&<div className="brand-semantic-note"><UiIcon name="info" size={17}/><span>Se reutiliza el logo existente de la empresa. Al guardar la identidad se usará como fallback sin duplicar el archivo.</span></div>}
+          {initial.hasBrandLogo&&!removeExistingLogo&&<Button type="button" onClick={removeLogoOverride} variant="danger" iconLeft="trash">Eliminar logo de marca</Button>}
         </article>
 
         <article className="brand-section-card">

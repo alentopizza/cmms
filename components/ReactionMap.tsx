@@ -565,6 +565,7 @@ export default function ReactionMap(){
   return <>
     <div className="reaction-map-layout">
       <div className="reaction-map-stage">
+      <div ref={hostRef} className="reaction-google-map" aria-label="Mapa operativo de Reacción" />
       <div className="reaction-filter-bar" aria-label="Filtros del mapa de Reacción">
         <div className="reaction-global-search">
           <Search value={search} onValueChange={setSearch} placeholder="Buscar técnico, empresa, sede, correo, teléfono, dirección…" ariaLabel="Buscar en Reacción"/>
@@ -591,7 +592,6 @@ export default function ReactionMap(){
         <small>Mostrando {visibleCounts.technicians} técnicos · {visibleCounts.companies} empresas · {visibleCounts.sites} sedes</small>
         {snapshot.generatedAt&&<small>Actualizado {new Date(snapshot.generatedAt).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</small>}
       </div>
-      <div ref={hostRef} className="reaction-google-map" aria-label="Mapa operativo de Reacción" />
     </div>
 
     <aside className="reaction-side-panel" aria-label="Actividades pendientes de Reacción">

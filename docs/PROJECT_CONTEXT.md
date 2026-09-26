@@ -66,7 +66,7 @@ The existing top-right account menu is now the single entry point for personal c
 
 Organization Pro white label now extends the existing `organization_branding` source with predefined/custom palettes, accent color, automatic derived tokens, logo identity, interface default and density, plus an unsaved real-time preview. The runtime applies organization brand tokens through the Design System shell while retaining semantic status colors and tenant isolation.
 
-Personal theme preference remains browser-local and takes precedence over the organization default. Account self-editing is restricted to personal identity/password fields and does not change RBAC or memberships. Help continues to be generated from the checked-in `lib/user-manual.ts` content.
+Personal theme preference remains browser-local and takes precedence over the organization default. Account self-editing is restricted to personal identity/contact/avatar fields; credential changes remain in existing flows and self-editing does not change RBAC or memberships. Help continues to be generated from the checked-in `lib/user-manual.ts` content.
 
 ## Implemented product foundation
 

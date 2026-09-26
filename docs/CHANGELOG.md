@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-26 — Auditoría de rendimiento · Fase 3 piloto Rutinas
+
+- Rutinas migra de filtrado DOM sobre hasta 200 filas a búsqueda, filtros, orden y paginación server-side sobre el conjunto autorizado completo.
+- La URL conserva `q`, estado, empresa, sede, frecuencia y página; búsqueda/filtros regresan a página 1.
+- `ModuleHeader` añade un modo server-side opcional y mantiene sin cambios el modo DOM para módulos todavía no migrados.
+- `UrlPagination` reutiliza el primitive `Pagination`; la página contiene 24 rutinas y `LIMIT/OFFSET` queda encapsulado en `routinePageWindow()`.
+- Facetas y KPI se calculan sobre el scope RBAC completo, no sobre la página visible.
+- `CollectionView` sigue siendo la única autoridad de Grid/List; cambiar vista no navega ni consulta nuevamente.
+- El catálogo de activos de `RoutineCreateModal`, acciones por fila y permisos existentes permanecen.
+- Smoke SQL con 30 rutinas demuestra búsqueda fuera de primera página, página 2, filtros combinados, COUNT/facetas completos y exclusión de una sede no autorizada.
+- Filas máximas de rutinas transferidas inicialmente: 200 → 24. No se atribuyen mejoras de tiempo sin RUM/medición productiva.
+- Base funcional validada: `c4f0ae2a40d66d54215cef2ae911ce20d68a5e6c`.
+
 ## 2026-09-26 — Auditoría de rendimiento · Fase 2 Proveedores
 
 - El directorio de Proveedores deja de precargar hasta 600 actividades, 800 suministros, 600 requisiciones y 800 documentos.

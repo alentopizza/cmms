@@ -972,4 +972,4 @@ Organization document POST routes now honor a sanitized dashboard `return_to` va
 
 The organization interface-style preference is a default, not a second theme implementation. `BrandThemeSync` reuses the existing `html[data-theme]` contract; an explicit browser `desweb-theme` preference wins. Density is likewise a shell presentation class over existing components and does not alter domain data or permissions.
 
-Personal profile editing uses `/api/preferences/profile`, restricted to `session.userId`. It updates only personal account fields/avatar/password and cannot alter membership, role, organization or Site scope. The environment bootstrap Platform Owner has no normal user row and remains non-editable through this boundary.
+Personal profile editing uses `/api/preferences/profile`, restricted to `session.userId`. It updates only personal identity/contact/avatar fields and cannot alter credentials, membership, role, organization or Site scope. The environment bootstrap Platform Owner has no normal user row and remains non-editable through this boundary.

@@ -30,6 +30,10 @@ La documentación del repositorio es la fuente de continuidad. Las conversacione
 - La preferencia personal de tema guardada en `desweb-theme` prevalece sobre el estilo predeterminado de empresa. Si no existe preferencia personal, `BrandThemeSync` usa la apariencia de empresa.
 - `app/api/preferences/profile` es self-service y solo puede actualizar al `session.userId`: nombre, correo, teléfono y avatar. No debe mutar contraseñas, `organization_members`, roles ni Site scope. Seguridad conserva los flujos de autenticación existentes. El bootstrap Platform Owner sigue sin user row editable.
 - Logout desde el menú de cuenta y el sheet móvil solicita confirmación y después usa `/api/auth/logout`; no duplicar cierre de sesión.
+- La eliminación de un logo personalizado es estado local del editor hasta `Guardar identidad visual`; la mutación de guardado limpia el override en el mismo UPSERT. No reintroducir una acción de eliminación inmediata que haga perder otros cambios no guardados.
+- El logo tenant PNG/JPG/WebP se valida en servidor por firma y dimensiones; el logo canónico de la empresa se reutiliza como fallback sin copiarlo.
+- `ThemePreferences` recibe el default de apariencia de la Organización cuando está disponible. No escribir `desweb-theme` al montar si el usuario todavía no eligió una preferencia personal.
+- La preview de marca debe usar datos reales mínimos de la Organización; no agregar cifras/ciudades ficticias solo para decorar.
 - `scripts/brand-personalization-smoke.mjs` protege estas fronteras.
 
 ## Ajuste UX/UI · Ubicaciones + Reacción

@@ -31,9 +31,11 @@ export default async function BrandPage({
   const proEnabled=session.planCode==="pro"&&session.whiteLabel;
   const logoSrc=branding.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"
-    : org.has_logo
-      ? `/api/organizations/${session.organizationId}/assets/logo`
-      : "/brand/desweb-logo-dark.webp";
+    : branding.hasLogoOnLight
+      ? "/api/organization-branding/logo/light"
+      : org.has_logo
+        ? `/api/organizations/${session.organizationId}/assets/logo`
+        : "/brand/desweb-logo-dark.webp";
 
   return <div className="phase-brand-personalization">
     <header className="brand-page-header">

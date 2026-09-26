@@ -46,7 +46,7 @@ for(const marker of [
   "Color principal","Color secundario","Color de acento",
   "Generar paleta automáticamente","Vista previa en tiempo real",
   "Guardar identidad visual","Restaurar predeterminado","cancelChanges",
-  "brand-preview-tabs","brand-preview-filter",'previewData.active?"success":"neutral"',
+  "brand-preview-tabs","brand-preview-filter","role=\"tablist\"","onTabKeyDown",'previewData.active?"success":"neutral"',
 ]){
   if(!brand.includes(marker))throw new Error("Brand workspace contract missing "+marker);
 }
@@ -55,6 +55,11 @@ for(const marker of ["Predeterminado","Fresco","Luminoso","Azul","Café","Ectopl
 }
 if(brand.includes("/api/brand")||brand.includes("/api/personalization/brand")){
   throw new Error("Brand workspace introduced a parallel branding endpoint");
+}
+
+const orgAssets=fs.readFileSync("lib/organization-assets.ts","utf8");
+for(const marker of ["image-invalid","pngDimensions","jpegDimensions","webpDimensions","width>12000","height>12000"]){
+  if(!orgAssets.includes(marker))throw new Error("Organization logo validation missing "+marker);
 }
 
 const api=fs.readFileSync("app/api/organization-branding/route.ts","utf8");

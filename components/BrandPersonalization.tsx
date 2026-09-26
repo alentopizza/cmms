@@ -87,6 +87,21 @@ export default function BrandPersonalization({
     }else setLogoPreview(logoSrc);
   }
 
+  function selectTab(next:Tab){
+    setActive(next);
+    window.requestAnimationFrame(()=>document.getElementById("brand-tab-"+next)?.focus());
+  }
+
+  function onTabKeyDown(event:React.KeyboardEvent<HTMLButtonElement>,current:Tab){
+    const index=tabs.findIndex(tab=>tab.id===current);
+    let next:Tab|null=null;
+    if(event.key==="ArrowRight")next=tabs[(index+1)%tabs.length].id;
+    if(event.key==="ArrowLeft")next=tabs[(index-1+tabs.length)%tabs.length].id;
+    if(event.key==="Home")next=tabs[0].id;
+    if(event.key==="End")next=tabs[tabs.length-1].id;
+    if(next){event.preventDefault();selectTab(next);}
+  }
+
   function cancelChanges(){
     setSchemeKey(initial.schemeKey);
     setPrimary(initial.primaryColor);
@@ -112,8 +127,10 @@ export default function BrandPersonalization({
         role="tab"
         aria-selected={active===tab.id}
         aria-controls={"brand-panel-"+tab.id}
+        tabIndex={active===tab.id?0:-1}
         className={active===tab.id?"active":""}
         onClick={()=>setActive(tab.id)}
+        onKeyDown={event=>onTabKeyDown(event,tab.id)}
       >
         <UiIcon name={tab.icon} size={16}/><span>{tab.label}</span>
       </button>)}

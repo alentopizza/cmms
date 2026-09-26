@@ -56,6 +56,12 @@ for(const marker of ["Predeterminado","Fresco","Luminoso","Azul","Café","Ectopl
 if(brand.includes("/api/brand")||brand.includes("/api/personalization/brand")){
   throw new Error("Brand workspace introduced a parallel branding endpoint");
 }
+for(const marker of ["Logo existente de la empresa","sin duplicar el archivo","previewData.siteCount","previewData.city"]){
+  if(!brand.includes(marker))throw new Error("Brand editor must reuse real Organization context: "+marker);
+}
+for(const forbidden of ["<strong>12</strong>","<strong>10</strong>","<strong>2</strong>","Bogotá"]){
+  if(brand.includes(forbidden))throw new Error("Brand preview must not contain fictitious Organization data: "+forbidden);
+}
 
 const orgAssets=fs.readFileSync("lib/organization-assets.ts","utf8");
 for(const marker of ["image-invalid","pngDimensions","jpegDimensions","webpDimensions","width>12000","height>12000"]){
@@ -66,9 +72,12 @@ const api=fs.readFileSync("app/api/organization-branding/route.ts","utf8");
 for(const marker of [
   'session.whiteLabel','session.planCode !== "pro"','session.role !== "admin"',
   "organization_branding","accent_color","scheme_key","interface_style","interface_density",
-  'intent==="reset"','intent==="remove_logo"',
+  'intent==="reset"','intent==="remove_logo"',"session.organizationId",
 ]){
   if(!api.includes(marker))throw new Error("Existing branding mutation extension missing "+marker);
+}
+if(api.includes('form.get("organization_id")')||api.includes("form.get('organization_id')")){
+  throw new Error("Tenant branding target must come from the authenticated session, never browser form data");
 }
 
 const theme=fs.readFileSync("lib/brand-theme.ts","utf8");

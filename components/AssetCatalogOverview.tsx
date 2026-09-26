@@ -17,10 +17,20 @@ export type AssetHistorySummary={
 export type AssetDocumentSummary={
   id:string;asset_name:string;file_name:string;mime_type:string|null;size_bytes:string|null;created_at:string;
 };
-
-type AssetLike={
-  manufacturer:string|null;model:string|null;status:string;criticality:string;category:string|null;
+export type AssetCatalogSummary={
+  total_count:number;
+  operational_count:number;
+  maintenance_count:number;
+  down_count:number;
+  retired_count:number;
+  critical_count:number;
+  high_critical_count:number;
+  with_category_count:number;
+  with_manufacturer_count:number;
+  with_model_count:number;
 };
+export type AssetBrandSummary={name:string;asset_count:number};
+export type AssetModelSummary={label:string};
 
 function statusLabel(value:string){
   return ({operational:"Operativo",maintenance:"En mantenimiento",down:"Fuera de servicio",retired:"Retirado"} as Record<string,string>)[value]||value;
@@ -37,19 +47,23 @@ function frequencyLabel(value:number,unit:string){
 }
 
 export default function AssetCatalogOverview({
-  assets,categories,maintenance,history,documents,
+  summary,brands,models,categories,maintenance,history,documents,
 }:{
-  assets:AssetLike[];
+  summary:AssetCatalogSummary;
+  brands:AssetBrandSummary[];
+  models:AssetModelSummary[];
   categories:AssetCategorySummary[];
   maintenance:AssetMaintenanceSummary[];
   history:AssetHistorySummary[];
   documents:AssetDocumentSummary[];
 }){
   const roots=categories.filter(item=>!item.parent_name);
-  const brands=Array.from(new Set(assets.map(item=>item.manufacturer?.trim()).filter(Boolean) as string[])).sort((a,b)=>a.localeCompare(b,"es"));
-  const models=Array.from(new Set(assets.map(item=>[item.manufacturer?.trim(),item.model?.trim()].filter(Boolean).join(" · ")).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"es"));
-  const statuses=["operational","maintenance","down","retired"].map(status=>({status,count:assets.filter(item=>item.status===status).length}));
-  const critical=assets.filter(item=>item.criticality==="critical").length;
+  const statuses=[
+    {status:"operational",count:summary.operational_count},
+    {status:"maintenance",count:summary.maintenance_count},
+    {status:"down",count:summary.down_count},
+    {status:"retired",count:summary.retired_count},
+  ];
 
   return <div className="phase7-asset-catalog">
     <section className="section phase7-anchor" id="asset-types">
@@ -58,7 +72,7 @@ export default function AssetCatalogOverview({
         <StatTiles items={[
           {label:"Tipos raíz",value:String(roots.length),hint:"categorías sin padre"},
           {label:"Categorías",value:String(categories.length),hint:"clasificaciones registradas"},
-          {label:"Activos críticos",value:String(critical),hint:"criticidad crítica",tone:critical?"danger":"success"},
+          {label:"Activos críticos",value:String(summary.critical_count),hint:"criticidad crítica",tone:summary.critical_count?"danger":"success"},
         ]}/>
       </Card>
     </section>
@@ -76,16 +90,16 @@ export default function AssetCatalogOverview({
 
     <section className="section phase7-anchor phase7-dual" id="asset-brands">
       <Card header={<div><span className="eyebrow">Fabricantes</span><h2>Marcas</h2></div>}>
-        {brands.length?<div className="phase7-chip-grid">{brands.map(brand=><span key={brand} className="phase7-chip">{brand}<strong>{assets.filter(item=>item.manufacturer?.trim()===brand).length}</strong></span>)}</div>:<EmptyState icon="asset" title="Sin marcas registradas" description="Registra el fabricante en la ficha del activo para construir este catálogo automáticamente."/>}
+        {brands.length?<div className="phase7-chip-grid">{brands.map(brand=><span key={brand.name} className="phase7-chip">{brand.name}<strong>{brand.asset_count}</strong></span>)}</div>:<EmptyState icon="asset" title="Sin marcas registradas" description="Registra el fabricante en la ficha del activo para construir este catálogo automáticamente."/>}
       </Card>
       <Card header={<div><span className="eyebrow">Referencias</span><h2>Modelos</h2></div>} id="asset-models">
-        {models.length?<div className="phase7-chip-grid">{models.map(model=><span key={model} className="phase7-chip">{model}</span>)}</div>:<EmptyState icon="asset" title="Sin modelos registrados" description="Los modelos se consolidan desde las fichas técnicas de los activos."/>}
+        {models.length?<div className="phase7-chip-grid">{models.map(model=><span key={model.label} className="phase7-chip">{model.label}</span>)}</div>:<EmptyState icon="asset" title="Sin modelos registrados" description="Los modelos se consolidan desde las fichas técnicas de los activos."/>}
       </Card>
     </section>
 
     <section className="section phase7-anchor" id="asset-states">
       <Card header={<div><span className="eyebrow">Disponibilidad</span><h2>Estados operativos</h2></div>}>
-        <div className="phase7-state-grid">{statuses.map(item=><div key={item.status}><Badge variant={badgeTone(item.status)}>{statusLabel(item.status)}</Badge><strong>{item.count}</strong><span>{assets.length?Math.round(item.count/assets.length*100):0}%</span></div>)}</div>
+        <div className="phase7-state-grid">{statuses.map(item=><div key={item.status}><Badge variant={badgeTone(item.status)}>{statusLabel(item.status)}</Badge><strong>{item.count}</strong><span>{summary.total_count?Math.round(item.count/summary.total_count*100):0}%</span></div>)}</div>
       </Card>
     </section>
 
@@ -138,10 +152,10 @@ export default function AssetCatalogOverview({
     <section className="section phase7-anchor" id="asset-settings">
       <Card header={<div><span className="eyebrow">Configuración</span><h2>Calidad del catálogo</h2></div>}>
         <StatTiles items={[
-          {label:"Con categoría",value:String(assets.filter(item=>Boolean(item.category)).length),hint:"activos clasificados"},
-          {label:"Con fabricante",value:String(assets.filter(item=>Boolean(item.manufacturer)).length),hint:"marca registrada"},
-          {label:"Con modelo",value:String(assets.filter(item=>Boolean(item.model)).length),hint:"referencia registrada"},
-          {label:"Criticidad alta/crítica",value:String(assets.filter(item=>["high","critical"].includes(item.criticality)).length),hint:"requieren mayor control",tone:"warning"},
+          {label:"Con categoría",value:String(summary.with_category_count),hint:"activos clasificados"},
+          {label:"Con fabricante",value:String(summary.with_manufacturer_count),hint:"marca registrada"},
+          {label:"Con modelo",value:String(summary.with_model_count),hint:"referencia registrada"},
+          {label:"Criticidad alta/crítica",value:String(summary.high_critical_count),hint:"requieren mayor control",tone:"warning"},
         ]}/>
         <p className="phase7-section-copy">Estos indicadores usan la información maestra actual. No crean nuevas taxonomías ni cambian la estructura de base de datos.</p>
       </Card>

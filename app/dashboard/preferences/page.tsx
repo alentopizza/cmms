@@ -139,7 +139,7 @@ export default async function PreferencesPage({
 
         <section id="integrations" className="account-settings-card">
           <div className="account-card-heading"><div><span className="eyebrow">Integraciones</span><h2>Conexiones personales</h2><p>Esta sección no crea conexiones nuevas: refleja el alcance disponible actualmente para tu cuenta.</p></div></div>
-          <EmptyState icon="share" title="Sin integraciones personales configurables" description="Las integraciones operativas y de plataforma continúan administrándose desde sus superficies autorizadas; no existe una segunda configuración personal."/>
+          <EmptyState icon="info" title="Sin integraciones personales configurables" description="Las integraciones operativas y de plataforma continúan administrándose desde sus superficies autorizadas; no existe una segunda configuración personal."/>
         </section>
       </main>
     </div>

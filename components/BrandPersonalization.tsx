@@ -62,7 +62,7 @@ export default function BrandPersonalization({
     primary:validColor(primary,initial.primaryColor),
     secondary:validColor(secondary,initial.secondaryColor),
     accent:validColor(accent,initial.accentColor),
-  }) as CSSProperties,[primary,secondary,accent,initial]);
+  },autoPalette) as CSSProperties,[primary,secondary,accent,autoPalette,initial]);
 
   function selectScheme(key:BrandSchemeKey){
     const scheme=brandSchemeByKey(key);
@@ -146,7 +146,7 @@ export default function BrandPersonalization({
           <label className="brand-auto-palette">
             <input type="checkbox" checked={autoPalette} onChange={event=>setAutoPalette(event.target.checked)}/>
             <span className="brand-auto-track" aria-hidden="true"><i/></span>
-            <span><strong>Generar paleta automáticamente</strong><small>El sistema creará tonos complementarios para una experiencia visual completa.</small></span>
+            <span><strong>Generar paleta automáticamente</strong><small>{autoPalette?"El sistema creará tonos complementarios para una experiencia visual completa.":"Se aplicarán tus tres colores directos y los tonos estructurales conservarán la base segura de Desweb CMMS."}</small></span>
           </label>
           <div className="brand-semantic-note"><UiIcon name="info" size={17}/><span>Los estados de éxito, advertencia, error e información mantienen sus colores semánticos para conservar comprensión y accesibilidad.</span></div>
         </article>

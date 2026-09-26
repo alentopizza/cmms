@@ -221,6 +221,78 @@ Separar por dominio en cambios pequeños, empezando por marketing público vs sh
 
 No se implementa una separación masiva en esta fase.
 
+### P1 — Proveedores: precarga de detalle — Fase 2 cerrada
+
+**Antes**
+
+Al entrar a `/dashboard/suppliers` se resolvían, además del directorio y catálogos de creación:
+
+- hasta 600 actividades;
+- hasta 800 suministros;
+- hasta 600 requisiciones;
+- hasta 800 documentos;
+- cuatro catálogos de inventario;
+- analítica comercial para todos los proveedores mediante tres consultas adicionales.
+
+El Server Component ejecutaba 12 lecturas de datos en su `Promise.all` y luego tres consultas analíticas globales. El creation gate se resolvía aparte y permanece funcionalmente igual.
+
+**Después**
+
+El render inicial conserva únicamente:
+
+- resumen de proveedores autorizado;
+- empresa(s) requeridas por creación;
+- catálogo de capacidades;
+- catálogo de especialidades;
+- creation gate existente.
+
+El resumen incorpora conteos agregados de actividades, suministros, requisiciones y documentos. Esos agregados se calculan una sola vez por tabla y se limitan por empresa para sesiones tenant.
+
+Las colecciones detalladas ya no forman parte del RSC inicial.
+
+**Carga bajo demanda por pestaña**
+
+- General / Información financiera: `GET /api/suppliers/[id]?view=general`.
+- Estadísticas: `GET /api/suppliers/[id]?view=statistics`.
+- Actividades: `GET /api/suppliers/[id]?view=activities`.
+- Inventarios / suministros: `GET /api/suppliers/[id]?view=inventory`.
+- Requisiciones: `GET /api/suppliers/[id]?view=requisitions`.
+- Documentos: `GET /api/suppliers/[id]/documents`.
+
+`SupplierDirectory` mantiene caché en memoria por proveedor y vista. Regresar a una pestaña ya cargada no vuelve a consultar mientras la pantalla permanezca montada.
+
+**Comparación estructural**
+
+| Métrica | Antes | Después |
+| --- | ---: | ---: |
+| Consultas SQL de módulo al entrar, excluyendo creation gate sin cambios | 15 | 4 |
+| Actividades detalladas precargadas | hasta 600 | 0 |
+| Suministros detallados precargados | hasta 800 | 0 |
+| Requisiciones detalladas precargadas | hasta 600 | 0 |
+| Documentos detallados precargados | hasta 800 | 0 |
+| Catálogos de inventario en render inicial | 4 colecciones | 0 |
+| Analítica comercial global al entrar | 3 queries | 0 |
+| Requests HTTP al abrir una sola pestaña de ficha | 0 porque todo estaba precargado | 1 para la pestaña solicitada |
+| Requests al volver a una pestaña ya cacheada | 0 | 0 |
+
+La reducción de consultas iniciales de módulo es 15 → 4 (~73%), sin contar el creation gate porque existe antes y después.
+
+El build medido después de la primera versión funcional de Fase 2 reportó para `/dashboard/suppliers` 206,619 bytes de JavaScript referenciado y 746,070 bytes de CSS. La línea base anterior era 203,137 bytes JS / 746,070 bytes CSS: el caché/tab-demand añade ~3.5 KB JS (~1.7%) y no altera CSS. La ganancia buscada está en queries, filas y RSC inicial, no en CSS.
+
+No existe todavía una medición RUM/p50/p95 de navegación productiva ni una medición directa de bytes del RSC con datos reales. Por eso no se declara una mejora en milisegundos que no haya sido observada.
+
+**Compatibilidad preservada**
+
+- Grid/List usa la misma colección resumida.
+- búsqueda, filtros, acciones rápidas y selección no cambian;
+- POST de proveedor/documentos no cambia;
+- creación/edición/desactivación de suministros no cambia;
+- `RequisitionBuilder` y exportación de requisiciones permanecen;
+- permisos `suppliers.manage` y alcance por empresa se mantienen;
+- no hubo migraciones ni cambios de modelo.
+
+`scripts/performance-suppliers-phase2-smoke.mjs` protege la separación de datos, caché por pestaña, alcance tenant y funciones existentes.
+
 ### P1 — Directorios con límites grandes — pendiente de migración server-side
 
 Límites observados:
@@ -230,7 +302,6 @@ Límites observados:
 - Ubicaciones/servicios: hasta 500
 - Work Orders: 200
 - Rutinas: 200
-- Proveedores: colecciones auxiliares de 600–800
 - Usuarios (antes de lazy detail): documentos hasta 1,600
 
 **Diagnóstico**  
@@ -246,7 +317,7 @@ Migrar módulo por módulo a parámetros URL server-side:
 5. total
 6. misma colección para Grid/List
 
-Prioridad sugerida: Proveedores → Activos → Inventario → Ubicaciones → Work Orders/Rutinas.
+Prioridad sugerida restante: Activos → Inventario → Ubicaciones → Work Orders/Rutinas.
 
 ### P2 — Dashboard: alto número de consultas
 
@@ -312,7 +383,7 @@ No se cambió el contrato de POST existente.
 
 1. CSS monolítico: riesgo de cascada al separar.
 2. Server pagination: requiere sincronizar filtros/búsqueda/facetas con URL.
-3. Proveedores y Ubicaciones todavía precargan colecciones de detalle grandes.
+3. Ubicaciones y otros directorios aún precargan colecciones de detalle grandes; Proveedores Fase 2 quedó separado por pestaña.
 4. Dashboard necesita datos reales de slow-query telemetry antes de cambiar SQL.
 5. No hay RUM de producción todavía.
 6. No se ejecutó `EXPLAIN ANALYZE` contra datos productivos; el dataset de CI no representa escala real.

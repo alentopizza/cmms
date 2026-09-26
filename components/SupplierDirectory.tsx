@@ -388,16 +388,17 @@ export default function SupplierDirectory({
   const inventoryLocations=selectedInventory?.locations||[];
   const inventoryCategories=selectedInventory?.categories||[];
   const inventoryWarehouses=selectedInventory?.warehouses||[];
+  const demandSupplierId=selected.id;
 
   function demandContent(view:SupplierDataView,content:ReactNode){
-    const loaded=view==="general"?Object.prototype.hasOwnProperty.call(detailsBySupplier,selected.id)
-      :view==="statistics"?Object.prototype.hasOwnProperty.call(statisticsBySupplier,selected.id)
-      :view==="documents"?Object.prototype.hasOwnProperty.call(documentsBySupplier,selected.id)
-      :view==="activities"?Object.prototype.hasOwnProperty.call(activitiesBySupplier,selected.id)
-      :view==="inventory"?Object.prototype.hasOwnProperty.call(inventoryBySupplier,selected.id)
-      :Object.prototype.hasOwnProperty.call(requisitionsBySupplier,selected.id);
+    const loaded=view==="general"?Object.prototype.hasOwnProperty.call(detailsBySupplier,demandSupplierId)
+      :view==="statistics"?Object.prototype.hasOwnProperty.call(statisticsBySupplier,demandSupplierId)
+      :view==="documents"?Object.prototype.hasOwnProperty.call(documentsBySupplier,demandSupplierId)
+      :view==="activities"?Object.prototype.hasOwnProperty.call(activitiesBySupplier,demandSupplierId)
+      :view==="inventory"?Object.prototype.hasOwnProperty.call(inventoryBySupplier,demandSupplierId)
+      :Object.prototype.hasOwnProperty.call(requisitionsBySupplier,demandSupplierId);
     if(loaded)return content;
-    const key=selected.id+":"+view;
+    const key=demandSupplierId+":"+view;
     const error=loadErrors[key];
     return <div className="entity-panel supplier-demand-state">
       {error?<Alert variant="danger" title="No fue posible cargar la sección">{error}</Alert>:<Spinner label={loadingKeys[key]?"Cargando información del proveedor…":"Preparando información del proveedor…"}/>}

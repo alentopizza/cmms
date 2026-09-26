@@ -20,14 +20,14 @@
 
 ## 2026-09-26 — Ajuste UX/UI · Ubicaciones + Reacción
 
-- Ubicaciones conserva sin cambios su cuadrícula aprobada con fotografía de sede y logo de empresa.
+- Ubicaciones conserva la cuadrícula aprobada, pero corrige la jerarquía visual: la fotografía sigue siendo protagonista y el logo de empresa queda como thumbnail de 48 px completamente dentro de la esquina superior izquierda de la foto; ya no cruza hacia el bloque de información. El badge Activa/Inactiva permanece arriba a la derecha.
 - El modo Listado reutiliza `EntityIdentityCell` y ahora muestra en la primera columna la fotografía propia de cada sede mediante `/api/sites/[id]/image`; cuando no existe imagen usa el icono/placeholder institucional existente.
 - La miniatura permanece en 44 px del UI Kit, por lo que la tabla conserva densidad, columnas, búsqueda/filtros, selector Cuadrícula/Listado y acciones existentes.
 - Reacción mantiene el mismo `ReactionMap`, snapshot autorizado, filtros, marcadores, rutas, Google Maps, eventos y panel de alertas; el cambio es exclusivamente espacial.
-- El workspace de Reacción usa aproximadamente 75/25 en escritorio y 67/33 en tablet, con mapa y panel a la misma altura calculada desde el viewport.
+- Reacción encapsula explícitamente únicamente `reaction-map-stage` + `reaction-side-panel` en el layout de dos columnas. El contenedor exterior deja de ser una grid multicolumna, por lo que no puede reservar una columna vacía: el mapa toma todo el ancho libre a la izquierda y Alertas permanece a la derecha.
 - La barra de filtros pasa a ser un control flotante compacto sobre el mapa; el estado del mapa también se presenta como overlay ligero y el lienzo de Google Maps ocupa el 100% del área principal.
 - En móvil el panel de alertas baja debajo del mapa sin scroll horizontal y el filtro se reorganiza en dos columnas.
-- Los smoke tests de Grid/List y Fase 9 protegen la miniatura real de sede y la jerarquía espacial dominante del mapa.
+- Los smoke tests de Fase 6/Business UI y Fase 9 protegen que el logo de Ubicaciones permanezca dentro de la foto, que Listado conserve su miniatura actual y que Reacción solo reserve columnas para mapa + alertas.
 - No hubo cambios de consultas, endpoints, permisos, datos, marcadores, navegación ni lógica de alertas.
 
 ## 2026-09-26 — Fase 3 · Activos server-side

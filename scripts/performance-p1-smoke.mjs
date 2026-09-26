@@ -155,11 +155,13 @@ for(const marker of [
 const maintenance=fs.readFileSync("app/dashboard/maintenance/page.tsx","utf8");
 for(const marker of [
   'const creationGatePromise=getCreationGateForScope("routine"',
-  "const plansPromise",
+  "const summaryPromise",
+  "const facetsPromise",
   "const assetsPromise",
-  "const [creationGate,plans,assets]=await Promise.all",
+  "const [creationGate,summaryResult,facetsResult,assets]=await Promise.all",
+  "const plans=await query<PlanRow>",
 ]){
-  if(!maintenance.includes(marker))throw new Error("Maintenance parallel-read contract missing "+marker);
+  if(!maintenance.includes(marker))throw new Error("Maintenance server-read contract missing "+marker);
 }
 
 const reactionSnapshot=fs.readFileSync("app/api/reaction/snapshot/route.ts","utf8");

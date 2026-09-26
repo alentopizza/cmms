@@ -229,8 +229,11 @@ export function LocationCard({
 }){
   return <BusinessCardShell domain="location" className="site-visual-card site-compact-card" recordProps={recordProps}>
     <button className="site-visual-card-button site-card-main-action ds-business-open" type="button" onClick={onOpen}>
-      <div className={"site-visual-cover ds-business-banner"+(coverSrc?"":" fallback")}>{coverSrc&&<img src={coverSrc} alt="" loading="lazy" decoding="async" />}<span className="ds-location-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span></div>
-      <div className="site-company-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+organization} loading="lazy" decoding="async"/>:<span>{fallback}</span>}</div>
+      <div className={"site-visual-cover ds-business-banner"+(coverSrc?"":" fallback")}>
+        {coverSrc&&<img src={coverSrc} alt="" loading="lazy" decoding="async" />}
+        <div className="site-company-logo ds-business-logo">{logoSrc?<img src={logoSrc} alt={"Logo de "+organization} loading="lazy" decoding="async"/>:<span>{fallback}</span>}</div>
+        <span className="ds-location-status"><Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge></span>
+      </div>
       <div className="site-visual-content site-visual-content-compact ds-business-copy"><h3>{name}</h3><p><span>{organization}</span><span>{location}</span><span>{address}</span></p></div>
     </button>
     {resources}

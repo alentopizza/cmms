@@ -63,7 +63,7 @@ try{
   await db.query("BEGIN");
   await db.query("INSERT INTO organizations(id,name,slug,active) VALUES($1,'WO Org A','wo-rbac-a',true),($2,'WO Org B','wo-rbac-b',true)",[I.oa,I.ob]);
   await db.query("INSERT INTO sites(id,organization_id,name,code,country,active) VALUES($1,$4,'Sede A','WOA','CO',true),($2,$4,'Sede B','WOB','CO',true),($3,$5,'Sede X','WOX','CO',true)",[I.sa,I.sb,I.sx,I.oa,I.ob]);
-  await db.query("INSERT INTO suppliers(id,organization_id,name,supplier_type,active) VALUES($1,$3,'Proveedor A','services',true),($2,$3,'Proveedor B','services',true)",[I.sup,I.sup2,I.oa]);
+  await db.query("INSERT INTO suppliers(id,organization_id,code,name,supplier_type,active) VALUES($1,$3,'WO-PROV-A','Proveedor A','services',true),($2,$3,'WO-PROV-B','Proveedor B','services',true)",[I.sup,I.sup2,I.oa]);
   await db.query("INSERT INTO users(id,email,full_name,active) VALUES($1,'wo-req@test.local','Requester',true),($2,'wo-other@test.local','Other',true),($3,'wo-ext@test.local','External',true)",[I.req,I.other,I.ext]);
   await db.query("INSERT INTO assets(id,organization_id,site_id,code,name,status,criticality) VALUES($1,$4,$5,'WOA','Equipo A','operational','medium'),($2,$4,$6,'WOB','Equipo B','operational','medium'),($3,$7,$8,'WOX','Equipo X','operational','medium')",[I.aa,I.ab,I.ax,I.oa,I.sa,I.sb,I.ob,I.sx]);
   await db.query("INSERT INTO crews(id,organization_id,site_id,name,active) VALUES($1,$2,$3,'Crew RBAC',true)",[I.crew,I.oa,I.sa]);

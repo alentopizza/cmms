@@ -84,7 +84,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : undefined;
   const sidebarLogo = organizationBranding?.hasLogoOnDark
     ? "/api/organization-branding/logo/dark"
-    : organizationBranding?.hasOrganizationLogo && session.organizationId
+    : organizationBranding?.hasBrandingRecord && organizationBranding.hasOrganizationLogo && session.organizationId
       ? `/api/organizations/${session.organizationId}/assets/logo`
       : logoOnDarkSrc(customization);
   const productName = organizationBranding?.appName || "Desweb CMMS";

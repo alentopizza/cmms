@@ -263,8 +263,13 @@ export default function ReactionMap(){
       const rect=host.getBoundingClientRect();
       if(rect.width<2||rect.height<2)return;
       const center=typeof map.getCenter==="function"?map.getCenter():null;
+      const zoom=typeof map.getZoom==="function"?map.getZoom():null;
       google.maps.event.trigger(map,"resize");
-      if(center&&typeof map.setCenter==="function")map.setCenter(center);
+      if(center&&typeof map.moveCamera==="function"&&typeof zoom==="number"){
+        map.moveCamera({center,zoom});
+      }else if(center&&typeof map.setCenter==="function"){
+        map.setCenter(center);
+      }
     }
 
     function scheduleMapViewportSync(){

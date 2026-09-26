@@ -270,9 +270,9 @@ export default function SupplierDirectory({
     return <div className="phase8-supplier-directory"><section className="section supplier-directory-modern">
       <div className="section-heading"><div><span className="eyebrow">Directorio</span><h2>Proveedores registrados</h2><p className="muted">Abre una tarjeta para consultar su operación, suministros y requisiciones sin salir del módulo.</p></div></div>
       {suppliers.length?<CollectionView storageKey="suppliers" label="Vista de proveedores" grid={<div className="supplier-profile-grid" data-collection-grid>{suppliers.map(s=>{
-        const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
-        const supplierActivities=activities.filter(item=>item.supplier_id===s.id&&["pending","in_progress"].includes(item.status)).length;
-        const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
+        const supplierItems=s.active_item_count;
+        const supplierActivities=s.active_activity_count;
+        const supplierReqs=s.directory_requisition_count;
         return <SupplierCard
           key={s.id}
           name={s.name}
@@ -324,8 +324,8 @@ export default function SupplierDirectory({
           {key:"actions",label:"Acciones",align:"end"},
         ]}
         rows={suppliers.map(s=>{
-          const supplierItems=items.filter(item=>item.supplier_id===s.id&&item.active!==false).length;
-          const supplierReqs=requisitions.filter(item=>item.supplier_id===s.id&& !["closed","cancelled"].includes(item.status)).length;
+          const supplierItems=s.active_item_count;
+          const supplierReqs=s.directory_requisition_count;
           return {
             id:s.id,
             recordProps:{

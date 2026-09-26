@@ -72,7 +72,7 @@
 .desweb-shell-v2 .header-account-popover a strong,.desweb-shell-v2 .header-account-popover>button strong{display:flex;align-items:center;gap:var(--space-2);color:var(--color-text-primary)}
 .desweb-shell-v2 .header-account-popover a small,.desweb-shell-v2 .header-account-popover>button small{color:var(--color-text-muted)}
 .desweb-shell-v2 .header-account-popover .account-menu-brand{background:color-mix(in srgb,var(--brand-primary) 6%,var(--brand-surface))}
-.desweb-shell-v2 .account-menu-brand em{padding:2px 5px;border-radius:var(--radius-sm);background:var(--brand-primary);color:var(--color-text-inverse);font-size:8px;font-style:normal;letter-spacing:.05em}
+.desweb-shell-v2 .account-menu-brand em{padding:2px 5px;border-radius:var(--radius-sm);background:var(--brand-primary);color:var(--brand-on-primary);font-size:8px;font-style:normal;letter-spacing:.05em}
 .desweb-shell-v2 .account-menu-logout{margin-top:var(--space-1);border-top:1px solid var(--brand-border)!important;border-radius:0 0 var(--radius-lg) var(--radius-lg)!important}
 .desweb-shell-v2 .account-menu-logout .account-menu-icon{color:var(--color-danger-600)}
 .logout-confirm-icon{width:72px;height:72px;display:grid;place-items:center;margin:0 auto;border-radius:var(--radius-2xl);background:var(--color-danger-surface);color:var(--color-danger-text)}

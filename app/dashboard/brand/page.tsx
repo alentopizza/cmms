@@ -70,7 +70,8 @@ export default async function BrandPage({
         autoPalette:branding.autoPalette,
         interfaceStyle:branding.interfaceStyle,
         interfaceDensity:branding.interfaceDensity,
-        hasLogo:branding.hasLogoOnDark||branding.hasLogoOnLight,
+        hasBrandLogo:branding.hasLogoOnDark||branding.hasLogoOnLight,
+        hasCompanyLogo:org.has_logo,
       }}
     />}
   </div>;

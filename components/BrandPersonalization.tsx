@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import FileDropzone from "@/components/FileDropzone";
 import UiIcon from "@/components/UiIcon";
 import { BRAND_SCHEMES, brandCssVariables, brandSchemeByKey, normalizeBrandHex, type BrandSchemeKey } from "@/lib/brand-theme";
@@ -92,7 +92,7 @@ export default function BrandPersonalization({
     window.requestAnimationFrame(()=>document.getElementById("brand-tab-"+next)?.focus());
   }
 
-  function onTabKeyDown(event:React.KeyboardEvent<HTMLButtonElement>,current:Tab){
+  function onTabKeyDown(event:KeyboardEvent<HTMLButtonElement>,current:Tab){
     const index=tabs.findIndex(tab=>tab.id===current);
     let next:Tab|null=null;
     if(event.key==="ArrowRight")next=tabs[(index+1)%tabs.length].id;

@@ -15,12 +15,17 @@ for(const marker of [
   "ROUTINE_STATUSES",
   "ROUTINE_FREQUENCIES",
   "ROUTINE_SORTS",
+  "routinePageWindow",
   "scopeConditions",
   "filteredConditions",
   "filtered_count",
   "facetOptions",
   "<UrlPagination",
   "serverState={{",
+  "requestedPage!==page",
+  'redirect(queryString?"/dashboard/maintenance?"+queryString:"/dashboard/maintenance")',
+  "<RoutineCreateModal",
+  '<OwnerRecordActions table="maintenance_plans"',
   "LIMIT ${limitToken} OFFSET ${offsetToken}",
 ]){
   if(!pageSource.includes(marker))throw new Error("Maintenance server-pagination contract missing "+marker);
@@ -34,6 +39,8 @@ for(const marker of [
   "router.replace",
   'next.delete(serverState.pageParam||"page")',
   "serverState.facetOptions",
+  'next.delete(serverState.pageParam||"page")',
+  "if(search!==serverState.search)",
 ]){
   if(!headerSource.includes(marker))throw new Error("Optional ModuleHeader server mode missing "+marker);
 }

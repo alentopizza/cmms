@@ -201,6 +201,17 @@ try{
   const warehouseFilter=await db.query(`WITH scoped AS (${scoped.sql}) SELECT count(*)::int total FROM scoped WHERE warehouse_id=$3::uuid`,[...scoped.params,I.wa]);
   if(warehouseFilter.rows[0].total<=0||warehouseFilter.rows[0].total>=total)throw new Error("Kardex warehouse filter failed");
 
+  const organizationFilter=await db.query(`WITH scoped AS (${scoped.sql}) SELECT count(*)::int total FROM scoped WHERE organization_id=$3::uuid`,[...scoped.params,I.oa]);
+  if(organizationFilter.rows[0].total!==total)throw new Error("Kardex organization filter failed inside authorized scope");
+  const siteFilter=await db.query(`WITH scoped AS (${scoped.sql}) SELECT count(*)::int total FROM scoped WHERE site_id=$3::uuid`,[...scoped.params,I.sa]);
+  if(siteFilter.rows[0].total!==total)throw new Error("Kardex site filter failed inside authorized scope");
+  const combinedFilter=await db.query(
+    `WITH scoped AS (${scoped.sql}) SELECT count(*)::int total FROM scoped
+     WHERE type='receipt' AND supplier_id=$3::uuid AND warehouse_id=$4::uuid AND organization_id=$5::uuid AND site_id=$6::uuid`,
+    [...scoped.params,I.supa,I.wa,I.oa,I.sa],
+  );
+  if(combinedFilter.rows[0].total<=0||combinedFilter.rows[0].total>=total)throw new Error("Combined Kardex filters failed");
+
   const secretSite=await db.query(`WITH scoped AS (${scoped.sql}) SELECT id FROM scoped WHERE source_movement_id ILIKE $3`,[...scoped.params,"%SECRET-SITE%"]);
   const secretOrg=await db.query(`WITH scoped AS (${scoped.sql}) SELECT id FROM scoped WHERE source_movement_id ILIKE $3`,[...scoped.params,"%SECRET-ORG%"]);
   const filterEscape=await db.query(`WITH scoped AS (${scoped.sql}) SELECT id FROM scoped WHERE organization_id=$3::uuid OR site_id=$4::uuid OR warehouse_id=$5::uuid`,[...scoped.params,I.ob,I.sb,I.wc]);

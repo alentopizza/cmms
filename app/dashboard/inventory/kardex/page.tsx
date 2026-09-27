@@ -127,11 +127,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   const physicalScope=limitedSiteScope
     ?` AND w.site_id=ANY(${siteScopeToken}::uuid[]) AND (d.id IS NULL OR d.site_id=ANY(${siteScopeToken}::uuid[]))`
     :"";
-  const scopeWhere=itemScope.where
-    ?itemScope.where+physicalScope
-    :physicalScope
-      ?"WHERE "+physicalScope.replace(/^\\s*AND\\s+/,"")
-      :"";
+  const scopeWhere=itemScope.where+physicalScope;
 
   const scopedSql=`
     SELECT t.id,t.organization_id,o.name organization_name,t.item_id,i.sku,i.name item_name,i.unit,i.supplier_id,p.name supplier_name,

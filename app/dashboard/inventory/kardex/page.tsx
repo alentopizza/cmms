@@ -3,13 +3,15 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
-import ModuleHeader from "@/components/ModuleHeader";
+import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import InventorySubnav from "@/components/InventorySubnav";
 import UiIcon from "@/components/UiIcon";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
+import { UrlPagination } from "@/components/ui-kit/UrlPagination";
+import { inventoryItemSqlScope } from "@/lib/inventory-scope";
 
 type Tx={
   id:string;organization_id:string;organization_name:string;item_id:string;sku:string;item_name:string;unit:string;supplier_id:string|null;supplier_name:string|null;
@@ -20,6 +22,50 @@ type Tx={
 };
 type Item={id:string;sku:string;name:string;unit:string;organization_id:string;site_id:string|null;warehouse_id:string|null};
 type Warehouse={id:string;name:string;organization_id:string;site_id:string|null};
+
+type KardexSummary={total_count:number;filtered_count:number};
+type KardexFacetValue={value:string;label:string};
+type KardexFacetRow={
+  organizations:KardexFacetValue[];
+  sites:KardexFacetValue[];
+  suppliers:KardexFacetValue[];
+  warehouses:KardexFacetValue[];
+};
+type KardexSearchParams={
+  type?:string;created?:string;error?:string;
+  q?:string;organization?:string;site?:string;supplier?:string;warehouse?:string;
+  sortBy?:string;sortDirection?:string;page?:string;pageSize?:string;
+};
+
+const KARDEX_DEFAULT_PAGE_SIZE=24;
+const KARDEX_PAGE_SIZES=new Set([24,40,80]);
+const KARDEX_TYPES=new Set(["receipt","issue","adjustment","transfer","return","supplier_return"]);
+const KARDEX_SORT_FIELDS:Record<string,string>={
+  date:"movement_at",
+  item:"item_name",
+  type:"type",
+  quantity:"quantity",
+  cost:"unit_cost",
+};
+
+function safeText(value:string|undefined,max=120){
+  return String(value||"").trim().slice(0,max);
+}
+function safeUuid(value:string|undefined){
+  const normalized=safeText(value,36);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)?normalized:"";
+}
+function safePage(value:string|undefined){
+  const parsed=Number.parseInt(String(value||"1"),10);
+  return Number.isFinite(parsed)&&parsed>0?parsed:1;
+}
+function safePageSize(value:string|undefined){
+  const parsed=Number.parseInt(String(value||KARDEX_DEFAULT_PAGE_SIZE),10);
+  return KARDEX_PAGE_SIZES.has(parsed)?parsed:KARDEX_DEFAULT_PAGE_SIZE;
+}
+function likePattern(value:string){
+  return "%"+value.replace(/[\\%_]/g,match=>"\\"+match)+"%";
+}
 
 function typeTone(type:string,quantity:number):BadgeVariant{
   if(type==="receipt"||type==="return")return "success";
@@ -52,54 +98,194 @@ function activeSection(type:string|undefined){
   return "kardex" as const;
 }
 
-export default async function InventoryKardexPage({searchParams}:{searchParams:Promise<{type?:string;created?:string;error?:string}>}){
+export default async function InventoryKardexPage({searchParams}:{searchParams:Promise<KardexSearchParams>}){
   const session=await getSession();
   if(!session)redirect("/login");
   if(!can(session,"inventory.read"))redirect("/dashboard");
   const params=await searchParams;
-  const requestedType=["receipt","issue","adjustment","transfer","return","supplier_return"].includes(params.type||"")?params.type:"";
-  const platform=session.platformRole!=="user";
+  const q=safeText(params.q);
+  const requestedType=KARDEX_TYPES.has(params.type||"")?String(params.type):"";
+  const organization=safeUuid(params.organization);
+  const site=safeUuid(params.site);
+  const supplier=safeUuid(params.supplier);
+  const warehouse=safeUuid(params.warehouse);
+  const sortBy=KARDEX_SORT_FIELDS[params.sortBy||""]?String(params.sortBy):"date";
+  const sortDirection=params.sortDirection==="asc"?"asc":"desc";
+  const requestedPage=safePage(params.page);
+  const pageSize=safePageSize(params.pageSize);
   const canWrite=can(session,"inventory.write");
   const orgId=session.organizationId;
 
-  const base=`SELECT t.id,t.organization_id,o.name organization_name,t.item_id,i.sku,i.name item_name,i.unit,i.supplier_id,p.name supplier_name,
-      i.site_id,s.name site_name,t.type,t.quantity::text,t.unit_cost::text,t.warehouse_id,w.name warehouse_name,
-      t.destination_warehouse_id,d.name destination_name,t.document_number,t.movement_at::text,t.lot_number,t.expires_at::text,t.cost_center,t.notes,
-      u.full_name created_by_name,t.requisition_id,r.number::text requisition_number,sr.number::text supplier_return_number,
-      t.source_movement_id,b.import_number::text import_number,b.created_at::text import_created_at
+  // I2-A1 deliberately reuses the I0 product/site scope instead of rebuilding
+  // organization and legacy site semantics inside the Kardex.
+  const itemScope=inventoryItemSqlScope(session);
+  const scopeParams=[...itemScope.params];
+  const limitedSiteScope=itemScope.limitedSiteScope;
+  const siteScopeToken=itemScope.siteParamToken;
+  if(limitedSiteScope&&!siteScopeToken)throw new Error("Inventory site scope token is required for limited Kardex sessions");
+
+  const physicalScope=limitedSiteScope
+    ?` AND w.site_id=ANY(${siteScopeToken}::uuid[]) AND (d.id IS NULL OR d.site_id=ANY(${siteScopeToken}::uuid[]))`
+    :"";
+  const scopeWhere=itemScope.where
+    ?itemScope.where+physicalScope
+    :physicalScope
+      ?"WHERE "+physicalScope.replace(/^\\s*AND\\s+/,"")
+      :"";
+
+  const scopedSql=`
+    SELECT t.id,t.organization_id,o.name organization_name,t.item_id,i.sku,i.name item_name,i.unit,i.supplier_id,p.name supplier_name,
+           i.site_id,s.name site_name,t.type,t.quantity,t.unit_cost,t.warehouse_id,w.name warehouse_name,
+           t.destination_warehouse_id,d.name destination_name,t.document_number,t.movement_at,t.created_at,t.lot_number,t.expires_at,
+           t.cost_center,t.notes,u.full_name created_by_name,t.requisition_id,r.number requisition_number,
+           sr.number supplier_return_number,t.source_movement_id,b.import_number,b.created_at import_created_at
     FROM inventory_transactions t
-    JOIN inventory_items i ON i.id=t.item_id
+    JOIN inventory_items i ON i.id=t.item_id AND i.organization_id=t.organization_id
     JOIN organizations o ON o.id=t.organization_id
-    LEFT JOIN suppliers p ON p.id=i.supplier_id LEFT JOIN sites s ON s.id=i.site_id
-    LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
+    LEFT JOIN suppliers p ON p.id=i.supplier_id
+    LEFT JOIN sites s ON s.id=i.site_id
+    LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id
+    LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
     LEFT JOIN users u ON u.id=t.created_by
     LEFT JOIN supplier_requisitions r ON r.id=t.requisition_id
     LEFT JOIN supplier_returns sr ON sr.id=t.supplier_return_id
-    LEFT JOIN bulk_import_batches b ON b.id=t.import_batch_id`;
+    LEFT JOIN bulk_import_batches b ON b.id=t.import_batch_id
+    ${scopeWhere}`;
 
-  let transactions;
-  if(platform){
-    const clauses:string[]=[];const values:unknown[]=[];
-    if(requestedType){values.push(requestedType);clauses.push("t.type=$1");}
-    transactions=await query<Tx>(base+(clauses.length?" WHERE "+clauses.join(" AND "):"")+" ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 1000",values);
-  }else{
-    const values:unknown[]=[orgId];
-    let where=" WHERE t.organization_id=$1";
-    if(!session.accessAllSites){values.push(session.siteIds);where+=" AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) AND w.site_id=ANY($2::uuid[]) AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))";}
-    if(requestedType){values.push(requestedType);where+=" AND t.type=$"+values.length;}
-    transactions=await query<Tx>(base+where+" ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 1000",values);
+  const filteredParams=[...scopeParams];
+  const filteredConditions:string[]=[];
+  if(q){
+    filteredParams.push(likePattern(q));
+    const token="$"+filteredParams.length;
+    filteredConditions.push(`(
+      sku ILIKE ${token} ESCAPE E'\\\\' OR
+      item_name ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(document_number,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(source_movement_id,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(supplier_name,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(warehouse_name,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(destination_name,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(lot_number,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(cost_center,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      COALESCE(created_by_name,'') ILIKE ${token} ESCAPE E'\\\\' OR
+      CASE WHEN requisition_number IS NULL THEN '' ELSE 'REQ-'||lpad(requisition_number::text,6,'0') END ILIKE ${token} ESCAPE E'\\\\' OR
+      CASE WHEN supplier_return_number IS NULL THEN '' ELSE 'DEV-'||lpad(supplier_return_number::text,6,'0') END ILIKE ${token} ESCAPE E'\\\\' OR
+      CASE WHEN import_number IS NULL THEN '' ELSE
+        'IMP-'||EXTRACT(YEAR FROM COALESCE(import_created_at,movement_at))::int::text||'-'||lpad(import_number::text,6,'0')
+      END ILIKE ${token} ESCAPE E'\\\\'
+    )`);
   }
+  if(requestedType){
+    filteredParams.push(requestedType);
+    filteredConditions.push("type=$"+filteredParams.length);
+  }
+  if(organization){
+    filteredParams.push(organization);
+    filteredConditions.push("organization_id=$"+filteredParams.length+"::uuid");
+  }
+  if(site){
+    filteredParams.push(site);
+    filteredConditions.push("site_id=$"+filteredParams.length+"::uuid");
+  }
+  if(supplier){
+    filteredParams.push(supplier);
+    filteredConditions.push("supplier_id=$"+filteredParams.length+"::uuid");
+  }
+  if(warehouse){
+    filteredParams.push(warehouse);
+    filteredConditions.push("warehouse_id=$"+filteredParams.length+"::uuid");
+  }
+  const filteredWhere=filteredConditions.length?"WHERE "+filteredConditions.join(" AND "):"";
 
-  const [items,warehouses]=orgId?await Promise.all([
-    session.accessAllSites
+  const summaryPromise=query<KardexSummary>(
+    `WITH scoped AS (${scopedSql}),
+          filtered AS (SELECT * FROM scoped ${filteredWhere})
+     SELECT
+       (SELECT count(*)::int FROM scoped) total_count,
+       (SELECT count(*)::int FROM filtered) filtered_count`,
+    filteredParams,
+  );
+  const facetsPromise=query<KardexFacetRow>(
+    `WITH scoped AS (${scopedSql})
+     SELECT
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (
+         SELECT DISTINCT organization_id::text value,organization_name label FROM scoped
+       ) v),'[]'::jsonb) organizations,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (
+         SELECT DISTINCT site_id::text value,site_name label FROM scoped WHERE site_id IS NOT NULL AND site_name IS NOT NULL
+       ) v),'[]'::jsonb) sites,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (
+         SELECT DISTINCT supplier_id::text value,supplier_name label FROM scoped WHERE supplier_id IS NOT NULL AND supplier_name IS NOT NULL
+       ) v),'[]'::jsonb) suppliers,
+       COALESCE((SELECT jsonb_agg(row_to_json(v) ORDER BY v.label) FROM (
+         SELECT DISTINCT warehouse_id::text value,warehouse_name label FROM scoped WHERE warehouse_id IS NOT NULL AND warehouse_name IS NOT NULL
+       ) v),'[]'::jsonb) warehouses`,
+    scopeParams,
+  );
+
+  const itemsPromise=orgId
+    ?session.accessAllSites
       ?query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
                     WHERE organization_id=$1 AND active=true ORDER BY name`,[orgId])
       :query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
-                    WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=ANY($2::uuid[])) ORDER BY name`,[orgId,session.siteIds]),
-    session.accessAllSites
+                    WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=ANY($2::uuid[])) ORDER BY name`,[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Item[]});
+  const warehousesPromise=orgId
+    ?session.accessAllSites
       ?query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-      :query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds]),
-  ]):[{rows:[]} as {rows:Item[]},{rows:[]} as {rows:Warehouse[]}];
+      :query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+    :Promise.resolve({rows:[]} as {rows:Warehouse[]});
+
+  const [summaryResult,facetsResult,items,warehouses]=await Promise.all([
+    summaryPromise,facetsPromise,itemsPromise,warehousesPromise,
+  ]);
+  const summary=summaryResult.rows[0]||{total_count:0,filtered_count:0};
+  const pageCount=Math.max(1,Math.ceil(summary.filtered_count/pageSize));
+  const page=Math.min(requestedPage,pageCount);
+  if(requestedPage!==page){
+    const canonical=new URLSearchParams();
+    if(params.created)canonical.set("created",params.created);
+    if(params.error)canonical.set("error",params.error);
+    if(q)canonical.set("q",q);
+    if(requestedType)canonical.set("type",requestedType);
+    if(organization)canonical.set("organization",organization);
+    if(site)canonical.set("site",site);
+    if(supplier)canonical.set("supplier",supplier);
+    if(warehouse)canonical.set("warehouse",warehouse);
+    if(sortBy!=="date")canonical.set("sortBy",sortBy);
+    if(sortDirection!=="desc")canonical.set("sortDirection",sortDirection);
+    if(pageSize!==KARDEX_DEFAULT_PAGE_SIZE)canonical.set("pageSize",String(pageSize));
+    if(page>1)canonical.set("page",String(page));
+    const queryString=canonical.toString();
+    redirect(queryString?"/dashboard/inventory/kardex?"+queryString:"/dashboard/inventory/kardex");
+  }
+
+  const pageParams=[...filteredParams,pageSize,(page-1)*pageSize];
+  const limitToken="$"+(pageParams.length-1);
+  const offsetToken="$"+pageParams.length;
+  const orderColumn=KARDEX_SORT_FIELDS[sortBy]||KARDEX_SORT_FIELDS.date;
+  const orderDirection=sortDirection==="asc"?"ASC":"DESC";
+  const transactions=await query<Tx>(
+    `WITH scoped AS (${scopedSql})
+     SELECT id,organization_id,organization_name,item_id,sku,item_name,unit,supplier_id,supplier_name,
+            site_id,site_name,type,quantity::text,unit_cost::text,warehouse_id,warehouse_name,
+            destination_warehouse_id,destination_name,document_number,movement_at::text,lot_number,expires_at::text,
+            cost_center,notes,created_by_name,requisition_id,requisition_number::text,supplier_return_number::text,
+            source_movement_id,import_number::text,import_created_at::text
+     FROM scoped
+     ${filteredWhere}
+     ORDER BY ${orderColumn} ${orderDirection},id ${orderDirection}
+     LIMIT ${limitToken} OFFSET ${offsetToken}`,
+    pageParams,
+  );
+
+  const rawFacets=facetsResult.rows[0]||{organizations:[],sites:[],suppliers:[],warehouses:[]};
+  const facetOptions:ModuleFacetOptionMap={
+    organization:Array.isArray(rawFacets.organizations)?rawFacets.organizations:[],
+    site:Array.isArray(rawFacets.sites)?rawFacets.sites:[],
+    supplier:Array.isArray(rawFacets.suppliers)?rawFacets.suppliers:[],
+    warehouse:Array.isArray(rawFacets.warehouses)?rawFacets.warehouses:[],
+  };
 
   const error=params.error==="stock"?"El movimiento fue rechazado porque dejaría existencias negativas o incumple las reglas del Kardex."
     :params.error==="relation"?"La bodega seleccionada no pertenece a la empresa."
@@ -111,7 +297,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       eyebrow="Inventario"
       title={sectionTitle(requestedType)}
       description="Historial auditable de entradas, salidas, ajustes, devoluciones y transferencias por bodega."
-      count={transactions.rowCount||0}
+      count={summary.total_count}
       countLabel="movimientos"
       searchPlaceholder="Buscar SKU, producto, documento, MOVIMIENTO_ID, IMP, proveedor, bodega o lote"
       filters={[
@@ -124,6 +310,21 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
         {key:"supplier",label:"Proveedor",allLabel:"Todos los proveedores"},
         {key:"warehouse",label:"Bodega",allLabel:"Todas las bodegas"},
       ]}
+      serverState={{
+        search:q,
+        filter:requestedType||"all",
+        facetValues:{
+          organization:organization||"all",
+          site:site||"all",
+          supplier:supplier||"all",
+          warehouse:warehouse||"all",
+        },
+        facetOptions,
+        filteredCount:summary.filtered_count,
+        searchParam:"q",
+        filterParam:"type",
+        pageParam:"page",
+      }}
       action={<div className="module-header-action-group">
         <ModuleExportMenu entity="kardex" type={requestedType||undefined}/>
         {canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" iconName="inventory">
@@ -175,6 +376,14 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
         })}
       </tbody></table></div></div>
       {!transactions.rowCount&&<EmptyState icon="file" title="No hay movimientos para este filtro" description="Registra un movimiento o cambia la sección del Kardex."/>}
+      <UrlPagination
+        page={page}
+        pageCount={pageCount}
+        label="Paginación del Kardex"
+        pageSize={pageSize}
+        pageSizeOptions={[24,40,80]}
+        total={summary.filtered_count}
+      />
     </section>
   </div>;
 }

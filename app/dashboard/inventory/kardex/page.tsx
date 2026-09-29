@@ -12,6 +12,7 @@ import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge, type BadgeVariant } from "@/components/ui-kit/Badge";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 import { inventoryItemSqlScope } from "@/lib/inventory-scope";
+import { canAccessOrganization } from "@/lib/organization-scope";
 
 type Tx={
   id:string;organization_id:string;organization_name:string;item_id:string;sku:string;item_name:string;unit:string;supplier_id:string|null;supplier_name:string|null;
@@ -115,6 +116,10 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   const pageSize=safePageSize(params.pageSize);
   const canWrite=can(session,"inventory.write");
   const orgId=session.organizationId;
+  const platform=session.platformRole!=="user";
+  const createOrganizationId=platform
+    ?organization&&canAccessOrganization(session,organization)?organization:null
+    :orgId;
 
   // I2-A1 deliberately reuses the I0 product/site scope instead of rebuilding
   // organization and legacy site semantics inside the Kardex.
@@ -219,17 +224,17 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
     scopeParams,
   );
 
-  const itemsPromise=orgId
-    ?session.accessAllSites
+  const itemsPromise=createOrganizationId
+    ?platform||session.accessAllSites
       ?query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
-                    WHERE organization_id=$1 AND active=true ORDER BY name`,[orgId])
+                    WHERE organization_id=$1 AND active=true ORDER BY name`,[createOrganizationId])
       :query<Item>(`SELECT id,sku,name,unit,organization_id,site_id,warehouse_id FROM inventory_items
-                    WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=ANY($2::uuid[])) ORDER BY name`,[orgId,session.siteIds])
+                    WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=ANY($2::uuid[])) ORDER BY name`,[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Item[]});
-  const warehousesPromise=orgId
-    ?session.accessAllSites
-      ?query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-      :query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+  const warehousesPromise=createOrganizationId
+    ?platform||session.accessAllSites
+      ?query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[createOrganizationId])
+      :query<Warehouse>("SELECT id,name,organization_id,site_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Warehouse[]});
 
   const [summaryResult,facetsResult,items,warehouses]=await Promise.all([
@@ -323,8 +328,9 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       }}
       action={<div className="module-header-action-group">
         <ModuleExportMenu entity="kardex" type={requestedType||undefined}/>
-        {canWrite&&orgId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" iconName="inventory">
+        {canWrite&&createOrganizationId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/movements">
+          <input type="hidden" name="organization_context" value={createOrganizationId||""}/>
           <div className="field form-span-2"><label>Artículo *</label><select name="item_id" required><option value="">Selecciona SKU / producto</option>{items.rows.map(item=><option key={item.id} value={item.id}>{item.sku} · {item.name}</option>)}</select></div>
           <div className="field"><label>Movimiento *</label><select name="movement_type" defaultValue={initialMovement} required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución a inventario</option><option value="transfer">Transferencia</option></select><small>Las devoluciones a proveedor se registran únicamente desde la requisición/recepción de origen.</small></div>
           <div className="field"><label>Cantidad *</label><input name="quantity" type="number" min="0.001" step="0.001" required/></div>
@@ -343,6 +349,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
       </div>}
     />
     <InventorySubnav active={activeSection(requestedType)}/>
+    {platform&&canWrite&&!createOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa">Usa el filtro Empresa para definir el contexto antes de registrar movimientos. El selector solo contiene empresas de tu cartera autorizada.</Alert></div>}
     {params.created&&<div className="section"><Alert variant="success" title="Movimiento registrado">Existencias actualizadas correctamente en Kardex.</Alert></div>}
     {error&&<div className="section"><Alert variant="danger" title="Movimiento rechazado">{error}</Alert></div>}
 

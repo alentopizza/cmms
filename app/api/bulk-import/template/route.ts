@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 
@@ -64,7 +65,7 @@ export async function GET(request:Request){
       [contextSupplierId],
     );
     if(!scoped.rowCount)return new NextResponse("Proveedor no disponible para esta plantilla.",{status:400});
-    if(session.platformRole==="user"&&scoped.rows[0].organization_id!==session.organizationId)return new NextResponse("Forbidden",{status:403});
+    if(!canAccessOrganization(session,scoped.rows[0].organization_id))return new NextResponse("Forbidden",{status:403});
     organizationId=scoped.rows[0].organization_id;
     contextSupplier=scoped.rows[0];
   }

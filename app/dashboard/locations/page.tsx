@@ -26,7 +26,7 @@ export default async function LocationsIndexPage({
   const platformOperator = session.platformRole !== "user";
   const scope=organizationScopeFor(session);
   const scopeParams:unknown[]=[scope.unrestricted,scope.organizationIds];
-  const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, platformOperator);
+  const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, platformOperator, session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const sites = platformOperator
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,

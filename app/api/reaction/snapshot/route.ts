@@ -44,7 +44,7 @@ export async function GET(){
   const platform=session.platformRole!=="user";
   const organizationId=session.organizationId;
   const organizationScope=organizationScopeFor(session);
-  const platformParams=[organizationScope.unrestricted,organizationScope.organizationIds] as const;
+  const platformParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
   const companiesPromise=query<CompanyRow>(
     platform? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,

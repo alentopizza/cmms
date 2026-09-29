@@ -58,7 +58,7 @@ export default async function ReportsPage(){
   const canAssets=can(session,"assets.read");
   const canInventory=can(session,"inventory.read");
   const canAttendanceReports=can(session,"attendance.reports");
-  const reportScope=session.platformRole!=="user"?"Plataforma":session.organizationName||roleLabel(session);
+  const reportScope=session.platformRole==="platform_owner"?"Plataforma":session.platformRole==="superadmin"?"Cartera asignada":session.organizationName||roleLabel(session);
 
   return <div className="phase10-reports">
     <header className="phase10-page-hero">

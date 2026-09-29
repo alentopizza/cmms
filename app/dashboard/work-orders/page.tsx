@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHeader";
@@ -58,12 +59,14 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   if(!session) redirect("/login");
   if(!can(session,"work_orders.read")) redirect("/dashboard");
 
-  const superadmin=session.platformRole!=="user";
+  const platform=session.platformRole!=="user";
   const orgId=session.organizationId;
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
   const canWrite=can(session,"work_orders.write");
   const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
-  const creationGatePromise=getCreationGateForScope("work_order",session.organizationId,superadmin);
+  const creationGatePromise=getCreationGateForScope("work_order",session.organizationId,platform);
   const requesterOnly=session.role==="requester"&&Boolean(session.userId);
   const providerOnly=session.role==="provider"&&Boolean(session.userId);
   const externalOnly=session.role==="external"&&Boolean(session.userId);
@@ -79,7 +82,10 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
   const scopeParams:unknown[]=[];
   const scopeConditions:string[]=[];
-  if(!superadmin){
+  if(session.platformRole==="superadmin"){
+    scopeParams.push(organizationScope.organizationIds);
+    scopeConditions.push("w.organization_id=ANY($"+scopeParams.length+"::uuid[])");
+  }else if(session.platformRole==="user"){
     scopeParams.push(orgId);
     scopeConditions.push("w.organization_id=$"+scopeParams.length);
 
@@ -169,8 +175,8 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   );
 
   const assetsPromise=canWrite
-    ? superadmin
-      ? query<{id:string;label:string}>(`SELECT a.id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' ORDER BY o.name,a.name`)
+    ? platform
+      ? query<{id:string;label:string}>(`SELECT a.id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' AND ($1::boolean OR a.organization_id=ANY($2::uuid[])) ORDER BY o.name,a.name`,platformScopeParams)
       : session.accessAllSites
         ? query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
         : query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])

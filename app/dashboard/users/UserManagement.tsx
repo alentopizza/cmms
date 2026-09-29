@@ -61,6 +61,7 @@ export type ManagedUser = {
   external_supplier_name: string | null;
   platform_organization_ids: string[];
   platform_organization_names: string[];
+  platform_created_organization_ids: string[];
   has_avatar: boolean;
   biometric_status: "verified" | "legacy" | "revoked" | "missing";
   assigned_work_orders: number;
@@ -1011,16 +1012,24 @@ export default function UserManagement({
               <div className="site-checkbox-grid">
                 {organizations.map(organization=>{
                   const checked=draft.platform_organization_ids.includes(organization.id);
+                  const createdBySuperadmin=Boolean(
+                    editingUser?.platform_role==="superadmin"
+                    && editingUser.platform_created_organization_ids?.includes(organization.id)
+                  );
                   return <label className={`site-checkbox-card ${checked?"active":""}`} key={organization.id}>
                     <input
                       type="checkbox"
                       checked={checked}
+                      disabled={createdBySuperadmin}
                       onChange={()=>updateDraft("platform_organization_ids",checked
                         ?draft.platform_organization_ids.filter(id=>id!==organization.id)
                         :[...draft.platform_organization_ids,organization.id])}
                     />
                     <span className="site-checkbox-mark">{checked?<UiIcon name="check" size={12}/>:null}</span>
-                    <span><strong>{organization.name}</strong><small>{checked?"Asignada":"Sin acceso"}</small></span>
+                    <span>
+                      <strong>{organization.name}</strong>
+                      <small>{createdBySuperadmin?"Creada por este Superadministrador":checked?"Asignada por Propietario Desweb":"Sin acceso"}</small>
+                    </span>
                   </label>;
                 })}
               </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, roleLabel } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import DashboardControls from "@/components/DashboardControls";
 import { Card } from "@/components/ui-kit/Card";
@@ -160,34 +161,47 @@ function monthValues(keys:string[],rows:unknown[],field:string){
   return keys.map(key=>map.get(key)||0);
 }
 
-async function platformPeriodMetrics(filters:DashboardFilters){
+function platformOrganizationPredicate(session:Session,expression:string,params:unknown[]){
+  const organizationScope=organizationScopeFor(session);
+  if(organizationScope.unrestricted)return "TRUE";
+  params.push(organizationScope.organizationIds);
+  return expression+"=ANY($"+params.length+"::uuid[])";
+}
+
+async function platformPeriodMetrics(session:Session,filters:DashboardFilters){
   const orgParams:unknown[]=[];
   const companyStatus=appendCompanyStatus(orgParams,"o.active",filters);
   const companyPeriod=appendPeriod(orgParams,"o.created_at",filters);
-  const companies=await query<C>("SELECT count(*)::text count FROM organizations o WHERE "+companyStatus+" AND "+companyPeriod,orgParams);
+  const companyScope=platformOrganizationPredicate(session,"o.id",orgParams);
+  const companies=await query<C>("SELECT count(*)::text count FROM organizations o WHERE "+companyStatus+" AND "+companyPeriod+" AND "+companyScope,orgParams);
 
   const subscription=(extra:string)=>{
     const params:unknown[]=[];
     const period=appendPeriod(params,"s.created_at",filters);
     const company=appendCompanyStatus(params,"o.active",filters);
     const status=filters.activityStatus!=="all"?" AND "+appendValue(params,"s.status",filters.activityStatus):"";
-    return query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+period+" AND "+company+status+extra,params);
+    const scope=platformOrganizationPredicate(session,"o.id",params);
+    return query<C>("SELECT count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+period+" AND "+company+" AND "+scope+status+extra,params);
   };
   const mrrParams:unknown[]=[];
   const mrrPeriod=appendPeriod(mrrParams,"s.created_at",filters);
   const mrrCompany=appendCompanyStatus(mrrParams,"o.active",filters);
+  const mrrScope=platformOrganizationPredicate(session,"o.id",mrrParams);
   const leadsParams:unknown[]=[];
   const leadsPeriod=appendPeriod(leadsParams,"created_at",filters);
   const openParams:unknown[]=[];
-  const openPeriod=appendPeriod(openParams,"created_at",filters);
+  const openPeriod=appendPeriod(openParams,"w.created_at",filters);
+  const openScope=platformOrganizationPredicate(session,"w.organization_id",openParams);
 
   const [paid,trials,pastDue,mrr,leads,openWo]=await Promise.all([
     subscription(" AND s.status='active' AND p.code<>'trial'"),
     subscription(" AND s.status='trialing'"),
     subscription(" AND s.status='past_due'"),
-    query<{amount:string}>("SELECT COALESCE(sum(COALESCE(p.monthly_price_cop,0)),0)::text amount FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+mrrPeriod+" AND "+mrrCompany+" AND s.status='active' AND p.code<>'trial'",mrrParams),
-    query<{total:string;closed:string}>("SELECT count(*)::text total,count(*) FILTER(WHERE status='closed')::text closed FROM sales_leads WHERE "+leadsPeriod,leadsParams),
-    query<C>("SELECT count(*)::text count FROM work_orders WHERE "+openPeriod+" AND status IN ('open','assigned','in_progress','paused')",openParams),
+    query<{amount:string}>("SELECT COALESCE(sum(COALESCE(p.monthly_price_cop,0)),0)::text amount FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+mrrPeriod+" AND "+mrrCompany+" AND "+mrrScope+" AND s.status='active' AND p.code<>'trial'",mrrParams),
+    session.platformRole==="platform_owner"
+      ?query<{total:string;closed:string}>("SELECT count(*)::text total,count(*) FILTER(WHERE status='closed')::text closed FROM sales_leads WHERE "+leadsPeriod,leadsParams)
+      :Promise.resolve({rows:[{total:"0",closed:"0"}]}),
+    query<C>("SELECT count(*)::text count FROM work_orders w WHERE "+openPeriod+" AND "+openScope+" AND w.status IN ('open','assigned','in_progress','paused')",openParams),
   ]);
 
   return {
@@ -202,16 +216,20 @@ async function platformPeriodMetrics(filters:DashboardFilters){
   };
 }
 
-async function platformTrend(filters:DashboardFilters){
+async function platformTrend(session:Session,filters:DashboardFilters){
   const window=trendWindow(filters);
   const companyParams:unknown[]=[window.start,window.end];
   const companyStatus=appendCompanyStatus(companyParams,"o.active",filters);
+  const companyScope=platformOrganizationPredicate(session,"o.id",companyParams);
   const subscriptionParams:unknown[]=[window.start,window.end];
   const subscriptionStatus=filters.activityStatus!=="all"?" AND "+appendValue(subscriptionParams,"s.status",filters.activityStatus):"";
+  const subscriptionScope=platformOrganizationPredicate(session,"o.id",subscriptionParams);
   const [companies,subscriptions,leads]=await Promise.all([
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',o.created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM organizations o WHERE o.created_at >= $1::date AND o.created_at < $2::date AND "+companyStatus+" GROUP BY 1 ORDER BY 1",companyParams),
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',s.created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE s.created_at >= $1::date AND s.created_at < $2::date"+subscriptionStatus+" GROUP BY 1 ORDER BY 1",subscriptionParams),
-    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM sales_leads WHERE created_at >= $1::date AND created_at < $2::date GROUP BY 1 ORDER BY 1",[window.start,window.end]),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',o.created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM organizations o WHERE o.created_at >= $1::date AND o.created_at < $2::date AND "+companyStatus+" AND "+companyScope+" GROUP BY 1 ORDER BY 1",companyParams),
+    query<{month:string;count:string}>("SELECT to_char(date_trunc('month',s.created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id WHERE s.created_at >= $1::date AND s.created_at < $2::date AND "+subscriptionScope+subscriptionStatus+" GROUP BY 1 ORDER BY 1",subscriptionParams),
+    session.platformRole==="platform_owner"
+      ?query<{month:string;count:string}>("SELECT to_char(date_trunc('month',created_at),'YYYY-MM') AS \"month\",count(*)::text count FROM sales_leads WHERE created_at >= $1::date AND created_at < $2::date GROUP BY 1 ORDER BY 1",[window.start,window.end])
+      :Promise.resolve({rows:[]}),
   ]);
   return {
     labels:window.labels,
@@ -225,26 +243,30 @@ async function platform(session:Session,filters:DashboardFilters) {
   const owner=session.platformRole==="platform_owner";
   const previousFilters=comparisonFilters(filters);
   const [metrics,previous,trend]=await Promise.all([
-    platformPeriodMetrics(filters),
-    platformPeriodMetrics(previousFilters),
-    platformTrend(filters),
+    platformPeriodMetrics(session,filters),
+    platformPeriodMetrics(session,previousFilters),
+    platformTrend(session,filters),
   ]);
 
   const planParams:unknown[]=[];
   const planPeriod=appendPeriod(planParams,"s.created_at",filters);
   const planCompany=appendCompanyStatus(planParams,"o.active",filters);
   const planStatus=filters.activityStatus!=="all"?" AND "+appendValue(planParams,"s.status",filters.activityStatus):"";
+  const planScope=platformOrganizationPredicate(session,"o.id",planParams);
   const leadParams:unknown[]=[];
   const leadPeriod=appendPeriod(leadParams,"created_at",filters);
   const recentParams:unknown[]=[];
   const recentPeriod=appendPeriod(recentParams,"s.created_at",filters);
   const recentCompany=appendCompanyStatus(recentParams,"o.active",filters);
   const recentStatus=filters.activityStatus!=="all"?" AND "+appendValue(recentParams,"s.status",filters.activityStatus):"";
+  const recentScope=platformOrganizationPredicate(session,"o.id",recentParams);
 
   const [plans,leads,recent]=await Promise.all([
-    query<{code:string;name:string;count:string}>("SELECT p.code,p.name,count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+planPeriod+" AND "+planCompany+planStatus+" GROUP BY p.code,p.name,p.sort_order ORDER BY p.sort_order",planParams),
-    query<{status:string;count:string}>("SELECT status,count(*)::text count FROM sales_leads WHERE "+leadPeriod+" GROUP BY status ORDER BY status",leadParams),
-    query<{id:string;name:string;plan:string;status:string;period_end:string|null}>("SELECT o.id,o.name,p.name plan,s.status,s.current_period_end::text period_end FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+recentPeriod+" AND "+recentCompany+recentStatus+" ORDER BY s.updated_at DESC LIMIT 10",recentParams),
+    query<{code:string;name:string;count:string}>("SELECT p.code,p.name,count(*)::text count FROM organization_subscriptions s JOIN billing_plans p ON p.id=s.plan_id JOIN organizations o ON o.id=s.organization_id WHERE "+planPeriod+" AND "+planCompany+" AND "+planScope+planStatus+" GROUP BY p.code,p.name,p.sort_order ORDER BY p.sort_order",planParams),
+    owner
+      ?query<{status:string;count:string}>("SELECT status,count(*)::text count FROM sales_leads WHERE "+leadPeriod+" GROUP BY status ORDER BY status",leadParams)
+      :Promise.resolve({rows:[]}),
+    query<{id:string;name:string;plan:string;status:string;period_end:string|null}>("SELECT o.id,o.name,p.name plan,s.status,s.current_period_end::text period_end FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+recentPeriod+" AND "+recentCompany+" AND "+recentScope+recentStatus+" ORDER BY s.updated_at DESC LIMIT 10",recentParams),
   ]);
 
   const planRows=plans.rows.map(row=>({key:row.code,label:row.name,count:n(row.count)}));
@@ -273,23 +295,30 @@ async function platform(session:Session,filters:DashboardFilters) {
   >
     <div className="dashboard-layout-main dashboard-layout-analytics">
       <Panel eyebrow="Tendencia" title="Evolución de los últimos 6 meses">
-        <DashboardTrendChart labels={trend.labels} series={[
+        <DashboardTrendChart labels={trend.labels} series={owner?[
           {name:"Empresas",values:trend.companies},
           {name:"Suscripciones",values:trend.subscriptions},
           {name:"Leads",values:trend.leads},
+        ]:[
+          {name:"Empresas",values:trend.companies},
+          {name:"Suscripciones",values:trend.subscriptions},
         ]}/>
       </Panel>
-      <Panel eyebrow="Conversión" title="Resumen comercial">
-        <DashboardStatTiles items={[
+      <Panel eyebrow={owner?"Conversión":"Cartera"} title={owner?"Resumen comercial":"Resumen de empresas autorizadas"}>
+        <DashboardStatTiles items={owner?[
           {label:"Conversión de leads",value:String(pct(metrics.closedLeads,metrics.leads))+"%",hint:String(metrics.closedLeads)+" cierres del periodo",tone:"success"},
           {label:"Trials",value:String(metrics.trials),hint:"Altas de prueba",tone:"warning"},
           {label:"Pago pendiente",value:String(metrics.pastDue),hint:"Requieren revisión",tone:metrics.pastDue>0?"danger":"default"},
+        ]:[
+          {label:"Empresas",value:String(metrics.companies),hint:"Dentro de tu cartera autorizada",tone:"default"},
+          {label:"Trials",value:String(metrics.trials),hint:"Altas de prueba de tu cartera",tone:"warning"},
+          {label:"Pago pendiente",value:String(metrics.pastDue),hint:"Empresas de tu cartera que requieren revisión",tone:metrics.pastDue>0?"danger":"default"},
         ]}/>
       </Panel>
     </div>
     <div className="dashboard-layout-main">
       <Panel eyebrow="Suscripciones" title="Distribución de planes">{planRows.length?<Bars rows={planRows}/>:<Empty>No hay suscripciones para los filtros seleccionados.</Empty>}</Panel>
-      <Panel eyebrow="Comercial" title="Embudo de leads" action={<Link className="text-button" href="/dashboard/leads">Ver leads →</Link>}>{leadRows.length?<Bars rows={leadRows}/>:<Empty>No hay leads en el periodo seleccionado.</Empty>}</Panel>
+      {owner&&<Panel eyebrow="Comercial" title="Embudo de leads" action={<Link className="text-button" href="/dashboard/leads">Ver leads →</Link>}>{leadRows.length?<Bars rows={leadRows}/>:<Empty>No hay leads en el periodo seleccionado.</Empty>}</Panel>}
     </div>
     <Panel eyebrow="Clientes" title="Suscripciones filtradas"><StaticDataTable
       caption="Suscripciones filtradas"

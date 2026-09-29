@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { publicUrl } from "@/lib/urls";
@@ -23,7 +24,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     if(!order.rowCount){await client.query("ROLLBACK");return new NextResponse("Orden no encontrada",{status:404});}
     const {organization_id:organizationId,site_id:siteId}=order.rows[0];
 
-    if(session.platformRole!=="superadmin" && (session.organizationId!==organizationId || !canAccessSite(session,siteId))){
+    if(!canAccessOrganization(session,organizationId) || (session.platformRole==="user"&&!canAccessSite(session,siteId))){
       await client.query("ROLLBACK");return new NextResponse("Forbidden",{status:403});
     }
 
@@ -78,7 +79,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     );
     if(!activity.rowCount){await client.query("ROLLBACK");return new NextResponse("Actividad no encontrada",{status:404});}
 
-    if(session.platformRole!=="superadmin" && !can(session,"activities.manage")){
+    if(session.platformRole==="user" && !can(session,"activities.manage")){
       const row=activity.rows[0];
       const direct=row.assigned_to===session.userId;
       const supplier=session.role==="provider" && Boolean(row.service_supplier_id && session.externalSupplierId===row.service_supplier_id);

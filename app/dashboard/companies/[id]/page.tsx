@@ -259,7 +259,7 @@ export default async function CompanyDetailPage({
           <div className="company-profile-cover-shade" />
         </div>
         <div className="company-profile-hero-content">
-          <Link className="company-profile-back" href="/dashboard/companies">← Directorio de empresas</Link>
+          <Link className="company-profile-back" href="/dashboard/companies">← {session.platformRole==="user"?"Mi empresa":"Directorio de empresas"}</Link>
           <div className="company-profile-identity">
             <div className="company-profile-logo">
               {organization.has_logo ? <img src={`/api/organizations/${organization.id}/assets/logo`} alt={`Logo de ${organization.name}`} /> : <span>{initials(organization.name)}</span>}

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
+import LeadPreviewAction from "@/components/LeadPreviewAction";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
 import PhoneField from "@/components/PhoneField";
@@ -12,6 +13,7 @@ import { getCustomizationSummary } from "@/lib/customization";
 import { CollectionView } from "@/components/ui-kit/DataControls";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
+import { Avatar } from "@/components/ui-kit/Avatar";
 import UiIcon from "@/components/UiIcon";
 
 type Lead = {
@@ -43,6 +45,24 @@ const INTEREST_LABELS:Record<string,string>={
   self_hosted:"Self-hosted",
   other:"Otro",
 };
+
+const STATUS_LABELS:Record<Lead["status"],string>={
+  new:"Nuevo",
+  contacted:"Contactado",
+  qualified:"Calificado",
+  closed:"Cerrado",
+  discarded:"Descartado",
+};
+
+function formatLeadDate(value:string){
+  return new Intl.DateTimeFormat("es-CO",{
+    day:"2-digit",
+    month:"2-digit",
+    year:"numeric",
+    hour:"numeric",
+    minute:"2-digit",
+  }).format(new Date(value));
+}
 
 export default async function LeadsPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
   const session=await getSession();
@@ -98,117 +118,123 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
     {feedback.created && <div className="notice success section">Lead creado correctamente.</div>}
     {feedback.error && <div className="notice error section">Completa los campos obligatorios para crear el lead.</div>}
 
-    <section className="grid section metric-grid leads-metrics">
-      <div className="card metric-card"><div className="metric-icon">N</div><div><span className="muted">Nuevos</span><div className="metric">{byStatus.new || "0"}</div></div></div>
-      <div className="card metric-card"><div className="metric-icon">C</div><div><span className="muted">Contactados</span><div className="metric">{byStatus.contacted || "0"}</div></div></div>
-      <div className="card metric-card"><div className="metric-icon">Q</div><div><span className="muted">Calificados</span><div className="metric">{byStatus.qualified || "0"}</div></div></div>
-      <div className="card metric-card"><div className="metric-icon">✓</div><div><span className="muted">Cerrados</span><div className="metric">{byStatus.closed || "0"}</div></div></div>
+    <section className="section metric-grid leads-metrics" aria-label="Resumen de Leads">
+      <div className="card metric-card lead-metric-card"><div className="metric-icon"><UiIcon name="crew" size={22}/></div><div><span className="muted">Nuevos</span><div className="metric">{byStatus.new || "0"}</div></div></div>
+      <div className="card metric-card lead-metric-card"><div className="metric-icon"><UiIcon name="phone" size={21}/></div><div><span className="muted">Contactados</span><div className="metric">{byStatus.contacted || "0"}</div></div></div>
+      <div className="card metric-card lead-metric-card"><div className="metric-icon"><UiIcon name="lead" size={22}/></div><div><span className="muted">Calificados</span><div className="metric">{byStatus.qualified || "0"}</div></div></div>
+      <div className="card metric-card lead-metric-card"><div className="metric-icon"><UiIcon name="check" size={22}/></div><div><span className="muted">Cerrados</span><div className="metric">{byStatus.closed || "0"}</div></div></div>
     </section>
 
-    <section className="section leads-directory">
-      {leads.rowCount===0 ? <div className="card empty-state"><span className="eyebrow">Sin oportunidades</span><h2>Aún no hay leads registrados</h2><p>Cuando alguien solicite contacto desde la landing aparecerá aquí.</p></div> :
-        <CollectionView storageKey="leads" label="Vista de leads" grid={<div className="grid leads-directory-grid" data-collection-grid>{leads.rows.map(lead=><article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],SOURCE_LABELS[lead.source]||lead.source,lead.message,lead.status].filter(Boolean).join(" ")}>
-          <div className="lead-card-head">
-            <div><strong>{lead.full_name}</strong><span>{lead.company_name}</span></div>
-            <span className={`lead-status lead-status-${lead.status}`}>{lead.status}</span>
-          </div>
-          <div className="lead-card-info">
-            <div><span>Interés</span><strong>{INTEREST_LABELS[lead.interest] || lead.interest}</strong></div>
-            <div><span>Correo</span><a href={`mailto:${lead.email}`}>{lead.email}</a></div>
-            <div><span>País</span><strong>{countryName(lead.country_code)||"Sin registrar"}</strong></div>
-            <div><span>Teléfono</span><strong>{lead.phone || "No registrado"}</strong></div>
-            <div><span>Fecha</span><strong>{new Date(lead.created_at).toLocaleString("es-CO")}</strong></div>
-          </div>
-          {lead.message && <p className="lead-message">{lead.message}</p>}
-          <form className="lead-status-form" method="post" action={`/api/leads/${lead.id}/status`}>
-            <label>Seguimiento
-              <select name="status" defaultValue={lead.status}>
-                <option value="new">Nuevo</option>
-                <option value="contacted">Contactado</option>
-                <option value="qualified">Calificado</option>
-                <option value="closed">Cerrado</option>
-                <option value="discarded">Descartado</option>
-              </select>
-            </label>
-            <button className="button secondary" type="submit">Actualizar</button>
-          </form>
-          {owner && <OwnerRecordActions
-            table="sales_leads"
-            id={lead.id}
-            label={lead.full_name}
-            fields={[
+    <section className="section leads-directory card leads-list-panel">
+      <div className="leads-list-head">
+        <h2>Listado de Leads</h2>
+        <div className="leads-list-secondary" aria-label="Orden y resultados del listado">
+          <span>Ordenar por</span>
+          <strong>Más recientes</strong>
+          <small>Mostrando {leads.rowCount || 0} de {leads.rowCount || 0} leads</small>
+        </div>
+      </div>
+
+      <div className="leads-list-body">
+      {leads.rowCount===0 ? <div className="empty-state lead-empty-state"><span className="eyebrow">Sin oportunidades</span><h2>Aún no hay leads registrados</h2><p>Cuando alguien solicite contacto desde la landing aparecerá aquí.</p></div> :
+        <CollectionView storageKey="leads" label="Vista de leads" grid={<div className="leads-directory-grid" data-collection-grid>{leads.rows.map(lead=>{
+          const country=countryName(lead.country_code)||"Sin registrar";
+          const interest=INTEREST_LABELS[lead.interest]||lead.interest;
+          const statusLabel=STATUS_LABELS[lead.status];
+          const createdAt=formatLeadDate(lead.created_at);
+          const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt}/>;
+          const editFields=[
+            {name:"full_name",label:"Nombre",value:lead.full_name},
+            {name:"company_name",label:"Empresa",value:lead.company_name},
+            {name:"email",label:"Correo",value:lead.email},
+            {name:"phone",label:"Teléfono",value:lead.phone||""},
+            {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea" as const},
+            {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:[
+              {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
+            ]},
+          ];
+          return <article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")}>
+            <header className="lead-card-head">
+              <div className="lead-card-identity">
+                <Avatar initials={initials(lead.full_name)} size="lg"/>
+                <div className="lead-card-title"><strong>{lead.full_name}</strong><span><UiIcon name="location" size={12}/>{country}</span></div>
+              </div>
+              <span className={"lead-status lead-status-"+lead.status}>{statusLabel}</span>
+            </header>
+
+            <div className="lead-crm-info-grid">
+              <div className="lead-crm-field"><span className="lead-crm-icon"><UiIcon name="company" size={16}/></span><div><span>Empresa</span><strong>{lead.company_name}</strong></div></div>
+              <div className="lead-crm-field"><span className="lead-crm-icon"><UiIcon name="lead" size={16}/></span><div><span>Interés</span><strong>{interest}</strong></div></div>
+              <div className="lead-crm-field"><span className="lead-crm-icon"><UiIcon name="mail" size={16}/></span><div><span>Correo</span><a href={"mailto:"+lead.email}>{lead.email}</a></div></div>
+              <div className="lead-crm-field"><span className="lead-crm-icon"><UiIcon name="phone" size={16}/></span><div><span>Teléfono</span><strong>{lead.phone || "No registrado"}</strong></div></div>
+            </div>
+
+            {lead.message&&<div className="lead-message"><UiIcon name="file" size={15}/><p>{lead.message}</p></div>}
+
+            <footer className="lead-card-footer">
+              <div className="lead-created-at"><UiIcon name="calendar" size={16}/><time dateTime={lead.created_at}>{createdAt}</time></div>
+              <form className="lead-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
+                <label><span className="ds-visually-hidden">Seguimiento de {lead.full_name}</span>
+                  <select name="status" defaultValue={lead.status} aria-label={"Seguimiento de "+lead.full_name}>
+                    <option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option>
+                  </select>
+                </label>
+                <button className="ds-list-action primary" type="submit" title="Actualizar seguimiento" data-tooltip="Actualizar seguimiento" aria-label={"Actualizar seguimiento de "+lead.full_name}><UiIcon name="check" size={15}/></button>
+              </form>
+              {owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-card-actions">{preview}</OwnerRecordActions>:<div className="lead-card-actions">{preview}</div>}
+            </footer>
+          </article>;
+        })}</div>} list={<StaticDataTable
+          className="lead-directory-list"
+          caption="Listado de leads"
+          columns={[
+            {key:"lead",label:"Lead",width:"22%"},
+            {key:"status",label:"Estado"},
+            {key:"company",label:"Empresa"},
+            {key:"interest",label:"Interés"},
+            {key:"email",label:"Correo"},
+            {key:"phone",label:"Teléfono"},
+            {key:"date",label:"Fecha"},
+            {key:"followup",label:"Seguimiento"},
+            {key:"actions",label:"Acciones",align:"end"},
+          ]}
+          rows={leads.rows.map(lead=>{
+            const country=countryName(lead.country_code)||"Sin registrar";
+            const interest=INTEREST_LABELS[lead.interest]||lead.interest;
+            const statusLabel=STATUS_LABELS[lead.status];
+            const createdAt=formatLeadDate(lead.created_at);
+            const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt}/>;
+            const editFields=[
               {name:"full_name",label:"Nombre",value:lead.full_name},
               {name:"company_name",label:"Empresa",value:lead.company_name},
               {name:"email",label:"Correo",value:lead.email},
               {name:"phone",label:"Teléfono",value:lead.phone||""},
-              {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea"},
-              {name:"status",label:"Estado",value:lead.status,type:"select",options:[
+              {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea" as const},
+              {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:[
                 {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
               ]},
-            ]}
-          />}
-        </article>)}</div>} list={<StaticDataTable
-          className="lead-directory-list"
-          caption="Listado de leads"
-          columns={[
-            {key:"lead",label:"Lead",width:"30%"},
-            {key:"status",label:"Estado"},
-            {key:"interest",label:"Interés"},
-            {key:"source",label:"Origen"},
-            {key:"country",label:"País"},
-            {key:"date",label:"Fecha"},
-            {key:"activity",label:"Última actividad"},
-            {key:"followup",label:"Seguimiento"},
-            {key:"actions",label:"Acciones",align:"end"},
-          ]}
-          rows={leads.rows.map(lead=>({
-            id:lead.id,
-            recordProps:{
-              "data-module-record":true,
-              "data-status":lead.status,
-              "data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,INTEREST_LABELS[lead.interest],SOURCE_LABELS[lead.source]||lead.source,lead.message,lead.status].filter(Boolean).join(" "),
-            },
-            cells:{
-              lead:<EntityIdentityCell fallback={initials(lead.full_name)} icon="lead" variant="avatar" title={lead.full_name} subtitle={lead.company_name} meta={lead.email}/>,
-              status:<span className={"lead-status lead-status-"+lead.status}>{lead.status}</span>,
-              interest:INTEREST_LABELS[lead.interest]||lead.interest,
-              source:SOURCE_LABELS[lead.source]||lead.source,
-              country:countryName(lead.country_code)||"Sin registrar",
-              date:new Date(lead.created_at).toLocaleDateString("es-CO"),
-              activity:new Date(lead.updated_at).toLocaleString("es-CO"),
-              followup:<form className="lead-status-form lead-status-form-compact" method="post" action={"/api/leads/"+lead.id+"/status"}>
-                <label><span className="ds-visually-hidden">Estado de seguimiento</span>
-                  <select name="status" defaultValue={lead.status}>
-                    <option value="new">Nuevo</option>
-                    <option value="contacted">Contactado</option>
-                    <option value="qualified">Calificado</option>
-                    <option value="closed">Cerrado</option>
-                    <option value="discarded">Descartado</option>
-                  </select>
-                </label>
-                <button className="ds-list-action" type="submit" title="Actualizar estado" data-tooltip="Actualizar estado" aria-label={"Actualizar estado de "+lead.full_name}><UiIcon name="check" size={15}/></button>
-              </form>,
-              actions:<ListQuickActions>
-                <a className="ds-list-action" href={"mailto:"+lead.email} title="Enviar correo" data-tooltip="Enviar correo" aria-label={"Enviar correo a "+lead.full_name}><UiIcon name="mail" size={15}/></a>
-                {owner&&<OwnerRecordActions
-                  table="sales_leads"
-                  id={lead.id}
-                  label={lead.full_name}
-                  fields={[
-                    {name:"full_name",label:"Nombre",value:lead.full_name},
-                    {name:"company_name",label:"Empresa",value:lead.company_name},
-                    {name:"email",label:"Correo",value:lead.email},
-                    {name:"phone",label:"Teléfono",value:lead.phone||""},
-                    {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea"},
-                    {name:"status",label:"Estado",value:lead.status,type:"select",options:[
-                      {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
-                    ]},
-                  ]}
-                />}
-              </ListQuickActions>,
-            },
-          }))}
-        />}/>} 
+            ];
+            return {
+              id:lead.id,
+              recordProps:{"data-module-record":true,"data-status":lead.status,"data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")},
+              cells:{
+                lead:<EntityIdentityCell fallback={initials(lead.full_name)} icon="lead" variant="avatar" title={lead.full_name} subtitle={country}/>,
+                status:<span className={"lead-status lead-status-"+lead.status}>{statusLabel}</span>,
+                company:lead.company_name,
+                interest,
+                email:<a className="lead-table-email" href={"mailto:"+lead.email}>{lead.email}</a>,
+                phone:lead.phone||"—",
+                date:createdAt,
+                followup:<form className="lead-status-form lead-status-form-compact" method="post" action={"/api/leads/"+lead.id+"/status"}>
+                  <label><span className="ds-visually-hidden">Estado de seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+                  <button className="ds-list-action" type="submit" title="Actualizar estado" data-tooltip="Actualizar estado" aria-label={"Actualizar estado de "+lead.full_name}><UiIcon name="check" size={15}/></button>
+                </form>,
+                actions:<ListQuickActions>{owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact>{preview}</OwnerRecordActions>:preview}</ListQuickActions>,
+              },
+            };
+          })}
+        />}/>}
+      </div>
     </section>
   </>;
 }

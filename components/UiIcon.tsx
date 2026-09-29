@@ -32,6 +32,7 @@ export type UiIconName =
   | "mail"
   | "activity"
   | "clock"
+  | "calendar"
   | "check"
   | "power"
   | "chevron-left"
@@ -117,6 +118,7 @@ export default function UiIcon({
   if (name === "phone") return <svg {...common}><path d="M7 4.5 9.5 8l-1.7 1.8c1 2.1 2.5 3.6 4.6 4.6l1.8-1.7 3.3 2.6c-.8 2.2-2.4 3.6-4.4 3.1-4.7-1.1-8.5-4.9-9.6-9.6C3 6.8 4.5 5.2 7 4.5Z"/></svg>;
   if (name === "mail") return <svg {...common}><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/></svg>;
   if (name === "clock") return <svg {...common}><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>;
+  if (name === "calendar") return <svg {...common}><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16"/><path d="M8 13h2M13 13h2M8 16h2M13 16h2"/></svg>;
   if (name === "check") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>;
   if (name === "power") return <svg {...common}><path d="M12 3.5v8"/><path d="M7.2 6.7a7.3 7.3 0 1 0 9.6 0"/></svg>;
   if (name === "chevron-left") return <svg {...common}><path d="m15 5-7 7 7 7"/></svg>;

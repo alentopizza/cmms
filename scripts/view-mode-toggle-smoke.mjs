@@ -14,6 +14,7 @@ const required=[
   "app/dashboard/maintenance/page.tsx",
   "app/dashboard/inventory/page.tsx",
   "app/dashboard/leads/page.tsx",
+  "components/LeadPreviewAction.tsx",
   "app/ui-kit-core.css",
   "app/phase8-modules.css",
   "app/phase9-modules.css",
@@ -71,12 +72,26 @@ const visualListContracts=[
   ["app/dashboard/work-orders/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","Ver actividades"],
   ["app/dashboard/maintenance/page.tsx",'list={<StaticDataTable',"asset_has_image","canReadAssets","EntityIdentityCell","ListQuickActions"],
   ["app/dashboard/inventory/page.tsx",'list={<StaticDataTable',"has_image","EntityIdentityCell","ds-list-action"],
-  ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","SOURCE_LABELS","updated_at","Enviar correo"],
+  ["app/dashboard/leads/page.tsx",'list={<StaticDataTable',"fallback={initials(lead.full_name)}","EntityIdentityCell","LeadPreviewAction","company_name","lead.email","lead.phone","compact"],
 ];
 for(const [file,...markers] of visualListContracts){
   const source=fs.readFileSync(file,"utf8");
   for(const marker of markers)if(!source.includes(marker))throw new Error(file+" visual list identity/action contract missing "+marker);
 }
+const leads=fs.readFileSync("app/dashboard/leads/page.tsx","utf8");
+for(const marker of ["Listado de Leads","<Avatar initials={initials(lead.full_name)}","lead-crm-info-grid","STATUS_LABELS","LeadPreviewAction"]){
+  if(!leads.includes(marker))throw new Error("Leads CRM card contract missing "+marker);
+}
+if(/<Avatar[^>]*src=/.test(leads))throw new Error("Leads must use initials and must not introduce photos");
+const leadsCss=fs.readFileSync("app/globals.css","utf8");
+for(const marker of [".leads-directory-grid","grid-template-columns:repeat(3,minmax(0,1fr))","@media(max-width:1180px)","-webkit-line-clamp:2",".lead-card-actions"]){
+  if(!leadsCss.includes(marker))throw new Error("Leads CRM responsive styling missing "+marker);
+}
+const leadPreview=fs.readFileSync("components/LeadPreviewAction.tsx","utf8");
+for(const marker of ["<Modal","<Avatar initials=",'name="eye"',"Información registrada en el Lead."]){
+  if(!leadPreview.includes(marker))throw new Error("Leads preview action missing "+marker);
+}
+
 const crews=fs.readFileSync("components/CrewDirectory.tsx","utf8");
 for(const marker of ['toolbarTargetId="crew-view-mode-tools"','id="crew-view-mode-tools"']){
   if(!crews.includes(marker))throw new Error("Crews local shared-toggle host missing "+marker);

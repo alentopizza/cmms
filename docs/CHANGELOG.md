@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-29 — Rediseño UX/UI · Leads CRM
+
+- El módulo Leads conserva su `ModuleHeader`, búsqueda, filtros, selector Cuadrícula/Listado, creación y contador; no se modifican navegación lateral, endpoints, modelos, permisos ni formulario público de captación.
+- Los cuatro KPI superiores se compactan y usan iconografía del UI Kit para Nuevos, Contactados, Calificados y Cerrados; no se inventan porcentajes históricos porque el módulo no dispone de ese dato.
+- La sección **Listado de Leads** separa visualmente resumen y colección, conserva el orden real existente por fecha descendente y muestra el total cargado.
+- Cuadrícula pasa a 3 tarjetas por fila en escritorio, 2 en resolución intermedia y 1 en móvil. Cada tarjeta usa `Avatar` con iniciales, nunca fotografías, y muestra únicamente Nombre, País, Empresa, Interés, Correo, Teléfono, necesidad registrada, Fecha y Estado/Seguimiento reales.
+- La necesidad se presenta en un bloque independiente con truncamiento visual de dos líneas sin alterar el texto almacenado.
+- Los estados conservan los valores `new/contacted/qualified/closed/discarded`, pero se presentan con etiquetas legibles en español y badges existentes.
+- El seguimiento conserva el mismo `POST /api/leads/[id]/status`; la actualización se vuelve una acción compacta con icono y tooltip, sin auto-guardar ni cambiar opciones.
+- Se añade **Ver** mediante el `Modal` existente del UI Kit y una lectura del mismo Lead; Editar/Eliminar reutilizan `OwnerRecordActions` y su confirmación actual. El modo compacto es aditivo y no cambia permisos: las acciones destructivas continúan exclusivas del Platform Owner.
+- La vista Listado se alinea al mismo contrato: Lead, Estado, Empresa, Interés, Correo, Teléfono, Fecha, Seguimiento y Acciones.
+- `view-mode-toggle-smoke` protege avatar sin foto, 3/2/1 responsive, preview, acciones compactas y continuidad Grid/List.
+
 ## 2026-09-29 — Ajuste visual · proporciones del directorio de Leads
 
 - Se corrige la composición del directorio de Leads: el contenedor deja de aplicar una segunda grilla de dos columnas sobre `CollectionView`, evitando que la cuadrícula global comprima cada tarjeta a una fracción del ancho disponible.

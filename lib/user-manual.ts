@@ -55,7 +55,7 @@ export const MANUAL_ROLES:Array<{id:ManualRole;label:string;summary:string}> = [
   {id:"external",label:"Colaborador externo",summary:"Trabajo de campo asignado directamente o mediante cuadrilla."},
 ];
 
-export const MANUAL_LAST_REVIEW = "2026-09-26";
+export const MANUAL_LAST_REVIEW = "2026-09-29";
 
 // ── User-facing articles ────────────────────────────────────────────────────
 
@@ -648,6 +648,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 // ── Recent product changes shown in the manual ──────────────────────────────
 
 export const MANUAL_CHANGES:ManualChange[] = [
+  {
+    date:"2026-09-29",
+    title:"Leads con tarjeta CRM compacta",
+    summary:"Leads reorganiza la vista Cuadrícula en tarjetas de iniciales 3/2/1 con empresa, interés, contacto, necesidad, fecha, seguimiento y acciones rápidas; la vista Listado conserva los mismos datos reales, búsqueda, filtros, creación, edición, eliminación y cambio de estado.",
+    roles:["all","platform_owner","superadmin"],
+  },
   {
     date:"2026-09-26",
     title:"Activos con búsqueda completa y catálogo independiente de la página",

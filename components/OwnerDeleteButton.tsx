@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import UiIcon, { type UiIconName } from "@/components/UiIcon";
 
 export default function OwnerDeleteButton({
   table,
@@ -12,6 +13,8 @@ export default function OwnerDeleteButton({
   className = "text-button text-danger",
   tooltip,
   icon,
+  iconName,
+  iconOnly=false,
 }: {
   table: string;
   id: string;
@@ -20,6 +23,8 @@ export default function OwnerDeleteButton({
   className?: string;
   tooltip?: string;
   icon?: string;
+  iconName?: UiIconName;
+  iconOnly?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -64,8 +69,9 @@ export default function OwnerDeleteButton({
       data-tooltip={tooltip}
       onClick={() => setOpen(true)}
     >
+      {iconName && <UiIcon name={iconName} size={15}/>}
       {icon && <i aria-hidden="true">{icon}</i>}
-      <span>{deleting ? "Eliminando…" : "Eliminar"}</span>
+      <span className={iconOnly?"ds-visually-hidden":undefined}>{deleting ? "Eliminando…" : "Eliminar"}</span>
     </button>
     {error && <span className="owner-inline-delete-error">{error}</span>}
     <ConfirmDialog

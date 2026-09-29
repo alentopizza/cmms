@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-29 — Optimización visual · directorio de Proveedores
+
+- Se retira del listado de Proveedores el bloque redundante **Directorio / Proveedores registrados / Abre una tarjeta...**.
+- El contenedor del directorio deja de usar el margen superior legado de `.section`, de modo que las tarjetas suben y aprovechan mejor el espacio inmediatamente debajo del header del módulo.
+- No se modifican tarjetas, búsqueda, filtros, selector Grid/List, acciones, datos, permisos ni lógica de Proveedores.
+
 ## 2026-09-29 — Corrección · detalle y edición de Leads
 
 - Se corrige el colapso horizontal del detalle: el `Drawer` de Leads ahora prevalece sobre el ancho base del UI Kit con `width: min(900px, 92vw)` y un mínimo de escritorio equivalente a 650 px.

@@ -582,7 +582,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               },
             };
           })}
-        />}:<EmptyState icon="asset" title={summary.total_count?"No hay artículos con estos filtros":"Aún no hay artículos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros productos.":"Usa Agregar o Importar para comenzar."}/>}
+        />}/>:<EmptyState icon="asset" title={summary.total_count?"No hay artículos con estos filtros":"Aún no hay artículos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros productos.":"Usa Agregar o Importar para comenzar."}/>}
         <UrlPagination
           page={page}
           pageCount={pageCount}

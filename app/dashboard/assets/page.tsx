@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
-import { organizationScopeFor } from "@/lib/organization-scope";
+import { canAccessOrganization, organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import Link from "next/link";
@@ -81,6 +81,9 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const q=safeText(params.q);
   const status=ASSET_STATUSES.has(params.status||"")?String(params.status):"all";
   const organization=safeUuid(params.organization);
+  const importOrganizationId=platform
+    ?organization&&canAccessOrganization(session,organization)?organization:null
+    :orgId;
   const site=safeUuid(params.site);
   const criticality=ASSET_CRITICALITIES.has(params.criticality||"")?String(params.criticality):"";
   const category=safeUuid(params.category);
@@ -365,12 +368,13 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
         pageParam:"page",
       }}
       action={<div className="module-header-action-group">
-        {canWrite&&orgId&&<BulkImportModal entity="assets"/>}
+        {canWrite&&importOrganizationId&&<BulkImportModal entity="assets" organizationId={importOrganizationId}/>}
         <ModuleExportMenu entity="assets"/>
         {canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar activo" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
       </div>}
     />
     <AssetSubnav/>
+    {platform&&canWrite&&!importOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa para importar">La carga masiva de activos requiere un contexto empresarial explícito. Usa el filtro Empresa; únicamente se muestran empresas autorizadas para tu cuenta.</Alert></div>}
     {params.created && <div className="section"><Alert variant="success" title="Activo creado">El activo se registró correctamente.</Alert></div>}
     {error && <div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 

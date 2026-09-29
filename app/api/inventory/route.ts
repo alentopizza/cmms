@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
@@ -51,14 +52,14 @@ export async function POST(request:Request) {
   if(!supplierScope.rowCount) return NextResponse.redirect(errorTarget("relation"),303);
 
   const organizationId=supplierScope.rows[0].organization_id;
-  if(session.platformRole==="user"&&session.organizationId!==organizationId){
+  if(!canAccessOrganization(session,organizationId)){
     return new NextResponse("Forbidden",{status:403});
   }
   let image=null;
   try{ image=await readImageUpload(form,"image"); }
   catch(error){ return NextResponse.redirect(errorTarget(imageUploadMessage(error)||"image"),303); }
 
-  if(!canAccessSite(session,siteId)) return new NextResponse("Forbidden",{status:403});
+  if(session.platformRole==="user"&&!canAccessSite(session,siteId)) return new NextResponse("Forbidden",{status:403});
   if(!Number.isFinite(quantity)||!Number.isFinite(minQuantity)||!Number.isFinite(maxQuantity)||!Number.isFinite(unitCost)){
     return NextResponse.redirect(errorTarget("required"),303);
   }

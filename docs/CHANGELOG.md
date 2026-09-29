@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-29 — Ajuste visual · proporciones del directorio de Leads
+
+- Se corrige la composición del directorio de Leads: el contenedor deja de aplicar una segunda grilla de dos columnas sobre `CollectionView`, evitando que la cuadrícula global comprima cada tarjeta a una fracción del ancho disponible.
+- La vista Cuadrícula usa columnas específicas de 360–480 px en escritorio y una columna fluida en móvil; la vista Listado, búsqueda, filtros y preferencia Grid/List permanecen sin cambios.
+- La tarjeta existente de Lead conserva los mismos datos y acciones, pero equilibra encabezado, badge, bloques de contacto, fecha, nota, selector de seguimiento y acciones del Platform Owner con alturas, separación y tipografía más legibles.
+- El bloque de Fecha ocupa el ancho de la tarjeta en escritorio; correo, nombre y otros valores largos permiten wrap sin desbordar.
+- No hubo cambios de API, PostgreSQL, RBAC, estados comerciales ni lógica de seguimiento.
+
 ## 2026-09-29 — Corrección de build · scope RBAC de Proveedores
 
 - Se corrige el type-check de `app/api/suppliers/[id]/route.ts` introducido durante el endurecimiento del scope por empresa.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
@@ -38,8 +39,8 @@ export default async function LocationPage({ params, searchParams }: { params: P
   ]);
   if (!siteResult.rowCount) notFound();
   const site = siteResult.rows[0];
-  if (session.platformRole === "user" && session.organizationId !== site.organization_id) redirect("/dashboard/locations");
-  if (!canAccessSite(session, site.id)) redirect("/dashboard/locations");
+  if(!canAccessOrganization(session,site.organization_id)) redirect("/dashboard/locations");
+  if (session.platformRole === "user" && !canAccessSite(session, site.id)) redirect("/dashboard/locations");
   const suppliers = await query<Supplier>(
     "SELECT id,organization_id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name",
     [site.organization_id],

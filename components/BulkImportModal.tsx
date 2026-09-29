@@ -41,6 +41,7 @@ export default function BulkImportModal({
   supplierName="",
   supplierTaxId="",
   supplierCode="",
+  organizationId="",
 }:{
   entity:"inventory"|"assets";
   label?:string;
@@ -49,6 +50,7 @@ export default function BulkImportModal({
   supplierName?:string;
   supplierTaxId?:string;
   supplierCode?:string;
+  organizationId?:string;
 }){
   const [open,setOpen]=useState(false);
   const [file,setFile]=useState<File|null>(null);
@@ -61,9 +63,10 @@ export default function BulkImportModal({
   const inputRef=useRef<HTMLInputElement>(null);
 
   const title=entity==="inventory"?"Importar inventario y Kardex":"Importar activos";
+  const organizationQuery=organizationId?"&organization="+encodeURIComponent(organizationId):"";
   const templateBase=entity==="inventory"
-    ?"/api/bulk-import/template?entity=inventory"+(supplierId?"&supplier="+encodeURIComponent(supplierId):"")
-    :"/api/bulk-import/template?entity=assets";
+    ?"/api/bulk-import/template?entity=inventory"+organizationQuery+(supplierId?"&supplier="+encodeURIComponent(supplierId):"")
+    :"/api/bulk-import/template?entity=assets"+organizationQuery;
   const currentTemplate=templateBase+(entity==="inventory"?"&data=current":"");
 
   useEffect(()=>{
@@ -76,14 +79,14 @@ export default function BulkImportModal({
     if(!open)return;
     let cancelled=false;
     setHistoryBusy(true);
-    const url="/api/bulk-import/history?entity="+entity+(supplierId?"&supplier="+encodeURIComponent(supplierId):"");
+    const url="/api/bulk-import/history?entity="+entity+(organizationId?"&organization="+encodeURIComponent(organizationId):"")+(supplierId?"&supplier="+encodeURIComponent(supplierId):"");
     fetch(url,{cache:"no-store"})
       .then(async response=>response.ok?response.json():{batches:[]})
       .then((payload:{batches?:ImportBatch[]})=>{if(!cancelled)setHistory(payload.batches||[]);})
       .catch(()=>{if(!cancelled)setHistory([]);})
       .finally(()=>{if(!cancelled)setHistoryBusy(false);});
     return ()=>{cancelled=true;};
-  },[open,entity,supplierId]);
+  },[open,entity,supplierId,organizationId]);
 
   async function run(mode:"validate"|"commit"){
     if(!file)return;
@@ -94,6 +97,7 @@ export default function BulkImportModal({
       body.set("entity",entity);
       body.set("mode",mode);
       body.set("file",file);
+      if(organizationId)body.set("organization_id",organizationId);
       if(supplierId)body.set("supplier_id",supplierId);
       if(entity==="inventory"){
         body.set("import_scope",importScope);

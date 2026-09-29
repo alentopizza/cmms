@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import Link from "next/link";
@@ -70,10 +71,12 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   if(!session) redirect("/login");
   if(!can(session,"assets.read")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole!=="user";
+  const platform=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"assets.write");
   const owner=isPlatformOwner(session);
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams=[organizationScope.unrestricted,organizationScope.organizationIds] as const;
 
   const q=safeText(params.q);
   const status=ASSET_STATUSES.has(params.status||"")?String(params.status):"all";
@@ -87,7 +90,10 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
 
   const scopeParams:unknown[]=[];
   const scopeConditions:string[]=[];
-  if(!superadmin){
+  if(session.platformRole==="superadmin"){
+    scopeParams.push(organizationScope.organizationIds);
+    scopeConditions.push("a.organization_id=ANY($"+scopeParams.length+"::uuid[])");
+  }else if(session.platformRole==="user"){
     scopeParams.push(orgId);
     scopeConditions.push("a.organization_id=$"+scopeParams.length);
     if(!session.accessAllSites){
@@ -198,36 +204,37 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
      FROM asset_categories c
      LEFT JOIN asset_categories p ON p.id=c.parent_id
      LEFT JOIN scoped ON scoped.category_id=c.id
-     ${superadmin?"":"WHERE c.organization_id=$1"}
+     WHERE ($1::boolean OR c.organization_id=ANY($2::uuid[]))
      GROUP BY c.id,c.name,p.name
      ORDER BY p.name NULLS FIRST,c.name`,
-    scopeParams,
+    platformScopeParams,
   );
 
   const sitesPromise=canWrite
-    ? superadmin
-      ? query<Site>("SELECT s.id,s.organization_id,o.name||' · '||s.name label FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true ORDER BY o.name,s.name")
+    ? platform
+      ? query<Site>("SELECT s.id,s.organization_id,o.name||' · '||s.name label FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true AND ($1::boolean OR s.organization_id=ANY($2::uuid[])) ORDER BY o.name,s.name",platformScopeParams)
       : session.accessAllSites
         ? query<Site>("SELECT s.id,s.organization_id,s.name label FROM sites s WHERE s.organization_id=$1 AND s.active=true ORDER BY s.name",[orgId])
         : query<Site>("SELECT s.id,s.organization_id,s.name label FROM sites s WHERE s.organization_id=$1 AND s.active=true AND s.id=ANY($2::uuid[]) ORDER BY s.name",[orgId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:Site[]});
   const locationsPromise=canWrite
-    ? superadmin
-      ? query<Location>("SELECT l.id,l.organization_id,l.site_id,o.name||' · '||s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id JOIN organizations o ON o.id=l.organization_id WHERE l.active=true ORDER BY o.name,s.name,l.name")
+    ? platform
+      ? query<Location>("SELECT l.id,l.organization_id,l.site_id,o.name||' · '||s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id JOIN organizations o ON o.id=l.organization_id WHERE l.active=true AND ($1::boolean OR l.organization_id=ANY($2::uuid[])) ORDER BY o.name,s.name,l.name",platformScopeParams)
       : session.accessAllSites
         ? query<Location>("SELECT l.id,l.organization_id,l.site_id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[orgId])
         : query<Location>("SELECT l.id,l.organization_id,l.site_id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[orgId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:Location[]});
   const suppliersPromise=canWrite
-    ? superadmin
-      ? query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true ORDER BY name")
+    ? platform
+      ? query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true AND ($1::boolean OR organization_id=ANY($2::uuid[])) ORDER BY name",platformScopeParams)
       : query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true AND organization_id=$1 ORDER BY name",[orgId])
     : Promise.resolve({rows:[]} as {rows:Supplier[]});
 
-  const maintenancePromise=superadmin
+  const maintenancePromise=platform
     ? query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
         FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
-        ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`)
+        WHERE ($1::boolean OR mp.organization_id=ANY($2::uuid[]))
+        ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,platformScopeParams)
     : session.accessAllSites
       ? query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
           FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
@@ -237,10 +244,11 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
           WHERE mp.organization_id=$1 AND a.site_id=ANY($2::uuid[])
           ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,[orgId,session.siteIds]);
 
-  const historyPromise=superadmin
+  const historyPromise=platform
     ? query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
         FROM work_orders w JOIN assets a ON a.id=w.asset_id
-        ORDER BY w.requested_at DESC LIMIT 250`)
+        WHERE ($1::boolean OR w.organization_id=ANY($2::uuid[]))
+        ORDER BY w.requested_at DESC LIMIT 250`,platformScopeParams)
     : session.accessAllSites
       ? query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
           FROM work_orders w JOIN assets a ON a.id=w.asset_id
@@ -250,10 +258,11 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
           WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
           ORDER BY w.requested_at DESC LIMIT 250`,[orgId,session.siteIds]);
 
-  const documentsPromise=superadmin
+  const documentsPromise=platform
     ? query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
         FROM attachments at JOIN assets a ON a.id=at.asset_id
-        WHERE at.asset_id IS NOT NULL ORDER BY at.created_at DESC LIMIT 250`)
+        WHERE at.asset_id IS NOT NULL AND ($1::boolean OR at.organization_id=ANY($2::uuid[]))
+        ORDER BY at.created_at DESC LIMIT 250`,platformScopeParams)
     : session.accessAllSites
       ? query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
           FROM attachments at JOIN assets a ON a.id=at.asset_id
@@ -263,7 +272,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
           WHERE at.asset_id IS NOT NULL AND at.organization_id=$1 AND a.site_id=ANY($2::uuid[])
           ORDER BY at.created_at DESC LIMIT 250`,[orgId,session.siteIds]);
 
-  const creationGatePromise=getCreationGateForScope("asset",session.organizationId,superadmin);
+  const creationGatePromise=getCreationGateForScope("asset",session.organizationId,platform);
   const [
     summaryResult,facetsResult,brandsResult,modelsResult,catalogCategories,sites,locations,suppliers,
     maintenanceSummary,historySummary,documentSummary,creationGate,

@@ -28,10 +28,9 @@ async function accessibleSupplier(id:string,session:NonNullable<Awaited<ReturnTy
     "SELECT id,organization_id FROM suppliers WHERE id=$1",
     [id],
   );
-  if(!result.rowCount||!canAccessOrganization(session,result.rows[0].organization_id)){
-    return {rows:[],rowCount:0} as typeof result;
-  }
-  return result;
+  const supplier=result.rows[0]||null;
+  if(!supplier||!canAccessOrganization(session,supplier.organization_id))return null;
+  return supplier;
 }
 
 export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){
@@ -41,8 +40,8 @@ export async function GET(request:Request,{params}:{params:Promise<{id:string}>}
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Proveedor inválido",{status:400});
   const supplierScope=await accessibleSupplier(id,session);
-  if(!supplierScope.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
-  const organizationId=supplierScope.rows[0].organization_id;
+  if(!supplierScope)return new NextResponse("Proveedor no encontrado",{status:404});
+  const organizationId=supplierScope.organization_id;
   const view=new URL(request.url).searchParams.get("view")||"general";
 
   if(view==="general"){

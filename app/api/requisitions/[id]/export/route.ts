@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import ExcelJS from "exceljs";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { countryDefinition } from "@/lib/international-catalog";
 import { loadProcurementReconciliation,procurementDocumentTypeLabel,procurementMatchLabel,procurementReviewLabel,type ProcurementDocumentSummary,type ProcurementDocumentLine } from "@/lib/procurement-reconciliation";
@@ -40,7 +41,7 @@ async function load(id:string,session:NonNullable<Awaited<ReturnType<typeof getS
      WHERE r.id=$1`,[id],
   );
   if(!req.rowCount)return null;
-  if(session.platformRole==="user"&&session.organizationId!==req.rows[0].organization_id)return null;
+  if(!canAccessOrganization(session,req.rows[0].organization_id))return null;
   const items=await query<Item>(
     `SELECT ri.sku,ri.description,ri.unit,ri.quantity_requested::text,ri.quantity_received::text,
             COALESCE((SELECT sum(sri.quantity) FROM supplier_return_items sri WHERE sri.requisition_item_id=ri.id),0)::text quantity_returned,

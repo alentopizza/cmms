@@ -28,6 +28,7 @@ export type AuthSession = {
   currentPeriodEnd: string | null;
   whiteLabel: boolean;
   externalSupplierId: string | null;
+  platformOrganizationIds: string[];
 };
 
 function secret() {
@@ -105,6 +106,7 @@ async function resolveSession(): Promise<AuthSession | null> {
       currentPeriodEnd: null,
       whiteLabel: true,
       externalSupplierId: null,
+      platformOrganizationIds: [],
     };
   }
 
@@ -125,12 +127,18 @@ async function resolveSession(): Promise<AuthSession | null> {
     current_period_end: string | null;
     white_label: boolean | null;
     external_supplier_id: string | null;
+    platform_organization_ids: string[] | null;
   }>(
     `SELECT u.id,u.email,u.full_name,u.platform_role,
             membership.organization_id,membership.organization_name,membership.role,membership.site_id,
             membership.access_all_sites,membership.site_ids,membership.external_supplier_id,
             subscription.plan_code,subscription.subscription_status,subscription.trial_ends_at,
-            subscription.current_period_end,subscription.white_label
+            subscription.current_period_end,subscription.white_label,
+            COALESCE((
+              SELECT array_agg(poa.organization_id::text ORDER BY poa.organization_id::text)
+              FROM platform_organization_access poa
+              WHERE poa.user_id=u.id
+            ),ARRAY[]::text[]) platform_organization_ids
      FROM users u
      LEFT JOIN LATERAL (
        SELECT om.organization_id,o.name organization_name,om.role,om.site_id,om.access_all_sites,om.external_supplier_id,
@@ -181,6 +189,7 @@ async function resolveSession(): Promise<AuthSession | null> {
     currentPeriodEnd: user.platform_role !== "user" ? null : user.current_period_end,
     whiteLabel: user.platform_role !== "user" ? true : Boolean(user.white_label),
     externalSupplierId: user.platform_role !== "user" ? null : user.external_supplier_id,
+    platformOrganizationIds: user.platform_role === "superadmin" ? (user.platform_organization_ids || []) : [],
   };
 }
 

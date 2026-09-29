@@ -66,7 +66,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const canWrite=can(session,"work_orders.write");
   const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
-  const creationGatePromise=getCreationGateForScope("work_order",session.organizationId,platform);
+  const creationGatePromise=getCreationGateForScope("work_order",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const requesterOnly=session.role==="requester"&&Boolean(session.userId);
   const providerOnly=session.role==="provider"&&Boolean(session.userId);
   const externalOnly=session.role==="external"&&Boolean(session.userId);

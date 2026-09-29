@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
@@ -22,9 +23,9 @@ export async function POST(request: Request) {
     : await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND organization_id=$2", [assetId, session.organizationId]);
 
   if (!asset.rowCount || !title) return new NextResponse("Equipo o título inválido", { status: 400 });
-  if (!canAccessSite(session, asset.rows[0].site_id)) return new NextResponse("Forbidden", { status: 403 });
-
   const organizationId=asset.rows[0].organization_id;
+  if(!canAccessOrganization(session,organizationId)) return new NextResponse("Forbidden",{status:403});
+  if (session.platformRole==="user"&&!canAccessSite(session, asset.rows[0].site_id)) return new NextResponse("Forbidden", { status: 403 });
   const gate=await getCreationGateForScope("work_order",organizationId,false);
   if(!gate.ready) {
     return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=sequence",request.url),303);

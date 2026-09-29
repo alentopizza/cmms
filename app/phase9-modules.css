@@ -273,15 +273,15 @@
   min-width:0;color:var(--color-text-primary);font-size:10.5px;line-height:1.3;font-weight:var(--font-weight-semibold);overflow-wrap:break-word
 }
 .phase9-work-orders .work-order-grid-description{
-  position:relative;display:grid;grid-template-columns:4px 34px minmax(0,1fr);align-items:center;gap:var(--space-2);
-  min-width:0;padding:var(--space-2);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);overflow:hidden
+  position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:start;gap:var(--space-2);
+  min-width:0;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface-soft);overflow:hidden
 }
 .phase9-work-orders .work-order-grid-description-marker{position:absolute;inset:0 auto 0 0;width:3px;background:var(--color-brand-secondary)}
 .phase9-work-orders .work-order-grid-description-icon{
-  width:34px;height:34px;display:grid;place-items:center;border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-brand-secondary)
+  width:34px;height:34px;display:grid;place-items:center;align-self:start;border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-brand-secondary)
 }
-.phase9-work-orders .work-order-grid-description>div{display:grid;gap:3px;min-width:0}
-.phase9-work-orders .work-order-grid-description p{margin:0;color:var(--color-text-primary);font-size:11px;line-height:1.4;overflow-wrap:break-word}
+.phase9-work-orders .work-order-grid-description>div{display:grid;gap:3px;min-width:0;width:100%}
+.phase9-work-orders .work-order-grid-description p{margin:0;min-width:0;color:var(--color-text-primary);font-size:11px;line-height:1.45;white-space:normal;word-break:normal;overflow-wrap:break-word}
 .phase9-work-orders .work-order-grid-dates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
 .phase9-work-orders .work-order-grid-dates>div.is-empty .work-order-grid-meta-icon{color:var(--color-danger-500)}
 .phase9-work-orders .work-order-grid-actions{display:grid;grid-template-columns:1fr;gap:var(--space-2);margin-top:auto}

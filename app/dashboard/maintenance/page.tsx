@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
@@ -62,7 +63,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const canWrite=can(session,"maintenance.write");
   const canReadAssets=can(session,"assets.read");
   const owner=isPlatformOwner(session);
-  const creationGatePromise=getCreationGateForScope("routine",session.organizationId,session.platformRole!=="user");
+  const platform=session.platformRole!=="user";
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
+  const creationGatePromise=getCreationGateForScope("routine",session.organizationId,platform);
 
   const q=safeText(feedback.q);
   const status=ROUTINE_STATUSES.has(feedback.status||"")?String(feedback.status):"all";
@@ -74,7 +78,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
 
   const scopeParams:unknown[]=[];
   const scopeConditions:string[]=[];
-  if(session.platformRole==="user"){
+  if(session.platformRole==="superadmin"){
+    scopeParams.push(organizationScope.organizationIds);
+    scopeConditions.push("p.organization_id=ANY($"+scopeParams.length+"::uuid[])");
+  }else if(session.platformRole==="user"){
     scopeParams.push(session.organizationId);
     scopeConditions.push("p.organization_id=$"+scopeParams.length);
     if(!session.accessAllSites){
@@ -150,11 +157,11 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   );
 
   const assetsPromise=canWrite
-    ? session.platformRole!=="user"
+    ? platform
       ? query<AssetOption>(
           `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,o.name||' · '||s.name||' · '||a.code||' '||a.name label
            FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
-           WHERE a.status<>'retired' ORDER BY o.name,s.name,a.name`)
+           WHERE a.status<>'retired' AND ($1::boolean OR a.organization_id=ANY($2::uuid[])) ORDER BY o.name,s.name,a.name`,platformScopeParams)
       : session.accessAllSites
         ? query<AssetOption>(
             `SELECT a.id,a.organization_id,a.site_id,a.name,a.code,s.name||' · '||a.code||' '||a.name label

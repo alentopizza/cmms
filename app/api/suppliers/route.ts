@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool, query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { publicUrl } from "@/lib/urls";
@@ -50,6 +51,7 @@ export async function POST(request:Request) {
   if(!organizationId||!name||!legalName||!city||!address||!capabilityCodes.length||!isSupportedCountry(countryCode)||!logo){
     return NextResponse.redirect(target("?error=required"),303);
   }
+  if(!canAccessOrganization(session,organizationId)) return new NextResponse("Forbidden",{status:403});
   if((taxId||taxIdType)&&(!taxId||!taxIdType||!isTaxIdTypeForCountry(countryCode,taxIdType))){
     return NextResponse.redirect(target("?error=required"),303);
   }

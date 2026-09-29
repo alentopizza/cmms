@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite,getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool,query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { readImageUpload,imageUploadMessage } from "@/lib/image-upload";
@@ -19,7 +20,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const current=await query<{organization_id:string}>("SELECT organization_id FROM assets WHERE id=$1",[id]);
   if(!current.rowCount)return new NextResponse("Activo no encontrado",{status:404});
   const organizationId=current.rows[0].organization_id;
-  if(session.platformRole==="user"&&session.organizationId!==organizationId)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,organizationId))return new NextResponse("Forbidden",{status:403});
 
   const form=await request.formData();
   const siteId=String(form.get("site_id")||"");

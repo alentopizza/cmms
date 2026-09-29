@@ -88,10 +88,19 @@ for(const marker of [".leads-directory-grid","grid-template-columns:repeat(3,min
   if(!leadsCss.includes(marker))throw new Error("Leads CRM responsive styling missing "+marker);
 }
 const leadPreview=fs.readFileSync("components/LeadPreviewAction.tsx","utf8");
-for(const marker of ["<Drawer","lead-detail-drawer","<Avatar initials=",'name="eye"',"Información general","Seguimiento"]){
+for(const marker of ["<Drawer","lead-detail-drawer","lead-detail-scroll","<Avatar initials=",'name="eye"',"Información general","Seguimiento","cmms:record-detail-reopen"]){
   if(!leadPreview.includes(marker))throw new Error("Leads detail drawer missing "+marker);
 }
 if(leadPreview.includes("Adjuntar archivo")||leadPreview.includes("Agregar nota"))throw new Error("Lead detail must not invent notes/files features without persisted support");
+const ownerActions=fs.readFileSync("components/OwnerRecordActions.tsx","utf8");
+for(const marker of ["createPortal","owner-record-edit-dialog","owner-record-edit-backdrop","editOverlay","afterSaveReopenKey","Cancelar"]){
+  if(!ownerActions.includes(marker))throw new Error("Owner direct edit form contract missing "+marker);
+}
+if(ownerActions.includes('description="Conserva el flujo de edición existente."')||ownerActions.includes('import { Modal }'))throw new Error("Owner edit must not keep the placeholder modal wrapper");
+for(const marker of [".ds-drawer.lead-detail-drawer{width:min(900px,92vw)","grid-template-columns:minmax(360px,1.4fr) minmax(280px,1fr)",".lead-detail-scroll{flex:1","overflow-x:hidden"]){
+  if(!leadsCss.includes(marker))throw new Error("Lead detail stable layout missing "+marker);
+}
+
 const overlay=fs.readFileSync("components/ui-kit/Overlay.tsx","utf8");
 for(const marker of ["headerActions?:ReactNode","className?:string","bodyClassName?:string","ds-overlay-header-actions"]){
   if(!overlay.includes(marker))throw new Error("Shared Drawer extension missing "+marker);

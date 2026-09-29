@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -57,8 +58,10 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
   if(!session) redirect("/login");
   if(!can(session,"crews.manage")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole!=="user";
+  const platform=session.platformRole!=="user";
   const owner=isPlatformOwner(session);
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
   const crewSelect=`SELECT c.id,c.organization_id,o.name organization_name,c.site_id,s.name site_name,c.name,c.description,c.leader_user_id,
       leader.full_name leader_name,leader.phone leader_phone,leader.email leader_email,leader_membership.role leader_role,
@@ -82,20 +85,20 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id`;
 
   const [crews,organizations,sites,workers,members]=await Promise.all([
-    superadmin
-      ? query<Crew>(crewSelect+" ORDER BY o.name,c.active DESC,c.name")
+    platform
+      ? query<Crew>(crewSelect+" WHERE ($1::boolean OR c.organization_id=ANY($2::uuid[])) ORDER BY o.name,c.active DESC,c.name",platformScopeParams)
       : session.accessAllSites
         ? query<Crew>(crewSelect+" WHERE c.organization_id=$1 ORDER BY c.active DESC,c.name",[session.organizationId])
         : query<Crew>(crewSelect+" WHERE c.organization_id=$1 AND (c.site_id IS NULL OR c.site_id=ANY($2::uuid[])) ORDER BY c.active DESC,c.name",[session.organizationId,session.siteIds]),
-    superadmin
-      ? query<Organization>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
+    platform
+      ? query<Organization>("SELECT id,name FROM organizations WHERE active=true AND ($1::boolean OR id=ANY($2::uuid[])) ORDER BY name",platformScopeParams)
       : query<Organization>("SELECT id,name FROM organizations WHERE id=$1",[session.organizationId]),
-    superadmin
-      ? query<Site>(`SELECT s.id,s.organization_id,s.name,o.name organization_name FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true ORDER BY o.name,s.name`)
+    platform
+      ? query<Site>(`SELECT s.id,s.organization_id,s.name,o.name organization_name FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true AND ($1::boolean OR s.organization_id=ANY($2::uuid[])) ORDER BY o.name,s.name`,platformScopeParams)
       : session.accessAllSites
         ? query<Site>(`SELECT s.id,s.organization_id,s.name,o.name organization_name FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true AND s.organization_id=$1 ORDER BY s.name`,[session.organizationId])
         : query<Site>(`SELECT s.id,s.organization_id,s.name,o.name organization_name FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.active=true AND s.organization_id=$1 AND s.id=ANY($2::uuid[]) ORDER BY s.name`,[session.organizationId,session.siteIds]),
-    superadmin
+    platform
       ? query<CrewFormWorker>(
           `SELECT u.id,om.organization_id,u.full_name,om.role,supplier.name supplier_name,u.phone,u.email,
                   (u.avatar_data IS NOT NULL) has_avatar,COALESCE(om.access_all_sites,true) access_all_sites,
@@ -103,7 +106,8 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
            FROM organization_members om JOIN users u ON u.id=om.user_id
            LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
            WHERE u.active=true AND om.role IN ('manager','technician','external')
-           ORDER BY om.organization_id,u.full_name`)
+             AND ($1::boolean OR om.organization_id=ANY($2::uuid[]))
+           ORDER BY om.organization_id,u.full_name`,platformScopeParams)
       : query<CrewFormWorker>(
           `SELECT u.id,om.organization_id,u.full_name,om.role,supplier.name supplier_name,u.phone,u.email,
                   (u.avatar_data IS NOT NULL) has_avatar,COALESCE(om.access_all_sites,true) access_all_sites,
@@ -112,14 +116,14 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
            LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
            WHERE u.active=true AND om.organization_id=$1 AND om.role IN ('manager','technician','external')
            ORDER BY u.full_name`,[session.organizationId]),
-    superadmin
-      ? query<CrewMember>(memberSelect+" ORDER BY cm.crew_id,u.full_name")
+    platform
+      ? query<CrewMember>(memberSelect+" WHERE ($1::boolean OR c.organization_id=ANY($2::uuid[])) ORDER BY cm.crew_id,u.full_name",platformScopeParams)
       : session.accessAllSites
         ? query<CrewMember>(memberSelect+" WHERE c.organization_id=$1 ORDER BY cm.crew_id,u.full_name",[session.organizationId])
         : query<CrewMember>(memberSelect+" WHERE c.organization_id=$1 AND (c.site_id IS NULL OR c.site_id=ANY($2::uuid[])) ORDER BY cm.crew_id,u.full_name",[session.organizationId,session.siteIds]),
   ]);
 
-  const creationGate=await getCreationGateForScope("crew",session.organizationId,superadmin);
+  const creationGate=await getCreationGateForScope("crew",session.organizationId,platform);
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="members" ? "Selecciona al menos un integrante válido para la cuadrilla."
     : params.error==="leader" ? "El líder debe ser un integrante activo y autorizado de la misma cuadrilla."
@@ -187,7 +191,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
           organizations={organizations.rows}
           sites={sites.rows}
           workers={workers.rows}
-          fixedOrganizationId={superadmin?undefined:session.organizationId||undefined}
+          fixedOrganizationId={platform?undefined:session.organizationId||undefined}
         />
       </CreateRecordModal>}
     </section>

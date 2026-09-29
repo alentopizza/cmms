@@ -106,7 +106,7 @@ type UserStatisticsSnapshot = {
   upcoming_activities: UserStatisticsActivity[];
 };
 
-type Organization = { id: string; name: string; country: string };
+type Organization = { id: string; name: string; country: string; active: boolean };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
@@ -984,7 +984,7 @@ export default function UserManagement({
               <label htmlFor="managed-user-org">Empresa *</label>
               <select id="managed-user-org" value={draft.organization_id} onChange={event => changeOrganization(event.target.value)}>
                 <option value="">Selecciona una empresa</option>
-                {organizations.map(org => <option value={org.id} key={org.id}>{org.name}</option>)}
+                {organizations.map(org => <option value={org.id} key={org.id} disabled={!org.active}>{org.name}{org.active?"":" · Inactiva"}</option>)}
               </select>
               {errors.organization_id && <small className="field-error-message">{errors.organization_id}</small>}
             </div> : !isPlatformOperator ? <input type="hidden" value={fixedOrganizationId || ""} /> : null}
@@ -1028,7 +1028,11 @@ export default function UserManagement({
                     <span className="site-checkbox-mark">{checked?<UiIcon name="check" size={12}/>:null}</span>
                     <span>
                       <strong>{organization.name}</strong>
-                      <small>{createdBySuperadmin?"Creada por este Superadministrador":checked?"Asignada por Propietario Desweb":"Sin acceso"}</small>
+                      <small>{createdBySuperadmin
+                        ?`Creada por este Superadministrador${organization.active?"":" · Inactiva"}`
+                        :checked
+                          ?`Asignada por Propietario Desweb${organization.active?"":" · Inactiva"}`
+                          :organization.active?"Sin acceso":"Sin acceso · Inactiva"}</small>
                     </span>
                   </label>;
                 })}

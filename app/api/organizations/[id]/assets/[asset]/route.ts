@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -18,7 +19,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; asset: string }> },
 ) {
-  if (!(await isAuthenticated())) return new NextResponse("Unauthorized", { status: 401 });
+  const session=await getSession();
+  if(!session) return new NextResponse("Unauthorized",{status:401});
 
   const { id, asset } = await params;
   const columns = assetMap[asset as keyof typeof assetMap];
@@ -26,6 +28,7 @@ export async function GET(
   if (!UUID_PATTERN.test(id) || !columns) {
     return new NextResponse("Not found", { status: 404 });
   }
+  if(!canAccessOrganization(session,id)) return new NextResponse("Forbidden",{status:403});
 
   const [dataColumn, mimeColumn] = columns;
   const result = await query<AssetRow>(

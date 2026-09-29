@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { publicUrl } from "@/lib/urls";
@@ -23,6 +24,7 @@ export async function POST(request:Request) {
   if(!organizationId||!siteId||!name||!leaderUserId) {
     return NextResponse.redirect(target("?error=members"),303);
   }
+  if(!canAccessOrganization(session,organizationId)) return new NextResponse("Forbidden",{status:403});
 
   // The leader is always part of the Crew even when the visual leader
   // checkbox is disabled and therefore not submitted by the browser.

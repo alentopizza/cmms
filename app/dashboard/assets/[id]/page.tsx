@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { RoutineCreateModal } from "@/components/ContextCreateModals";
 import FileDropzone from "@/components/FileDropzone";
@@ -67,9 +68,8 @@ export default async function AssetDetailPage({
   if(!assetResult.rowCount) notFound();
   const asset=assetResult.rows[0];
 
-  if(session.platformRole==="user"){
-    if(session.organizationId!==asset.organization_id || !canAccessSite(session,asset.site_id)) redirect("/dashboard/assets");
-  }
+  if(!canAccessOrganization(session,asset.organization_id)) redirect("/dashboard/assets");
+  if(session.platformRole==="user"&&!canAccessSite(session,asset.site_id)) redirect("/dashboard/assets");
 
   const canWrite=can(session,"assets.write");
   const [plans,sites,locations,suppliers,categories]=await Promise.all([

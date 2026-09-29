@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -115,6 +116,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
   const requestedPage=safePage(params.page);
   const pageSize=safePageSize(params.pageSize);
   const canWrite=can(session,"inventory.write");
+  const manualMovementIdempotencyKey=randomUUID();
   const orgId=session.organizationId;
   const platform=session.platformRole!=="user";
   const createOrganizationId=platform
@@ -330,6 +332,7 @@ export default async function InventoryKardexPage({searchParams}:{searchParams:P
         <ModuleExportMenu entity="kardex" type={requestedType||undefined}/>
         {canWrite&&createOrganizationId?<CreateRecordModal title="Registrar movimiento" eyebrow="Kardex" description="El saldo se actualizará únicamente después de validar la existencia y las bodegas." triggerLabel="Nuevo movimiento" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/movements">
+          <input type="hidden" name="idempotency_key" value={manualMovementIdempotencyKey}/>
           <input type="hidden" name="organization_context" value={createOrganizationId||""}/>
           <div className="field form-span-2"><label>Artículo *</label><select name="item_id" required><option value="">Selecciona SKU / producto</option>{items.rows.map(item=><option key={item.id} value={item.id}>{item.sku} · {item.name}</option>)}</select></div>
           <div className="field"><label>Movimiento *</label><select name="movement_type" defaultValue={initialMovement} required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución a inventario</option><option value="transfer">Transferencia</option></select><small>Las devoluciones a proveedor se registran únicamente desde la requisición/recepción de origen.</small></div>

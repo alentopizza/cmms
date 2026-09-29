@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { canAccessInventoryItem, canAccessInventoryWarehouse } from "@/lib/inventory-scope";
+import { insertManualInventoryMovement, readManualMovementIdempotencyKey } from "@/lib/inventory-manual-movement";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,8 @@ export async function POST(request:Request){
   if(!session)return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   const form=await request.formData();
+  const idempotencyKey=readManualMovementIdempotencyKey(request,form);
+  if(!idempotencyKey)return new NextResponse("Idempotency-Key UUID required",{status:400});
   const itemId=String(form.get("item_id")||"");
   if(!UUID.test(itemId))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=required",request.url),303);
   const item=await query<{organization_id:string;site_id:string|null;warehouse_id:string|null}>(
@@ -60,13 +63,24 @@ export async function POST(request:Request){
   }
 
   try{
-    await query(
-      `INSERT INTO inventory_transactions(
-        organization_id,item_id,type,quantity,unit_cost,warehouse_id,destination_warehouse_id,document_number,movement_at,
-        created_by,lot_number,expires_at,cost_center,notes
-      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9::timestamptz,now()),$10,$11,$12,$13,$14)`,
-      [row.organization_id,itemId,action.type,quantity*action.sign,unitCost,warehouseId,destinationId||null,document||null,movementAt||null,session.userId||null,lot||null,expires||null,costCenter||null,notes||null],
-    );
+    const result=await insertManualInventoryMovement({
+      organizationId:row.organization_id,
+      itemId,
+      type:action.type,
+      quantity:quantity*action.sign,
+      unitCost,
+      warehouseId,
+      destinationWarehouseId:destinationId||null,
+      documentNumber:document||null,
+      movementAt:movementAt||null,
+      createdBy:session.userId||null,
+      lotNumber:lot||null,
+      expiresAt:expires||null,
+      costCenter:costCenter||null,
+      notes:notes||null,
+      idempotencyKey,
+    });
+    if(result.status==="conflict")return new NextResponse("Idempotency key already used with a different movement payload",{status:409});
   }catch{
     return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=stock"+contextSuffix,request.url),303);
   }

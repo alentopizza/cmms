@@ -37,6 +37,9 @@ jobs:
       - run: node scripts/inventory-kardex-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
+      - run: node scripts/inventory-i2a2-transaction-integrity-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: node scripts/inventory-kardex-server-pagination-smoke.mjs
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms

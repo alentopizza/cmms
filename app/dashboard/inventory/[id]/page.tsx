@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import Link from "next/link";
 import { notFound,redirect } from "next/navigation";
 import { getSession,canAccessSite } from "@/lib/auth";
@@ -70,6 +71,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
                    WHERE t.item_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 200`,[id]),
   ]);
   const canWrite=can(session,"inventory.write");
+  const manualMovementIdempotencyKey=randomUUID();
   const visibleQuantity=limitedSiteScope?stocks.rows.reduce((sum,stock)=>sum+Number(stock.quantity||0),0):Number(item.quantity||0);
   const visiblePrimaryWarehouse=warehouses.rows.find(warehouse=>warehouse.id===item.warehouse_id)||null;
 
@@ -135,6 +137,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
         <div className="section-heading"><div><span className="eyebrow">Bodegas</span><h2>Existencias por almacén</h2></div></div>
         <div className="inventory-stock-location-list">{stocks.rows.map(stock=><article key={stock.warehouse_id}><div><strong>{stock.warehouse}</strong><span>Mín {stock.min_quantity} · Máx {stock.max_quantity}</span></div><b>{stock.quantity} {item.unit}</b></article>)}</div>
         {canWrite&&<form className="form-grid inventory-inline-form" method="post" action={"/api/inventory/"+item.id+"/movement"}>
+          <input type="hidden" name="idempotency_key" value={manualMovementIdempotencyKey}/>
           <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
           <div className="field"><label>Movimiento *</label><select name="movement_type" required><option value="receipt">Entrada</option><option value="issue">Salida</option><option value="adjustment_positive">Ajuste positivo</option><option value="adjustment_negative">Ajuste negativo</option><option value="return">Devolución</option><option value="transfer">Traslado</option></select></div>
           <div className="field"><label>Bodega origen *</label><select name="warehouse_id" defaultValue={visiblePrimaryWarehouse?.id||""} required>{warehouses.rows.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select></div>

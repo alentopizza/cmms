@@ -247,7 +247,10 @@ export type OrganizationCreationHierarchy = CreationHierarchyContext & {
   organizationName: string;
 };
 
-export async function getOrganizationCreationHierarchies(): Promise<OrganizationCreationHierarchy[]> {
+export async function getOrganizationCreationHierarchies(
+  organizationIds?: string[] | null,
+): Promise<OrganizationCreationHierarchy[]> {
+  const restricted=Array.isArray(organizationIds);
   const result = await query<OrganizationCreationHierarchy>(
     `SELECT
       o.id::text "organizationId",
@@ -267,7 +270,9 @@ export async function getOrganizationCreationHierarchies(): Promise<Organization
       (SELECT count(*)::int FROM assets a WHERE a.organization_id=o.id AND a.status<>'retired') assets
     FROM organizations o
     WHERE o.active=true
+      ${restricted?"AND o.id=ANY($1::uuid[])":""}
     ORDER BY o.name`,
+    restricted?[organizationIds]:[],
   );
   return result.rows;
 }
@@ -318,10 +323,11 @@ export async function getCreationGateForScope(
   target: CreationHierarchyTarget,
   organizationId: string | null | undefined,
   platformWide: boolean,
+  platformOrganizationIds?: string[] | null,
 ): Promise<SetupGate> {
   if (platformWide) {
     return creationPrerequisiteAcrossOrganizations(
-      await getOrganizationCreationHierarchies(),
+      await getOrganizationCreationHierarchies(platformOrganizationIds),
       target,
     );
   }

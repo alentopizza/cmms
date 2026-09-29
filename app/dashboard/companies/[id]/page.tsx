@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { canAccessOrganization, canManageOrganizationCommercialControls } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { ContextUserCreateModal, SiteCreateModal } from "@/components/ContextCreateModals";
 import { ORGANIZATION_DOCUMENT_CATEGORIES } from "@/lib/organization-documents";
@@ -150,6 +151,8 @@ export default async function CompanyDetailPage({
 
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   if (!UUID_PATTERN.test(id)) notFound();
+  if (!canAccessOrganization(session,id)) notFound();
+  const canManageCommercial=canManageOrganizationCommercialControls(session);
 
   const [organizationResult, sitesResult, serviceSuppliersResult, documentsResult] = await Promise.all([
     query<Organization>(
@@ -353,7 +356,7 @@ export default async function CompanyDetailPage({
           />
           <div className="field"><label>Correo</label><input name="primary_contact_email" type="email" defaultValue={organization.primary_contact_email || ""} /></div>
 
-          <div className="field"><label>Identificador interno</label><input name="slug" defaultValue={organization.slug} required /></div>
+          {canManageCommercial&&<div className="field"><label>Identificador interno</label><input name="slug" defaultValue={organization.slug} required /></div>}
           <CountryTimezoneSelect id="organization-timezone" name="timezone" countryInputId="organization-legal-country" countryCode={organization.legal_country||"CO"} defaultValue={organization.timezone} />
           <BusinessHoursFields
             days={organization.business_days}
@@ -363,7 +366,7 @@ export default async function CompanyDetailPage({
             title="Horario general de atención"
             description="Este horario define el estado operativo general de la empresa en Reacción."
           />
-          <div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={4} defaultValue={organization.internal_notes || ""} placeholder="Información interna relevante para administración, soporte o relación comercial." /></div>
+          {canManageCommercial&&<div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={4} defaultValue={organization.internal_notes || ""} placeholder="Información interna relevante para administración, soporte o relación comercial." /></div>}
           <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar ficha empresarial</button></div>
         </form>
       </article>
@@ -389,10 +392,12 @@ export default async function CompanyDetailPage({
             <h2>{organization.active ? "Empresa habilitada" : "Empresa deshabilitada"}</h2>
             <p className="muted">{organization.active ? "La organización puede operar normalmente." : "La información se conserva, pero la empresa permanece inactiva."}</p>
           </div>
-          <form method="post" action={`/api/organizations/${organization.id}`}>
-            <input type="hidden" name="intent" value="toggle" />
-            <button className={`button ${organization.active ? "danger-secondary" : ""}`} type="submit">{organization.active ? "Desactivar empresa" : "Activar empresa"}</button>
-          </form>
+          {canManageCommercial
+            ?<form method="post" action={`/api/organizations/${organization.id}`}>
+              <input type="hidden" name="intent" value="toggle" />
+              <button className={`button ${organization.active ? "danger-secondary" : ""}`} type="submit">{organization.active ? "Desactivar empresa" : "Activar empresa"}</button>
+            </form>
+            :<small className="muted">El estado contractual de la empresa lo administra Desweb; tú puedes mantener actualizada toda la ficha operativa de tu organización.</small>}
         </article>
       </aside>
     </section>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
@@ -27,6 +28,10 @@ function uniqueSiteIds(form: FormData) {
   return [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
 }
 
+function uniqueOrganizationIds(form:FormData){
+  return [...new Set(form.getAll("platform_organization_ids").map(value=>String(value)).filter(Boolean))];
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
   let organizationId = String(form.get("organization_id") || "");
   let accessAllSites = String(form.get("access_all_sites") || "true") === "true";
   let siteIds = uniqueSiteIds(form);
+  let platformOrganizationIds=uniqueOrganizationIds(form);
   const creatingSuperadmin = requestedRole === "superadmin";
   const returnTo = String(form.get("return_to") || "");
   let avatar=null;
@@ -67,6 +73,7 @@ export async function POST(request: Request) {
 
   if (session.platformRole === "user") {
     organizationId = session.organizationId || "";
+    platformOrganizationIds=[];
     if (creatingSuperadmin) fields.role = "No tienes permiso para crear un Superadministrador.";
 
     if (accessAllSites && !session.accessAllSites) {
@@ -84,8 +91,17 @@ export async function POST(request: Request) {
     fields.role = "Solo el Propietario Desweb puede crear Superadministradores.";
   }
 
+  if(creatingSuperadmin){
+    if(platformOrganizationIds.some(id=>!UUID.test(id))){
+      fields.platform_organization_ids="Una de las empresas asignadas no es válida.";
+    }
+  }
+
   if (!creatingSuperadmin) {
     if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
+    if (session.platformRole==="superadmin" && UUID.test(organizationId) && !canAccessOrganization(session,organizationId)) {
+      fields.organization_id="Solo puedes crear usuarios dentro de las empresas de tu cartera.";
+    }
     if (!ROLES.has(requestedRole as OrganizationRole)) fields.role = "Selecciona un rol válido.";
     if (requestedRole === "provider" && !UUID.test(externalSupplierId)) fields.external_supplier_id = "Selecciona el proveedor de servicios al que representa.";
     if (requestedRole === "external" && externalSupplierId && !UUID.test(externalSupplierId)) fields.external_supplier_id = "El proveedor seleccionado no es válido.";
@@ -110,7 +126,18 @@ export async function POST(request: Request) {
       return response(request, 409, { fields: { email: "Ya existe una cuenta con este correo electrónico." } }, "?error=email", returnTo);
     }
 
-    if (!creatingSuperadmin) {
+    if (creatingSuperadmin) {
+      if(platformOrganizationIds.length){
+        const validPortfolio=await client.query<{id:string}>(
+          "SELECT id::text id FROM organizations WHERE active=true AND id=ANY($1::uuid[])",
+          [platformOrganizationIds],
+        );
+        if(validPortfolio.rowCount!==platformOrganizationIds.length){
+          await client.query("ROLLBACK");
+          return response(request,422,{fields:{platform_organization_ids:"Todas las empresas asignadas deben existir y estar activas."}},"?error=scope",returnTo);
+        }
+      }
+    } else {
       const organization = await client.query("SELECT 1 FROM organizations WHERE id=$1 AND active=true", [organizationId]);
       if (!organization.rowCount) {
         await client.query("ROLLBACK");
@@ -193,6 +220,16 @@ export async function POST(request: Request) {
             [organizationId, user.rows[0].id, siteId],
           );
         }
+      }
+    } else {
+      for(const assignedOrganizationId of platformOrganizationIds){
+        await client.query(
+          `INSERT INTO platform_organization_access(user_id,organization_id,access_source,granted_by_user_id,granted_by_email)
+           VALUES($1,$2,'assigned',$3,$4)
+           ON CONFLICT(user_id,organization_id) DO UPDATE
+           SET access_source='assigned',granted_by_user_id=EXCLUDED.granted_by_user_id,granted_by_email=EXCLUDED.granted_by_email`,
+          [user.rows[0].id,assignedOrganizationId,session.userId,session.email],
+        );
       }
     }
 

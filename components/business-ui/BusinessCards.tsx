@@ -121,9 +121,59 @@ export function MaintenanceCard({
 
 export function WorkOrderCard({
   id,number,title,asset,company,priority,status,actions,recordProps,
+  variant="compact",site,type,description,createdAt,dueAt,assignedTo,
 }:{
   id:string;number:string;title:string;asset:string;company:string;priority:string;status:string;actions?:ReactNode;recordProps?:RecordProps;
+  variant?:"compact"|"dashboard";site?:string;type?:string;description?:string;createdAt?:string;dueAt?:string;assignedTo?:string;
 }){
+  if(variant==="dashboard"){
+    return <BusinessCardShell domain="work-order" className="work-order-grid-card-v2" recordProps={recordProps}>
+      <header className="work-order-grid-card-head">
+        <div className="work-order-grid-card-identity">
+          <span className="work-order-grid-card-icon" aria-hidden="true"><UiIcon name="work-order" size={20}/></span>
+          <div className="work-order-grid-card-heading">
+            <div className="work-order-grid-card-number"><strong>OT #{number}</strong><WorkOrderStatusBadge status={status}/></div>
+            <p>{title}</p>
+          </div>
+        </div>
+        <div className="work-order-grid-card-priority">
+          <span>Prioridad</span>
+          <div>
+            <PriorityBadge priority={priority}/>
+            <details className="work-order-grid-more">
+              <summary title="Más opciones" aria-label={"Más opciones de OT #"+number}><UiIcon name="more" size={18}/></summary>
+              <div><Link href={"/dashboard/work-orders/"+id}><UiIcon name="eye" size={14}/>Abrir detalle</Link></div>
+            </details>
+          </div>
+        </div>
+      </header>
+
+      <div className="work-order-grid-facts">
+        <div><span className="work-order-grid-fact-icon"><UiIcon name="company" size={17}/></span><div><small>Empresa</small><strong>{company}</strong></div></div>
+        <div><span className="work-order-grid-fact-icon"><UiIcon name="location" size={17}/></span><div><small>Ubicación</small><strong>{site||"No asignado"}</strong></div></div>
+        <div><span className="work-order-grid-fact-icon"><UiIcon name="asset" size={17}/></span><div><small>Activo / Equipo</small><strong>{asset||"No asignado"}</strong></div></div>
+        <div><span className="work-order-grid-fact-icon"><UiIcon name="maintenance" size={17}/></span><div><small>Tipo de trabajo</small><strong>{type||"No especificado"}</strong></div></div>
+      </div>
+
+      <div className="work-order-grid-description">
+        <span className="work-order-grid-description-marker" aria-hidden="true"/>
+        <span className="work-order-grid-description-icon" aria-hidden="true"><UiIcon name="work-order" size={16}/></span>
+        <div><small>Descripción</small><p>{description||"No especificado"}</p></div>
+      </div>
+
+      <div className="work-order-grid-dates">
+        <div><span className="work-order-grid-meta-icon"><UiIcon name="calendar" size={17}/></span><div><small>Fecha creación</small><strong>{createdAt||"Sin fecha"}</strong></div></div>
+        <div className={dueAt==="Sin fecha"?"is-empty":""}><span className="work-order-grid-meta-icon"><UiIcon name="clock" size={17}/></span><div><small>Fecha requerida</small><strong>{dueAt||"Sin fecha"}</strong></div></div>
+        <div><span className="work-order-grid-meta-icon"><UiIcon name="user" size={17}/></span><div><small>Asignado a</small><strong>{assignedTo||"Sin asignar"}</strong></div></div>
+      </div>
+
+      <footer className={"work-order-grid-actions"+(actions?" has-owner-actions":"")}>
+        <Link className="work-order-grid-action-primary" href={"/dashboard/work-orders/"+id}><UiIcon name="eye" size={16}/><span>Ver actividades</span></Link>
+        {actions}
+      </footer>
+    </BusinessCardShell>;
+  }
+
   return <BusinessCardShell domain="work-order" className="work-order-mobile-card" recordProps={recordProps}>
     <Link href={"/dashboard/work-orders/"+id} className="work-order-mobile-main ds-business-mobile-main">
       <div className="work-order-mobile-icon ds-business-icon" aria-hidden="true"><UiIcon name="work-order" size={20}/></div>

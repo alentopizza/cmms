@@ -9,6 +9,7 @@ import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHead
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import CreateRecordModal from "@/components/CreateRecordModal";
+import { WorkOrderCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
@@ -340,64 +341,32 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
               {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
             ]},
           ];
-          return <article
-            className="work-order-grid-card-v2"
+          return <WorkOrderCard
             key={w.id}
-            data-module-record
-            data-status={w.status}
-            data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}
-            data-filter-organization={w.organization_id}
-            data-filter-organization-label={w.company}
-            data-filter-site={w.site_id}
-            data-filter-site-label={w.site}
-            data-filter-priority={w.priority}
-            data-filter-priority-label={w.priority}
-            data-filter-type={w.type}
-            data-filter-type-label={w.type}
-          >
-            <header className="work-order-grid-card-head">
-              <div className="work-order-grid-card-identity">
-                <span className="work-order-grid-card-icon" aria-hidden="true"><UiIcon name="work-order" size={20}/></span>
-                <div className="work-order-grid-card-heading">
-                  <div className="work-order-grid-card-number"><strong>OT #{w.number}</strong><WorkOrderStatusBadge status={w.status}/></div>
-                  <p>{w.title}</p>
-                </div>
-              </div>
-              <div className="work-order-grid-card-priority">
-                <span>Prioridad</span>
-                <div><PriorityBadge priority={w.priority}/>
-                  <details className="work-order-grid-more">
-                    <summary title="Más opciones" aria-label={"Más opciones de OT #"+w.number}><UiIcon name="more" size={18}/></summary>
-                    <div><Link href={"/dashboard/work-orders/"+w.id}><UiIcon name="eye" size={14}/>Abrir detalle</Link></div>
-                  </details>
-                </div>
-              </div>
-            </header>
-
-            <div className="work-order-grid-facts">
-              <div><span className="work-order-grid-fact-icon"><UiIcon name="company" size={17}/></span><div><small>Empresa</small><strong>{w.company}</strong></div></div>
-              <div><span className="work-order-grid-fact-icon"><UiIcon name="location" size={17}/></span><div><small>Ubicación</small><strong>{w.site}</strong></div></div>
-              <div><span className="work-order-grid-fact-icon"><UiIcon name="asset" size={17}/></span><div><small>Activo / Equipo</small><strong>{assetLabel}</strong></div></div>
-              <div><span className="work-order-grid-fact-icon"><UiIcon name="maintenance" size={17}/></span><div><small>Tipo de trabajo</small><strong>{typeLabel}</strong></div></div>
-            </div>
-
-            <div className="work-order-grid-description">
-              <span className="work-order-grid-description-marker" aria-hidden="true"/>
-              <span className="work-order-grid-description-icon" aria-hidden="true"><UiIcon name="work-order" size={16}/></span>
-              <div><small>Descripción</small><p>{description}</p></div>
-            </div>
-
-            <div className="work-order-grid-dates">
-              <div><span className="work-order-grid-meta-icon"><UiIcon name="calendar" size={17}/></span><div><small>Fecha creación</small><strong>{createdAt}</strong></div></div>
-              <div className={!w.due_at?"is-empty":""}><span className="work-order-grid-meta-icon"><UiIcon name="clock" size={17}/></span><div><small>Fecha requerida</small><strong>{dueAt}</strong></div></div>
-              <div><span className="work-order-grid-meta-icon"><UiIcon name="user" size={17}/></span><div><small>Asignado a</small><strong>{assignedTo}</strong></div></div>
-            </div>
-
-            <footer className={"work-order-grid-actions"+(owner?" has-owner-actions":"")}>
-              <Link className="work-order-grid-action-primary" href={"/dashboard/work-orders/"+w.id}><UiIcon name="eye" size={16}/><span>Ver actividades</span></Link>
-              {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFields} compact className="work-order-grid-owner-actions"/>}
-            </footer>
-          </article>;
+            variant="dashboard"
+            id={w.id}
+            number={w.number}
+            title={w.title}
+            asset={assetLabel}
+            company={w.company}
+            site={w.site}
+            type={typeLabel}
+            description={description}
+            priority={w.priority}
+            status={w.status}
+            createdAt={createdAt}
+            dueAt={dueAt}
+            assignedTo={assignedTo}
+            recordProps={{
+              "data-module-record":true,"data-status":w.status,
+              "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" "),
+              "data-filter-organization":w.organization_id,"data-filter-organization-label":w.company,
+              "data-filter-site":w.site_id,"data-filter-site-label":w.site,
+              "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,
+              "data-filter-type":w.type,"data-filter-type-label":w.type,
+            }}
+            actions={owner?<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFields} compact className="work-order-grid-owner-actions"/>:undefined}
+          />;
         })}
       </div>} list={<StaticDataTable
         className="work-order-directory-table"

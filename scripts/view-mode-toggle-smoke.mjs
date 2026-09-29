@@ -123,11 +123,18 @@ for(const marker of ["<StaticDataTable","Listado de ubicaciones","EntityIdentity
 
 const workOrderPage=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
 for(const marker of [
-  "work-order-dashboard-grid","work-order-grid-toolbar","work-order-grid-card-v2","work-order-grid-facts",
-  "Fecha creación","Fecha requerida","Asignado a","Ver actividades","WORK_ORDER_TYPE_LABELS",
-  "w.description","w.due_at","assigned_to_label","compact className=\"work-order-grid-owner-actions\"",
+  "work-order-dashboard-grid","work-order-grid-toolbar","<WorkOrderCard","variant=\"dashboard\"",
+  "WORK_ORDER_TYPE_LABELS","w.description","w.due_at","assigned_to_label",
+  "compact className=\"work-order-grid-owner-actions\"",
 ]){
-  if(!workOrderPage.includes(marker))throw new Error("Work Orders dashboard grid contract missing "+marker);
+  if(!workOrderPage.includes(marker))throw new Error("Work Orders dashboard grid orchestration missing "+marker);
+}
+const businessCards=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
+for(const marker of [
+  'variant?:"compact"|"dashboard"',"work-order-grid-card-v2","work-order-grid-facts",
+  "Fecha creación","Fecha requerida","Asignado a","Ver actividades","work-order-grid-more",
+]){
+  if(!businessCards.includes(marker))throw new Error("WorkOrderCard dashboard variant missing "+marker);
 }
 for(const marker of [
   'list={<StaticDataTable','className="work-order-directory-table"','caption="Órdenes de trabajo visibles"',

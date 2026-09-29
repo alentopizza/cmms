@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { hashPassword } from "@/lib/passwords";
 import { pool } from "@/lib/db";
 import { can, isPlatformOwner, type OrganizationRole, type PlatformRole } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import { forceDeleteRecord } from "@/lib/platform-owner-purge";
 import { readImageUpload, imageUploadMessage } from "@/lib/image-upload";
@@ -103,9 +104,15 @@ export async function POST(
       await client.query("ROLLBACK");
       return json(403, { message: "La cuenta Propietario Desweb está protegida y no se modifica desde el directorio de usuarios." });
     }
-    if (session.platformRole === "superadmin" && target.platform_role !== "user") {
-      await client.query("ROLLBACK");
-      return json(403, { message: "Un Superadministrador no puede modificar otras cuentas de plataforma." });
+    if (session.platformRole === "superadmin") {
+      if (target.platform_role !== "user") {
+        await client.query("ROLLBACK");
+        return json(403, { message: "Un Superadministrador no puede modificar otras cuentas de plataforma." });
+      }
+      if (!target.organization_id || !canAccessOrganization(session,target.organization_id)) {
+        await client.query("ROLLBACK");
+        return json(403, { message: "Solo puedes administrar usuarios de las empresas de tu cartera." });
+      }
     }
 
     if (intent === "activate" || intent === "deactivate") {
@@ -158,11 +165,15 @@ export async function POST(
     const organizationId = String(form.get("organization_id") || "");
     let accessAllSites = String(form.get("access_all_sites") || "true") === "true";
     let siteIds = [...new Set(form.getAll("site_ids").map(value => String(value)).filter(Boolean))];
+    let platformOrganizationIds=[...new Set(form.getAll("platform_organization_ids").map(value=>String(value)).filter(Boolean))];
     const makingSuperadmin = requestedRole === "superadmin";
     const fields: FieldErrors = {};
 
-    if (session.platformRole === "user" && organizationId !== session.organizationId) {
-      fields.organization_id = "No puedes mover usuarios fuera de tu empresa.";
+    if (session.platformRole === "user") {
+      platformOrganizationIds=[];
+      if (organizationId !== session.organizationId) {
+        fields.organization_id = "No puedes mover usuarios fuera de tu empresa.";
+      }
     }
     let avatar=null;
     try { avatar=await readImageUpload(form,"avatar"); }
@@ -170,6 +181,9 @@ export async function POST(
 
     if (makingSuperadmin && !isPlatformOwner(session)) {
       fields.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
+    }
+    if (makingSuperadmin && platformOrganizationIds.some(organizationId=>!UUID.test(organizationId))) {
+      fields.platform_organization_ids="Una de las empresas asignadas no es válida.";
     }
 
     if (!fullName) fields.full_name = "Ingresa el nombre completo.";
@@ -184,6 +198,9 @@ export async function POST(
 
     if (!makingSuperadmin) {
       if (!UUID.test(organizationId)) fields.organization_id = "Selecciona una empresa.";
+      if (session.platformRole==="superadmin" && UUID.test(organizationId) && !canAccessOrganization(session,organizationId)) {
+        fields.organization_id="Solo puedes mover usuarios dentro de las empresas de tu cartera.";
+      }
       if (!ROLES.has(requestedRole as OrganizationRole)) fields.role = "Selecciona un rol válido.";
       if (requestedRole === "provider" && !UUID.test(externalSupplierId)) fields.external_supplier_id = "Selecciona el proveedor de servicios al que representa.";
       if (requestedRole === "external" && externalSupplierId && !UUID.test(externalSupplierId)) fields.external_supplier_id = "El proveedor seleccionado no es válido.";
@@ -243,7 +260,18 @@ export async function POST(
       }
     }
 
-    if (!makingSuperadmin) {
+    if (makingSuperadmin) {
+      if(platformOrganizationIds.length){
+        const validPortfolio=await client.query<{id:string}>(
+          "SELECT id::text id FROM organizations WHERE active=true AND id=ANY($1::uuid[])",
+          [platformOrganizationIds],
+        );
+        if(validPortfolio.rowCount!==platformOrganizationIds.length){
+          await client.query("ROLLBACK");
+          return json(422,{fields:{platform_organization_ids:"Todas las empresas asignadas deben existir y estar activas."}});
+        }
+      }
+    } else {
       const organization = await client.query("SELECT 1 FROM organizations WHERE id=$1 AND active=true", [organizationId]);
       if (!organization.rowCount) {
         await client.query("ROLLBACK");
@@ -310,7 +338,16 @@ export async function POST(
 
     if (makingSuperadmin) {
       await client.query("DELETE FROM organization_members WHERE user_id=$1", [id]);
+      await client.query("DELETE FROM platform_organization_access WHERE user_id=$1",[id]);
+      for(const assignedOrganizationId of platformOrganizationIds){
+        await client.query(
+          `INSERT INTO platform_organization_access(user_id,organization_id,access_source,granted_by_user_id,granted_by_email)
+           VALUES($1,$2,'assigned',$3,$4)`,
+          [id,assignedOrganizationId,session.userId,session.email],
+        );
+      }
     } else {
+      await client.query("DELETE FROM platform_organization_access WHERE user_id=$1",[id]);
       await client.query(
         `INSERT INTO organization_members(organization_id,user_id,role,site_id,access_all_sites,external_supplier_id)
          VALUES($1,$2,$3,NULL,$4,$5)

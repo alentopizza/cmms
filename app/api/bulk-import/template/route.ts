@@ -6,6 +6,8 @@ import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type Named={id:string;name:string};
 type Site={id:string;name:string};
 type Location={id:string;name:string;site_name:string};
@@ -53,11 +55,15 @@ export async function GET(request:Request){
   const url=new URL(request.url);
   const entity=url.searchParams.get("entity")==="assets"?"assets":"inventory";
   const contextSupplierId=url.searchParams.get("supplier")||"";
+  const requestedOrganization=url.searchParams.get("organization")||"";
   const dataMode=url.searchParams.get("data")==="current"?"current":"blank";
   if(entity==="inventory"&&!can(session,"inventory.write"))return new NextResponse("Forbidden",{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return new NextResponse("Forbidden",{status:403});
 
-  let organizationId=session.organizationId;
+  let organizationId=session.platformRole==="user"
+    ?session.organizationId
+    :UUID.test(requestedOrganization)?requestedOrganization:null;
+  if(organizationId&&!canAccessOrganization(session,organizationId))return new NextResponse("Forbidden",{status:403});
   let contextSupplier:Supplier|null=null;
   if(contextSupplierId){
     const scoped=await query<Supplier&{organization_id:string}>(
@@ -66,6 +72,7 @@ export async function GET(request:Request){
     );
     if(!scoped.rowCount)return new NextResponse("Proveedor no disponible para esta plantilla.",{status:400});
     if(!canAccessOrganization(session,scoped.rows[0].organization_id))return new NextResponse("Forbidden",{status:403});
+    if(organizationId&&organizationId!==scoped.rows[0].organization_id)return new NextResponse("El proveedor no pertenece a la empresa seleccionada.",{status:422});
     organizationId=scoped.rows[0].organization_id;
     contextSupplier=scoped.rows[0];
   }

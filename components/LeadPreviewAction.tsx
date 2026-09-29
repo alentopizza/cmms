@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import UiIcon from "@/components/UiIcon";
 import { Avatar } from "@/components/ui-kit/Avatar";
 import { Drawer } from "@/components/ui-kit/Overlay";
@@ -13,14 +13,24 @@ function initials(value:string){
 }
 
 export default function LeadPreviewAction({
-  name,company,email,phone,country,interest,message,status,statusLabel,createdAt,updatedAt,sourceLabel,manageActions,followupControls,
+  name,company,email,phone,country,interest,message,status,statusLabel,createdAt,updatedAt,sourceLabel,manageActions,followupControls,reopenKey,
 }:{
   name:string;company:string;email:string;phone:string|null;country:string;interest:string;message:string|null;
   status:LeadStatus;statusLabel:string;createdAt:string;updatedAt:string;sourceLabel:string;
-  manageActions?:ReactNode;followupControls?:ReactNode;
+  manageActions?:ReactNode;followupControls?:ReactNode;reopenKey?:string;
 }){
   const [open,setOpen]=useState(false);
   const [tab,setTab]=useState<DetailTab>("general");
+
+  useEffect(()=>{
+    if(!reopenKey)return;
+    try{
+      if(window.sessionStorage.getItem("cmms:record-detail-reopen")===reopenKey){
+        window.sessionStorage.removeItem("cmms:record-detail-reopen");
+        setOpen(true);
+      }
+    }catch{}
+  },[reopenKey]);
 
   return <>
     <button className="ds-list-action lead-action-button" type="button" onClick={()=>setOpen(true)} title="Ver Lead" data-tooltip="Ver Lead" aria-label={"Ver "+name}><UiIcon name="eye" size={15}/></button>
@@ -39,6 +49,7 @@ export default function LeadPreviewAction({
         <button type="button" role="tab" aria-selected={tab==="followup"} className={tab==="followup"?"active":""} onClick={()=>setTab("followup")}><UiIcon name="activity" size={15}/>Seguimiento</button>
       </div>
 
+      <div className="lead-detail-scroll">
       {tab==="general"?<div className="lead-detail-layout">
         <div className="lead-detail-column">
           <section className="lead-detail-card">
@@ -90,6 +101,7 @@ export default function LeadPreviewAction({
           <p className="lead-detail-note">El sistema no conserva todavía un historial de eventos separado para este Lead; se muestran únicamente las marcas de tiempo disponibles en el registro.</p>
         </section>
       </div>}
+      </div>
     </Drawer>
   </>;
 }

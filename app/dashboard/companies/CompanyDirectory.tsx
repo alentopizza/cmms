@@ -138,6 +138,7 @@ export default function CompanyDirectory({
   canManageResources,
   canManageLocations,
   canManageUsers,
+  canManageCommercial,
   canDelete,
   initialCompanyId,
   initialTab,
@@ -151,6 +152,7 @@ export default function CompanyDirectory({
   canManageResources: boolean;
   canManageLocations: boolean;
   canManageUsers: boolean;
+  canManageCommercial: boolean;
   canDelete: boolean;
   initialCompanyId?: string;
   initialTab?: string;
@@ -512,9 +514,9 @@ export default function CompanyDirectory({
                 <div className="field"><label>Cargo</label><input name="primary_contact_title" defaultValue={selected.primary_contact_title||""}/></div>
                 <PhoneField name="primary_contact_phone" label="Teléfono del contacto" countryCode={selected.legal_country||"CO"} countryInputId="directory-company-country" defaultValue={selected.primary_contact_phone}/>
                 <div className="field"><label>Correo del contacto</label><input type="email" name="primary_contact_email" defaultValue={selected.primary_contact_email||""}/></div>
-                <div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>
+                {canManageCommercial&&<div className="field"><label>Identificador</label><input name="slug" defaultValue={selected.slug} required/></div>}
                 <CountryTimezoneSelect id="directory-company-timezone" name="timezone" countryInputId="directory-company-country" countryCode={selected.legal_country||"CO"} defaultValue={selected.timezone} />
-                <div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={3} defaultValue={selected.internal_notes||""} placeholder="Información administrativa o comercial relevante."/></div>
+                {canManageCommercial&&<div className="field form-span-2"><label>Notas internas</label><textarea name="internal_notes" rows={3} defaultValue={selected.internal_notes||""} placeholder="Información administrativa o comercial relevante."/></div>}
                 <BusinessHoursFields
                   days={selected.business_days}
                   openTime={selected.business_open_time}

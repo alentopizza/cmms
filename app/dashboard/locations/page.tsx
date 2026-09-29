@@ -25,7 +25,7 @@ export default async function LocationsIndexPage({
   const params = await searchParams;
   const platformOperator = session.platformRole !== "user";
   const scope=organizationScopeFor(session);
-  const scopeParams=[scope.unrestricted,scope.organizationIds] as const;
+  const scopeParams:unknown[]=[scope.unrestricted,scope.organizationIds];
   const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, platformOperator);
   const sites = platformOperator
     ? await query<SiteRow>(

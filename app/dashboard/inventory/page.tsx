@@ -23,6 +23,7 @@ import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 import { inventoryItemSqlScope } from "@/lib/inventory-scope";
+import { canAccessOrganization } from "@/lib/organization-scope";
 
 type Item={
   id:string;organization_id:string;site_id:string|null;location_id:string|null;supplier_id:string|null;category_id:string|null;warehouse_id:string|null;
@@ -97,7 +98,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   if(!session) redirect("/login");
   if(!can(session,"inventory.read")) redirect("/dashboard");
   const params=await searchParams;
-  const superadmin=session.platformRole!=="user";
+  const platform=session.platformRole!=="user";
   const orgId=session.organizationId;
   const canWrite=can(session,"inventory.write");
   const canCreateRequisitions=can(session,"requisitions.write");
@@ -105,6 +106,9 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const q=safeText(params.q);
   const stockStatus=INVENTORY_STOCK_FILTERS.has(params.status||"")?String(params.status):"all";
   const organization=safeUuid(params.organization);
+  const createOrganizationId=platform
+    ?organization&&canAccessOrganization(session,organization)?organization:null
+    :orgId;
   const site=safeUuid(params.site);
   const category=safeUuid(params.category);
   const supplier=safeUuid(params.supplier);
@@ -221,54 +225,62 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     scopeParams,
   );
 
-  const sitesPromise=canWrite&&orgId
-    ?session.accessAllSites
-      ?query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-      :query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+  const sitesPromise=canWrite&&createOrganizationId
+    ?platform||session.accessAllSites
+      ?query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true ORDER BY name",[createOrganizationId])
+      :query<Site>("SELECT id,name label FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Site[]});
-  const locationsPromise=canWrite&&orgId
-    ?session.accessAllSites
-      ?query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[orgId])
-      :query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[orgId,session.siteIds])
+  const locationsPromise=canWrite&&createOrganizationId
+    ?platform||session.accessAllSites
+      ?query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true ORDER BY s.name,l.name",[createOrganizationId])
+      :query<Location>("SELECT l.id,s.name||' · '||l.name label FROM locations l JOIN sites s ON s.id=l.site_id WHERE l.organization_id=$1 AND l.active=true AND l.site_id=ANY($2::uuid[]) ORDER BY s.name,l.name",[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Location[]});
-  const suppliersPromise=canWrite&&orgId
-    ?query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[orgId])
+  const suppliersPromise=canWrite&&createOrganizationId
+    ?query<Supplier>("SELECT id,name,supplier_type FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('materials','both') ORDER BY name",[createOrganizationId])
     :Promise.resolve({rows:[]} as {rows:Supplier[]});
-  const categoriesPromise=orgId
-    ?query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
+  const categoriesPromise=createOrganizationId
+    ?query<Category>("SELECT id,name FROM inventory_categories WHERE organization_id=$1 AND active=true ORDER BY name",[createOrganizationId])
     :Promise.resolve({rows:[]} as {rows:Category[]});
-  const warehousesPromise=orgId
-    ?session.accessAllSites
-      ?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[orgId])
-      :query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[orgId,session.siteIds])
+  const warehousesPromise=createOrganizationId
+    ?platform||session.accessAllSites
+      ?query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true ORDER BY name",[createOrganizationId])
+      :query<Warehouse>("SELECT id,name,site_id,location_id FROM inventory_warehouses WHERE organization_id=$1 AND active=true AND site_id=ANY($2::uuid[]) ORDER BY name",[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Warehouse[]});
-  const movementsPromise=orgId
-    ?session.accessAllSites
+  const movementsPromise=createOrganizationId
+    ?platform||session.accessAllSites
       ?query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
                          FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
                          LEFT JOIN inventory_warehouses w ON w.id=t.warehouse_id LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
-                         WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId])
+                         WHERE t.organization_id=$1 ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[createOrganizationId])
       :query<Movement>(`SELECT t.id,t.type,t.quantity::text,i.sku,i.name,w.name warehouse,d.name destination,t.movement_at::text,t.document_number
                          FROM inventory_transactions t JOIN inventory_items i ON i.id=t.item_id
                          JOIN inventory_warehouses w ON w.id=t.warehouse_id
                          LEFT JOIN inventory_warehouses d ON d.id=t.destination_warehouse_id
                          WHERE t.organization_id=$1 AND w.site_id=ANY($2::uuid[])
                            AND (d.id IS NULL OR d.site_id=ANY($2::uuid[]))
-                         ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[orgId,session.siteIds])
+                         ORDER BY t.movement_at DESC,t.created_at DESC LIMIT 10`,[createOrganizationId,session.siteIds])
     :Promise.resolve({rows:[]} as {rows:Movement[]});
-  const requisitionItemsPromise=canCreateRequisitions
+  const requisitionScopeParams=[...scopeParams];
+  let requisitionOrganizationCondition="";
+  if(createOrganizationId){
+    requisitionScopeParams.push(createOrganizationId);
+    requisitionOrganizationCondition=" AND organization_id=$"+requisitionScopeParams.length+"::uuid";
+  }
+  const requisitionItemsPromise=canCreateRequisitions&&(!platform||Boolean(createOrganizationId))
     ?query<Item>(
       `WITH scoped AS (${scopedSql})
        SELECT id,organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,supplier_type,sku,name,description,presentation,
               company,site,location,category,warehouse,supplier,quantity::text,min_quantity::text,max_quantity::text,unit,unit_cost::text,
               storage_location,has_image,active
        FROM scoped
-       WHERE active=true AND supplier_id IS NOT NULL AND supplier_type IN ('materials','both')
+       WHERE active=true AND supplier_id IS NOT NULL AND supplier_type IN ('materials','both')${requisitionOrganizationCondition}
        ORDER BY name,id`,
-      scopeParams,
+      requisitionScopeParams,
     )
     :Promise.resolve({rows:[]} as {rows:Item[]});
-  const creationGatePromise=getCreationGateForScope("inventory",session.organizationId,superadmin);
+  const creationGatePromise=createOrganizationId
+    ?getCreationGateForScope("inventory",createOrganizationId,false)
+    :getCreationGateForScope("inventory",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
 
   const [summaryResult,facetsResult,sites,locations,suppliers,categories,warehouses,movements,requisitionItems,creationGate]=await Promise.all([
     summaryPromise,facetsPromise,sitesPromise,locationsPromise,suppliersPromise,categoriesPromise,warehousesPromise,movementsPromise,requisitionItemsPromise,creationGatePromise,
@@ -376,10 +388,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         pageParam:"page",
       }}
       action={<div className="module-header-action-group">
-        {canWrite&&orgId&&<BulkImportModal entity="inventory"/>}
+        {canWrite&&createOrganizationId&&<BulkImportModal entity="inventory" organizationId={createOrganizationId}/>}
         <ModuleExportMenu entity="inventory"/>
         {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
-        {canWrite && creationGate.ready && orgId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" iconName="inventory">
+        {canWrite && creationGate.ready && createOrganizationId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" iconName="inventory">
           <form className="form-grid unified-popup-form" method="post" action="/api/inventory" encType="multipart/form-data">
             <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
             <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
@@ -403,6 +415,8 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     />
     <InventorySubnav active="summary"/>
 
+    {platform&&canWrite&&!createOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa">Usa el filtro Empresa para definir el contexto antes de crear productos, importar archivos, revisar movimientos recientes o generar requisiciones. Solo aparecen empresas de tu alcance autorizado.</Alert></div>}
+
     {(params.created||params.updated||params.movement||params.requisition_created)&&<div className="section phase7-feedback-stack">
       {params.created&&<Alert variant="success" title="Producto creado">Artículo creado y existencia inicial registrada en Kardex.</Alert>}
       {params.updated&&<Alert variant="success" title="Producto actualizado">Artículo actualizado correctamente.</Alert>}
@@ -411,7 +425,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     </div>}
     {error&&<div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
-    {canWrite && !creationGate.ready && <CreationPrerequisiteState
+    {canWrite && createOrganizationId && !creationGate.ready && <CreationPrerequisiteState
       icon="inventory" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message}
       href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}
     />}

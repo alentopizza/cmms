@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -37,7 +38,7 @@ export async function POST(request:Request){
       await client.query("ROLLBACK");
       return new NextResponse("Empresa no encontrada",{status:404});
     }
-    if(session.platformRole==="user"&&session.organizationId!==organizationId){
+    if(!canAccessOrganization(session,organizationId)){
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden",{status:403});
     }

@@ -60,20 +60,21 @@ export function Modal({
 }
 
 export function Drawer({
-  open,onClose,title,description,children,footer,side="right",
+  open,onClose,title,description,children,footer,side="right",className="",headerClassName="",bodyClassName="",headerActions,
 }:{
   open:boolean;onClose:()=>void;title:string;description?:string;children?:ReactNode;footer?:ReactNode;side?:"left"|"right";
+  className?:string;headerClassName?:string;bodyClassName?:string;headerActions?:ReactNode;
 }){
   const titleId=useId(),descriptionId=useId();
   const ref=useOverlay(open,onClose);
   if(!open||typeof document==="undefined")return null;
   return createPortal(<div className="ds-overlay-backdrop ds-drawer-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <aside ref={ref} className={["ds-drawer","ds-drawer-"+side].join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
-      <header className="ds-overlay-header">
+    <aside ref={ref} className={["ds-drawer","ds-drawer-"+side,className].filter(Boolean).join(" ")} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined}>
+      <header className={["ds-overlay-header",headerClassName].filter(Boolean).join(" ")}>
         <div><h2 id={titleId}>{title}</h2>{description&&<p id={descriptionId}>{description}</p>}</div>
-        <IconButton icon="x" label="Cerrar" variant="ghost" onClick={onClose}/>
+        <div className="ds-overlay-header-actions">{headerActions}<IconButton icon="x" label="Cerrar" variant="ghost" onClick={onClose}/></div>
       </header>
-      {children&&<div className="ds-overlay-body">{children}</div>}
+      {children&&<div className={["ds-overlay-body",bodyClassName].filter(Boolean).join(" ")}>{children}</div>}
       {footer&&<footer className="ds-overlay-footer">{footer}</footer>}
     </aside>
   </div>,document.body);

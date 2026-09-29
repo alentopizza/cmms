@@ -88,8 +88,13 @@ for(const marker of [".leads-directory-grid","grid-template-columns:repeat(3,min
   if(!leadsCss.includes(marker))throw new Error("Leads CRM responsive styling missing "+marker);
 }
 const leadPreview=fs.readFileSync("components/LeadPreviewAction.tsx","utf8");
-for(const marker of ["<Modal","<Avatar initials=",'name="eye"',"Información registrada en el Lead."]){
-  if(!leadPreview.includes(marker))throw new Error("Leads preview action missing "+marker);
+for(const marker of ["<Drawer","lead-detail-drawer","<Avatar initials=",'name="eye"',"Información general","Seguimiento"]){
+  if(!leadPreview.includes(marker))throw new Error("Leads detail drawer missing "+marker);
+}
+if(leadPreview.includes("Adjuntar archivo")||leadPreview.includes("Agregar nota"))throw new Error("Lead detail must not invent notes/files features without persisted support");
+const overlay=fs.readFileSync("components/ui-kit/Overlay.tsx","utf8");
+for(const marker of ["headerActions?:ReactNode","className?:string","bodyClassName?:string","ds-overlay-header-actions"]){
+  if(!overlay.includes(marker))throw new Error("Shared Drawer extension missing "+marker);
 }
 
 const crews=fs.readFileSync("components/CrewDirectory.tsx","utf8");

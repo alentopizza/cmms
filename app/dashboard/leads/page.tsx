@@ -142,7 +142,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           const interest=INTEREST_LABELS[lead.interest]||lead.interest;
           const statusLabel=STATUS_LABELS[lead.status];
           const createdAt=formatLeadDate(lead.created_at);
-          const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt}/>;
+          const updatedAt=formatLeadDate(lead.updated_at);
           const editFields=[
             {name:"full_name",label:"Nombre",value:lead.full_name},
             {name:"company_name",label:"Empresa",value:lead.company_name},
@@ -153,6 +153,12 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
             ]},
           ];
+          const drawerFollowup=<form className="lead-status-form lead-detail-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
+            <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+            <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
+          </form>;
+          const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions"/>:undefined;
+          const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup}/>;
           return <article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")}>
             <header className="lead-card-head">
               <div className="lead-card-identity">
@@ -181,7 +187,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
                 </label>
                 <button className="ds-list-action primary" type="submit" title="Actualizar seguimiento" data-tooltip="Actualizar seguimiento" aria-label={"Actualizar seguimiento de "+lead.full_name}><UiIcon name="check" size={15}/></button>
               </form>
-              {owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-card-actions">{preview}</OwnerRecordActions>:<div className="lead-card-actions">{preview}</div>}
+              <div className="lead-card-actions">{preview}{owner&&<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact/>}</div>
             </footer>
           </article>;
         })}</div>} list={<StaticDataTable
@@ -203,7 +209,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
             const interest=INTEREST_LABELS[lead.interest]||lead.interest;
             const statusLabel=STATUS_LABELS[lead.status];
             const createdAt=formatLeadDate(lead.created_at);
-            const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt}/>;
+            const updatedAt=formatLeadDate(lead.updated_at);
             const editFields=[
               {name:"full_name",label:"Nombre",value:lead.full_name},
               {name:"company_name",label:"Empresa",value:lead.company_name},
@@ -214,6 +220,12 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
                 {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
               ]},
             ];
+            const drawerFollowup=<form className="lead-status-form lead-detail-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
+              <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+              <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
+            </form>;
+            const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions"/>:undefined;
+            const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup}/>;
             return {
               id:lead.id,
               recordProps:{"data-module-record":true,"data-status":lead.status,"data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")},
@@ -229,7 +241,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
                   <label><span className="ds-visually-hidden">Estado de seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
                   <button className="ds-list-action" type="submit" title="Actualizar estado" data-tooltip="Actualizar estado" aria-label={"Actualizar estado de "+lead.full_name}><UiIcon name="check" size={15}/></button>
                 </form>,
-                actions:<ListQuickActions>{owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact>{preview}</OwnerRecordActions>:preview}</ListQuickActions>,
+                actions:<ListQuickActions>{preview}{owner&&<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact/>}</ListQuickActions>,
               },
             };
           })}

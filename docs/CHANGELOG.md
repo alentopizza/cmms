@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-29 — Detalle de Lead · drawer CRM
+
+- La acción **Ver** deja el modal genérico y usa el `Drawer` existente del UI Kit, ampliado de forma aditiva con `className`, clases de header/body y un slot de acciones de cabecera.
+- El drawer sigue abierto sobre el listado y adopta la referencia visual: título **Detalle del Lead**, avatar de iniciales, nombre, badge de estado, país, fecha de creación, pestañas Información general/Seguimiento y composición de dos columnas.
+- Información general muestra únicamente datos persistidos en `sales_leads`: nombre, empresa, correo, teléfono, país, interés, necesidad, origen, creación, última actualización y estado.
+- Seguimiento reutiliza el mismo formulario/endpoint de cambio de estado. Editar y Eliminar reutilizan `OwnerRecordActions` y la confirmación destructiva existente; no se amplían permisos.
+- No se implementan Notas, Archivos ni un historial de eventos ficticio porque el modelo/endpoints actuales de Leads no los soportan. La pestaña Seguimiento muestra solamente `created_at` y `updated_at` como trazabilidad disponible.
+- Se mantiene el detalle responsive: drawer amplio en escritorio, una columna en tablet y ancho completo en móvil.
+
 ## 2026-09-29 — Rediseño UX/UI · Leads CRM
 
 - El módulo Leads conserva su `ModuleHeader`, búsqueda, filtros, selector Cuadrícula/Listado, creación y contador; no se modifican navegación lateral, endpoints, modelos, permisos ni formulario público de captación.

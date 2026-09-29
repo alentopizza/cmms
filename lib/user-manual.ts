@@ -651,7 +651,7 @@ export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
     title:"Leads con tarjeta CRM compacta",
-    summary:"Leads reorganiza la vista Cuadrícula en tarjetas de iniciales 3/2/1 con empresa, interés, contacto, necesidad, fecha, seguimiento y acciones rápidas; la vista Listado conserva los mismos datos reales, búsqueda, filtros, creación, edición, eliminación y cambio de estado.",
+    summary:"Leads reorganiza la vista Cuadrícula en tarjetas de iniciales 3/2/1 y la acción Ver abre un drawer amplio con información real de contacto, necesidad, registro y seguimiento; búsqueda, filtros, listado, creación, edición, eliminación y cambio de estado conservan sus flujos existentes.",
     roles:["all","platform_owner","superadmin"],
   },
   {

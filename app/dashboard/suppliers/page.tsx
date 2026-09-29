@@ -109,7 +109,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       : query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1",[session.organizationId]),
     query<CatalogOption>("SELECT code,label FROM supplier_capability_catalog WHERE active=true ORDER BY sort_order,label"),
     query<CatalogOption>("SELECT code,label FROM supplier_specialty_catalog WHERE active=true ORDER BY sort_order,label"),
-    getCreationGateForScope("supplier",session.organizationId,platform),
+    getCreationGateForScope("supplier",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined),
   ]);
 
   const defaultCountry=organizations.rows[0]?.country||"CO";

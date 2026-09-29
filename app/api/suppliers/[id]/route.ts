@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { isSupportedCountry, isTaxIdTypeForCountry } from "@/lib/international-catalog";
@@ -23,12 +24,14 @@ function legacySupplierType(capabilities:string[]){
 }
 
 async function accessibleSupplier(id:string,session:NonNullable<Awaited<ReturnType<typeof getSession>>>){
-  return query<{id:string;organization_id:string}>(
-    `SELECT id,organization_id
-     FROM suppliers
-     WHERE id=$1 AND ($2::uuid IS NULL OR organization_id=$2)`,
-    [id,session.platformRole==="user"?session.organizationId:null],
+  const result=await query<{id:string;organization_id:string}>(
+    "SELECT id,organization_id FROM suppliers WHERE id=$1",
+    [id],
   );
+  if(!result.rowCount||!canAccessOrganization(session,result.rows[0].organization_id)){
+    return {rows:[],rowCount:0} as typeof result;
+  }
+  return result;
 }
 
 export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){
@@ -214,7 +217,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const supplier=await query<{organization_id:string}>("SELECT organization_id FROM suppliers WHERE id=$1",[id]);
   if(!supplier.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
   const organizationId=supplier.rows[0].organization_id;
-  if(session.platformRole==="user"&&session.organizationId!==organizationId)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,organizationId))return new NextResponse("Forbidden",{status:403});
 
   const form=await request.formData();
   const intent=String(form.get("intent")||"update");

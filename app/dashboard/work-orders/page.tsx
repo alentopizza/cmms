@@ -9,7 +9,6 @@ import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHead
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import CreateRecordModal from "@/components/CreateRecordModal";
-import { WorkOrderCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
@@ -19,7 +18,7 @@ import UiIcon from "@/components/UiIcon";
 import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
-type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;priority:string;status:string;requested_at:string};
+type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;description:string|null;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;priority:string;status:string;requested_at:string;created_at:string;due_at:string|null;assigned_to_label:string|null};
 
 type WorkOrderSummary={total_count:number;filtered_count:number;active_count:number;in_progress_count:number;urgent_count:number;completed_count:number};
 type WorkOrderFacetValue={value:string;label:string};
@@ -32,6 +31,25 @@ const WORK_ORDER_STATUSES=new Set(["all","open","assigned","in_progress","paused
 const WORK_ORDER_PRIORITIES=new Set(["low","medium","high","urgent"]);
 const WORK_ORDER_TYPES=new Set(["corrective","preventive","inspection","emergency","improvement"]);
 const WORK_ORDER_SORTS=new Set(["requested"]);
+
+const WORK_ORDER_TYPE_LABELS:Record<string,string>={
+  corrective:"Correctivo",
+  preventive:"Preventivo",
+  inspection:"Inspección",
+  emergency:"Emergencia",
+  improvement:"Mejora",
+};
+
+function formatWorkOrderDate(value:string|null){
+  if(!value)return "Sin fecha";
+  return new Intl.DateTimeFormat("es-CO",{
+    day:"2-digit",
+    month:"2-digit",
+    year:"numeric",
+    hour:"numeric",
+    minute:"2-digit",
+  }).format(new Date(value));
+}
 
 function safeText(value:string|undefined,max=120){
   return String(value||"").trim().slice(0,max);
@@ -109,13 +127,17 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   }
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
-    SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text number,w.title,
+    SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text number,w.title,w.description,
            a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,
-           o.name company,w.type,w.priority,w.status,w.requested_at
+           o.name company,w.type,w.priority,w.status,w.requested_at,w.created_at,w.due_at,
+           COALESCE(assigned_user.full_name,assigned_crew.name,assigned_supplier.name) assigned_to_label
     FROM work_orders w
     JOIN organizations o ON o.id=w.organization_id
     JOIN sites s ON s.id=w.site_id
     LEFT JOIN assets a ON a.id=w.asset_id
+    LEFT JOIN users assigned_user ON assigned_user.id=w.assigned_to
+    LEFT JOIN crews assigned_crew ON assigned_crew.id=w.crew_id
+    LEFT JOIN suppliers assigned_supplier ON assigned_supplier.id=w.service_supplier_id
     ${scopeWhere}`;
 
   const filteredParams=[...scopeParams];
@@ -210,7 +232,8 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const orderSql=sort==="requested"?"requested_at DESC,id DESC":"requested_at DESC,id DESC";
   const orders=await query<OrderRow>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,site,number,title,asset_id,asset_has_image,asset,company,type,priority,status,requested_at::text
+     SELECT id,organization_id,site_id,site,number,title,description,asset_id,asset_has_image,asset,company,type,priority,status,
+            requested_at::text,created_at::text,due_at::text,assigned_to_label
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}
@@ -289,34 +312,93 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
       <KpiCard label="Completadas" value={String(completedOrders)} hint="según tu alcance" icon="check" tone="success"/>
     </MetricGrid>
     <section className="section work-order-directory-section">
-      <CollectionView storageKey="work-orders" label="Vista de órdenes" grid={<div className="work-order-mobile-list" data-collection-grid>
-        {orders.rows.map(w=><WorkOrderCard
-          key={w.id}
-          id={w.id}
-          number={w.number}
-          title={w.title}
-          asset={w.asset}
-          company={w.company}
-          priority={w.priority}
-          status={w.status}
-          recordProps={{
-            "data-module-record":true,"data-status":w.status,
-            "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" "),
-            "data-filter-organization":w.organization_id,"data-filter-organization-label":w.company,
-            "data-filter-site":w.site_id,"data-filter-site-label":w.site,
-            "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,
-            "data-filter-type":w.type,"data-filter-type-label":w.type,
-          }}
-          actions={owner?<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
+      <CollectionView storageKey="work-orders" label="Vista de órdenes" grid={<div className="work-order-mobile-list work-order-dashboard-grid" data-collection-grid>
+        <div className="work-order-grid-toolbar">
+          <h2>Listado de órdenes de trabajo</h2>
+          <div className="work-order-grid-toolbar-meta" aria-label="Orden y resultados">
+            <label>Ordenar por
+              <select defaultValue={sort} disabled aria-label="Ordenar órdenes de trabajo">
+                <option value="requested">Más recientes</option>
+              </select>
+            </label>
+            <span>Mostrando {orders.rowCount} de {summary.filtered_count} OT</span>
+          </div>
+        </div>
+        {orders.rows.map(w=>{
+          const assetLabel=w.asset_id?w.asset:"No asignado";
+          const typeLabel=WORK_ORDER_TYPE_LABELS[w.type]||w.type||"No especificado";
+          const description=(w.description||"").trim()||w.title||"No especificado";
+          const createdAt=formatWorkOrderDate(w.created_at||w.requested_at);
+          const dueAt=formatWorkOrderDate(w.due_at);
+          const assignedTo=(w.assigned_to_label||"").trim()||"Sin asignar";
+          const ownerFields=[
             {name:"title",label:"Título",value:w.title},
-            {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
+            {name:"priority",label:"Prioridad",value:w.priority,type:"select" as const,options:[
               {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
             ]},
-            {name:"status",label:"Estado",value:w.status,type:"select",options:[
+            {name:"status",label:"Estado",value:w.status,type:"select" as const,options:[
               {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
             ]},
-          ]}/>:undefined}
-        />)}
+          ];
+          return <article
+            className="work-order-grid-card-v2"
+            key={w.id}
+            data-module-record
+            data-status={w.status}
+            data-search={[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" ")}
+            data-filter-organization={w.organization_id}
+            data-filter-organization-label={w.company}
+            data-filter-site={w.site_id}
+            data-filter-site-label={w.site}
+            data-filter-priority={w.priority}
+            data-filter-priority-label={w.priority}
+            data-filter-type={w.type}
+            data-filter-type-label={w.type}
+          >
+            <header className="work-order-grid-card-head">
+              <div className="work-order-grid-card-identity">
+                <span className="work-order-grid-card-icon" aria-hidden="true"><UiIcon name="work-order" size={20}/></span>
+                <div className="work-order-grid-card-heading">
+                  <div className="work-order-grid-card-number"><strong>OT #{w.number}</strong><WorkOrderStatusBadge status={w.status}/></div>
+                  <p>{w.title}</p>
+                </div>
+              </div>
+              <div className="work-order-grid-card-priority">
+                <span>Prioridad</span>
+                <div><PriorityBadge priority={w.priority}/>
+                  <details className="work-order-grid-more">
+                    <summary title="Más opciones" aria-label={"Más opciones de OT #"+w.number}><UiIcon name="more" size={18}/></summary>
+                    <div><Link href={"/dashboard/work-orders/"+w.id}><UiIcon name="eye" size={14}/>Abrir detalle</Link></div>
+                  </details>
+                </div>
+              </div>
+            </header>
+
+            <div className="work-order-grid-facts">
+              <div><span className="work-order-grid-fact-icon"><UiIcon name="company" size={17}/></span><div><small>Empresa</small><strong>{w.company}</strong></div></div>
+              <div><span className="work-order-grid-fact-icon"><UiIcon name="location" size={17}/></span><div><small>Ubicación</small><strong>{w.site}</strong></div></div>
+              <div><span className="work-order-grid-fact-icon"><UiIcon name="asset" size={17}/></span><div><small>Activo / Equipo</small><strong>{assetLabel}</strong></div></div>
+              <div><span className="work-order-grid-fact-icon"><UiIcon name="maintenance" size={17}/></span><div><small>Tipo de trabajo</small><strong>{typeLabel}</strong></div></div>
+            </div>
+
+            <div className="work-order-grid-description">
+              <span className="work-order-grid-description-marker" aria-hidden="true"/>
+              <span className="work-order-grid-description-icon" aria-hidden="true"><UiIcon name="work-order" size={16}/></span>
+              <div><small>Descripción</small><p>{description}</p></div>
+            </div>
+
+            <div className="work-order-grid-dates">
+              <div><span className="work-order-grid-meta-icon"><UiIcon name="calendar" size={17}/></span><div><small>Fecha creación</small><strong>{createdAt}</strong></div></div>
+              <div className={!w.due_at?"is-empty":""}><span className="work-order-grid-meta-icon"><UiIcon name="clock" size={17}/></span><div><small>Fecha requerida</small><strong>{dueAt}</strong></div></div>
+              <div><span className="work-order-grid-meta-icon"><UiIcon name="user" size={17}/></span><div><small>Asignado a</small><strong>{assignedTo}</strong></div></div>
+            </div>
+
+            <footer className={"work-order-grid-actions"+(owner?" has-owner-actions":"")}>
+              <Link className="work-order-grid-action-primary" href={"/dashboard/work-orders/"+w.id}><UiIcon name="eye" size={16}/><span>Ver actividades</span></Link>
+              {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFields} compact className="work-order-grid-owner-actions"/>}
+            </footer>
+          </article>;
+        })}
       </div>} list={<StaticDataTable
         className="work-order-directory-table"
         caption="Órdenes de trabajo visibles"

@@ -650,6 +650,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
+    title:"Órdenes de trabajo: cuadrícula tipo dashboard",
+    summary:"La vista Cuadrícula de Órdenes de trabajo usa tarjetas de dos columnas con OT, estado, prioridad, empresa, ubicación, activo/equipo, tipo, descripción, fechas, asignación y acciones. La vista Listado conserva su estructura anterior sin cambios.",
+    roles:["all","platform_owner","superadmin"],
+  },
+  {
+    date:"2026-09-29",
     title:"Detalle de Lead: ancho y edición corregidos",
     summary:"El detalle de Leads usa un drawer ancho con columnas estables y scroll únicamente en el contenido. Editar abre directamente el formulario existente en una sola interfaz; al guardar, la página recarga los datos y reabre el detalle actualizado.",
     roles:["all","platform_owner","superadmin"],

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-29 — Rediseño UX/UI · cuadrícula de Órdenes de trabajo
+
+- El cambio se limita a la presentación **Cuadrícula** de Órdenes de trabajo. `StaticDataTable` y su vista Listado permanecen sin cambios.
+- La cuadrícula usa dos tarjetas por fila en escritorio y una en pantallas pequeñas, con tarjeta blanca, borde/sombra sutil y elevación mínima en hover.
+- Cada tarjeta presenta OT, estado, título, prioridad, Empresa, Ubicación, Activo/Equipo, Tipo de trabajo, Descripción, Fecha creación, Fecha requerida y Asignado a.
+- Para los datos solicitados que ya existen en `work_orders`, el scope autorizado proyecta `description`, `created_at`, `due_at` y el ejecutor actual mediante `assigned_to`, `crew_id` o `service_supplier_id`. No cambia el orden RBAC → búsqueda → filtros → sort → paginación ni se crean endpoints/modelos.
+- Ausencias se muestran explícitamente como **No asignado**, **Sin fecha**, **Sin asignar** o **No especificado** según corresponda.
+- Las acciones conservan sus flujos existentes: **Ver actividades** enlaza al detalle actual; Editar/Eliminar siguen usando `OwnerRecordActions` y mantienen los permisos existentes.
+- Se agrega en Grid el encabezado **Listado de órdenes de trabajo**, orden actual **Más recientes** y el contador de resultados de la página/consulta.
+- `view-mode-toggle-smoke` protege la nueva tarjeta y, simultáneamente, los marcadores estructurales de la vista Listado para evitar regresiones.
+
 ## 2026-09-29 — Optimización visual · directorio de Proveedores
 
 - Se retira del listado de Proveedores el bloque redundante **Directorio / Proveedores registrados / Abre una tarjeta...**.

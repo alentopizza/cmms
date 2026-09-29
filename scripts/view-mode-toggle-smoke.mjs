@@ -121,6 +121,30 @@ for(const marker of ["<StaticDataTable","Listado de ubicaciones","EntityIdentity
   if(!locations.includes(marker))throw new Error("Locations approved list view missing "+marker);
 }
 
+const workOrderPage=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
+for(const marker of [
+  "work-order-dashboard-grid","work-order-grid-toolbar","work-order-grid-card-v2","work-order-grid-facts",
+  "Fecha creación","Fecha requerida","Asignado a","Ver actividades","WORK_ORDER_TYPE_LABELS",
+  "w.description","w.due_at","assigned_to_label","compact className=\"work-order-grid-owner-actions\"",
+]){
+  if(!workOrderPage.includes(marker))throw new Error("Work Orders dashboard grid contract missing "+marker);
+}
+for(const marker of [
+  'list={<StaticDataTable','className="work-order-directory-table"','caption="Órdenes de trabajo visibles"',
+  '{key:"order",label:"Orden",width:"34%"}','EntityIdentityCell','asset_has_image','canReadAssets',
+]){
+  if(!workOrderPage.includes(marker))throw new Error("Work Orders list presentation changed or missing "+marker);
+}
+const phase9WorkOrderCss=fs.readFileSync("app/phase9-modules.css","utf8");
+for(const marker of [
+  ".work-order-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))",
+  ".work-order-grid-card-v2:hover",".work-order-grid-facts{display:grid;grid-template-columns:repeat(2",
+  ".work-order-grid-dates{display:grid;grid-template-columns:repeat(3",
+  "@media(max-width:820px)",".work-order-grid-owner-actions",
+]){
+  if(!phase9WorkOrderCss.includes(marker))throw new Error("Work Orders dashboard grid styling missing "+marker);
+}
+
 const workOrders=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
 const maintenance=fs.readFileSync("app/dashboard/maintenance/page.tsx","utf8");
 for(const [name,source] of [["Work Orders",workOrders],["Maintenance",maintenance]]){

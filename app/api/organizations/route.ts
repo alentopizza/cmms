@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canCreateOrganizations } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
@@ -27,7 +28,9 @@ function creationError(requestUrl: string, code: string) {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
-  if (!can(session, "companies.manage")) return new NextResponse("Forbidden", { status: 403 });
+  if (!can(session, "companies.manage") || !canCreateOrganizations(session)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   try {
     const form = await request.formData();
@@ -164,6 +167,16 @@ export async function POST(request: Request) {
          VALUES($1,$2,'manual',$3::jsonb)`,
         [organizationId, isTrial ? "trial_started" : "subscription_activated", JSON.stringify({ plan: plan.code })],
       );
+
+      if (session.platformRole === "superadmin" && session.userId) {
+        await client.query(
+          `INSERT INTO platform_organization_access(user_id,organization_id,access_source,granted_by_user_id,granted_by_email)
+           VALUES($1,$2,'created',$1,$3)
+           ON CONFLICT(user_id,organization_id) DO NOTHING`,
+          [session.userId, organizationId, session.email],
+        );
+      }
+
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");

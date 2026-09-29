@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import ModuleHeader from "@/components/ModuleHeader";
 import CreateRecordModal from "@/components/CreateRecordModal";
@@ -14,6 +15,7 @@ type Category={
   id:string;organization_id:string;organization_name:string;code:string;name:string;active:boolean;
   item_count:number;quantity:string;total_value:string;
 };
+type Organization={id:string;name:string};
 
 function money(value:number){
   return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(value);
@@ -26,6 +28,8 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
   const feedback=await searchParams;
   const platform=session.platformRole!=="user";
   const canWrite=can(session,"inventory.write");
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
   const sql=`SELECT c.id,c.organization_id,o.name organization_name,c.code,c.name,c.active,
       count(i.id)::int item_count,COALESCE(sum(i.quantity),0)::text quantity,
       COALESCE(sum(i.quantity*i.unit_cost),0)::text total_value
@@ -48,11 +52,18 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
     ) scoped ON i.id IS NOT NULL
     WHERE c.organization_id=$1
     GROUP BY c.id,o.name ORDER BY c.active DESC,c.name`;
-  const result=platform
-    ?await query<Category>(sql+" GROUP BY c.id,o.name ORDER BY o.name,c.active DESC,c.name")
-    :session.accessAllSites
-      ?await query<Category>(sql+" WHERE c.organization_id=$1 GROUP BY c.id,o.name ORDER BY c.active DESC,c.name",[session.organizationId])
-      :await query<Category>(limitedSql,[session.organizationId,session.siteIds]);
+  const [result,organizations]=await Promise.all([
+    platform
+      ?query<Category>(sql+" WHERE ($1::boolean OR c.organization_id=ANY($2::uuid[])) GROUP BY c.id,o.name ORDER BY o.name,c.active DESC,c.name",platformScopeParams)
+      :session.accessAllSites
+        ?query<Category>(sql+" WHERE c.organization_id=$1 GROUP BY c.id,o.name ORDER BY c.active DESC,c.name",[session.organizationId])
+        :query<Category>(limitedSql,[session.organizationId,session.siteIds]),
+    canWrite
+      ?platform
+        ?query<Organization>("SELECT id,name FROM organizations WHERE active=true AND ($1::boolean OR id=ANY($2::uuid[])) ORDER BY name",platformScopeParams)
+        :query<Organization>("SELECT id,name FROM organizations WHERE id=$1 AND active=true",[session.organizationId])
+      :Promise.resolve({rows:[]} as {rows:Organization[]}),
+  ]);
 
   const error=feedback.error==="duplicate"?"Ya existe una categoría con ese código o nombre."
     :feedback.error?"Completa los datos requeridos.":"";
@@ -67,8 +78,11 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
       searchPlaceholder="Buscar categoría, código o empresa"
       filters={[{value:"all",label:"Todas"},{value:"active",label:"Activas"},{value:"inactive",label:"Inactivas"}]}
       facets={[{key:"organization",label:"Empresa",allLabel:"Todas las empresas"}]}
-      action={canWrite&&session.organizationId?<CreateRecordModal title="Nueva categoría" eyebrow="Catálogo de inventario" description="Crea una categoría reutilizable para mantener datos consistentes." triggerLabel="Nueva categoría" iconName="inventory">
+      action={canWrite&&organizations.rows.length?<CreateRecordModal title="Nueva categoría" eyebrow="Catálogo de inventario" description="Crea una categoría reutilizable para mantener datos consistentes." triggerLabel="Nueva categoría" iconName="inventory">
         <form className="form-grid unified-popup-form" method="post" action="/api/inventory/categories">
+          {platform
+            ?<div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
+            :<input type="hidden" name="organization_id" value={session.organizationId||""}/>}
           <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Refrigeración"/></div>
           <div className="field"><label>Código</label><input name="code" placeholder="Ej. REF"/></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear categoría</button></div>
@@ -97,7 +111,7 @@ export default async function InventoryCategoriesPage({searchParams}:{searchPara
           {label:"Unidades",value:Number(category.quantity||0).toLocaleString("es-CO")},
           {label:"Valor",value:money(Number(category.total_value||0))},
         ]}/>
-        {canWrite&&session.organizationId===category.organization_id&&<div className="inventory-category-actions">
+        {canWrite&&<div className="inventory-category-actions">
           <details><summary className="button secondary"><UiIcon name="edit" size={14}/> Editar</summary>
             <form method="post" action={"/api/inventory/categories/"+category.id} className="inventory-popover-form">
               <div className="field"><label>Nombre</label><input name="name" defaultValue={category.name} required/></div>

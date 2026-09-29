@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, isPlatformOwner, type OrganizationRole } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import UserManagement, { type ManagedUser } from "./UserManagement";
 
@@ -17,6 +18,7 @@ export default async function UsersPage() {
 
   const isGlobalOperator = isPlatformOperator(session);
   const ownerAccess = isPlatformOwner(session);
+  const scope=organizationScopeFor(session);
 
   const [users, organizations, sites, serviceSuppliers] = await Promise.all([
     isGlobalOperator
@@ -40,6 +42,18 @@ export default async function UsersPage() {
                   COALESCE(membership.access_all_sites,true) access_all_sites,
                   COALESCE(membership.site_ids,ARRAY[]::text[]) site_ids,
                   COALESCE(membership.site_names,ARRAY[]::text[]) site_names,
+                  COALESCE((
+                    SELECT array_agg(poa.organization_id::text ORDER BY po.name)
+                    FROM platform_organization_access poa
+                    JOIN organizations po ON po.id=poa.organization_id
+                    WHERE poa.user_id=u.id
+                  ),ARRAY[]::text[]) platform_organization_ids,
+                  COALESCE((
+                    SELECT array_agg(po.name ORDER BY po.name)
+                    FROM platform_organization_access poa
+                    JOIN organizations po ON po.id=poa.organization_id
+                    WHERE poa.user_id=u.id
+                  ),ARRAY[]::text[]) platform_organization_names,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
@@ -73,6 +87,55 @@ export default async function UsersPage() {
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=membership.organization_id
            ORDER BY u.active DESC,u.full_name`,
         )
+      : isGlobalOperator
+        ? query<ManagedUser>(
+            `SELECT u.id,u.email,u.full_name,u.phone,u.country_code,u.identity_document_type,u.identity_document_number,u.preferred_locale,u.active,u.platform_role,u.last_login_at::text,
+                    (u.avatar_data IS NOT NULL) has_avatar,
+                    CASE
+                      WHEN bp.revoked_at IS NOT NULL THEN 'revoked'
+                      WHEN bp.enrollment_method='supervised_camera' AND bp.identity_verified_at IS NOT NULL AND bp.encrypted_embedding IS NOT NULL THEN 'verified'
+                      WHEN bp.user_id IS NOT NULL THEN 'legacy'
+                      ELSE 'missing'
+                    END biometric_status,
+                    (SELECT count(*)::int FROM work_orders w WHERE w.assigned_to=u.id AND w.status NOT IN ('completed','cancelled')) assigned_work_orders,
+                    (SELECT count(*)::int FROM work_order_tasks wt WHERE wt.assigned_to=u.id AND wt.status IN ('pending','in_progress')) pending_activities,
+                    (SELECT count(*)::int FROM activity_execution_events aee WHERE aee.user_id=u.id AND aee.event_type='completed' AND aee.occurred_at>=now()-interval '30 days') completed_activities_30d,
+                    COALESCE((SELECT ROUND((SUM(EXTRACT(EPOCH FROM (COALESCE(ats.check_out_at,now())-ats.check_in_at)))/3600)::numeric,1)::float8
+                              FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.check_in_at>=now()-interval '30 days'),0)::float8 attendance_hours_30d,
+                    EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id AND ats.status='open') open_shift,
+                    EXISTS(SELECT 1 FROM technician_tracking_sessions ts WHERE ts.user_id=u.id AND ts.status='active' AND ts.last_seen_at>now()-interval '2 minutes') tracking_live,
+                    om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
+                    COALESCE(site_scope.site_ids,ARRAY[]::text[]) site_ids,
+                    COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names,
+                    ARRAY[]::text[] platform_organization_ids,
+                    ARRAY[]::text[] platform_organization_names,
+                    (
+                      EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
+                      OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
+                      OR EXISTS(SELECT 1 FROM work_order_comments wc WHERE wc.user_id=u.id)
+                      OR EXISTS(SELECT 1 FROM audit_log al WHERE al.user_id=u.id)
+                      OR EXISTS(SELECT 1 FROM work_order_tasks wt WHERE wt.assigned_to=u.id)
+                      OR EXISTS(SELECT 1 FROM crew_members cm WHERE cm.user_id=u.id)
+                      OR EXISTS(SELECT 1 FROM attendance_shifts ats WHERE ats.user_id=u.id)
+                      OR EXISTS(SELECT 1 FROM activity_execution_events aee WHERE aee.user_id=u.id)
+                    ) has_activity
+             FROM organization_members om
+             JOIN users u ON u.id=om.user_id
+             JOIN organizations o ON o.id=om.organization_id
+             LEFT JOIN suppliers supplier ON supplier.id=om.external_supplier_id
+             LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+             LEFT JOIN LATERAL (
+               SELECT
+                 array_agg(oms.site_id::text ORDER BY site.name) site_ids,
+                 array_agg(site.name ORDER BY site.name) site_names
+               FROM organization_member_sites oms
+               JOIN sites site ON site.id=oms.site_id
+               WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+             ) site_scope ON true
+             WHERE om.organization_id=ANY($1::uuid[])
+             ORDER BY u.active DESC,u.full_name`,
+            [scope.organizationIds],
+          )
       : query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.country_code,u.identity_document_type,u.identity_document_number,u.preferred_locale,u.active,u.platform_role,u.last_login_at::text,
                   (u.avatar_data IS NOT NULL) has_avatar,
@@ -92,6 +155,8 @@ export default async function UsersPage() {
                   om.organization_id,o.name organization_name,om.role,om.access_all_sites,om.external_supplier_id,supplier.name external_supplier_name,
                   COALESCE(site_scope.site_ids,ARRAY[]::text[]) site_ids,
                   COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names,
+                  ARRAY[]::text[] platform_organization_ids,
+                  ARRAY[]::text[] platform_organization_names,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
@@ -119,15 +184,25 @@ export default async function UsersPage() {
            ORDER BY u.active DESC,u.full_name`,
           [session.organizationId],
         ),
-    isGlobalOperator
+    ownerAccess
       ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.active=true ORDER BY o.name`)
-      : query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.id=$1`, [session.organizationId]),
-    isGlobalOperator
+      : isGlobalOperator
+        ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.active=true AND o.id=ANY($1::uuid[]) ORDER BY o.name`,[scope.organizationIds])
+        : query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.id=$1`, [session.organizationId]),
+    ownerAccess
       ? query<Site>(
           `SELECT s.id,s.organization_id,s.name,o.name organization_name
            FROM sites s JOIN organizations o ON o.id=s.organization_id
            WHERE s.active=true AND o.active=true ORDER BY o.name,s.name`,
         )
+      : isGlobalOperator
+        ? query<Site>(
+            `SELECT s.id,s.organization_id,s.name,o.name organization_name
+             FROM sites s JOIN organizations o ON o.id=s.organization_id
+             WHERE s.active=true AND o.active=true AND s.organization_id=ANY($1::uuid[])
+             ORDER BY o.name,s.name`,
+            [scope.organizationIds],
+          )
       : session.accessAllSites
         ? query<Site>(
             `SELECT s.id,s.organization_id,s.name,o.name organization_name
@@ -142,13 +217,21 @@ export default async function UsersPage() {
              ORDER BY s.name`,
             [session.organizationId, session.siteIds],
           ),
-    isGlobalOperator
+    ownerAccess
       ? query<ServiceSupplier>(
           `SELECT id,organization_id,name
            FROM suppliers
            WHERE active=true AND supplier_type IN ('services','both')
            ORDER BY organization_id,name`,
         )
+      : isGlobalOperator
+        ? query<ServiceSupplier>(
+            `SELECT id,organization_id,name
+             FROM suppliers
+             WHERE active=true AND supplier_type IN ('services','both') AND organization_id=ANY($1::uuid[])
+             ORDER BY organization_id,name`,
+            [scope.organizationIds],
+          )
       : query<ServiceSupplier>(
           `SELECT id,organization_id,name
            FROM suppliers

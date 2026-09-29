@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { can, ROLE_LABELS } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { loadSupplierCommercialAnalytics } from "@/lib/supplier-analytics";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -51,7 +52,7 @@ async function loadOrganization(id:string,session:NonNullable<Awaited<ReturnType
      WHERE o.id=$1`,[id]);
   if(!result.rowCount)return null;
   const row=result.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==row.id)return null;
+  if(!canAccessOrganization(session,row.id))return null;
   return {
     entityLabel:"Empresa",title:row.name,subtitle:row.legal_name||row.name,status:row.active?"Activa":"Inactiva",
     fields:[
@@ -99,7 +100,7 @@ async function loadSite(id:string,session:NonNullable<Awaited<ReturnType<typeof 
      FROM sites s JOIN organizations o ON o.id=s.organization_id WHERE s.id=$1`,[id]);
   if(!result.rowCount)return null;
   const row=result.rows[0];
-  if(session.platformRole==="user"&&(session.organizationId!==row.organization_id||!canAccessSite(session,row.id)))return null;
+  if(!canAccessOrganization(session,row.organization_id)||(session.platformRole==="user"&&!canAccessSite(session,row.id)))return null;
   return {
     entityLabel:"Ubicación principal",title:row.name,subtitle:row.organization_name,status:row.active?"Activa":"Inactiva",
     fields:[
@@ -149,7 +150,7 @@ async function loadLocation(id:string,session:NonNullable<Awaited<ReturnType<typ
      FROM locations l JOIN sites s ON s.id=l.site_id JOIN organizations o ON o.id=l.organization_id WHERE l.id=$1`,[id]);
   if(!result.rowCount)return null;
   const row=result.rows[0];
-  if(session.platformRole==="user"&&(session.organizationId!==row.organization_id||!canAccessSite(session,row.site_id)))return null;
+  if(!canAccessOrganization(session,row.organization_id)||(session.platformRole==="user"&&!canAccessSite(session,row.site_id)))return null;
   return {
     entityLabel:"Sububicación",title:row.name,subtitle:row.site_name+" · "+row.organization_name,status:row.active?"Activa":"Inactiva",
     fields:[
@@ -193,8 +194,18 @@ async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof 
      WHERE u.id=$1`,[id]);
   if(!result.rowCount)return null;
   const row=result.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
-  const scope=row.platform_role!=="user"?"Todas las empresas":row.access_all_sites!==false?"Todas las sedes":(row.site_names||[]).join(", ")||"Sin sedes asignadas";
+  if(row.platform_role!=="user"){
+    if(session.platformRole!=="platform_owner"&&session.userId!==row.id)return null;
+  }else if(!row.organization_id||!canAccessOrganization(session,row.organization_id)){
+    return null;
+  }
+  const scope=row.platform_role==="platform_owner"
+    ?"Todas las empresas"
+    :row.platform_role==="superadmin"
+      ?"Cartera asignada"
+      :row.access_all_sites!==false
+        ?"Todas las sedes"
+        :(row.site_names||[]).join(", ")||"Sin sedes asignadas";
   return {
     entityLabel:row.role==="technician"?"Técnico":"Usuario",title:row.full_name,subtitle:row.organization_name||"Desweb CMMS",status:row.active?"Activo":"Inactivo",
     fields:[
@@ -202,7 +213,7 @@ async function loadUser(id:string,session:NonNullable<Awaited<ReturnType<typeof 
       {label:"País",value:safe(row.country_code,"Sin registrar")},{label:"Tipo de documento",value:safe(row.identity_document_type,"Sin registrar")},
       {label:"Número de documento",value:safe(row.identity_document_number,"Sin registrar")},
       {label:"Rol",value:row.platform_role==="user"?roleName(row.role):row.platform_role==="platform_owner"?"Propietario Desweb":"Superadministrador"},
-      {label:"Empresa",value:safe(row.organization_name,"Acceso global")},{label:"Alcance",value:scope},
+      {label:"Empresa",value:safe(row.organization_name,row.platform_role==="superadmin"?"Cartera asignada":"Acceso de plataforma")},{label:"Alcance",value:scope},
       {label:"Último acceso",value:dateText(row.last_login_at)},{label:"Biometría",value:row.biometric_status},
     ],
     stats:[
@@ -244,7 +255,7 @@ async function loadSupplier(id:string,session:NonNullable<Awaited<ReturnType<typ
      FROM suppliers s JOIN organizations o ON o.id=s.organization_id WHERE s.id=$1`,[id]);
   if(!result.rowCount)return null;
   const row=result.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
+  if(!canAccessOrganization(session,row.organization_id))return null;
   const type=row.supplier_type==="services"?"Servicios":row.supplier_type==="both"?"Materiales + servicios":"Materiales / suministros";
   const analytics=(await loadSupplierCommercialAnalytics([row.id])).summaries[0]||null;
   const analyticsStats=analytics&&analytics.received_requisitions>0?[

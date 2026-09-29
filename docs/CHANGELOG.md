@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-29 — Corrección de build · scope RBAC de Proveedores
+
+- Se corrige el type-check de `app/api/suppliers/[id]/route.ts` introducido durante el endurecimiento del scope por empresa.
+- `accessibleSupplier()` deja de fabricar un `QueryResult` parcial mediante un cast inseguro y ahora devuelve directamente la fila autorizada o `null`.
+- Se conserva la validación server-side con `canAccessOrganization()`; no cambia el alcance funcional del módulo ni se relaja el aislamiento multiempresa.
+- La corrección elimina el error TypeScript `TS2352` que detenía `npm run build` durante el despliegue.
+
 ## 2026-09-26 — Menú de usuario + Personalización de marca PRO
 
 - El dropdown existente del avatar superior conserva Mi configuración, Manual / Ayuda y Configuración, añade **Personalización de marca · PRO** para Administradores de empresa y reemplaza el logout inmediato por confirmación explícita.

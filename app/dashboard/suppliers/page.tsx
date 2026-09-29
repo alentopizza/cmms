@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { getCreationGateForScope } from "@/lib/setup-sequence";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -25,6 +26,8 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
   if(!can(session,"suppliers.manage"))redirect("/dashboard");
   const params=await searchParams;
   const platform=session.platformRole!=="user";
+  const organizationScope=organizationScopeFor(session);
+  const supplierScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
   const supplierSql=`SELECT s.id,s.organization_id,o.name organization_name,COALESCE(o.default_country,o.legal_country) organization_country,
       s.code,s.name,s.legal_name,s.tax_id,s.tax_id_type,s.country_code,s.city,s.supplier_type,s.service_category,
@@ -65,7 +68,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
       FROM work_order_tasks wt
       JOIN work_orders work_order ON work_order.id=wt.work_order_id
       WHERE wt.service_supplier_id IS NOT NULL
-        AND ($1::uuid IS NULL OR work_order.organization_id=$1)
+        AND ($1::boolean OR work_order.organization_id=ANY($2::uuid[]))
       GROUP BY wt.service_supplier_id
     ) activity_stats ON activity_stats.supplier_id=s.id
     LEFT JOIN (
@@ -74,7 +77,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*) FILTER (WHERE i.active<>false)::int active_item_count
       FROM inventory_items i
       WHERE i.supplier_id IS NOT NULL
-        AND ($1::uuid IS NULL OR i.organization_id=$1)
+        AND ($1::boolean OR i.organization_id=ANY($2::uuid[]))
       GROUP BY i.supplier_id
     ) item_stats ON item_stats.supplier_id=s.id
     LEFT JOIN (
@@ -83,7 +86,7 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled'))::int directory_requisition_count,
              count(*) FILTER (WHERE r.status NOT IN ('closed','cancelled','fulfilled'))::int open_requisition_count
       FROM supplier_requisitions r
-      WHERE ($1::uuid IS NULL OR r.organization_id=$1)
+      WHERE ($1::boolean OR r.organization_id=ANY($2::uuid[]))
       GROUP BY r.supplier_id
     ) req_stats ON req_stats.supplier_id=s.id
     LEFT JOIN (
@@ -91,18 +94,18 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
              count(*)::int document_count,
              count(*) FILTER (WHERE d.archived_at IS NULL)::int active_document_count
       FROM supplier_documents d
-      WHERE ($1::uuid IS NULL OR d.organization_id=$1)
+      WHERE ($1::boolean OR d.organization_id=ANY($2::uuid[]))
       GROUP BY d.supplier_id
     ) document_stats ON document_stats.supplier_id=s.id
-    WHERE ($1::uuid IS NULL OR s.organization_id=$1)`;
+    WHERE ($1::boolean OR s.organization_id=ANY($2::uuid[]))`;
 
   const [suppliers,organizations,capabilityCatalog,specialtyCatalog,creationGate]=await Promise.all([
     query<SupplierDirectoryItem>(
       supplierSql+" ORDER BY o.name,s.active DESC,s.name",
-      [platform?null:session.organizationId],
+      platform?supplierScopeParams:[false,[session.organizationId]],
     ),
     platform
-      ? query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
+      ? query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true AND ($1::boolean OR id=ANY($2::uuid[])) ORDER BY name",supplierScopeParams)
       : query<Organization>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1",[session.organizationId]),
     query<CatalogOption>("SELECT code,label FROM supplier_capability_catalog WHERE active=true ORDER BY sort_order,label"),
     query<CatalogOption>("SELECT code,label FROM supplier_specialty_catalog WHERE active=true ORDER BY sort_order,label"),

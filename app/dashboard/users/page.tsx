@@ -54,6 +54,12 @@ export default async function UsersPage() {
                     JOIN organizations po ON po.id=poa.organization_id
                     WHERE poa.user_id=u.id
                   ),ARRAY[]::text[]) platform_organization_names,
+                  COALESCE((
+                    SELECT array_agg(poa.organization_id::text ORDER BY po.name)
+                    FROM platform_organization_access poa
+                    JOIN organizations po ON po.id=poa.organization_id
+                    WHERE poa.user_id=u.id AND poa.access_source='created'
+                  ),ARRAY[]::text[]) platform_created_organization_ids,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
@@ -109,6 +115,7 @@ export default async function UsersPage() {
                     COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names,
                     ARRAY[]::text[] platform_organization_ids,
                     ARRAY[]::text[] platform_organization_names,
+                    ARRAY[]::text[] platform_created_organization_ids,
                     (
                       EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                       OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)
@@ -157,6 +164,7 @@ export default async function UsersPage() {
                   COALESCE(site_scope.site_names,ARRAY[]::text[]) site_names,
                   ARRAY[]::text[] platform_organization_ids,
                   ARRAY[]::text[] platform_organization_names,
+                  ARRAY[]::text[] platform_created_organization_ids,
                   (
                     EXISTS(SELECT 1 FROM work_orders w WHERE w.requested_by=u.id OR w.assigned_to=u.id)
                     OR EXISTS(SELECT 1 FROM meter_readings mr WHERE mr.recorded_by=u.id)

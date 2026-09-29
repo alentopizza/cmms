@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { gateFor, getSetupState } from "@/lib/setup-sequence";
 import OwnerDeleteButton from "@/components/OwnerDeleteButton";
@@ -47,8 +48,9 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
   if(!orderResult.rowCount) notFound();
   const order=orderResult.rows[0];
 
+  if(!canAccessOrganization(session,order.organization_id)) redirect("/dashboard/work-orders");
   if(session.platformRole==="user"){
-    if(session.organizationId!==order.organization_id || !canAccessSite(session,order.site_id)) redirect("/dashboard/work-orders");
+    if(!canAccessSite(session,order.site_id)) redirect("/dashboard/work-orders");
     if(session.role==="provider"){
       const visible=await query(
         `SELECT 1 FROM work_orders w

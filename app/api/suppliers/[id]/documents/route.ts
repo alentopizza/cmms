@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { OrganizationDocumentUploadError, readOrganizationDocumentUpload } from "@/lib/organization-documents";
@@ -18,12 +19,9 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   if(!can(session,"suppliers.manage"))return new NextResponse("Forbidden",{status:403});
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Proveedor inválido",{status:400});
-  const supplier=await query<{organization_id:string}>(
-    `SELECT organization_id FROM suppliers
-     WHERE id=$1 AND ($2::uuid IS NULL OR organization_id=$2)`,
-    [id,session.platformRole==="user"?session.organizationId:null],
-  );
+  const supplier=await query<{organization_id:string}>("SELECT organization_id FROM suppliers WHERE id=$1",[id]);
   if(!supplier.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
+  if(!canAccessOrganization(session,supplier.rows[0].organization_id))return new NextResponse("Forbidden",{status:403});
   const result=await query(
     `SELECT id,supplier_id,category,display_name,reference,expires_at::text,file_name,file_mime_type,archived_at::text,created_at::text
      FROM supplier_documents
@@ -42,7 +40,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(!UUID.test(id))return new NextResponse("Proveedor inválido",{status:400});
   const supplier=await query<{organization_id:string}>("SELECT organization_id FROM suppliers WHERE id=$1",[id]);
   if(!supplier.rowCount)return new NextResponse("Proveedor no encontrado",{status:404});
-  if(session.platformRole==="user"&&session.organizationId!==supplier.rows[0].organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,supplier.rows[0].organization_id))return new NextResponse("Forbidden",{status:403});
   try{
     const form=await request.formData();
     const category=String(form.get("category")||"other");

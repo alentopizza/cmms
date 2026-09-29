@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import ModuleHeader from "@/components/ModuleHeader";
 import UiIcon from "@/components/UiIcon";
@@ -23,6 +24,8 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
   if(!can(session,"requisitions.read"))redirect("/dashboard");
   const params=await searchParams;
   const platform=session.platformRole!=="user";
+  const organizationScope=organizationScopeFor(session);
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
   const reqs=platform
     ? await query<Req>(
@@ -39,8 +42,9 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
        JOIN organizations o ON o.id=r.organization_id
        LEFT JOIN users u ON u.id=r.requested_by
        LEFT JOIN supplier_requisition_items ri ON ri.requisition_id=r.id
+       WHERE ($1::boolean OR r.organization_id=ANY($2::uuid[]))
        GROUP BY r.id,s.name,o.name,u.full_name
-       ORDER BY r.created_at DESC LIMIT 300`)
+       ORDER BY r.created_at DESC LIMIT 300`,platformScopeParams)
     : await query<Req>(
       `SELECT r.id,r.organization_id,r.requested_by,r.number::text,r.status,r.created_at::text,r.needed_by::text,r.supplier_id,s.name supplier_name,o.name organization_name,r.approval_required,r.approval_state,
               (SELECT count(*)::int FROM procurement_documents pd WHERE pd.requisition_id=r.id AND pd.voided_at IS NULL) document_count,

@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { query } from "@/lib/db";
 import { hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
+import { organizationScopeFor } from "@/lib/organization-scope";
 
 type Row=Record<string,string|number|null>;
 
@@ -27,7 +28,12 @@ async function inventoryRows(session:NonNullable<Awaited<ReturnType<typeof getSe
     LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN locations l ON l.id=i.location_id
     LEFT JOIN suppliers p ON p.id=i.supplier_id LEFT JOIN inventory_categories c ON c.id=i.category_id
     LEFT JOIN inventory_warehouses w ON w.id=i.warehouse_id${limited?" AND w.site_id=ANY($2::uuid[])":""}`;
-  if(session.platformRole!=="user")return query<Row>(base+" ORDER BY o.name,i.name");
+  if(session.platformRole!=="user"){
+    const scope=organizationScopeFor(session);
+    return scope.unrestricted
+      ?query<Row>(base+" ORDER BY o.name,i.name")
+      :query<Row>(base+" WHERE i.organization_id=ANY($1::uuid[]) ORDER BY o.name,i.name",[scope.organizationIds]);
+  }
   if(session.accessAllSites)return query<Row>(base+" WHERE i.organization_id=$1 ORDER BY i.name",[session.organizationId]);
   return query<Row>(base+" WHERE i.organization_id=$1 AND (i.site_id IS NULL OR i.site_id=ANY($2::uuid[])) ORDER BY i.name",[session.organizationId,session.siteIds]);
 }
@@ -39,7 +45,12 @@ async function assetRows(session:NonNullable<Awaited<ReturnType<typeof getSessio
     COALESCE(a.purchase_cost,0)::text purchase_cost
     FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id
     LEFT JOIN locations l ON l.id=a.location_id LEFT JOIN suppliers p ON p.id=a.supplier_id LEFT JOIN asset_categories c ON c.id=a.category_id`;
-  if(session.platformRole!=="user")return query<Row>(base+" ORDER BY o.name,a.name");
+  if(session.platformRole!=="user"){
+    const scope=organizationScopeFor(session);
+    return scope.unrestricted
+      ?query<Row>(base+" ORDER BY o.name,a.name")
+      :query<Row>(base+" WHERE a.organization_id=ANY($1::uuid[]) ORDER BY o.name,a.name",[scope.organizationIds]);
+  }
   if(session.accessAllSites)return query<Row>(base+" WHERE a.organization_id=$1 ORDER BY a.name",[session.organizationId]);
   return query<Row>(base+" WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) ORDER BY a.name",[session.organizationId,session.siteIds]);
 }
@@ -81,9 +92,16 @@ async function kardexRows(session:NonNullable<Awaited<ReturnType<typeof getSessi
     LEFT JOIN inventory_transactions source ON source.id=t.source_transaction_id
     LEFT JOIN bulk_import_batches b ON b.id=t.import_batch_id`;
   if(session.platformRole!=="user"){
-    return filter
-      ?query<Row>(base+" WHERE t.type=$1 ORDER BY t.movement_at DESC,t.created_at DESC",[filter])
-      :query<Row>(base+" ORDER BY t.movement_at DESC,t.created_at DESC");
+    const scope=organizationScopeFor(session);
+    if(scope.unrestricted){
+      return filter
+        ?query<Row>(base+" WHERE t.type=$1 ORDER BY t.movement_at DESC,t.created_at DESC",[filter])
+        :query<Row>(base+" ORDER BY t.movement_at DESC,t.created_at DESC");
+    }
+    const values:unknown[]=[scope.organizationIds];
+    let where=" WHERE t.organization_id=ANY($1::uuid[])";
+    if(filter){values.push(filter);where+=" AND t.type=$2";}
+    return query<Row>(base+where+" ORDER BY t.movement_at DESC,t.created_at DESC",values);
   }
   const values:unknown[]=[session.organizationId];
   let where=" WHERE t.organization_id=$1";

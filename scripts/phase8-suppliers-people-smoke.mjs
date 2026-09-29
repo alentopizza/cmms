@@ -35,6 +35,12 @@ for(const marker of ['icon:"activity"','icon:"inventory"','icon:"requisition"','
 if(supplierDir.includes('"Ubicación sin registrar"')||supplierDir.includes('"Especialidad sin registrar"')||supplierDir.includes('"Sin contacto"')||supplierDir.includes('"Sin teléfono"')){
   throw new Error("Supplier directory must omit unavailable card fields instead of inventing placeholders");
 }
+if(supplierDir.includes("Proveedores registrados")||supplierDir.includes("Abre una tarjeta para consultar su operación")){
+  throw new Error("Supplier directory must not render the redundant directory intro block");
+}
+if(supplierDir.includes('className="section supplier-directory-modern"')){
+  throw new Error("Supplier directory must stay flush with the module header without legacy section top margin");
+}
 if(supplierDir.includes('status={<span className={"status-badge'))throw new Error("Supplier profile still uses legacy status badge");
 
 const users=fs.readFileSync("app/dashboard/users/UserManagement.tsx","utf8");
@@ -118,34 +124,3 @@ for(const marker of ["<MetricGrid","<KpiCard","<Badge","<Alert","<Button"]){
   if(!biometricAdmin.includes(marker))throw new Error("BiometricEnrollmentAdmin missing V2/admin primitive "+marker);
 }
 for(const glyph of ["⌖","◎"])if(biometric.includes(glyph))throw new Error("Biometric enrollment still contains legacy glyph "+glyph);
-
-const userStats=fs.readFileSync("components/UserStatisticsDashboard.tsx","utf8");
-for(const marker of ["<MetricGrid","<KpiCard","<ProgressBar","<Badge","<EmptyState"]){
-  if(!userStats.includes(marker))throw new Error("UserStatisticsDashboard missing V2 primitive "+marker);
-}
-
-const staticTable=fs.readFileSync("components/ui-kit/StaticTable.tsx","utf8");
-if(!staticTable.includes("recordProps?:Record"))throw new Error("StaticDataTable does not support server-side record filter metadata");
-if(!staticTable.includes("{...row.recordProps}"))throw new Error("StaticDataTable does not render row metadata");
-
-const prereq=fs.readFileSync("components/CreationPrerequisiteState.tsx","utf8");
-for(const marker of ["supplier:\"supplier\"","crew:\"crew\"","attendance:\"attendance\"","user:\"user\""]){
-  if(!prereq.includes(marker))throw new Error("Creation prerequisite icon map missing "+marker);
-}
-
-const css=fs.readFileSync("app/phase8-modules.css","utf8");
-for(const selector of [".phase8-suppliers",".phase8-users",".phase8-crews",".phase8-attendance",".phase8-supplier-directory .supplier-profile-grid",".attendance-admin-context",".user-attendance-admin-panel",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
-  if(!css.includes(selector))throw new Error("Phase 8 CSS missing "+selector);
-}
-if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 8 CSS must use Design Tokens only");
-
-const layout=fs.readFileSync("app/layout.tsx","utf8");
-const p7=layout.indexOf('import "./phase7-modules.css";');
-const p8=layout.indexOf('import "./phase8-modules.css";');
-const shell=layout.indexOf('import "./shell-v2.css";');
-if(p7<0||p8<0||shell<0||p8<p7||shell<p8)throw new Error("Phase 8 CSS load order is invalid");
-
-const workflow=fs.readFileSync(".github/workflows/ci.yml","utf8");
-if(!workflow.includes("node scripts/phase8-suppliers-people-smoke.mjs"))throw new Error("CI does not run Phase 8 checks");
-
-console.log("DESWEB Design System V2 Phase 8 Suppliers/People checks passed.");

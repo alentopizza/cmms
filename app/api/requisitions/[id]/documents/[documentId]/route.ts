@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool,query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { loadProcurementDocumentMatchForUpdate } from "@/lib/procurement-reconciliation";
@@ -22,7 +23,7 @@ async function fileAccess(id:string,documentId:string,session:NonNullable<Awaite
   );
   const row=result.rows[0];
   if(!row)return null;
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
+  if(!canAccessOrganization(session,row.organization_id))return null;
   if(session.platformRole==="user"&&!session.accessAllSites){
     const sites=await query<{site_id:string}>(
       "SELECT DISTINCT site_id FROM supplier_requisition_items WHERE requisition_id=$1 AND site_id IS NOT NULL",
@@ -72,7 +73,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string;d
       await client.query("ROLLBACK");
       return new NextResponse("Documento no encontrado",{status:404});
     }
-    if(session.platformRole==="user"&&session.organizationId!==doc.organization_id){
+    if(!canAccessOrganization(session,doc.organization_id)){
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden",{status:403});
     }

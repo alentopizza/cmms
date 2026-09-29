@@ -46,7 +46,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 (!item.permission || can(session, item.permission)) &&
     (!item.anyPermissions || item.anyPermissions.some(permission => can(session, permission)))
   );
-  const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({ id, icon, label, href }));
+  const navigationItems: ReorderableNavItem[] = visibleItems.map(({ id, icon, label, href }) => ({
+    id,
+    icon,
+    label: id==="companies" && session.platformRole==="user" && session.role==="admin" ? "Mi empresa" : label,
+    href,
+  }));
   const canConfigure = can(session, "personalization.manage") || can(session, "settings.view");
   const canBrandPersonalization = Boolean(session.organizationId && session.role === "admin");
   const brandPersonalizationEnabled = Boolean(canBrandPersonalization && session.planCode === "pro" && session.whiteLabel);

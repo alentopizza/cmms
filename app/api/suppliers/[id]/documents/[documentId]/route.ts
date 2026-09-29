@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -17,7 +18,7 @@ async function access(id:string,documentId:string,session:NonNullable<Awaited<Re
   );
   const row=result.rows[0];
   if(!row)return null;
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return null;
+  if(!canAccessOrganization(session,row.organization_id))return null;
   return row;
 }
 

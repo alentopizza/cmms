@@ -1,11 +1,12 @@
 import { canAccessSite, type AuthSession } from "@/lib/auth";
+import { canAccessOrganization } from "@/lib/organization-scope";
 
 export function hasLimitedInventorySiteScope(session:AuthSession){
   return session.platformRole==="user"&&!session.accessAllSites;
 }
 
 export function canAccessInventoryOrganization(session:AuthSession,organizationId:string){
-  return session.platformRole!=="user"||session.organizationId===organizationId;
+  return canAccessOrganization(session,organizationId);
 }
 
 // Product master scope preserves the current model during I0. A legacy product
@@ -37,7 +38,10 @@ export function inventoryItemSqlScope(session:AuthSession):InventoryItemSqlScope
   const conditions:string[]=[];
   let siteParamToken:string|null=null;
 
-  if(session.platformRole==="user"){
+  if(session.platformRole==="superadmin"){
+    params.push(session.platformOrganizationIds);
+    conditions.push("i.organization_id=ANY($"+params.length+"::uuid[])");
+  }else if(session.platformRole==="user"){
     params.push(session.organizationId);
     conditions.push("i.organization_id=$"+params.length);
     if(!session.accessAllSites){

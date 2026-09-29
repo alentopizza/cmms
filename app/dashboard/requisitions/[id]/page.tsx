@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound,redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import FileDropzone from "@/components/FileDropzone";
@@ -67,7 +68,7 @@ export default async function RequisitionDetail({params,searchParams}:{params:Pr
   );
   if(!result.rowCount)notFound();
   const req=result.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==req.organization_id)notFound();
+  if(!canAccessOrganization(session,req.organization_id))notFound();
 
   const items=await query<Item>(
     `SELECT ri.id,ri.inventory_item_id,i.warehouse_id,i.active inventory_active,ri.site_id,ri.sku,ri.description,ri.unit,

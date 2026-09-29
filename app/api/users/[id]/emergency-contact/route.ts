@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -18,7 +19,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   );
   const row=target.rows[0];
   if(!row)return NextResponse.json({contact:null});
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,row.organization_id))return new NextResponse("Forbidden",{status:403});
   const result=await query<{
     user_id:string;organization_id:string;full_name:string;relationship_code:string;phone:string;email:string|null;notes:string|null;
   }>(
@@ -42,7 +43,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   );
   const row=target.rows[0];
   if(!row)return new NextResponse("Usuario sin empresa",{status:422});
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,row.organization_id))return new NextResponse("Forbidden",{status:403});
   const form=await request.formData();
   const fullName=String(form.get("full_name")||"").trim();
   const relationship=String(form.get("relationship_code")||"").trim();

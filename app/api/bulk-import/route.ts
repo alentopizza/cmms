@@ -29,6 +29,8 @@ import {
   type InventoryImportScope,
 } from "@/lib/inventory-import-service";
 
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type Issue={
   sheet:string;row:number;severity:"error"|"warning";message:string;
   field?:string;value?:string;problem?:string;suggestion?:string;
@@ -540,10 +542,16 @@ export async function POST(request:Request){
   const entity=String(form.get("entity")||"inventory")==="assets"?"assets":"inventory";
   const mode=String(form.get("mode")||"validate");
   const fixedSupplierId=String(form.get("supplier_id")||"");
+  const requestedOrganization=String(form.get("organization_id")||"");
   if(entity==="inventory"&&!can(session,"inventory.write"))return NextResponse.json({error:"Forbidden"},{status:403});
   if(entity==="assets"&&!can(session,"assets.write"))return NextResponse.json({error:"Forbidden"},{status:403});
 
-  let organizationId=session.organizationId;
+  let organizationId=session.platformRole==="user"
+    ?session.organizationId
+    :UUID.test(requestedOrganization)?requestedOrganization:null;
+  if(organizationId&&!canAccessOrganization(session,organizationId)){
+    return NextResponse.json({error:"Forbidden"},{status:403});
+  }
   if(fixedSupplierId){
     const scopedSupplier=await query<{organization_id:string}>(
       "SELECT organization_id FROM suppliers WHERE id=$1 AND active=true",
@@ -552,6 +560,9 @@ export async function POST(request:Request){
     if(!scopedSupplier.rowCount)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
     if(!canAccessOrganization(session,scopedSupplier.rows[0].organization_id)){
       return NextResponse.json({error:"Forbidden"},{status:403});
+    }
+    if(organizationId&&organizationId!==scopedSupplier.rows[0].organization_id){
+      return NextResponse.json({error:"El proveedor no pertenece a la empresa seleccionada."},{status:422});
     }
     organizationId=scopedSupplier.rows[0].organization_id;
   }

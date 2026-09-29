@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -50,11 +51,9 @@ export async function POST(request:Request){
     }
 
     for(const item of items.rows){
-      if(session.platformRole==="user"){
-        if(session.organizationId!==item.organization_id || (item.site_id&&!canAccessSite(session,item.site_id))){
-          await client.query("ROLLBACK");
-          return new NextResponse("Forbidden",{status:403});
-        }
+      if(!canAccessOrganization(session,item.organization_id) || (session.platformRole==="user"&&item.site_id&&!canAccessSite(session,item.site_id))){
+        await client.query("ROLLBACK");
+        return new NextResponse("Forbidden",{status:403});
       }
     }
 

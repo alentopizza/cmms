@@ -272,7 +272,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
           WHERE at.asset_id IS NOT NULL AND at.organization_id=$1 AND a.site_id=ANY($2::uuid[])
           ORDER BY at.created_at DESC LIMIT 250`,[orgId,session.siteIds]);
 
-  const creationGatePromise=getCreationGateForScope("asset",session.organizationId,platform);
+  const creationGatePromise=getCreationGateForScope("asset",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const [
     summaryResult,facetsResult,brandsResult,modelsResult,catalogCategories,sites,locations,suppliers,
     maintenanceSummary,historySummary,documentSummary,creationGate,

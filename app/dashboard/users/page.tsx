@@ -21,7 +21,7 @@ export default async function UsersPage() {
   const scope=organizationScopeFor(session);
 
   const [users, organizations, sites, serviceSuppliers] = await Promise.all([
-    isGlobalOperator
+    ownerAccess
       ? query<ManagedUser>(
           `SELECT u.id,u.email,u.full_name,u.phone,u.country_code,u.identity_document_type,u.identity_document_number,u.preferred_locale,u.active,u.platform_role,u.last_login_at::text,
                   (u.avatar_data IS NOT NULL) has_avatar,

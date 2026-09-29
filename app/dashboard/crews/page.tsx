@@ -123,7 +123,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
         : query<CrewMember>(memberSelect+" WHERE c.organization_id=$1 AND (c.site_id IS NULL OR c.site_id=ANY($2::uuid[])) ORDER BY cm.crew_id,u.full_name",[session.organizationId,session.siteIds]),
   ]);
 
-  const creationGate=await getCreationGateForScope("crew",session.organizationId,platform);
+  const creationGate=await getCreationGateForScope("crew",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const error=params.error==="sequence" ? creationGate.message
     : params.error==="members" ? "Selecciona al menos un integrante válido para la cuadrilla."
     : params.error==="leader" ? "El líder debe ser un integrante activo y autorizado de la misma cuadrilla."

@@ -517,3 +517,201 @@ export default function SupplierDirectory({
             </div>
             <span className="supplier-analytics-sample">{selectedCommercial?.received_requisitions||0} requisiciones con recepción</span>
           </div>
+          {selectedCommercial&&selectedCommercial.received_requisitions>0?<>
+            <div className="supplier-commercial-kpi-grid">
+              <article>
+                <span>Tiempo a primera recepción</span>
+                <strong>{days(selectedCommercial.average_lead_time_days)}</strong>
+                <small>Desde envío/creación hasta la primera entrada física · muestra {selectedCommercial.received_requisitions}</small>
+              </article>
+              <article>
+                <span>Cumplimiento de cantidad</span>
+                <strong>{pct(selectedCommercial.quantity_fulfillment_pct)}</strong>
+                <small>{selectedCommercial.completed_requisitions} completas · {selectedCommercial.partial_requisitions} parciales</small>
+              </article>
+              <article>
+                <span>Completas dentro de fecha</span>
+                <strong>{pct(selectedCommercial.on_time_complete_pct)}</strong>
+                <small>{selectedCommercial.on_time_sample?selectedCommercial.on_time_sample+" requisiciones completas con fecha requerida":"Sin requisiciones completas con fecha requerida"}</small>
+              </article>
+              <article>
+                <span>Variación ponderada de costo</span>
+                <strong className={selectedCommercial.price_variance_pct!=null&&selectedCommercial.price_variance_pct>0?"variance-up":selectedCommercial.price_variance_pct!=null&&selectedCommercial.price_variance_pct<0?"variance-down":""}>{pct(selectedCommercial.price_variance_pct)}</strong>
+                <small>{varianceCopy(selectedCommercial.price_variance_pct)} · {selectedCommercial.price_sample_lines} líneas comparables</small>
+              </article>
+            </div>
+            <div className="supplier-commercial-value-strip">
+              <div><span>Valor estimado de lo recibido</span><strong>{new Intl.NumberFormat("es-CO",{style:"currency",currency:countryDefinition(selected.organization_country)?.currency||"USD",maximumFractionDigits:0}).format(selectedCommercial.estimated_received_value)}</strong></div>
+              <div><span>Valor real recibido</span><strong>{new Intl.NumberFormat("es-CO",{style:"currency",currency:countryDefinition(selected.organization_country)?.currency||"USD",maximumFractionDigits:0}).format(selectedCommercial.actual_received_value)}</strong></div>
+              <div><span>Última recepción</span><strong>{selectedCommercial.latest_receipt_at?new Date(selectedCommercial.latest_receipt_at).toLocaleDateString("es-CO"):"—"}</strong></div>
+            </div>
+          </>:<div className="location-detail-empty">Aún no hay suficiente historial físico enlazado a requisiciones para calcular desempeño comercial.</div>}
+        </div>
+
+        {selectedCommercialTrend.length>0&&<div className="entity-panel supplier-commercial-trend-panel">
+          <div className="entity-panel-heading-row"><div><h3>Evolución de recepciones</h3><p className="entity-panel-copy">Lectura mensual de las requisiciones cuya primera recepción ocurrió en cada mes.</p></div></div>
+          <div className="supplier-commercial-trend">
+            {selectedCommercialTrend.map(point=><article key={point.month}>
+              <div><strong>{monthLabel(point.month)}</strong><span>{point.received_requisitions} req.</span></div>
+              <div className="supplier-commercial-trend-metric"><span>Cantidad</span><strong>{pct(point.quantity_fulfillment_pct,0)}</strong><i><b style={{width:Math.max(0,Math.min(100,point.quantity_fulfillment_pct||0))+"%"}}/></i></div>
+              <div><span>Lead time</span><strong>{days(point.average_lead_time_days)}</strong></div>
+              <div><span>Variación costo</span><strong>{pct(point.price_variance_pct)}</strong></div>
+            </article>)}
+          </div>
+        </div>}
+
+        <div className="entity-panel supplier-commercial-history">
+          <div className="entity-panel-heading-row"><div><h3>Base reciente del indicador</h3><p className="entity-panel-copy">Últimas requisiciones con recepción para revisar de dónde salen los KPIs.</p></div></div>
+          {selectedCommercialReqs.length?<div className="ds-data-table-shell inventory-kardex-table-wrap"><div className="ds-data-table-scroll"><table className="ds-data-table"><thead><tr><th>Requisición</th><th>Recepción</th><th>Lead time</th><th>Cantidad</th><th>Costo</th><th>Fecha requerida</th></tr></thead><tbody>
+            {selectedCommercialReqs.map(row=><tr key={row.requisition_id}>
+              <td><Link className="kardex-requisition-link" href={"/dashboard/requisitions/"+row.requisition_id}>REQ-{row.number.padStart(6,"0")}</Link><small className="table-subline">{statusLabel(row.status)}</small></td>
+              <td>{row.first_receipt_at?new Date(row.first_receipt_at).toLocaleDateString("es-CO"):"—"}<small className="table-subline">{row.completed?"Completa":"Parcial"}</small></td>
+              <td>{days(row.lead_time_days)}</td>
+              <td><strong>{pct(row.quantity_fulfillment_pct)}</strong><small className="table-subline">{row.received_quantity.toLocaleString("es-CO")} / {row.requested_quantity.toLocaleString("es-CO")}</small></td>
+              <td><strong>{pct(row.price_variance_pct)}</strong><small className="table-subline">{varianceCopy(row.price_variance_pct)}</small></td>
+              <td>{row.needed_by?new Date(row.needed_by+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"}{row.completed_on_time!=null?<small className="table-subline">{row.completed_on_time?"Completada a tiempo":"Completada después de fecha"}</small>:null}</td>
+            </tr>)}
+          </tbody></table></div></div>:<EmptyState icon="file" title="No hay requisiciones con recepción" description="El historial comercial aparecerá cuando existan recepciones físicas enlazadas."/>}
+        </div>
+      </div>)},
+      {id:"documents",label:"Documentos",content:demandContent("documents",<SupplierDocuments supplier={selected} documents={selectedDocs}/>)},
+      {id:"financial",label:"Información financiera",content:demandContent("general",financialEditing
+        ?<form className="entity-panel form-grid" method="post" action={"/api/suppliers/"+detail.id}>
+          <input type="hidden" name="intent" value="financial"/>
+          <div className="field"><label>Banco</label><input name="bank_name" defaultValue={detail.bank_name||""} placeholder="Ej. Bancolombia"/></div>
+          <div className="field"><label>Tipo de cuenta</label><select name="account_type" defaultValue={detail.account_type||""}><option value="">Selecciona</option><option value="savings">Ahorros</option><option value="checking">Corriente</option><option value="other">Otra</option></select></div>
+          <div className="field"><label>Número de cuenta</label><input name="account_number" defaultValue={detail.account_number||""} autoComplete="off"/></div>
+          <div className="field"><label>Titular de la cuenta</label><input name="account_holder" defaultValue={detail.account_holder||detail.legal_name||""}/></div>
+          <div className="field"><label>Identificación del titular</label><input name="account_holder_tax_id" defaultValue={detail.account_holder_tax_id||detail.tax_id||""}/></div>
+          <div className="field"><label>Moneda</label><select name="currency_code" defaultValue={detail.currency_code||"COP"}><option value="COP">COP · Peso colombiano</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="MXN">MXN · Peso mexicano</option><option value="PEN">PEN · Sol peruano</option><option value="CLP">CLP · Peso chileno</option></select></div>
+          <div className="field"><label>Plazo de pago (días)</label><input name="payment_terms_days" type="number" min="0" max="365" defaultValue={detail.payment_terms_days??""}/></div>
+          <div className="field"><label>Correo para pagos</label><input name="payment_email" type="email" defaultValue={detail.payment_email||""}/></div>
+          <div className="field form-span-2"><label>Observaciones de pago</label><textarea name="payment_notes" rows={3} defaultValue={detail.payment_notes||""} placeholder="Condiciones, referencia, instrucciones administrativas."/></div>
+          <div className="form-span-2 form-actions">
+            <button className="button secondary" type="button" onClick={()=>setFinancialEditing(false)}>Cancelar</button>
+            <button className="button" type="submit">Guardar información financiera</button>
+          </div>
+        </form>
+        :<div className="entity-panel">
+          <div className="entity-panel-heading-row">
+            <div>
+              <h3><span className="entity-section-icon"><UiIcon name="company"/></span>Datos para pagos</h3>
+              <p className="entity-panel-copy">Información administrativa usada para preparar pagos al proveedor. El número de cuenta se muestra enmascarado.</p>
+            </div>
+            <button className="button secondary entity-financial-edit-button" type="button" onClick={()=>setFinancialEditing(true)}><UiIcon name="edit" size={15}/> Editar</button>
+          </div>
+          <div className="entity-info-grid entity-financial-summary">
+            <div className="entity-info-field"><span>Banco</span><strong>{detail.bank_name||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Tipo de cuenta</span><strong>{detail.account_type==="savings"?"Ahorros":detail.account_type==="checking"?"Corriente":detail.account_type==="other"?"Otra":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Número de cuenta</span><strong>{detail.account_number?("•••• "+detail.account_number.slice(-4)):"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Titular</span><strong>{detail.account_holder||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Identificación titular</span><strong>{detail.account_holder_tax_id||"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Moneda</span><strong>{detail.currency_code||"COP"}</strong></div>
+            <div className="entity-info-field"><span>Plazo de pago</span><strong>{detail.payment_terms_days!=null?detail.payment_terms_days+" días":"Sin registrar"}</strong></div>
+            <div className="entity-info-field"><span>Correo de pagos</span><strong>{detail.payment_email||"Sin registrar"}</strong></div>
+            <div className="entity-info-field entity-financial-notes"><span>Observaciones</span><strong>{detail.payment_notes||"Sin observaciones"}</strong></div>
+          </div>
+        </div>)},
+
+      ...((selected.supplier_type==="services"||selected.supplier_type==="both")?[{id:"activities",label:"Actividades",content:demandContent("activities",<div className="supplier-activity-list">
+        {selectedActivities.length?selectedActivities.map(activity=><article className="supplier-activity-row" key={activity.id}>
+          <span className={"activity-status activity-status-"+activity.status}>{activity.status}</span>
+          <div><strong>{activity.description}</strong><span>OT #{activity.order_number} · {activity.order_title}</span><small>{activity.site_name}{activity.location_name?" · "+activity.location_name:""}{activity.due_date?" · compromiso "+new Date(activity.due_date+"T12:00:00").toLocaleDateString("es-CO"):""}</small></div>
+          <Link href={"/dashboard/work-orders/"+activity.work_order_id}>Ver OT</Link>
+        </article>):<div className="location-detail-empty">No hay actividades asignadas a este proveedor de servicios.</div>}
+      </div>)}]:[]),
+      ...((selected.supplier_type==="materials"||selected.supplier_type==="both")?[{id:"inventory",label:"Inventarios / suministros",content:demandContent("inventory",<div className="entity-section-stack supplier-operational-tab">
+        <div className="entity-panel supplier-tab-toolbar">
+          <div><h3><span className="entity-section-icon"><UiIcon name="asset"/></span>Inventario del proveedor</h3><p className="entity-panel-copy">Crea, importa, edita y consulta los artículos suministrados por este proveedor. El Kardex permanece centralizado en Inventario.</p></div>
+          <div className="supplier-tab-actions">
+            {canInventoryWrite&&<BulkImportModal entity="inventory" supplierId={selected.id} supplierName={selected.name} supplierTaxId={selected.tax_id||""} supplierCode={selected.code||""} compact label="Importar"/>}
+            <Link className="button secondary" href={"/dashboard/inventory"}><UiIcon name="asset" size={15}/> Abrir inventario</Link>
+          </div>
+        </div>
+        {canInventoryWrite&&<div className="entity-panel">
+          <h3>Crear suministro para {selected.name}</h3>
+          <form className="form-grid" method="post" action="/api/inventory" encType="multipart/form-data">
+            <input type="hidden" name="supplier_id" value={selected.id}/>
+            <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+            <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{inventorySites.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></div>
+            <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{inventoryLocations.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.id}>{option.label}</option>)}</select></div>
+            <div className="field"><label>SKU *</label><input name="sku" required placeholder="REP-001"/></div>
+            <div className="field"><label>Nombre *</label><input name="name" required placeholder="Nombre del suministro"/></div>
+            <div className="field"><label>Categoría</label><input name="category" list={"supplier-category-"+selected.id}/><datalist id={"supplier-category-"+selected.id}>{inventoryCategories.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.name}/>)}</datalist></div>
+            <div className="field"><label>Presentación</label><input name="presentation" placeholder="Caja, rollo, unidad..."/></div>
+            <div className="field"><label>Unidad</label><input name="unit" defaultValue="unidad"/></div>
+            <div className="field"><label>Bodega</label><input name="warehouse_name" list={"supplier-warehouse-"+selected.id} defaultValue="Almacén principal"/><datalist id={"supplier-warehouse-"+selected.id}>{inventoryWarehouses.filter(option=>option.organization_id===selected.organization_id).map(option=><option key={option.id} value={option.name}/>)}</datalist></div>
+            <div className="field"><label>Existencia inicial</label><input name="quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Stock mínimo</label><input name="min_quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Stock máximo</label><input name="max_quantity" type="number" min="0" step="0.001" defaultValue="0"/></div>
+            <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" min="0" step="0.01" defaultValue="0"/></div>
+            <div className="field form-span-2"><label>Descripción</label><input name="description"/></div>
+            <div className="form-span-2"><FileDropzone name="image" label="Imagen del suministro" description="PNG, JPG o WebP. Se mostrará en la tarjeta del proveedor y en Inventario." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image"/></div>
+            <div className="form-span-2 form-actions"><button className="button" type="submit">Crear suministro</button></div>
+          </form>
+        </div>}
+        <div className="supplier-supply-grid supplier-supply-grid-operational">{selectedItems.length?selectedItems.map(item=><article className={"supplier-supply-card supplier-supply-card-operational"+(item.active===false?" inactive":"")} key={item.id}>
+          <div className="supplier-supply-card-head">
+            <span className={"supplier-supply-image"+(item.has_image?" has-image":"")}>{item.has_image?<img src={"/api/inventory/"+item.id+"/image"} alt="" loading="lazy" decoding="async" />:<UiIcon name="asset" size={30}/>}</span>
+            <div><small>{item.sku}</small><strong>{item.name}</strong><span>{item.category_name||"Sin categoría"} · {item.site_name||"Sin sede"}{item.location_name?" · "+item.location_name:""}</span></div>
+            <div className="supplier-supply-state-stack"><span className={Number(item.quantity)<=Number(item.min_quantity)?"inventory-stock-pill low":"inventory-stock-pill ok"}>{Number(item.quantity)<=Number(item.min_quantity)?"Stock bajo":"En stock"}</span>{item.active===false&&<span className="inventory-record-pill">Inactivo</span>}</div>
+          </div>
+          <div className="supplier-supply-card-metrics"><div><span>Existencia</span><strong>{item.quantity} {item.unit}</strong></div><div><span>Mínimo</span><strong>{item.min_quantity}</strong></div><div><span>Costo</span><strong>{item.unit_cost}</strong></div><div><span>Bodega</span><strong>{item.warehouse_name||item.storage_location||"Sin registrar"}</strong></div></div>
+          <div className="supplier-supply-card-actions">
+            <Link className="button secondary" href={"/dashboard/inventory/"+item.id}>Ver / Kardex</Link>
+            {canInventoryWrite&&<details className="supplier-inline-edit"><summary className="button secondary"><UiIcon name="edit" size={14}/> Editar</summary><form className="form-grid" method="post" encType="multipart/form-data" action={"/api/inventory/"+item.id}>
+              <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+              <div className="field"><label>Nombre</label><input name="name" defaultValue={item.name} required/></div>
+              <div className="field"><label>Categoría</label><input name="category" defaultValue={item.category_name||""}/></div>
+              <div className="field"><label>Presentación</label><input name="presentation" defaultValue={item.presentation||""}/></div>
+              <div className="field"><label>Unidad</label><input name="unit" defaultValue={item.unit}/></div>
+              <div className="field"><label>Mínimo</label><input name="min_quantity" type="number" step="0.001" min="0" defaultValue={item.min_quantity}/></div>
+              <div className="field"><label>Máximo</label><input name="max_quantity" type="number" step="0.001" min="0" defaultValue={item.max_quantity||"0"}/></div>
+              <div className="field"><label>Costo unitario</label><input name="unit_cost" type="number" step="0.01" min="0" defaultValue={item.unit_cost}/></div>
+              <div className="field form-span-2"><label>Descripción</label><input name="description" defaultValue={item.description||""}/></div>
+              <div className="form-span-2"><FileDropzone name="image" label="Imagen del suministro" description="Puedes reemplazar la imagen actual." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={item.has_image?"Imagen actual":null} existingPreviewUrl={item.has_image?"/api/inventory/"+item.id+"/image":null}/></div>
+              <div className="form-span-2 form-actions"><button className="button" type="submit">Guardar</button></div>
+            </form></details>}
+            {canInventoryWrite&&<form method="post" action={"/api/inventory/"+item.id} onSubmit={event=>{if(item.active!==false&&!window.confirm("¿Desactivar este suministro? Permanecerá en el histórico y su Kardex no se eliminará."))event.preventDefault();}}>
+              <input type="hidden" name="intent" value={item.active===false?"reactivate":"deactivate"}/>
+              <input type="hidden" name="return_to" value={"/dashboard/suppliers?supplier="+selected.id+"&tab=inventory"}/>
+              <button className={"button secondary"+(item.active===false?"":" danger-text")} type="submit"><UiIcon name="power" size={14}/>{item.active===false?"Reactivar":"Desactivar"}</button>
+            </form>}
+          </div>
+        </article>):<div className="location-detail-empty">No hay suministros asociados a este proveedor. Puedes crearlos o importarlos desde aquí.</div>}</div>
+      </div>)}]:[]),
+      {id:"requisitions",label:"Requisiciones",content:demandContent("requisitions",<div className="entity-section-stack supplier-operational-tab">
+        {(selected.supplier_type==="materials"||selected.supplier_type==="both")&&<div className="entity-panel"><RequisitionBuilder items={selectedActiveItems} returnTo={"/dashboard/suppliers?supplier="+selected.id+"&tab=requisitions"} title={"Nueva requisición · "+selected.name} description="Selecciona los insumos y cantidades. Esta ficha genera una requisición directamente para este proveedor."/></div>}
+        <div className="entity-panel">
+          <div className="entity-panel-heading-row"><div><h3>Historial de requisiciones</h3><p className="entity-panel-copy">Consulta, actualiza y exporta cada requisición sin perder la relación con el proveedor.</p></div><Link className="button secondary" href="/dashboard/requisitions">Ver módulo completo</Link></div>
+          {selectedReqs.length?<div className="supplier-requisition-list supplier-requisition-list-operational">{selectedReqs.map(req=>{
+            const requested=Number(req.quantity_requested||0);
+            const received=Number(req.quantity_received||0);
+            const pct=requested>0?Math.min(100,Math.round(received/requested*100)):0;
+            return <article key={req.id} className="supplier-requisition-operational-row">
+              <Link href={"/dashboard/requisitions/"+req.id}>
+                <span>REQ-{req.number.padStart(6,"0")}</span>
+                <div className="supplier-requisition-status-stack"><strong>{statusLabel(req.status)}</strong>{req.approval_required&&<em className={"requisition-approval-mini "+req.approval_state}>Aprobación · {approvalLabel(req.approval_state)}</em>}{req.document_count>0&&<em className={"requisition-document-mini"+(req.document_disputed>0?" disputed":req.document_pending_review>0?" pending":" reviewed")}>Docs · {req.document_count}{req.document_disputed>0?" · disputa":req.document_pending_review>0?" · pendiente":" · revisados"}</em>}</div>
+                <small>{req.item_count} ítems · {new Date(req.created_at).toLocaleDateString("es-CO")}{req.return_count>0?" · "+req.return_count+" DEV":""}</small>
+                <div className="supplier-requisition-progress"><i style={{width:pct+"%"}}/><em>{pct}% recibido{Number(req.quantity_returned)>0?" · "+Number(req.quantity_returned).toLocaleString("es-CO")+" devuelto":""}</em></div>
+                <UiIcon name="chevron-right" size={14}/>
+              </Link>
+              <RequisitionExportMenu id={req.id}/>
+            </article>;
+          })}</div>:<div className="location-detail-empty">Aún no hay requisiciones para este proveedor.</div>}
+        </div>
+      </div>)},
+    ]}
+  />
+  {deleteError&&<div className="section"><Alert variant="danger" title="No fue posible eliminar el proveedor">{deleteError}</Alert></div>}
+  <ConfirmDialog
+    open={Boolean(deleteCandidate)}
+    title="Eliminar proveedor"
+    message={deleteCandidate?"Vas a eliminar definitivamente a "+deleteCandidate.name+". Esta acción solo se completará si no tiene inventario, actividades ni requisiciones relacionadas.":"Confirma la eliminación del proveedor."}
+    confirmLabel="Eliminar proveedor"
+    cancelLabel="Conservar"
+    variant="danger"
+    onConfirm={confirmSupplierDelete}
+    onCancel={()=>setDeleteCandidate(null)}
+  /></div>;
+}

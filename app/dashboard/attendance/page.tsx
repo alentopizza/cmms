@@ -4,6 +4,7 @@ import UiIcon from "@/components/UiIcon";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOperator, ROLE_LABELS, type OrganizationRole } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import AttendanceCapture from "@/components/AttendanceCapture";
 import AttendanceMovement, { type AttendanceMovementSegment } from "@/components/AttendanceMovement";
@@ -105,8 +106,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   if(!canSelf && !canManage && !canReports) redirect("/dashboard");
 
   const feedback=await searchParams;
+  const organizationScope=organizationScopeFor(session);
   const organizations=globalOperator
-    ? await query<OrganizationOption>("SELECT id,name FROM organizations WHERE active=true ORDER BY name")
+    ? await query<OrganizationOption>(
+        "SELECT id,name FROM organizations WHERE active=true AND ($1::boolean OR id=ANY($2::uuid[])) ORDER BY name",
+        [organizationScope.unrestricted,organizationScope.organizationIds],
+      )
     : {rows:[]} as {rows:OrganizationOption[]};
   const requestedOrganizationId=attendanceOrganizationId(session,feedback.organization_id);
   const organizationId=globalOperator

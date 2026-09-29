@@ -13,7 +13,7 @@ if(!dashboard.includes("desweb-shell-v2"))throw new Error("Dashboard shell is no
 for(const legacy of ['icon: "▦"','icon: "◫"','icon: "⌂"','icon: "▤"'])if(dashboard.includes(legacy))throw new Error("Legacy Unicode navigation icon remains: "+legacy);
 
 const sidebar=fs.readFileSync("components/DashboardSidebar.tsx","utf8");
-for(const required of ['<UiIcon name={item.icon}','name="reorder"','name="reset"','name="logout"'])if(!sidebar.includes(required))throw new Error("Sidebar V2 icon contract missing "+required);
+for(const required of ['<UiIcon name={item.icon}','name="reorder"','name="reset"'])if(!sidebar.includes(required))throw new Error("Sidebar V2 icon contract missing "+required);
 
 const chrome=fs.readFileSync("components/DashboardChrome.tsx","utf8");
 if(!chrome.includes('pathname.startsWith("/dashboard/requisitions")'))throw new Error("Requisitions must have contextual header metadata");

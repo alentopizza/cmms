@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
@@ -32,8 +33,8 @@ export async function POST(
   if (!UUID_PATTERN.test(id) || !UUID_PATTERN.test(organizationId)) {
     return new NextResponse("Sede inválida", { status: 400 });
   }
-  if (session.platformRole === "user" && session.organizationId !== organizationId) return new NextResponse("Forbidden", { status: 403 });
-  if (!canAccessSite(session, id)) return new NextResponse("Forbidden", { status: 403 });
+  if(!canAccessOrganization(session,organizationId)) return new NextResponse("Forbidden",{status:403});
+  if (session.platformRole === "user" && !canAccessSite(session, id)) return new NextResponse("Forbidden", { status: 403 });
 
   const site = await query<{
     active:boolean; latitude:number|null; longitude:number|null; geofence_radius_m:number;

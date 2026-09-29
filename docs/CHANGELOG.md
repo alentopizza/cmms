@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-29 — Rediseño UX/UI · cuadrícula de Inventario
+
+- El cambio prioriza el **catálogo de productos/existencias** en la vista Cuadrícula y conserva lógica de inventario, Kardex, movimientos, requisiciones, proveedores, categorías, almacenes, permisos, estados y cálculos.
+- `InventoryCard` conserva su variante compacta y añade `catalog`, utilizada únicamente por el Grid principal.
+- Cada tarjeta usa imagen real cuando existe o placeholder de inventario, y muestra SKU, categoría, nombre, presentación/referencia disponible, estado real de stock, bodega, proveedor, existencia actual, stock mínimo y valor unitario.
+- La barra de cobertura se calcula visualmente como existencia / stock mínimo únicamente cuando el mínimo es mayor que cero; no se agregan porcentajes históricos ni datos ficticios.
+- La cuadrícula usa 3 columnas en escritorio, 2 en tablet y 1 en móvil, con altura uniforme por fila, imagen de proporción fija, hover sutil y sin overflow horizontal.
+- Las acciones conservan flujos existentes: Ver detalles abre la ficha actual; Editar navega al formulario actual mediante `#inventory-edit`; Ver proveedor permanece como acción contextual cuando existe proveedor. No se crea Eliminar porque el módulo no expone esa acción.
+- Se añade navegación compacta basada en **categorías reales del facet actual**, más Todos y Configuración, sin categorías hardcodeadas.
+- El catálogo pasa a ancho completo. **Últimos movimientos/Kardex** se mueve después como sección secundaria con acceso explícito a Ver Kardex; luego permanecen Abastecimiento, Reportes y Configuración.
+- El selector Grid/List sigue usando `CollectionView`; la tabla `inventory-directory-list` conserva sus columnas y acciones existentes.
+
 ## 2026-09-29 — Rediseño UX/UI · cuadrícula de Rutinas
 
 - La vista **Cuadrícula** de Rutinas adopta el mismo lenguaje visual consolidado en Órdenes de trabajo, sin alterar lógica, permisos, endpoints, filtros, paginación ni la vista Listado.

@@ -72,12 +72,50 @@ export function AssetCard({
 }
 
 export function InventoryCard({
-  name,sku,category,presentation,quantity,unit,min,max,supplier,warehouse,unitValue,status,statusTone="neutral",active=true,imageSrc,actions,recordProps,
+  name,sku,category,presentation,quantity,unit,min,max,supplier,warehouse,unitValue,status,statusTone="neutral",active=true,imageSrc,actions,recordProps,variant="compact",
 }:{
   name:string;sku:string;category:string;presentation:string;quantity:number;unit:string;min:number;max:number;supplier:string;warehouse:string;unitValue:string;
-  status:string;statusTone?:BadgeVariant;active?:boolean;imageSrc?:string|null;actions?:ReactNode;recordProps?:RecordProps;
+  status:string;statusTone?:BadgeVariant;active?:boolean;imageSrc?:string|null;actions?:ReactNode;recordProps?:RecordProps;variant?:"compact"|"catalog";
 }){
   const progressMax=Math.max(max,min,quantity,1);
+  const stockPercent=min>0?Math.max(0,Math.min(100,Math.round(quantity/min*100))):null;
+
+  if(variant==="catalog"){
+    return <BusinessCardShell domain="inventory" className={"inventory-catalog-card-v2"+(active?"":" inactive")} recordProps={recordProps}>
+      <header className="inventory-catalog-head">
+        <span className={"inventory-catalog-visual"+(imageSrc?" has-image":"")}>
+          {imageSrc?<img src={imageSrc} alt={"Imagen de "+name} loading="lazy" decoding="async"/>:<UiIcon name="inventory" size={34}/>}
+        </span>
+        <div className="inventory-catalog-identity">
+          <div className="inventory-catalog-tags">
+            <span className="inventory-catalog-sku">{sku}</span>
+            <Badge variant="info">{category}</Badge>
+            {!active&&<Badge variant="neutral">Inactivo</Badge>}
+          </div>
+          <h3>{name}</h3>
+          <p>{presentation||unit}</p>
+          <div className="inventory-catalog-context">
+            <span><UiIcon name="warehouse" size={14}/>{warehouse||"Sin bodega"}</span>
+            <span><UiIcon name="supplier" size={14}/>{supplier||"Sin proveedor"}</span>
+          </div>
+        </div>
+        <div className="inventory-catalog-status"><Badge variant={statusTone}>{status}</Badge></div>
+      </header>
+
+      <div className="inventory-catalog-metrics">
+        <div><strong>{quantity}</strong><small>Existencia actual · {unit}</small></div>
+        <div><strong>{min}</strong><small>Stock mínimo · {unit}</small></div>
+        <div><strong>{unitValue}</strong><small>Valor unitario</small></div>
+      </div>
+
+      <div className={"inventory-catalog-stock inventory-catalog-stock-"+statusTone}>
+        {stockPercent!==null?<><div className="inventory-catalog-stock-track" aria-label={"Cobertura frente al stock mínimo "+stockPercent+"%"}><span style={{width:stockPercent+"%"}}/></div><strong>{stockPercent}%</strong></>:<div className="inventory-catalog-stock-track is-unavailable" aria-label="Porcentaje de stock no disponible"/>}
+      </div>
+
+      {actions&&<footer className="inventory-catalog-actions">{actions}</footer>}
+    </BusinessCardShell>;
+  }
+
   return <BusinessCardShell domain="inventory" className={"inventory-product-card"+(active?"":" inactive")} recordProps={recordProps}>
     <div className="inventory-product-card-head ds-business-head">
       <span className={"inventory-product-visual ds-business-thumbnail"+(imageSrc?" has-image":"")}>{imageSrc?<img src={imageSrc} alt="" loading="lazy" decoding="async" />:<UiIcon name="inventory" size={32}/>}</span>

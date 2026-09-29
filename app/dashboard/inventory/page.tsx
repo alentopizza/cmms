@@ -352,15 +352,32 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const inStock=summary.in_stock_count;
   const lowStock=summary.low_stock_count;
   const outStock=summary.out_stock_count;
+  const categoryTabs=facetOptions.category;
+  const inventoryCategoryHref=(nextCategory:string)=>{
+    const search=new URLSearchParams();
+    if(q)search.set("q",q);
+    if(stockStatus!=="all")search.set("status",stockStatus);
+    if(organization)search.set("organization",organization);
+    if(site)search.set("site",site);
+    if(nextCategory)search.set("category",nextCategory);
+    if(supplier)search.set("supplier",supplier);
+    if(warehouse)search.set("warehouse",warehouse);
+    if(record)search.set("record",record);
+    if(sortBy!=="name")search.set("sortBy",sortBy);
+    if(sortDirection!=="asc")search.set("sortDirection",sortDirection);
+    if(pageSize!==INVENTORY_DEFAULT_PAGE_SIZE)search.set("pageSize",String(pageSize));
+    const queryString=search.toString();
+    return (queryString?"/dashboard/inventory?"+queryString:"/dashboard/inventory")+"#inventory-products";
+  };
 
   return <div className="phase7-inventory">
     <ModuleHeader
-      eyebrow="Abastecimiento"
+      eyebrow="Inventario y suministros"
       title="Inventario"
       description="Productos, repuestos y suministros con trazabilidad por proveedor, ubicación, bodega y Kardex."
       count={summary.total_count}
       countLabel="artículos"
-      searchPlaceholder="Buscar SKU, artículo, categoría, ubicación o proveedor"
+      searchPlaceholder="Buscar producto, código, categoría o proveedor"
       filters={[{value:"all",label:"Todos"},{value:"ok",label:"En stock"},{value:"low",label:"Stock bajo"},{value:"out",label:"Sin stock"}]}
       facets={[
         {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
@@ -391,7 +408,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         {canWrite&&createOrganizationId&&<BulkImportModal entity="inventory" organizationId={createOrganizationId}/>}
         <ModuleExportMenu entity="inventory"/>
         {can(session,"requisitions.read")&&<Link className="button secondary" href="/dashboard/requisitions"><UiIcon name="file" size={15}/> Requisiciones</Link>}
-        {canWrite && creationGate.ready && createOrganizationId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Nuevo producto" iconName="inventory">
+        {canWrite && creationGate.ready && createOrganizationId ? <CreateRecordModal title="Crear artículo" eyebrow="Nuevo inventario" description="Registra el artículo y su posición inicial. La existencia inicial quedará registrada en Kardex." triggerLabel="Agregar" iconName="inventory">
           <form className="form-grid unified-popup-form" method="post" action="/api/inventory" encType="multipart/form-data">
             <div className="field"><label>Sede *</label><select name="site_id" required><option value="">Selecciona sede</option>{sites.rows.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
             <div className="field"><label>Sububicación *</label><select name="location_id" required><option value="">Selecciona sububicación</option>{locations.rows.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
@@ -415,6 +432,12 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     />
     <InventorySubnav active="summary"/>
 
+    <nav className="section inventory-category-nav" aria-label="Categorías del inventario">
+      <Link href={inventoryCategoryHref("")} className={!category?"active":""}>Todos</Link>
+      {categoryTabs.map(option=><Link key={option.value} href={inventoryCategoryHref(option.value)} className={category===option.value?"active":""}>{option.label}</Link>)}
+      <Link href="/dashboard/inventory#inventory-settings" className="inventory-category-nav-settings"><UiIcon name="settings" size={14}/>Configuración</Link>
+    </nav>
+
     {platform&&canWrite&&!createOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa">Usa el filtro Empresa para definir el contexto antes de crear productos, importar archivos, revisar movimientos recientes o generar requisiciones. Solo aparecen empresas de tu alcance autorizado.</Alert></div>}
 
     {(params.created||params.updated||params.movement||params.requisition_created)&&<div className="section phase7-feedback-stack">
@@ -437,15 +460,43 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       <KpiCard label="Sin stock" value={String(outStock)} hint={(summary.active_count?Math.round(outStock/summary.active_count*100):0)+"% del total activo"} icon="error" tone="danger"/>
     </MetricGrid>
 
-    <section className="section inventory-dashboard-layout phase7-anchor" id="inventory-products">
+    <section className="section inventory-catalog-section phase7-anchor" id="inventory-products">
       <div className="inventory-products-panel">
-        <div className="section-heading"><div><span className="eyebrow">Productos</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas. {summary.filtered_count} resultado{summary.filtered_count===1?"":"s"} · página {page} de {pageCount} · {pageSize} por página.</p></div></div>
-        {items.rows.length?<CollectionView storageKey="inventory" label="Vista de inventario" grid={<div className="inventory-product-grid" data-collection-grid>{items.rows.map(item=>{
+        <div className="inventory-catalog-heading">
+          <div><span className="eyebrow">Listado de inventario</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div>
+          <div className="inventory-catalog-heading-tools">
+            <form className="inventory-catalog-sort" method="get">
+              {q&&<input type="hidden" name="q" value={q}/>}
+              {stockStatus!=="all"&&<input type="hidden" name="status" value={stockStatus}/>}
+              {organization&&<input type="hidden" name="organization" value={organization}/>}
+              {site&&<input type="hidden" name="site" value={site}/>}
+              {category&&<input type="hidden" name="category" value={category}/>}
+              {supplier&&<input type="hidden" name="supplier" value={supplier}/>}
+              {warehouse&&<input type="hidden" name="warehouse" value={warehouse}/>}
+              {record&&<input type="hidden" name="record" value={record}/>}
+              {pageSize!==INVENTORY_DEFAULT_PAGE_SIZE&&<input type="hidden" name="pageSize" value={String(pageSize)}/>}
+              <label>Ordenar por
+                <select name="sortBy" defaultValue={sortBy} aria-label="Ordenar inventario">
+                  <option value="name">Nombre</option>
+                  <option value="sku">Código</option>
+                </select>
+              </label>
+              <select name="sortDirection" defaultValue={sortDirection} aria-label="Dirección del orden">
+                <option value="asc">A–Z</option>
+                <option value="desc">Z–A</option>
+              </select>
+              <button className="ds-button ds-button-secondary ds-button-sm" type="submit">Ordenar</button>
+            </form>
+            <span>Mostrando {items.rowCount} de {summary.filtered_count} productos</span>
+          </div>
+        </div>
+
+        {items.rows.length?<CollectionView storageKey="inventory" label="Vista de inventario" grid={<div className="inventory-product-grid inventory-catalog-grid" data-collection-grid>{items.rows.map(item=>{
           const state=stockState(item);
-          const quantity=Number(item.quantity||0),max=Math.max(Number(item.max_quantity||0),Number(item.min_quantity||0),quantity,1);
-          const pct=Math.max(0,Math.min(100,quantity/max*100));
+          const quantity=Number(item.quantity||0);
           return <InventoryCard
             key={item.id}
+            variant="catalog"
             name={item.name}
             sku={item.sku}
             category={item.category||"Sin categoría"}
@@ -455,7 +506,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             min={Number(item.min_quantity||0)}
             max={Number(item.max_quantity||0)}
             supplier={item.supplier||"Sin proveedor"}
-            warehouse={item.warehouse||item.storage_location||"Sin registrar"}
+            warehouse={item.warehouse||item.storage_location||"Sin bodega"}
             unitValue={money(Number(item.unit_cost||0))}
             status={state.label}
             statusTone={state.key==="out"?"danger":state.key==="low"?"warning":"success"}
@@ -472,8 +523,12 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               "data-filter-record":item.active?"active":"inactive","data-filter-record-label":item.active?"Activo":"Inactivo",
             }}
             actions={<>
-              <Link href={"/dashboard/suppliers?supplier="+(item.supplier_id||"")+"&tab=inventory"} className="text-button">Ver proveedor</Link>
-              {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="button secondary">Ver detalles →</Link>}
+              {canWrite&&<Link href={"/dashboard/inventory/"+item.id} className="inventory-catalog-action inventory-catalog-action-primary"><UiIcon name="eye" size={16}/>Ver detalles</Link>}
+              {canWrite&&<Link href={"/dashboard/inventory/"+item.id+"#inventory-edit"} className="inventory-catalog-action inventory-catalog-action-secondary"><UiIcon name="edit" size={16}/>Editar</Link>}
+              {item.supplier_id&&<details className="inventory-catalog-more">
+                <summary title="Más opciones" aria-label={"Más opciones de "+item.name}><UiIcon name="more" size={18}/></summary>
+                <div><Link href={"/dashboard/suppliers?supplier="+item.supplier_id+"&tab=inventory"}><UiIcon name="supplier" size={14}/>Ver proveedor</Link></div>
+              </details>}
             </>}
           />;
         })}</div>} list={<StaticDataTable
@@ -527,7 +582,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
               },
             };
           })}
-        />}/>:<EmptyState icon="asset" title={summary.total_count?"No hay artículos con estos filtros":"Aún no hay artículos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros productos.":"Usa Nuevo producto o Importar para comenzar."}/>}
+        />}/:<EmptyState icon="asset" title={summary.total_count?"No hay artículos con estos filtros":"Aún no hay artículos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros productos.":"Usa Agregar o Importar para comenzar."}/>}
         <UrlPagination
           page={page}
           pageCount={pageCount}
@@ -537,9 +592,14 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           total={summary.filtered_count}
         />
       </div>
+    </section>
 
-      <aside className="inventory-movements-panel card">
-        <div className="section-heading"><div><span className="eyebrow">Kardex</span><h2>Últimos movimientos</h2></div></div>
+    <section className="section inventory-movements-section phase7-anchor" id="inventory-kardex-preview">
+      <div className="inventory-movements-panel card">
+        <div className="inventory-secondary-heading">
+          <div><span className="eyebrow">Kardex</span><h2>Últimos movimientos</h2><p className="muted">Trazabilidad reciente de entradas, salidas, devoluciones y traslados.</p></div>
+          <Link className="button secondary" href="/dashboard/inventory/kardex"><UiIcon name="activity" size={15}/>Ver Kardex</Link>
+        </div>
         <div className="inventory-movement-list">
           {movements.rows.length?movements.rows.map(move=>{
             const qty=Number(move.quantity||0);
@@ -550,7 +610,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             </article>;
           }):<div className="location-detail-empty">Todavía no hay movimientos registrados.</div>}
         </div>
-      </aside>
+      </div>
     </section>
 
     {canCreateRequisitions&&<section className="card section" id="crear-requisicion">

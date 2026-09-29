@@ -650,6 +650,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
+    title:"Inventario: catálogo operativo en cuadrícula",
+    summary:"La vista Cuadrícula de Inventario prioriza el catálogo con tres tarjetas por fila, imagen real o placeholder, estado de stock, SKU/categoría, ubicación, proveedor, existencia, mínimo, valor, cobertura y acciones existentes. Kardex, abastecimiento, reportes y configuración permanecen después como secciones secundarias; la vista Listado conserva su estructura.",
+    roles:["all","platform_owner","superadmin"],
+  },
+  {
+    date:"2026-09-29",
     title:"Rutinas: cuadrícula alineada con Órdenes de trabajo",
     summary:"La vista Cuadrícula de Rutinas adopta tarjetas dashboard de dos columnas con estado, empresa, ubicación, activo/equipo, frecuencia, próxima ejecución y acciones existentes. La vista Listado conserva su estructura anterior sin cambios.",
     roles:["all","platform_owner","superadmin"],

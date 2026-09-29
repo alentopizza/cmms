@@ -37,7 +37,7 @@ for(const marker of ["asset-types","asset-categories","asset-brands","asset-mode
 }
 
 const inventory=fs.readFileSync("app/dashboard/inventory/page.tsx","utf8");
-for(const marker of ["phase7-inventory","<InventorySubnav","<MetricGrid","<KpiCard","<CollectionView","<InventoryCard","inventory-reports","inventory-settings"]){
+for(const marker of ["phase7-inventory","<InventorySubnav","inventory-category-nav","<MetricGrid","<KpiCard","<CollectionView","<InventoryCard","variant=\"catalog\"","inventory-reports","inventory-settings","inventory-kardex-preview"]){
   if(!inventory.includes(marker))throw new Error("Inventory Phase 7 contract missing "+marker);
 }
 for(const glyph of ["×","▤"])if(inventory.includes(glyph))throw new Error("Inventory summary still contains legacy glyph "+glyph);
@@ -56,6 +56,7 @@ if(kardex.includes('className="table inventory-kardex-table"'))throw new Error("
 
 const inventoryDetail=fs.readFileSync("app/dashboard/inventory/[id]/page.tsx","utf8");
 if(!inventoryDetail.includes("ds-data-table")||!inventoryDetail.includes("<MetricGrid")||!inventoryDetail.includes("<Alert"))throw new Error("Inventory detail is not fully on Phase 7 primitives");
+if(!inventoryDetail.includes('id="inventory-edit"'))throw new Error("Inventory detail edit anchor required by catalog action");
 
 const assetDetail=fs.readFileSync("app/dashboard/assets/[id]/page.tsx","utf8");
 if(!assetDetail.includes("<AssetSubnav")||!assetDetail.includes("<StaticDataTable")||!assetDetail.includes("<Badge")||!assetDetail.includes("<Alert"))throw new Error("Asset detail is not fully on Phase 7 primitives");
@@ -74,6 +75,14 @@ if(!navigation.includes("if(exact||/[?#]/.test(itemHref))return activeHref===ite
 const css=fs.readFileSync("app/phase7-modules.css","utf8");
 for(const selector of [".phase7-assets",".phase7-inventory",".phase7-bulk-import",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 7 CSS missing "+selector);
+}
+for(const marker of [
+  ".inventory-catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))",
+  ".inventory-catalog-card-v2:hover",".inventory-catalog-visual img{width:100%;height:100%;object-fit:contain",
+  ".inventory-catalog-metrics{",".inventory-catalog-stock-track",".inventory-movements-section .inventory-movement-list",
+  "@media(max-width:1180px)","@media(max-width:700px)",
+]){
+  if(!css.includes(marker))throw new Error("Inventory catalog styling missing "+marker);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 7 CSS must use Design Tokens only");
 

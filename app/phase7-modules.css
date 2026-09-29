@@ -143,3 +143,138 @@
 @media(prefers-reduced-motion:reduce){
   .phase7-assets *,.phase7-inventory *,.phase7-bulk-import *{scroll-behavior:auto!important}
 }
+
+
+/* 2026-09-29 Inventory — operational catalog grid. */
+.phase7-inventory .inventory-category-nav{
+  display:flex;align-items:center;gap:var(--space-1);padding:var(--space-2);overflow-x:auto;
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);background:var(--color-surface);box-shadow:var(--shadow-xs)
+}
+.phase7-inventory .inventory-category-nav a{
+  min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-1);flex:0 0 auto;
+  padding:0 var(--space-3);border-radius:var(--radius-lg);color:var(--color-text-secondary);font-size:10px;font-weight:var(--font-weight-semibold);text-decoration:none
+}
+.phase7-inventory .inventory-category-nav a:hover{background:var(--color-surface-soft);color:var(--color-text-primary)}
+.phase7-inventory .inventory-category-nav a.active{background:var(--color-surface-teal);color:var(--color-brand-secondary);box-shadow:inset 0 -2px 0 var(--color-brand-secondary)}
+.phase7-inventory .inventory-category-nav-settings{margin-left:auto}
+.phase7-inventory .inventory-catalog-section{display:grid;gap:var(--space-3)}
+.phase7-inventory .inventory-catalog-heading{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);padding:0 var(--space-1)
+}
+.phase7-inventory .inventory-catalog-heading>div:first-child{display:grid;gap:4px}
+.phase7-inventory .inventory-catalog-heading h2{margin:0;color:var(--color-text-primary);font-size:var(--font-size-h4)}
+.phase7-inventory .inventory-catalog-heading p{margin:0}
+.phase7-inventory .inventory-catalog-heading-tools{display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);flex-wrap:wrap;color:var(--color-text-muted);font-size:10px}
+.phase7-inventory .inventory-catalog-sort{display:flex;align-items:center;gap:var(--space-2)}
+.phase7-inventory .inventory-catalog-sort label{display:flex;align-items:center;gap:var(--space-2);font-weight:var(--font-weight-semibold)}
+.phase7-inventory .inventory-catalog-sort select{
+  min-height:34px;padding:0 30px 0 var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);
+  background:var(--color-surface);color:var(--color-text-primary);font:inherit;font-weight:var(--font-weight-semibold)
+}
+.phase7-inventory .inventory-catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+.phase7-inventory .inventory-catalog-card-v2{
+  height:100%;display:flex;min-width:0;flex-direction:column;gap:var(--space-3);padding:var(--space-3);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-2xl);background:var(--color-surface);
+  box-shadow:var(--shadow-xs);transition:box-shadow var(--motion-fast) ease,border-color var(--motion-fast) ease,transform var(--motion-fast) ease
+}
+.phase7-inventory .inventory-catalog-card-v2:hover{border-color:var(--color-border-default);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.phase7-inventory .inventory-catalog-card-v2.inactive{opacity:.72}
+.phase7-inventory .inventory-catalog-head{
+  display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:start;gap:var(--space-3);min-width:0
+}
+.phase7-inventory .inventory-catalog-visual{
+  width:76px;height:76px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-xl);background:var(--color-surface-soft);color:var(--color-brand-secondary)
+}
+.phase7-inventory .inventory-catalog-visual img{width:100%;height:100%;object-fit:contain;padding:4px}
+.phase7-inventory .inventory-catalog-identity{display:grid;gap:4px;min-width:0}
+.phase7-inventory .inventory-catalog-tags{display:flex;align-items:center;gap:var(--space-1);flex-wrap:wrap}
+.phase7-inventory .inventory-catalog-sku{
+  min-height:24px;display:inline-flex;align-items:center;padding:0 var(--space-2);border-radius:999px;
+  background:var(--color-surface-teal);color:var(--color-brand-secondary);font-size:9px;font-weight:var(--font-weight-bold);letter-spacing:.03em
+}
+.phase7-inventory .inventory-catalog-identity h3{
+  margin:0;color:var(--color-text-primary);font-size:var(--font-size-body-lg);line-height:1.25;overflow-wrap:break-word
+}
+.phase7-inventory .inventory-catalog-identity>p{margin:0;color:var(--color-text-muted);font-size:10px;line-height:1.3;overflow-wrap:break-word}
+.phase7-inventory .inventory-catalog-context{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-top:var(--space-1)}
+.phase7-inventory .inventory-catalog-context>span{
+  display:inline-flex;align-items:center;gap:5px;min-width:0;color:var(--color-text-secondary);font-size:9px;font-weight:var(--font-weight-medium)
+}
+.phase7-inventory .inventory-catalog-context .ui-icon{color:var(--color-brand-secondary);flex:0 0 auto}
+.phase7-inventory .inventory-catalog-status{justify-self:end}
+.phase7-inventory .inventory-catalog-metrics{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--color-border-subtle);padding-top:var(--space-3)
+}
+.phase7-inventory .inventory-catalog-metrics>div{display:grid;gap:2px;min-width:0;padding:0 var(--space-3);border-left:1px solid var(--color-border-subtle)}
+.phase7-inventory .inventory-catalog-metrics>div:first-child{padding-left:0;border-left:0}
+.phase7-inventory .inventory-catalog-metrics>div:last-child{padding-right:0}
+.phase7-inventory .inventory-catalog-metrics strong{color:var(--color-text-primary);font-size:14px;line-height:1.2;overflow-wrap:break-word}
+.phase7-inventory .inventory-catalog-metrics small{color:var(--color-text-muted);font-size:9px;line-height:1.3}
+.phase7-inventory .inventory-catalog-stock{min-height:18px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-2)}
+.phase7-inventory .inventory-catalog-stock-track{height:8px;overflow:hidden;border-radius:999px;background:var(--color-surface-soft)}
+.phase7-inventory .inventory-catalog-stock-track>span{display:block;height:100%;border-radius:999px;background:var(--color-success-500)}
+.phase7-inventory .inventory-catalog-stock-warning .inventory-catalog-stock-track>span{background:var(--color-warning-500)}
+.phase7-inventory .inventory-catalog-stock-danger .inventory-catalog-stock-track>span{background:var(--color-danger-500)}
+.phase7-inventory .inventory-catalog-stock strong{min-width:34px;color:var(--color-brand-secondary);font-size:10px;text-align:right}
+.phase7-inventory .inventory-catalog-stock-warning strong{color:var(--color-warning-700)}
+.phase7-inventory .inventory-catalog-stock-danger strong{color:var(--color-danger-600)}
+.phase7-inventory .inventory-catalog-stock-track.is-unavailable{opacity:.5}
+.phase7-inventory .inventory-catalog-actions{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:var(--space-2);align-items:center;margin-top:auto
+}
+.phase7-inventory .inventory-catalog-action{
+  min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);padding:0 var(--space-3);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-xl);font-size:10px;font-weight:var(--font-weight-bold);text-decoration:none
+}
+.phase7-inventory .inventory-catalog-action-primary{background:var(--color-surface-soft);color:var(--color-brand-secondary)}
+.phase7-inventory .inventory-catalog-action-secondary{background:var(--color-surface);color:var(--color-brand-secondary)}
+.phase7-inventory .inventory-catalog-action:hover{border-color:var(--color-border-default);background:var(--color-surface-teal)}
+.phase7-inventory .inventory-catalog-action:active{transform:translateY(1px)}
+.phase7-inventory .inventory-catalog-more{position:relative}
+.phase7-inventory .inventory-catalog-more summary{
+  width:38px;height:38px;display:grid;place-items:center;list-style:none;border:1px solid var(--color-border-subtle);
+  border-radius:var(--radius-xl);background:var(--color-surface);color:var(--color-danger-500);cursor:pointer
+}
+.phase7-inventory .inventory-catalog-more summary::-webkit-details-marker{display:none}
+.phase7-inventory .inventory-catalog-more summary:hover{background:var(--color-surface-soft)}
+.phase7-inventory .inventory-catalog-more summary .ui-icon{transform:rotate(90deg)}
+.phase7-inventory .inventory-catalog-more>div{
+  position:absolute;right:0;bottom:44px;z-index:20;min-width:160px;padding:var(--space-1);
+  border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)
+}
+.phase7-inventory .inventory-catalog-more a{
+  display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2);border-radius:var(--radius-md);
+  color:var(--color-text-primary);font-size:10px;font-weight:var(--font-weight-semibold);text-decoration:none
+}
+.phase7-inventory .inventory-catalog-more a:hover{background:var(--color-surface-soft)}
+.phase7-inventory .inventory-movements-section{display:grid;gap:var(--space-3)}
+.phase7-inventory .inventory-secondary-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-3)}
+.phase7-inventory .inventory-secondary-heading>div{display:grid;gap:4px}
+.phase7-inventory .inventory-secondary-heading h2,.phase7-inventory .inventory-secondary-heading p{margin:0}
+.phase7-inventory .inventory-movements-section .inventory-movement-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.phase7-inventory .phase7-settings-grid>a{padding:var(--space-3)}
+@media(max-width:1180px){
+  .phase7-inventory .inventory-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .phase7-inventory .inventory-catalog-heading{align-items:flex-start;flex-direction:column}
+  .phase7-inventory .inventory-catalog-heading-tools{width:100%;justify-content:space-between}
+  .phase7-inventory .inventory-movements-section .inventory-movement-list{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .phase7-inventory .inventory-catalog-grid{grid-template-columns:1fr}
+  .phase7-inventory .inventory-catalog-sort{align-items:flex-start;flex-wrap:wrap}
+  .phase7-inventory .inventory-catalog-head{grid-template-columns:68px minmax(0,1fr)}
+  .phase7-inventory .inventory-catalog-visual{width:68px;height:68px}
+  .phase7-inventory .inventory-catalog-status{grid-column:1/-1;justify-self:start}
+  .phase7-inventory .inventory-catalog-actions{grid-template-columns:1fr 1fr auto}
+}
+@media(max-width:480px){
+  .phase7-inventory .inventory-catalog-metrics{grid-template-columns:1fr;gap:var(--space-2)}
+  .phase7-inventory .inventory-catalog-metrics>div,.phase7-inventory .inventory-catalog-metrics>div:first-child{padding:var(--space-2) 0;border-left:0;border-top:1px solid var(--color-border-subtle)}
+  .phase7-inventory .inventory-catalog-metrics>div:first-child{border-top:0}
+  .phase7-inventory .inventory-catalog-actions{grid-template-columns:1fr}
+  .phase7-inventory .inventory-catalog-more summary{width:100%}
+  .phase7-inventory .inventory-category-nav-settings{margin-left:0}
+}

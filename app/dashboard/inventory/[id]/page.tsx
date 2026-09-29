@@ -116,7 +116,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
           <div className="entity-info-field"><span>Proveedor</span><strong>{item.supplier||"Sin proveedor"}</strong></div><div className="entity-info-field"><span>Unidad</span><strong>{item.unit}</strong></div>
           <div className="entity-info-field"><span>Descripción</span><strong>{item.description||"Sin descripción"}</strong></div><div className="entity-info-field"><span>Presentación</span><strong>{item.presentation||"Sin registrar"}</strong></div>
         </div>
-        {canWrite&&<form className="form-grid inventory-inline-form" method="post" encType="multipart/form-data" action={"/api/inventory/"+item.id}>
+        {canWrite&&<form id="inventory-edit" className="form-grid inventory-inline-form" method="post" encType="multipart/form-data" action={"/api/inventory/"+item.id}>
           <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
           <div className="field"><label>Nombre</label><input name="name" defaultValue={item.name} required/></div>
           <div className="field"><label>Categoría</label><input name="category" defaultValue={item.category||""}/></div>

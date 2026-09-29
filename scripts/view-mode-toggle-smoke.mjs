@@ -121,6 +121,20 @@ for(const marker of ["<StaticDataTable","Listado de ubicaciones","EntityIdentity
   if(!locations.includes(marker))throw new Error("Locations approved list view missing "+marker);
 }
 
+const inventoryPage=fs.readFileSync("app/dashboard/inventory/page.tsx","utf8");
+for(const marker of [
+  'storageKey="inventory"','inventory-catalog-grid','variant="catalog"','Listado de inventario','Catálogo y existencias',
+  'list={<StaticDataTable','className="inventory-directory-list"','caption="Listado de inventario"',
+]){
+  if(!inventoryPage.includes(marker))throw new Error("Inventory grid/list catalog contract missing "+marker);
+}
+const inventoryBusinessCards=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
+for(const marker of [
+  'variant?:"compact"|"catalog"','inventory-catalog-card-v2','inventory-catalog-metrics','inventory-catalog-stock','inventory-catalog-actions',
+]){
+  if(!inventoryBusinessCards.includes(marker))throw new Error("InventoryCard catalog variant missing "+marker);
+}
+
 const workOrderPage=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
 for(const marker of [
   "work-order-dashboard-grid","work-order-grid-toolbar","<WorkOrderCard","variant=\"dashboard\"",

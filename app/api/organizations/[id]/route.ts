@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { canAccessOrganization, canManageOrganizationCommercialControls } from "@/lib/organization-scope";
 import { pool, query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { ImageUploadError, readImageUpload } from "@/lib/organization-assets";
@@ -39,9 +40,8 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) return new NextResponse("Empresa inválida", { status: 400 });
-  if (session.platformRole === "user" && session.organizationId !== id) {
-    return new NextResponse("Forbidden", { status: 403 });
-  }
+  if (!canAccessOrganization(session,id)) return new NextResponse("Forbidden", { status: 403 });
+  const canManageCommercial=canManageOrganizationCommercialControls(session);
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "update");
@@ -66,6 +66,7 @@ export async function POST(
   }
 
   if (intent === "toggle") {
+    if (!canManageCommercial) return new NextResponse("Forbidden", { status: 403 });
     const updated = await query<{ active: boolean }>(
       "UPDATE organizations SET active = NOT active, updated_at = now() WHERE id=$1 RETURNING active",
       [id],
@@ -113,7 +114,7 @@ export async function POST(
   }
 
   if (intent === "limits") {
-    if (!can(session, "company_resources.manage")) return new NextResponse("Forbidden", { status: 403 });
+    if (!canManageCommercial || !can(session, "company_resources.manage")) return new NextResponse("Forbidden", { status: 403 });
     const limits = [
       positiveLimit(form.get("max_sites"), DEFAULT_LIMITS.max_sites, 1),
       positiveLimit(form.get("max_sublocations"), DEFAULT_LIMITS.max_sublocations),
@@ -130,12 +131,23 @@ export async function POST(
     return NextResponse.redirect(companyUrl(id, request.url, "?saved=limits"), 303);
   }
 
+  const currentOrganizationResult = await query<{
+    slug:string;internal_notes:string|null;
+    business_days:number[];business_open_time:string;business_close_time:string;business_schedule:unknown;
+  }>(
+    "SELECT slug,internal_notes,business_days,business_open_time::text,business_close_time::text,business_schedule FROM organizations WHERE id=$1",
+    [id],
+  );
+  if(!currentOrganizationResult.rowCount) return new NextResponse("Empresa no encontrada",{status:404});
+  const currentOrganization=currentOrganizationResult.rows[0];
+
   const returnToDirectory = String(form.get("return_to") || "") === "directory";
   const name = String(form.get("name") || "").trim();
   const legalName = String(form.get("legal_name") || "").trim();
   const taxId = String(form.get("tax_id") || "").trim();
   const timezone = String(form.get("timezone") || "America/Bogota").trim();
-  const slug = slugify(String(form.get("slug") || name)) || slugify(name);
+  const requestedSlug=slugify(String(form.get("slug") || name)) || slugify(name);
+  const slug=canManageCommercial?requestedSlug:currentOrganization.slug;
   const profileV2 = form.get("profile_v2") === "1";
   const taxIdType = String(form.get("tax_id_type") || "").trim();
   const legalAddress = String(form.get("legal_address") || "").trim();
@@ -149,14 +161,10 @@ export async function POST(
   const primaryContactTitle = String(form.get("primary_contact_title") || "").trim();
   const primaryContactPhone = String(form.get("primary_contact_phone") || "").trim();
   const primaryContactEmail = String(form.get("primary_contact_email") || "").trim().toLowerCase();
-  const internalNotes = String(form.get("internal_notes") || "").trim();
-  const currentOrganizationHoursResult = await query<{
-    business_days:number[]; business_open_time:string; business_close_time:string; business_schedule:unknown;
-  }>(
-    "SELECT business_days,business_open_time::text,business_close_time::text,business_schedule FROM organizations WHERE id=$1",
-    [id],
-  );
-  const currentOrganizationHours = normalizeBusinessHoursRow(currentOrganizationHoursResult.rows[0] || {});
+  const internalNotes = canManageCommercial
+    ? String(form.get("internal_notes") || "").trim()
+    : (currentOrganization.internal_notes||"");
+  const currentOrganizationHours = normalizeBusinessHoursRow(currentOrganization);
   let organizationHours = currentOrganizationHours;
   try {
     if (businessHoursSubmitted(form, "business_")) {

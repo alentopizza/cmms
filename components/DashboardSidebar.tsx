@@ -6,8 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DashboardNavItem } from "@/components/DashboardNavigation";
 import UiIcon from "@/components/UiIcon";
-import { Button } from "@/components/ui-kit/Button";
-import { Modal } from "@/components/ui-kit/Overlay";
 
 export type ReorderableNavItem = DashboardNavItem & { id: string };
 
@@ -20,7 +18,6 @@ type Props = {
   productName: string;
   fullName: string;
   role: string;
-  canConfigure: boolean;
   showDeswebBranding: boolean;
   mobileNavigationMode: "drawer" | "field";
 };
@@ -56,7 +53,6 @@ export default function DashboardSidebar({
   productName,
   fullName,
   role,
-  canConfigure,
   showDeswebBranding,
   mobileNavigationMode,
 }: Props) {
@@ -66,7 +62,6 @@ export default function DashboardSidebar({
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
-  const [logoutConfirm,setLogoutConfirm]=useState(false);
   const [organizing, setOrganizing] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -128,11 +123,11 @@ export default function DashboardSidebar({
 
   const mobileSecondaryItems = useMemo(() => {
     const primaryIds = new Set(mobileFieldItems.map(item => item.id));
-    return orderedItems.filter(item => !primaryIds.has(item.id) && item.id !== "help" && item.id !== "preferences");
+    return orderedItems.filter(item => !primaryIds.has(item.id));
   }, [orderedItems, mobileFieldItems]);
 
   const mobileFieldHasOtherActive = mobileNavigationMode === "field" &&
-    (mobileSecondaryItems.some(item => isActive(pathname,item.href)) || pathname.startsWith("/dashboard/help"));
+    mobileSecondaryItems.some(item => isActive(pathname,item.href));
 
   function persist(nextOrder = order, nextCollapsed = collapsed) {
     if (!persistentUser) {
@@ -278,23 +273,6 @@ export default function DashboardSidebar({
           </div>
         </div>}
 
-        <div className="field-mobile-more-section">
-          <span className="field-mobile-more-label">Cuenta y sistema</span>
-          <div className="field-mobile-more-account">
-            <Link href="/dashboard/preferences" onClick={()=>setMobileMoreOpen(false)}>
-              <span><UiIcon name="preferences" size={18}/></span><div><strong>Mi configuración</strong><small>Apariencia y preferencias personales</small></div>
-            </Link>
-            <Link href="/dashboard/help" onClick={()=>setMobileMoreOpen(false)}>
-              <span><UiIcon name="help" size={18}/></span><div><strong>Manual / Ayuda</strong><small>Guías según tu rol y alcance</small></div>
-            </Link>
-            {canConfigure && <Link href="/dashboard/settings" onClick={()=>setMobileMoreOpen(false)}>
-              <span><UiIcon name="settings" size={18}/></span><div><strong>Configuración</strong><small>Empresa, cuenta y preferencias</small></div>
-            </Link>}
-            <button type="button" onClick={()=>{setMobileMoreOpen(false);setLogoutConfirm(true);}}>
-              <span><UiIcon name="logout" size={18}/></span><div><strong>Cerrar sesión</strong><small>Salir de Desweb CMMS</small></div>
-            </button>
-          </div>
-        </div>
       </section>
     </>}
 
@@ -412,20 +390,5 @@ export default function DashboardSidebar({
       </div>
     </aside>
 
-    <Modal
-      open={logoutConfirm}
-      onClose={()=>setLogoutConfirm(false)}
-      title="¿Cerrar sesión?"
-      description="Se cerrará tu sesión actual de Desweb CMMS. Deberás iniciar sesión nuevamente para continuar."
-      size="sm"
-      role="alertdialog"
-      className="logout-confirm-modal"
-      footer={<>
-        <Button variant="secondary" onClick={()=>setLogoutConfirm(false)}>Cancelar</Button>
-        <form method="post" action="/api/auth/logout"><Button type="submit" variant="danger" iconLeft="logout">Cerrar sesión</Button></form>
-      </>}
-    >
-      <div className="logout-confirm-icon"><UiIcon name="logout" size={28}/></div>
-    </Modal>
   </>;
 }

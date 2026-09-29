@@ -25,4 +25,70 @@ for(const required of [".desweb-shell-v2",":focus-visible","@media(max-width:900
 
 const workflow=fs.readFileSync(".github/workflows/ci.yml","utf8");
 if(!workflow.includes("node scripts/shell-v2-smoke.mjs"))throw new Error("CI does not run Phase 3 shell smoke checks");
+
+
+// Global UX/UI cleanup — Header / Sidebar / Profile authority.
+const responsiveViewports=[
+  [1920,1080,"large"],
+  [1600,900,"large"],
+  [1440,900,"medium"],
+  [1366,768,"medium"],
+  [1280,800,"medium"],
+  [1024,768,"tablet"],
+  [900,768,"tablet"],
+  [768,1024,"tablet"],
+  [390,844,"mobile"],
+];
+for(const [width,,expected] of responsiveViewports){
+  const actual=width>=1500?"large":width>=1200?"medium":width>=768?"tablet":"mobile";
+  if(actual!==expected)throw new Error("Global header viewport contract mismatch at "+width+"px");
+}
+
+const dashboardLayout=fs.readFileSync("app/dashboard/layout.tsx","utf8");
+if(dashboardLayout.includes('id: "help"'))throw new Error("Sidebar must not expose Manual / Ayuda as a navigation module");
+
+const chromeSource=fs.readFileSync("components/DashboardChrome.tsx","utf8");
+const profileStart=chromeSource.indexOf("export function SidebarAccountMenu");
+if(profileStart<0)throw new Error("Shared profile menu missing");
+const headerSource=chromeSource.slice(0,profileStart);
+const profileSource=chromeSource.slice(profileStart);
+if(headerSource.includes('className="context-header-utility"'))throw new Error("Header still exposes duplicated utility controls");
+for(const forbidden of ['href="/dashboard/help"','href="/dashboard/settings"']){
+  if(headerSource.includes(forbidden))throw new Error("Header still duplicates account function "+forbidden);
+}
+for(const marker of [
+  "<strong>Mi configuración</strong>","Apariencia y preferencias personales",
+  "<strong>Manual / Ayuda</strong>","Guías según tu rol y alcance",
+  "<strong>Configuración</strong>","Cuenta, empresa y plataforma",
+  "<strong>Cerrar sesión</strong>","Salir de Desweb CMMS",
+]){
+  if(!profileSource.includes(marker))throw new Error("Profile menu authority missing "+marker);
+}
+
+const sidebarSource=fs.readFileSync("components/DashboardSidebar.tsx","utf8");
+for(const forbidden of ["field-mobile-more-account",'href="/dashboard/help"','href="/dashboard/preferences"']){
+  if(sidebarSource.includes(forbidden))throw new Error("Sidebar/mobile module navigation still duplicates profile function "+forbidden);
+}
+
+const globalHeaderCss=css.slice(css.indexOf("Global operational header responsive contract"));
+for(const marker of [
+  "display:contents!important",
+  "grid-area:search","grid-area:filters","grid-area:view","grid-area:action","grid-area:count","grid-area:account",
+  "@media(min-width:1500px)",
+  "@media(min-width:1200px) and (max-width:1499px)",
+  "@media(min-width:768px) and (max-width:1199px)",
+  "@media(max-width:767px)",
+  "@media(max-width:520px)",
+  "min-width:min(240px,100%)",
+  'grid-template-areas:"identity search filters view action count account"',
+  '"identity search search search search account"',
+  '"search search search search search"',
+  "overflow-x:clip",
+]){
+  if(!globalHeaderCss.includes(marker))throw new Error("Global header responsive CSS missing "+marker);
+}
+for(const forbidden of ["transform:scale(","zoom:","position:absolute"]){
+  if(globalHeaderCss.includes(forbidden))throw new Error("Global header responsive contract uses forbidden layout technique "+forbidden);
+}
+
 console.log("DESWEB Design System V2 Phase 3 shell/navigation checks passed.");

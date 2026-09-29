@@ -32,7 +32,6 @@ const navItems: NavItem[] = [
   { id: "inventory", icon: "inventory", label: "Inventario", href: "/dashboard/inventory", permission: "inventory.read" },
   { id: "requisitions", icon: "requisition", label: "Requisiciones", href: "/dashboard/requisitions", permission: "requisitions.read" },
   { id: "reports", icon: "report", label: "Reportes", href: "/dashboard/reports" },
-  { id: "help", icon: "help", label: "Manual / Ayuda", href: "/dashboard/help" },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -110,7 +109,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       productName={productName}
       fullName={session.fullName}
       role={roleLabel(session)}
-      canConfigure={canConfigure}
       showDeswebBranding={!organizationBranding || organizationBranding.showDeswebBranding}
       mobileNavigationMode={mobileNavigationMode}
     />

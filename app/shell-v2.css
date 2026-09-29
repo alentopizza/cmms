@@ -121,3 +121,294 @@
 @media(prefers-reduced-motion:reduce){
   .desweb-shell-v2 .smart-sidebar,.desweb-shell-v2 .smart-sidebar-link,.desweb-shell-v2 .smart-sidebar-collapse,.desweb-shell-v2 .smart-sidebar-tool,.desweb-shell-v2 .context-header-utility,.desweb-shell-v2 .field-mobile-nav-icon{transition:none!important}
 }
+
+
+/* ==========================================================================
+   2026-09-29 — Global operational header responsive contract
+   Shared across every dashboard module. Secondary account functions live only
+   in the profile menu; no module-specific header variants are introduced.
+   ========================================================================== */
+.desweb-shell-v2 .main{
+  max-width:none;
+  margin:0;
+  min-width:0;
+  overflow-x:clip;
+}
+.desweb-shell-v2 .context-header{
+  width:100%;
+  max-width:none;
+  min-width:0;
+  display:grid;
+  align-items:center;
+  column-gap:clamp(var(--space-2),1vw,var(--space-4));
+  row-gap:var(--space-2);
+  overflow:visible;
+}
+.desweb-shell-v2 .context-header-tools-slot,
+.desweb-shell-v2 .module-page-tools-portal{
+  display:contents!important;
+}
+.desweb-shell-v2 .context-header-mobile-nav-slot{grid-area:nav}
+.desweb-shell-v2 .context-header-left{
+  grid-area:identity;
+  min-width:0;
+  max-width:240px;
+  margin:0;
+}
+.desweb-shell-v2 .context-header-copy{min-width:0}
+.desweb-shell-v2 .context-header-copy>strong,
+.desweb-shell-v2 .context-header-copy>small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.desweb-shell-v2 .module-page-tools-portal .ds-search{
+  grid-area:search;
+  width:100%;
+  min-width:min(240px,100%);
+  flex:1 1 auto;
+}
+.desweb-shell-v2 .module-page-tools-portal .ds-filter{
+  grid-area:filters;
+  min-width:0;
+  flex:0 0 auto;
+}
+.desweb-shell-v2 .module-page-tools-portal .ds-filter-trigger{
+  min-width:150px;
+  justify-content:center;
+  white-space:nowrap;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools{
+  grid-area:view;
+  width:auto!important;
+  min-width:max-content;
+  display:flex;
+  align-items:center;
+  flex:0 0 auto;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle{
+  width:auto!important;
+  flex-wrap:nowrap;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle button{
+  flex:0 0 auto;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-add-action{
+  grid-area:action;
+  width:auto!important;
+  min-width:max-content;
+  flex:0 0 auto;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-add-action>*,
+.desweb-shell-v2 .module-page-tools-portal .module-add-button{
+  width:auto!important;
+  min-width:max-content;
+  white-space:nowrap;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group{
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-visible-count{
+  grid-area:count;
+  min-width:42px;
+  width:max-content;
+  flex:0 0 auto;
+}
+.desweb-shell-v2 .context-header-account-zone{
+  grid-area:account;
+  margin-left:0;
+  min-width:0;
+  justify-self:end;
+}
+.desweb-shell-v2 .header-account-trigger{
+  max-width:220px;
+  min-width:180px;
+}
+.desweb-shell-v2 .header-account-copy{min-width:0}
+.desweb-shell-v2 .header-account-copy strong,
+.desweb-shell-v2 .header-account-copy small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Large desktop — one operational row. */
+@media(min-width:1500px){
+  .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(180px,220px) minmax(240px,1fr) max-content max-content max-content max-content minmax(180px,220px);
+    grid-template-areas:"identity search filters view action count account";
+  }
+}
+
+/* Medium desktop / laptop — identity + search + user, then actions. */
+@media(min-width:1200px) and (max-width:1499px){
+  .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(180px,220px) minmax(240px,1fr) max-content max-content max-content minmax(170px,210px);
+    grid-template-areas:
+      "identity search search search search account"
+      ". filters view action count .";
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{justify-content:flex-start}
+}
+
+/* Tablet — identity/user, search, then indivisible actions. */
+@media(min-width:768px) and (max-width:1199px){
+  .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-areas:
+      "identity identity identity identity account"
+      "search search search search search"
+      "filters view action count .";
+    align-items:center;
+  }
+  .desweb-shell-v2 .context-header-left{max-width:none}
+  .desweb-shell-v2 .module-page-tools-portal .ds-search{min-width:240px}
+  .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{justify-content:flex-start}
+  .desweb-shell-v2 .header-account-trigger{
+    min-width:0;
+    max-width:180px;
+    grid-template-columns:auto minmax(0,1fr) auto;
+  }
+  .desweb-shell-v2 .header-account-copy{display:grid}
+  .desweb-shell-v2 .header-account-copy small{display:none}
+  .desweb-shell-v2 .header-account-copy strong{max-width:112px}
+  .desweb-shell-v2 .header-account-chevron{display:grid}
+}
+
+/* Drawer breakpoint adds the navigation control without disturbing header flow. */
+@media(min-width:768px) and (max-width:900px){
+  .desweb-shell-v2 .context-header{
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-areas:
+      "nav identity identity identity identity account"
+      "search search search search search search"
+      "filters view action count . .";
+  }
+  .desweb-shell-v2 .context-header-mobile-nav-slot{
+    display:flex;
+    margin:0;
+  }
+}
+
+/* Mobile — identity/user, full-width search, compact action row. */
+@media(max-width:767px){
+  .desweb-shell-v2 .main{
+    padding-left:var(--space-3);
+    padding-right:var(--space-3);
+  }
+  .desweb-shell-v2 .context-header{
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content max-content;
+    grid-template-areas:
+      "nav identity identity identity account"
+      "search search search search search"
+      "filters view action count .";
+    padding:var(--space-2) var(--space-3)!important;
+    align-items:center;
+  }
+  .desweb-shell-v2 .context-header-mobile-nav-slot{
+    display:flex;
+    margin:0;
+  }
+  .desweb-shell-v2 .context-header-left{
+    max-width:none;
+    min-width:0;
+    margin:0;
+    flex-direction:row;
+    justify-content:flex-start;
+    text-align:left;
+  }
+  .desweb-shell-v2 .context-header-copy{
+    justify-items:start;
+    text-align:left;
+    min-width:0;
+  }
+  .desweb-shell-v2 .context-header-copy>small{display:none}
+  .desweb-shell-v2 .module-page-tools-portal .ds-search{
+    width:100%;
+    min-width:min(240px,100%);
+  }
+  .desweb-shell-v2 .module-page-tools-portal .ds-filter{
+    min-width:0;
+    max-width:100%;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .ds-filter-trigger{
+    width:100%;
+    min-width:clamp(112px,32vw,150px);
+    padding-inline:clamp(var(--space-2),2vw,var(--space-3));
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools,
+  .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle{
+    width:auto!important;
+    min-width:max-content;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle button{
+    width:32px!important;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-add-action,
+  .desweb-shell-v2 .module-page-tools-portal .module-add-action>*,
+  .desweb-shell-v2 .module-page-tools-portal .module-add-button{
+    width:auto!important;
+    min-width:max-content;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{
+    flex-wrap:nowrap;
+    justify-content:flex-start;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-visible-count{
+    display:inline-flex;
+  }
+  .desweb-shell-v2 .header-account-trigger{
+    width:auto;
+    min-width:0;
+    max-width:154px;
+    min-height:40px;
+    height:auto;
+    padding:4px 7px;
+    grid-template-columns:auto minmax(0,1fr) auto;
+  }
+  .desweb-shell-v2 .header-account-copy{
+    display:grid;
+    min-width:0;
+  }
+  .desweb-shell-v2 .header-account-copy strong{
+    display:block;
+    max-width:82px;
+    font-size:9px;
+  }
+  .desweb-shell-v2 .header-account-copy small{display:none}
+  .desweb-shell-v2 .header-account-chevron{display:grid}
+  .desweb-shell-v2 .header-account-popover{
+    position:fixed;
+    top:86px;
+    right:12px;
+    width:min(330px,calc(100vw - 24px));
+  }
+}
+
+/* Narrow phones keep primary actions intact; the count yields first. */
+@media(max-width:520px){
+  .desweb-shell-v2 .context-header{
+    column-gap:var(--space-1);
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content;
+    grid-template-areas:
+      "nav identity identity account"
+      "search search search search"
+      "filters view action action";
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-visible-count{display:none}
+  .desweb-shell-v2 .module-page-tools-portal .ds-filter-trigger{
+    min-width:clamp(108px,34vw,136px);
+  }
+  .desweb-shell-v2 .header-account-trigger{max-width:138px}
+  .desweb-shell-v2 .header-account-copy strong{max-width:68px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .desweb-shell-v2 .context-header,
+  .desweb-shell-v2 .module-page-tools-portal .ds-search,
+  .desweb-shell-v2 .module-page-tools-portal .ds-filter-trigger,
+  .desweb-shell-v2 .header-account-trigger{
+    transition:none!important;
+  }
+}

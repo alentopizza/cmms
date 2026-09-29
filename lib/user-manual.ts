@@ -650,6 +650,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
+    title:"Header global y perfil: controles centralizados y responsive",
+    summary:"Manual/Ayuda, apariencia/preferencias y configuración se concentran en el menú de perfil. El sidebar queda dedicado a módulos y el header global redistribuye identidad, búsqueda, filtros, Grid/Listado, acción principal, contador y usuario mediante breakpoints compartidos para desktop, laptop, tablet y móvil.",
+    roles:["all","platform_owner","superadmin"],
+  },
+  {
+    date:"2026-09-29",
     title:"Inventario: catálogo operativo en cuadrícula",
     summary:"La vista Cuadrícula de Inventario prioriza el catálogo con tres tarjetas por fila, imagen real o placeholder, estado de stock, SKU/categoría, ubicación, proveedor, existencia, mínimo, valor, cobertura y acciones existentes. Kardex, abastecimiento, reportes y configuración permanecen después como secciones secundarias; la vista Listado conserva su estructura.",
     roles:["all","platform_owner","superadmin"],

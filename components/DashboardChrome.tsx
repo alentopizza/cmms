@@ -73,8 +73,6 @@ export function CurrentSectionHeader({
     </div>
     <div id="context-header-tools" className="context-header-tools-slot" />
     <div className="context-header-account-zone">
-      <Link className="context-header-utility" href="/dashboard/help" title="Manual / Ayuda" aria-label="Manual / Ayuda"><UiIcon name="help" size={17}/></Link>
-      {canConfigure && <Link className="context-header-utility" href="/dashboard/settings" title="Configuración" aria-label="Configuración"><UiIcon name="settings" size={17}/></Link>}
       <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} canBrandPersonalization={canBrandPersonalization} brandPersonalizationEnabled={brandPersonalizationEnabled} placement="header" avatarSrc={avatarSrc} />
     </div>
   </header>;

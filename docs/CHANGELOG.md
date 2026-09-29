@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-29 — Refactor global UX/UI · Header, Sidebar y Perfil
+
+- Se elimina **Manual / Ayuda** de la navegación lateral global; el sidebar queda reservado a módulos y operación.
+- Se eliminan del Header Global los accesos duplicados de Ayuda/Configuración. Preferencias de apariencia, Manual/Ayuda, Configuración y Cerrar sesión permanecen centralizados en `SidebarAccountMenu`.
+- La hoja móvil “Más” deja de duplicar opciones de cuenta/sistema; el selector de usuario del Header continúa siendo el punto de acceso único.
+- `shell-v2.css` incorpora un contrato responsive transversal sin selectores por módulo: una fila en desktop grande; dos filas controladas en laptop; identidad/usuario + búsqueda + acciones en tablet; y composición de tres filas en móvil.
+- El buscador es el elemento flexible principal (`min-width: min(240px, 100%)`), Filtros mantiene su trigger legible, Grid/Listado permanece como grupo indivisible, Agregar conserva jerarquía y el contador cede primero en teléfonos estrechos.
+- El selector de usuario mantiene avatar, nombre truncado de forma segura y flecha en tablet/móvil; el rol se oculta antes que el nombre.
+- El `main` global elimina el límite heredado que impedía aprovechar el ancho liberado al colapsar el sidebar; el contenido funcional sigue usando sus contenedores internos y no se modifica ninguna ruta ni lógica de módulo.
+- `shell-v2-smoke` protege la autoridad del perfil, la ausencia de duplicados y clasifica los viewports requeridos: 1920, 1600, 1440, 1366, 1280, 1024, 900, 768 y 390 px.
+
 ## 2026-09-29 — Rediseño UX/UI · cuadrícula de Inventario
 
 - El cambio prioriza el **catálogo de productos/existencias** en la vista Cuadrícula y conserva lógica de inventario, Kardex, movimientos, requisiciones, proveedores, categorías, almacenes, permisos, estados y cálculos.

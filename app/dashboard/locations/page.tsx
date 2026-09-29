@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { LocationCreateModal } from "@/components/ContextCreateModals";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -22,9 +23,11 @@ export default async function LocationsIndexPage({
   if (!can(session, "locations.manage")) redirect("/dashboard");
 
   const params = await searchParams;
-  const superadmin = session.platformRole !== "user";
-  const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, superadmin);
-  const sites = superadmin
+  const platformOperator = session.platformRole !== "user";
+  const scope=organizationScopeFor(session);
+  const scopeParams=[scope.unrestricted,scope.organizationIds] as const;
+  const sublocationGate = await getCreationGateForScope("sublocation", session.organizationId, platformOperator);
+  const sites = platformOperator
     ? await query<SiteRow>(
         `SELECT s.id,s.organization_id,o.name organization_name,s.name,s.code,s.address,s.city,s.country,s.active,
                 s.locality,s.contact_name,s.contact_title,s.contact_phone,s.contact_email,s.notes,s.latitude,s.longitude,s.geofence_radius_m,
@@ -39,7 +42,9 @@ export default async function LocationsIndexPage({
                      WHERE oms.organization_id=om.organization_id AND oms.user_id=om.user_id AND oms.site_id=s.id
                    ))) technician_count
          FROM sites s JOIN organizations o ON o.id=s.organization_id
+         WHERE ($1::boolean OR s.organization_id=ANY($2::uuid[]))
          ORDER BY o.name,s.active DESC,s.name`,
+        scopeParams,
       )
     : session.accessAllSites
       ? await query<SiteRow>(
@@ -80,10 +85,13 @@ export default async function LocationsIndexPage({
         );
 
   const [organizations, sublocations, services] = await Promise.all([
-    superadmin
-      ? query<OrganizationRow>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true ORDER BY name")
+    platformOperator
+      ? query<OrganizationRow>(
+          "SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE active=true AND ($1::boolean OR id=ANY($2::uuid[])) ORDER BY name",
+          scopeParams,
+        )
       : query<OrganizationRow>("SELECT id,name,COALESCE(default_country,legal_country,'CO') country FROM organizations WHERE id=$1", [session.organizationId]),
-    superadmin
+    platformOperator
       ? query<LocationDirectorySub>(
           `SELECT l.id,l.organization_id,l.site_id,l.parent_id,l.name,l.code,l.type,l.description,l.active,
                   (l.image_data IS NOT NULL) has_image,
@@ -92,7 +100,9 @@ export default async function LocationsIndexPage({
            FROM locations l
            JOIN sites s ON s.id=l.site_id
            JOIN organizations o ON o.id=l.organization_id
+           WHERE ($1::boolean OR l.organization_id=ANY($2::uuid[]))
            ORDER BY o.name,s.name,l.name`,
+          scopeParams,
         )
       : session.accessAllSites
         ? query<LocationDirectorySub>(
@@ -111,14 +121,16 @@ export default async function LocationsIndexPage({
              FROM locations l WHERE l.organization_id=$1 AND l.site_id=ANY($2::uuid[]) ORDER BY l.name`,
             [session.organizationId,session.siteIds],
           ),
-    superadmin
+    platformOperator
       ? query<LocationDirectoryService>(
           `SELECT w.id,w.site_id,COALESCE(w.location_id,a.location_id) location_id,w.number::text,w.title,w.status,w.type,w.priority,w.requested_at::text,
                   l.name location_name
            FROM work_orders w
            LEFT JOIN assets a ON a.id=w.asset_id
            LEFT JOIN locations l ON l.id=COALESCE(w.location_id,a.location_id)
+           WHERE ($1::boolean OR w.organization_id=ANY($2::uuid[]))
            ORDER BY w.requested_at DESC LIMIT 500`,
+          scopeParams,
         )
       : session.accessAllSites
         ? query<LocationDirectoryService>(
@@ -143,8 +155,8 @@ export default async function LocationsIndexPage({
           ),
   ]);
 
-  const technicianScope = superadmin
-    ? { where: "", params: [] as unknown[] }
+  const technicianScope = platformOperator
+    ? { where: "WHERE ($1::boolean OR at.organization_id=ANY($2::uuid[]))", params: [...scopeParams] as unknown[] }
     : session.accessAllSites
       ? { where: "WHERE at.organization_id=$1", params: [session.organizationId] as unknown[] }
       : { where: "WHERE at.organization_id=$1 AND at.site_id=ANY($2::uuid[])", params: [session.organizationId,session.siteIds] as unknown[] };
@@ -223,8 +235,8 @@ export default async function LocationsIndexPage({
         organizations={organizations.rows}
         sites={siteOptions}
         locations={sublocations.rows.map(location=>({id:location.id,organization_id:location.organization_id,site_id:location.site_id,name:location.name,label:location.name}))}
-        fixedOrganizationId={superadmin ? undefined : session.organizationId || undefined}
-        fixedOrganizationName={superadmin ? undefined : session.organizationName || undefined}
+        fixedOrganizationId={platformOperator ? undefined : session.organizationId || undefined}
+        fixedOrganizationName={platformOperator ? undefined : session.organizationName || undefined}
         returnTo="/dashboard/locations"
         autoOpen={params.create==="site" || params.create==="sub"}
         initialKind={params.create==="sub" ? "sub" : "site"}

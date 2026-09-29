@@ -5,11 +5,11 @@ import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
 import { canAccessInventoryItem, canAccessInventoryWarehouse } from "@/lib/inventory-scope";
-import { insertManualInventoryMovement, readManualMovementIdempotencyKey } from "@/lib/inventory-manual-movement";
+import { insertManualInventoryMovement, readManualMovementIdempotencyKey, type ManualInventoryMovementType } from "@/lib/inventory-manual-movement";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function movement(value:string){
+function movement(value:string):{type:ManualInventoryMovementType;sign:1|-1}|null{
   if(value==="receipt")return {type:"receipt",sign:1};
   if(value==="issue")return {type:"issue",sign:1};
   if(value==="return")return {type:"return",sign:1};

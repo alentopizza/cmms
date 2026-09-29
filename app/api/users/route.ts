@@ -129,12 +129,12 @@ export async function POST(request: Request) {
     if (creatingSuperadmin) {
       if(platformOrganizationIds.length){
         const validPortfolio=await client.query<{id:string}>(
-          "SELECT id::text id FROM organizations WHERE active=true AND id=ANY($1::uuid[])",
+          "SELECT id::text id FROM organizations WHERE id=ANY($1::uuid[])",
           [platformOrganizationIds],
         );
         if(validPortfolio.rowCount!==platformOrganizationIds.length){
           await client.query("ROLLBACK");
-          return response(request,422,{fields:{platform_organization_ids:"Todas las empresas asignadas deben existir y estar activas."}},"?error=scope",returnTo);
+          return response(request,422,{fields:{platform_organization_ids:"Todas las empresas asignadas deben existir."}},"?error=scope",returnTo);
         }
       }
     } else {

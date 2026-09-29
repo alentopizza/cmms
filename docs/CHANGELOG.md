@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-29 — Corrección visual · descripción en tarjetas de Órdenes de trabajo
+
+- Se corrige el bloque **Descripción** de la vista Cuadrícula: la barra teal permanece absoluta y el grid pasa a dos columnas reales, icono de 34 px + contenido flexible.
+- El texto de la descripción vuelve a utilizar todo el ancho disponible, con salto natural de palabras y sin columnas estrechas ni overflow horizontal.
+- No se modifican datos, acciones, permisos, endpoints, vista Listado ni la estructura funcional de las tarjetas.
+
 ## 2026-09-29 — Rediseño UX/UI · cuadrícula de Órdenes de trabajo
 
 - El cambio se limita a la presentación **Cuadrícula** de Órdenes de trabajo. `StaticDataTable` y su vista Listado permanecen sin cambios.

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool,query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 
@@ -26,7 +27,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   );
   if(!result.rowCount)return new NextResponse("Requisición no encontrada",{status:404});
   const req=result.rows[0];
-  if(session.platformRole==="user"&&session.organizationId!==req.organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,req.organization_id))return new NextResponse("Forbidden",{status:403});
   if(BLOCKED.has(req.status))return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_locked",request.url),303);
   if(req.approval_required&&req.approval_state!=="approved")return NextResponse.redirect(publicUrl("/dashboard/requisitions/"+id+"?error=receive_approval",request.url),303);
 

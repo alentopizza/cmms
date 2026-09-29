@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import ExcelJS from "exceljs";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { roleLabel } from "@/lib/permissions";
 import {
   appendCompanyStatus,
@@ -500,21 +501,27 @@ function scope(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,alias
     : {sql:alias+".organization_id=$1 AND "+alias+".site_id=ANY($2::uuid[])",params:[session.organizationId,session.siteIds] as unknown[]};
 }
 
-async function platformRows(filters:ReturnType<typeof parseDashboardFilters>){
+async function platformRows(session:NonNullable<Awaited<ReturnType<typeof getSession>>>,filters:ReturnType<typeof parseDashboardFilters>){
   const subParams:unknown[]=[];
   const subPeriod=appendPeriod(subParams,"s.created_at",filters);
   const companyStatus=appendCompanyStatus(subParams,"o.active",filters);
   const subscriptionStatus=filters.activityStatus!=="all" ? " AND "+appendValue(subParams,"s.status",filters.activityStatus) : "";
+  const organizationScope=organizationScopeFor(session);
+  const subscriptionScope=organizationScope.unrestricted
+    ?""
+    :(()=>{subParams.push(organizationScope.organizationIds);return " AND o.id=ANY($"+subParams.length+"::uuid[])";})();
   const subscriptions=await query<{created_at:string;organization:string;plan:string;status:string;price:string|null}>(
-    "SELECT s.created_at::text,o.name organization,p.name plan,s.status,p.monthly_price_cop::text price FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+subPeriod+" AND "+companyStatus+subscriptionStatus+" ORDER BY s.created_at DESC LIMIT 1000",
+    "SELECT s.created_at::text,o.name organization,p.name plan,s.status,p.monthly_price_cop::text price FROM organization_subscriptions s JOIN organizations o ON o.id=s.organization_id JOIN billing_plans p ON p.id=s.plan_id WHERE "+subPeriod+" AND "+companyStatus+subscriptionScope+subscriptionStatus+" ORDER BY s.created_at DESC LIMIT 1000",
     subParams,
   );
   const leadParams:unknown[]=[];
   const leadPeriod=appendPeriod(leadParams,"created_at",filters);
-  const leads=await query<{created_at:string;full_name:string;company_name:string;status:string;interest:string}>(
-    "SELECT created_at::text,full_name,company_name,status,interest FROM sales_leads WHERE "+leadPeriod+" ORDER BY created_at DESC LIMIT 1000",
-    leadParams,
-  );
+  const leads=session.platformRole==="platform_owner"
+    ?await query<{created_at:string;full_name:string;company_name:string;status:string;interest:string}>(
+      "SELECT created_at::text,full_name,company_name,status,interest FROM sales_leads WHERE "+leadPeriod+" ORDER BY created_at DESC LIMIT 1000",
+      leadParams,
+    )
+    :{rows:[] as {created_at:string;full_name:string;company_name:string;status:string;interest:string}[]};
   return [
     ...subscriptions.rows.map(row=>({
       type:"Suscripción",date:safeDate(row.created_at),reference:row.plan,subject:row.organization,status:row.status,
@@ -610,7 +617,7 @@ export async function GET(request:Request){
   const filters=parseDashboardFilters(input);
 
   let rows:ExportRow[]=[];
-  if(session.platformRole==="platform_owner"||session.platformRole==="superadmin") rows=await platformRows(filters);
+  if(session.platformRole==="platform_owner"||session.platformRole==="superadmin") rows=await platformRows(session,filters);
   else if(session.role==="technician"||session.role==="external"||session.role==="provider") rows=await fieldRows(session,filters);
   else if(session.role==="requester") rows=await requesterRows(session,filters);
   else rows=await operationRows(session,filters);

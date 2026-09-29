@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { canCreateSite } from "@/lib/resource-limits";
@@ -26,7 +27,7 @@ export async function POST(
 
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) return new NextResponse("Empresa inválida", { status: 400 });
-  if (session.platformRole === "user" && session.organizationId !== id) return new NextResponse("Forbidden", { status: 403 });
+  if(!canAccessOrganization(session,id)) return new NextResponse("Forbidden",{status:403});
   if (session.platformRole === "user" && !session.accessAllSites) return new NextResponse("Forbidden", { status: 403 });
 
   const form = await request.formData();

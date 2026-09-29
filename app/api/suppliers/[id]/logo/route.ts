@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { canAccessOrganization } from "@/lib/organization-scope";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -14,7 +15,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   );
   const row=result.rows[0];
   if(!row)return new NextResponse("Not found",{status:404});
-  if(session.platformRole==="user"&&session.organizationId!==row.organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,row.organization_id))return new NextResponse("Forbidden",{status:403});
   if(!row.data||!row.mime)return new NextResponse("Not found",{status:404});
   return new NextResponse(new Uint8Array(row.data),{headers:{
     "Content-Type":row.mime,

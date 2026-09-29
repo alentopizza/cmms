@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 
 type Batch={
@@ -23,7 +24,7 @@ export async function GET(request:Request){
   if(supplierId){
     const supplier=await query<{organization_id:string}>("SELECT organization_id FROM suppliers WHERE id=$1",[supplierId]);
     if(!supplier.rowCount)return NextResponse.json({error:"Proveedor no disponible"},{status:404});
-    if(session.platformRole==="user"&&supplier.rows[0].organization_id!==session.organizationId)return NextResponse.json({error:"Forbidden"},{status:403});
+    if(!canAccessOrganization(session,supplier.rows[0].organization_id))return NextResponse.json({error:"Forbidden"},{status:403});
     organizationId=supplier.rows[0].organization_id;
   }
   if(!organizationId)return NextResponse.json({batches:[]});

@@ -5,7 +5,7 @@ import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import UserManagement, { type ManagedUser } from "./UserManagement";
 
-type Organization = { id: string; name: string; country: string };
+type Organization = { id: string; name: string; country: string; active: boolean };
 type Site = { id: string; organization_id: string; name: string; organization_name: string };
 type ServiceSupplier = { id: string; organization_id: string; name: string };
 
@@ -193,10 +193,10 @@ export default async function UsersPage() {
           [session.organizationId],
         ),
     ownerAccess
-      ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.active=true ORDER BY o.name`)
+      ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country,o.active FROM organizations o ORDER BY o.active DESC,o.name`)
       : isGlobalOperator
-        ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.active=true AND o.id=ANY($1::uuid[]) ORDER BY o.name`,[scope.organizationIds])
-        : query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country FROM organizations o WHERE o.id=$1`, [session.organizationId]),
+        ? query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country,o.active FROM organizations o WHERE o.active=true AND o.id=ANY($1::uuid[]) ORDER BY o.name`,[scope.organizationIds])
+        : query<Organization>(`SELECT o.id,o.name,COALESCE(o.legal_country,(SELECT s.country FROM sites s WHERE s.organization_id=o.id ORDER BY s.created_at ASC LIMIT 1),'CO') country,o.active FROM organizations o WHERE o.id=$1`, [session.organizationId]),
     ownerAccess
       ? query<Site>(
           `SELECT s.id,s.organization_id,s.name,o.name organization_name

@@ -76,7 +76,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const canWrite=can(session,"assets.write");
   const owner=isPlatformOwner(session);
   const organizationScope=organizationScopeFor(session);
-  const platformScopeParams=[organizationScope.unrestricted,organizationScope.organizationIds] as const;
+  const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
   const q=safeText(params.q);
   const status=ASSET_STATUSES.has(params.status||"")?String(params.status):"all";

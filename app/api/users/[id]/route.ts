@@ -338,11 +338,19 @@ export async function POST(
 
     if (makingSuperadmin) {
       await client.query("DELETE FROM organization_members WHERE user_id=$1", [id]);
-      await client.query("DELETE FROM platform_organization_access WHERE user_id=$1",[id]);
+
+      // Companies created by this Superadministrator are part of their own portfolio.
+      // Owner edits replace only explicit assignments; they never erase provenance
+      // or silently revoke access to companies created by the Superadministrator.
+      await client.query(
+        "DELETE FROM platform_organization_access WHERE user_id=$1 AND access_source='assigned'",
+        [id],
+      );
       for(const assignedOrganizationId of platformOrganizationIds){
         await client.query(
           `INSERT INTO platform_organization_access(user_id,organization_id,access_source,granted_by_user_id,granted_by_email)
-           VALUES($1,$2,'assigned',$3,$4)`,
+           VALUES($1,$2,'assigned',$3,$4)
+           ON CONFLICT(user_id,organization_id) DO NOTHING`,
           [id,assignedOrganizationId,session.userId,session.email],
         );
       }

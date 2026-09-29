@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-29 — Corrección · detalle y edición de Leads
+
+- Se corrige el colapso horizontal del detalle: el `Drawer` de Leads ahora prevalece sobre el ancho base del UI Kit con `width: min(900px, 92vw)` y un mínimo de escritorio equivalente a 650 px.
+- La distribución principal usa columnas estables `minmax(360px, 1.4fr) / minmax(280px, 1fr)` y cambia a una sola columna antes de que puedan comprimirse; se elimina el corte letra por letra y se evita scroll horizontal.
+- Header, identidad y tabs permanecen fuera del área desplazable; únicamente `.lead-detail-scroll` gestiona el scroll vertical del contenido.
+- `OwnerRecordActions` deja de envolver el formulario compacto en un `Modal`. El formulario existente se renderiza directamente como única interfaz de edición, con X, Cancelar, Escape y Guardar cambios.
+- En el drawer de Lead no se crea un segundo backdrop: la edición reutiliza el overlay ya activo del detalle. Desde tarjetas/listado, la misma edición compacta usa un único backdrop propio.
+- Al guardar desde el detalle se conserva el `reload` existente para refrescar datos, pero se registra una clave temporal en `sessionStorage` y el drawer del Lead se reabre automáticamente con los valores actualizados.
+- No se modifican endpoints, permisos, modelo `sales_leads`, formulario público, búsqueda, filtros, tarjetas, cuadrícula/listado, eliminación ni estados.
+
 ## 2026-09-29 — Detalle de Lead · drawer CRM
 
 - La acción **Ver** deja el modal genérico y usa el `Drawer` existente del UI Kit, ampliado de forma aditiva con `className`, clases de header/body y un slot de acciones de cabecera.

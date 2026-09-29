@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound,redirect } from "next/navigation";
 import { getSession,canAccessSite } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessInventoryItem } from "@/lib/inventory-scope";
 import { query } from "@/lib/db";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
@@ -38,7 +39,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
   );
   if(!result.rowCount)notFound();
   const item=result.rows[0];
-  if(session.platformRole==="user"&&(session.organizationId!==item.organization_id||!canAccessSite(session,item.site_id)))notFound();
+  if(!canAccessInventoryItem(session,item.organization_id,item.site_id))notFound();
   const limitedSiteScope=session.platformRole==="user"&&!session.accessAllSites;
   const [stocks,warehouses,transactions]=await Promise.all([
     limitedSiteScope

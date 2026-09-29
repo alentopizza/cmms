@@ -55,10 +55,10 @@ export const PLATFORM_OWNER_DESCRIPTION =
   "Máxima autoridad de Desweb CMMS. Tiene acceso total de plataforma y es el único nivel autorizado para crear o retirar Superadministradores. Durante la fase de desarrollo puede visualizar, crear, editar y administrar todos los módulos sin restricciones funcionales de RBAC.";
 
 export const SUPERADMIN_DESCRIPTION =
-  "Administra clientes y la operación global de Desweb. Puede crear empresas, asignar planes y administrar usuarios de cliente, pero no puede crear otros Superadministradores ni modificar al Propietario Desweb.";
+  "Administra únicamente las empresas de su cartera autorizada. Puede crear empresas —que quedan asignadas automáticamente a su cartera— y operar las que el Propietario Desweb le asigne, pero no ve por defecto las demás empresas ni puede crear otros Superadministradores o modificar al Propietario Desweb.";
 
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
-  admin: ["settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve","requisitions.reconcile"],
+  admin: ["companies.manage","settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve","requisitions.reconcile"],
   manager: ["locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve","requisitions.reconcile"],
   technician: ["attendance.self","reaction.track","assets.read","work_orders.read","activities.execute","maintenance.read","inventory.read"],
   requester: ["work_orders.read","work_orders.write","requisitions.read","requisitions.write"],

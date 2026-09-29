@@ -2,9 +2,9 @@
 
 This document is the source of truth for the approved Desweb CMMS role hierarchy and for the explanatory copy that must appear when administrators create users.
 
-> Status: **Platform Owner foundation implemented; commercial roles still pending**.
+> Status: **Platform Owner, scoped Superadministrator portfolio and Company Administrator tenant ownership implemented; commercial roles still pending**.
 >
-> `platform_owner` is now active in authentication/RBAC. The bootstrap account configured by `APP_ADMIN_EMAIL` resolves as Platform Owner, and migration 015 promotes the database account `admin@dominio.com` when present. Superadministrator creation is reserved to Platform Owner. Comercial Desweb and Partner / Distribuidor remain approved future roles and are not yet active.
+> `platform_owner` is active in authentication/RBAC. Superadministrator creation is reserved to Platform Owner and Superadministrators no longer receive implicit global customer access: they operate only on companies they created or companies explicitly assigned by Platform Owner. Company Administrators can maintain their own company profile while contractual/platform controls remain outside tenant scope. Comercial Desweb and Partner / Distribuidor remain approved future roles and are not yet active.
 
 ## Core principle: two separate hierarchies
 
@@ -97,25 +97,36 @@ Purpose: trusted Desweb platform operator.
 
 Allowed scope:
 
-- create, configure, activate and support customer organizations;
-- assign approved plans and effective resource limits;
-- create the initial Administrador de empresa and manage customer onboarding;
-- administer platform-level customer records and support workflows;
-- manage leads/subscriptions within assigned platform capabilities;
-- create lower-level platform users only when explicitly permitted by the future permission matrix;
-- view cross-company operational information only where platform support/audit privileges permit it.
+- create customer organizations; every company created by that Superadministrator is automatically added to that Superadministrator's portfolio;
+- operate only on companies in the explicit Superadministrator portfolio;
+- receive additional company assignments only from Platform Owner;
+- configure and support assigned customer organizations within the enabled permission set;
+- assign approved plans and effective resource limits only inside that authorized portfolio;
+- create the initial Administrador de empresa and manage onboarding only for companies in that portfolio;
+- administer tenant operational records only inside that portfolio;
+- create tenant users only inside authorized companies;
+- use platform dashboards, exports, Attendance, Reacción and other operational modules only with the same portfolio scope enforced server-side.
 
 Hard limits:
 
+- has no implicit access to all companies;
+- cannot access a company merely because it exists in the platform;
 - cannot create another Superadministrator;
 - cannot create or modify the Platform Owner;
 - cannot grant a role higher than its own;
+- cannot access Leads, global personalization or other Platform Owner-only capabilities unless a future permission explicitly grants them;
 - cannot perform final irreversible global/tenant destruction reserved to the Platform Owner;
-- cannot silently bypass audit, retention or approval controls.
+- cannot silently bypass audit, retention, approval or tenant-scope controls.
+
+Portfolio provenance:
+
+- `access_source='created'` means the company was created by that Superadministrator;
+- `access_source='assigned'` means Platform Owner explicitly added the company to the Superadministrator's portfolio;
+- editing portfolio assignments must preserve `created` provenance and must not silently convert or remove it.
 
 Example user-creation help text:
 
-**Superadministrador** — Administra clientes y la operación global de Desweb. Puede crear empresas, asignar planes y crear Administradores de empresa, pero no puede crear otros Superadministradores ni ejecutar por sí solo eliminaciones irreversibles reservadas al Propietario Desweb.
+**Superadministrador** — Administra únicamente las empresas de su cartera autorizada. Las empresas que crea se agregan automáticamente a su cartera y el Propietario Desweb puede asignarle empresas adicionales. No obtiene acceso global, no puede crear otros Superadministradores ni ejecutar eliminaciones irreversibles reservadas al Propietario Desweb.
 
 ### 3. Comercial Desweb
 
@@ -204,6 +215,7 @@ Highest customer-side role.
 
 Allowed scope:
 
+- maintain the company's own business profile, contact data, identity assets, documents and operating information;
 - organization settings available to the tenant;
 - users and roles within the company, subject to role-creation rules;
 - sites and sublocations;
@@ -217,7 +229,8 @@ Allowed scope:
 
 Hard limits:
 
-- cannot manage other organizations;
+- cannot manage or view other organizations;
+- cannot modify contractual/commercial platform controls such as Desweb-only internal notes, tenant slug governance, plan limits or platform lifecycle state unless a future explicit capability is introduced;
 - cannot alter Desweb platform users;
 - cannot create Platform Owner, Superadministrator, Commercial or Partner accounts;
 - cannot change contractual platform entitlements unless a future commercial capability explicitly allows requests rather than direct changes.
@@ -456,3 +469,38 @@ Normal edit permissions that already existed for other roles remain unchanged. T
 ## Company Administrator user-management scope
 
 A Company Administrator with `users.manage` can create, edit, activate and deactivate ordinary users that belong to the same organization. This capability does not extend to Platform Owner or Superadministrator identities and does not permit moving a user to another organization. Permanent destructive deletion remains governed by the Platform Owner exceptional-action rules.
+
+
+## Implemented Superadministrator organization portfolio
+
+Status: implemented.
+
+The active server-side source of truth is `platform_organization_access`.
+
+Rules:
+
+- Platform Owner remains unrestricted across organizations.
+- A Superadministrator session receives only the organization IDs present in `platform_organization_access`.
+- Creating an organization as Superadministrator inserts a `created` portfolio row automatically.
+- Platform Owner can assign additional companies from User Management; those rows use `assigned`.
+- Editing a Superadministrator replaces only `assigned` rows and preserves `created` rows.
+- Existing/legacy Superadministrators do not receive all existing companies automatically.
+- Company directory, Users, Locations, Assets, Work Orders, Maintenance, Inventory, Kardex, Suppliers, Crews, Requisitions, Attendance, Reacción, reports and exports must use the same portfolio scope.
+- Direct URL access and mutation endpoints must call the organization-scope authority instead of relying on hidden UI controls.
+
+## Implemented Company Administrator ownership of company profile
+
+Status: implemented.
+
+A tenant `admin` has `companies.manage` only for its own `organizationId`.
+
+The Company Administrator may maintain:
+
+- legal/commercial-facing company data owned by the customer;
+- administrative and billing contact data;
+- business hours;
+- company logo and cover;
+- company documents;
+- sites and operational structure according to tenant permissions.
+
+The Company Administrator does not receive Desweb commercial authority. Platform-only controls remain protected server-side and are hidden from the tenant editing experience.

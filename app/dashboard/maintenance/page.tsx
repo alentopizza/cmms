@@ -66,7 +66,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const platform=session.platformRole!=="user";
   const organizationScope=organizationScopeFor(session);
   const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
-  const creationGatePromise=getCreationGateForScope("routine",session.organizationId,platform);
+  const creationGatePromise=getCreationGateForScope("routine",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
 
   const q=safeText(feedback.q);
   const status=ROUTINE_STATUSES.has(feedback.status||"")?String(feedback.status):"all";

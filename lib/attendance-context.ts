@@ -13,5 +13,7 @@ export function attendanceOrganizationId(
 ){
   if(session.platformRole==="user")return session.organizationId;
   const candidate=typeof requestedOrganizationId==="string"?requestedOrganizationId.trim():"";
-  return UUID.test(candidate)?candidate:null;
+  if(!UUID.test(candidate))return null;
+  if(session.platformRole==="superadmin"&&!session.platformOrganizationIds.includes(candidate))return null;
+  return candidate;
 }

@@ -42,7 +42,7 @@ export const ROLE_LABELS: Record<OrganizationRole, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
-  admin: "Máximo nivel dentro de una empresa cliente. Administra usuarios, ubicaciones y módulos operativos de su organización, sin acceso a otras empresas ni a roles de plataforma.",
+  admin: "Máximo nivel dentro de una empresa cliente. Mantiene la información y documentos de su propia empresa y administra usuarios, ubicaciones y módulos operativos de esa organización, sin acceso a otras empresas, controles comerciales de Desweb ni roles de plataforma.",
   manager: "Coordina la operación de mantenimiento dentro de las sedes autorizadas. Gestiona trabajo operativo y equipos, sin permisos de administración global de la empresa ni de la plataforma.",
   technician: "Ejecuta mantenimiento sobre los trabajos y sedes autorizados. Consulta activos, preventivos e inventario necesarios para su labor, sin administrar usuarios ni configuración empresarial.",
   requester: "Reporta necesidades de mantenimiento y consulta el avance de sus solicitudes permitidas. No administra la operación ni la configuración del CMMS.",

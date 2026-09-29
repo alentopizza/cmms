@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession, canAccessSite } from "@/lib/auth";
 import { canAccessInventoryItem, canAccessInventoryWarehouse, hasLimitedInventorySiteScope } from "@/lib/inventory-scope";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool, query } from "@/lib/db";
 import {
   boolValue,
@@ -549,7 +550,7 @@ export async function POST(request:Request){
       [fixedSupplierId],
     );
     if(!scopedSupplier.rowCount)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
-    if(session.platformRole==="user"&&scopedSupplier.rows[0].organization_id!==session.organizationId){
+    if(!canAccessOrganization(session,scopedSupplier.rows[0].organization_id)){
       return NextResponse.json({error:"Forbidden"},{status:403});
     }
     organizationId=scopedSupplier.rows[0].organization_id;

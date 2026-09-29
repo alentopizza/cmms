@@ -650,6 +650,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
+    title:"Detalle de Lead: ancho y edición corregidos",
+    summary:"El detalle de Leads usa un drawer ancho con columnas estables y scroll únicamente en el contenido. Editar abre directamente el formulario existente en una sola interfaz; al guardar, la página recarga los datos y reabre el detalle actualizado.",
+    roles:["all","platform_owner","superadmin"],
+  },
+  {
+    date:"2026-09-29",
     title:"Leads con tarjeta CRM compacta",
     summary:"Leads reorganiza la vista Cuadrícula en tarjetas de iniciales 3/2/1 y la acción Ver abre un drawer amplio con información real de contacto, necesidad, registro y seguimiento; búsqueda, filtros, listado, creación, edición, eliminación y cambio de estado conservan sus flujos existentes.",
     roles:["all","platform_owner","superadmin"],

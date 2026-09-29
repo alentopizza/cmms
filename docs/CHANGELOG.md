@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-29 — Rediseño UX/UI · cuadrícula de Rutinas
+
+- La vista **Cuadrícula** de Rutinas adopta el mismo lenguaje visual consolidado en Órdenes de trabajo, sin alterar lógica, permisos, endpoints, filtros, paginación ni la vista Listado.
+- `MaintenanceCard` conserva su variante compacta como default y añade una variante `dashboard` exclusiva para el directorio Grid de Rutinas.
+- Cada tarjeta muestra únicamente información ya disponible: nombre, estado, Empresa, Ubicación, Activo/Equipo, Frecuencia y Próxima ejecución.
+- La cuadrícula usa dos tarjetas por fila en escritorio y una en pantallas pequeñas, con borde/sombra sutil y elevación mínima en hover.
+- El bloque de Programación usa el mismo contrato corregido de Órdenes: icono de 34 px + contenido flexible, evitando texto comprimido, palabras cortadas u overflow horizontal.
+- Editar/Eliminar continúan usando `OwnerRecordActions`; se presentan como acciones compactas con texto únicamente para el Platform Owner, sin ampliar permisos.
+- La cabecera del Grid incorpora **Listado de rutinas**, el orden actualmente soportado **Próximo vencimiento** y el contador real de resultados.
+- `view-mode-toggle-smoke` protege la nueva variante dashboard y los marcadores estructurales de la vista Listado.
+
 ## 2026-09-29 — Corrección visual · descripción en tarjetas de Órdenes de trabajo
 
 - Se corrige el bloque **Descripción** de la vista Cuadrícula: la barra teal permanece absoluta y el grid pasa a dos columnas reales, icono de 34 px + contenido flexible.

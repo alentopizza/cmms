@@ -100,10 +100,47 @@ export function InventoryCard({
 }
 
 export function MaintenanceCard({
-  name,asset,company,frequency,nextDue,active,actions,recordProps,
+  name,asset,company,frequency,nextDue,active,actions,recordProps,variant="compact",site,
 }:{
   name:string;asset:string;company:string;frequency:string;nextDue:string;active:boolean;actions?:ReactNode;recordProps?:RecordProps;
+  variant?:"compact"|"dashboard";site?:string;
 }){
+  if(variant==="dashboard"){
+    return <BusinessCardShell domain="maintenance" className="maintenance-grid-card-v2" recordProps={recordProps}>
+      <header className="maintenance-grid-card-head">
+        <div className="maintenance-grid-card-identity">
+          <span className="maintenance-grid-card-icon" aria-hidden="true"><UiIcon name="maintenance" size={20}/></span>
+          <div className="maintenance-grid-card-heading">
+            <div className="maintenance-grid-card-title-row">
+              <strong>{name}</strong>
+              <Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge>
+            </div>
+            <p>{asset||"No asignado"}</p>
+          </div>
+        </div>
+        <div className="maintenance-grid-card-due">
+          <span>Próxima ejecución</span>
+          <strong>{nextDue||"Sin programar"}</strong>
+        </div>
+      </header>
+
+      <div className="maintenance-grid-facts">
+        <div><span className="maintenance-grid-fact-icon"><UiIcon name="company" size={17}/></span><div><small>Empresa</small><strong>{company||"No especificado"}</strong></div></div>
+        <div><span className="maintenance-grid-fact-icon"><UiIcon name="location" size={17}/></span><div><small>Ubicación</small><strong>{site||"No asignado"}</strong></div></div>
+        <div><span className="maintenance-grid-fact-icon"><UiIcon name="asset" size={17}/></span><div><small>Activo / Equipo</small><strong>{asset||"No asignado"}</strong></div></div>
+        <div><span className="maintenance-grid-fact-icon"><UiIcon name="clock" size={17}/></span><div><small>Frecuencia</small><strong>{frequency||"No especificado"}</strong></div></div>
+      </div>
+
+      <div className="maintenance-grid-schedule">
+        <span className="maintenance-grid-schedule-marker" aria-hidden="true"/>
+        <span className="maintenance-grid-schedule-icon" aria-hidden="true"><UiIcon name="calendar" size={16}/></span>
+        <div><small>Programación</small><p>Próxima ejecución: <strong>{nextDue||"Sin programar"}</strong></p></div>
+      </div>
+
+      {actions&&<footer className="maintenance-grid-actions">{actions}</footer>}
+    </BusinessCardShell>;
+  }
+
   return <BusinessCardShell domain="maintenance" className="maintenance-mobile-card" recordProps={recordProps}>
     <div className="maintenance-mobile-main ds-business-mobile-main">
       <div className="maintenance-mobile-icon ds-business-icon" aria-hidden="true"><UiIcon name="maintenance" size={20}/></div>

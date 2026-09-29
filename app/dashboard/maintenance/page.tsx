@@ -258,32 +258,48 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       <KpiCard label="Próximos 7 días" value={String(summary.due_soon_count)} hint="vencimientos próximos" icon="clock" tone={summary.due_soon_count?"warning":"default"}/>
     </MetricGrid>
     <section className="section maintenance-directory-section">
-      <CollectionView storageKey="maintenance" label="Vista de rutinas" grid={<div className="maintenance-mobile-list" data-collection-grid>
-        {plans.rows.map(p=><MaintenanceCard
-          key={p.id}
-          name={p.name}
-          asset={p.asset}
-          company={p.company}
-          frequency={"Cada "+p.frequency_value+" "+p.frequency_unit}
-          nextDue={p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}
-          active={p.active}
-          recordProps={{
-            "data-module-record":true,"data-status":p.active?"active":"inactive",
-            "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
-            "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
-            "data-filter-site":p.site_id,"data-filter-site-label":p.site,
-            "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
-          }}
-          actions={owner?<OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
+      <CollectionView storageKey="maintenance" label="Vista de rutinas" grid={<div className="maintenance-mobile-list maintenance-dashboard-grid" data-collection-grid>
+        <div className="maintenance-grid-toolbar">
+          <h2>Listado de rutinas</h2>
+          <div className="maintenance-grid-toolbar-meta" aria-label="Orden y resultados">
+            <label>Ordenar por
+              <select defaultValue={sort} disabled aria-label="Ordenar rutinas">
+                <option value="due">Próximo vencimiento</option>
+              </select>
+            </label>
+            <span>Mostrando {plans.rowCount} de {summary.filtered_count} rutinas</span>
+          </div>
+        </div>
+        {plans.rows.map(p=>{
+          const ownerFields=[
             {name:"name",label:"Nombre",value:p.name},
-            {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
-            {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[
+            {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number" as const},
+            {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select" as const,options:[
               {value:"day",label:"Día"},{value:"week",label:"Semana"},{value:"month",label:"Mes"},{value:"year",label:"Año"},{value:"meter",label:"Medidor"}
             ]},
-            {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date"},
-            {name:"active",label:"Estado",value:p.active,type:"checkbox"},
-          ]}/>:undefined}
-        />)}
+            {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date" as const},
+            {name:"active",label:"Estado",value:p.active,type:"checkbox" as const},
+          ];
+          return <MaintenanceCard
+            key={p.id}
+            variant="dashboard"
+            name={p.name}
+            asset={p.asset||"No asignado"}
+            company={p.company}
+            site={p.site}
+            frequency={"Cada "+p.frequency_value+" "+frequencyLabel(p.frequency_unit)}
+            nextDue={p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}
+            active={p.active}
+            recordProps={{
+              "data-module-record":true,"data-status":p.active?"active":"inactive",
+              "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
+              "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
+              "data-filter-site":p.site_id,"data-filter-site-label":p.site,
+              "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
+            }}
+            actions={owner?<OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={ownerFields} compact className="maintenance-grid-owner-actions"/>:undefined}
+          />;
+        })}
       </div>} list={<StaticDataTable
         className="maintenance-directory-table"
         caption="Rutinas de mantenimiento preventivo"

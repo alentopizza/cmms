@@ -650,6 +650,12 @@ export const MANUAL_ARTICLES:ManualArticle[] = [
 export const MANUAL_CHANGES:ManualChange[] = [
   {
     date:"2026-09-29",
+    title:"Rutinas: cuadrícula alineada con Órdenes de trabajo",
+    summary:"La vista Cuadrícula de Rutinas adopta tarjetas dashboard de dos columnas con estado, empresa, ubicación, activo/equipo, frecuencia, próxima ejecución y acciones existentes. La vista Listado conserva su estructura anterior sin cambios.",
+    roles:["all","platform_owner","superadmin"],
+  },
+  {
+    date:"2026-09-29",
     title:"Órdenes de trabajo: cuadrícula tipo dashboard",
     summary:"La vista Cuadrícula de Órdenes de trabajo usa tarjetas de dos columnas con OT, estado, prioridad, empresa, ubicación, activo/equipo, tipo, descripción, fechas, asignación y acciones. La vista Listado conserva su estructura anterior sin cambios.",
     roles:["all","platform_owner","superadmin"],

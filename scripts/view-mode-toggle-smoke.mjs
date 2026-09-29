@@ -155,6 +155,32 @@ for(const marker of [
 
 const workOrders=fs.readFileSync("app/dashboard/work-orders/page.tsx","utf8");
 const maintenance=fs.readFileSync("app/dashboard/maintenance/page.tsx","utf8");
+for(const marker of [
+  "maintenance-dashboard-grid","maintenance-grid-toolbar","<MaintenanceCard","variant=\"dashboard\"",
+  "site={p.site}","frequencyLabel(p.frequency_unit)","compact className=\"maintenance-grid-owner-actions\"",
+]){
+  if(!maintenance.includes(marker))throw new Error("Maintenance dashboard grid orchestration missing "+marker);
+}
+for(const marker of [
+  'list={<StaticDataTable','className="maintenance-directory-table"','caption="Rutinas de mantenimiento preventivo"',
+  '{key:"plan",label:"Rutina",width:"34%"}','EntityIdentityCell','asset_has_image','canReadAssets',
+]){
+  if(!maintenance.includes(marker))throw new Error("Maintenance list presentation changed or missing "+marker);
+}
+for(const marker of [
+  'variant?:"compact"|"dashboard"',"maintenance-grid-card-v2","maintenance-grid-facts",
+  "Próxima ejecución","Programación","maintenance-grid-schedule",
+]){
+  if(!businessCards.includes(marker))throw new Error("MaintenanceCard dashboard variant missing "+marker);
+}
+for(const marker of [
+  ".maintenance-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))",
+  ".maintenance-grid-card-v2:hover",".maintenance-grid-facts{display:grid;grid-template-columns:repeat(2",
+  ".maintenance-grid-schedule{","grid-template-columns:34px minmax(0,1fr)","word-break:normal",
+  "@media(max-width:820px)",".maintenance-grid-owner-actions",
+]){
+  if(!phase9WorkOrderCss.includes(marker))throw new Error("Maintenance dashboard grid styling missing "+marker);
+}
 for(const [name,source] of [["Work Orders",workOrders],["Maintenance",maintenance]]){
   if(!source.includes("grid={<div")||!source.includes("list={<StaticDataTable"))throw new Error(name+" must reuse existing card/table presentations inside CollectionView");
 }

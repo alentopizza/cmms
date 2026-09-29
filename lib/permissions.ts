@@ -57,6 +57,32 @@ export const PLATFORM_OWNER_DESCRIPTION =
 export const SUPERADMIN_DESCRIPTION =
   "Administra únicamente las empresas de su cartera autorizada. Puede crear empresas —que quedan asignadas automáticamente a su cartera— y operar las que el Propietario Desweb le asigne, pero no ve por defecto las demás empresas ni puede crear otros Superadministradores o modificar al Propietario Desweb.";
 
+const SUPERADMIN_PERMISSIONS: Permission[] = [
+  "companies.manage",
+  "company_resources.manage",
+  "users.manage",
+  "locations.manage",
+  "suppliers.manage",
+  "crews.manage",
+  "activities.manage",
+  "activities.execute",
+  "attendance.manage",
+  "attendance.reports",
+  "reaction.view",
+  "assets.read",
+  "assets.write",
+  "work_orders.read",
+  "work_orders.write",
+  "maintenance.read",
+  "maintenance.write",
+  "inventory.read",
+  "inventory.write",
+  "requisitions.read",
+  "requisitions.write",
+  "requisitions.approve",
+  "requisitions.reconcile",
+];
+
 const ROLE_PERMISSIONS: Record<OrganizationRole, Permission[]> = {
   admin: ["companies.manage","settings.view","users.manage","locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve","requisitions.reconcile"],
   manager: ["locations.manage","suppliers.manage","crews.manage","attendance.self","attendance.manage","attendance.reports","reaction.view","assets.read","assets.write","work_orders.read","work_orders.write","activities.manage","activities.execute","maintenance.read","maintenance.write","inventory.read","inventory.write","requisitions.read","requisitions.write","requisitions.approve","requisitions.reconcile"],
@@ -83,7 +109,7 @@ export function isPlatformOwner(subject: PermissionSubject | null) {
 export function can(subject: PermissionSubject | null, permission: Permission) {
   if (!subject) return false;
   if (subject.platformRole === "platform_owner") return true;
-  if (subject.platformRole === "superadmin") return true;
+  if (subject.platformRole === "superadmin") return SUPERADMIN_PERMISSIONS.includes(permission);
   if (!subject.role) return false;
   return ROLE_PERMISSIONS[subject.role].includes(permission);
 }

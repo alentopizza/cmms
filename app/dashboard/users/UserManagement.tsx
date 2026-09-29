@@ -59,6 +59,8 @@ export type ManagedUser = {
   site_names: string[] | null;
   external_supplier_id: string | null;
   external_supplier_name: string | null;
+  platform_organization_ids: string[];
+  platform_organization_names: string[];
   has_avatar: boolean;
   biometric_status: "verified" | "legacy" | "revoked" | "missing";
   assigned_work_orders: number;
@@ -120,9 +122,10 @@ type Draft = {
   access_all_sites: boolean;
   site_ids: string[];
   external_supplier_id: string;
+  platform_organization_ids: string[];
 };
 
-type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "avatar" | "country_code" | "identity_document_type" | "identity_document_number" | "organization_id" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
+type FieldErrors = Partial<Record<"full_name" | "email" | "password" | "avatar" | "country_code" | "identity_document_type" | "identity_document_number" | "organization_id" | "platform_organization_ids" | "role" | "site_ids" | "external_supplier_id" | "general", string>>;
 
 const EMPTY_DRAFT: Draft = {
   full_name: "",
@@ -137,6 +140,7 @@ const EMPTY_DRAFT: Draft = {
   access_all_sites: true,
   site_ids: [],
   external_supplier_id: "",
+  platform_organization_ids: [],
 };
 
 function roleKey(user: ManagedUser) {
@@ -167,7 +171,13 @@ function biometricStatusLabel(status: ManagedUser["biometric_status"]) {
 }
 
 function siteAccessLabel(user: ManagedUser) {
-  if (user.platform_role !== "user") return "Todas las empresas";
+  if (user.platform_role === "platform_owner") return "Todas las empresas";
+  if (user.platform_role === "superadmin") {
+    const names=user.platform_organization_names||[];
+    if(!names.length)return "Sin empresas asignadas";
+    if(names.length<=2)return names.join(", ");
+    return `${names.slice(0,2).join(", ")} +${names.length-2}`;
+  }
   if (user.access_all_sites !== false) return "Todas las sedes";
   const siteNames = user.site_names || [];
   if (!siteNames.length) return "Sin sedes asignadas";
@@ -462,6 +472,7 @@ export default function UserManagement({
       access_all_sites: user.platform_role !== "user" ? true : user.access_all_sites !== false,
       site_ids: user.platform_role !== "user" ? [] : (user.site_ids || []),
       external_supplier_id: user.platform_role !== "user" ? "" : (user.external_supplier_id || ""),
+      platform_organization_ids: user.platform_role === "superadmin" ? (user.platform_organization_ids || []) : [],
     });
     setErrors({});
     setActionError("");
@@ -502,7 +513,12 @@ export default function UserManagement({
         next.external_supplier_id = "El proveedor debe pertenecer a la empresa y prestar servicios.";
       }
     }
-    if (draft.role === "superadmin" && !isPlatformOwner) next.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
+    if (draft.role === "superadmin") {
+      if (!isPlatformOwner) next.role = "Solo el Propietario Desweb puede crear o asignar Superadministradores.";
+      if (draft.platform_organization_ids.some(id=>!organizations.some(org=>org.id===id))) {
+        next.platform_organization_ids="Una de las empresas asignadas no está disponible.";
+      }
+    }
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -533,6 +549,7 @@ export default function UserManagement({
       body.set("external_supplier_id", draft.external_supplier_id);
       if(avatarFile) body.set("avatar",avatarFile);
       if (!draft.access_all_sites) draft.site_ids.forEach(siteId => body.append("site_ids", siteId));
+      if (draft.role === "superadmin") draft.platform_organization_ids.forEach(organizationId=>body.append("platform_organization_ids",organizationId));
       if (mode === "edit") body.set("intent", "update");
 
       const response = await fetch(url, {
@@ -772,8 +789,8 @@ export default function UserManagement({
                 <div className="entity-info-field"><span>País</span><strong>{selectedUser.country_code||"Sin registrar"}</strong></div>
                 <div className="entity-info-field"><span>Tipo de documento</span><strong>{selectedUser.identity_document_type||"Sin registrar"}</strong></div>
                 <div className="entity-info-field"><span>Número de documento</span><strong>{selectedUser.identity_document_number||"Sin registrar"}</strong></div>
-                <div className="entity-info-field"><span>Empresa</span><strong>{selectedUser.organization_name||"Acceso global"}</strong></div>
-                <div className="entity-info-field"><span>Alcance de sedes</span><strong>{siteAccessLabel(selectedUser)}</strong></div>
+                <div className="entity-info-field"><span>{selectedUser.platform_role==="superadmin"?"Empresas autorizadas":"Empresa"}</span><strong>{selectedUser.platform_role==="superadmin"?siteAccessLabel(selectedUser):(selectedUser.organization_name||"Sin empresa operativa")}</strong></div>
+                <div className="entity-info-field"><span>Alcance</span><strong>{siteAccessLabel(selectedUser)}</strong></div>
                 <div className="entity-info-field"><span>Último acceso</span><strong>{selectedUser.last_login_at?new Date(selectedUser.last_login_at).toLocaleString("es-CO"):"Aún no ingresa"}</strong></div>
                 <div className="entity-info-field"><span>Biometría</span><strong>{biometricStatusLabel(selectedUser.biometric_status)}</strong></div>
               </div></div>
@@ -962,23 +979,23 @@ export default function UserManagement({
               {errors.password && <small className="field-error-message">{errors.password}</small>}
             </div>
 
-            {isPlatformOperator ? <div className={`field ${errors.organization_id ? "field-error" : ""}`}>
-              <label htmlFor="managed-user-org">Empresa {draft.role === "superadmin" ? "" : "*"}</label>
-              <select id="managed-user-org" value={draft.organization_id} disabled={draft.role === "superadmin"} onChange={event => changeOrganization(event.target.value)}>
-                <option value="">{draft.role === "superadmin" ? "Acceso global" : "Selecciona una empresa"}</option>
+            {isPlatformOperator && draft.role !== "superadmin" ? <div className={`field ${errors.organization_id ? "field-error" : ""}`}>
+              <label htmlFor="managed-user-org">Empresa *</label>
+              <select id="managed-user-org" value={draft.organization_id} onChange={event => changeOrganization(event.target.value)}>
+                <option value="">Selecciona una empresa</option>
                 {organizations.map(org => <option value={org.id} key={org.id}>{org.name}</option>)}
               </select>
               {errors.organization_id && <small className="field-error-message">{errors.organization_id}</small>}
-            </div> : <input type="hidden" value={fixedOrganizationId || ""} />}
+            </div> : !isPlatformOperator ? <input type="hidden" value={fixedOrganizationId || ""} /> : null}
 
             <div className={`field ${errors.role ? "field-error" : ""}`}>
               <label htmlFor="managed-user-role">Rol *</label>
               <select id="managed-user-role" value={draft.role} onChange={event => {
                 const nextRole = event.target.value;
                 if (nextRole === "superadmin") {
-                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [], external_supplier_id: "" }));
+                  setDraft(previous => ({ ...previous, role: nextRole, organization_id: "", access_all_sites: true, site_ids: [], external_supplier_id: "", platform_organization_ids: previous.platform_organization_ids || [] }));
                 } else {
-                  setDraft(previous => ({ ...previous, role: nextRole, external_supplier_id: nextRole === "external" || nextRole === "provider" ? previous.external_supplier_id : "" }));
+                  setDraft(previous => ({ ...previous, role: nextRole, platform_organization_ids: [], external_supplier_id: nextRole === "external" || nextRole === "provider" ? previous.external_supplier_id : "" }));
                   setErrors(previous => ({ ...previous, role: undefined, external_supplier_id: undefined, general: undefined }));
                 }
               }}>
@@ -987,6 +1004,28 @@ export default function UserManagement({
               </select>
               {errors.role && <small className="field-error-message">{errors.role}</small>}
             </div>
+
+            {draft.role==="superadmin"&&isPlatformOwner&&<div className={`field form-span-2 site-access-field ${errors.platform_organization_ids?"field-error":""}`}>
+              <label>Empresas autorizadas <span className="muted">(opcional)</span></label>
+              <div className="site-access-empty">El Superadministrador no obtiene acceso global. Las empresas que cree se añadirán automáticamente a su cartera; aquí puedes asignarle empresas adicionales.</div>
+              <div className="site-checkbox-grid">
+                {organizations.map(organization=>{
+                  const checked=draft.platform_organization_ids.includes(organization.id);
+                  return <label className={`site-checkbox-card ${checked?"active":""}`} key={organization.id}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={()=>updateDraft("platform_organization_ids",checked
+                        ?draft.platform_organization_ids.filter(id=>id!==organization.id)
+                        :[...draft.platform_organization_ids,organization.id])}
+                    />
+                    <span className="site-checkbox-mark">{checked?<UiIcon name="check" size={12}/>:null}</span>
+                    <span><strong>{organization.name}</strong><small>{checked?"Asignada":"Sin acceso"}</small></span>
+                  </label>;
+                })}
+              </div>
+              {errors.platform_organization_ids&&<small className="field-error-message">{errors.platform_organization_ids}</small>}
+            </div>}
 
             {(draft.role === "provider" || draft.role === "external") && <div className={`field ${errors.external_supplier_id ? "field-error" : ""}`}>
               <label htmlFor="managed-user-supplier">Proveedor de servicios {draft.role === "provider" ? "*" : "(opcional)"}</label>

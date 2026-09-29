@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { pool } from "@/lib/db";
 import { canCreateLocation } from "@/lib/resource-limits";
 import { publicUrl } from "@/lib/urls";
@@ -41,11 +42,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new NextResponse("Ubicación no encontrada", { status: 404 });
     }
     const organizationId = site.rows[0].organization_id;
-    if (!canAccessSite(session, siteId)) {
+    if (!canAccessOrganization(session,organizationId)) {
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });
     }
-    if (session.platformRole === "user" && session.organizationId !== organizationId) {
+    if (session.platformRole==="user"&&!canAccessSite(session, siteId)) {
       await client.query("ROLLBACK");
       return new NextResponse("Forbidden", { status: 403 });
     }

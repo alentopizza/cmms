@@ -26,7 +26,7 @@ export default async function CompaniesPage({
   if (!can(session, "companies.manage")) redirect("/dashboard");
 
   const scope=organizationScopeFor(session);
-  const scopeParams=[scope.unrestricted,scope.organizationIds] as const;
+  const scopeParams:unknown[]=[scope.unrestricted,scope.organizationIds];
   const tenantCompanyView=session.platformRole==="user";
 
   const [companies, params, customization, sites, locations, technicians, documents, serviceSuppliers] = await Promise.all([

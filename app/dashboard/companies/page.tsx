@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
+import { canCreateOrganizations, organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -23,6 +24,10 @@ export default async function CompaniesPage({
   const session = await getSession();
   if (!session) redirect("/login");
   if (!can(session, "companies.manage")) redirect("/dashboard");
+
+  const scope=organizationScopeFor(session);
+  const scopeParams=[scope.unrestricted,scope.organizationIds] as const;
+  const tenantCompanyView=session.platformRole==="user";
 
   const [companies, params, customization, sites, locations, technicians, documents, serviceSuppliers] = await Promise.all([
     query<CompanyDirectoryItem>(
@@ -51,7 +56,8 @@ export default async function CompaniesPage({
         ) / NULLIF(13 + (
           SELECT count(*)::int FROM organization_documents rq
           WHERE rq.organization_id=o.id AND rq.archived_at IS NULL AND rq.requirement_level='required'
-        ),0))::int profile_completion,
+          scopeParams,
+    ),0))::int profile_completion,
         (SELECT count(*)::text FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL) document_count,
         (SELECT count(*)::text FROM organization_documents od
           WHERE od.organization_id=o.id AND od.archived_at IS NULL AND od.requirement_level='required'
@@ -84,6 +90,7 @@ export default async function CompaniesPage({
          ORDER BY active DESC,created_at ASC
          LIMIT 1
        ) s ON true
+       WHERE ($1::boolean OR o.id=ANY($2::uuid[]))
        ORDER BY o.active DESC,o.name`,
     ),
     searchParams,
@@ -96,8 +103,10 @@ export default async function CompaniesPage({
        FROM sites s
        LEFT JOIN assets a ON a.site_id=s.id
        LEFT JOIN locations l ON l.site_id=s.id
+       WHERE ($1::boolean OR s.organization_id=ANY($2::uuid[]))
        GROUP BY s.id
        ORDER BY s.active DESC,s.created_at ASC`,
+      scopeParams,
     ),
     query<CompanyRelatedLocation>(
       `SELECT l.id,l.organization_id,l.site_id,l.name,l.code,l.type,l.parent_id,l.active,
@@ -105,8 +114,10 @@ export default async function CompaniesPage({
               (l.image_data IS NOT NULL) has_image
        FROM locations l
        LEFT JOIN assets a ON a.location_id=l.id
+       WHERE ($1::boolean OR l.organization_id=ANY($2::uuid[]))
        GROUP BY l.id
        ORDER BY l.created_at ASC`,
+      scopeParams,
     ),
     query<CompanyRelatedTechnician>(
       `SELECT u.id,om.organization_id,u.full_name,u.email,u.phone,u.active,(u.avatar_data IS NOT NULL) has_avatar,
@@ -117,8 +128,10 @@ export default async function CompaniesPage({
        LEFT JOIN organization_member_sites oms ON oms.organization_id=om.organization_id AND oms.user_id=om.user_id
        LEFT JOIN sites s ON s.id=oms.site_id
        WHERE om.role='technician'
+         AND ($1::boolean OR om.organization_id=ANY($2::uuid[]))
        GROUP BY u.id,om.organization_id,om.access_all_sites
        ORDER BY u.active DESC,u.full_name`,
+      scopeParams,
     ),
     query<CompanyRelatedDocument>(
       `SELECT d.id,d.organization_id,d.category,d.requirement_level,d.display_name,d.reference,
@@ -128,21 +141,27 @@ export default async function CompaniesPage({
        FROM organization_documents d
        LEFT JOIN users u ON u.id=d.uploaded_by
        LEFT JOIN users au ON au.id=d.archived_by
+       WHERE ($1::boolean OR d.organization_id=ANY($2::uuid[]))
        ORDER BY (d.archived_at IS NOT NULL),d.created_at DESC`,
+      scopeParams,
     ),
     query<CompanyRelatedSupplier>(
       `SELECT id,organization_id,name
        FROM suppliers
        WHERE active=true AND supplier_type IN ('services','both')
+         AND ($1::boolean OR organization_id=ANY($2::uuid[]))
        ORDER BY organization_id,name`,
+      scopeParams,
     ),
   ]);
 
   return <>
     <ModuleHeader
-      eyebrow="Configuración operativa"
-      title="Empresas"
-      description="Administra empresas, planes, estructura operativa y recursos contratados desde un mismo directorio."
+      eyebrow={tenantCompanyView?"Administración empresarial":"Configuración operativa"}
+      title={tenantCompanyView?"Mi empresa":"Empresas"}
+      description={tenantCompanyView
+        ?"Completa y administra la información, identidad, documentos y estructura operativa de tu propia empresa."
+        :"Administra únicamente las empresas de tu cartera autorizada, sus planes y estructura operativa."}
       count={companies.rowCount || 0}
       countLabel="compañías"
       searchPlaceholder="Buscar compañía, ciudad, NIT o plan"
@@ -151,7 +170,9 @@ export default async function CompaniesPage({
         {key:"country",label:"País",allLabel:"Todos los países"},
         {key:"city",label:"Ciudad",allLabel:"Todas las ciudades"},
       ]}
-      action={<NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} defaultCountry={customization.defaultCountry} defaultLocale={customization.defaultLocale} />}
+      action={canCreateOrganizations(session)
+        ? <NewCompanyModal error={params.create_error} autoOpen={params.create==="1"} defaultCountry={customization.defaultCountry} defaultLocale={customization.defaultLocale} />
+        : undefined}
     />
 
     {(params.saved || params.deleted || params.error) && <div className="section phase6-feedback-stack">

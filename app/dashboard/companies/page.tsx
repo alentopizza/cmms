@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
-import { canCreateOrganizations, organizationScopeFor } from "@/lib/organization-scope";
+import { canCreateOrganizations, canManageOrganizationCommercialControls, organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import NewCompanyModal from "./NewCompanyModal";
 import ModuleHeader from "@/components/ModuleHeader";
@@ -212,6 +212,7 @@ export default async function CompaniesPage({
         canManageResources={can(session, "company_resources.manage")}
         canManageLocations={can(session, "locations.manage")}
         canManageUsers={can(session, "users.manage")}
+        canManageCommercial={canManageOrganizationCommercialControls(session)}
         canDelete={isPlatformOwner(session)}
         initialCompanyId={params.company}
         initialTab={params.tab}

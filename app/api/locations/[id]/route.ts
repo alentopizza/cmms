@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
@@ -24,8 +25,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const current = await query<{ organization_id: string }>("SELECT organization_id FROM locations WHERE id=$1 AND site_id=$2", [id, siteId]);
   if (!current.rowCount) return new NextResponse("Sububicación no encontrada", { status: 404 });
-  if (session.platformRole === "user" && session.organizationId !== current.rows[0].organization_id) return new NextResponse("Forbidden", { status: 403 });
-  if (!canAccessSite(session, siteId)) return new NextResponse("Forbidden", { status: 403 });
+  if (!canAccessOrganization(session,current.rows[0].organization_id)) return new NextResponse("Forbidden", { status: 403 });
+  if (session.platformRole==="user"&&!canAccessSite(session, siteId)) return new NextResponse("Forbidden", { status: 403 });
   const intent = String(form.get("intent") || "update");
   if (intent === "toggle") {
     await query("UPDATE locations SET active=NOT active,updated_at=now() WHERE id=$1 AND site_id=$2", [id, siteId]);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { stableCode } from "@/lib/import-workbook";
@@ -15,7 +16,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
   const current=await query<{organization_id:string}>("SELECT organization_id FROM inventory_categories WHERE id=$1",[id]);
   if(!current.rowCount)return new NextResponse("Categoría no encontrada",{status:404});
-  if(session.platformRole==="user"&&session.organizationId!==current.rows[0].organization_id)return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,current.rows[0].organization_id))return new NextResponse("Forbidden",{status:403});
   const form=await request.formData();
   const intent=String(form.get("intent")||"update");
   if(intent==="toggle"){

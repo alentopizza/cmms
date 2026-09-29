@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
@@ -37,6 +38,8 @@ export async function GET(
   if (!UUID_PATTERN.test(id) || !UUID_PATTERN.test(documentId)) {
     return new NextResponse("Documento inválido", { status: 400 });
   }
+  if(!canAccessOrganization(session,id)) return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,id)) return new NextResponse("Forbidden",{status:403});
 
   const result = await query<{ file_data: Buffer | null; file_mime_type: string | null; file_name: string | null }>(
     "SELECT file_data,file_mime_type,file_name FROM organization_documents " +

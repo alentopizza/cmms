@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { canAccessOrganization } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { publicUrl } from "@/lib/urls";
 import { appendFeedback, safeDashboardReturn } from "@/lib/return-to";
@@ -37,7 +38,8 @@ export async function POST(request:Request) {
     : await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1 AND organization_id=$2 AND status<>'retired'",[assetId,session.organizationId]);
 
   if(!asset.rowCount) return NextResponse.redirect(target("?error=asset"),303);
-  if(!canAccessSite(session,asset.rows[0].site_id)) return new NextResponse("Forbidden",{status:403});
+  if(!canAccessOrganization(session,asset.rows[0].organization_id)) return new NextResponse("Forbidden",{status:403});
+  if(session.platformRole==="user"&&!canAccessSite(session,asset.rows[0].site_id)) return new NextResponse("Forbidden",{status:403});
 
   const gate=await getCreationGateForScope("routine",asset.rows[0].organization_id,false);
   if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);

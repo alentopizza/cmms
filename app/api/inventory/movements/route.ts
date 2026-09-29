@@ -30,6 +30,7 @@ export async function POST(request:Request){
   if(!item.rowCount)return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=required",request.url),303);
   const row=item.rows[0];
   if(!canAccessInventoryItem(session,row.organization_id,row.site_id))return new NextResponse("Forbidden",{status:403});
+  const contextSuffix="&organization="+encodeURIComponent(row.organization_id);
 
   const action=movement(String(form.get("movement_type")||""));
   const quantity=Number(form.get("quantity")||0);
@@ -44,7 +45,7 @@ export async function POST(request:Request){
   const costCenter=String(form.get("cost_center")||"").trim();
   const notes=String(form.get("notes")||"").trim();
 
-  if(!action||!Number.isFinite(quantity)||quantity<=0||!warehouseId)return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement",request.url),303);
+  if(!action||!Number.isFinite(quantity)||quantity<=0||!warehouseId)return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement"+contextSuffix,request.url),303);
   if(unitCost!==null&&(!Number.isFinite(unitCost)||unitCost<0))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement",request.url),303);
   if(expires&&!/^\d{4}-\d{2}-\d{2}$/.test(expires))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement",request.url),303);
   if(action.type==="transfer"&&(!destinationId||destinationId===warehouseId))return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=movement",request.url),303);
@@ -55,7 +56,7 @@ export async function POST(request:Request){
     [row.organization_id,warehouseIds],
   );
   if(warehouses.rowCount!==warehouseIds.length||warehouses.rows.some(warehouse=>!canAccessInventoryWarehouse(session,warehouse.organization_id,warehouse.site_id))){
-    return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=relation",request.url),303);
+    return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=relation"+contextSuffix,request.url),303);
   }
 
   try{
@@ -67,7 +68,7 @@ export async function POST(request:Request){
       [row.organization_id,itemId,action.type,quantity*action.sign,unitCost,warehouseId,destinationId||null,document||null,movementAt||null,session.userId||null,lot||null,expires||null,costCenter||null,notes||null],
     );
   }catch{
-    return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=stock",request.url),303);
+    return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?error=stock"+contextSuffix,request.url),303);
   }
-  return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?created=1",request.url),303);
+  return NextResponse.redirect(publicUrl("/dashboard/inventory/kardex?created=1"+contextSuffix,request.url),303);
 }

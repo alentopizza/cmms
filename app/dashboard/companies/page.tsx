@@ -56,8 +56,7 @@ export default async function CompaniesPage({
         ) / NULLIF(13 + (
           SELECT count(*)::int FROM organization_documents rq
           WHERE rq.organization_id=o.id AND rq.archived_at IS NULL AND rq.requirement_level='required'
-          scopeParams,
-    ),0))::int profile_completion,
+        ),0))::int profile_completion,
         (SELECT count(*)::text FROM organization_documents od WHERE od.organization_id=o.id AND od.archived_at IS NULL) document_count,
         (SELECT count(*)::text FROM organization_documents od
           WHERE od.organization_id=o.id AND od.archived_at IS NULL AND od.requirement_level='required'
@@ -92,6 +91,7 @@ export default async function CompaniesPage({
        ) s ON true
        WHERE ($1::boolean OR o.id=ANY($2::uuid[]))
        ORDER BY o.active DESC,o.name`,
+      scopeParams,
     ),
     searchParams,
     getCustomizationSummary(),

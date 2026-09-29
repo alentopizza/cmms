@@ -146,6 +146,7 @@ const phase9WorkOrderCss=fs.readFileSync("app/phase9-modules.css","utf8");
 for(const marker of [
   ".work-order-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))",
   ".work-order-grid-card-v2:hover",".work-order-grid-facts{display:grid;grid-template-columns:repeat(2",
+  ".work-order-grid-description{","grid-template-columns:34px minmax(0,1fr)","word-break:normal",
   ".work-order-grid-dates{display:grid;grid-template-columns:repeat(3",
   "@media(max-width:820px)",".work-order-grid-owner-actions",
 ]){

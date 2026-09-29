@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
 import { isBusinessOpenNow, normalizeBusinessHoursRow } from "@/lib/business-hours";
 import { e164Phone, nationalPhonePart } from "@/lib/country-calling-codes";
@@ -40,12 +41,13 @@ export async function GET(){
   if(!session) return new NextResponse("Unauthorized",{status:401});
   if(!can(session,"reaction.view")) return new NextResponse("Forbidden",{status:403});
 
-  const global=session.platformRole!=="user";
+  const platform=session.platformRole!=="user";
   const organizationId=session.organizationId;
+  const organizationScope=organizationScopeFor(session);
+  const platformParams=[organizationScope.unrestricted,organizationScope.organizationIds] as const;
 
   const companiesPromise=query<CompanyRow>(
-    global
-      ? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
+    platform? `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
                 COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') contact_country,
                 o.admin_email,o.website,
                 o.primary_contact_name,o.primary_contact_phone,o.primary_contact_email,
@@ -62,6 +64,7 @@ export async function GET(){
            LIMIT 1
          ) representative ON true
          WHERE o.active=true
+           AND ($1::boolean OR o.id=ANY($2::uuid[]))
          ORDER BY o.name`
       : `SELECT o.id,o.name,o.legal_name,o.tax_id,o.phone,
                 COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') contact_country,
@@ -82,12 +85,11 @@ export async function GET(){
          ) representative ON true
          WHERE o.active=true AND o.id=$1
          ORDER BY o.name`,
-    global?[]:[organizationId,session.accessAllSites,session.siteIds],
+    platform?[...platformParams]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
   const sitesPromise=query<SiteRow>(
-    global
-      ? `SELECT s.id,s.organization_id,o.name organization_name,o.timezone organization_timezone,s.name,s.code,
+    platform? `SELECT s.id,s.organization_id,o.name organization_name,o.timezone organization_timezone,s.name,s.code,
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
                 s.latitude,s.longitude,s.geofence_radius_m,
                 (o.logo_data IS NOT NULL) organization_has_logo,
@@ -96,6 +98,7 @@ export async function GET(){
          JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND o.active=true
            AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
+           AND ($1::boolean OR s.organization_id=ANY($2::uuid[]))
          ORDER BY o.name,s.name`
       : `SELECT s.id,s.organization_id,o.name organization_name,o.timezone organization_timezone,s.name,s.code,
                 s.address,s.city,s.country,s.contact_name,s.contact_phone,s.contact_email,
@@ -108,12 +111,11 @@ export async function GET(){
            AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
            AND ($2::boolean OR s.id=ANY($3::uuid[]))
          ORDER BY s.name`,
-    global?[]:[organizationId,session.accessAllSites,session.siteIds],
+    platform?[...platformParams]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
   const techniciansPromise=query<TechRow>(
-    global
-      ? `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,u.email,u.phone,om.role,
+    platform? `SELECT ts.id tracking_session_id,u.id user_id,u.full_name,u.email,u.phone,om.role,
                 ts.organization_id,o.name organization_name,
                 COALESCE(o.legal_country,(SELECT sc.country FROM sites sc WHERE sc.organization_id=o.id ORDER BY sc.created_at ASC LIMIT 1),'CO') organization_country,
                 ts.last_latitude latitude,ts.last_longitude longitude,
@@ -147,6 +149,7 @@ export async function GET(){
            LIMIT 1
          ) travel ON true
          WHERE ts.status='active' AND om.role='technician'
+           AND ($1::boolean OR ts.organization_id=ANY($2::uuid[]))
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
            AND ts.last_seen_at > now()-interval '30 minutes'
          ORDER BY ts.last_seen_at DESC`
@@ -187,12 +190,11 @@ export async function GET(){
            AND ts.last_latitude IS NOT NULL AND ts.last_longitude IS NOT NULL
            AND ts.last_seen_at > now()-interval '30 minutes'
          ORDER BY ts.last_seen_at DESC`,
-    global?[]:[organizationId,session.accessAllSites,session.siteIds],
+    platform?[...platformParams]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
   const activitiesPromise=query<ActivityRow>(
-    global
-      ? `SELECT t.id,w.id work_order_id,w.number::text work_order_number,w.title work_order_title,
+    platform? `SELECT t.id,w.id work_order_id,w.number::text work_order_number,w.title work_order_title,
                 w.type work_order_type,w.status work_order_status,
                 t.description,t.notes,t.status,w.priority,w.organization_id,o.name organization_name,
                 w.site_id,s.name site_name,a.name asset_name,
@@ -221,6 +223,7 @@ export async function GET(){
          WHERE t.status IN ('pending','in_progress')
            AND COALESCE(t.completed,false)=false
            AND w.status NOT IN ('completed','cancelled')
+           AND ($1::boolean OR w.organization_id=ANY($2::uuid[]))
          ORDER BY
            CASE
              WHEN COALESCE(t.due_date,(w.due_at AT TIME ZONE o.timezone)::date,(w.requested_at AT TIME ZONE o.timezone)::date)
@@ -276,7 +279,7 @@ export async function GET(){
            CASE w.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
            w.number
          LIMIT 500`,
-    global?[]:[organizationId,session.accessAllSites,session.siteIds],
+    platform?[...platformParams]:[organizationId,session.accessAllSites,session.siteIds],
   );
 
   const [companies,sites,technicians,activities]=await Promise.all([

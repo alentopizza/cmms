@@ -108,7 +108,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: node scripts/phase10-final-smoke.mjs
-      - run: node scripts/configurable-catalogs-phase2-smoke.mjs
+      - run: node scripts/configurable-catalogs-phase2-smoke.mjs\n      - run: node scripts/catalog-phase2-migration-catchup-smoke.mjs
       - run: node scripts/brand-personalization-smoke.mjs
       - run: node scripts/design-system-final-audit.mjs
       - run: npm run build

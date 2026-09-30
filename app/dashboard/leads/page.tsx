@@ -118,9 +118,9 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="andrea@empresa.com" /></div>
           <CountrySelect id="manual-lead-country" name="country_code" label="País *" defaultValue={customization.defaultCountry} required />
           <PhoneField name="phone" label="Teléfono" countryCode={customization.defaultCountry} countryInputId="manual-lead-country" />
-          <ConfigurableCatalogSelect name="source" label="Origen" catalog="lead_sources" defaultValue="manual" required />
+          <ConfigurableCatalogSelect name="source" label="Origen" catalog="lead_sources" defaultValue="manual" required allowManage />
           <ConfigurableCatalogSelect name="interest" label="Interés" catalog="lead_interests" defaultValue="demo" required allowManage />
-          <ConfigurableCatalogSelect name="status" label="Estado" catalog="lead_statuses" defaultValue="new" required />
+          <ConfigurableCatalogSelect name="status" label="Estado" catalog="lead_statuses" defaultValue="new" required allowManage />
           <ConfigurableCatalogSelect name="followup_type" label="Seguimiento" catalog="lead_followups" placeholder="Selecciona seguimiento inicial" allowManage />
           <div className="field form-span-2"><label>Notas iniciales</label><textarea name="message" rows={4} placeholder="Ej. Busca controlar mantenimiento de 3 sedes y aproximadamente 120 activos." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear lead</button></div>

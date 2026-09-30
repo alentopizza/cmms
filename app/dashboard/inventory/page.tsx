@@ -12,7 +12,7 @@ import ModuleExportMenu from "@/components/ModuleExportMenu";
 import Link from "next/link";
 import UiIcon from "@/components/UiIcon";
 import FileDropzone from "@/components/FileDropzone";
-import InventorySubnav from "@/components/InventorySubnav";
+import InventorySubnav, { type InventorySection } from "@/components/InventorySubnav";
 import { InventoryCard } from "@/components/business-ui";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Card } from "@/components/ui-kit/Card";
@@ -47,6 +47,7 @@ type InventoryFacetRow={
   suppliers:InventoryFacetValue[];warehouses:InventoryFacetValue[];records:InventoryFacetValue[];
 };
 type InventorySearchParams={
+  view?:string;
   created?:string;updated?:string;movement?:string;error?:string;requisition_created?:string;
   q?:string;status?:string;organization?:string;site?:string;category?:string;supplier?:string;warehouse?:string;record?:string;
   sortBy?:string;sortDirection?:string;page?:string;pageSize?:string;
@@ -57,6 +58,7 @@ const INVENTORY_PAGE_SIZES=new Set([24,40,80]);
 const INVENTORY_STOCK_FILTERS=new Set(["all","ok","low","out"]);
 const INVENTORY_RECORD_FILTERS=new Set(["active","inactive"]);
 const INVENTORY_SORT_FIELDS:Record<string,string>={name:"name",sku:"sku"};
+const INVENTORY_MAIN_VIEWS=new Set<InventorySection>(["summary","products","reports","settings"]);
 
 function safeText(value:string|undefined,max=120){
   return String(value||"").trim().slice(0,max);
@@ -104,6 +106,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const canWrite=can(session,"inventory.write");
   const canCreateRequisitions=can(session,"requisitions.write");
 
+  const view=INVENTORY_MAIN_VIEWS.has(params.view as InventorySection)?params.view as InventorySection:"summary";
   const q=safeText(params.q);
   const stockStatus=INVENTORY_STOCK_FILTERS.has(params.status||"")?String(params.status):"all";
   const organization=safeUuid(params.organization);
@@ -294,6 +297,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const page=Math.min(requestedPage,pageCount);
   if(requestedPage!==page){
     const canonical=new URLSearchParams();
+    if(view!=="summary")canonical.set("view",view);
     if(params.created)canonical.set("created",params.created);
     if(params.updated)canonical.set("updated",params.updated);
     if(params.movement)canonical.set("movement",params.movement);
@@ -356,6 +360,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const categoryTabs=facetOptions.category;
   const inventoryCategoryHref=(nextCategory:string)=>{
     const search=new URLSearchParams();
+    search.set("view","products");
     if(q)search.set("q",q);
     if(stockStatus!=="all")search.set("status",stockStatus);
     if(organization)search.set("organization",organization);
@@ -368,7 +373,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
     if(sortDirection!=="asc")search.set("sortDirection",sortDirection);
     if(pageSize!==INVENTORY_DEFAULT_PAGE_SIZE)search.set("pageSize",String(pageSize));
     const queryString=search.toString();
-    return (queryString?"/dashboard/inventory?"+queryString:"/dashboard/inventory")+"#inventory-products";
+    return queryString?"/dashboard/inventory?"+queryString:"/dashboard/inventory?view=products";
   };
 
   return <div className="phase7-inventory">
@@ -433,13 +438,15 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         </CreateRecordModal> : null}
       </div>}
     />
-    <InventorySubnav active="summary"/>
+    <InventorySubnav active={view}/>
 
+    {view==="products"&&<>
     <nav className="section inventory-category-nav" aria-label="Categorías del inventario">
       <Link href={inventoryCategoryHref("")} className={!category?"active":""}>Todos</Link>
       {categoryTabs.map(option=><Link key={option.value} href={inventoryCategoryHref(option.value)} className={category===option.value?"active":""}>{option.label}</Link>)}
-      <Link href="/dashboard/inventory#inventory-settings" className="inventory-category-nav-settings"><UiIcon name="settings" size={14}/>Configuración</Link>
+      <Link href="/dashboard/inventory?view=settings" className="inventory-category-nav-settings"><UiIcon name="settings" size={14}/>Configuración</Link>
     </nav>
+    </>}
 
     {platform&&canWrite&&!createOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa">Usa el filtro Empresa para definir el contexto antes de crear productos, importar archivos, revisar movimientos recientes o generar requisiciones. Solo aparecen empresas de tu alcance autorizado.</Alert></div>}
 
@@ -456,14 +463,46 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
       href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}
     />}
 
+    {view==="summary"&&<>
     <MetricGrid className="section phase7-kpi-grid">
       <KpiCard label="Valor total inventario" value={money(totalValue)} hint={summary.active_count+" productos activos"} icon="inventory"/>
       <KpiCard label="Productos en stock" value={String(inStock)} hint={(summary.active_count?Math.round(inStock/summary.active_count*100):0)+"% del total activo"} icon="check" tone="success"/>
       <KpiCard label="Stock bajo" value={String(lowStock)} hint={(summary.active_count?Math.round(lowStock/summary.active_count*100):0)+"% del total activo"} icon="warning" tone="warning"/>
       <KpiCard label="Sin stock" value={String(outStock)} hint={(summary.active_count?Math.round(outStock/summary.active_count*100):0)+"% del total activo"} icon="error" tone="danger"/>
     </MetricGrid>
+    <section className="section inventory-movements-section inventory-central-view">
+      <div className="inventory-movements-panel card">
+        <div className="inventory-secondary-heading">
+          <div><span className="eyebrow">Kardex</span><h2>Últimos movimientos</h2><p className="muted">Trazabilidad reciente de entradas, salidas, devoluciones y traslados.</p></div>
+          <Link className="button secondary" href="/dashboard/inventory/kardex"><UiIcon name="activity" size={15}/>Ver Kardex</Link>
+        </div>
+        <div className="inventory-movement-list">
+          {movements.rows.length?movements.rows.map(move=>{
+            const qty=Number(move.quantity||0);
+            return <article key={move.id} className={"inventory-movement-item "+move.type}>
+              <span><UiIcon name={move.type==="issue"||qty<0?"upload":move.type==="transfer"?"activity":"download"} size={17}/></span>
+              <div><strong>{movementLabel(move.type,qty)}</strong><small>{move.sku} · {move.name}</small><em>{move.warehouse||"Sin bodega"}{move.destination?" → "+move.destination:""} · {new Date(move.movement_at).toLocaleDateString("es-CO")}</em></div>
+              <Badge variant={move.type==="issue"||qty<0?"warning":"success"}>{qty>0?"+":""}{qty}</Badge>
+            </article>;
+          }):<div className="location-detail-empty">Todavía no hay movimientos registrados.</div>}
+        </div>
+      </div>
+    </section>
+    {canCreateRequisitions&&<section className="card section" id="crear-requisicion">
+      <RequisitionBuilder
+        items={requisitionItems.rows.map(item=>({
+          id:item.id,supplier_id:item.supplier_id||"",supplier_name:item.supplier||"Proveedor",sku:item.sku,name:item.name,unit:item.unit,
+          unit_cost:item.unit_cost,quantity:item.quantity,min_quantity:item.min_quantity,site_name:item.site,location_name:item.location,
+        }))}
+        returnTo="/dashboard/inventory"
+        title="Generar requisiciones desde inventario"
+        description="Selecciona insumos y cantidades. Si pertenecen a proveedores distintos, Desweb CMMS crea una requisición independiente para cada proveedor."
+      />
+    </section>}
+    </>}
 
-    <section className="section inventory-catalog-section phase7-anchor" id="inventory-products">
+    {view==="products"&&<>
+    <section className="section inventory-catalog-section inventory-central-view">
       <div className="inventory-products-panel">
         <div className="inventory-catalog-heading">
           <div><span className="eyebrow">Listado de inventario</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div>
@@ -596,39 +635,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         />
       </div>
     </section>
+    </>}
 
-    <section className="section inventory-movements-section phase7-anchor" id="inventory-kardex-preview">
-      <div className="inventory-movements-panel card">
-        <div className="inventory-secondary-heading">
-          <div><span className="eyebrow">Kardex</span><h2>Últimos movimientos</h2><p className="muted">Trazabilidad reciente de entradas, salidas, devoluciones y traslados.</p></div>
-          <Link className="button secondary" href="/dashboard/inventory/kardex"><UiIcon name="activity" size={15}/>Ver Kardex</Link>
-        </div>
-        <div className="inventory-movement-list">
-          {movements.rows.length?movements.rows.map(move=>{
-            const qty=Number(move.quantity||0);
-            return <article key={move.id} className={"inventory-movement-item "+move.type}>
-              <span><UiIcon name={move.type==="issue"||qty<0?"upload":move.type==="transfer"?"activity":"download"} size={17}/></span>
-              <div><strong>{movementLabel(move.type,qty)}</strong><small>{move.sku} · {move.name}</small><em>{move.warehouse||"Sin bodega"}{move.destination?" → "+move.destination:""} · {new Date(move.movement_at).toLocaleDateString("es-CO")}</em></div>
-              <Badge variant={move.type==="issue"||qty<0?"warning":"success"}>{qty>0?"+":""}{qty}</Badge>
-            </article>;
-          }):<div className="location-detail-empty">Todavía no hay movimientos registrados.</div>}
-        </div>
-      </div>
-    </section>
-
-    {canCreateRequisitions&&<section className="card section" id="crear-requisicion">
-      <RequisitionBuilder
-        items={requisitionItems.rows.map(item=>({
-          id:item.id,supplier_id:item.supplier_id||"",supplier_name:item.supplier||"Proveedor",sku:item.sku,name:item.name,unit:item.unit,
-          unit_cost:item.unit_cost,quantity:item.quantity,min_quantity:item.min_quantity,site_name:item.site,location_name:item.location,
-        }))}
-        returnTo="/dashboard/inventory"
-        title="Generar requisiciones desde inventario"
-        description="Selecciona insumos y cantidades. Si pertenecen a proveedores distintos, Desweb CMMS crea una requisición independiente para cada proveedor."
-      />
-    </section>}
-
-    <section className="section phase7-anchor" id="inventory-reports">
+    {view==="reports"&&<>
+    <section className="section inventory-central-view">
       <Card header={<div><span className="eyebrow">Reportes</span><h2>Resumen de abastecimiento</h2></div>}>
         <StatTiles items={[
           {label:"Valor total",value:money(totalValue),hint:"existencia activa"},
@@ -642,8 +652,10 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         </div>
       </Card>
     </section>
+    </>}
 
-    <section className="section phase7-anchor" id="inventory-settings">
+    {view==="settings"&&<>
+    <section className="section inventory-central-view">
       <Card header={<div><span className="eyebrow">Configuración</span><h2>Catálogos y trazabilidad</h2></div>}>
         <div className="phase7-settings-grid">
           <Link href="/dashboard/inventory/categories"><UiIcon name="file"/><span><strong>Categorías</strong><small>{categories.rows.length} categorías activas disponibles</small></span></Link>
@@ -653,5 +665,6 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         </div>
       </Card>
     </section>
+    </>}
   </div>;
 }

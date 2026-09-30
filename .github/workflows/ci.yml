@@ -78,7 +78,7 @@ jobs:
       - run: node scripts/phase6-modules-smoke.mjs
       - run: node scripts/company-documents-fullwidth-smoke.mjs
       - run: node scripts/phase7-assets-inventory-smoke.mjs
-      - run: node scripts/assets-independent-views-smoke.mjs
+      - run: node scripts/assets-independent-views-smoke.mjs\n      - run: node scripts/inventory-independent-views-smoke.mjs
       - run: node scripts/phase8-suppliers-people-smoke.mjs
       - run: node scripts/crew-directory-redesign-smoke.mjs
       - run: node scripts/attendance-schedule-smoke.mjs

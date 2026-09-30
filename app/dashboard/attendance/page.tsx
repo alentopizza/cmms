@@ -672,7 +672,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
       {canSelf&&organizationId&&<>
         {!selfAttendanceEnabled
-          ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede habilitar tu rol en la política general o crear una condición individual para tu usuario."/>
+          ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu usuario" description="Un administrador puede habilitar tu rol en la política general o crear una condición individual para tu usuario."/>
           :<>
             <section className="section attendance-scheduled-workday">
               <div className="attendance-scheduled-workday-icon"><UiIcon name="clock" size={20}/></div>

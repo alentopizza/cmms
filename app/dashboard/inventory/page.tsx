@@ -422,7 +422,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="PNG, JPG o WebP. Se mostrará en las tarjetas y ficha del inventario." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image"/></div>
             <div className="field"><label>Presentación</label><input name="presentation" placeholder="Ej. caja x 12, rollo 100 m"/></div>
             <ConfigurableCatalogSelect name="unit" label="Unidad de medida" catalog="inventory_units" organizationId={createOrganizationId} defaultValue="unidad" allowCreate allowManage required />
-            <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={createOrganizationId} defaultValue="active" required />
+            <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={createOrganizationId} defaultValue="active" required allowManage />
             <div className="field"><label>Bodega / almacén</label><input name="warehouse_name" list="inventory-warehouse-list" defaultValue="Almacén principal"/><datalist id="inventory-warehouse-list">{warehouses.rows.map(w=><option value={w.name} key={w.id}/>)}</datalist></div>
             <div className="field"><label>Existencia inicial</label><input name="quantity" type="number" step="0.001" min="0" defaultValue="0"/></div>
             <div className="field"><label>Stock mínimo</label><input name="min_quantity" type="number" step="0.001" min="0" defaultValue="0"/></div>

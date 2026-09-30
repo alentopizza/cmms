@@ -291,9 +291,9 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           <div className="field form-span-2"><label>Equipo *</label><select name="asset_id" required><option value="">Selecciona un activo</option>{assets.rows.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
           <div className="field form-span-2"><label>Título *</label><input name="title" required placeholder="Ej. Revisar temperatura irregular en cámara 02"/></div>
           {!requesterOnly && <>
-            <ConfigurableCatalogSelect name="type" label="Tipo de OT" catalog="work_order_types" organizationId={orgId||undefined} defaultValue="corrective" required />
-            <ConfigurableCatalogSelect name="priority" label="Prioridad" catalog="work_order_priorities" organizationId={orgId||undefined} defaultValue="medium" required />
-            <ConfigurableCatalogSelect name="status" label="Estado inicial" catalog="work_order_statuses" organizationId={orgId||undefined} defaultValue="open" required />
+            <ConfigurableCatalogSelect name="type" label="Tipo de OT" catalog="work_order_types" organizationId={orgId||undefined} defaultValue="corrective" required allowManage />
+            <ConfigurableCatalogSelect name="priority" label="Prioridad" catalog="work_order_priorities" organizationId={orgId||undefined} defaultValue="medium" required allowManage />
+            <ConfigurableCatalogSelect name="status" label="Estado inicial" catalog="work_order_statuses" organizationId={orgId||undefined} defaultValue="open" required allowManage />
             <ConfigurableCatalogSelect name="work_type" label="Tipo de trabajo" catalog="work_order_work_types" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea un tipo de trabajo" />
             <ConfigurableCatalogSelect name="cause" label="Causa" catalog="work_order_causes" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea una causa" />
           </>}

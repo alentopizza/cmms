@@ -11,9 +11,10 @@ import InventorySubnav from "@/components/InventorySubnav";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 
 type Item={
-  id:string;organization_id:string;site_id:string;sku:string;name:string;description:string|null;presentation:string|null;unit:string;
+  id:string;organization_id:string;site_id:string;sku:string;name:string;description:string|null;presentation:string|null;unit:string;item_type:string|null;catalog_status:string;
   quantity:string;min_quantity:string;max_quantity:string;unit_cost:string;category:string|null;supplier_id:string|null;supplier:string|null;
   company:string;site:string;location:string|null;warehouse_id:string|null;warehouse:string|null;active:boolean;has_image:boolean;
 };
@@ -31,7 +32,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
   const {id}=await params;
   const feedback=await searchParams;
   const result=await query<Item>(
-    `SELECT i.id,i.organization_id,i.site_id,i.sku,i.name,i.description,i.presentation,i.unit,i.quantity::text,i.min_quantity::text,i.max_quantity::text,
+    `SELECT i.id,i.organization_id,i.site_id,i.sku,i.name,i.description,i.presentation,i.unit,i.item_type,i.catalog_status,i.quantity::text,i.min_quantity::text,i.max_quantity::text,
       i.unit_cost::text,c.name category,i.supplier_id,p.name supplier,o.name company,s.name site,l.name location,i.warehouse_id,w.name warehouse,i.active,(i.image_data IS NOT NULL) has_image
      FROM inventory_items i JOIN organizations o ON o.id=i.organization_id JOIN sites s ON s.id=i.site_id
      LEFT JOIN locations l ON l.id=i.location_id LEFT JOIN suppliers p ON p.id=i.supplier_id
@@ -121,11 +122,13 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
         {canWrite&&<form id="inventory-edit" className="form-grid inventory-inline-form" method="post" encType="multipart/form-data" action={"/api/inventory/"+item.id}>
           <input type="hidden" name="return_to" value={"/dashboard/inventory/"+item.id}/>
           <div className="field"><label>Nombre</label><input name="name" defaultValue={item.name} required/></div>
-          <div className="field"><label>Categoría</label><input name="category" defaultValue={item.category||""}/></div>
+          <ConfigurableCatalogSelect name="category" label="Categoría" catalog="inventory_categories" organizationId={item.organization_id} defaultValue={item.category||""} submitValue="label" allowCreate allowManage placeholder="Selecciona una categoría" />
+          <ConfigurableCatalogSelect name="item_type" label="Tipo" catalog="inventory_types" organizationId={item.organization_id} defaultValue={item.item_type||""} allowCreate allowManage placeholder="Selecciona un tipo" />
           <div className="field form-span-2"><label>Descripción</label><input name="description" defaultValue={item.description||""}/></div>
           <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="Puedes reemplazar la imagen actual sin afectar el Kardex." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={item.has_image?"Imagen actual":null} existingPreviewUrl={item.has_image?"/api/inventory/"+item.id+"/image":null}/></div>
           <div className="field"><label>Presentación</label><input name="presentation" defaultValue={item.presentation||""}/></div>
-          <div className="field"><label>Unidad</label><input name="unit" defaultValue={item.unit}/></div>
+          <ConfigurableCatalogSelect name="unit" label="Unidad de medida" catalog="inventory_units" organizationId={item.organization_id} defaultValue={item.unit} allowCreate allowManage required />
+          <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={item.organization_id} defaultValue={item.catalog_status||"active"} required />
           <div className="field"><label>Mínimo</label><input type="number" step="0.001" min="0" name="min_quantity" defaultValue={item.min_quantity}/></div>
           <div className="field"><label>Máximo</label><input type="number" step="0.001" min="0" name="max_quantity" defaultValue={item.max_quantity}/></div>
           <div className="field"><label>Costo unitario</label><input type="number" step="0.01" min="0" name="unit_cost" defaultValue={item.unit_cost}/></div>

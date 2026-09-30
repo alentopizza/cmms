@@ -58,6 +58,41 @@ if(!moduleHeader.includes('querySelectorAll<HTMLElement>("[data-module-record]")
 }
 if(!moduleHeader.includes("cmms:view-mode-change"))throw new Error("ModuleHeader must reapply filters when collection view changes");
 
+for(const contract of [
+  "facets=[]",
+  "const facetSignature=JSON.stringify(facets);",
+  "[normalizedSearch, filter, count, facetSignature, facetValues, viewRevision, serverState]",
+  "setFacetOptions(options);",
+  "if(serverState){",
+]){
+  if(!moduleHeader.includes(contract))throw new Error("ModuleHeader facet stability contract missing "+contract);
+}
+if(moduleHeader.includes("[normalizedSearch, filter, count, facetSignature, facetValues, facets, viewRevision, serverState]")){
+  throw new Error("ModuleHeader facet effect must depend on semantic facetSignature, not unstable facets identity");
+}
+
+const leadsSource=fs.readFileSync("app/dashboard/leads/page.tsx","utf8");
+if(!leadsSource.includes("<ModuleHeader"))throw new Error("Leads must continue using shared ModuleHeader");
+if(leadsSource.includes("facets=")||leadsSource.includes("serverState=")){
+  throw new Error("Leads regression must remain valid without artificial facets/serverState props");
+}
+
+const clientFacetSource=fs.readFileSync("app/dashboard/suppliers/page.tsx","utf8");
+if(!clientFacetSource.includes("facets={[")||clientFacetSource.includes("serverState={{")){
+  throw new Error("Client-side ModuleHeader facet consumer contract changed unexpectedly");
+}
+for(const file of [
+  "app/dashboard/assets/page.tsx",
+  "app/dashboard/inventory/page.tsx",
+  "app/dashboard/work-orders/page.tsx",
+  "app/dashboard/maintenance/page.tsx",
+]){
+  const source=fs.readFileSync(file,"utf8");
+  if(!source.includes("facets={[")||!source.includes("serverState={{")){
+    throw new Error(file+" must preserve ModuleHeader facets + serverState behavior");
+  }
+}
+
 const analytics=fs.readFileSync("components/DashboardAnalytics.tsx","utf8");
 if(!analytics.includes("@/components/ui-kit/Metrics")||!analytics.includes("@/components/ui-kit/Charts")){
   throw new Error("DashboardAnalytics must delegate KPI/chart rendering to Shared Data UI");

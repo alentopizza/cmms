@@ -171,7 +171,7 @@ export default function ModuleHeader({
       }
       return changed?next:previous;
     });
-  }, [normalizedSearch, filter, count, facetSignature, facetValues, facets, viewRevision, serverState]);
+  }, [normalizedSearch, filter, count, facetSignature, facetValues, viewRevision, serverState]);
 
   if(!portalHost) return null;
 

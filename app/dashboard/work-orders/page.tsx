@@ -18,6 +18,7 @@ import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/Collec
 import UiIcon from "@/components/UiIcon";
 import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui/OperationStatus";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 
 type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;description:string|null;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;priority:string;status:string;requested_at:string;created_at:string;due_at:string|null;assigned_to_label:string|null};
 
@@ -289,7 +290,13 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         <form className="form-grid unified-popup-form" method="post" action="/api/work-orders">
           <div className="field form-span-2"><label>Equipo *</label><select name="asset_id" required><option value="">Selecciona un activo</option>{assets.rows.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
           <div className="field form-span-2"><label>Título *</label><input name="title" required placeholder="Ej. Revisar temperatura irregular en cámara 02"/></div>
-          {!requesterOnly && <><div className="field"><label>Tipo</label><select name="type"><option value="corrective">Correctivo</option><option value="preventive">Preventivo</option><option value="inspection">Inspección</option><option value="emergency">Emergencia</option><option value="improvement">Mejora</option></select></div><div className="field"><label>Prioridad</label><select name="priority"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></div></>}
+          {!requesterOnly && <>
+            <ConfigurableCatalogSelect name="type" label="Tipo de OT" catalog="work_order_types" organizationId={orgId||undefined} defaultValue="corrective" required />
+            <ConfigurableCatalogSelect name="priority" label="Prioridad" catalog="work_order_priorities" organizationId={orgId||undefined} defaultValue="medium" required />
+            <ConfigurableCatalogSelect name="status" label="Estado inicial" catalog="work_order_statuses" organizationId={orgId||undefined} defaultValue="open" required />
+            <ConfigurableCatalogSelect name="work_type" label="Tipo de trabajo" catalog="work_order_work_types" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea un tipo de trabajo" />
+            <ConfigurableCatalogSelect name="cause" label="Causa" catalog="work_order_causes" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea una causa" />
+          </>}
           <div className="form-span-2 form-actions"><button className="button" type="submit">{requesterOnly?"Enviar solicitud":"Crear orden"}</button></div>
         </form>
       </CreateRecordModal> : undefined}

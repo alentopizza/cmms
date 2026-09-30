@@ -3,6 +3,7 @@ import { canAccessSite, getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { finiteCoordinate } from "@/lib/biometric";
 import { pool } from "@/lib/db";
+import { DEFAULT_ATTENDANCE_POLICY, attendanceRoleEnabled } from "@/lib/attendance-policy";
 
 const REASONS=new Set(["camera_failure","gps_unavailable","gps_accuracy","geofence_mismatch","connectivity","device_issue","other"]);
 
@@ -69,6 +70,23 @@ export async function POST(request:Request){
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+
+    const policyResult=await client.query<{enabled:boolean;enabled_roles:string[]}>(
+      `SELECT enabled,enabled_roles FROM organization_attendance_policies
+       WHERE organization_id=$1 FOR UPDATE`,
+      [session.organizationId],
+    );
+    const policy=policyResult.rows[0]||DEFAULT_ATTENDANCE_POLICY;
+    const controlOverride=await client.query<{enabled:boolean}>(
+      `SELECT enabled FROM user_attendance_control_overrides
+       WHERE organization_id=$1 AND user_id=$2`,
+      [session.organizationId,session.userId],
+    );
+    const attendanceEnabled=policy.enabled&&(controlOverride.rows[0]?.enabled??attendanceRoleEnabled(session,policy.enabled_roles));
+    if(!attendanceEnabled){
+      await client.query("ROLLBACK");
+      return NextResponse.json({message:"El control de asistencia no está habilitado para tu usuario."},{status:409});
+    }
 
     const profile=await client.query(
       `SELECT 1 FROM user_biometric_profiles

@@ -147,3 +147,14 @@ FROM assets a
 WHERE nullif(trim(a.model),'') IS NOT NULL
 GROUP BY a.organization_id, trim(a.model)
 ON CONFLICT DO NOTHING;
+
+
+-- Fields still backed by rigid legacy enum/check constraints are centrally readable
+-- but cannot accept tenant CUSTOM values until their owning domain is migrated.
+UPDATE configurable_catalogs
+SET allow_custom=false, updated_at=now()
+WHERE key IN (
+  'asset_statuses','asset_criticalities',
+  'work_order_types','work_order_priorities','work_order_statuses',
+  'lead_sources','lead_statuses'
+);

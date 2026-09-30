@@ -56,6 +56,7 @@ type EnrollmentPerson={
   request_site_name:string|null;
   request_requested_at:string|null;
   request_review_note:string|null;
+  attendance_override:boolean|null;
 };
 
 type BiometricPolicyVersion={
@@ -121,7 +122,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     ? organizations.rows.find(item=>item.id===organizationId)||null
     : null;
 
-  const [policyResult,biometricNotice,sites,enrolled,openShift,selfSchedule]=await Promise.all([
+  const [policyResult,biometricNotice,sites,enrolled,openShift,selfSchedule,selfControl]=await Promise.all([
     organizationId
       ? query<Policy>(
           `SELECT enabled,enabled_roles,require_face,require_geolocation,max_location_accuracy_m,
@@ -203,6 +204,13 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           [organizationId,session.userId],
         )
       : Promise.resolve({rows:[]} as {rows:SelfSchedule[]}),
+    canSelf && session.userId && organizationId
+      ? query<{enabled:boolean}>(
+          `SELECT enabled FROM user_attendance_control_overrides
+           WHERE organization_id=$1 AND user_id=$2`,
+          [organizationId,session.userId],
+        )
+      : Promise.resolve({rows:[]} as {rows:{enabled:boolean}[]}),
   ]);
 
   const policy:Policy=policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
@@ -322,10 +330,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
              request.id::text request_id,
              CASE WHEN request.status='pending' AND request.preview_expires_at<=now() THEN 'expired' ELSE request.status END request_status,
              request_site.name request_site_name,
-             request.requested_at::text request_requested_at,request.review_note request_review_note
+             request.requested_at::text request_requested_at,request.review_note request_review_note,
+             control.enabled attendance_override
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           LEFT JOIN user_attendance_control_overrides control ON control.organization_id=om.organization_id AND control.user_id=om.user_id
            LEFT JOIN LATERAL (
              SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note,enrollment.preview_expires_at
              FROM biometric_enrollment_requests enrollment
@@ -352,10 +362,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
              request.id::text request_id,
              CASE WHEN request.status='pending' AND request.preview_expires_at<=now() THEN 'expired' ELSE request.status END request_status,
              request_site.name request_site_name,
-             request.requested_at::text request_requested_at,request.review_note request_review_note
+             request.requested_at::text request_requested_at,request.review_note request_review_note,
+             control.enabled attendance_override
            FROM organization_members om
            JOIN users u ON u.id=om.user_id
            LEFT JOIN user_biometric_profiles bp ON bp.user_id=u.id AND bp.organization_id=om.organization_id
+           LEFT JOIN user_attendance_control_overrides control ON control.organization_id=om.organization_id AND control.user_id=om.user_id
            LEFT JOIN LATERAL (
              SELECT enrollment.id,enrollment.status,enrollment.site_id,enrollment.requested_at,enrollment.review_note,enrollment.preview_expires_at
              FROM biometric_enrollment_requests enrollment
@@ -392,7 +404,10 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
   const activeView=canManage&&feedback.view==="operation"?"operation":"setup";
   const activeStep=["1","2","3","4","5"].includes(feedback.step||"")?feedback.step!:"1";
   const geofencedSites=sites.rows.filter(site=>site.latitude!==null&&site.longitude!==null&&site.geofence_radius_m>0).length;
-  const controlledPeople=enrollmentPeople.rows.filter(person=>policy.enabled_roles.includes(person.role));
+  const controlledPeople=enrollmentPeople.rows.filter(person=>
+    person.attendance_override===null?policy.enabled_roles.includes(person.role):person.attendance_override
+  );
+  const selfAttendanceEnabled=policy.enabled&&(selfControl.rows[0]?.enabled??attendanceRoleEnabled(session,policy.enabled_roles));
   const verifiedControlled=controlledPeople.filter(person=>person.biometric_status==="verified").length;
   const pendingControlled=controlledPeople.filter(person=>person.biometric_status!=="verified"&&person.request_status==="pending").length;
   const generalComplete=Boolean(organizationId);
@@ -652,7 +667,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       </section>}
 
       {canSelf&&organizationId&&<>
-        {!policy.enabled||!attendanceRoleEnabled(session,policy.enabled_roles)
+        {!selfAttendanceEnabled
           ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/>
           :<>
             <section className="section attendance-scheduled-workday">

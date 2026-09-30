@@ -16,6 +16,7 @@ import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/Collec
 import { Avatar } from "@/components/ui-kit/Avatar";
 import UiIcon from "@/components/UiIcon";
 import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
+import { listCatalogOptions } from "@/lib/configurable-catalogs";
 
 type Lead = {
   id:string;
@@ -28,6 +29,7 @@ type Lead = {
   message:string|null;
   source:string;
   status:"new"|"contacted"|"qualified"|"closed"|"discarded";
+  followup_type:string|null;
   created_at:string;
   updated_at:string;
 };
@@ -75,7 +77,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
   const customization=await getCustomizationSummary();
 
   const leads=await query<Lead>(
-    `SELECT id,full_name,company_name,email,phone,country_code,interest,message,source,status,created_at::text,updated_at::text
+    `SELECT id,full_name,company_name,email,phone,country_code,interest,message,source,status,followup_type,created_at::text,updated_at::text
      FROM sales_leads
      ORDER BY created_at DESC
      LIMIT 300`
@@ -85,6 +87,12 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
     `SELECT status,count(*)::text count
      FROM sales_leads GROUP BY status`
   );
+  const [leadSourceOptions,leadInterestOptions,leadStatusOptions,leadFollowupOptions]=await Promise.all([
+    listCatalogOptions("lead_sources",null),
+    listCatalogOptions("lead_interests",null),
+    listCatalogOptions("lead_statuses",null),
+    listCatalogOptions("lead_followups",null),
+  ]);
   const byStatus=Object.fromEntries(totals.rows.map(row=>[row.status,row.count]));
 
   return <>
@@ -153,12 +161,13 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
             {name:"email",label:"Correo",value:lead.email},
             {name:"phone",label:"Teléfono",value:lead.phone||""},
             {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea" as const},
-            {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:[
-              {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
-            ]},
+            {name:"source",label:"Origen",value:lead.source,type:"select" as const,options:leadSourceOptions.map(option=>({value:option.code,label:option.label}))},
+            {name:"interest",label:"Interés",value:lead.interest,type:"select" as const,options:leadInterestOptions.map(option=>({value:option.code,label:option.label}))},
+            {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:leadStatusOptions.map(option=>({value:option.code,label:option.label}))},
+            {name:"followup_type",label:"Seguimiento",value:lead.followup_type||"",type:"select" as const,options:[{value:"",label:"Sin definir"},...leadFollowupOptions.map(option=>({value:option.code,label:option.label}))]},
           ];
           const drawerFollowup=<form className="lead-status-form lead-detail-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
-            <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+            <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}>{leadStatusOptions.map(option=><option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
             <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
           </form>;
           const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions" editOverlay={false} afterSaveReopenKey={"lead:"+lead.id}/>:undefined;
@@ -185,9 +194,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               <div className="lead-created-at"><UiIcon name="calendar" size={16}/><time dateTime={lead.created_at}>{createdAt}</time></div>
               <form className="lead-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
                 <label><span className="ds-visually-hidden">Seguimiento de {lead.full_name}</span>
-                  <select name="status" defaultValue={lead.status} aria-label={"Seguimiento de "+lead.full_name}>
-                    <option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option>
-                  </select>
+                  <select name="status" defaultValue={lead.status} aria-label={"Seguimiento de "+lead.full_name}>{leadStatusOptions.map(option=><option key={option.code} value={option.code}>{option.label}</option>)}</select>
                 </label>
                 <button className="ds-list-action primary" type="submit" title="Actualizar seguimiento" data-tooltip="Actualizar seguimiento" aria-label={"Actualizar seguimiento de "+lead.full_name}><UiIcon name="check" size={15}/></button>
               </form>

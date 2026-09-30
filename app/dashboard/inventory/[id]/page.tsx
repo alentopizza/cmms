@@ -128,7 +128,7 @@ export default async function InventoryDetail({params,searchParams}:{params:Prom
           <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="Puedes reemplazar la imagen actual sin afectar el Kardex." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image" existingFileName={item.has_image?"Imagen actual":null} existingPreviewUrl={item.has_image?"/api/inventory/"+item.id+"/image":null}/></div>
           <div className="field"><label>Presentación</label><input name="presentation" defaultValue={item.presentation||""}/></div>
           <ConfigurableCatalogSelect name="unit" label="Unidad de medida" catalog="inventory_units" organizationId={item.organization_id} defaultValue={item.unit} allowCreate allowManage required />
-          <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={item.organization_id} defaultValue={item.catalog_status||"active"} required />
+          <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={item.organization_id} defaultValue={item.catalog_status||"active"} required allowManage />
           <div className="field"><label>Mínimo</label><input type="number" step="0.001" min="0" name="min_quantity" defaultValue={item.min_quantity}/></div>
           <div className="field"><label>Máximo</label><input type="number" step="0.001" min="0" name="max_quantity" defaultValue={item.max_quantity}/></div>
           <div className="field"><label>Costo unitario</label><input type="number" step="0.01" min="0" name="unit_cost" defaultValue={item.unit_cost}/></div>

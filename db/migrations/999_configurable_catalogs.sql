@@ -254,3 +254,15 @@ INSERT INTO configurable_catalog_options(catalog_key,origin,code,label,sort_orde
 ('work_order_statuses','SYSTEM','completed','Completada',50),
 ('work_order_statuses','SYSTEM','cancelled','Cancelada',60)
 ON CONFLICT DO NOTHING;
+
+
+-- Reuse existing supplier master catalogs as SYSTEM options in the central architecture.
+INSERT INTO configurable_catalog_options(catalog_key,origin,code,label,sort_order)
+SELECT 'supplier_types','SYSTEM',sc.code,sc.label,sc.sort_order
+FROM supplier_capability_catalog sc
+ON CONFLICT DO NOTHING;
+
+INSERT INTO configurable_catalog_options(catalog_key,origin,code,label,sort_order)
+SELECT 'supplier_specialties','SYSTEM',ss.code,ss.label,ss.sort_order
+FROM supplier_specialty_catalog ss
+ON CONFLICT DO NOTHING;

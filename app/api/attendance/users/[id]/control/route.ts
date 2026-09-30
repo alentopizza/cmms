@@ -65,6 +65,17 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
       return new NextResponse("Forbidden",{status:403});
     }
 
+    if(mode==="disabled"){
+      const openShift=await client.query(
+        "SELECT 1 FROM attendance_shifts WHERE organization_id=$1 AND user_id=$2 AND status='open' FOR UPDATE",
+        [organizationId,userId],
+      );
+      if(openShift.rowCount){
+        await client.query("ROLLBACK");
+        return NextResponse.json({message:"Cierra la jornada abierta de esta persona antes de excluirla del control de asistencia."},{status:409});
+      }
+    }
+
     if(mode==="inherit"){
       await client.query(
         "DELETE FROM user_attendance_control_overrides WHERE organization_id=$1 AND user_id=$2",

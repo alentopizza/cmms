@@ -18,6 +18,9 @@ export async function POST(request:Request) {
   const assetId=String(form.get("asset_id")||"");
   const name=String(form.get("name")||"").trim();
   const description=String(form.get("description")||"").trim();
+  const routineType=String(form.get("routine_type")||"").trim();
+  const priority=String(form.get("priority")||"medium").trim();
+  const specialty=String(form.get("specialty")||"").trim();
   const frequencyValue=Number.parseInt(String(form.get("frequency_value")||"1"),10);
   const frequencyUnit=String(form.get("frequency_unit")||"month");
   const nextDueAt=String(form.get("next_due_at")||"").trim();
@@ -45,9 +48,9 @@ export async function POST(request:Request) {
   if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
 
   await query(
-    `INSERT INTO maintenance_plans(organization_id,asset_id,name,description,trigger_type,frequency_value,frequency_unit,next_due_at,estimated_minutes)
-     VALUES($1,$2,$3,$4,'calendar',$5,$6,$7,$8)`,
-    [asset.rows[0].organization_id,assetId,name,description||null,frequencyValue,frequencyUnit,nextDueAt||null,estimatedMinutes],
+    `INSERT INTO maintenance_plans(organization_id,asset_id,name,description,routine_type,priority,specialty,trigger_type,frequency_value,frequency_unit,next_due_at,estimated_minutes)
+     VALUES($1,$2,$3,$4,$5,$6,$7,'calendar',$8,$9,$10,$11)`,
+    [asset.rows[0].organization_id,assetId,name,description||null,routineType||null,priority||null,specialty||null,frequencyValue,frequencyUnit,nextDueAt||null,estimatedMinutes],
   );
 
   return NextResponse.redirect(target("?created=routine"),303);

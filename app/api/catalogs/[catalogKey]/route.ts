@@ -20,7 +20,8 @@ export async function GET(request:Request,{params}:{params:Promise<{catalogKey:s
   const organizationId=requestedOrganization(request,session.organizationId);
   if(organizationId&&!canAccessOrganization(session,organizationId))return new NextResponse("Forbidden",{status:403});
   const options=await listCatalogOptions(catalogKey,organizationId);
-  return NextResponse.json({catalog:definition,options,canCreate:can(session,"catalogs.manage")&&definition.allowCustom});
+  const canManageCatalog=can(session,"catalogs.manage");
+  return NextResponse.json({catalog:definition,options,canCreate:canManageCatalog&&definition.allowCustom,canManage:canManageCatalog});
 }
 
 export async function POST(request:Request,{params}:{params:Promise<{catalogKey:string}>}){

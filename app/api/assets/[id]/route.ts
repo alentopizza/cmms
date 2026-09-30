@@ -26,6 +26,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const siteId=String(form.get("site_id")||"");
   const locationId=String(form.get("location_id")||"");
   const supplierId=String(form.get("supplier_id")||"");
+  const assetType=String(form.get("asset_type")||"").trim();
   const categoryName=String(form.get("category")||"").trim();
   const code=String(form.get("code")||"").trim().toUpperCase();
   const name=String(form.get("name")||"").trim();
@@ -78,16 +79,16 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
 
     await client.query(
       `UPDATE assets SET
-        site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,code=$5,name=$6,description=$7,
-        manufacturer=$8,model=$9,serial_number=$10,status=$11,criticality=$12,purchase_date=$13,
-        installation_date=$14,warranty_expires=$15,purchase_cost=$16,location_detail=$17,notes=$18,
-        image_data=COALESCE($19,image_data),
-        image_mime_type=CASE WHEN $19 IS NULL THEN image_mime_type ELSE $20 END,
-        image_file_name=CASE WHEN $19 IS NULL THEN image_file_name ELSE $21 END,
+        site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,asset_type=$5,code=$6,name=$7,description=$8,
+        manufacturer=$9,model=$10,serial_number=$11,status=$12,criticality=$13,purchase_date=$14,
+        installation_date=$15,warranty_expires=$16,purchase_cost=$17,location_detail=$18,notes=$19,
+        image_data=COALESCE($20,image_data),
+        image_mime_type=CASE WHEN $20 IS NULL THEN image_mime_type ELSE $21 END,
+        image_file_name=CASE WHEN $20 IS NULL THEN image_file_name ELSE $22 END,
         updated_at=now()
-       WHERE id=$22 AND organization_id=$23`,
+       WHERE id=$23 AND organization_id=$24`,
       [
-        siteId,locationId,supplierId,categoryId,code,name,description||null,manufacturer||null,model||null,serial||null,
+        siteId,locationId,supplierId,categoryId,assetType||null,code,name,description||null,manufacturer||null,model||null,serial||null,
         status,criticality,purchaseDate||null,installationDate||null,warrantyExpires||null,purchaseCost,
         locationDetail||null,notes||null,image?.data||null,image?.mime||null,image?"asset-image":null,id,organizationId,
       ],

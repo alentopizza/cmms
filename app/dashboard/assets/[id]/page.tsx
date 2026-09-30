@@ -172,8 +172,8 @@ export default async function AssetDetailPage({
         <ConfigurableCatalogSelect name="manufacturer" label="Marca / fabricante" catalog="asset_brands" organizationId={asset.organization_id} defaultValue={asset.manufacturer||""} submitValue="label" allowCreate allowManage placeholder="Selecciona una marca" />
         <ConfigurableCatalogSelect name="model" label="Modelo" catalog="asset_models" organizationId={asset.organization_id} defaultValue={asset.model||""} submitValue="label" allowCreate allowManage placeholder="Selecciona un modelo" />
         <div className="field"><label>Serial</label><input name="serial_number" defaultValue={asset.serial_number||""}/></div>
-        <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={asset.organization_id} defaultValue={asset.status} required />
-        <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={asset.organization_id} defaultValue={asset.criticality} required />
+        <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={asset.organization_id} defaultValue={asset.status} required allowManage />
+        <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={asset.organization_id} defaultValue={asset.criticality} required allowManage />
         <div className="field"><label>Costo compra</label><input name="purchase_cost" type="number" min="0" step="0.01" defaultValue={asset.purchase_cost||""}/></div>
 
         <div className="field"><label>Fecha compra</label><input name="purchase_date" type="date" defaultValue={asset.purchase_date||""}/></div>

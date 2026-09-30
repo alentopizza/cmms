@@ -15,6 +15,7 @@ import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { Avatar } from "@/components/ui-kit/Avatar";
 import UiIcon from "@/components/UiIcon";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 
 type Lead = {
   id:string;
@@ -109,7 +110,10 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
           <div className="field"><label>Correo *</label><input name="email" type="email" required placeholder="andrea@empresa.com" /></div>
           <CountrySelect id="manual-lead-country" name="country_code" label="País *" defaultValue={customization.defaultCountry} required />
           <PhoneField name="phone" label="Teléfono" countryCode={customization.defaultCountry} countryInputId="manual-lead-country" />
-          <div className="field form-span-2"><label>Interés *</label><select name="interest" defaultValue="demo"><option value="demo">Demostración</option><option value="trial">Prueba 15 días</option><option value="basic">Plan Básico</option><option value="medium">Plan Medio</option><option value="pro">Plan Pro / marca blanca</option><option value="self_hosted">Self-hosted</option><option value="other">Otro</option></select></div>
+          <ConfigurableCatalogSelect name="source" label="Origen" catalog="lead_sources" defaultValue="manual" required />
+          <ConfigurableCatalogSelect name="interest" label="Interés" catalog="lead_interests" defaultValue="demo" required allowManage />
+          <ConfigurableCatalogSelect name="status" label="Estado" catalog="lead_statuses" defaultValue="new" required />
+          <ConfigurableCatalogSelect name="followup_type" label="Seguimiento" catalog="lead_followups" placeholder="Selecciona seguimiento inicial" allowManage />
           <div className="field form-span-2"><label>Notas iniciales</label><textarea name="message" rows={4} placeholder="Ej. Busca controlar mantenimiento de 3 sedes y aproximadamente 120 activos." /></div>
           <div className="form-span-2 form-actions"><button className="button" type="submit">Crear lead</button></div>
         </form>

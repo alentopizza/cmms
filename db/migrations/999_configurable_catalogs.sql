@@ -266,3 +266,8 @@ INSERT INTO configurable_catalog_options(catalog_key,origin,code,label,sort_orde
 SELECT 'supplier_specialties','SYSTEM',ss.code,ss.label,ss.sort_order
 FROM supplier_specialty_catalog ss
 ON CONFLICT DO NOTHING;
+
+-- Keep routine frequency aligned with the existing maintenance engine.
+UPDATE configurable_catalog_options
+SET active=false,updated_at=now()
+WHERE catalog_key='routine_frequencies' AND code='meter';

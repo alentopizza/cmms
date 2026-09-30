@@ -305,13 +305,27 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   try{
     await client.query("BEGIN");
     const validCapabilities=await client.query<{code:string;label:string}>(
-      "SELECT code,label FROM supplier_capability_catalog WHERE active=true AND code=ANY($1::text[]) ORDER BY sort_order,label",
-      [capabilityCodes],
+      `SELECT cco.code,scc.label
+       FROM configurable_catalog_options cco
+       JOIN supplier_capability_catalog scc ON scc.code=cco.code
+       WHERE cco.catalog_key='supplier_types'
+         AND cco.active=true AND scc.active=true
+         AND (cco.organization_id IS NULL OR cco.organization_id=$2)
+         AND cco.code=ANY($1::text[])
+       ORDER BY scc.sort_order,scc.label`,
+      [capabilityCodes,organizationId],
     );
     const validSpecialties=specialtyCodes.length
       ?await client.query<{code:string;label:string}>(
-        "SELECT code,label FROM supplier_specialty_catalog WHERE active=true AND code=ANY($1::text[]) ORDER BY sort_order,label",
-        [specialtyCodes],
+        `SELECT cco.code,ssc.label
+         FROM configurable_catalog_options cco
+         JOIN supplier_specialty_catalog ssc ON ssc.code=cco.code
+         WHERE cco.catalog_key='supplier_specialties'
+           AND cco.active=true AND ssc.active=true
+           AND (cco.organization_id IS NULL OR cco.organization_id=$2)
+           AND cco.code=ANY($1::text[])
+         ORDER BY ssc.sort_order,ssc.label`,
+        [specialtyCodes,organizationId],
       )
       :{rows:[],rowCount:0};
     if(validCapabilities.rowCount!==capabilityCodes.length||validSpecialties.rowCount!==specialtyCodes.length){

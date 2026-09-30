@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui-kit/Badge";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell, ListQuickActions } from "@/components/ui-kit/CollectionIdentity";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 import { inventoryItemSqlScope } from "@/lib/inventory-scope";
 import { canAccessOrganization } from "@/lib/organization-scope";
 
@@ -415,11 +416,13 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
             <div className="field"><label>Proveedor *</label><select name="supplier_id" required><option value="">Selecciona proveedor</option>{suppliers.rows.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
             <div className="field"><label>SKU *</label><input name="sku" required placeholder="Ej. REP-FLT-001"/></div>
             <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Filtro plisado 20 x 20"/></div>
-            <div className="field"><label>Categoría</label><input name="category" list="inventory-category-list" placeholder="Ej. Refrigeración"/><datalist id="inventory-category-list">{categories.rows.map(c=><option value={c.name} key={c.id}/>)}</datalist></div>
+            <ConfigurableCatalogSelect name="category" label="Categoría" catalog="inventory_categories" organizationId={createOrganizationId} submitValue="label" allowCreate allowManage placeholder="Selecciona o crea una categoría" />
+            <ConfigurableCatalogSelect name="item_type" label="Tipo" catalog="inventory_types" organizationId={createOrganizationId} allowCreate allowManage placeholder="Selecciona o crea un tipo" />
             <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Descripción del producto o repuesto"/></div>
             <div className="form-span-2"><FileDropzone name="image" label="Imagen del producto" description="PNG, JPG o WebP. Se mostrará en las tarjetas y ficha del inventario." accept="image/png,image/jpeg,image/webp" maxSizeMb={5} kind="image"/></div>
             <div className="field"><label>Presentación</label><input name="presentation" placeholder="Ej. caja x 12, rollo 100 m"/></div>
-            <div className="field"><label>Unidad</label><input name="unit" defaultValue="unidad" placeholder="unidad, caja, metro..."/></div>
+            <ConfigurableCatalogSelect name="unit" label="Unidad de medida" catalog="inventory_units" organizationId={createOrganizationId} defaultValue="unidad" allowCreate allowManage required />
+            <ConfigurableCatalogSelect name="catalog_status" label="Estado" catalog="inventory_statuses" organizationId={createOrganizationId} defaultValue="active" required />
             <div className="field"><label>Bodega / almacén</label><input name="warehouse_name" list="inventory-warehouse-list" defaultValue="Almacén principal"/><datalist id="inventory-warehouse-list">{warehouses.rows.map(w=><option value={w.name} key={w.id}/>)}</datalist></div>
             <div className="field"><label>Existencia inicial</label><input name="quantity" type="number" step="0.001" min="0" defaultValue="0"/></div>
             <div className="field"><label>Stock mínimo</label><input name="min_quantity" type="number" step="0.001" min="0" defaultValue="0"/></div>

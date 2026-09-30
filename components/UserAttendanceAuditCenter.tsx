@@ -152,6 +152,13 @@ type AuditData={
   period:"30"|"90"|"365"|"all";
   today:string;
   person:{id:string;fullName:string;email:string;role:string;organizationName:string;timezone:string};
+  control:{
+    policyEnabled:boolean;
+    roleEnabled:boolean;
+    enabledOverride:boolean|null;
+    effectiveEnabled:boolean;
+    reason:string|null;
+  };
   scope:{limited:boolean;siteIds:string[]};
   summary:{
     shifts:number;
@@ -310,6 +317,10 @@ export default function UserAttendanceAuditCenter({
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const [activeTab,setActiveTab]=useState("summary");
+  const [controlMode,setControlMode]=useState<"inherit"|"enabled"|"disabled">("inherit");
+  const [controlReason,setControlReason]=useState("");
+  const [controlSaving,setControlSaving]=useState(false);
+  const [controlMessage,setControlMessage]=useState("");
 
   useEffect(()=>{
     const next=lockedUserId||initialUserId||people[0]?.id||"";
@@ -325,12 +336,42 @@ export default function UserAttendanceAuditCenter({
     }).then(async response=>{
       const payload=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(payload.message||"No fue posible cargar el expediente de asistencia.");
-      if(!cancelled)setData(payload);
+      if(!cancelled){
+        setData(payload);
+        setControlMode(payload.control.enabledOverride===null?"inherit":payload.control.enabledOverride?"enabled":"disabled");
+        setControlReason(payload.control.reason||"");
+      }
     }).catch(cause=>{
       if(!cancelled){setData(null);setError(cause instanceof Error?cause.message:"No fue posible cargar el expediente de asistencia.");}
     }).finally(()=>{if(!cancelled)setLoading(false);});
     return()=>{cancelled=true;};
   },[organizationId,userId,period]);
+
+  async function saveControl(){
+    if(!userId)return;
+    setControlSaving(true);setControlMessage("");
+    try{
+      const response=await fetch("/api/attendance/users/"+encodeURIComponent(userId)+"/control",{
+        method:"PATCH",
+        headers:{"Content-Type":"application/json",Accept:"application/json"},
+        body:JSON.stringify({organizationId,mode:controlMode,reason:controlReason}),
+      });
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(payload.message||"No fue posible guardar la condición individual.");
+      setControlMessage("Condición individual actualizada.");
+      const auditResponse=await fetch("/api/attendance/users/"+encodeURIComponent(userId)+"/audit?organization_id="+encodeURIComponent(organizationId)+"&period="+period,{headers:{Accept:"application/json"}});
+      const auditPayload=await auditResponse.json().catch(()=>({}));
+      if(auditResponse.ok){
+        setData(auditPayload);
+        setControlMode(auditPayload.control.enabledOverride===null?"inherit":auditPayload.control.enabledOverride?"enabled":"disabled");
+        setControlReason(auditPayload.control.reason||"");
+      }
+    }catch(cause){
+      setControlMessage(cause instanceof Error?cause.message:"No fue posible guardar la condición individual.");
+    }finally{
+      setControlSaving(false);
+    }
+  }
 
   const selectedPerson=useMemo(()=>people.find(person=>person.id===userId)||null,[people,userId]);
   const attendanceHref=userId?"/dashboard/attendance?organization_id="+encodeURIComponent(organizationId)+"&user_id="+encodeURIComponent(userId)+"&view=setup&step=3":"/dashboard/attendance?view=setup&step=3";
@@ -491,6 +532,41 @@ export default function UserAttendanceAuditCenter({
     </div>
   </div>:null;
 
+  const controlContent=data?<div className="attendance-audit-control">
+    <div className="attendance-audit-overview-grid">
+      <article className="attendance-audit-overview-card">
+        <div className="attendance-audit-card-head">
+          <span className="attendance-audit-card-icon"><UiIcon name="attendance" size={18}/></span>
+          <div><span>Resultado efectivo</span><strong>{data.control.effectiveEnabled?"Control habilitado":"Control excluido"}</strong></div>
+          <Badge variant={data.control.effectiveEnabled?"success":"neutral"}>{data.control.effectiveEnabled?"Activo":"Excluido"}</Badge>
+        </div>
+        <p>Regla general del rol: <strong>{data.control.roleEnabled?"habilitada":"no habilitada"}</strong>.</p>
+        <small>{data.control.enabledOverride===null?"Este usuario hereda la política general por rol.":"Existe una excepción individual que prevalece sobre la regla del rol."}</small>
+      </article>
+    </div>
+    <div className="card attendance-user-control-form">
+      <div className="section-heading compact"><div><span className="eyebrow">Condición individual</span><h3>Control de asistencia por usuario</h3><p className="muted">La política general sigue definida por rol. Esta opción solo crea una excepción para esta persona.</p></div></div>
+      <div className="form-grid">
+        <div className="field">
+          <label>Aplicación del control</label>
+          <select value={controlMode} onChange={event=>setControlMode(event.target.value as "inherit"|"enabled"|"disabled")}>
+            <option value="inherit">Heredar configuración del rol</option>
+            <option value="enabled">Forzar habilitado para este usuario</option>
+            <option value="disabled">Excluir a este usuario del control</option>
+          </select>
+        </div>
+        <div className="field form-span-2">
+          <label>Motivo / nota</label>
+          <textarea rows={3} maxLength={500} value={controlReason} onChange={event=>setControlReason(event.target.value)} placeholder="Opcional. Deja contexto para la excepción individual."/>
+        </div>
+        <div className="form-span-2 form-actions">
+          <Button loading={controlSaving} onClick={()=>void saveControl()}>Guardar condición individual</Button>
+        </div>
+      </div>
+      {controlMessage&&<Alert variant={controlMessage.includes("actualizada")?"success":"danger"} title={controlMessage.includes("actualizada")?"Configuración guardada":"No fue posible guardar"}>{controlMessage}</Alert>}
+    </div>
+  </div>:null;
+
   const scheduleContent=data?<UserAttendanceScheduleAdmin
     key={"schedule-"+userId}
     organizationId={organizationId}
@@ -634,6 +710,7 @@ export default function UserAttendanceAuditCenter({
       label={"Expediente de asistencia de "+data.person.fullName}
       items={[
         {id:"summary",label:"Resumen",content:summaryContent},
+        {id:"control",label:"Control",content:controlContent},
         {id:"schedule",label:"Jornada",content:scheduleContent},
         {id:"shifts",label:"Marcaciones",content:shiftsContent},
         {id:"movements",label:"Desplazamientos",content:movementContent},

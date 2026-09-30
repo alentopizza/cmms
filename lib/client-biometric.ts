@@ -126,12 +126,14 @@ export async function runActiveLivenessChallenge({
   video,
   challenge,
   onStep,
-  timeoutMs=9000,
+  onCentering,
+  timeoutMs=13000,
 }:{
   human:any;
   video:HTMLVideoElement;
   challenge:ActiveLivenessChallengeCode[];
   onStep?:(input:{index:number;code:ActiveLivenessChallengeCode;label:string;status:"waiting"|"done"})=>void;
+  onCentering?:()=>void;
   timeoutMs?:number;
 }):Promise<ActiveLivenessEvidence[]>{
   const evidence:ActiveLivenessEvidence[]=[];
@@ -163,7 +165,8 @@ export async function runActiveLivenessChallenge({
   }
 
   // Return to a frontal pose before generating the enrollment descriptor.
-  const centerDeadline=Date.now()+5000;
+  onCentering?.();
+  const centerDeadline=Date.now()+8000;
   while(Date.now()<centerDeadline){
     const result=await human.detect(video);
     if(result.face?.length===1&&gestureStrings(result).includes("facing center"))return evidence;
@@ -195,41 +198,54 @@ export async function captureLiveFace({
   video,
   livenessThreshold,
   samples=2,
+  maxAttempts=samples,
+  attemptDelayMs=550,
 }:{
   human:any;
   video:HTMLVideoElement;
   livenessThreshold:number;
   samples?:number;
+  maxAttempts?:number;
+  attemptDelayMs?:number;
 }):Promise<FaceCapture> {
   const embeddings:number[][]=[];
   let minLive=1;
   let minReal=1;
+  let lastFailure="No se detectó un rostro válido.";
 
-  for(let attempt=0;attempt<samples;attempt+=1){
-    if(attempt) await new Promise(resolve=>setTimeout(resolve,550));
+  for(let attempt=0;attempt<maxAttempts&&embeddings.length<samples;attempt+=1){
+    if(attempt) await new Promise(resolve=>setTimeout(resolve,attemptDelayMs));
     const result=await human.detect(video);
     if(result.face.length!==1){
-      throw new Error(result.face.length>1
+      lastFailure=result.face.length>1
         ? "Debe aparecer una sola persona frente a la cámara."
-        : "No se detectó un rostro. Mira de frente a la cámara.");
+        : "No se detectó un rostro. Mira de frente a la cámara.";
+      continue;
     }
 
     const face=result.face[0];
-    if(!face.embedding?.length) throw new Error("No fue posible generar la plantilla facial.");
+    if(!face.embedding?.length){
+      lastFailure="No fue posible generar la plantilla facial.";
+      continue;
+    }
 
     const live=Number(face.live);
     const real=Number(face.real);
     if(!Number.isFinite(live)||!Number.isFinite(real)){
-      throw new Error("No fue posible comprobar presencia real.");
+      lastFailure="No fue posible comprobar presencia real.";
+      continue;
     }
     if(live<livenessThreshold || real<livenessThreshold){
-      throw new Error("La prueba de presencia no fue suficiente. Evita fotos o pantallas y mejora la iluminación.");
+      lastFailure="La prueba de presencia no fue suficiente. Evita fotos o pantallas y mejora la iluminación.";
+      continue;
     }
 
     embeddings.push(face.embedding.map(Number));
     minLive=Math.min(minLive,live);
     minReal=Math.min(minReal,real);
   }
+
+  if(embeddings.length<samples)throw new Error(lastFailure+" Mantén el rostro centrado unos segundos e intenta nuevamente.");
 
   return {
     embedding:averageNormalized(embeddings),

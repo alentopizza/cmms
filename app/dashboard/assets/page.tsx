@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui-kit/Badge";
 import UiIcon from "@/components/UiIcon";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
-type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;asset_type:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean;created_at:string};
+type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean;created_at:string};
 type AssetSummary=AssetCatalogSummary&{filtered_count:number};
 type AssetFacetValue={value:string;label:string};
 type AssetFacetRow={organizations:AssetFacetValue[];sites:AssetFacetValue[];criticalities:AssetFacetValue[];categories:AssetFacetValue[];suppliers:AssetFacetValue[]};
@@ -108,7 +108,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   }
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
-    SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.asset_type,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,
+    SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,
            a.status,a.criticality,a.manufacturer,a.model,a.serial_number,(a.image_data IS NOT NULL) has_image,a.created_at
     FROM assets a
     JOIN organizations o ON o.id=a.organization_id
@@ -185,22 +185,28 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
     scopeParams,
   );
 
-  const typesPromise=query<AssetTypeSummary>(
-    `WITH scoped AS (${scopedSql})
-     SELECT COALESCE(MAX(cco.label),btrim(scoped.asset_type)) name,count(*)::int asset_count
-     FROM scoped
-     LEFT JOIN configurable_catalog_options cco
-       ON cco.catalog_key='asset_types'
-      AND cco.code=scoped.asset_type
-      AND cco.active=true
-      AND (cco.organization_id IS NULL OR cco.organization_id=scoped.organization_id)
-     WHERE NULLIF(btrim(COALESCE(scoped.asset_type,'')),'') IS NOT NULL
-     GROUP BY btrim(scoped.asset_type)
-     ORDER BY name`,
-    scopeParams,
-  );
+  const typesPromise=view==="types"
+    ?query<AssetTypeSummary>(
+      `WITH scoped_types AS (
+         SELECT a.organization_id,a.asset_type
+         FROM assets a
+         ${scopeWhere}
+       )
+       SELECT COALESCE(MAX(cco.label),btrim(scoped_types.asset_type)) name,count(*)::int asset_count
+       FROM scoped_types
+       LEFT JOIN configurable_catalog_options cco
+         ON cco.catalog_key='asset_types'
+        AND cco.code=scoped_types.asset_type
+        AND cco.active=true
+        AND (cco.organization_id IS NULL OR cco.organization_id=scoped_types.organization_id)
+       WHERE NULLIF(btrim(COALESCE(scoped_types.asset_type,'')),'') IS NOT NULL
+       GROUP BY btrim(scoped_types.asset_type)
+       ORDER BY name`,
+      scopeParams,
+    )
+    :Promise.resolve({rows:[]} as {rows:AssetTypeSummary[]});
 
-  const brandsPromise=query<AssetBrandSummary>(
+  const brandsPromise=view==="brands"?query<AssetBrandSummary>(
     `WITH scoped AS (${scopedSql})
      SELECT btrim(manufacturer) name,count(*)::int asset_count
      FROM scoped
@@ -208,17 +214,17 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
      GROUP BY btrim(manufacturer)
      ORDER BY btrim(manufacturer)`,
     scopeParams,
-  );
-  const modelsPromise=query<AssetModelSummary>(
+  ):Promise.resolve({rows:[]} as {rows:AssetBrandSummary[]});
+  const modelsPromise=view==="models"?query<AssetModelSummary>(
     `WITH scoped AS (${scopedSql})
      SELECT DISTINCT concat_ws(' · ',NULLIF(btrim(COALESCE(manufacturer,'')),''),NULLIF(btrim(COALESCE(model,'')),'')) label
      FROM scoped
      WHERE NULLIF(concat_ws('',btrim(COALESCE(manufacturer,'')),btrim(COALESCE(model,''))),'') IS NOT NULL
      ORDER BY label`,
     scopeParams,
-  );
+  ):Promise.resolve({rows:[]} as {rows:AssetModelSummary[]});
 
-  const catalogCategoriesPromise=query<AssetCategorySummary>(
+  const catalogCategoriesPromise=view==="categories"?query<AssetCategorySummary>(
     `WITH scoped AS (${scopedSql})
      SELECT c.id,c.name,p.name parent_name,count(scoped.id)::int asset_count
      FROM asset_categories c
@@ -228,7 +234,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
      GROUP BY c.id,c.name,p.name
      ORDER BY p.name NULLS FIRST,c.name`,
     platformScopeParams,
-  );
+  ):Promise.resolve({rows:[]} as {rows:AssetCategorySummary[]});
 
   const sitesPromise=canWrite
     ? platform
@@ -250,7 +256,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       : query<Supplier>("SELECT id,organization_id,name FROM suppliers WHERE active=true AND organization_id=$1 ORDER BY name",[orgId])
     : Promise.resolve({rows:[]} as {rows:Supplier[]});
 
-  const maintenancePromise=platform
+  const maintenancePromise=view==="maintenance"?(platform
     ? query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
         FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
         WHERE ($1::boolean OR mp.organization_id=ANY($2::uuid[]))
@@ -262,9 +268,9 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       : query<AssetMaintenanceSummary>(`SELECT mp.id,mp.name,a.name asset_name,mp.frequency_value,mp.frequency_unit,mp.next_due_at::text,mp.active
           FROM maintenance_plans mp JOIN assets a ON a.id=mp.asset_id
           WHERE mp.organization_id=$1 AND a.site_id=ANY($2::uuid[])
-          ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,[orgId,session.siteIds]);
+          ORDER BY mp.active DESC,mp.next_due_at NULLS LAST LIMIT 250`,[orgId,session.siteIds])):Promise.resolve({rows:[]} as {rows:AssetMaintenanceSummary[]});
 
-  const historyPromise=platform
+  const historyPromise=view==="history"?(platform
     ? query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
         FROM work_orders w JOIN assets a ON a.id=w.asset_id
         WHERE ($1::boolean OR w.organization_id=ANY($2::uuid[]))
@@ -276,9 +282,9 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       : query<AssetHistorySummary>(`SELECT w.id,w.number::text,w.title,a.name asset_name,w.status,w.priority,w.requested_at::text
           FROM work_orders w JOIN assets a ON a.id=w.asset_id
           WHERE w.organization_id=$1 AND w.site_id=ANY($2::uuid[])
-          ORDER BY w.requested_at DESC LIMIT 250`,[orgId,session.siteIds]);
+          ORDER BY w.requested_at DESC LIMIT 250`,[orgId,session.siteIds])):Promise.resolve({rows:[]} as {rows:AssetHistorySummary[]});
 
-  const documentsPromise=platform
+  const documentsPromise=view==="documents"?(platform
     ? query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
         FROM attachments at JOIN assets a ON a.id=at.asset_id
         WHERE at.asset_id IS NOT NULL AND ($1::boolean OR at.organization_id=ANY($2::uuid[]))
@@ -290,7 +296,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       : query<AssetDocumentSummary>(`SELECT at.id,a.name asset_name,at.file_name,at.mime_type,at.size_bytes::text,at.created_at::text
           FROM attachments at JOIN assets a ON a.id=at.asset_id
           WHERE at.asset_id IS NOT NULL AND at.organization_id=$1 AND a.site_id=ANY($2::uuid[])
-          ORDER BY at.created_at DESC LIMIT 250`,[orgId,session.siteIds]);
+          ORDER BY at.created_at DESC LIMIT 250`,[orgId,session.siteIds])):Promise.resolve({rows:[]} as {rows:AssetDocumentSummary[]});
 
   const creationGatePromise=getCreationGateForScope("asset",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const [
@@ -332,7 +338,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const orderSql=sort==="created"?"created_at DESC,id DESC":"created_at DESC,id DESC";
   const assets=await query<Asset>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,category_id,supplier_id,asset_type,code,name,company,site,location,category,supplier,status,criticality,manufacturer,model,serial_number,has_image,created_at::text
+     SELECT id,organization_id,site_id,category_id,supplier_id,code,name,company,site,location,category,supplier,status,criticality,manufacturer,model,serial_number,has_image,created_at::text
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}

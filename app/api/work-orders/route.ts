@@ -35,7 +35,9 @@ export async function POST(request: Request) {
   }
 
   await query(
-    `INSERT INTO work_orders(organization_id,site_id,asset_id,title,type,priority,status,work_type,cause,requested_by)\n     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,\n    [organizationId,asset.rows[0].site_id,assetId,title,type,priority,status,workType||null,cause||null,session.userId],
+    `INSERT INTO work_orders(organization_id,site_id,asset_id,title,type,priority,status,work_type,cause,requested_by)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [organizationId,asset.rows[0].site_id,assetId,title,type,priority,status,workType||null,cause||null,session.userId],
   );
   return NextResponse.redirect(publicUrl("/dashboard/work-orders", request.url), 303);
 }

@@ -82,6 +82,8 @@ export default function SelfBiometricEnrollment({
   const [loading,setLoading]=useState(true);
   const [busy,setBusy]=useState(false);
   const [policyOpen,setPolicyOpen]=useState(false);
+  const [cameraOpen,setCameraOpen]=useState(false);
+  const [validationPhase,setValidationPhase]=useState<"idle"|"challenges"|"centering"|"capture"|"sending">("idle");
   const [policyRead,setPolicyRead]=useState(false);
   const [consent,setConsent]=useState(false);
   const [deviceConsent,setDeviceConsent]=useState(false);
@@ -170,16 +172,30 @@ export default function SelfBiometricEnrollment({
     }
   }
 
+  function closeCameraModal(){
+    if(busy)return;
+    stopCamera();
+    setCameraOpen(false);
+    setChallenge([]);
+    setChallengeLabel("");
+    setChallengeCompleted(0);
+    setValidationPhase("idle");
+  }
+
   async function submitEnrollment(){
     if(!state?.notice){setError("No existe una política biométrica vigente para aceptar.");return;}
     if(!location){setError("Primero verifica que estás dentro de la sede.");return;}
     if(!policyRead||!consent||!deviceConsent){setError("Completa las autorizaciones antes de activar la cámara.");return;}
 
-    setBusy(true);setError("");setMessage("");
+    setCameraOpen(true);
+    setBusy(true);setError("");setMessage("");setValidationPhase("challenges");
     const activeChallenge=createActiveLivenessChallenge();
     setChallenge(activeChallenge);
     setChallengeCompleted(0);
+    let completed=false;
     try{
+      await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
+      if(!videoRef.current)throw new Error("No fue posible preparar la ventana de cámara. Intenta nuevamente.");
       await ensureCamera();
       if(!humanRef.current)humanRef.current=await loadBiometricEngine();
       const evidence=await runActiveLivenessChallenge({
@@ -187,19 +203,29 @@ export default function SelfBiometricEnrollment({
         video:videoRef.current as HTMLVideoElement,
         challenge:activeChallenge,
         onStep:({index,label,status})=>{
+          setValidationPhase("challenges");
           setChallengeLabel(label);
           if(status==="done")setChallengeCompleted(index+1);
         },
+        onCentering:()=>{
+          setValidationPhase("centering");
+          setChallengeLabel("Retos completados. Mira de frente y mantente quieto unos segundos.");
+        },
       });
-      setChallengeLabel("Mira de frente a la cámara");
+      setValidationPhase("capture");
+      setChallengeLabel("Validando presencia real y preparando tu plantilla facial...");
       const face=await captureLiveFace({
         human:humanRef.current,
         video:videoRef.current as HTMLVideoElement,
         livenessThreshold:state.policy.livenessThreshold,
         samples:3,
+        maxAttempts:8,
+        attemptDelayMs:650,
       });
       const preview=captureEnrollmentPreview(videoRef.current as HTMLVideoElement);
 
+      setValidationPhase("sending");
+      setChallengeLabel("Validación completada. Enviando solicitud...");
       const response=await fetch("/api/attendance/enrollment-request",{
         method:"POST",
         headers:{"content-type":"application/json"},
@@ -233,11 +259,14 @@ export default function SelfBiometricEnrollment({
         },
       }:previous);
       setMessage(payload.message||"Solicitud enviada para aprobación.");
+      completed=true;
     }catch(cause){
       setError(cause instanceof Error?cause.message:"No fue posible completar el enrolamiento.");
     }finally{
       stopCamera();
       setBusy(false);
+      setValidationPhase("idle");
+      if(completed)setCameraOpen(false);
     }
   }
 
@@ -320,20 +349,39 @@ export default function SelfBiometricEnrollment({
       </article>
     </div>
 
-    <div className={"attendance-camera-card self-biometric-camera "+(cameraReady?"visible":"")}>
-      <div className="attendance-camera-stage">
-        <video ref={videoRef} playsInline muted className={cameraReady?"ready":""}/>
-        <div className="attendance-face-guide" aria-hidden="true"/>
-        {!cameraReady&&<div className="attendance-camera-placeholder"><span><UiIcon name="user" size={24}/></span><strong>Cámara frontal</strong><small>Solo se activa después de aceptar la política y verificar la sede.</small></div>}
-      </div>
-      {cameraReady&&challenge.length>0&&<div className="self-biometric-challenge">
-        <strong>{challengeLabel}</strong>
-        <span>{challengeCompleted}/{challenge.length} retos completados</span>
-      </div>}
-    </div>
-
     {message&&<Alert variant="success" title="Proceso biométrico">{message}</Alert>}
     {error&&<Alert variant="danger" title="No fue posible completar el enrolamiento">{error}</Alert>}
+
+    <Modal
+      open={cameraOpen}
+      onClose={closeCameraModal}
+      title="Enrolamiento biométrico"
+      eyebrow="Prueba de vida"
+      description="Mantén tu rostro dentro de la guía. Tendrás más tiempo para completar cada reto y la validación final."
+      size="lg"
+      className="self-biometric-camera-modal"
+      bodyClassName="self-biometric-camera-modal-body"
+      footer={<div className="self-biometric-camera-modal-footer">
+        {!busy&&error&&<Button variant="secondary" onClick={submitEnrollment} iconLeft="user">Reintentar prueba</Button>}
+        {!busy&&<Button variant="ghost" onClick={closeCameraModal}>Cerrar</Button>}
+      </div>}
+    >
+      <div className="attendance-camera-card self-biometric-camera visible">
+        <div className="attendance-camera-stage">
+          <video ref={videoRef} playsInline muted className={cameraReady?"ready":""}/>
+          <div className="attendance-face-guide" aria-hidden="true"/>
+          {!cameraReady&&<div className="attendance-camera-placeholder"><span><UiIcon name="user" size={24}/></span><strong>Preparando cámara frontal</strong><small>Permite el acceso a la cámara y mantente frente al dispositivo.</small></div>}
+        </div>
+        <div className="self-biometric-challenge">
+          <strong>{challengeLabel||"Preparando prueba de vida..."}</strong>
+          <span>{challenge.length?challengeCompleted+"/"+challenge.length+" retos completados":"Iniciando..."}</span>
+          {validationPhase==="centering"&&<small>Los retos ya terminaron. Esta fase solo confirma que vuelves a mirar de frente.</small>}
+          {validationPhase==="capture"&&<small>Estamos tomando varias muestras válidas sin reducir el nivel de seguridad.</small>}
+          {validationPhase==="sending"&&<small>No cierres esta ventana mientras se envía la solicitud.</small>}
+        </div>
+      </div>
+      {error&&<Alert variant="danger" title="No fue posible completar esta prueba">{error}</Alert>}
+    </Modal>
 
     <Modal
       open={policyOpen}

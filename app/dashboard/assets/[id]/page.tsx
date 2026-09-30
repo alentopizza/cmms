@@ -11,11 +11,12 @@ import AssetSubnav from "@/components/AssetSubnav";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type AssetDetail={
-  id:string;organization_id:string;site_id:string;location_id:string|null;supplier_id:string|null;category_id:string|null;
+  id:string;organization_id:string;site_id:string;location_id:string|null;supplier_id:string|null;category_id:string|null;asset_type:string|null;
   code:string;name:string;description:string|null;manufacturer:string|null;model:string|null;serial_number:string|null;
   status:string;criticality:string;purchase_date:string|null;installation_date:string|null;warranty_expires:string|null;
   purchase_cost:string|null;location_detail:string|null;notes:string|null;organization_name:string;site_name:string;
@@ -52,7 +53,7 @@ export default async function AssetDetailPage({
   if(!UUID.test(id)) notFound();
 
   const assetResult=await query<AssetDetail>(
-    `SELECT a.id,a.organization_id,a.site_id,a.location_id,a.supplier_id,a.category_id,a.code,a.name,a.description,a.manufacturer,a.model,a.serial_number,
+    `SELECT a.id,a.organization_id,a.site_id,a.location_id,a.supplier_id,a.category_id,a.asset_type,a.code,a.name,a.description,a.manufacturer,a.model,a.serial_number,
             a.status,a.criticality,a.purchase_date::text,a.installation_date::text,a.warranty_expires::text,a.purchase_cost::text,a.location_detail,a.notes,
             o.name organization_name,s.name site_name,l.name location_name,p.name supplier_name,c.name category_name,
             (a.image_data IS NOT NULL) has_image
@@ -161,17 +162,18 @@ export default async function AssetDetailPage({
         <div className="field"><label>Sede *</label><select name="site_id" defaultValue={asset.site_id} required>{sites.rows.map(site=><option key={site.id} value={site.id}>{site.name}</option>)}</select></div>
         <div className="field"><label>Sububicación *</label><select name="location_id" defaultValue={asset.location_id||""} required><option value="">Selecciona</option>{locations.rows.map(location=><option key={location.id} value={location.id}>{location.name}</option>)}</select></div>
         <div className="field"><label>Proveedor *</label><select name="supplier_id" defaultValue={asset.supplier_id||""} required><option value="">Selecciona</option>{suppliers.rows.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
-        <div className="field"><label>Categoría</label><input name="category" list={"asset-categories-"+asset.id} defaultValue={asset.category_name||""}/><datalist id={"asset-categories-"+asset.id}>{categories.rows.map(category=><option key={category.id} value={category.name}/>)}</datalist></div>
+        <ConfigurableCatalogSelect name="asset_type" label="Tipo" catalog="asset_types" organizationId={asset.organization_id} defaultValue={asset.asset_type||""} allowCreate allowManage placeholder="Selecciona un tipo" />
+        <ConfigurableCatalogSelect name="category" label="Categoría" catalog="asset_categories" organizationId={asset.organization_id} defaultValue={asset.category_name||""} submitValue="label" allowCreate allowManage placeholder="Selecciona una categoría" />
 
         <div className="field"><label>Código *</label><input name="code" defaultValue={asset.code} required/></div>
         <div className="field"><label>Nombre *</label><input name="name" defaultValue={asset.name} required/></div>
         <div className="field form-span-2"><label>Descripción</label><textarea name="description" rows={3} defaultValue={asset.description||""}/></div>
 
-        <div className="field"><label>Fabricante</label><input name="manufacturer" defaultValue={asset.manufacturer||""}/></div>
-        <div className="field"><label>Modelo</label><input name="model" defaultValue={asset.model||""}/></div>
+        <ConfigurableCatalogSelect name="manufacturer" label="Marca / fabricante" catalog="asset_brands" organizationId={asset.organization_id} defaultValue={asset.manufacturer||""} submitValue="label" allowCreate allowManage placeholder="Selecciona una marca" />
+        <ConfigurableCatalogSelect name="model" label="Modelo" catalog="asset_models" organizationId={asset.organization_id} defaultValue={asset.model||""} submitValue="label" allowCreate allowManage placeholder="Selecciona un modelo" />
         <div className="field"><label>Serial</label><input name="serial_number" defaultValue={asset.serial_number||""}/></div>
-        <div className="field"><label>Estado</label><select name="status" defaultValue={asset.status}><option value="operational">Operativo</option><option value="maintenance">En mantenimiento</option><option value="down">Fuera de servicio</option><option value="retired">Retirado</option></select></div>
-        <div className="field"><label>Criticidad</label><select name="criticality" defaultValue={asset.criticality}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="critical">Crítica</option></select></div>
+        <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={asset.organization_id} defaultValue={asset.status} required />
+        <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={asset.organization_id} defaultValue={asset.criticality} required />
         <div className="field"><label>Costo compra</label><input name="purchase_cost" type="number" min="0" step="0.01" defaultValue={asset.purchase_cost||""}/></div>
 
         <div className="field"><label>Fecha compra</label><input name="purchase_date" type="date" defaultValue={asset.purchase_date||""}/></div>

@@ -12,8 +12,8 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   if(!can(session,"catalogs.manage"))return new NextResponse("Forbidden",{status:403});
   const {id}=await params;
   if(!UUID.test(id))return new NextResponse("Not found",{status:404});
-  const current=await query<{organization_id:string|null;origin:"SYSTEM"|"CUSTOM";label:string}>(
-    "SELECT organization_id,origin,label FROM configurable_catalog_options WHERE id=$1",[id]
+  const current=await query<{organization_id:string|null;origin:"SYSTEM"|"CUSTOM";label:string;catalog_key:string;code:string}>(
+    "SELECT organization_id,origin,label,catalog_key,code FROM configurable_catalog_options WHERE id=$1",[id]
   );
   if(!current.rowCount)return new NextResponse("Not found",{status:404});
   const row=current.rows[0];
@@ -26,7 +26,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   if(label!==undefined&&!label)return NextResponse.json({error:"required"},{status:400});
 
   try{
-    const updated=await query(
+    const updated=await query<{label:string;active:boolean}>(
       `UPDATE configurable_catalog_options
        SET label=COALESCE($2,label),
            description=CASE WHEN $3::boolean THEN $4 ELSE description END,
@@ -36,7 +36,14 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
        RETURNING id,catalog_key,organization_id,origin,code,label,description,active,sort_order`,
       [id,label??null,body.description!==undefined,body.description===undefined?null:String(body.description).trim()||null,body.active??null],
     );
-    return NextResponse.json({option:updated.rows[0]});
+    const next=updated.rows[0];
+    if(row.catalog_key==="supplier_types"){
+      await query("UPDATE supplier_capability_catalog SET label=$1,active=$2 WHERE code=$3",[next.label,next.active,row.code]);
+    }
+    if(row.catalog_key==="supplier_specialties"){
+      await query("UPDATE supplier_specialty_catalog SET label=$1,active=$2 WHERE code=$3",[next.label,next.active,row.code]);
+    }
+    return NextResponse.json({option:next});
   }catch(error){
     if((error as {code?:string}).code==="23505")return NextResponse.json({error:"duplicate"},{status:409});
     throw error;

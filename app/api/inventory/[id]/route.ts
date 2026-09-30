@@ -39,6 +39,8 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const description=String(form.get("description")||"").trim();
   const presentation=String(form.get("presentation")||"").trim();
   const categoryName=String(form.get("category")||"").trim();
+  const itemType=String(form.get("item_type")||"").trim();
+  const catalogStatus=String(form.get("catalog_status")||"active").trim();
   const unit=String(form.get("unit")||"unidad").trim()||"unidad";
   const minQuantity=Math.max(0,Number(form.get("min_quantity")||0));
   const maxQuantity=Math.max(0,Number(form.get("max_quantity")||0));
@@ -61,13 +63,13 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     }
     await client.query(
       `UPDATE inventory_items SET
-         name=$1,description=$2,presentation=$3,category_id=$4,unit=$5,min_quantity=$6,max_quantity=$7,unit_cost=$8,
-         image_data=COALESCE($9,image_data),
-         image_mime_type=CASE WHEN $9 IS NULL THEN image_mime_type ELSE $10 END,
-         image_file_name=CASE WHEN $9 IS NULL THEN image_file_name ELSE $11 END,
+         name=$1,description=$2,presentation=$3,category_id=$4,unit=$5,item_type=$6,catalog_status=$7,active=($7<>'inactive'),min_quantity=$8,max_quantity=$9,unit_cost=$10,
+         image_data=COALESCE($11,image_data),
+         image_mime_type=CASE WHEN $11 IS NULL THEN image_mime_type ELSE $12 END,
+         image_file_name=CASE WHEN $11 IS NULL THEN image_file_name ELSE $13 END,
          updated_at=now()
-       WHERE id=$12`,
-      [name,description||null,presentation||null,categoryId,unit,minQuantity,maxQuantity,unitCost,image?.data||null,image?.mime||null,image?"inventory-image":null,id],
+       WHERE id=$14`,
+      [name,description||null,presentation||null,categoryId,unit,itemType||null,catalogStatus,minQuantity,maxQuantity,unitCost,image?.data||null,image?.mime||null,image?"inventory-image":null,id],
     );
     await client.query(
       "UPDATE inventory_stock_levels SET min_quantity=$1,max_quantity=$2,updated_at=now() WHERE item_id=$3",

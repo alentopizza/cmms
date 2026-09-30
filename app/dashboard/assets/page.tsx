@@ -187,11 +187,16 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
 
   const typesPromise=query<AssetTypeSummary>(
     `WITH scoped AS (${scopedSql})
-     SELECT btrim(asset_type) name,count(*)::int asset_count
+     SELECT COALESCE(MAX(cco.label),btrim(scoped.asset_type)) name,count(*)::int asset_count
      FROM scoped
-     WHERE NULLIF(btrim(COALESCE(asset_type,'')),'') IS NOT NULL
-     GROUP BY btrim(asset_type)
-     ORDER BY btrim(asset_type)`,
+     LEFT JOIN configurable_catalog_options cco
+       ON cco.catalog_key='asset_types'
+      AND cco.code=scoped.asset_type
+      AND cco.active=true
+      AND (cco.organization_id IS NULL OR cco.organization_id=scoped.organization_id)
+     WHERE NULLIF(btrim(COALESCE(scoped.asset_type,'')),'') IS NOT NULL
+     GROUP BY btrim(scoped.asset_type)
+     ORDER BY name`,
     scopeParams,
   );
 

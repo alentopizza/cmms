@@ -368,6 +368,21 @@ export default async function SettingsPage({
         <article className="card settings-panel settings-panel-wide">
           <div className="settings-panel-head">
             <div>
+              <span className="settings-kicker">Clasificaciones</span>
+              <h2>Catálogos configurables</h2>
+              <p>Administra opciones SYSTEM globales y revisa las opciones CUSTOM por empresa desde una sola arquitectura.</p>
+            </div>
+            <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="settings" size={20}/></span>
+          </div>
+          <Link className="settings-link-card" href="/dashboard/settings/catalogs">
+            <div><strong>Abrir Catálogos</strong><span>Sistema central de clasificaciones</span></div>
+            <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
+          </Link>
+        </article>
+
+        <article className="card settings-panel settings-panel-wide">
+          <div className="settings-panel-head">
+            <div>
               <span className="settings-kicker">Apariencia</span>
               <h2>Tema de la interfaz</h2>
               <p>Elige cómo quieres visualizar la plataforma. Esta preferencia se guarda en este navegador.</p>

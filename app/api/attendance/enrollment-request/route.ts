@@ -76,7 +76,7 @@ export async function GET(){
     await client.query("BEGIN");
     await expirePending(client,session.organizationId,session.userId);
 
-    const [policy,notice,account,profile,request]=await Promise.all([
+    const [policy,notice,account,profile,request,controlOverride]=await Promise.all([
       client.query<Policy>(
         `SELECT enabled,enabled_roles,require_face,max_location_accuracy_m,liveness_threshold
          FROM organization_attendance_policies WHERE organization_id=$1`,
@@ -114,14 +114,20 @@ export async function GET(){
          ORDER BY request.requested_at DESC LIMIT 1`,
         [session.organizationId,session.userId],
       ),
+      client.query<{enabled:boolean}>(
+        `SELECT enabled FROM user_attendance_control_overrides
+         WHERE organization_id=$1 AND user_id=$2`,
+        [session.organizationId,session.userId],
+      ),
     ]);
 
     await client.query("COMMIT");
     const effective=policy.rows[0]||DEFAULT_ATTENDANCE_POLICY;
+    const userControlEnabled=effective.enabled&&(controlOverride.rows[0]?.enabled??attendanceRoleEnabled(session,effective.enabled_roles));
     return NextResponse.json({
       policy:{
         enabled:effective.enabled,
-        roleEnabled:attendanceRoleEnabled(session,effective.enabled_roles),
+        roleEnabled:userControlEnabled,
         requireFace:effective.require_face,
         maxLocationAccuracy:effective.max_location_accuracy_m,
         livenessThreshold:effective.liveness_threshold,
@@ -180,9 +186,15 @@ export async function POST(request:Request){
       [session.organizationId],
     );
     const policy=policyResult.rows[0]||DEFAULT_ATTENDANCE_POLICY;
-    if(!policy.enabled||!attendanceRoleEnabled(session,policy.enabled_roles)||!policy.require_face){
+    const controlOverride=await client.query<{enabled:boolean}>(
+      `SELECT enabled FROM user_attendance_control_overrides
+       WHERE organization_id=$1 AND user_id=$2`,
+      [session.organizationId,session.userId],
+    );
+    const userControlEnabled=policy.enabled&&(controlOverride.rows[0]?.enabled??attendanceRoleEnabled(session,policy.enabled_roles));
+    if(!userControlEnabled||!policy.require_face){
       await client.query("ROLLBACK");
-      return NextResponse.json({message:"El enrolamiento facial no está habilitado para tu rol."},{status:409});
+      return NextResponse.json({message:"El enrolamiento facial no está habilitado para tu usuario."},{status:409});
     }
     if(!Number.isFinite(live)||!Number.isFinite(real)||live<policy.liveness_threshold||real<policy.liveness_threshold){
       await client.query("ROLLBACK");

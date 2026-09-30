@@ -21,6 +21,7 @@ export async function POST(request:Request) {
   const siteId=String(form.get("site_id")||"");
   const locationId=String(form.get("location_id")||"");
   const supplierId=String(form.get("supplier_id")||"");
+  const assetType=String(form.get("asset_type")||"").trim();
   const categoryName=String(form.get("category")||"").trim();
   const code=String(form.get("code")||"").trim().toUpperCase();
   const name=String(form.get("name")||"").trim();
@@ -87,12 +88,12 @@ export async function POST(request:Request) {
 
     await client.query(
       `INSERT INTO assets(
-         organization_id,site_id,location_id,supplier_id,category_id,code,name,description,status,criticality,
+         organization_id,site_id,location_id,supplier_id,category_id,asset_type,code,name,description,status,criticality,
          manufacturer,model,serial_number,purchase_date,installation_date,warranty_expires,purchase_cost,location_detail,notes,
          image_data,image_mime_type,image_file_name
-       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
+       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
       [
-        organizationId,siteId,locationId,supplierId,categoryId,code,name,description||null,status,criticality,
+        organizationId,siteId,locationId,supplierId,categoryId,assetType||null,code,name,description||null,status,criticality,
         manufacturer||null,model||null,serial||null,purchaseDate||null,installationDate||null,warrantyExpires||null,
         purchaseCost,locationDetail||null,notes||null,image?.data||null,image?.mime||null,image?"asset-image":null,
       ],

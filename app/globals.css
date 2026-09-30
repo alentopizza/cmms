@@ -13767,3 +13767,23 @@ html[data-theme="dark"] .procurement-match-badge.pending_evidence,html[data-them
 .phase7-inventory .phase7-subnav .ds-module-nav{display:flex;align-items:center;gap:4px;min-height:46px;padding:5px 7px;border:1px solid var(--border);border-radius:13px;background:var(--surface);overflow-x:auto;scrollbar-width:thin}
 .phase7-inventory .phase7-subnav .ds-module-nav>a,.phase7-inventory .phase7-subnav .ds-module-nav>span{flex:0 0 auto;padding:9px 12px;border-radius:9px;font-size:11px;font-weight:750;white-space:nowrap}
 .phase7-inventory .phase7-subnav .ds-module-nav>a.active{background:rgba(56,178,169,.1);color:var(--brand-teal)}
+
+
+/* Self biometric enrollment — camera stays in modal, never expands page flow */
+.self-biometric-camera-modal{width:min(760px,calc(100vw - 24px))}
+.self-biometric-camera-modal-body{display:grid;gap:12px;overflow:auto;max-height:min(78vh,760px)}
+.self-biometric-camera-modal .self-biometric-camera{margin:0}
+.self-biometric-camera-modal .attendance-camera-stage{width:100%;max-height:58vh;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#0b1117}
+.self-biometric-camera-modal .attendance-camera-stage video{width:100%;height:100%;object-fit:cover}
+.self-biometric-camera-modal .self-biometric-challenge{display:grid;gap:4px;padding:12px 4px 2px}
+.self-biometric-camera-modal .self-biometric-challenge strong{font-size:15px}
+.self-biometric-camera-modal .self-biometric-challenge span{font-size:12px;font-weight:700}
+.self-biometric-camera-modal .self-biometric-challenge small{font-size:11px;line-height:1.45;color:var(--text-soft)}
+.self-biometric-camera-modal-footer{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){
+  .self-biometric-camera-modal{width:calc(100vw - 12px);max-height:96vh}
+  .self-biometric-camera-modal-body{max-height:78vh;padding:10px}
+  .self-biometric-camera-modal .attendance-camera-stage{max-height:52vh;aspect-ratio:3/4}
+  .self-biometric-camera-modal-footer{width:100%}
+  .self-biometric-camera-modal-footer .button{flex:1 1 auto}
+}

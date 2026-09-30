@@ -10,6 +10,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import PhoneField from "@/components/PhoneField";
 import FileDropzone from "@/components/FileDropzone";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/InternationalFields";
 import SupplierDirectory, { type SupplierDirectoryItem } from "@/components/SupplierDirectory";
 import { Alert } from "@/components/ui-kit/Feedback";
@@ -143,14 +144,14 @@ export default async function SuppliersPage({searchParams}:{searchParams:Promise
         <form className="form-grid unified-popup-form" method="post" action="/api/suppliers" encType="multipart/form-data">
           {platform?<div className="field"><label>Empresa *</label><select name="organization_id" required><option value="">Selecciona una empresa</option>{organizations.rows.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select></div>
             :<input type="hidden" name="organization_id" value={session.organizationId||""}/>}
-          <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityCatalog.rows.map(option=>({value:option.code,label:option.label}))} defaultValues={["materials"]} required help="Puedes seleccionar varias capacidades. Se almacenan con códigos normalizados para filtros, exportación e importación."/>
+          <ConfigurableCatalogSelect name="capability_codes" label="Tipo de proveedor" catalog="supplier_types" organizationId={session.organizationId||undefined} defaultValues={["materials"]} multiple allowCreate allowManage required help="Puedes seleccionar varias capacidades. Se conservan los códigos existentes para filtros, exportación e importación."/>
           <div className="field"><label>Nombre comercial *</label><input name="name" required placeholder="Ej. Servicios Técnicos Andinos"/></div>
           <div className="field"><label>Razón social *</label><input name="legal_name" required placeholder="Ej. Servicios Técnicos Andinos S.A.S."/></div>
           <CountryCityFields countryId="supplier-country" countryName="country_code" cityId="supplier-city" cityName="city" defaultCountry={defaultCountry} defaultCity="" required/>
           <TaxIdentificationTypeSelect id="supplier-tax-type" name="tax_id_type" countryInputId="supplier-country" countryCode={defaultCountry}/>
           <div className="field"><label>Número de identificación</label><input name="tax_id" placeholder="Número fiscal / tributario"/></div>
           <div className="field form-span-2"><label>Dirección *</label><input name="address" required placeholder="Dirección comercial o administrativa"/></div>
-          <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyCatalog.rows.map(option=>({value:option.code,label:option.label}))} help="Selecciona una o varias especialidades del catálogo estándar."/>
+          <ConfigurableCatalogSelect name="specialty_codes" label="Categoría / especialidad" catalog="supplier_specialties" organizationId={session.organizationId||undefined} multiple allowCreate allowManage help="Selecciona o crea una o varias especialidades."/>
           <div className="field"><label>Sitio web</label><input type="url" name="website" placeholder="https://..."/></div>
           <div className="field"><label>Contacto principal</label><input name="contact_name" placeholder="Nombre del contacto"/></div>
           <div className="field"><label>Cargo</label><input name="contact_title" placeholder="Ej. Ejecutivo comercial"/></div>

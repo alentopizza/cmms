@@ -503,9 +503,13 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
             <strong>{ROLE_LABELS[role]}</strong>
           </div>)}
         </div>
+        <div className="form-actions">
+          <Link className="button" href={attendanceHref({step:"4"})}><UiIcon name="settings" size={14}/>Configurar roles</Link>
+          <Link className="button secondary" href={attendanceHref({view:"operation"})}><UiIcon name="user" size={14}/>Configurar por usuario</Link>
+        </div>
       </section>
 
-      <Alert variant="info" title="Una sola fuente de configuración">Este paso resume la configuración real. Para modificar estos valores utiliza el paso Política; no existe un segundo formulario ni una configuración paralela.</Alert>
+      <Alert variant="info" title="Dos niveles, una sola política">Los roles definen la regla general. En Operación y reportes → expediente individual puedes crear una excepción para una persona concreta sin cambiar su rol ni duplicar permisos.</Alert>
     </div>,
 
     "2":<div className="attendance-setup-sections">
@@ -668,7 +672,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
 
       {canSelf&&organizationId&&<>
         {!selfAttendanceEnabled
-          ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede activarlo desde la política de asistencia."/>
+          ?<EmptyState icon="file" title="El control de asistencia no está habilitado para tu rol" description="Un administrador puede habilitar tu rol en la política general o crear una condición individual para tu usuario."/>
           :<>
             <section className="section attendance-scheduled-workday">
               <div className="attendance-scheduled-workday-icon"><UiIcon name="clock" size={20}/></div>

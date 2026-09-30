@@ -285,6 +285,21 @@ function CompanySettings({
       <article className="card settings-panel">
         <div className="settings-panel-head">
           <div>
+            <span className="settings-kicker">Clasificaciones</span>
+            <h2>Catálogos</h2>
+            <p>Administra categorías, tipos, marcas, prioridades y demás opciones reutilizables de la empresa.</p>
+          </div>
+          <span className="settings-panel-icon" aria-hidden="true"><UiIcon name="settings" size={20}/></span>
+        </div>
+        <Link className="settings-link-card" href="/dashboard/settings/catalogs">
+          <div><strong>Administrar catálogos</strong><span>Opciones del sistema y personalizadas</span></div>
+          <span aria-hidden="true"><UiIcon name="chevron-right" size={15}/></span>
+        </Link>
+      </article>
+
+      <article className="card settings-panel">
+        <div className="settings-panel-head">
+          <div>
             <span className="settings-kicker">Estructura</span>
             <h2>Ubicaciones</h2>
             <p>Consulta y administra las sedes y sububicaciones permitidas dentro del cupo asignado.</p>

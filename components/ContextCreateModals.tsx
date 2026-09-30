@@ -254,8 +254,8 @@ export function AssetCreateModal({
           <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Unidad manejadora de aire 01" /></div>
           <ConfigurableCatalogSelect name="asset_type" label="Tipo" catalog="asset_types" organizationId={organizationId} allowCreate allowManage placeholder="Selecciona o crea un tipo" />
           <ConfigurableCatalogSelect name="category" label="Categoría" catalog="asset_categories" organizationId={organizationId} submitValue="label" allowCreate allowManage placeholder="Selecciona o crea una categoría" />
-          <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={organizationId} defaultValue="operational" required />
-          <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={organizationId} defaultValue="medium" required />
+          <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={organizationId} defaultValue="operational" required allowManage />
+          <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={organizationId} defaultValue="medium" required allowManage />
           <ConfigurableCatalogSelect name="manufacturer" label="Marca / fabricante" catalog="asset_brands" organizationId={organizationId} submitValue="label" allowCreate allowManage placeholder="Selecciona o crea una marca" />
           <ConfigurableCatalogSelect name="model" label="Modelo" catalog="asset_models" organizationId={organizationId} submitValue="label" allowCreate allowManage placeholder="Selecciona o crea un modelo" />
           <div className="field"><label>Serial</label><input name="serial_number" placeholder="Número de serie" /></div>
@@ -318,7 +318,7 @@ export function RoutineCreateModal({
           <ConfigurableCatalogSelect name="priority" label="Prioridad" catalog="routine_priorities" organizationId={organizationId} allowCreate allowManage defaultValue="medium" />
           <ConfigurableCatalogSelect name="specialty" label="Especialidad" catalog="routine_specialties" organizationId={organizationId} allowCreate allowManage placeholder="Selecciona o crea una especialidad" />
           <div className="field"><label>Cada *</label><input name="frequency_value" type="number" min="1" defaultValue="1" required /></div>
-          <ConfigurableCatalogSelect name="frequency_unit" label="Unidad" catalog="routine_frequencies" organizationId={organizationId} defaultValue="month" required help="La frecuencia conserva la lógica calendario existente; el catálogo solo centraliza las opciones permitidas." />
+          <ConfigurableCatalogSelect name="frequency_unit" label="Unidad" catalog="routine_frequencies" organizationId={organizationId} defaultValue="month" required allowManage help="La frecuencia conserva la lógica calendario existente; el catálogo solo centraliza las opciones permitidas." />
           <div className="field"><label>Próxima ejecución</label><input name="next_due_at" type="date" /></div>
           <div className="field"><label>Duración estimada (min)</label><input name="estimated_minutes" type="number" min="0" placeholder="60" /></div>
         </div>

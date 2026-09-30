@@ -245,3 +245,12 @@ ON CONFLICT DO NOTHING;
 
 UPDATE configurable_catalogs SET allow_custom=false,updated_at=now()
 WHERE key IN ('routine_frequencies','inventory_statuses');
+
+INSERT INTO configurable_catalog_options(catalog_key,origin,code,label,sort_order) VALUES
+('work_order_statuses','SYSTEM','open','Abierta',10),
+('work_order_statuses','SYSTEM','assigned','Asignada',20),
+('work_order_statuses','SYSTEM','in_progress','En progreso',30),
+('work_order_statuses','SYSTEM','paused','Pausada',40),
+('work_order_statuses','SYSTEM','completed','Completada',50),
+('work_order_statuses','SYSTEM','cancelled','Cancelada',60)
+ON CONFLICT DO NOTHING;

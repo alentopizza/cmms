@@ -4,6 +4,7 @@ import { getSession, type AuthSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { pool } from "@/lib/db";
 import { attendanceOrganizationId } from "@/lib/attendance-context";
+import { DEFAULT_ATTENDANCE_POLICY } from "@/lib/attendance-policy";
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PERIODS=new Map([["30",30],["90",90],["365",365],["all",null]] as const);
@@ -97,6 +98,8 @@ export async function GET(
       contingencies,
       schedules,
       scheduleAudit,
+      policyResult,
+      controlOverride,
     ]=await Promise.all([
       client.query<{
         shifts:number;
@@ -337,6 +340,18 @@ export async function GET(
          LIMIT 120`,
         [...paramsBase],
       ),
+      client.query<{enabled:boolean;enabled_roles:string[]}>(
+        `SELECT enabled,enabled_roles
+         FROM organization_attendance_policies
+         WHERE organization_id=$1`,
+        [organizationId],
+      ),
+      client.query<{enabled:boolean;reason:string|null}>(
+        `SELECT enabled,reason
+         FROM user_attendance_control_overrides
+         WHERE organization_id=$1 AND user_id=$2`,
+        [organizationId,userId],
+      ),
     ]);
 
     const scheduleRows=schedules.rows as Array<{effective_from:string;effective_until:string|null}>;
@@ -350,6 +365,11 @@ export async function GET(
       .filter(item=>item.effective_from>today)
       .sort((a,b)=>a.effective_from.localeCompare(b.effective_from))[0]||null;
 
+    const attendancePolicy=policyResult.rows[0]||DEFAULT_ATTENDANCE_POLICY;
+    const roleEnabled=attendancePolicy.enabled_roles.includes(person.role);
+    const override=controlOverride.rows[0]||null;
+    const effectiveEnabled=attendancePolicy.enabled&&(override?override.enabled:roleEnabled);
+
     return NextResponse.json({
       period:days===null?"all":String(days),
       today,
@@ -360,6 +380,13 @@ export async function GET(
         role:person.role,
         organizationName:person.organization_name,
         timezone:person.timezone,
+      },
+      control:{
+        policyEnabled:attendancePolicy.enabled,
+        roleEnabled,
+        enabledOverride:override?.enabled??null,
+        effectiveEnabled,
+        reason:override?.reason||null,
       },
       scope:{limited:scope!==null,siteIds:scope||[]},
       summary:summary.rows[0]||{

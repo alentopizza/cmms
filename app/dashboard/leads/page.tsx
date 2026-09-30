@@ -227,12 +227,13 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               {name:"email",label:"Correo",value:lead.email},
               {name:"phone",label:"Teléfono",value:lead.phone||""},
               {name:"message",label:"Mensaje",value:lead.message||"",type:"textarea" as const},
-              {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:[
-                {value:"new",label:"Nuevo"},{value:"contacted",label:"Contactado"},{value:"qualified",label:"Calificado"},{value:"closed",label:"Cerrado"},{value:"discarded",label:"Descartado"}
-              ]},
+              {name:"source",label:"Origen",value:lead.source,type:"select" as const,options:leadSourceOptions.map(option=>({value:option.code,label:option.label}))},
+              {name:"interest",label:"Interés",value:lead.interest,type:"select" as const,options:leadInterestOptions.map(option=>({value:option.code,label:option.label}))},
+              {name:"status",label:"Estado",value:lead.status,type:"select" as const,options:leadStatusOptions.map(option=>({value:option.code,label:option.label}))},
+              {name:"followup_type",label:"Seguimiento",value:lead.followup_type||"",type:"select" as const,options:[{value:"",label:"Sin definir"},...leadFollowupOptions.map(option=>({value:option.code,label:option.label}))]},
             ];
             const drawerFollowup=<form className="lead-status-form lead-detail-status-form" method="post" action={"/api/leads/"+lead.id+"/status"}>
-              <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+              <label><span>Seguimiento</span><select name="status" defaultValue={lead.status}>{leadStatusOptions.map(option=><option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
               <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
             </form>;
             const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions" editOverlay={false} afterSaveReopenKey={"lead:"+lead.id}/>:undefined;
@@ -249,7 +250,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
                 phone:lead.phone||"—",
                 date:createdAt,
                 followup:<form className="lead-status-form lead-status-form-compact" method="post" action={"/api/leads/"+lead.id+"/status"}>
-                  <label><span className="ds-visually-hidden">Estado de seguimiento</span><select name="status" defaultValue={lead.status}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="qualified">Calificado</option><option value="closed">Cerrado</option><option value="discarded">Descartado</option></select></label>
+                  <label><span className="ds-visually-hidden">Estado de seguimiento</span><select name="status" defaultValue={lead.status}>{leadStatusOptions.map(option=><option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
                   <button className="ds-list-action" type="submit" title="Actualizar estado" data-tooltip="Actualizar estado" aria-label={"Actualizar estado de "+lead.full_name}><UiIcon name="check" size={15}/></button>
                 </form>,
                 actions:<ListQuickActions>{preview}{owner&&<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact/>}</ListQuickActions>,

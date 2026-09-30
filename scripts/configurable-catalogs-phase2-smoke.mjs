@@ -46,3 +46,22 @@ expect(api,"supplier_capability_catalog","supplier bridge");
 expect(api,"supplier_specialty_catalog","supplier bridge");
 
 console.log("Configurable catalogs phase 2 smoke: OK");
+
+const selectorUx=read("components/ConfigurableCatalogSelect.tsx");
+for(const needle of ["SISTEMA","EMPRESA","canManage","canCreate"])expect(selectorUx,needle,"selector UX contract");
+
+const controlled=read("db/migrations/999_configurable_catalogs.sql");
+for(const key of ["asset_statuses","asset_criticalities","work_order_types","work_order_priorities","work_order_statuses","routine_frequencies","inventory_statuses","lead_sources","lead_interests","lead_statuses","lead_followups"]){
+  expect(controlled,key,"controlled catalog "+key);
+}
+expect(controlled,"allow_custom=false","controlled catalog flag");
+
+const supplierCreate=read("app/api/suppliers/route.ts");
+const supplierEdit=read("app/api/suppliers/[id]/route.ts");
+for(const source of [supplierCreate,supplierEdit]){
+  expect(source,"configurable_catalog_options","supplier tenant catalog validation");
+  expect(source,"cco.organization_id IS NULL OR cco.organization_id=$2","supplier tenant scope");
+}
+
+const leadsPage=read("app/dashboard/leads/page.tsx");
+if(/<option value="new">Nuevo<\/option>/.test(leadsPage))throw new Error("Lead status still hardcoded in rendered controls");

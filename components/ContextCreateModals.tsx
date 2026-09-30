@@ -252,6 +252,7 @@ export function AssetCreateModal({
           <div className="field"><label>Proveedor *</label><select name="supplier_id" required><option value="">Selecciona proveedor</option>{visibleSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
           <div className="field"><label>Código *</label><input name="code" required autoFocus placeholder="Ej. HVAC-001" /></div>
           <div className="field"><label>Nombre *</label><input name="name" required placeholder="Ej. Unidad manejadora de aire 01" /></div>
+          <ConfigurableCatalogSelect name="asset_type" label="Tipo" catalog="asset_types" organizationId={organizationId} allowCreate allowManage placeholder="Selecciona o crea un tipo" />
           <ConfigurableCatalogSelect name="category" label="Categoría" catalog="asset_categories" organizationId={organizationId} submitValue="label" allowCreate allowManage placeholder="Selecciona o crea una categoría" />
           <ConfigurableCatalogSelect name="status" label="Estado" catalog="asset_statuses" organizationId={organizationId} defaultValue="operational" required />
           <ConfigurableCatalogSelect name="criticality" label="Criticidad" catalog="asset_criticalities" organizationId={organizationId} defaultValue="medium" required />

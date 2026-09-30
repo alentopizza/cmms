@@ -34,3 +34,7 @@ for(const path of [
 }
 
 console.log("Attendance role + per-user control smoke: OK");
+
+const policyRoute=read("app/api/attendance/policy/route.ts");
+if(policyRoute.includes('new URL("/dashboard/attendance",request.url)'))throw new Error("Attendance policy redirect must not derive browser origin from internal request.url");
+expect(policyRoute,'headers:{Location:"/dashboard/attendance?"+params.toString()}',"relative attendance policy redirect");

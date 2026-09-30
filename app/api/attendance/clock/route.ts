@@ -53,9 +53,15 @@ export async function POST(request: Request) {
       [session.organizationId],
     );
     const policy = policyResult.rows[0] || DEFAULT_ATTENDANCE_POLICY;
-    if (!policy.enabled || !attendanceRoleEnabled(session, policy.enabled_roles)) {
+    const overrideResult=await client.query<{enabled:boolean}>(
+      `SELECT enabled FROM user_attendance_control_overrides
+       WHERE organization_id=$1 AND user_id=$2`,
+      [session.organizationId,session.userId],
+    );
+    const attendanceEnabled=policy.enabled&&(overrideResult.rows[0]?.enabled??attendanceRoleEnabled(session,policy.enabled_roles));
+    if (!attendanceEnabled) {
       await client.query("ROLLBACK");
-      return NextResponse.json({ message: "El control de asistencia no está habilitado para tu rol." }, { status: 409 });
+      return NextResponse.json({ message: "El control de asistencia no está habilitado para tu usuario." }, { status: 409 });
     }
 
     const siteResult = await client.query<{

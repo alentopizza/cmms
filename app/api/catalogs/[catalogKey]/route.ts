@@ -59,6 +59,18 @@ export async function POST(request:Request,{params}:{params:Promise<{catalogKey:
     [catalogKey,organizationId,base,label,description,session.userId],
   );
   const row=result.rows[0];
+  if(catalogKey==="supplier_types"){
+    await query(
+      "INSERT INTO supplier_capability_catalog(code,label,sort_order,active) VALUES($1,$2,1000,true) ON CONFLICT(code) DO UPDATE SET label=EXCLUDED.label,active=true",
+      [row.code,row.label],
+    );
+  }
+  if(catalogKey==="supplier_specialties"){
+    await query(
+      "INSERT INTO supplier_specialty_catalog(code,label,sort_order,active) VALUES($1,$2,1000,true) ON CONFLICT(code) DO UPDATE SET label=EXCLUDED.label,active=true",
+      [row.code,row.label],
+    );
+  }
   return NextResponse.json({option:{
     id:row.id,catalogKey:row.catalog_key,organizationId:row.organization_id,origin:row.origin,code:row.code,
     label:row.label,description:row.description,active:row.active,sortOrder:row.sort_order,

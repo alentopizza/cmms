@@ -12,8 +12,8 @@ import { AssetCard } from "@/components/business-ui";
 import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import BulkImportModal from "@/components/BulkImportModal";
 import ModuleExportMenu from "@/components/ModuleExportMenu";
-import AssetSubnav from "@/components/AssetSubnav";
-import AssetCatalogOverview, { type AssetBrandSummary, type AssetCatalogSummary, type AssetCategorySummary, type AssetMaintenanceSummary, type AssetHistorySummary, type AssetDocumentSummary, type AssetModelSummary } from "@/components/AssetCatalogOverview";
+import AssetSubnav, { type AssetView } from "@/components/AssetSubnav";
+import AssetCatalogOverview, { type AssetTypeSummary, type AssetBrandSummary, type AssetCatalogSummary, type AssetCategorySummary, type AssetMaintenanceSummary, type AssetHistorySummary, type AssetDocumentSummary, type AssetModelSummary } from "@/components/AssetCatalogOverview";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
 import { CollectionView } from "@/components/ui-kit/DataControls";
@@ -23,11 +23,11 @@ import { Badge } from "@/components/ui-kit/Badge";
 import UiIcon from "@/components/UiIcon";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
-type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean;created_at:string};
+type Asset={id:string;organization_id:string;site_id:string;category_id:string|null;supplier_id:string|null;asset_type:string|null;code:string;name:string;company:string;site:string;location:string|null;category:string|null;supplier:string|null;status:string;criticality:string;manufacturer:string|null;model:string|null;serial_number:string|null;has_image:boolean;created_at:string};
 type AssetSummary=AssetCatalogSummary&{filtered_count:number};
 type AssetFacetValue={value:string;label:string};
 type AssetFacetRow={organizations:AssetFacetValue[];sites:AssetFacetValue[];criticalities:AssetFacetValue[];categories:AssetFacetValue[];suppliers:AssetFacetValue[]};
-type AssetSearchParams={created?:string;error?:string;q?:string;status?:string;organization?:string;site?:string;criticality?:string;category?:string;supplier?:string;sort?:string;page?:string};
+type AssetSearchParams={view?:string;created?:string;error?:string;q?:string;status?:string;organization?:string;site?:string;criticality?:string;category?:string;supplier?:string;sort?:string;page?:string};
 type Site={id:string;organization_id:string;label:string};
 type Location={id:string;organization_id:string;site_id:string;label:string};
 type Supplier={id:string;organization_id:string;name:string};
@@ -37,6 +37,7 @@ const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 const ASSET_STATUSES=new Set(["all","operational","maintenance","down","retired"]);
 const ASSET_CRITICALITIES=new Set(["low","medium","high","critical"]);
 const ASSET_SORTS=new Set(["created"]);
+const ASSET_VIEWS=new Set<AssetView>(["list","types","categories","brands","models","states","maintenance","history","documents","settings"]);
 
 function safeText(value:string|undefined,max=120){
   return String(value||"").trim().slice(0,max);
@@ -78,6 +79,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const organizationScope=organizationScopeFor(session);
   const platformScopeParams:unknown[]=[organizationScope.unrestricted,organizationScope.organizationIds];
 
+  const view=ASSET_VIEWS.has(params.view as AssetView)?params.view as AssetView:"list";
   const q=safeText(params.q);
   const status=ASSET_STATUSES.has(params.status||"")?String(params.status):"all";
   const organization=safeUuid(params.organization);
@@ -106,7 +108,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   }
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
-    SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,
+    SELECT a.id,a.organization_id,a.site_id,a.category_id,a.supplier_id,a.asset_type,a.code,a.name,o.name company,s.name site,l.name location,c.name category,p.name supplier,
            a.status,a.criticality,a.manufacturer,a.model,a.serial_number,(a.image_data IS NOT NULL) has_image,a.created_at
     FROM assets a
     JOIN organizations o ON o.id=a.organization_id
@@ -180,6 +182,16 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
                  FROM (SELECT DISTINCT category_id::text value,category label FROM scoped WHERE category_id IS NOT NULL AND category IS NOT NULL) value_row),'[]'::jsonb) categories,
        COALESCE((SELECT jsonb_agg(row_to_json(value_row) ORDER BY value_row.label)
                  FROM (SELECT DISTINCT supplier_id::text value,supplier label FROM scoped WHERE supplier_id IS NOT NULL AND supplier IS NOT NULL) value_row),'[]'::jsonb) suppliers`,
+    scopeParams,
+  );
+
+  const typesPromise=query<AssetTypeSummary>(
+    `WITH scoped AS (${scopedSql})
+     SELECT btrim(asset_type) name,count(*)::int asset_count
+     FROM scoped
+     WHERE NULLIF(btrim(COALESCE(asset_type,'')),'') IS NOT NULL
+     GROUP BY btrim(asset_type)
+     ORDER BY btrim(asset_type)`,
     scopeParams,
   );
 
@@ -277,10 +289,10 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
 
   const creationGatePromise=getCreationGateForScope("asset",session.organizationId,platform,session.platformRole==="superadmin"?session.platformOrganizationIds:undefined);
   const [
-    summaryResult,facetsResult,brandsResult,modelsResult,catalogCategories,sites,locations,suppliers,
+    summaryResult,facetsResult,typesResult,brandsResult,modelsResult,catalogCategories,sites,locations,suppliers,
     maintenanceSummary,historySummary,documentSummary,creationGate,
   ]=await Promise.all([
-    summaryPromise,facetsPromise,brandsPromise,modelsPromise,catalogCategoriesPromise,sitesPromise,locationsPromise,suppliersPromise,
+    summaryPromise,facetsPromise,typesPromise,brandsPromise,modelsPromise,catalogCategoriesPromise,sitesPromise,locationsPromise,suppliersPromise,
     maintenancePromise,historyPromise,documentsPromise,creationGatePromise,
   ]);
 
@@ -292,6 +304,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const page=Math.min(requestedPage,pageCount);
   if(requestedPage!==page){
     const canonical=new URLSearchParams();
+    if(view!=="list")canonical.set("view",view);
     if(params.created)canonical.set("created",params.created);
     if(params.error)canonical.set("error",params.error);
     if(q)canonical.set("q",q);
@@ -314,7 +327,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
   const orderSql=sort==="created"?"created_at DESC,id DESC":"created_at DESC,id DESC";
   const assets=await query<Asset>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,category_id,supplier_id,code,name,company,site,location,category,supplier,status,criticality,manufacturer,model,serial_number,has_image,created_at::text
+     SELECT id,organization_id,site_id,category_id,supplier_id,asset_type,code,name,company,site,location,category,supplier,status,criticality,manufacturer,model,serial_number,has_image,created_at::text
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}
@@ -373,95 +386,97 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
         {canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar activo" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
       </div>}
     />
-    <AssetSubnav/>
+    <AssetSubnav activeView={view}/>
     {platform&&canWrite&&!importOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa para importar">La carga masiva de activos requiere un contexto empresarial explícito. Usa el filtro Empresa; únicamente se muestran empresas autorizadas para tu cuenta.</Alert></div>}
     {params.created && <div className="section"><Alert variant="success" title="Activo creado">El activo se registró correctamente.</Alert></div>}
     {error && <div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState icon="◇" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message} href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}/>}
 
-    <MetricGrid className="section phase7-kpi-grid">
-      <KpiCard label="Total activos" value={String(summary.total_count)} hint="Todos los activos autorizados" icon="asset"/>
-      <KpiCard label="Operativos" value={String(summary.operational_count)} hint={(summary.total_count?Math.round(summary.operational_count/summary.total_count*100):0)+"% del total"} icon="check" tone="success"/>
-      <KpiCard label="En mantenimiento" value={String(summary.maintenance_count)} hint={(summary.total_count?Math.round(summary.maintenance_count/summary.total_count*100):0)+"% del total"} icon="maintenance" tone="warning"/>
-      <KpiCard label="Fuera de servicio" value={String(summary.down_count)} hint={(summary.total_count?Math.round(summary.down_count/summary.total_count*100):0)+"% del total"} icon="warning" tone="danger"/>
-    </MetricGrid>
+    {view==="list"?<>
+      <MetricGrid className="section phase7-kpi-grid">
+        <KpiCard label="Total activos" value={String(summary.total_count)} hint="Todos los activos autorizados" icon="asset"/>
+        <KpiCard label="Operativos" value={String(summary.operational_count)} hint={(summary.total_count?Math.round(summary.operational_count/summary.total_count*100):0)+"% del total"} icon="check" tone="success"/>
+        <KpiCard label="En mantenimiento" value={String(summary.maintenance_count)} hint={(summary.total_count?Math.round(summary.maintenance_count/summary.total_count*100):0)+"% del total"} icon="maintenance" tone="warning"/>
+        <KpiCard label="Fuera de servicio" value={String(summary.down_count)} hint={(summary.total_count?Math.round(summary.down_count/summary.total_count*100):0)+"% del total"} icon="warning" tone="danger"/>
+      </MetricGrid>
 
-    <section className="section phase7-anchor" id="asset-list">
-      <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
-      {assets.rows.length?<CollectionView storageKey="assets" label="Vista de activos" grid={<div className="asset-modern-grid" data-collection-grid>{assets.rows.map(a=><AssetCard
-        key={a.id}
-        name={a.name}
-        code={a.code}
-        category={a.category||"Sin categoría"}
-        site={a.site}
-        location={a.location}
-        supplier={a.supplier||"Sin proveedor"}
-        criticality={criticalityLabel(a.criticality)}
-        manufacturerModel={[a.manufacturer,a.model].filter(Boolean).join(" · ")||"Sin registrar"}
-        status={statusLabel(a.status)}
-        statusTone={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}
-        imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
-        recordProps={{"data-module-record":true}}
-        actions={<>
-          <Link className="button secondary" href={"/dashboard/assets/"+a.id}>Ver detalles →</Link>
-          {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
-            {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
-            {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
-            {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
-          ]}/>}
-        </>}
-      />)}</div>} list={<StaticDataTable
-        className="asset-directory-list"
-        caption="Listado de activos"
-        columns={[
-          {key:"asset",label:"Activo",width:"30%"},
-          {key:"status",label:"Estado"},
-          {key:"category",label:"Tipo / categoría"},
-          {key:"location",label:"Ubicación"},
-          {key:"criticality",label:"Criticidad"},
-          {key:"supplier",label:"Proveedor"},
-          {key:"actions",label:"Acciones",align:"end"},
-        ]}
-        rows={assets.rows.map(a=>({
-          id:a.id,
-          recordProps:{"data-module-record":true},
-          cells:{
-            asset:<EntityIdentityCell
-              imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
-              imageAlt={a.has_image?"Imagen de "+a.name:""}
-              icon="asset"
-              variant="thumbnail"
-              title={a.name}
-              subtitle={a.code}
-              meta={[a.manufacturer,a.model].filter(Boolean).join(" · ")||null}
-            />,
-            status:<Badge variant={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}>{statusLabel(a.status)}</Badge>,
-            category:a.category||"Sin categoría",
-            location:[a.site,a.location].filter(Boolean).join(" · "),
-            criticality:criticalityLabel(a.criticality),
-            supplier:a.supplier||"Sin proveedor",
-            actions:<ListQuickActions>
-              <Link className="ds-list-action primary" href={"/dashboard/assets/"+a.id} title="Ver detalles" data-tooltip="Ver detalles" aria-label={"Ver detalles de "+a.name}><UiIcon name="eye" size={16}/></Link>
-              {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
-                {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
-                {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
-                {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
-              ]}/>}
-            </ListQuickActions>,
-          },
-        }))}
-      />}/>:<EmptyState icon="asset" title={summary.total_count?"No hay activos con estos filtros":"Aún no hay activos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros activos.":"Usa Agregar activo o Importar para comenzar."}/>}
-      <UrlPagination page={page} pageCount={pageCount} label="Paginación de activos"/>
-    </section>
-    <AssetCatalogOverview
+      <section className="section asset-list-view">
+        <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
+        {assets.rows.length?<CollectionView storageKey="assets" label="Vista de activos" grid={<div className="asset-modern-grid asset-modern-grid-dense" data-collection-grid>{assets.rows.map(a=><AssetCard
+          key={a.id}
+          name={a.name}
+          code={a.code}
+          category={a.category||"Sin categoría"}
+          site={a.site}
+          location={a.location}
+          supplier={a.supplier||"Sin proveedor"}
+          criticality={criticalityLabel(a.criticality)}
+          manufacturerModel={[a.manufacturer,a.model].filter(Boolean).join(" · ")||"Sin registrar"}
+          status={statusLabel(a.status)}
+          statusTone={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}
+          imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
+          recordProps={{"data-module-record":true}}
+          actions={<>
+            <Link className="button secondary" href={"/dashboard/assets/"+a.id}>Ver detalles →</Link>
+            {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+              {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
+              {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
+              {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
+            ]}/>}
+          </>}
+        />)}</div>} list={<StaticDataTable
+          className="asset-directory-list"
+          caption="Listado de activos"
+          columns={[
+            {key:"asset",label:"Activo",width:"30%"},
+            {key:"status",label:"Estado"},
+            {key:"category",label:"Tipo / categoría"},
+            {key:"location",label:"Ubicación"},
+            {key:"criticality",label:"Criticidad"},
+            {key:"supplier",label:"Proveedor"},
+            {key:"actions",label:"Acciones",align:"end"},
+          ]}
+          rows={assets.rows.map(a=>({
+            id:a.id,
+            recordProps:{"data-module-record":true},
+            cells:{
+              asset:<EntityIdentityCell
+                imageSrc={a.has_image?"/api/assets/"+a.id+"/image":null}
+                imageAlt={a.has_image?"Imagen de "+a.name:""}
+                icon="asset"
+                variant="thumbnail"
+                title={a.name}
+                subtitle={a.code}
+                meta={[a.manufacturer,a.model].filter(Boolean).join(" · ")||null}
+              />,
+              status:<Badge variant={a.status==="operational"?"success":a.status==="maintenance"?"warning":a.status==="down"?"danger":"neutral"}>{statusLabel(a.status)}</Badge>,
+              category:a.category||"Sin categoría",
+              location:[a.site,a.location].filter(Boolean).join(" · "),
+              criticality:criticalityLabel(a.criticality),
+              supplier:a.supplier||"Sin proveedor",
+              actions:<ListQuickActions>
+                <Link className="ds-list-action primary" href={"/dashboard/assets/"+a.id} title="Ver detalles" data-tooltip="Ver detalles" aria-label={"Ver detalles de "+a.name}><UiIcon name="eye" size={16}/></Link>
+                {owner&&<OwnerRecordActions table="assets" id={a.id} label={a.name} fields={[
+                  {name:"code",label:"Código",value:a.code},{name:"name",label:"Nombre",value:a.name},
+                  {name:"status",label:"Estado",value:a.status,type:"select",options:[{value:"operational",label:"Operativo"},{value:"maintenance",label:"Mantenimiento"},{value:"down",label:"Fuera de servicio"},{value:"retired",label:"Retirado"}]},
+                  {name:"criticality",label:"Criticidad",value:a.criticality,type:"select",options:[{value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"critical",label:"Crítica"}]},
+                ]}/>}
+              </ListQuickActions>,
+            },
+          }))}
+        />}/>:<EmptyState icon="asset" title={summary.total_count?"No hay activos con estos filtros":"Aún no hay activos"} description={summary.total_count?"Ajusta la búsqueda o los filtros para ver otros activos.":"Usa Agregar activo o Importar para comenzar."}/>}
+        <UrlPagination page={page} pageCount={pageCount} label="Paginación de activos"/>
+      </section>
+    </>:<AssetCatalogOverview
+      view={view}
       summary={summary}
+      types={typesResult.rows}
       brands={brandsResult.rows}
       models={modelsResult.rows}
       categories={catalogCategories.rows}
       maintenance={maintenanceSummary.rows}
       history={historySummary.rows}
       documents={documentSummary.rows}
-    />
-  </div>;
+    />}  </div>;
 }

@@ -29,6 +29,7 @@ export default function ConfigurableCatalogSelect({
   const [selected,setSelected]=useState<string[]>(initial);
   const [search,setSearch]=useState("");
   const [canCreate,setCanCreate]=useState(false);
+  const [canManage,setCanManage]=useState(false);
   const [loading,setLoading]=useState(false);
   const [creating,setCreating]=useState(false);
   const [error,setError]=useState("");
@@ -41,8 +42,8 @@ export default function ConfigurableCatalogSelect({
     setLoading(true);setError("");
     const qs=organizationId?"?organization_id="+encodeURIComponent(organizationId):"";
     fetch("/api/catalogs/"+encodeURIComponent(catalog)+qs,{signal:controller.signal})
-      .then(async response=>{if(!response.ok)throw new Error("catalog");return response.json() as Promise<{options:ConfigurableCatalogOption[];canCreate:boolean}>;})
-      .then(data=>{if(!cancelled){setOptions(data.options.filter(option=>option.active));setCanCreate(Boolean(data.canCreate));}})
+      .then(async response=>{if(!response.ok)throw new Error("catalog");return response.json() as Promise<{options:ConfigurableCatalogOption[];canCreate:boolean;canManage:boolean}>;})
+      .then(data=>{if(!cancelled){setOptions(data.options.filter(option=>option.active));setCanCreate(Boolean(data.canCreate));setCanManage(Boolean(data.canManage));}})
       .catch(err=>{if(!cancelled&&err?.name!=="AbortError")setError("No fue posible cargar las opciones.");})
       .finally(()=>{if(!cancelled)setLoading(false);});
     return()=>{cancelled=true;controller.abort();};
@@ -63,6 +64,8 @@ export default function ConfigurableCatalogSelect({
     if(!term)return options;
     return options.filter(option=>(option.label+" "+option.code).toLocaleLowerCase("es").includes(term));
   },[options,search]);
+  const systemOptions=filtered.filter(option=>option.origin==="SYSTEM");
+  const customOptions=filtered.filter(option=>option.origin==="CUSTOM");
 
   function choose(option:ConfigurableCatalogOption){
     const value=optionValue(option);
@@ -109,19 +112,32 @@ export default function ConfigurableCatalogSelect({
       <div className="configurable-catalog-search"><UiIcon name="search" size={15}/><input value={search} onChange={event=>setSearch(event.target.value)} placeholder={"Buscar "+label.toLowerCase()+"..."} autoFocus/></div>
       <div className="multi-select-options configurable-catalog-options">
         {loading&&<span className="configurable-catalog-empty">Cargando opciones…</span>}
-        {!loading&&filtered.map(option=>{
-          const active=selected.includes(optionValue(option));
-          return <button type="button" key={option.id} className={active?"active":""} onClick={()=>choose(option)}>
-            <span><strong>{option.label}</strong><small>{option.origin==="SYSTEM"?"Sistema":"Empresa"}</small></span>
-            {active&&<UiIcon name="check" size={14}/>}
-          </button>;
-        })}
+        {!loading&&systemOptions.length>0&&<div className="configurable-catalog-group">
+          <span className="configurable-catalog-group-label">SISTEMA</span>
+          {systemOptions.map(option=>{
+            const active=selected.includes(optionValue(option));
+            return <button type="button" key={option.id} className={active?"active":""} onClick={()=>choose(option)}>
+              <span><strong>{option.label}</strong></span>
+              {active&&<UiIcon name="check" size={14}/>}
+            </button>;
+          })}
+        </div>}
+        {!loading&&customOptions.length>0&&<div className="configurable-catalog-group">
+          <span className="configurable-catalog-group-label">EMPRESA</span>
+          {customOptions.map(option=>{
+            const active=selected.includes(optionValue(option));
+            return <button type="button" key={option.id} className={active?"active":""} onClick={()=>choose(option)}>
+              <span><strong>{option.label}</strong></span>
+              {active&&<UiIcon name="check" size={14}/>}
+            </button>;
+          })}
+        </div>}
         {!loading&&!filtered.length&&<span className="configurable-catalog-empty">No hay coincidencias.</span>}
       </div>
-      {(mayCreate||allowManage||multiple)&&<div className="configurable-catalog-actions">
+      {(mayCreate||(allowManage&&canManage)||multiple)&&<div className="configurable-catalog-actions">
         {multiple&&<button type="button" onClick={()=>{setOpen(false);setSearch("");}}><UiIcon name="check" size={14}/> Aplicar selección</button>}
         {mayCreate&&<button type="button" onClick={()=>{setOpen(false);setCreateOpen(true);}}><UiIcon name="plus" size={14}/> Crear nueva opción</button>}
-        {allowManage&&<a href={"/dashboard/settings/catalogs?catalog="+encodeURIComponent(catalog)}><UiIcon name="settings" size={14}/> Administrar catálogo</a>}
+        {allowManage&&canManage&&<a href={"/dashboard/settings/catalogs?catalog="+encodeURIComponent(catalog)}><UiIcon name="settings" size={14}/> Administrar catálogo</a>}
       </div>}
     </div>}
     {help&&<small>{help}</small>}

@@ -271,3 +271,8 @@ ON CONFLICT DO NOTHING;
 UPDATE configurable_catalog_options
 SET active=false,updated_at=now()
 WHERE catalog_key='routine_frequencies' AND code='meter';
+
+-- Leads are platform-scoped, not tenant-owned; keep their classifications controlled.
+UPDATE configurable_catalogs
+SET allow_custom=false,updated_at=now()
+WHERE key IN ('lead_sources','lead_interests','lead_statuses','lead_followups');

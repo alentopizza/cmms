@@ -18,7 +18,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   if(!current.rowCount)return new NextResponse("Not found",{status:404});
   const row=current.rows[0];
   if(row.organization_id&&!canAccessOrganization(session,row.organization_id))return new NextResponse("Forbidden",{status:403});
-  if(row.origin==="SYSTEM"&&session.platformRole==="user")return new NextResponse("System options are protected",{status:403});
+  if(row.origin==="SYSTEM"&&session.platformRole!=="platform_owner")return new NextResponse("System options are protected",{status:403});
 
   const body=await request.json().catch(()=>null) as {label?:string;description?:string;active?:boolean}|null;
   if(!body)return NextResponse.json({error:"invalid"},{status:400});

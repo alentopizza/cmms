@@ -13,6 +13,7 @@ import { CountryCityFields, TaxIdentificationTypeSelect } from "@/components/Int
 import UiIcon from "@/components/UiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MultiSelectDropdown, { type MultiSelectOption } from "@/components/MultiSelectDropdown";
+import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 import RequisitionExportMenu from "@/components/RequisitionExportMenu";
 import { countryDefinition, countryName } from "@/lib/international-catalog";
 import type { SupplierCommercialAnalytics, SupplierCommercialTrend, SupplierRequisitionPerformance } from "@/lib/supplier-analytics";
@@ -409,8 +410,8 @@ export default function SupplierDirectory({
     <div className="entity-panel"><h3><span className="entity-section-icon"><UiIcon name="company"/></span>Editar proveedor</h3><div className="form-grid">
       <div className="field"><label>Nombre comercial *</label><input name="name" defaultValue={detail.name} required/></div>
       <div className="field"><label>Razón social *</label><input name="legal_name" defaultValue={detail.legal_name||""} required/></div>
-      <MultiSelectDropdown name="capability_codes" label="Tipo de proveedor" options={capabilityOptions} defaultValues={detail.capability_codes||[]} required help="Puedes seleccionar múltiples capacidades normalizadas."/>
-      <MultiSelectDropdown name="specialty_codes" label="Categoría / especialidad" options={specialtyOptions} defaultValues={detail.specialty_codes||[]} help="Catálogo estándar para mantener consistencia en filtros, importaciones y exportaciones."/>
+      <ConfigurableCatalogSelect name="capability_codes" label="Tipo de proveedor" catalog="supplier_types" organizationId={detail.organization_id} defaultValues={detail.capability_codes||[]} multiple allowCreate allowManage required help="Puedes seleccionar múltiples capacidades normalizadas."/>
+      <ConfigurableCatalogSelect name="specialty_codes" label="Categoría / especialidad" catalog="supplier_specialties" organizationId={detail.organization_id} defaultValues={detail.specialty_codes||[]} multiple allowCreate allowManage help="Opciones SYSTEM y CUSTOM de esta empresa, sin perder las relaciones existentes."/>
       <TaxIdentificationTypeSelect id="supplier-edit-tax-type" name="tax_id_type" countryInputId="supplier-edit-country" countryCode={detail.country_code||"CO"} defaultValue={detail.tax_id_type||""}/>
       <div className="field"><label>Número de identificación</label><input name="tax_id" defaultValue={detail.tax_id||""}/></div>
       <CountryCityFields countryId="supplier-edit-country" countryName="country_code" cityId="supplier-edit-city" cityName="city" defaultCountry={detail.country_code||"CO"} defaultCity={detail.city||""} required/>

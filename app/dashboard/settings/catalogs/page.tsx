@@ -8,7 +8,7 @@ import { query } from "@/lib/db";
 import { Badge } from "@/components/ui-kit/Badge";
 import CatalogAdminPanel from "@/components/CatalogAdminPanel";
 
-export default async function CatalogsPage({searchParams}:{searchParams:Promise<{catalog?:string;organization?:string}>}){
+export default async function CatalogsPage({searchParams}:{searchParams:Promise<{catalog?:string;organization?:string;q?:string}>}){
   const session=await getSession();
   if(!session)redirect("/login");
   if(!can(session,"catalogs.read"))redirect("/dashboard");
@@ -17,7 +17,11 @@ export default async function CatalogsPage({searchParams}:{searchParams:Promise<
   const requestedOrganization=params.organization||session.organizationId||null;
   const organizationId=requestedOrganization&&canAccessOrganization(session,requestedOrganization)?requestedOrganization:null;
   const definitions=await listCatalogDefinitions(organizationId);
-  const selected=definitions.find(item=>item.key===params.catalog)||definitions[0]||null;
+  const q=String(params.q||"").trim().toLocaleLowerCase("es");
+  const visibleDefinitions=q?definitions.filter(item=>
+    [item.label,item.description||"",item.module,item.key].join(" ").toLocaleLowerCase("es").includes(q)
+  ):definitions;
+  const selected=definitions.find(item=>item.key===params.catalog)||visibleDefinitions[0]||definitions[0]||null;
   const options=selected?await listCatalogOptions(selected.key,organizationId,{includeInactive:true}):[];
   const scope=organizationScopeFor(session);
   const organizations=session.platformRole==="user"?[]
@@ -40,11 +44,19 @@ export default async function CatalogsPage({searchParams}:{searchParams:Promise<
       <button className="button secondary" type="submit">Cambiar contexto</button>
     </form>}
 
+    <form className="card section catalog-search-bar" method="get">
+      {organizationId&&<input type="hidden" name="organization" value={organizationId}/>}
+      {selected&&<input type="hidden" name="catalog" value={selected.key}/>}
+      <div className="field"><label>Buscar catálogo</label><input name="q" defaultValue={params.q||""} placeholder="Nombre, módulo o descripción"/></div>
+      <button className="button secondary" type="submit">Buscar</button>
+      {organizationId&&<Badge variant="neutral">Empresa seleccionada: {organizations.find(org=>org.id===organizationId)?.name||"Actual"}</Badge>}
+    </form>
+
     <div className="catalog-admin-layout section">
       <aside className="card catalog-directory">
-        <div className="catalog-directory-head"><strong>Catálogos</strong><small>{definitions.length} registrados</small></div>
-        {definitions.map(item=><Link key={item.key} className={"catalog-directory-item"+(selected?.key===item.key?" active":"")} href={"/dashboard/settings/catalogs?catalog="+encodeURIComponent(item.key)+(organizationId?"&organization="+organizationId:"")}>
-          <div><strong>{item.label}</strong><span>{item.description}</span></div>
+        <div className="catalog-directory-head"><strong>Catálogos</strong><small>{visibleDefinitions.length} de {definitions.length}</small></div>
+        {visibleDefinitions.map(item=><Link key={item.key} className={"catalog-directory-item"+(selected?.key===item.key?" active":"")} href={"/dashboard/settings/catalogs?catalog="+encodeURIComponent(item.key)+(organizationId?"&organization="+organizationId:"")}>
+          <div><strong>{item.label}</strong><span>{item.module} · {item.description}</span></div>
           <div><b>{item.total_count} opciones</b><small>{item.system_count} sistema · {item.custom_count} empresa</small></div>
         </Link>)}
       </aside>

@@ -23,6 +23,7 @@ const page=read("app/dashboard/inventory/page.tsx");
 expect(page,"INVENTORY_MAIN_VIEWS","inventory view registry");
 for(const view of ["summary","products","reports","settings"])expect(page,'view==="'+view+'"',"inventory central view "+view);
 expect(page,"<InventorySubnav active={view}/>","inventory active subnav");
+expect(page,'name="view" value="products"',"product sort preserves central view");
 if(/\/dashboard\/inventory#/.test(page))throw new Error("Inventory main page still uses hash navigation");
 
 const css=read("app/globals.css");

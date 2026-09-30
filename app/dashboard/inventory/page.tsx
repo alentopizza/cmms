@@ -508,6 +508,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           <div><span className="eyebrow">Listado de inventario</span><h2>Catálogo y existencias</h2><p className="muted">La existencia se calcula desde movimientos de Kardex y bodegas.</p></div>
           <div className="inventory-catalog-heading-tools">
             <form className="inventory-catalog-sort" method="get">
+              <input type="hidden" name="view" value="products"/>
               {q&&<input type="hidden" name="q" value={q}/>}
               {stockStatus!=="all"&&<input type="hidden" name="status" value={stockStatus}/>}
               {organization&&<input type="hidden" name="organization" value={organization}/>}

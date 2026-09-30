@@ -27,18 +27,25 @@ export async function POST(request: Request) {
   const noticeBody=String(form.get("biometric_notice_body")||DEFAULT_BIOMETRIC_NOTICE_BODY).trim().slice(0,12000);
   const returnStep=["1","2","3","4","5"].includes(String(form.get("return_step")||""))?String(form.get("return_step")):"";
 
-  const target=new URL("/dashboard/attendance",request.url);
-  target.searchParams.set("organization_id",organizationId);
-  target.searchParams.set("view","setup");
-  if(returnStep)target.searchParams.set("step",returnStep);
+  const targetParams=new URLSearchParams({
+    organization_id:organizationId,
+    view:"setup",
+  });
+  if(returnStep)targetParams.set("step",returnStep);
+  const redirectToAttendance=(extra?:Record<string,string>)=>{
+    const params=new URLSearchParams(targetParams);
+    for(const [key,value] of Object.entries(extra||{}))params.set(key,value);
+    return new NextResponse(null,{
+      status:303,
+      headers:{Location:"/dashboard/attendance?"+params.toString()},
+    });
+  };
 
   if(!roles.length){
-    target.searchParams.set("error","roles");
-    return NextResponse.redirect(target,303);
+    return redirectToAttendance({error:"roles"});
   }
   if(noticeTitle.length<8||noticeBody.length<80){
-    target.searchParams.set("error","biometric_notice");
-    return NextResponse.redirect(target,303);
+    return redirectToAttendance({error:"biometric_notice"});
   }
 
   const client=await pool.connect();
@@ -93,8 +100,7 @@ export async function POST(request: Request) {
     }
 
     await client.query("COMMIT");
-    target.searchParams.set("saved","policy");
-    return NextResponse.redirect(target,303);
+    return redirectToAttendance({saved:"policy"});
   }catch(error){
     try{await client.query("ROLLBACK");}catch{}
     throw error;

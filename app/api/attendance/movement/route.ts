@@ -174,9 +174,15 @@ export async function POST(request:Request){
     await client.query("BEGIN");
 
     const policy=await loadPolicy(client,session.organizationId);
-    if(!policy.enabled||!attendanceRoleEnabled(session,policy.enabled_roles)){
+    const controlOverride=await client.query<{enabled:boolean}>(
+      `SELECT enabled FROM user_attendance_control_overrides
+       WHERE organization_id=$1 AND user_id=$2`,
+      [session.organizationId,session.userId],
+    );
+    const attendanceEnabled=policy.enabled&&(controlOverride.rows[0]?.enabled??attendanceRoleEnabled(session,policy.enabled_roles));
+    if(!attendanceEnabled){
       await client.query("ROLLBACK");
-      return NextResponse.json({message:"El control de asistencia no está habilitado para tu rol."},{status:409});
+      return NextResponse.json({message:"El control de asistencia no está habilitado para tu usuario."},{status:409});
     }
 
     const shift=await client.query<{id:string}>(

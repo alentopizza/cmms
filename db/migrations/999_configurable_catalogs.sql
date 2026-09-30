@@ -158,3 +158,20 @@ WHERE key IN (
   'work_order_types','work_order_priorities','work_order_statuses',
   'lead_sources','lead_statuses'
 );
+
+
+-- Preserve observed brand -> model relationships from legacy assets without rewriting asset rows.
+INSERT INTO configurable_catalog_option_relations(parent_option_id,child_option_id,relation_type)
+SELECT DISTINCT brand.id, model.id, 'legacy_asset_brand_model'
+FROM assets a
+JOIN configurable_catalog_options brand
+  ON brand.catalog_key='asset_brands'
+ AND brand.organization_id=a.organization_id
+ AND lower(brand.label)=lower(trim(a.manufacturer))
+JOIN configurable_catalog_options model
+  ON model.catalog_key='asset_models'
+ AND model.organization_id=a.organization_id
+ AND lower(model.label)=lower(trim(a.model))
+WHERE nullif(trim(a.manufacturer),'') IS NOT NULL
+  AND nullif(trim(a.model),'') IS NOT NULL
+ON CONFLICT DO NOTHING;

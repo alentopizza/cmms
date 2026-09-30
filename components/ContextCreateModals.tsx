@@ -301,6 +301,9 @@ export function RoutineCreateModal({
     if (open) setAssetId(initial);
   }, [open, initial]);
 
+  const selectedAsset=assets.find(asset=>asset.id===assetId);
+  const organizationId=selectedAsset?.organization_id;
+
   return <>
     <TriggerButton label={triggerLabel} icon="activity" secondary={secondary} disabled={assets.length===0 && !fixedAssetId} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Mantenimiento preventivo" title="Crear rutina" description={fixedAssetName ? `El activo ${fixedAssetName} ya está seleccionado.` : "Selecciona el activo y define su frecuencia preventiva."}>
@@ -311,8 +314,11 @@ export function RoutineCreateModal({
           {fixedAssetId && <input type="hidden" name="asset_id" value={fixedAssetId} />}
           <div className="field form-span-2"><label>Nombre de la rutina *</label><input name="name" required autoFocus placeholder="Ej. Inspección y limpieza mensual de filtros" /></div>
           <div className="field form-span-2"><label>Descripción</label><input name="description" placeholder="Ej. Verificar filtros, correas, vibración y registrar hallazgos" /></div>
+          <ConfigurableCatalogSelect name="routine_type" label="Tipo de rutina" catalog="routine_types" organizationId={organizationId} allowCreate allowManage placeholder="Selecciona o crea un tipo" />
+          <ConfigurableCatalogSelect name="priority" label="Prioridad" catalog="routine_priorities" organizationId={organizationId} allowCreate allowManage defaultValue="medium" />
+          <ConfigurableCatalogSelect name="specialty" label="Especialidad" catalog="routine_specialties" organizationId={organizationId} allowCreate allowManage placeholder="Selecciona o crea una especialidad" />
           <div className="field"><label>Cada *</label><input name="frequency_value" type="number" min="1" defaultValue="1" required /></div>
-          <div className="field"><label>Unidad *</label><select name="frequency_unit" defaultValue="month"><option value="day">Día(s)</option><option value="week">Semana(s)</option><option value="month">Mes(es)</option><option value="year">Año(s)</option></select></div>
+          <ConfigurableCatalogSelect name="frequency_unit" label="Unidad" catalog="routine_frequencies" organizationId={organizationId} defaultValue="month" required help="La frecuencia conserva la lógica calendario existente; el catálogo solo centraliza las opciones permitidas." />
           <div className="field"><label>Próxima ejecución</label><input name="next_due_at" type="date" /></div>
           <div className="field"><label>Duración estimada (min)</label><input name="estimated_minutes" type="number" min="0" placeholder="60" /></div>
         </div>

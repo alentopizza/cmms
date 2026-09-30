@@ -13671,3 +13671,12 @@ html[data-theme="dark"] .procurement-match-badge.pending_evidence,html[data-them
   .catalog-organization-picker{align-items:stretch;flex-direction:column}
   .catalog-organization-picker .field{min-width:0;width:100%}
 }
+
+.configurable-catalog-group{display:grid;gap:2px;padding:4px 0}
+.configurable-catalog-group+.configurable-catalog-group{border-top:1px solid var(--color-border-subtle);margin-top:4px;padding-top:8px}
+.configurable-catalog-group-label{display:block;padding:4px 10px 6px;color:var(--color-text-muted);font-size:10px;font-weight:800;letter-spacing:.08em}
+.configurable-catalog-group>button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:0;border-radius:var(--radius-lg);background:transparent;color:var(--color-text-primary);text-align:left;cursor:pointer}
+.configurable-catalog-group>button:hover,.configurable-catalog-group>button.active{background:var(--color-surface-subtle)}
+.configurable-catalog-group>button span{display:grid;gap:2px;min-width:0}
+.configurable-catalog-group>button strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catalog-option-actions{display:flex;gap:6px;flex-wrap:wrap}

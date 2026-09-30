@@ -21,6 +21,8 @@ export async function POST(request:Request) {
   const locationId=String(form.get("location_id")||"");
   const supplierId=String(form.get("supplier_id")||"");
   const categoryName=String(form.get("category")||"").trim();
+  const itemType=String(form.get("item_type")||"").trim();
+  const catalogStatus=String(form.get("catalog_status")||"active").trim();
   const warehouseIdInput=String(form.get("warehouse_id")||"");
   const warehouseName=String(form.get("warehouse_name")||form.get("storage_location")||"Almacén principal").trim()||"Almacén principal";
   const sku=String(form.get("sku")||"").trim().toUpperCase();
@@ -128,10 +130,10 @@ export async function POST(request:Request) {
     const item=await client.query<{id:string}>(
       `INSERT INTO inventory_items(
          organization_id,site_id,location_id,supplier_id,category_id,warehouse_id,sku,name,description,presentation,
-         unit,quantity,min_quantity,max_quantity,unit_cost,storage_location,image_data,image_mime_type,image_file_name
-       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,$12,$13,$14,$15,$16,$17,$18)
+         unit,item_type,catalog_status,active,quantity,min_quantity,max_quantity,unit_cost,storage_location,image_data,image_mime_type,image_file_name
+       ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,0,$15,$16,$17,$18,$19,$20,$21)
        RETURNING id`,
-      [organizationId,siteId,locationId,supplierId,categoryId,warehouseId,sku,name,description||null,presentation||null,unit,minQuantity,maxQuantity,unitCost,warehouseName,image?.data||null,image?.mime||null,image?"inventory-image":null],
+      [organizationId,siteId,locationId,supplierId,categoryId,warehouseId,sku,name,description||null,presentation||null,unit,itemType||null,catalogStatus,catalogStatus!=="inactive",minQuantity,maxQuantity,unitCost,warehouseName,image?.data||null,image?.mime||null,image?"inventory-image":null],
     );
     await client.query(
       `INSERT INTO inventory_stock_levels(organization_id,item_id,warehouse_id,quantity,min_quantity,max_quantity)

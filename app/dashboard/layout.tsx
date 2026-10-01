@@ -89,7 +89,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ? query<{id:string;action:string;entity_type:string;created_at:string}>(
           `SELECT id::text,action,entity_type,created_at::text
            FROM audit_log
-           WHERE user_id=$1
+           WHERE user_id=$1 AND created_at>=now()-interval '30 days'
            ORDER BY created_at DESC,id DESC
            LIMIT 12`,
           [session.userId],

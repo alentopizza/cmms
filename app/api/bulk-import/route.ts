@@ -594,6 +594,7 @@ function assetValidation(
     if(!rawAssetId&&!rawCode&&!rawName)continue;
 
     let existing:AssetRecord|null=null;
+    let resolvedExistingBySimilarity=false;
     let operation:ParsedAsset["operation"]="create";
 
     if(rawAssetId){
@@ -624,6 +625,7 @@ function assetValidation(
             existing=null;
           }else if(choice&&assetsById.has(choice)){
             existing=assetsById.get(choice)||null;
+            resolvedExistingBySimilarity=true;
           }else{
             addResolution({
               key:rKey,field:"ACTIVO",value:rawCode,rows:[],
@@ -642,7 +644,7 @@ function assetValidation(
       operation="conflict";
     }
 
-    const code=rawCode||(existing?.code||"");
+    const code=resolvedExistingBySimilarity&&existing?existing.code:(rawCode||(existing?.code||""));
     const name=rawName||(existing?.name||"");
     if(!existing&&!code)issue(issues,sheetName,row.rowNumber,"error","Falta Código.","Código","", "Completa un código único para el activo.");
     if(!existing&&!name)issue(issues,sheetName,row.rowNumber,"error","Falta Nombre.","Nombre","", "Completa el nombre del activo.");

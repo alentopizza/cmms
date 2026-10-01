@@ -258,7 +258,9 @@ export function SidebarAccountMenu({
       onClick={() => setOpen(value => !value)}
       aria-expanded={open}
       aria-haspopup="menu"
-      title={collapsed ? fullName + " · " + role : undefined}
+      aria-label={placement==="header"?"Abrir perfil de "+fullName:undefined}
+      title={placement==="header"?"Perfil · "+fullName:(collapsed ? fullName + " · " + role : undefined)}
+      data-tooltip={placement==="header"?"Perfil":undefined}
     >
       <span className={placement === "header" ? "header-account-avatar" : "sidebar-account-avatar"}><Avatar src={avatarSrc} initials={initials} size="sm"/></span>
       {!collapsed && <span className={placement === "header" ? "header-account-copy" : "sidebar-account-copy"}>

@@ -193,6 +193,17 @@
 .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle button{
   flex:0 0 auto;
 }
+.desweb-shell-v2 .module-page-tools-portal .module-context-control{
+  grid-area:context;
+  min-width:0;
+  max-width:100%;
+  display:flex;
+  align-items:center;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-context-control>*{
+  min-width:0;
+  max-width:100%;
+}
 .desweb-shell-v2 .module-page-tools-portal .module-add-action{
   grid-area:action;
   width:auto!important;
@@ -236,18 +247,18 @@
 /* Large desktop — one operational row. */
 @media(min-width:1500px){
   .desweb-shell-v2 .context-header{
-    grid-template-columns:minmax(180px,220px) minmax(240px,1fr) max-content max-content max-content max-content minmax(180px,220px);
-    grid-template-areas:"identity search filters view action count account";
+    grid-template-columns:minmax(170px,210px) minmax(180px,1fr) max-content max-content minmax(180px,260px) max-content max-content minmax(160px,205px);
+    grid-template-areas:"identity search filters view context action count account";
   }
 }
 
 /* Medium desktop / laptop — identity + search + user, then actions. */
 @media(min-width:1200px) and (max-width:1499px){
   .desweb-shell-v2 .context-header{
-    grid-template-columns:minmax(180px,220px) minmax(240px,1fr) max-content max-content max-content minmax(170px,210px);
+    grid-template-columns:minmax(180px,220px) minmax(220px,1fr) max-content minmax(180px,260px) max-content max-content minmax(170px,210px);
     grid-template-areas:
-      "identity search search search search account"
-      ". filters view action count .";
+      "identity search search search search search account"
+      ". filters view context action count .";
   }
   .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{justify-content:flex-start}
 }
@@ -255,11 +266,11 @@
 /* Tablet — identity/user, search, then indivisible actions. */
 @media(min-width:768px) and (max-width:1199px){
   .desweb-shell-v2 .context-header{
-    grid-template-columns:minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-columns:minmax(0,1fr) max-content minmax(180px,260px) max-content max-content;
     grid-template-areas:
       "identity identity identity identity account"
       "search search search search search"
-      "filters view action count .";
+      "filters view context action count";
     align-items:center;
   }
   .desweb-shell-v2 .context-header-left{max-width:none}
@@ -279,11 +290,11 @@
 /* Drawer breakpoint adds the navigation control without disturbing header flow. */
 @media(min-width:768px) and (max-width:900px){
   .desweb-shell-v2 .context-header{
-    grid-template-columns:max-content minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-columns:max-content minmax(0,1fr) max-content minmax(180px,240px) max-content max-content;
     grid-template-areas:
       "nav identity identity identity identity account"
       "search search search search search search"
-      "filters view action count . .";
+      "filters view context context action count";
   }
   .desweb-shell-v2 .context-header-mobile-nav-slot{
     display:flex;
@@ -302,6 +313,7 @@
     grid-template-areas:
       "nav identity identity identity account"
       "search search search search search"
+      "context context context context context"
       "filters view action count .";
     padding:var(--space-2) var(--space-3)!important;
     align-items:center;
@@ -345,6 +357,10 @@
   .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle button{
     width:32px!important;
   }
+  .desweb-shell-v2 .module-page-tools-portal .module-context-control{
+    width:100%;
+    max-width:none;
+  }
   .desweb-shell-v2 .module-page-tools-portal .module-add-action,
   .desweb-shell-v2 .module-page-tools-portal .module-add-action>*,
   .desweb-shell-v2 .module-page-tools-portal .module-add-button{
@@ -352,8 +368,12 @@
     min-width:max-content;
   }
   .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{
-    flex-wrap:nowrap;
+    flex-wrap:wrap;
     justify-content:flex-start;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-add-action:has(.module-header-action-group){
+    grid-column:1/-1;
+    width:100%!important;
   }
   .desweb-shell-v2 .module-page-tools-portal .module-visible-count{
     display:inline-flex;
@@ -394,6 +414,7 @@
     grid-template-areas:
       "nav identity identity account"
       "search search search search"
+      "context context context context"
       "filters view action action";
   }
   .desweb-shell-v2 .module-page-tools-portal .module-visible-count{display:none}
@@ -549,5 +570,55 @@
     width:100%;
     max-width:none;
     grid-template-columns:minmax(0,1fr) 38px;
+  }
+}
+
+/* Compact header actions and accessible tooltips --------------------------- */
+.desweb-shell-v2 .contextual-create-trigger-icon-only{
+  position:relative;
+  width:40px!important;
+  min-width:40px!important;
+  height:40px!important;
+  min-height:40px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center;
+  border-radius:11px!important;
+}
+.desweb-shell-v2 .contextual-create-trigger-icon-only .contextual-create-icon{margin:0!important}
+.desweb-shell-v2 [data-tooltip]{position:relative}
+.desweb-shell-v2 [data-tooltip]:hover:after,
+.desweb-shell-v2 [data-tooltip]:focus-visible:after{
+  content:attr(data-tooltip);
+  position:absolute;
+  z-index:300;
+  left:50%;
+  top:calc(100% + 7px);
+  transform:translateX(-50%);
+  padding:5px 7px;
+  border-radius:7px;
+  background:var(--color-navy-900);
+  color:var(--color-text-inverse);
+  font-size:8px;
+  font-weight:700;
+  white-space:nowrap;
+  pointer-events:none;
+  box-shadow:var(--shadow-md);
+}
+@media(max-width:390px){
+  .desweb-shell-v2 .context-header{
+    padding-inline:var(--space-2)!important;
+    column-gap:4px;
+  }
+  .desweb-shell-v2 .context-header-copy>span{font-size:8px}
+  .desweb-shell-v2 .context-header-copy>strong{font-size:11px}
+  .desweb-shell-v2 .module-page-tools-portal .ds-filter-trigger{
+    min-width:104px;
+    max-width:132px;
+  }
+  .desweb-shell-v2 .module-page-tools-portal .module-view-mode-tools .ds-view-mode-toggle button{
+    width:34px!important;
+    min-width:34px!important;
+    min-height:38px;
   }
 }

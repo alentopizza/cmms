@@ -116,3 +116,7 @@ for(const marker of [
 ]){
   if(!headerCss.includes(marker))throw new Error("Header proportion/spacing contract missing "+marker);
 }
+
+if(!headerCss.includes("gap:12px"))throw new Error("Header count/notification spacing contract missing "+"gap:12px");
+
+if(!headerCss.includes("padding-left:10px"))throw new Error("Header count/notification spacing contract missing "+"padding-left:10px");

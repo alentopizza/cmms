@@ -52,7 +52,8 @@ const profileStart=chromeSource.indexOf("export function SidebarAccountMenu");
 if(profileStart<0)throw new Error("Shared profile menu missing");
 const headerSource=chromeSource.slice(0,profileStart);
 const profileSource=chromeSource.slice(profileStart);
-if(headerSource.includes('className="context-header-utility"'))throw new Error("Header still exposes duplicated utility controls");
+if(!headerSource.includes("GlobalNotificationBell"))throw new Error("Global notification bell missing from shared header");
+if((headerSource.match(/GlobalNotificationBell/g)||[]).length<2)throw new Error("Notification bell must be defined once and rendered once in shared header");
 for(const forbidden of ['href="/dashboard/help"','href="/dashboard/settings"']){
   if(headerSource.includes(forbidden))throw new Error("Header still duplicates account function "+forbidden);
 }
@@ -73,22 +74,31 @@ for(const forbidden of ["field-mobile-more-account",'href="/dashboard/help"','hr
 const globalHeaderCss=css.slice(css.indexOf("Global operational header responsive contract"));
 for(const marker of [
   "display:contents!important",
-  "grid-area:search","grid-area:filters","grid-area:view","grid-area:action","grid-area:count","grid-area:account",
+  "grid-area:search","grid-area:filters","grid-area:view","grid-area:context","grid-area:action","grid-area:count","grid-area:account",
   "@media(min-width:1500px)",
   "@media(min-width:1200px) and (max-width:1499px)",
   "@media(min-width:768px) and (max-width:1199px)",
   "@media(max-width:767px)",
   "@media(max-width:520px)",
   "min-width:min(240px,100%)",
-  'grid-template-areas:"identity search filters view action count account"',
-  '"identity search search search search account"',
+  'grid-template-areas:"identity search filters view context action count account"',
+  '"identity search search search search search account"',
   '"search search search search search"',
+  '"context context context context context"',
   "overflow-x:clip",
 ]){
   if(!globalHeaderCss.includes(marker))throw new Error("Global header responsive CSS missing "+marker);
 }
-for(const forbidden of ["transform:scale(","zoom:","position:absolute"]){
+for(const forbidden of ["transform:scale(","zoom:"]){
   if(globalHeaderCss.includes(forbidden))throw new Error("Global header responsive contract uses forbidden layout technique "+forbidden);
+}
+for(const marker of [
+  ".module-context-control",
+  ".contextual-create-trigger-icon-only",
+  "[data-tooltip]:focus-visible:after",
+  "@media(max-width:390px)",
+]){
+  if(!globalHeaderCss.includes(marker))throw new Error("Global contextual/accessibility header contract missing "+marker);
 }
 
 console.log("DESWEB Design System V2 Phase 3 shell/navigation checks passed.");

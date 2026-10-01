@@ -36,7 +36,7 @@ for(const marker of [
   'step:"1"',
   'step:"5"',
   'return_step',
-  "attendance-redesign-head",
+  "attendance-company-header-control",
   "attendance-setup-summary-grid",
 ]){
   if(!page.includes(marker))throw new Error("Attendance setup page contract missing "+marker);
@@ -44,6 +44,26 @@ for(const marker of [
 
 if(page.includes("attendance-admin-context")){
   throw new Error("Legacy long-scroll attendance admin context should not remain in the redesigned page");
+}
+if(page.includes('className="attendance-redesign-head"')){
+  throw new Error("Attendance must not render a duplicated secondary header");
+}
+for(const marker of [
+  'action={globalOperator?<form',
+  'className="attendance-company-header-control"',
+  'aria-label="Empresa de asistencia"',
+  'className="attendance-company-switch"',
+  'data-tooltip="Cambiar empresa"',
+]){
+  if(!page.includes(marker))throw new Error("Compact attendance company header control missing "+marker);
+}
+const shellCss=fs.readFileSync("app/shell-v2.css","utf8");
+for(const marker of [
+  ".attendance-company-header-control",
+  ".attendance-company-switch",
+  "@media(max-width:767px)",
+]){
+  if(!shellCss.includes(marker))throw new Error("Attendance header responsive styling missing "+marker);
 }
 if(page.includes("<SupervisedBiometricEnrollment")){
   throw new Error("Attendance page must not mount supervised enrollment as the primary setup flow");

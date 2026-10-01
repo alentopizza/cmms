@@ -13845,3 +13845,34 @@ html[data-theme="dark"] .procurement-match-badge.pending_evidence,html[data-them
 
 .module-add-button-icon-only{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:11px!important}
 .module-add-button-icon-only .ui-icon{width:17px;height:17px}
+
+
+/* Bulk import footer action balance ---------------------------------------- */
+.bulk-import-footer{
+  position:sticky;
+  bottom:0;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+  max-width:720px;
+  margin:0 auto;
+  padding:16px 18px 18px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.bulk-import-footer .button{
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  height:44px;
+  justify-content:center;
+  padding-inline:14px;
+  white-space:nowrap;
+}
+@media(max-width:700px){
+  .bulk-import-footer{
+    grid-template-columns:1fr;
+    max-width:none;
+  }
+}

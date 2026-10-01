@@ -171,7 +171,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
             <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
           </form>;
           const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions" editOverlay={false} afterSaveReopenKey={"lead:"+lead.id}/>:undefined;
-          const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup} reopenKey={"lead:"+lead.id}/>;
+          const preview=<LeadPreviewAction leadId={lead.id} name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup} reopenKey={"lead:"+lead.id}/>;
           return <article className="card lead-card" key={lead.id} data-module-record data-status={lead.status} data-search={[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")}>
             <header className="lead-card-head">
               <div className="lead-card-identity">
@@ -237,7 +237,7 @@ export default async function LeadsPage({searchParams}:{searchParams:Promise<{cr
               <button className="ds-button ds-button-secondary ds-button-sm" type="submit"><UiIcon name="check" size={14}/><span>Actualizar</span></button>
             </form>;
             const drawerActions=owner?<OwnerRecordActions table="sales_leads" id={lead.id} label={lead.full_name} fields={editFields} compact className="lead-detail-owner-actions" editOverlay={false} afterSaveReopenKey={"lead:"+lead.id}/>:undefined;
-            const preview=<LeadPreviewAction name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup} reopenKey={"lead:"+lead.id}/>;
+            const preview=<LeadPreviewAction leadId={lead.id} name={lead.full_name} company={lead.company_name} email={lead.email} phone={lead.phone} country={country} interest={interest} message={lead.message} status={lead.status} statusLabel={statusLabel} createdAt={createdAt} updatedAt={updatedAt} sourceLabel={SOURCE_LABELS[lead.source]||lead.source} manageActions={drawerActions} followupControls={drawerFollowup} reopenKey={"lead:"+lead.id}/>;
             return {
               id:lead.id,
               recordProps:{"data-module-record":true,"data-status":lead.status,"data-search":[lead.full_name,lead.company_name,lead.email,lead.phone,interest,SOURCE_LABELS[lead.source]||lead.source,lead.message,statusLabel].filter(Boolean).join(" ")},

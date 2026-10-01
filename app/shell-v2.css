@@ -502,9 +502,15 @@
   min-width:0;
   max-width:min(390px,34vw);
   display:grid;
-  grid-template-columns:minmax(180px,1fr) 38px;
+  grid-template-columns:auto minmax(150px,1fr) 38px;
   gap:var(--space-2);
   align-items:center;
+}
+.desweb-shell-v2 .module-page-tools-portal .attendance-company-context-label{
+  color:var(--color-text-muted);
+  font-size:9px;
+  font-weight:800;
+  white-space:nowrap;
 }
 .desweb-shell-v2 .module-page-tools-portal .attendance-company-header-control select{
   min-width:0;
@@ -569,6 +575,12 @@
   .desweb-shell-v2 .module-page-tools-portal .attendance-company-header-control{
     width:100%;
     max-width:none;
+    grid-template-columns:auto minmax(0,1fr) 38px;
+  }
+}
+@media(max-width:420px){
+  .desweb-shell-v2 .module-page-tools-portal .attendance-company-context-label{display:none}
+  .desweb-shell-v2 .module-page-tools-portal .attendance-company-header-control{
     grid-template-columns:minmax(0,1fr) 38px;
   }
 }

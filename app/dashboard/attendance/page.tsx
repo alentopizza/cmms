@@ -468,6 +468,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     />}
 
     {feedback.saved==="policy"&&<Alert variant="success" title="Política actualizada">Política de asistencia actualizada.</Alert>}
+    {feedback.saved==="site"&&<Alert variant="success" title="Geocerca actualizada">La configuración de la sede se guardó y permaneces dentro del módulo Asistencia.</Alert>}
     {feedback.error==="roles"&&<Alert variant="danger" title="Revisa la política">Selecciona al menos un rol para aplicar el control de asistencia.</Alert>}
     {feedback.error==="biometric_notice"&&<Alert variant="danger" title="Revisa la política biométrica">El título y el texto de consentimiento deben tener contenido suficiente antes de publicarse.</Alert>}
 

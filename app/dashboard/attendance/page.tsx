@@ -435,7 +435,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
       contextControl={globalOperator?<form method="get" action="/dashboard/attendance" className="attendance-company-header-control">
         <input type="hidden" name="view" value={activeView}/>
-                <label htmlFor="attendance-organization" className="sr-only">Empresa</label>
+        <label htmlFor="attendance-organization" className="attendance-company-context-label">Empresa</label>
         <select
           id="attendance-organization"
           name="organization_id"

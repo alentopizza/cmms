@@ -73,16 +73,27 @@ function TriggerButton({
   icon = "plus",
   secondary = false,
   disabled = false,
+  iconOnly = false,
   onClick,
 }: {
   label: string;
   icon?: UiIconName;
   secondary?: boolean;
   disabled?: boolean;
+  iconOnly?: boolean;
   onClick: () => void;
 }) {
-  return <button className={"button contextual-create-trigger"+(secondary ? " secondary" : "")} type="button" disabled={disabled} onClick={onClick}>
-    <span className="contextual-create-icon" aria-hidden="true"><UiIcon name={icon} size={17}/></span><span>{label}</span>
+  return <button
+    className={"button contextual-create-trigger"+(secondary ? " secondary" : "")+(iconOnly?" contextual-create-trigger-icon-only":"")}
+    type="button"
+    disabled={disabled}
+    onClick={onClick}
+    aria-label={label}
+    title={label}
+    data-tooltip={label}
+  >
+    <span className="contextual-create-icon" aria-hidden="true"><UiIcon name={iconOnly?"plus":icon} size={17}/></span>
+    {!iconOnly&&<span>{label}</span>}
   </button>;
 }
 
@@ -154,6 +165,7 @@ export function SubLocationCreateModal({
   returnTo,
   triggerLabel = "Nueva sububicación",
   secondary = false,
+  iconOnly = false,
 }: {
   sites: SiteOption[];
   locations: LocationOption[];
@@ -163,6 +175,7 @@ export function SubLocationCreateModal({
   returnTo: string;
   triggerLabel?: string;
   secondary?: boolean;
+  iconOnly?: boolean;
 }) {
   const initialSite = fixedSiteId || (sites.length === 1 ? sites[0].id : "");
   const [open,setOpen]=useState(false);
@@ -240,7 +253,7 @@ export function AssetCreateModal({
   const visibleSuppliers=suppliers.filter(supplier=>supplier.organization_id===organizationId);
 
   return <>
-    <TriggerButton label={triggerLabel} icon="asset" secondary={secondary} disabled={(sites.length===0 && !fixedSiteId) || suppliers.length===0} onClick={() => setOpen(true)} />
+    <TriggerButton label={triggerLabel} icon="asset" secondary={secondary} iconOnly={iconOnly} disabled={(sites.length===0 && !fixedSiteId) || suppliers.length===0} onClick={() => setOpen(true)} />
     <ModalShell open={open} onClose={() => setOpen(false)} eyebrow="Registro técnico" title="Crear activo" description={fixedLocationName ? `Quedará asociado directamente a ${fixedLocationName}.` : fixedSiteName ? `La sede ${fixedSiteName} ya está resuelta; solo selecciona la sububicación.` : "Selecciona el contexto físico del activo."}>
       <form className="company-modal-form" method="post" encType="multipart/form-data" action="/api/assets">
         <input type="hidden" name="return_to" value={returnTo} />

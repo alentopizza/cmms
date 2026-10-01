@@ -31,26 +31,54 @@ for(const forbidden of ["crew-showcase-grid","<CrewCard","Zona Sur","Mantenimien
 
 const directory=fs.readFileSync("components/CrewDirectory.tsx","utf8");
 for(const marker of [
-  "Buscar cuadrilla, líder, sede o descripción...",
-  "Todas las sedes",
-  "Todos los estados",
   "<CollectionView",
   'storageKey="crews"',
   'label="Vista de cuadrillas"',
-  'toolbarTargetId="crew-view-mode-tools"',
   "<CrewCard",
   "<StaticDataTable",
   "Contactar por WhatsApp",
   "Llamar",
   "Enviar correo",
   "Más acciones",
+  "Editar cuadrilla",
+  'action={"/api/crews/"+editCrew.id}',
+  'submitLabel="Guardar cambios"',
   "No encontramos cuadrillas",
   "No hay cuadrillas registradas",
 ]){
   if(!directory.includes(marker))throw new Error("Crew directory contract missing "+marker);
 }
+for(const removed of ["crew-directory-controls-v2","crew-directory-result-meta-v2",'toolbarTargetId="crew-view-mode-tools"']){
+  if(directory.includes(removed))throw new Error("Crew directory must not render duplicated lower controls: "+removed);
+}
 if(directory.includes("Todas las disciplinas")||directory.includes("En pausa")){
   throw new Error("Crew directory must not invent discipline or paused status without source data");
+}
+
+const form=fs.readFileSync("components/CrewCreateForm.tsx","utf8");
+for(const marker of [
+  'action="/api/crews"',
+  'submitLabel="Crear cuadrilla"',
+  "initialValues",
+  'name="leader_user_id"',
+  'name="member_ids"',
+  'name="description"',
+  'name="active"',
+]){
+  if(!form.includes(marker))throw new Error("Reusable crew form missing "+marker);
+}
+
+const updateApi=fs.readFileSync("app/api/crews/[id]/route.ts","utf8");
+for(const marker of [
+  'can(session,"crews.manage")',
+  "canAccessOrganization",
+  "canAccessSite",
+  "leader_user_id",
+  "DELETE FROM crew_members",
+  "INSERT INTO crew_members",
+  "active=$5",
+]){
+  if(!updateApi.includes(marker))throw new Error("Crew full edit API missing "+marker);
 }
 
 const cards=fs.readFileSync("components/business-ui/BusinessCards.tsx","utf8");
@@ -77,8 +105,6 @@ for(const marker of [
   "grid-template-columns:repeat(3,minmax(0,1fr))",
   "@media(max-width:1180px)",
   "@media(max-width:620px)",
-  ".crew-directory-controls-v2",
-  ".crew-view-mode-tools",
   ".crew-directory-list-v2",
 ]){
   if(!css.includes(marker))throw new Error("Crew responsive styles missing "+marker);

@@ -433,7 +433,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       searchPlaceholder="Buscar persona o rol en el reporte de asistencia"
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
-      action={globalOperator?<form method="get" action="/dashboard/attendance" className="attendance-company-header-control">
+      contextControl={globalOperator?<form method="get" action="/dashboard/attendance" className="attendance-company-header-control">
         <input type="hidden" name="view" value={activeView}/>
                 <label htmlFor="attendance-organization" className="sr-only">Empresa</label>
         <select

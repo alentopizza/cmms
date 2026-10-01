@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import UiIcon from "@/components/UiIcon";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -12,10 +11,10 @@ import BiometricEnrollmentAdmin from "@/components/BiometricEnrollmentAdmin";
 import SelfBiometricEnrollment from "@/components/SelfBiometricEnrollment";
 import UserAttendanceAuditCenter from "@/components/UserAttendanceAuditCenter";
 import AttendanceOperationalReport from "@/components/AttendanceOperationalReport";
-import AttendanceSetupWorkspace, { type AttendanceSetupStep } from "@/components/AttendanceSetupWorkspace";
 import { AttendanceContingencyReview, AttendanceContingencySelf, type ContingencyRequestView, type ContingencyReviewItem } from "@/components/AttendanceContingency";
 import { DEFAULT_ATTENDANCE_POLICY, DEFAULT_BIOMETRIC_NOTICE_BODY, DEFAULT_BIOMETRIC_NOTICE_TITLE, attendanceRoleEnabled } from "@/lib/attendance-policy";
 import ModuleHeader from "@/components/ModuleHeader";
+import AttendanceEditGuard from "@/components/AttendanceEditGuard";
 import { Alert, EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { ModuleNavigation } from "@/components/ui-kit/Navigation";
@@ -38,7 +37,10 @@ type Policy={
 type Site={
   id:string;
   name:string;
+  code:string|null;
+  address:string|null;
   city:string|null;
+  country:string;
   latitude:number|null;
   longitude:number|null;
   geofence_radius_m:number;
@@ -145,12 +147,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
     organizationId
       ? session.accessAllSites
         ? query<Site>(
-            `SELECT id,name,city,latitude,longitude,geofence_radius_m
+            `SELECT id,name,code,address,city,country,latitude,longitude,geofence_radius_m
              FROM sites WHERE organization_id=$1 AND active=true ORDER BY name`,
             [organizationId],
           )
         : query<Site>(
-            `SELECT id,name,city,latitude,longitude,geofence_radius_m
+            `SELECT id,name,code,address,city,country,latitude,longitude,geofence_radius_m
              FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name`,
             [organizationId,session.siteIds],
           )

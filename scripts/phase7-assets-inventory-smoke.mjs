@@ -119,3 +119,15 @@ const workflow=fs.readFileSync(".github/workflows/ci.yml","utf8");
 if(!workflow.includes("node scripts/phase7-assets-inventory-smoke.mjs"))throw new Error("CI does not run Phase 7 checks");
 
 console.log("DESWEB Design System V2 Phase 7 Assets/Inventory checks passed.");
+
+if(!globalCss.includes(".bulk-import-history{"))throw new Error("Bulk import layout contract missing "+".bulk-import-history{");
+
+if(!globalCss.includes("margin:12px 18px 0"))throw new Error("Bulk import layout contract missing "+"margin:12px 18px 0");
+
+if(!globalCss.includes("box-sizing:border-box"))throw new Error("Bulk import layout contract missing "+"box-sizing:border-box");
+
+if(!globalCss.includes("grid-template-columns:minmax(190px,1fr) minmax(200px,1fr) minmax(250px,1.25fr)"))throw new Error("Bulk import layout contract missing "+"grid-template-columns:minmax(190px,1fr) minmax(200px,1fr) minmax(250px,1.25fr)");
+
+if(!globalCss.includes("display:inline-flex"))throw new Error("Bulk import layout contract missing "+"display:inline-flex");
+
+if(!globalCss.includes("align-items:center"))throw new Error("Bulk import layout contract missing "+"align-items:center");

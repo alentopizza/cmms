@@ -40,6 +40,7 @@ export default function ModuleHeader({
     { value: "inactive", label: "Inactivos" },
   ],
   facets=[],
+  contextControl,
   action,
   serverState,
 }: {
@@ -51,6 +52,7 @@ export default function ModuleHeader({
   searchPlaceholder?: string;
   filters?: FilterOption[];
   facets?: ModuleFacet[];
+  contextControl?: React.ReactNode;
   action?: React.ReactNode;
   serverState?: ModuleHeaderServerState;
 }) {
@@ -237,6 +239,7 @@ export default function ModuleHeader({
 
       <div id="module-view-mode-tools" className="module-view-mode-tools" aria-label="Modo de visualización"/>
 
+      {contextControl&&<div className="module-context-control">{contextControl}</div>}
       {action && <div className="module-add-action">{action}</div>}
       <span className="module-visible-count" aria-live="polite" title={countLabel}>{visibleCount}/{count}</span>
     </div>,

@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import UiIcon from "@/components/UiIcon";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import { CrewCard } from "@/components/business-ui";
-import { CollectionView, Search } from "@/components/ui-kit/DataControls";
-import { Select } from "@/components/ui-kit/FormControls";
+import { CollectionView } from "@/components/ui-kit/DataControls";
 import { EmptyState } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
 import { StaticDataTable } from "@/components/ui-kit/StaticTable";
 import { EntityIdentityCell } from "@/components/ui-kit/CollectionIdentity";
+import { Modal } from "@/components/ui-kit/Overlay";
+import CrewCreateForm, { type CrewFormSite, type CrewFormWorker } from "@/components/CrewCreateForm";
 
 export type CrewDirectoryMember={
   id:string;
@@ -77,16 +78,12 @@ function contactActions(crew:CrewDirectoryItem){
   </>;
 }
 
-function ownerMenu(crew:CrewDirectoryItem,owner:boolean){
-  if(!owner)return null;
+function crewMenu(crew:CrewDirectoryItem,owner:boolean,onEdit:()=>void){
   return <details className="crew-card-more">
     <summary aria-label="Más acciones" title="Más acciones" data-tooltip="Más acciones"><UiIcon name="more" size={17}/></summary>
     <div className="crew-card-more-popover">
-      <OwnerRecordActions table="crews" id={crew.id} label={crew.name} fields={[
-        {name:"name",label:"Nombre",value:crew.name},
-        {name:"description",label:"Descripción",value:crew.description||"",type:"textarea"},
-        {name:"active",label:"Estado",value:crew.active,type:"checkbox"},
-      ]}/>
+      <button type="button" className="text-button" onClick={onEdit}><UiIcon name="edit" size={14}/> Editar cuadrilla</button>
+      {owner&&<OwnerRecordActions table="crews" id={crew.id} label={crew.name} fields={[]}/>}
     </div>
   </details>;
 }
@@ -94,36 +91,16 @@ function ownerMenu(crew:CrewDirectoryItem,owner:boolean){
 export default function CrewDirectory({
   crews,
   owner,
+  sites,
+  workers,
 }:{
   crews:CrewDirectoryItem[];
   owner:boolean;
+  sites:CrewFormSite[];
+  workers:CrewFormWorker[];
 }){
-  const [search,setSearch]=useState("");
-  const [siteId,setSiteId]=useState("all");
-  const [status,setStatus]=useState("all");
-
-  const sites=useMemo(()=>{
-    const map=new Map<string,string>();
-    for(const crew of crews)if(crew.siteId&&crew.siteName)map.set(crew.siteId,crew.siteName);
-    return [...map.entries()].sort((a,b)=>a[1].localeCompare(b[1],"es"));
-  },[crews]);
-
-  const filtered=useMemo(()=>{
-    const needle=search.trim().toLocaleLowerCase("es");
-    return crews.filter(crew=>{
-      if(siteId!=="all"&&crew.siteId!==siteId)return false;
-      if(status==="active"&&!crew.active)return false;
-      if(status==="inactive"&&crew.active)return false;
-      if(!needle)return true;
-      const members=crew.members.map(member=>member.name+" "+member.role).join(" ");
-      return [
-        crew.name,crew.organizationName,crew.siteName||"",crew.description||"",
-        crew.leaderName||"",crew.leaderRole,members,
-      ].join(" ").toLocaleLowerCase("es").includes(needle);
-    });
-  },[crews,search,siteId,status]);
-
-  const hasFilters=Boolean(search.trim()||siteId!=="all"||status!=="all");
+  const [editCrewId,setEditCrewId]=useState<string|null>(null);
+  const editCrew=crews.find(crew=>crew.id===editCrewId)||null;
 
   const empty=<EmptyState
     icon="file"
@@ -132,44 +109,10 @@ export default function CrewDirectory({
   />;
 
   return <section className="crew-directory-v2">
-    <div className="crew-directory-controls-v2">
-      <Search
-        value={search}
-        onValueChange={setSearch}
-        placeholder="Buscar cuadrilla, líder, sede o descripción..."
-        ariaLabel="Buscar cuadrillas"
-      />
-      <Select
-        value={siteId}
-        onChange={event=>setSiteId(event.target.value)}
-        placeholder=""
-        aria-label="Filtrar cuadrillas por sede"
-        options={[{value:"all",label:"Todas las sedes"},...sites.map(([value,label])=>({value,label}))]}
-      />
-      <Select
-        value={status}
-        onChange={event=>setStatus(event.target.value)}
-        placeholder=""
-        aria-label="Filtrar cuadrillas por estado"
-        options={[
-          {value:"all",label:"Todos los estados"},
-          {value:"active",label:"Activas"},
-          {value:"inactive",label:"Inactivas"},
-        ]}
-      />
-      <div id="crew-view-mode-tools" className="crew-view-mode-tools"/>
-    </div>
-
-    <div className="crew-directory-result-meta-v2">
-      <span>{filtered.length} de {crews.length} cuadrilla(s)</span>
-      {hasFilters&&<button type="button" onClick={()=>{setSearch("");setSiteId("all");setStatus("all");}}><UiIcon name="reset" size={13}/>Limpiar filtros</button>}
-    </div>
-
     <CollectionView
       storageKey="crews"
       label="Vista de cuadrillas"
-      toolbarTargetId="crew-view-mode-tools"
-      grid={filtered.length?<div className="crew-directory-grid-v2" data-collection-grid>{filtered.map(crew=><CrewCard
+      grid={crews.length?<div className="crew-directory-grid-v2" data-collection-grid>{crews.map(crew=><CrewCard
           key={crew.id}
           name={crew.name}
           organization={crew.organizationName}
@@ -193,7 +136,7 @@ export default function CrewDirectory({
             fallback:initials(member.name),
           }))}
           leaderActions={contactActions(crew)}
-          menuActions={ownerMenu(crew,owner)}
+          menuActions={crewMenu(crew,owner,()=>setEditCrewId(crew.id))}
           recordProps={{
             "data-module-record":true,
             "data-status":crew.active?"active":"inactive",
@@ -217,7 +160,7 @@ export default function CrewDirectory({
           {key:"completed",label:"Completadas",align:"end"},
           {key:"actions",label:"Acciones",align:"end"},
         ]}
-        rows={filtered.map(crew=>({
+        rows={crews.map(crew=>({
           id:crew.id,
           recordProps:{
             "data-module-record":true,
@@ -236,11 +179,39 @@ export default function CrewDirectory({
             members:crew.memberCount,
             activities:crew.activeActivityCount,
             completed:crew.completedActivityCount,
-            actions:<span className="crew-list-actions-v2">{contactActions(crew)}{ownerMenu(crew,owner)}</span>,
+            actions:<span className="crew-list-actions-v2">{contactActions(crew)}{crewMenu(crew,owner,()=>setEditCrewId(crew.id))}</span>,
           },
         }))}
         empty={empty}
       />}
     />
+
+    <Modal
+      open={Boolean(editCrew)}
+      onClose={()=>setEditCrewId(null)}
+      title={editCrew?"Editar "+editCrew.name:"Editar cuadrilla"}
+      eyebrow="Gestión de cuadrilla"
+      description="Actualiza nombre, descripción, sede, líder e integrantes. El líder siempre debe pertenecer a la cuadrilla."
+      size="lg"
+      className="unified-create-modal crew-edit-modal"
+      bodyClassName="unified-create-modal-body"
+    >
+      {editCrew&&<CrewCreateForm
+        organizations={[]}
+        sites={sites}
+        workers={workers}
+        fixedOrganizationId={editCrew.organizationId}
+        action={"/api/crews/"+editCrew.id}
+        submitLabel="Guardar cambios"
+        initialValues={{
+          organizationId:editCrew.organizationId,
+          siteId:editCrew.siteId||"",
+          name:editCrew.name,
+          description:editCrew.description||"",
+          leaderUserId:editCrew.leaderUserId||"",
+          memberIds:editCrew.members.map(member=>member.id),
+        }}
+      />}
+    </Modal>
   </section>;
 }

@@ -16,12 +16,22 @@ type ImportContext={
   supplier:{id:string;code:string|null;name:string;taxId:string|null}|null;
   otherSupplierRows:number;canSwitchGlobal:boolean;
 };
+type ImportResolution={
+  key:string;field:string;value:string;rows:number[];
+  candidates:Array<{id:string;label:string;context?:string}>;
+  allowNew?:boolean;
+};
+type ImportPreview={
+  row:number;code:string;name:string;operation:"create"|"update"|"unchanged"|"conflict"|"pending";changedFields:string[];
+};
 type ImportResult={
   valid?:boolean;ok?:boolean;error?:string;importId?:string;
   summary?:Record<string,number>;
   issues?:ImportIssue[];
   supplierGroups?:SupplierGroup[];
   context?:ImportContext;
+  resolutions?:ImportResolution[];
+  preview?:ImportPreview[];
 };
 type ImportBatch={
   id:string;import_number:string;file_name:string;status:string;total_rows:number;imported_rows:number;omitted_rows:number;error_rows:number;warning_rows:number;
@@ -61,6 +71,7 @@ export default function BulkImportModal({
   const [historyBusy,setHistoryBusy]=useState(false);
   const [importScope,setImportScope]=useState<"context_only"|"all">(supplierId?"context_only":"all");
   const [duplicateMode,setDuplicateMode]=useState<"compare"|"update"|"skip">("compare");
+  const [resolutionChoices,setResolutionChoices]=useState<Record<string,string>>({});
   const inputRef=useRef<HTMLInputElement>(null);
 
   const title=entity==="inventory"?"Importar inventario y Kardex":"Importar activos";
@@ -74,6 +85,7 @@ export default function BulkImportModal({
     setImportScope(supplierId?"context_only":"all");
     setResult(null);
     setDuplicateMode("compare");
+    setResolutionChoices({});
   },[supplierId]);
 
   useEffect(()=>{
@@ -116,6 +128,8 @@ export default function BulkImportModal({
       if(entity==="inventory"){
         body.set("import_scope",importScope);
         body.set("duplicate_policy",duplicateMode);
+      }else{
+        body.set("resolutions",JSON.stringify(resolutionChoices));
       }
       const response=await fetch("/api/bulk-import",{method:"POST",body});
       const payload=await response.json() as ImportResult;
@@ -132,7 +146,7 @@ export default function BulkImportModal({
 
   function choose(next:File|null){
     if(!next){
-      setFile(null);setResult(null);setDuplicateMode("compare");return;
+      setFile(null);setResult(null);setDuplicateMode("compare");setResolutionChoices({});return;
     }
     if(!next.name.toLowerCase().endsWith(".xlsx")){
       setFile(null);setResult({error:"Formato no permitido. Usa un archivo Excel .xlsx."});return;
@@ -140,7 +154,7 @@ export default function BulkImportModal({
     if(next.size>12*1024*1024){
       setFile(null);setResult({error:"El archivo supera el máximo permitido de 12 MB."});return;
     }
-    setFile(next);setResult(null);setDuplicateMode("compare");
+    setFile(next);setResult(null);setDuplicateMode("compare");setResolutionChoices({});
   }
 
   function changeScope(scope:"context_only"|"all"){
@@ -162,6 +176,12 @@ export default function BulkImportModal({
       omittedRows:"filas omitidas",
       assetRows:"filas de activos",
       newAssets:"activos nuevos",
+      updateAssets:"actualizaciones",
+      unchangedAssets:"sin cambios",
+      conflicts:"conflictos",
+      pendingMatches:"por conciliar",
+      created:"creados",
+      updated:"actualizados",
       items:"artículos procesados",
       kardex:"movimientos procesados",
       warehouses:"bodegas procesadas",
@@ -244,6 +264,51 @@ export default function BulkImportModal({
               <div><span>Productos: <b>{group.products}</b></span><span>Movimientos Kardex: <b>{group.movements}</b></span>{group.context&&<span>Proveedor de contexto</span>}</div>
             </details>)}</div>
           </div>}
+
+          {entity==="assets"&&result.resolutions&&result.resolutions.length>0&&<section className="bulk-import-reconciliation">
+            <div className="bulk-import-issues-head">
+              <div><strong>Conciliación en CMMS</strong><span>Resuelve cada valor una sola vez; se aplicará a todas las filas indicadas.</span></div>
+              <Badge variant="warning">{result.resolutions.length} pendiente{result.resolutions.length===1?"":"s"}</Badge>
+            </div>
+            <div className="bulk-import-reconciliation-list">
+              {result.resolutions.map(group=><article key={group.key}>
+                <div className="bulk-import-reconciliation-copy">
+                  <span>{group.field}</span>
+                  <strong>{group.value}</strong>
+                  <small>Filas {group.rows.join(", ")}</small>
+                </div>
+                <select
+                  value={resolutionChoices[group.key]||""}
+                  onChange={event=>setResolutionChoices(previous=>({...previous,[group.key]:event.target.value}))}
+                  aria-label={"Resolver "+group.field+" "+group.value}
+                >
+                  <option value="">Selecciona la coincidencia correcta</option>
+                  {group.candidates.map(candidate=><option value={candidate.id} key={candidate.id}>{candidate.label}{candidate.context?" · "+candidate.context:""}</option>)}
+                  {group.allowNew&&<option value="__new__">Crear como registro nuevo</option>}
+                </select>
+              </article>)}
+            </div>
+            <div className="bulk-import-reconciliation-actions">
+              <span>{Object.values(resolutionChoices).filter(Boolean).length} de {result.resolutions.length} decisiones seleccionadas</span>
+              <button
+                className="button secondary"
+                type="button"
+                disabled={busy||result.resolutions.some(group=>!resolutionChoices[group.key])}
+                onClick={()=>run("validate")}
+              ><UiIcon name="check" size={15}/> Aplicar correcciones</button>
+            </div>
+          </section>}
+
+          {entity==="assets"&&result.preview&&result.preview.length>0&&<section className="bulk-import-preview">
+            <div className="bulk-import-issues-head"><strong>Vista previa de conciliación</strong><span>{result.preview.length} fila{result.preview.length===1?"":"s"} mostrada{result.preview.length===1?"":"s"}</span></div>
+            <div className="bulk-import-preview-list">
+              {result.preview.map(item=><article key={item.row}>
+                <span className={"bulk-import-operation "+item.operation}>{item.operation==="create"?"Nuevo":item.operation==="update"?"Actualizar":item.operation==="unchanged"?"Sin cambios":item.operation==="conflict"?"Conflicto":"Conciliar"}</span>
+                <strong>{item.code||"Sin código"} · {item.name||"Sin nombre"}</strong>
+                <small>{item.changedFields.length?"Cambios: "+item.changedFields.join(", "):item.operation==="unchanged"?"No modifica información existente":"Fila "+item.row}</small>
+              </article>)}
+            </div>
+          </section>}
 
           {result.issues&&result.issues.length>0&&<div className="bulk-import-issues">
             <div className="bulk-import-issues-head"><strong>Resultado de validación</strong><span>{result.issues.length} observaciones mostradas</span></div>

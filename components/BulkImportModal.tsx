@@ -68,7 +68,7 @@ export default function BulkImportModal({
   const templateBase=entity==="inventory"
     ?"/api/bulk-import/template?entity=inventory"+organizationQuery+(supplierId?"&supplier="+encodeURIComponent(supplierId):"")
     :"/api/bulk-import/template?entity=assets"+organizationQuery;
-  const currentTemplate=templateBase+(entity==="inventory"?"&data=current":"");
+  const currentTemplate=templateBase+"&data=current";
 
   useEffect(()=>{
     setImportScope(supplierId?"context_only":"all");
@@ -206,7 +206,10 @@ export default function BulkImportModal({
           {entity==="inventory"?<>
             <a className="button secondary" href={templateBase}><UiIcon name="download" size={16}/> Plantilla vacía</a>
             <a className="button secondary" href={currentTemplate}><UiIcon name="download" size={16}/> {supplierId?"Con productos de este proveedor":"Con datos actuales"}</a>
-          </>:<a className="button secondary" href={templateBase}><UiIcon name="download" size={16}/> Descargar plantilla</a>}
+          </>:<>
+            <a className="button secondary" href={templateBase}><UiIcon name="download" size={16}/> Plantilla vacía</a>
+            <a className="button secondary" href={currentTemplate}><UiIcon name="download" size={16}/> Con datos actuales</a>
+          </>}
           <button className="button secondary" type="button" onClick={()=>inputRef.current?.click()}><UiIcon name="upload" size={16}/> Seleccionar Excel</button>
           <input ref={inputRef} type="file" accept=".xlsx" hidden onChange={event=>choose(event.target.files?.[0]||null)}/>
         </div>

@@ -562,39 +562,255 @@ function warehouseValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awai
   return {parsed,issues};
 }
 
-function assetValidation(rows:ParsedSheetRow[],sheetName:string,catalog:Awaited<ReturnType<typeof catalogs>>,existingCodes:Set<string>){
+function assetValidation(
+  rows:ParsedSheetRow[],
+  sheetName:string,
+  catalog:Awaited<ReturnType<typeof catalogs>>,
+  existingAssets:AssetRecord[],
+  assetCategories:AssetCategory[],
+  resolutions:Record<string,string>,
+){
   const issues:Issue[]=[];
-  const parsed=[] as Array<Record<string,unknown>>;
-  const fileCodes=new Set<string>();
-  let newCount=0;
-  for(const row of safeRows(rows)){
-    const code=textValue(row.values.code).toUpperCase();
-    const name=textValue(row.values.name);
-    if(!code&&!name)continue;
-    if(!code)issue(issues,sheetName,row.rowNumber,"error","Falta Código.");
-    if(!name)issue(issues,sheetName,row.rowNumber,"error","Falta Nombre.");
-    if(code&&fileCodes.has(code))issue(issues,sheetName,row.rowNumber,"error","Código repetido dentro del archivo: "+code);
-    fileCodes.add(code);
-    const site=resolveSite(catalog.sites,textValue(row.values.site));
-    if(!site)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.site)?"Sede no encontrada.":"Falta Sede y no existe una única sede para inferirla.");
-    const location=site?resolveLocation(catalog.locations,site.id,textValue(row.values.location)):null;
-    if(site&&!location)issue(issues,sheetName,row.rowNumber,"error",textValue(row.values.location)?"Sububicación no encontrada dentro de la sede.":"Falta Sububicación.");
-    const supplierResolution=resolveImportSupplier(catalog.suppliers,{name:textValue(row.values.supplier)});
-    const supplier=supplierResolution.supplier;
-    if(!supplier)issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado.");
-    const status=assetStatus(textValue(row.values.status)||"Operativo");
-    if(!status)issue(issues,sheetName,row.rowNumber,"error","Estado inválido.");
-    const crit=criticality(textValue(row.values.criticality)||"Media");
-    if(!crit)issue(issues,sheetName,row.rowNumber,"error","Criticidad inválida.");
-    const existing=existingCodes.has(code);
-    if(existing)issue(issues,sheetName,row.rowNumber,"warning","Código existente: se actualizarán sus datos.");
-    else newCount++;
-    parsed.push({row:row.rowNumber,code,name,description:textValue(row.values.description),category:textValue(row.values.category),site,location,supplier,manufacturer:textValue(row.values.manufacturer),model:textValue(row.values.model),serial:textValue(row.values.serial),status,criticality:crit,purchaseDate:isoDateValue(row.values.purchaseDate),installationDate:isoDateValue(row.values.installationDate),warrantyDate:isoDateValue(row.values.warrantyDate),purchaseCost:Math.max(0,numberValue(row.values.purchaseCost)??0),locationDetail:textValue(row.values.locationDetail),notes:textValue(row.values.notes),existing});
+  const parsed:ParsedAsset[]=[];
+  const groups=new Map<string,ResolutionGroup>();
+  const fileCodes=new Map<string,number>();
+  const assetsById=new Map(existingAssets.map(asset=>[asset.id,asset]));
+  const assetsByCode=new Map(existingAssets.map(asset=>[asset.code.toUpperCase(),asset]));
+  const categoriesById=new Map(assetCategories.map(category=>[category.id,category]));
+  let newCount=0,updateCount=0,unchangedCount=0,conflictCount=0,pendingCount=0;
+
+  function addResolution(group:ResolutionGroup,row:number){
+    const current=groups.get(group.key);
+    if(current){if(!current.rows.includes(row))current.rows.push(row);return;}
+    groups.set(group.key,{...group,rows:[row]});
   }
+  function selected<T extends {id:string}>(rows:T[],resolution:string){return rows.find(row=>row.id===resolution)||null;}
+
+  for(const row of safeRows(rows)){
+    const rawAssetId=textValue(row.values.assetId);
+    const rawUpdatedAt=textValue(row.values.updatedAt);
+    const rawCode=textValue(row.values.code).toUpperCase();
+    const rawName=textValue(row.values.name);
+    if(!rawAssetId&&!rawCode&&!rawName)continue;
+
+    let existing:AssetRecord|null=null;
+    let operation:ParsedAsset["operation"]="create";
+
+    if(rawAssetId){
+      if(!UUID.test(rawAssetId)||!assetsById.has(rawAssetId)){
+        issue(issues,sheetName,row.rowNumber,"error","ACTIVO_ID no pertenece a un activo disponible de esta empresa.","ACTIVO_ID",rawAssetId,"Descarga una plantilla actual o corrige el identificador.");
+        operation="conflict";
+      }else existing=assetsById.get(rawAssetId)||null;
+    }
+    if(existing&&rawCode){
+      const codeOwner=assetsByCode.get(rawCode)||null;
+      if(codeOwner&&codeOwner.id!==existing.id){
+        issue(issues,sheetName,row.rowNumber,"error","El Código indicado pertenece a otro activo.","Código",rawCode,"Conserva el código actual o usa el ACTIVO_ID correcto.");
+        operation="conflict";
+      }
+    }
+    if(!existing&&operation!=="conflict"&&rawCode){
+      existing=assetsByCode.get(rawCode)||null;
+      if(!existing){
+        const candidateAssets=existingAssets
+          .map(asset=>({asset,score:similarity(asset.code,rawCode)}))
+          .filter(item=>item.score>=0.78)
+          .sort((a,b)=>b.score-a.score)
+          .slice(0,4);
+        if(candidateAssets.length){
+          const rKey=resolutionKey("ACTIVO",rawCode);
+          const choice=resolutions[rKey]||"";
+          if(choice==="__new__"){
+            existing=null;
+          }else if(choice&&assetsById.has(choice)){
+            existing=assetsById.get(choice)||null;
+          }else{
+            addResolution({
+              key:rKey,field:"ACTIVO",value:rawCode,rows:[],
+              candidates:candidateAssets.map(item=>({id:item.asset.id,label:item.asset.code+" · "+item.asset.name,context:"Posible activo existente"})),
+              allowNew:true,
+            },row.rowNumber);
+            issue(issues,sheetName,row.rowNumber,"error","Existe un activo con código parecido. Confirma si es el mismo registro o uno nuevo.","Código",rawCode,"Resuelve esta coincidencia desde el panel de conciliación.");
+            operation="pending";
+          }
+        }
+      }
+    }
+
+    if(existing&&rawUpdatedAt&&!sameTime(existing.updated_at,rawUpdatedAt)){
+      issue(issues,sheetName,row.rowNumber,"error","El activo fue modificado en CMMS después de descargar la plantilla.","ACTUALIZADO_EN",rawUpdatedAt,"Revisa el registro actual antes de aplicar esta actualización.");
+      operation="conflict";
+    }
+
+    const code=rawCode||(existing?.code||"");
+    const name=rawName||(existing?.name||"");
+    if(!existing&&!code)issue(issues,sheetName,row.rowNumber,"error","Falta Código.","Código","", "Completa un código único para el activo.");
+    if(!existing&&!name)issue(issues,sheetName,row.rowNumber,"error","Falta Nombre.","Nombre","", "Completa el nombre del activo.");
+
+    if(code){
+      const normalized=code.toUpperCase();
+      const first=fileCodes.get(normalized);
+      if(first&&first!==row.rowNumber)issue(issues,sheetName,row.rowNumber,"error","Código repetido dentro del archivo: "+code,"Código",code,"Conserva una sola fila por activo.");
+      else fileCodes.set(normalized,row.rowNumber);
+    }
+
+    function resolveSiteValue(){
+      const id=textValue(row.values.siteId);
+      const text=textValue(row.values.site);
+      if(!id&&!text&&existing)return catalog.sites.find(site=>site.id===existing!.site_id)||null;
+      if(id){
+        const found=catalog.sites.find(site=>site.id===id)||null;
+        if(!found)issue(issues,sheetName,row.rowNumber,"error","SEDE_ID no es válido para esta empresa.","SEDE_ID",id,"Usa un ID de REFERENCIAS_CMMS.");
+        return found;
+      }
+      if(!text)return catalog.sites.length===1?catalog.sites[0]:null;
+      const exact=findByName(catalog.sites,text);
+      if(exact)return exact;
+      const rKey=resolutionKey("SEDE",text);
+      const choice=resolutions[rKey]||"";
+      const resolved=selected(catalog.sites,choice);
+      if(resolved)return resolved;
+      const candidates=suggestions(catalog.sites,text);
+      if(candidates.length){
+        addResolution({key:rKey,field:"SEDE",value:text,rows:[],candidates},row.rowNumber);
+        issue(issues,sheetName,row.rowNumber,"error","Sede no encontrada de forma exacta; hay posibles coincidencias.","Sede",text,"Selecciona la sede correcta en Conciliación.");
+      }else issue(issues,sheetName,row.rowNumber,"error","Sede no encontrada.","Sede",text,"Usa una sede de REFERENCIAS_CMMS.");
+      return null;
+    }
+
+    const site=resolveSiteValue();
+
+    function resolveLocationValue(){
+      const id=textValue(row.values.locationId);
+      const text=textValue(row.values.location);
+      const candidates=site?catalog.locations.filter(location=>location.site_id===site.id):[];
+      if(!id&&!text&&existing){
+        const current=catalog.locations.find(location=>location.id===existing!.location_id)||null;
+        if(current&&site&&current.site_id!==site.id)return null;
+        return current;
+      }
+      if(id){
+        const found=candidates.find(location=>location.id===id)||null;
+        if(!found)issue(issues,sheetName,row.rowNumber,"error","SUBUBICACION_ID no pertenece a la sede seleccionada.","SUBUBICACION_ID",id,"Usa una sububicación de la sede correcta.");
+        return found;
+      }
+      if(!text)return candidates.length===1?candidates[0]:null;
+      const exact=findByName(candidates,text);
+      if(exact)return exact;
+      const rKey=resolutionKey("SUBUBICACION",text,site?.id||"");
+      const choice=resolutions[rKey]||"";
+      const resolved=selected(candidates,choice);
+      if(resolved)return resolved;
+      const suggested=suggestions(candidates,text,location=>site?.name||"");
+      if(suggested.length){
+        addResolution({key:rKey,field:"SUBUBICACION",value:text,rows:[],candidates:suggested},row.rowNumber);
+        issue(issues,sheetName,row.rowNumber,"error","Sububicación no encontrada de forma exacta; hay posibles coincidencias.","Sububicación",text,"Selecciona la sububicación correcta en Conciliación.");
+      }else if(site)issue(issues,sheetName,row.rowNumber,"error",text?"Sububicación no encontrada dentro de la sede.":"Falta Sububicación.","Sububicación",text,"Usa una sububicación de REFERENCIAS_CMMS.");
+      return null;
+    }
+    const location=site?resolveLocationValue():null;
+
+    function resolveSupplierValue(){
+      const id=textValue(row.values.supplierId);
+      const text=textValue(row.values.supplier);
+      if(!id&&!text&&existing)return catalog.suppliers.find(supplier=>supplier.id===existing!.supplier_id)||null;
+      if(id){
+        const found=catalog.suppliers.find(supplier=>supplier.id===id)||null;
+        if(!found)issue(issues,sheetName,row.rowNumber,"error","PROVEEDOR_ID no es válido para esta empresa.","PROVEEDOR_ID",id,"Usa un ID de REFERENCIAS_CMMS.");
+        return found;
+      }
+      if(!text)return null;
+      const exact=findByName(catalog.suppliers,text);
+      if(exact)return exact;
+      const rKey=resolutionKey("PROVEEDOR",text);
+      const choice=resolutions[rKey]||"";
+      const resolved=selected(catalog.suppliers,choice);
+      if(resolved)return resolved;
+      const candidates=suggestions(catalog.suppliers,text,supplier=>supplier.code||supplier.tax_id||"");
+      if(candidates.length){
+        addResolution({key:rKey,field:"PROVEEDOR",value:text,rows:[],candidates},row.rowNumber);
+        issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado de forma exacta; hay posibles coincidencias.","Proveedor",text,"Selecciona el proveedor correcto en Conciliación.");
+      }else issue(issues,sheetName,row.rowNumber,"error","Proveedor no encontrado.","Proveedor",text,"Crea el proveedor en Proveedores o usa una referencia existente.");
+      return null;
+    }
+    const supplier=resolveSupplierValue();
+
+    if(!existing&&!site)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Sede.","Sede",textValue(row.values.site),"Completa una sede válida.");
+    if(!existing&&!location)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Sububicación.","Sububicación",textValue(row.values.location),"Completa una sububicación válida.");
+    if(!existing&&!supplier)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Proveedor.","Proveedor",textValue(row.values.supplier),"Completa un proveedor válido.");
+
+    const rawStatus=textValue(row.values.status);
+    const status=rawStatus?assetStatus(rawStatus):(existing?.status||"operational");
+    if(rawStatus&&!status)issue(issues,sheetName,row.rowNumber,"error","Estado inválido.","Estado",rawStatus,"Usa Operativo, En mantenimiento, Detenido o Retirado.");
+    const rawCriticality=textValue(row.values.criticality);
+    const crit=rawCriticality?criticality(rawCriticality):(existing?.criticality||"medium");
+    if(rawCriticality&&!crit)issue(issues,sheetName,row.rowNumber,"error","Criticidad inválida.","Criticidad",rawCriticality,"Usa Baja, Media, Alta o Crítica.");
+
+    function parseDate(field:string,label:string,current:string|null){
+      const raw=textValue(row.values[field]);
+      if(!raw)return current||"";
+      const parsed=isoDateValue(row.values[field]);
+      if(!parsed)issue(issues,sheetName,row.rowNumber,"error",label+" inválida; usa AAAA-MM-DD.",label,raw,"Corrige la fecha.");
+      return parsed;
+    }
+    const purchaseDate=parseDate("purchaseDate","Fecha compra",existing?.purchase_date||null);
+    const installationDate=parseDate("installationDate","Fecha instalación",existing?.installation_date||null);
+    const warrantyDate=parseDate("warrantyDate","Garantía vence",existing?.warranty_expires||null);
+    const rawCost=textValue(row.values.purchaseCost);
+    const parsedCost=rawCost?numberValue(row.values.purchaseCost):null;
+    if(rawCost&&(parsedCost===null||parsedCost<0))issue(issues,sheetName,row.rowNumber,"error","Costo de compra inválido.","Costo compra",rawCost,"Usa un valor mayor o igual a cero.");
+    const purchaseCost=rawCost?(parsedCost===null?null:parsedCost):(existing?.purchase_cost===null||existing?.purchase_cost===undefined?null:Number(existing.purchase_cost));
+
+    const description=textValue(row.values.description)||(existing?.description||"");
+    const category=textValue(row.values.category)||(existing?.category_id?categoriesById.get(existing.category_id)?.name||"":"");
+    const manufacturer=textValue(row.values.manufacturer)||(existing?.manufacturer||"");
+    const model=textValue(row.values.model)||(existing?.model||"");
+    const serial=textValue(row.values.serial)||(existing?.serial_number||"");
+    const locationDetail=textValue(row.values.locationDetail)||(existing?.location_detail||"");
+    const notes=textValue(row.values.notes)||(existing?.notes||"");
+
+    const changedFields:string[]=[];
+    if(existing){
+      const effectiveSite=site?.id||existing.site_id;
+      const effectiveLocation=location?.id||existing.location_id;
+      const effectiveSupplier=supplier?.id||existing.supplier_id;
+      const categoryMatch=category?assetCategories.find(item=>key(item.name)===key(category))||null:null;
+      const effectiveCategory=category?categoryMatch?.id||"__new__":existing.category_id||"";
+      const comparisons:Array<[string,unknown,unknown]>=[
+        ["Código",existing.code,code],["Nombre",existing.name,name],["Descripción",existing.description||"",description],
+        ["Sede",existing.site_id,effectiveSite],["Sububicación",existing.location_id,effectiveLocation],["Proveedor",existing.supplier_id,effectiveSupplier],
+        ["Categoría",existing.category_id||"",effectiveCategory],["Fabricante",existing.manufacturer||"",manufacturer],["Modelo",existing.model||"",model],
+        ["Serial",existing.serial_number||"",serial],["Estado",existing.status,status],["Criticidad",existing.criticality,crit],
+        ["Fecha compra",existing.purchase_date||"",purchaseDate],["Fecha instalación",existing.installation_date||"",installationDate],
+        ["Garantía vence",existing.warranty_expires||"",warrantyDate],["Costo compra",existing.purchase_cost===null?"":Number(existing.purchase_cost),purchaseCost===null?"":purchaseCost],
+        ["Ubicación detalle",existing.location_detail||"",locationDetail],["Notas",existing.notes||"",notes],
+      ];
+      for(const [label,before,after] of comparisons)if(!sameNullable(before,after))changedFields.push(label);
+      if(operation!=="conflict"&&operation!=="pending")operation=changedFields.length?"update":"unchanged";
+    }else if(operation!=="conflict"&&operation!=="pending"){
+      operation="create";
+    }
+
+    if(operation==="create")newCount++;
+    else if(operation==="update")updateCount++;
+    else if(operation==="unchanged")unchangedCount++;
+    else if(operation==="conflict")conflictCount++;
+    else if(operation==="pending")pendingCount++;
+
+    parsed.push({
+      row:row.rowNumber,assetId:rawAssetId,downloadedUpdatedAt:rawUpdatedAt,code,name,description,category,
+      site,location,supplier,manufacturer,model,serial,status,criticality:crit,purchaseDate,installationDate,warrantyDate,
+      purchaseCost,locationDetail,notes,existing,operation,changedFields,
+    });
+  }
+
   if(catalog.limits&&catalog.counts&&catalog.counts.assets+newCount>catalog.limits.max_assets){
     issue(issues,sheetName,1,"error","La importación excede el límite de activos del plan.");
   }
-  return {parsed,issues,newCount};
+  return {
+    parsed,issues,resolutions:[...groups.values()],
+    newCount,updateCount,unchangedCount,conflictCount,pendingCount,
+  };
 }
 
 export async function POST(request:Request){
@@ -603,6 +819,14 @@ export async function POST(request:Request){
   const form=await request.formData();
   const entity=String(form.get("entity")||"inventory")==="assets"?"assets":"inventory";
   const mode=String(form.get("mode")||"validate");
+  let assetResolutions:Record<string,string>={};
+  try{
+    const raw=String(form.get("resolutions")||"{}");
+    const parsed=JSON.parse(raw);
+    if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed)){
+      assetResolutions=Object.fromEntries(Object.entries(parsed).filter(([,value])=>typeof value==="string")) as Record<string,string>;
+    }
+  }catch{}
   const fixedSupplierId=String(form.get("supplier_id")||"");
   const requestedOrganization=String(form.get("organization_id")||"");
   if(entity==="inventory"&&!can(session,"inventory.write"))return NextResponse.json({error:"Forbidden"},{status:403});

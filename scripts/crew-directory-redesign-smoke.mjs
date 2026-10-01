@@ -15,7 +15,9 @@ for(const marker of [
   "Ejecución operativa",
   "Equipos de trabajo en campo, asigna actividades, gestiona integrantes y monitorea su operación.",
   'triggerLabel="Nueva cuadrilla"',
-  "<MetricGrid",
+  "iconOnly",
+  'iconName="plus"',
+  "crew-compact-stats",
   "Cuadrillas registradas",
   "Activas",
   "Inactivas",
@@ -25,7 +27,7 @@ for(const marker of [
 ]){
   if(!page.includes(marker))throw new Error("Crew page redesign contract missing "+marker);
 }
-for(const forbidden of ["crew-showcase-grid","<CrewCard","Zona Sur","Mantenimiento Norte","En pausa","disciplina"]){
+for(const forbidden of ["crew-showcase-grid","<CrewCard","crew-directory-page-head-v2","<MetricGrid","<KpiCard","Zona Sur","Mantenimiento Norte","En pausa","disciplina"]){
   if(page.includes(forbidden))throw new Error("Crew page contains legacy/fictitious design marker "+forbidden);
 }
 
@@ -102,6 +104,7 @@ for(const legacy of ["crew-leader-hero","crew-leader-photo","crew-leader-shade"]
 const css=fs.readFileSync("app/phase8-modules.css","utf8");
 for(const marker of [
   ".crew-directory-grid-v2",
+  ".crew-compact-stats",
   "grid-template-columns:repeat(3,minmax(0,1fr))",
   "@media(max-width:1180px)",
   "@media(max-width:620px)",
@@ -117,3 +120,29 @@ if(!preview.includes("<CrewCard")||!preview.includes('description="Equipo operat
 }
 
 console.log("Approved crew directory redesign checks passed.");
+
+
+const createModal=fs.readFileSync("components/CreateRecordModal.tsx","utf8");
+for(const marker of ["iconOnly","module-add-button-icon-only","data-tooltip={triggerLabel}"]){
+  if(!createModal.includes(marker))throw new Error("Compact create action missing "+marker);
+}
+
+const chrome=fs.readFileSync("components/DashboardChrome.tsx","utf8");
+for(const marker of [
+  "GlobalNotificationBell",
+  'aria-label="Notificaciones"',
+  'title="Notificaciones"',
+  "Marcar todas como leídas",
+  "Ver todas las notificaciones",
+]){
+  if(!chrome.includes(marker))throw new Error("Global notification UX missing "+marker);
+}
+
+const layout=fs.readFileSync("app/dashboard/layout.tsx","utf8");
+for(const marker of [
+  "FROM audit_log",
+  "WHERE user_id=$1",
+  "notifications={notifications}",
+]){
+  if(!layout.includes(marker))throw new Error("Global notifications must use real scoped system data: "+marker);
+}

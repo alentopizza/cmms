@@ -1427,55 +1427,187 @@ export async function POST(request:Request){
 
   const sheet=findWorksheet(workbook,["Activos"]);
   if(!sheet)return NextResponse.json({error:"No se encontró la hoja Activos."},{status:400});
-  const parsedSheet=parseSheet(sheet,ASSET_ALIASES,["code","name","supplier"]);
+  const parsedSheet=parseSheet(sheet,ASSET_ALIASES);
   validateRowLimit(issues,sheet.name,parsedSheet.rows);
-  if(parsedSheet.missing.length)issue(issues,sheet.name,1,"error","Faltan columnas reconocibles: "+parsedSheet.missing.join(", "));
-  const existingCodesResult=await query<{code:string}>("SELECT code FROM assets WHERE organization_id=$1",[organizationId]);
-  const assets=assetValidation(parsedSheet.rows,sheet.name,catalog,new Set(existingCodesResult.rows.map(row=>row.code.toUpperCase())));
+
+  const [existingAssetsResult,assetCategoriesResult]=await Promise.all([
+    query<AssetRecord>(
+      `SELECT id::text,updated_at::text,site_id::text,location_id::text,supplier_id::text,category_id::text,
+              code,name,description,manufacturer,model,serial_number,status,criticality,
+              purchase_date::text,installation_date::text,warranty_expires::text,purchase_cost::text,
+              location_detail,notes
+       FROM assets
+       WHERE organization_id=$1`,
+      [organizationId],
+    ),
+    query<AssetCategory>("SELECT id::text,name FROM asset_categories WHERE organization_id=$1 ORDER BY name",[organizationId]),
+  ]);
+
+  const assets=assetValidation(
+    parsedSheet.rows,
+    sheet.name,
+    catalog,
+    existingAssetsResult.rows,
+    assetCategoriesResult.rows,
+    assetResolutions,
+  );
   issues.push(...assets.issues);
   const errors=issues.filter(item=>item.severity==="error");
+  const preview=assets.parsed.slice(0,250).map(row=>({
+    row:row.row,code:row.code,name:row.name,operation:row.operation,changedFields:row.changedFields,
+  }));
+  const assetSummary={
+    assetRows:assets.parsed.length,
+    newAssets:assets.newCount,
+    updateAssets:assets.updateCount,
+    unchangedAssets:assets.unchangedCount,
+    conflicts:assets.conflictCount,
+    pendingMatches:assets.pendingCount,
+    warnings:issues.filter(item=>item.severity==="warning").length,
+    errors:errors.length,
+  };
+
   if(mode!=="commit"||errors.length){
-    return NextResponse.json({entity,valid:errors.length===0,summary:{assetRows:assets.parsed.length,newAssets:assets.newCount,warnings:issues.filter(i=>i.severity==="warning").length,errors:errors.length},issues:issues.slice(0,250)});
+    return NextResponse.json({
+      entity,
+      valid:errors.length===0,
+      summary:assetSummary,
+      issues:issues.slice(0,250),
+      resolutions:assets.resolutions,
+      preview,
+    });
   }
-  const duplicate=await query("SELECT 1 FROM bulk_import_batches WHERE organization_id=$1 AND entity='assets' AND file_hash=$2 AND status='committed'",[organizationId,hash]);
-  if(duplicate.rowCount)return NextResponse.json({error:"Este mismo archivo ya fue importado anteriormente."},{status:409});
 
   const client=await pool.connect();
   try{
     await client.query("BEGIN");
+    const rowsToCommit=assets.parsed.filter(row=>row.operation==="create"||row.operation==="update");
     const batch=await client.query<{id:string}>(
-      "INSERT INTO bulk_import_batches(organization_id,user_id,entity,file_name,file_hash,status,total_rows,error_rows,warning_rows) VALUES($1,$2,'assets',$3,$4,'validated',$5,0,$6) RETURNING id",
-      [organizationId,session.userId||null,file.name,hash,assets.parsed.length,issues.filter(i=>i.severity==="warning").length],
+      `INSERT INTO bulk_import_batches(
+         organization_id,user_id,entity,file_name,file_hash,status,total_rows,error_rows,warning_rows,omitted_rows
+       ) VALUES($1,$2,'assets',$3,$4,'validated',$5,0,$6,$7) RETURNING id`,
+      [
+        organizationId,session.userId||null,file.name,hash,assets.parsed.length,
+        issues.filter(item=>item.severity==="warning").length,assets.unchangedCount,
+      ],
     );
-    for(const row of assets.parsed){
-      const site=row.site as Site,location=row.location as Location,supplier=row.supplier as Supplier;
+    let created=0,updated=0;
+
+    for(const row of rowsToCommit){
+      const site=row.site,location=row.location,supplier=row.supplier;
+      if(!site||!location||!supplier)throw new Error("La conciliación de relaciones no está completa en la fila "+row.row+".");
       if(!canAccessSite(session,site.id))throw new Error("Sede no autorizada: "+site.name);
+
       let categoryId:string|null=null;
       if(row.category){
-        const cat=await client.query<{id:string}>(
-          "INSERT INTO asset_categories(organization_id,name) VALUES($1,$2) ON CONFLICT(organization_id,name) DO UPDATE SET name=EXCLUDED.name RETURNING id",
-          [organizationId,row.category],
-        );
-        categoryId=cat.rows[0].id;
+        const existingCategory=assetCategoriesResult.rows.find(category=>key(category.name)===key(row.category))||null;
+        if(existingCategory)categoryId=existingCategory.id;
+        else{
+          const cat=await client.query<{id:string}>(
+            "INSERT INTO asset_categories(organization_id,name) VALUES($1,$2) ON CONFLICT(organization_id,name) DO UPDATE SET name=EXCLUDED.name RETURNING id::text",
+            [organizationId,row.category],
+          );
+          categoryId=cat.rows[0].id;
+        }
       }
-      const existing=await client.query<{id:string}>("SELECT id FROM assets WHERE organization_id=$1 AND upper(code)=upper($2)",[organizationId,row.code]);
-      if(existing.rowCount){
-        await client.query(
-          "UPDATE assets SET site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,name=$5,description=$6,manufacturer=$7,model=$8,serial_number=$9,status=$10,criticality=$11,purchase_date=$12,installation_date=$13,warranty_expires=$14,purchase_cost=$15,location_detail=$16,notes=$17,updated_at=now() WHERE id=$18",
-          [site.id,location.id,supplier.id,categoryId,row.name,row.description||null,row.manufacturer||null,row.model||null,row.serial||null,row.status,row.criticality,row.purchaseDate||null,row.installationDate||null,row.warrantyDate||null,row.purchaseCost,row.locationDetail||null,row.notes||null,existing.rows[0].id],
+
+      if(row.operation==="update"&&row.existing){
+        const locked=await client.query<{updated_at:string}>(
+          "SELECT updated_at::text FROM assets WHERE id=$1 AND organization_id=$2 FOR UPDATE",
+          [row.existing.id,organizationId],
         );
+        if(!locked.rowCount||!sameTime(locked.rows[0].updated_at,row.existing.updated_at)){
+          throw new Error("Conflicto concurrente en "+row.code+": el activo cambió después del análisis. Analiza nuevamente el archivo.");
+        }
+        const before={
+          code:row.existing.code,name:row.existing.name,description:row.existing.description,
+          site_id:row.existing.site_id,location_id:row.existing.location_id,supplier_id:row.existing.supplier_id,
+          category_id:row.existing.category_id,manufacturer:row.existing.manufacturer,model:row.existing.model,
+          serial_number:row.existing.serial_number,status:row.existing.status,criticality:row.existing.criticality,
+          purchase_date:row.existing.purchase_date,installation_date:row.existing.installation_date,
+          warranty_expires:row.existing.warranty_expires,purchase_cost:row.existing.purchase_cost,
+          location_detail:row.existing.location_detail,notes:row.existing.notes,
+        };
+        const after={
+          code:row.code,name:row.name,description:row.description||null,
+          site_id:site.id,location_id:location.id,supplier_id:supplier.id,category_id:categoryId,
+          manufacturer:row.manufacturer||null,model:row.model||null,serial_number:row.serial||null,
+          status:row.status,criticality:row.criticality,purchase_date:row.purchaseDate||null,
+          installation_date:row.installationDate||null,warranty_expires:row.warrantyDate||null,
+          purchase_cost:row.purchaseCost,location_detail:row.locationDetail||null,notes:row.notes||null,
+        };
+        await client.query(
+          `UPDATE assets
+           SET site_id=$1,location_id=$2,supplier_id=$3,category_id=$4,code=$5,name=$6,description=$7,
+               manufacturer=$8,model=$9,serial_number=$10,status=$11,criticality=$12,purchase_date=$13,
+               installation_date=$14,warranty_expires=$15,purchase_cost=$16,location_detail=$17,notes=$18,updated_at=now()
+           WHERE id=$19`,
+          [
+            site.id,location.id,supplier.id,categoryId,row.code,row.name,row.description||null,row.manufacturer||null,
+            row.model||null,row.serial||null,row.status,row.criticality,row.purchaseDate||null,row.installationDate||null,
+            row.warrantyDate||null,row.purchaseCost,row.locationDetail||null,row.notes||null,row.existing.id,
+          ],
+        );
+        await client.query(
+          `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+           VALUES($1,$2,'assets.bulk_import_updated','asset',$3,$4::jsonb)`,
+          [organizationId,session.userId||null,row.existing.id,JSON.stringify({
+            file_name:file.name,row:row.row,changed_fields:row.changedFields,before,after,batch_id:batch.rows[0].id,
+          })],
+        );
+        updated++;
       }else{
-        await client.query(
-          "INSERT INTO assets(organization_id,site_id,location_id,supplier_id,category_id,code,name,description,manufacturer,model,serial_number,status,criticality,purchase_date,installation_date,warranty_expires,purchase_cost,location_detail,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)",
-          [organizationId,site.id,location.id,supplier.id,categoryId,row.code,row.name,row.description||null,row.manufacturer||null,row.model||null,row.serial||null,row.status,row.criticality,row.purchaseDate||null,row.installationDate||null,row.warrantyDate||null,row.purchaseCost,row.locationDetail||null,row.notes||null],
+        const inserted=await client.query<{id:string}>(
+          `INSERT INTO assets(
+             organization_id,site_id,location_id,supplier_id,category_id,code,name,description,manufacturer,model,
+             serial_number,status,criticality,purchase_date,installation_date,warranty_expires,purchase_cost,location_detail,notes
+           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+           RETURNING id::text`,
+          [
+            organizationId,site.id,location.id,supplier.id,categoryId,row.code,row.name,row.description||null,row.manufacturer||null,
+            row.model||null,row.serial||null,row.status,row.criticality,row.purchaseDate||null,row.installationDate||null,
+            row.warrantyDate||null,row.purchaseCost,row.locationDetail||null,row.notes||null,
+          ],
         );
+        await client.query(
+          `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+           VALUES($1,$2,'assets.bulk_import_created','asset',$3,$4::jsonb)`,
+          [organizationId,session.userId||null,inserted.rows[0].id,JSON.stringify({
+            file_name:file.name,row:row.row,code:row.code,batch_id:batch.rows[0].id,
+          })],
+        );
+        created++;
       }
     }
-    await client.query("UPDATE bulk_import_batches SET status='committed',imported_rows=$1,committed_at=now(),summary=$2::jsonb WHERE id=$3",[assets.parsed.length,JSON.stringify({assets:assets.parsed.length}),batch.rows[0].id]);
+
+    const committedSummary={
+      assets:created+updated,
+      created,
+      updated,
+      unchanged:assets.unchangedCount,
+      warnings:issues.filter(item=>item.severity==="warning").length,
+    };
+    await client.query(
+      `UPDATE bulk_import_batches
+       SET status='committed',imported_rows=$1,omitted_rows=$2,committed_at=now(),summary=$3::jsonb
+       WHERE id=$4`,
+      [created+updated,assets.unchangedCount,JSON.stringify(committedSummary),batch.rows[0].id],
+    );
+    await client.query(
+      `INSERT INTO audit_log(organization_id,user_id,action,entity_type,entity_id,metadata)
+       VALUES($1,$2,'assets.bulk_import_committed','bulk_import_batch',$3,$4::jsonb)`,
+      [organizationId,session.userId||null,batch.rows[0].id,JSON.stringify({
+        file_name:file.name,file_hash:hash,summary:committedSummary,resolutions:assetResolutions,
+      })],
+    );
     await client.query("COMMIT");
-    return NextResponse.json({ok:true,summary:{assets:assets.parsed.length,warnings:issues.filter(i=>i.severity==="warning").length}});
+    return NextResponse.json({
+      ok:true,
+      summary:{...assetSummary,assets:created+updated,created,updated,unchangedAssets:assets.unchangedCount,errors:0},
+    });
   }catch(error){
     await client.query("ROLLBACK");
     return NextResponse.json({error:error instanceof Error?error.message:"No fue posible importar activos."},{status:400});
   }finally{client.release();}
+
 }

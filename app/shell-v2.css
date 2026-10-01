@@ -412,3 +412,62 @@
     transition:none!important;
   }
 }
+
+
+/* Global notifications ------------------------------------------------------ */
+.desweb-shell-v2 .global-notifications{position:relative;flex:0 0 auto}
+.desweb-shell-v2 .global-notification-trigger{position:relative;cursor:pointer}
+.desweb-shell-v2 .global-notification-trigger.active{background:var(--color-surface-teal);border-color:var(--color-border-default);color:var(--color-action-primary)}
+.desweb-shell-v2 .global-notification-badge{
+  position:absolute;right:-4px;top:-5px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;
+  border:2px solid var(--brand-surface);border-radius:999px;background:var(--color-danger-text);color:var(--color-text-inverse);
+  font-size:8px;font-weight:800;line-height:1
+}
+.desweb-shell-v2 .global-notification-popover{
+  position:absolute;right:0;top:calc(100% + 10px);z-index:220;width:min(380px,calc(100vw - 24px));
+  border:1px solid var(--brand-border);border-radius:var(--radius-xl);background:var(--brand-surface);box-shadow:var(--shadow-lg);overflow:hidden
+}
+.desweb-shell-v2 .global-notification-popover>header{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);
+  padding:var(--space-3);border-bottom:1px solid var(--brand-border)
+}
+.desweb-shell-v2 .global-notification-popover>header>div{display:grid;gap:2px}
+.desweb-shell-v2 .global-notification-popover>header strong{color:var(--color-text-primary);font-size:var(--font-size-body)}
+.desweb-shell-v2 .global-notification-popover>header small{color:var(--color-text-muted);font-size:9px}
+.desweb-shell-v2 .global-notification-popover>header button{
+  width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:var(--radius-md);
+  background:transparent;color:var(--color-text-muted);cursor:pointer
+}
+.desweb-shell-v2 .global-notification-list{max-height:min(430px,62vh);overflow:auto}
+.desweb-shell-v2 .global-notification-list>a,
+.desweb-shell-v2 .global-notification-list>button{
+  width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--space-2);align-items:center;
+  padding:var(--space-3);border:0;border-bottom:1px solid var(--brand-border);background:transparent;color:inherit;
+  text-decoration:none;text-align:left;cursor:pointer
+}
+.desweb-shell-v2 .global-notification-list>a:hover,
+.desweb-shell-v2 .global-notification-list>button:hover{background:var(--color-surface-soft)}
+.desweb-shell-v2 .global-notification-list .unread{background:color-mix(in srgb,var(--color-surface-teal) 58%,var(--brand-surface))}
+.desweb-shell-v2 .global-notification-icon{
+  width:32px;height:32px;display:grid;place-items:center;border-radius:var(--radius-lg);
+  background:var(--color-surface-teal);color:var(--color-action-primary)
+}
+.desweb-shell-v2 .global-notification-copy{min-width:0;display:grid;gap:3px}
+.desweb-shell-v2 .global-notification-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-primary);font-size:10px}
+.desweb-shell-v2 .global-notification-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-muted);font-size:9px}
+.desweb-shell-v2 .global-notification-list i{width:7px;height:7px;border-radius:50%;background:var(--color-action-accent)}
+.desweb-shell-v2 .global-notification-empty{display:grid;justify-items:center;gap:5px;padding:var(--space-6);text-align:center;color:var(--color-text-muted)}
+.desweb-shell-v2 .global-notification-empty strong{color:var(--color-text-primary);font-size:11px}
+.desweb-shell-v2 .global-notification-empty small{font-size:9px}
+.desweb-shell-v2 .global-notification-popover>footer{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);padding:var(--space-2) var(--space-3);
+  background:var(--color-surface-soft)
+}
+.desweb-shell-v2 .global-notification-popover>footer button{
+  border:0;background:transparent;color:var(--color-action-primary);font-size:9px;font-weight:700;cursor:pointer
+}
+.desweb-shell-v2 .global-notification-popover>footer button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:620px){
+  .desweb-shell-v2 .global-notification-popover{position:fixed;right:8px;top:76px;width:calc(100vw - 16px);max-height:calc(100vh - 88px)}
+  .desweb-shell-v2 .global-notification-list{max-height:calc(100vh - 190px)}
+}

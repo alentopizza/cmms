@@ -210,6 +210,7 @@ export default function CrewDirectory({
           description:editCrew.description||"",
           leaderUserId:editCrew.leaderUserId||"",
           memberIds:editCrew.members.map(member=>member.id),
+          active:editCrew.active,
         }}
       />}
     </Modal>

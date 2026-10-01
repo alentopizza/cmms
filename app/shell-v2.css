@@ -247,6 +247,10 @@
 /* Large desktop — one operational row. */
 @media(min-width:1500px){
   .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(170px,210px) minmax(220px,1fr) max-content max-content max-content max-content minmax(160px,205px);
+    grid-template-areas:"identity search filters view action count account";
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
     grid-template-columns:minmax(170px,210px) minmax(180px,1fr) max-content max-content minmax(180px,260px) max-content max-content minmax(160px,205px);
     grid-template-areas:"identity search filters view context action count account";
   }
@@ -255,6 +259,12 @@
 /* Medium desktop / laptop — identity + search + user, then actions. */
 @media(min-width:1200px) and (max-width:1499px){
   .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(180px,220px) minmax(240px,1fr) max-content max-content max-content minmax(170px,210px);
+    grid-template-areas:
+      "identity search search search search account"
+      ". filters view action count .";
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
     grid-template-columns:minmax(180px,220px) minmax(220px,1fr) max-content minmax(180px,260px) max-content max-content minmax(170px,210px);
     grid-template-areas:
       "identity search search search search search account"
@@ -266,12 +276,19 @@
 /* Tablet — identity/user, search, then indivisible actions. */
 @media(min-width:768px) and (max-width:1199px){
   .desweb-shell-v2 .context-header{
+    grid-template-columns:minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-areas:
+      "identity identity identity identity account"
+      "search search search search search"
+      "filters view action count .";
+    align-items:center;
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
     grid-template-columns:minmax(0,1fr) max-content minmax(180px,260px) max-content max-content;
     grid-template-areas:
       "identity identity identity identity account"
       "search search search search search"
       "filters view context action count";
-    align-items:center;
   }
   .desweb-shell-v2 .context-header-left{max-width:none}
   .desweb-shell-v2 .module-page-tools-portal .ds-search{min-width:240px}
@@ -290,6 +307,13 @@
 /* Drawer breakpoint adds the navigation control without disturbing header flow. */
 @media(min-width:768px) and (max-width:900px){
   .desweb-shell-v2 .context-header{
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content max-content max-content;
+    grid-template-areas:
+      "nav identity identity identity identity account"
+      "search search search search search search"
+      "filters view action count . .";
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
     grid-template-columns:max-content minmax(0,1fr) max-content minmax(180px,240px) max-content max-content;
     grid-template-areas:
       "nav identity identity identity identity account"
@@ -313,10 +337,16 @@
     grid-template-areas:
       "nav identity identity identity account"
       "search search search search search"
-      "context context context context context"
       "filters view action count .";
     padding:var(--space-2) var(--space-3)!important;
     align-items:center;
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
+    grid-template-areas:
+      "nav identity identity identity account"
+      "search search search search search"
+      "context context context context context"
+      "filters view action count .";
   }
   .desweb-shell-v2 .context-header-mobile-nav-slot{
     display:flex;
@@ -414,6 +444,12 @@
     grid-template-areas:
       "nav identity identity account"
       "search search search search"
+      "filters view action action";
+  }
+  .desweb-shell-v2 .context-header:has(.module-context-control){
+    grid-template-areas:
+      "nav identity identity account"
+      "search search search search"
       "context context context context"
       "filters view action action";
   }
@@ -498,7 +534,6 @@
 
 /* Attendance company context in global module header ------------------------ */
 .desweb-shell-v2 .module-page-tools-portal .attendance-company-header-control{
-  grid-area:action;
   min-width:0;
   max-width:min(390px,34vw);
   display:grid;

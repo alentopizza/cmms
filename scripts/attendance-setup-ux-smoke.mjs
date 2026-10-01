@@ -30,6 +30,17 @@ for(const marker of [
 ]){
   if(!page.includes(marker))throw new Error("Attendance direct configuration contract missing "+marker);
 }
+for(const headerMarker of [
+  "<ModuleHeader",
+  'contextControl={globalOperator?<form',
+  'className="attendance-company-header-control"',
+  'aria-label="Empresa de asistencia"',
+  'data-tooltip="Cambiar empresa"',
+]){
+  if(!page.includes(headerMarker))throw new Error("Attendance global header contract missing "+headerMarker);
+}
+if(page.includes('action={globalOperator?<form'))throw new Error("Attendance company selector must use contextual header slot, not primary action slot");
+
 for(const forbidden of [
   "<AttendanceSetupWorkspace",
   "setupSteps",

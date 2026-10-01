@@ -78,6 +78,19 @@ export default function BulkImportModal({
 
   useEffect(()=>{
     if(!open)return;
+    const previous=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();setOpen(false);}};
+    document.addEventListener("keydown",onKey);
+    document.body.classList.add("ds-overlay-open");
+    return()=>{
+      document.removeEventListener("keydown",onKey);
+      document.body.classList.remove("ds-overlay-open");
+      if(previous?.isConnected)previous.focus();
+    };
+  },[open]);
+
+  useEffect(()=>{
+    if(!open)return;
     let cancelled=false;
     setHistoryBusy(true);
     const url="/api/bulk-import/history?entity="+entity+(organizationId?"&organization="+encodeURIComponent(organizationId):"")+(supplierId?"&supplier="+encodeURIComponent(supplierId):"");

@@ -471,3 +471,5 @@
   .desweb-shell-v2 .global-notification-popover{position:fixed;right:8px;top:76px;width:calc(100vw - 16px);max-height:calc(100vh - 88px)}
   .desweb-shell-v2 .global-notification-list{max-height:calc(100vh - 190px)}
 }
+
+.desweb-shell-v2 .module-page-tools-portal .module-add-button-icon-only{width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important}

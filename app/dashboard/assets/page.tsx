@@ -394,7 +394,7 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       action={<div className="module-header-action-group">
         {canWrite&&importOrganizationId&&<BulkImportModal entity="assets" organizationId={importOrganizationId}/>}
         <ModuleExportMenu entity="assets"/>
-        {canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Agregar activo" sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
+        {canWrite && creationGate.ready ? <AssetCreateModal triggerLabel="Nuevo activo" iconOnly sites={sites.rows.map(s=>({id:s.id,organization_id:s.organization_id,name:s.label}))} locations={locations.rows.map(l=>({id:l.id,organization_id:l.organization_id,site_id:l.site_id,name:l.label,label:l.label}))} suppliers={suppliers.rows} returnTo="/dashboard/assets" /> : undefined}
       </div>}
     />
     <AssetSubnav activeView={view}/>

@@ -735,6 +735,10 @@ function assetValidation(
     }
     const supplier=resolveSupplierValue();
 
+    if(existing&&!site)issue(issues,sheetName,row.rowNumber,"error","No fue posible conservar o resolver la Sede del activo existente.","Sede",textValue(row.values.site),"Selecciona una sede válida en Conciliación.");
+    if(existing&&!location)issue(issues,sheetName,row.rowNumber,"error","No fue posible conservar o resolver la Sububicación del activo existente.","Sububicación",textValue(row.values.location),"Selecciona una sububicación compatible con la sede.");
+    if(existing&&!supplier)issue(issues,sheetName,row.rowNumber,"error","No fue posible conservar o resolver el Proveedor del activo existente.","Proveedor",textValue(row.values.supplier),"Selecciona un proveedor válido en Conciliación.");
+
     if(!existing&&!site)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Sede.","Sede",textValue(row.values.site),"Completa una sede válida.");
     if(!existing&&!location)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Sububicación.","Sububicación",textValue(row.values.location),"Completa una sububicación válida.");
     if(!existing&&!supplier)issue(issues,sheetName,row.rowNumber,"error","El activo nuevo requiere Proveedor.","Proveedor",textValue(row.values.supplier),"Completa un proveedor válido.");

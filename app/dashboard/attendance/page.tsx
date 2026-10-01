@@ -529,7 +529,7 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
           <Badge variant={!policy.require_geolocation||geofencedSites===sites.rows.length?"success":"warning"}>{geofencedSites}/{sites.rows.length} con geocerca</Badge>
         </header>
         {sites.rows.length===0
-          ?<EmptyState icon="location" title="No hay sedes visibles" description="Asistencia necesita al menos una sede activa dentro de tu alcance."/>
+          ?<EmptyState icon="info" title="No hay sedes visibles" description="Asistencia necesita al menos una sede activa dentro de tu alcance."/>
           :<div className="attendance-site-grid attendance-site-grid-editable">
             {sites.rows.map(site=><article className="card attendance-site-card" key={site.id}>
               <div><strong>{site.name}</strong><span>{site.city||"Sin ciudad"}</span></div>

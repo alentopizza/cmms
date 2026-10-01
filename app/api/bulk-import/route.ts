@@ -38,6 +38,22 @@ type Issue={
 type Supplier=ImportSupplier;
 type Site={id:string;name:string};
 type Location={id:string;site_id:string;name:string};
+type AssetCategory={id:string;name:string};
+type AssetRecord={
+  id:string;updated_at:string;site_id:string;location_id:string;supplier_id:string;category_id:string|null;
+  code:string;name:string;description:string|null;manufacturer:string|null;model:string|null;serial_number:string|null;
+  status:string;criticality:string;purchase_date:string|null;installation_date:string|null;warranty_expires:string|null;
+  purchase_cost:string|null;location_detail:string|null;notes:string|null;
+};
+type ResolutionCandidate={id:string;label:string;context?:string};
+type ResolutionGroup={key:string;field:string;value:string;rows:number[];candidates:ResolutionCandidate[];allowNew?:boolean};
+type ParsedAsset={
+  row:number;assetId:string;downloadedUpdatedAt:string;code:string;name:string;description:string;category:string;
+  site:Site|null;location:Location|null;supplier:Supplier|null;manufacturer:string;model:string;serial:string;
+  status:string;criticality:string;purchaseDate:string;installationDate:string;warrantyDate:string;purchaseCost:number|null;
+  locationDetail:string;notes:string;existing:AssetRecord|null;operation:"create"|"update"|"unchanged"|"conflict"|"pending";
+  changedFields:string[];
+};
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
 type Item={id:string;sku:string;name:string;unit:string;unit_cost:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean;};
 type ParsedWarehouse={
@@ -128,6 +144,11 @@ const PROVIDER_ALIASES={
   name:["PROVEEDOR","Proveedor","Nombre proveedor"],
 };
 const ASSET_ALIASES={
+  assetId:["ACTIVO_ID","Activo ID","ID activo"],
+  updatedAt:["ACTUALIZADO_EN","Actualizado en","Versión","Version"],
+  siteId:["SEDE_ID","Sede ID","ID sede"],
+  locationId:["SUBUBICACION_ID","Sububicación ID","Sububicacion ID","ID sububicación","ID sububicacion"],
+  supplierId:["PROVEEDOR_ID","Proveedor ID","ID proveedor"],
   code:["Código *","Codigo *","Código","Codigo","SKU"],
   name:["Nombre *","Nombre","Activo","Nombre activo"],
   description:["Descripción","Descripcion"],
@@ -149,6 +170,47 @@ const ASSET_ALIASES={
 };
 
 function key(value:string){return normalizedHeader(value);}
+function compactKey(value:string){return key(value).replace(/\s+/g,"");}
+function levenshtein(a:string,b:string){
+  const left=compactKey(a),right=compactKey(b);
+  if(left===right)return 0;
+  if(!left.length)return right.length;
+  if(!right.length)return left.length;
+  const prev=Array.from({length:right.length+1},(_,index)=>index);
+  for(let i=1;i<=left.length;i++){
+    let diagonal=prev[0];
+    prev[0]=i;
+    for(let j=1;j<=right.length;j++){
+      const old=prev[j];
+      prev[j]=Math.min(prev[j]+1,prev[j-1]+1,diagonal+(left[i-1]===right[j-1]?0:1));
+      diagonal=old;
+    }
+  }
+  return prev[right.length];
+}
+function similarity(a:string,b:string){
+  const left=compactKey(a),right=compactKey(b);
+  const max=Math.max(left.length,right.length);
+  return max?1-levenshtein(left,right)/max:1;
+}
+function suggestions<T extends {id:string;name:string}>(rows:T[],value:string,context?:(row:T)=>string){
+  return rows
+    .map(row=>({row,score:similarity(row.name,value)}))
+    .filter(item=>item.score>=0.68)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,5)
+    .map(item=>({id:item.row.id,label:item.row.name,context:context?.(item.row)}));
+}
+function resolutionKey(field:string,value:string,scope=""){return field+"|"+key(scope)+"|"+key(value);}
+function sameTime(a:string,b:string){
+  const left=Date.parse(a),right=Date.parse(b);
+  return Number.isFinite(left)&&Number.isFinite(right)?Math.abs(left-right)<1000:a===b;
+}
+function sameNullable(a:unknown,b:unknown){
+  const left=a===null||a===undefined?"":String(a).trim();
+  const right=b===null||b===undefined?"":String(b).trim();
+  return left===right;
+}
 function issue(
   issues:Issue[],sheet:string,row:number,severity:Issue["severity"],message:string,
   field?:string,value?:string,suggestion?:string,

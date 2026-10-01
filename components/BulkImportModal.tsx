@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import UiIcon from "@/components/UiIcon";
 import { Alert } from "@/components/ui-kit/Feedback";
 import { Badge } from "@/components/ui-kit/Badge";
@@ -161,11 +162,8 @@ export default function BulkImportModal({
   const existingItems=Number(result?.summary?.existingItems||0);
   const commitBlockedByDuplicates=existingItems>0&&duplicateMode==="compare";
 
-  return <>
-    <button className={compact?"button secondary":"button secondary entity-action-button"} type="button" onClick={()=>setOpen(true)}>
-      <UiIcon name="upload" size={16}/><span>{label}</span>
-    </button>
-    {open&&<div className="modal-backdrop bulk-import-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false);}}>
+  const overlay=open&&typeof document!=="undefined"?createPortal(
+    <div className="modal-backdrop bulk-import-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false);}}>
       <section className="modal-card bulk-import-modal bulk-import-master-modal phase7-bulk-import" role="dialog" aria-modal="true" aria-label={title}>
         <header className="modal-header">
           <div><span className="eyebrow">Carga masiva validada</span><h2>{title}</h2><p>{entity==="inventory"?"Una plantilla maestra para productos, bodegas y Kardex; el contexto decide cómo se distribuyen los proveedores.":"Carga o actualiza activos identificados por Código."}</p></div>
@@ -272,6 +270,14 @@ export default function BulkImportModal({
           <button className="button" type="button" disabled={!file||busy||!result?.valid||commitBlockedByDuplicates} onClick={()=>run("commit")}><UiIcon name="upload" size={15}/> Confirmar importación</button>
         </footer>
       </section>
-    </div>}
+    </div>,
+    document.body,
+  ):null;
+
+  return <>
+    <button className={compact?"button secondary":"button secondary entity-action-button"} type="button" onClick={()=>setOpen(true)}>
+      <UiIcon name="upload" size={16}/><span>{label}</span>
+    </button>
+    {overlay}
   </>;
 }

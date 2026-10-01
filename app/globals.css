@@ -13819,3 +13819,6 @@ html[data-theme="dark"] .procurement-match-badge.pending_evidence,html[data-them
   .lead-trace-event-head{display:grid;gap:3px}
   .lead-trace-event-head time{white-space:normal}
 }
+
+.module-add-button-icon-only{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:11px!important}
+.module-add-button-icon-only .ui-icon{width:17px;height:17px}

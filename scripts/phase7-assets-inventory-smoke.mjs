@@ -62,8 +62,27 @@ const assetDetail=fs.readFileSync("app/dashboard/assets/[id]/page.tsx","utf8");
 if(!assetDetail.includes("<AssetSubnav")||!assetDetail.includes("<StaticDataTable")||!assetDetail.includes("<Badge")||!assetDetail.includes("<Alert"))throw new Error("Asset detail is not fully on Phase 7 primitives");
 
 const importer=fs.readFileSync("components/BulkImportModal.tsx","utf8");
-for(const marker of ["phase7-bulk-import","<Alert","<Badge","<UiIcon name=\"x\""]){
+for(const marker of [
+  "phase7-bulk-import",
+  "<Alert",
+  "<Badge",
+  "<UiIcon name=\"x\"",
+  'import { createPortal } from "react-dom";',
+  "createPortal(",
+  "document.body",
+  'document.body.classList.add("ds-overlay-open")',
+]){
   if(!importer.includes(marker))throw new Error("Bulk import Phase 7 integration missing "+marker);
+}
+
+const globalCss=fs.readFileSync("app/globals.css","utf8");
+for(const marker of [
+  ".bulk-import-backdrop{z-index:1500}",
+  ".bulk-import-modal{",
+  "background:var(--surface)",
+  "box-shadow:0 30px 80px",
+]){
+  if(!globalCss.includes(marker))throw new Error("Bulk import modal visual contract missing "+marker);
 }
 
 const createModal=fs.readFileSync("components/CreateRecordModal.tsx","utf8");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui-kit/Button";
+import { Button, IconButton } from "@/components/ui-kit/Button";
 import UiIcon, { type UiIconName } from "@/components/UiIcon";
 import { Modal } from "@/components/ui-kit/Overlay";
 
@@ -13,6 +13,7 @@ export default function CreateRecordModal({
   icon="+",
   iconName,
   disabled=false,
+  iconOnly=false,
   children,
 }:{
   title:string;
@@ -22,15 +23,26 @@ export default function CreateRecordModal({
   icon?:string;
   iconName?:UiIconName;
   disabled?:boolean;
+  iconOnly?:boolean;
   children:ReactNode;
 }){
   const [open,setOpen]=useState(false);
 
   return <>
-    <Button className="module-add-button" disabled={disabled} onClick={()=>setOpen(true)}>
-      <span className="module-add-button-icon" aria-hidden="true">{iconName?<UiIcon name={iconName} size={15}/>:icon}</span>
-      <span>{triggerLabel}</span>
-    </Button>
+    {iconOnly&&iconName
+      ?<IconButton
+        className="module-add-button module-add-button-icon-only"
+        disabled={disabled}
+        onClick={()=>setOpen(true)}
+        icon={iconName}
+        label={triggerLabel}
+        title={triggerLabel}
+        data-tooltip={triggerLabel}
+      />
+      :<Button className="module-add-button" disabled={disabled} onClick={()=>setOpen(true)}>
+        <span className="module-add-button-icon" aria-hidden="true">{iconName?<UiIcon name={iconName} size={15}/>:icon}</span>
+        <span>{triggerLabel}</span>
+      </Button>}
     <Modal
       open={open}
       onClose={()=>setOpen(false)}

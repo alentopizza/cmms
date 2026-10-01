@@ -600,31 +600,30 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       searchPlaceholder="Buscar persona o rol en el reporte de asistencia"
       filters={canReports?[{value:"all",label:"Todos"},{value:"active",label:"En campo"},{value:"inactive",label:"Sin jornada"}]:[{value:"all",label:"Todos"}]}
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
+      action={globalOperator?<form method="get" action="/dashboard/attendance" className="attendance-company-header-control">
+        <input type="hidden" name="view" value={activeView}/>
+        {activeView==="setup"&&<input type="hidden" name="step" value={activeStep}/>}
+        <label htmlFor="attendance-organization" className="sr-only">Empresa</label>
+        <select
+          id="attendance-organization"
+          name="organization_id"
+          defaultValue={organizationId||""}
+          required
+          aria-label="Empresa de asistencia"
+          title="Seleccionar empresa"
+        >
+          <option value="">Selecciona empresa</option>
+          {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+        <button
+          className="attendance-company-switch"
+          type="submit"
+          aria-label="Cambiar empresa"
+          title="Cambiar empresa"
+          data-tooltip="Cambiar empresa"
+        ><UiIcon name="reorder" size={16}/></button>
+      </form>:undefined}
     />
-
-    {canManage&&<section className="attendance-redesign-head">
-      <div className="attendance-redesign-title">
-        <span className="attendance-redesign-title-icon" aria-hidden="true"><UiIcon name="attendance" size={20}/></span>
-        <div><h1>Asistencia</h1><p>Administración de la operación en campo</p></div>
-      </div>
-
-      <div className="attendance-redesign-company">
-        {globalOperator
-          ?<form method="get" action="/dashboard/attendance" className="attendance-company-form">
-            <input type="hidden" name="view" value={activeView}/>
-            {activeView==="setup"&&<input type="hidden" name="step" value={activeStep}/>}
-            <div className="field">
-              <label htmlFor="attendance-organization">Empresa *</label>
-              <select id="attendance-organization" name="organization_id" defaultValue={organizationId||""} required>
-                <option value="">Selecciona empresa</option>
-                {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-            </div>
-            <button className="button" type="submit"><UiIcon name="reorder" size={15}/>Cambiar empresa</button>
-          </form>
-          :<div className="attendance-company-readonly"><span>Empresa</span><strong>{organizationName}</strong></div>}
-      </div>
-    </section>}
 
     {canManage&&organizationId&&<ModuleNavigation
       activeHref={activeView==="setup"?attendanceHref({view:"setup",step:activeStep}):attendanceHref({view:"operation"})}

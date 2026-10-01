@@ -53,7 +53,7 @@ function roleLabel(role:string|null){
   return role||"Integrante";
 }
 
-export default async function CrewsPage({searchParams}:{searchParams:Promise<{created?:string;error?:string}>}) {
+export default async function CrewsPage({searchParams}:{searchParams:Promise<{created?:string;updated?:string;error?:string}>}) {
   const session=await getSession();
   if(!session) redirect("/login");
   if(!can(session,"crews.manage")) redirect("/dashboard");
@@ -129,7 +129,8 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     : params.error==="leader" ? "El líder debe ser un integrante activo y autorizado de la misma cuadrilla."
     : params.error==="site-access" ? "Todos los integrantes deben tener acceso a la sede seleccionada."
     : params.error==="duplicate" ? "Ya existe una cuadrilla con ese nombre dentro de la empresa."
-    : params.error ? "No fue posible crear la cuadrilla." : "";
+    : params.error==="edit-fields" ? "Completa nombre, sede, líder e integrantes válidos para guardar la cuadrilla."
+    : params.error ? "No fue posible guardar la cuadrilla." : "";
 
   const activeCrews=crews.rows.filter(crew=>crew.active).length;
   const inactiveCrews=crews.rows.length-activeCrews;
@@ -197,6 +198,7 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
     </section>
 
     {params.created&&<Alert variant="success" title="Cuadrilla creada">Cuadrilla creada correctamente.</Alert>}
+    {params.updated&&<Alert variant="success" title="Cuadrilla actualizada">Los cambios de la cuadrilla se guardaron correctamente.</Alert>}
     {error&&<Alert variant="danger" title="No fue posible crear la cuadrilla">{error}</Alert>}
 
     {!creationGate.ready&&<CreationPrerequisiteState
@@ -214,6 +216,6 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       <KpiCard label="Inactivas" value={String(inactiveCrews)} hint="fuera de operación" icon="warning" tone={inactiveCrews?"warning":"default"}/>
     </MetricGrid>
 
-    <CrewDirectory crews={directoryCrews} owner={owner}/>
+    <CrewDirectory crews={directoryCrews} owner={owner} sites={sites.rows} workers={workers.rows}/>
   </div>;
 }

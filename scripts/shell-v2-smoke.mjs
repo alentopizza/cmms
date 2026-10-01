@@ -102,3 +102,17 @@ for(const marker of [
 }
 
 console.log("DESWEB Design System V2 Phase 3 shell/navigation checks passed.");
+
+
+const headerCss=fs.readFileSync("app/shell-v2.css","utf8");
+for(const marker of [
+  "Header control proportion normalization",
+  ".module-header-action-group>.button",
+  "height:40px!important",
+  ".module-visible-count{",
+  "min-height:40px",
+  ".global-notification-trigger",
+  "padding-left:4px",
+]){
+  if(!headerCss.includes(marker))throw new Error("Header proportion/spacing contract missing "+marker);
+}

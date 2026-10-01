@@ -241,7 +241,9 @@ export default function ModuleHeader({
 
       {contextControl&&<div className="module-context-control">{contextControl}</div>}
       {action && <div className="module-add-action">{action}</div>}
-      <span className="module-visible-count" aria-live="polite" title={countLabel}>{visibleCount}/{count}</span>
+      <span className="module-visible-count" aria-live="polite" title={countLabel}>
+        {visibleCount===count?count+" "+countLabel:visibleCount+"/"+count+" "+countLabel}
+      </span>
     </div>,
     portalHost,
   );

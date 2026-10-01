@@ -38,16 +38,29 @@ export default function CrewCreateForm({
   sites,
   workers,
   fixedOrganizationId,
+  action="/api/crews",
+  submitLabel="Crear cuadrilla",
+  initialValues,
 }:{
   organizations:Array<{id:string;name:string}>;
   sites:CrewFormSite[];
   workers:CrewFormWorker[];
   fixedOrganizationId?:string;
+  action?:string;
+  submitLabel?:string;
+  initialValues?:{
+    organizationId:string;
+    siteId:string;
+    name:string;
+    description:string;
+    leaderUserId:string;
+    memberIds:string[];
+  };
 }){
-  const [organizationId,setOrganizationId]=useState(fixedOrganizationId||"");
-  const [siteId,setSiteId]=useState("");
-  const [leaderId,setLeaderId]=useState("");
-  const [memberIds,setMemberIds]=useState<string[]>([]);
+  const [organizationId,setOrganizationId]=useState(initialValues?.organizationId||fixedOrganizationId||"");
+  const [siteId,setSiteId]=useState(initialValues?.siteId||"");
+  const [leaderId,setLeaderId]=useState(initialValues?.leaderUserId||"");
+  const [memberIds,setMemberIds]=useState<string[]>(()=>[...new Set(initialValues?.memberIds||[])]);
 
   const visibleSites=useMemo(
     ()=>sites.filter(site=>!organizationId||site.organization_id===organizationId),
@@ -83,7 +96,7 @@ export default function CrewCreateForm({
     setMemberIds(current=>current.includes(id)?current:[...current,id]);
   }
 
-  return <form className="form-grid unified-popup-form crew-create-form" method="post" action="/api/crews">
+  return <form className="form-grid unified-popup-form crew-create-form" method="post" action={action}>
     {fixedOrganizationId
       ?<input type="hidden" name="organization_id" value={fixedOrganizationId}/>
       :<div className="field">
@@ -104,7 +117,7 @@ export default function CrewCreateForm({
 
     <div className="field form-span-2">
       <label>Nombre de la cuadrilla *</label>
-      <input name="name" required placeholder="Ej. Cuadrilla refrigeración norte"/>
+      <input name="name" required defaultValue={initialValues?.name||""} placeholder="Ej. Cuadrilla refrigeración norte"/>
     </div>
 
     <div className="field form-span-2">
@@ -150,11 +163,11 @@ export default function CrewCreateForm({
 
     <div className="field form-span-2">
       <label>Descripción</label>
-      <textarea name="description" rows={3} placeholder="Ej. Equipo de atención de refrigeración para turno diurno."/>
+      <textarea name="description" rows={3} defaultValue={initialValues?.description||""} placeholder="Ej. Equipo de atención de refrigeración para turno diurno."/>
     </div>
 
     <div className="form-span-2 form-actions">
-      <button className="button" type="submit" disabled={!siteId||!leaderId||memberIds.length<1}>Crear cuadrilla</button>
+      <button className="button" type="submit" disabled={!siteId||!leaderId||memberIds.length<1}>{submitLabel}</button>
     </div>
   </form>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type FormEvent } from "react";
 import { Modal } from "@/components/ui-kit/Overlay";
 import UiIcon from "@/components/UiIcon";
 
@@ -25,8 +25,12 @@ export default function AttendanceEditGuard({
     setEditOpen(true);
   }
 
-  function requestSave(event:React.FormEvent<HTMLFormElement>){
+  function requestSave(event:FormEvent<HTMLFormElement>){
     event.preventDefault();
+    if(!event.currentTarget.checkValidity()){
+      event.currentTarget.reportValidity();
+      return;
+    }
     setForm(event.currentTarget);
     setSaveOpen(true);
   }
@@ -67,7 +71,7 @@ export default function AttendanceEditGuard({
     >
       <div onSubmitCapture={event=>{
         const target=event.target;
-        if(target instanceof HTMLFormElement)requestSave(event as unknown as React.FormEvent<HTMLFormElement>);
+        if(target instanceof HTMLFormElement)requestSave(event as unknown as FormEvent<HTMLFormElement>);
       }}>{children}</div>
     </Modal>
 

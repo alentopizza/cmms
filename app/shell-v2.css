@@ -622,3 +622,17 @@
     min-height:38px;
   }
 }
+
+@media(max-width:520px){
+  .desweb-shell-v2 .header-account-trigger{
+    width:40px;
+    min-width:40px;
+    max-width:40px;
+    height:40px;
+    padding:3px;
+    grid-template-columns:1fr;
+    place-items:center;
+  }
+  .desweb-shell-v2 .header-account-copy,
+  .desweb-shell-v2 .header-account-chevron{display:none!important}
+}

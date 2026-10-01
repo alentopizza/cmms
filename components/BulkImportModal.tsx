@@ -277,7 +277,7 @@ export default function BulkImportModal({
           </div>:<div className="bulk-import-history-empty">Aún no hay importaciones registradas para este módulo.</div>}
         </div>
 
-        <footer className="modal-actions">
+        <footer className="modal-actions bulk-import-footer">
           <button className="button secondary" type="button" onClick={()=>setOpen(false)}>Cancelar</button>
           <button className="button secondary" type="button" disabled={!file||busy} onClick={()=>run("validate")}>{busy?"Analizando…":"Analizar archivo"}</button>
           <button className="button" type="button" disabled={!file||busy||!result?.valid||commitBlockedByDuplicates} onClick={()=>run("commit")}><UiIcon name="upload" size={15}/> Confirmar importación</button>

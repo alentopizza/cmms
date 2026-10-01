@@ -34,6 +34,7 @@ for(const headerMarker of [
   "<ModuleHeader",
   'contextControl={globalOperator?<form',
   'className="attendance-company-header-control"',
+  'className="attendance-company-context-label"',
   'aria-label="Empresa de asistencia"',
   'data-tooltip="Cambiar empresa"',
 ]){

@@ -23,6 +23,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const siteId=String(form.get("site_id")||"");
   const name=String(form.get("name")||"").trim();
   const description=String(form.get("description")||"").trim();
+  const active=form.get("active")==="on";
   const leaderUserId=String(form.get("leader_user_id")||"");
   const memberIds=[...new Set(form.getAll("member_ids").map(value=>String(value)).filter(Boolean))];
 
@@ -86,9 +87,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
 
     await client.query(
       `UPDATE crews
-       SET site_id=$1,name=$2,description=$3,leader_user_id=$4,updated_at=now()
-       WHERE id=$5`,
-      [siteId,name,description||null,leaderUserId,id],
+       SET site_id=$1,name=$2,description=$3,leader_user_id=$4,active=$5,updated_at=now()
+       WHERE id=$6`,
+      [siteId,name,description||null,leaderUserId,active,id],
     );
 
     await client.query("DELETE FROM crew_members WHERE crew_id=$1",[id]);

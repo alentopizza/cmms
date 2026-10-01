@@ -55,6 +55,7 @@ export default function CrewCreateForm({
     description:string;
     leaderUserId:string;
     memberIds:string[];
+    active?:boolean;
   };
 }){
   const [organizationId,setOrganizationId]=useState(initialValues?.organizationId||fixedOrganizationId||"");
@@ -165,6 +166,11 @@ export default function CrewCreateForm({
       <label>Descripción</label>
       <textarea name="description" rows={3} defaultValue={initialValues?.description||""} placeholder="Ej. Equipo de atención de refrigeración para turno diurno."/>
     </div>
+
+    {initialValues&&<div className="field form-span-2">
+      <label className="owner-record-checkbox"><input name="active" type="checkbox" defaultChecked={initialValues.active!==false}/><span>Cuadrilla activa</span></label>
+      <small className="crew-form-help">Una cuadrilla inactiva conserva su historial, integrantes y actividades anteriores, pero queda fuera de la operación activa.</small>
+    </div>}
 
     <div className="form-span-2 form-actions">
       <button className="button" type="submit" disabled={!siteId||!leaderId||memberIds.length<1}>{submitLabel}</button>

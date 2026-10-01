@@ -20,6 +20,13 @@ type InventoryRow={
   site_name:string|null;location_name:string|null;warehouse_name:string|null;min_quantity:string;max_quantity:string;quantity:string;unit_cost:string;
   reference_price:string;tax_rate:string;active:boolean;
 };
+type AssetTemplateRow={
+  id:string;updated_at:string;code:string;name:string;description:string|null;category:string|null;
+  site_id:string;site_name:string;location_id:string;location_name:string;supplier_id:string;supplier_name:string;
+  manufacturer:string|null;model:string|null;serial_number:string|null;status:string;criticality:string;
+  purchase_date:string|null;installation_date:string|null;warranty_expires:string|null;purchase_cost:string|null;
+  location_detail:string|null;notes:string|null;
+};
 
 function header(row:ExcelJS.Row){
   row.font={bold:true,color:{argb:"FFFFFFFF"}};
@@ -79,7 +86,7 @@ export async function GET(request:Request){
   if(!organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
 
   const limitedInventoryScope=entity==="inventory"&&hasLimitedInventorySiteScope(session);
-  const [org,sites,locations,suppliers,categories,warehouses,presentations,subcategories,inventoryRows]=await Promise.all([
+  const [org,sites,locations,suppliers,categories,warehouses,presentations,subcategories,inventoryRows,assetCategories,assetRows]=await Promise.all([
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),
     limitedInventoryScope
       ?query<Site>("SELECT id,name FROM sites WHERE organization_id=$1 AND active=true AND id=ANY($2::uuid[]) ORDER BY name",[organizationId,session.siteIds])
@@ -147,6 +154,24 @@ export async function GET(request:Request){
           [organizationId,contextSupplierId||null],
         )
       :Promise.resolve({rows:[]} as {rows:InventoryRow[]}),
+    query<Category>("SELECT id,name FROM asset_categories WHERE organization_id=$1 ORDER BY name",[organizationId]),
+    dataMode==="current"&&entity==="assets"
+      ?query<AssetTemplateRow>(
+        `SELECT a.id::text,a.updated_at::text,a.code,a.name,a.description,c.name category,
+                a.site_id::text,site.name site_name,a.location_id::text,l.name location_name,
+                a.supplier_id::text,s.name supplier_name,a.manufacturer,a.model,a.serial_number,a.status,a.criticality,
+                a.purchase_date::text,a.installation_date::text,a.warranty_expires::text,a.purchase_cost::text,
+                a.location_detail,a.notes
+         FROM assets a
+         JOIN sites site ON site.id=a.site_id
+         JOIN locations l ON l.id=a.location_id
+         JOIN suppliers s ON s.id=a.supplier_id
+         LEFT JOIN asset_categories c ON c.id=a.category_id
+         WHERE a.organization_id=$1
+         ORDER BY a.code`,
+        [organizationId],
+      )
+      :Promise.resolve({rows:[]} as {rows:AssetTemplateRow[]}),
   ]);
 
   const workbook=new ExcelJS.Workbook();
@@ -158,26 +183,56 @@ export async function GET(request:Request){
     title(instructions,"PLANTILLA DE ACTIVOS · DESWEB CMMS");
     instructions.addRows([
       ["Empresa",org.rows[0]?.name||""],
-      ["Objetivo","Carga masiva de activos con validación previa."],
-      ["Código","Debe ser único dentro de la empresa."],
-      ["Relaciones","Sede, Sububicación y Proveedor deben existir."],
+      ["Objetivo","Crear o actualizar activos sin borrar información existente ni duplicar registros."],
+      ["Identificación","Para actualizar, prioriza ACTIVO_ID. Si no existe, el Código identifica el activo dentro de la empresa."],
+      ["Celdas vacías","En una actualización, una celda vacía conserva el valor actual. Nunca borra información automáticamente."],
+      ["Relaciones","SEDE_ID, SUBUBICACION_ID y PROVEEDOR_ID son la referencia más segura. Si están vacíos, el CMMS intenta resolver los nombres normalizados."],
+      ["Coincidencias","Tildes, mayúsculas, puntos, guiones y espacios no crean registros distintos. Las coincidencias dudosas se resuelven en CMMS antes de confirmar."],
+      ["Conflictos","ACTUALIZADO_EN permite detectar si el activo cambió en CMMS después de descargar la plantilla. Un conflicto no se sobrescribe automáticamente."],
+      ["Base de conocimiento","La hoja REFERENCIAS_CMMS contiene IDs y nombres vigentes de Sedes, Sububicaciones, Proveedores y Categorías."],
       ["Fechas","Usa formato AAAA-MM-DD."],
     ]);
-    instructions.getColumn(1).font={bold:true};instructions.getColumn(1).width=24;instructions.getColumn(2).width=90;
+    instructions.getColumn(1).font={bold:true};instructions.getColumn(1).width=29;instructions.getColumn(2).width=105;instructions.getColumn(2).alignment={wrapText:true,vertical:"top"};
+
+    const references=workbook.addWorksheet("REFERENCIAS_CMMS",{views:[{showGridLines:false}]});
+    addSheetHeader(references,["TIPO","ID","NOMBRE","CONTEXTO","CODIGO","NIT"]);
+    for(const site of sites.rows)references.addRow(["SEDE",site.id,site.name,"","",""]);
+    for(const location of locations.rows)references.addRow(["SUBUBICACION",location.id,location.name,location.site_name,"",""]);
+    for(const supplier of suppliers.rows)references.addRow(["PROVEEDOR",supplier.id,supplier.name,"",supplier.code||"",supplier.tax_id||""]);
+    for(const category of assetCategories.rows)references.addRow(["CATEGORIA",category.id,category.name,"","",""]);
+    fit(references);
 
     const catalogs=workbook.addWorksheet("CATALOGOS",{views:[{showGridLines:false}]});
     addSheetHeader(catalogs,["PROVEEDORES","SEDES","SUBUBICACIONES","CATEGORIAS","ESTADOS","CRITICIDAD"]);
-    const max=Math.max(suppliers.rowCount||0,sites.rowCount||0,locations.rowCount||0,categories.rowCount||0,4);
+    const max=Math.max(suppliers.rowCount||0,sites.rowCount||0,locations.rowCount||0,assetCategories.rowCount||0,4);
     const statuses=["Operativo","En mantenimiento","Detenido","Retirado"],criticalities=["Baja","Media","Alta","Crítica"];
     for(let i=0;i<max;i++)catalogs.addRow([
       suppliers.rows[i]?.name||"",sites.rows[i]?.name||"",locations.rows[i]?(locations.rows[i].site_name+" · "+locations.rows[i].name):"",
-      categories.rows[i]?.name||"",statuses[i]||"",criticalities[i]||"",
+      assetCategories.rows[i]?.name||"",statuses[i]||"",criticalities[i]||"",
     ]);
     fit(catalogs);
 
     const assets=workbook.addWorksheet("ACTIVOS",{views:[{showGridLines:false}]});
-    addSheetHeader(assets,["Código *","Nombre *","Descripción","Categoría","Sede *","Sububicación *","Proveedor *","Fabricante","Modelo","Serial","Estado *","Criticidad *","Fecha compra","Fecha instalación","Garantía vence","Costo compra","Ubicación detalle","Notas"]);
+    const assetHeaders=[
+      "ACTIVO_ID","ACTUALIZADO_EN","Código *","Nombre *","Descripción","Categoría",
+      "SEDE_ID","Sede *","SUBUBICACION_ID","Sububicación *","PROVEEDOR_ID","Proveedor *",
+      "Fabricante","Modelo","Serial","Estado *","Criticidad *","Fecha compra","Fecha instalación",
+      "Garantía vence","Costo compra","Ubicación detalle","Notas",
+    ];
+    addSheetHeader(assets,assetHeaders);
+    for(const row of assetRows.rows){
+      assets.addRow([
+        row.id,row.updated_at,row.code,row.name,row.description||"",row.category||"",
+        row.site_id,row.site_name,row.location_id,row.location_name,row.supplier_id,row.supplier_name,
+        row.manufacturer||"",row.model||"",row.serial_number||"",
+        row.status==="maintenance"?"En mantenimiento":row.status==="down"?"Detenido":row.status==="retired"?"Retirado":"Operativo",
+        row.criticality==="critical"?"Crítica":row.criticality==="high"?"Alta":row.criticality==="low"?"Baja":"Media",
+        row.purchase_date||"",row.installation_date||"",row.warranty_expires||"",row.purchase_cost?Number(row.purchase_cost):"",
+        row.location_detail||"",row.notes||"",
+      ]);
+    }
     fit(assets);
+    assets.views=[{state:"frozen",ySplit:1,xSplit:2}];
     const body=Buffer.from(await workbook.xlsx.writeBuffer());
     return new NextResponse(new Uint8Array(body),{headers:{
       "Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

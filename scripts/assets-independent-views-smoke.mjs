@@ -16,6 +16,10 @@ expect(page,'<AssetCatalogOverview', "asset secondary central renderer");
 expect(page,'activeView={view}',"active subnav");
 expect(page,'asset-modern-grid-dense',"dense asset grid");
 expect(page,"configurable_catalog_options","asset type label resolution");
+expect(page,"<ModuleHeader","shared asset module header");
+expect(page,'triggerLabel="Nuevo activo"',"asset primary action label");
+expect(page,"iconOnly","asset primary action compact mode");
+expect(page,'<CollectionView storageKey="assets"',"asset grid/list view remains connected");
 
 const overview=read("components/AssetCatalogOverview.tsx");
 for(const view of ["types","categories","brands","models","states","maintenance","history","documents"]){

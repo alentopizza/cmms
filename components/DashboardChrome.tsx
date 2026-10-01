@@ -129,7 +129,7 @@ function GlobalNotificationBell({
       </div>
       <footer>
         <button type="button" onClick={markAll} disabled={!unread}>Marcar todas como leídas</button>
-        {items.length>5&&<button type="button" onClick={()=>setShowAll(value=>!value)}>{showAll?"Ver menos":"Ver todas las notificaciones"}</button>}
+<button type="button" onClick={()=>setShowAll(value=>!value)} disabled={items.length<=5}>{showAll?"Ver menos":"Ver todas las notificaciones"}</button>
       </footer>
     </section>}
   </div>;

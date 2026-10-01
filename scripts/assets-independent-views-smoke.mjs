@@ -50,3 +50,10 @@ for(const needle of [
 ]){
   expect(assetsPage,needle,"secondary views must be lazy");
 }
+
+
+const createModals=read("components/ContextCreateModals.tsx");
+expect(createModals,'name="model" placeholder="Ej. XZ-450, ProMax 2000 o referencia del fabricante"',"asset model free-text field");
+if(createModals.includes('name="model" label="Modelo" catalog="asset_models"')){
+  throw new Error("Asset create form must not use configurable catalog for model");
+}

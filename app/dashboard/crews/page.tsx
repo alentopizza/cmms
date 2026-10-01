@@ -10,7 +10,7 @@ import CreationPrerequisiteState from "@/components/CreationPrerequisiteState";
 import CrewCreateForm, { type CrewFormWorker } from "@/components/CrewCreateForm";
 import CrewDirectory from "@/components/CrewDirectory";
 import { Alert } from "@/components/ui-kit/Feedback";
-import { KpiCard, MetricGrid } from "@/components/ui-kit/Metrics";
+import UiIcon from "@/components/UiIcon";
 
 type Crew = {
   id:string;
@@ -174,19 +174,13 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
         {key:"organization",label:"Empresa",allLabel:"Todas las empresas"},
         {key:"site",label:"Sede",allLabel:"Todas las sedes"},
       ]}
-    />
-
-    <section className="crew-directory-page-head-v2">
-      <div>
-        <h1>Cuadrillas</h1>
-        <p>Equipos de trabajo en campo, asigna actividades, gestiona integrantes y monitorea su operación.</p>
-      </div>
-      {creationGate.ready&&<CreateRecordModal
+      action={creationGate.ready?<CreateRecordModal
         title="Crear cuadrilla"
         eyebrow="Nuevo equipo"
         description="Selecciona la sede, define los integrantes y elige visualmente quién será el líder. El liderazgo no depende de que sea Técnico o Supervisor."
         triggerLabel="Nueva cuadrilla"
-        iconName="crew"
+        iconName="plus"
+        iconOnly
       >
         <CrewCreateForm
           organizations={organizations.rows}
@@ -194,8 +188,8 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
           workers={workers.rows}
           fixedOrganizationId={platform?undefined:session.organizationId||undefined}
         />
-      </CreateRecordModal>}
-    </section>
+      </CreateRecordModal>:undefined}
+    />
 
     {params.created&&<Alert variant="success" title="Cuadrilla creada">Cuadrilla creada correctamente.</Alert>}
     {params.updated&&<Alert variant="success" title="Cuadrilla actualizada">Los cambios de la cuadrilla se guardaron correctamente.</Alert>}
@@ -210,11 +204,20 @@ export default async function CrewsPage({searchParams}:{searchParams:Promise<{cr
       action={creationGate.action||"Continuar"}
     />}
 
-    <MetricGrid className="crew-directory-kpis-v2">
-      <KpiCard label="Cuadrillas registradas" value={String(crews.rowCount||0)} hint="dentro de tu alcance" icon="crew"/>
-      <KpiCard label="Activas" value={String(activeCrews)} hint="disponibles para la operación" icon="activity" tone="success"/>
-      <KpiCard label="Inactivas" value={String(inactiveCrews)} hint="fuera de operación" icon="warning" tone={inactiveCrews?"warning":"default"}/>
-    </MetricGrid>
+    <section className="crew-compact-stats" aria-label="Resumen de cuadrillas">
+      <article>
+        <span className="crew-compact-stat-icon"><UiIcon name="crew" size={18}/></span>
+        <div><strong>{crews.rowCount||0}</strong><span>Cuadrillas registradas</span><small>dentro de tu alcance</small></div>
+      </article>
+      <article className="success">
+        <span className="crew-compact-stat-icon"><UiIcon name="check" size={18}/></span>
+        <div><strong>{activeCrews}</strong><span>Activas</span><small>disponibles para la operación</small></div>
+      </article>
+      <article className={inactiveCrews?"warning":""}>
+        <span className="crew-compact-stat-icon"><UiIcon name="warning" size={18}/></span>
+        <div><strong>{inactiveCrews}</strong><span>Inactivas</span><small>fuera de operación</small></div>
+      </article>
+    </section>
 
     <CrewDirectory crews={directoryCrews} owner={owner} sites={sites.rows} workers={workers.rows}/>
   </div>;

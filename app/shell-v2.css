@@ -683,3 +683,63 @@
   .desweb-shell-v2 .header-account-copy,
   .desweb-shell-v2 .header-account-chevron{display:none!important}
 }
+
+
+/* Header control proportion normalization --------------------------------- */
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.button,
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.profile-export-menu>summary,
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.contextual-create-trigger,
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.module-add-button{
+  height:40px!important;
+  min-height:40px!important;
+  border-radius:11px!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.button,
+.desweb-shell-v2 .module-page-tools-portal .module-header-action-group>.profile-export-menu>summary{
+  padding-inline:14px!important;
+}
+.desweb-shell-v2 .module-page-tools-portal .module-visible-count{
+  min-height:40px;
+  height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;
+  border:1px solid var(--color-border-subtle);
+  border-radius:11px;
+  background:var(--color-surface);
+  color:var(--color-text-secondary);
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.desweb-shell-v2 .context-header-account-zone{
+  gap:10px;
+  padding-left:4px;
+}
+.desweb-shell-v2 .context-header-utility,
+.desweb-shell-v2 .global-notification-trigger{
+  width:40px;
+  min-width:40px;
+  height:40px;
+  min-height:40px;
+  border-radius:11px;
+  flex:0 0 40px;
+}
+.desweb-shell-v2 .header-account-trigger{
+  min-height:40px;
+  height:40px;
+}
+@media(max-width:767px){
+  .desweb-shell-v2 .module-page-tools-portal .module-header-action-group{gap:6px}
+  .desweb-shell-v2 .context-header-account-zone{gap:8px;padding-left:0}
+}

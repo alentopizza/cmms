@@ -224,6 +224,7 @@ export function AssetCreateModal({
   returnTo,
   triggerLabel = "Nuevo activo",
   secondary = false,
+  iconOnly = false,
 }: {
   sites: SiteOption[];
   locations: LocationOption[];
@@ -235,6 +236,7 @@ export function AssetCreateModal({
   returnTo: string;
   triggerLabel?: string;
   secondary?: boolean;
+  iconOnly?: boolean;
 }) {
   const initialSite=fixedSiteId || (sites.length===1 ? sites[0].id : "");
   const [open,setOpen]=useState(false);

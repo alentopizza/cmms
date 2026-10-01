@@ -14,6 +14,15 @@ type Section = {
   icon: UiIconName;
 };
 
+export type HeaderNotification={
+  id:string;
+  title:string;
+  context:string;
+  createdAt:string;
+  href?:string;
+  icon:UiIconName;
+};
+
 const sections: Array<{ match: (pathname: string) => boolean; section: Section }> = [
   { match: pathname => pathname === "/dashboard", section: { label: "Dashboard", eyebrow: "Indicadores", icon: "dashboard" } },
   { match: pathname => pathname.startsWith("/dashboard/companies"), section: { label: "Empresas", eyebrow: "Administración", icon: "company" } },
@@ -36,6 +45,96 @@ const sections: Array<{ match: (pathname: string) => boolean; section: Section }
   { match: pathname => pathname.startsWith("/dashboard/help"), section: { label: "Manual / Ayuda", eyebrow: "Centro de ayuda", icon: "help" } },
 ];
 
+function relativeNotificationTime(value:string){
+  const diff=Math.max(0,Date.now()-new Date(value).getTime());
+  const minutes=Math.floor(diff/60000);
+  if(minutes<1)return "ahora";
+  if(minutes<60)return "hace "+minutes+" min";
+  const hours=Math.floor(minutes/60);
+  if(hours<24)return "hace "+hours+" h";
+  const days=Math.floor(hours/24);
+  return "hace "+days+" d";
+}
+
+function GlobalNotificationBell({
+  items,
+  storageKey,
+}:{
+  items:HeaderNotification[];
+  storageKey:string;
+}){
+  const [open,setOpen]=useState(false);
+  const [showAll,setShowAll]=useState(false);
+  const [readIds,setReadIds]=useState<string[]>([]);
+  const wrapperRef=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{
+    try{
+      const raw=window.localStorage.getItem(storageKey);
+      const parsed=raw?JSON.parse(raw):[];
+      if(Array.isArray(parsed))setReadIds(parsed.filter(item=>typeof item==="string"));
+    }catch{}
+  },[storageKey]);
+
+  useEffect(()=>{
+    if(!open)return;
+    const pointer=(event:MouseEvent)=>{if(!wrapperRef.current?.contains(event.target as Node))setOpen(false);};
+    const key=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false);};
+    document.addEventListener("mousedown",pointer);
+    document.addEventListener("keydown",key);
+    return()=>{document.removeEventListener("mousedown",pointer);document.removeEventListener("keydown",key);};
+  },[open]);
+
+  function persist(next:string[]){
+    setReadIds(next);
+    try{window.localStorage.setItem(storageKey,JSON.stringify(next.slice(-200)));}catch{}
+  }
+  function markRead(id:string){if(!readIds.includes(id))persist([...readIds,id]);}
+  function markAll(){persist([...new Set([...readIds,...items.map(item=>item.id)])]);}
+
+  const unread=items.filter(item=>!readIds.includes(item.id)).length;
+  const visible=showAll?items:items.slice(0,5);
+
+  return <div className="global-notifications" ref={wrapperRef}>
+    <button
+      type="button"
+      className={"context-header-utility global-notification-trigger"+(open?" active":"")}
+      onClick={()=>setOpen(value=>!value)}
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      aria-label="Notificaciones"
+      title="Notificaciones"
+      data-tooltip="Notificaciones"
+    >
+      <UiIcon name="bell" size={17}/>
+      {unread>0&&<span className="global-notification-badge">{unread>99?"99+":unread}</span>}
+    </button>
+    {open&&<section className="global-notification-popover" role="dialog" aria-label="Notificaciones">
+      <header>
+        <div><strong>Notificaciones</strong><small>{unread} sin leer</small></div>
+        <button type="button" onClick={()=>setOpen(false)} aria-label="Cerrar notificaciones"><UiIcon name="x" size={15}/></button>
+      </header>
+      <div className="global-notification-list">
+        {visible.length?visible.map(item=>{
+          const unreadItem=!readIds.includes(item.id);
+          const content=<>
+            <span className="global-notification-icon"><UiIcon name={item.icon} size={15}/></span>
+            <span className="global-notification-copy"><strong>{item.title}</strong><small>{item.context} · {relativeNotificationTime(item.createdAt)}</small></span>
+            {unreadItem&&<i aria-label="No leída"/>}
+          </>;
+          return item.href
+            ?<Link key={item.id} href={item.href} className={unreadItem?"unread":""} onClick={()=>{markRead(item.id);setOpen(false);}}>{content}</Link>
+            :<button key={item.id} type="button" className={unreadItem?"unread":""} onClick={()=>markRead(item.id)}>{content}</button>;
+        }):<div className="global-notification-empty"><UiIcon name="bell" size={20}/><strong>Sin notificaciones recientes</strong><small>La actividad real del sistema aparecerá aquí.</small></div>}
+      </div>
+      <footer>
+        <button type="button" onClick={markAll} disabled={!unread}>Marcar todas como leídas</button>
+        {items.length>5&&<button type="button" onClick={()=>setShowAll(value=>!value)}>{showAll?"Ver menos":"Ver todas las notificaciones"}</button>}
+      </footer>
+    </section>}
+  </div>;
+}
+
 function currentSection(pathname: string) {
   return sections.find(item => item.match(pathname))?.section || { label: "Desweb CMMS", eyebrow: "Plataforma", icon: "dashboard" };
 }
@@ -48,6 +147,8 @@ export function CurrentSectionHeader({
   canBrandPersonalization=false,
   brandPersonalizationEnabled=false,
   avatarSrc,
+  notifications=[],
+  notificationStorageKey="cmms:notifications",
 }: {
   contextName: string | null;
   fullName: string;
@@ -56,6 +157,8 @@ export function CurrentSectionHeader({
   canBrandPersonalization?: boolean;
   brandPersonalizationEnabled?: boolean;
   avatarSrc?: string | null;
+  notifications?:HeaderNotification[];
+  notificationStorageKey?:string;
 }) {
   const pathname = usePathname();
   const section = currentSection(pathname);
@@ -73,6 +176,7 @@ export function CurrentSectionHeader({
     </div>
     <div id="context-header-tools" className="context-header-tools-slot" />
     <div className="context-header-account-zone">
+      <GlobalNotificationBell items={notifications} storageKey={notificationStorageKey}/>
       <SidebarAccountMenu fullName={fullName} role={role} canConfigure={canConfigure} canBrandPersonalization={canBrandPersonalization} brandPersonalizationEnabled={brandPersonalizationEnabled} placement="header" avatarSrc={avatarSrc} />
     </div>
   </header>;

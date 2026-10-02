@@ -93,7 +93,7 @@ export default function OwnerRecordActions({
     <div className={["owner-record-actions",compact?"owner-record-actions-compact":"",className].filter(Boolean).join(" ")}>
       {children}
       {fields.length>0&&(compact
-        ?<button className="ds-list-action" type="button" onClick={()=>setEditing(true)} title="Editar" data-tooltip="Editar" aria-label={"Editar "+label}><UiIcon name="edit" size={15}/><span className="ds-visually-hidden">Editar</span></button>
+        ?<button className="ds-list-action" type="button" onClick={()=>setEditing(true)} data-tooltip="Editar" aria-label={"Editar "+label}><UiIcon name="edit" size={15}/><span className="ds-visually-hidden">Editar</span></button>
         :<button className="text-button" type="button" onClick={()=>setEditing(value=>!value)}>{editing?"Cerrar edición":"Editar"}</button>)}
       <OwnerDeleteButton table={table} id={id} label={label} redirectTo={deleteRedirectTo} className={compact?"ds-list-action danger":"text-button text-danger"} tooltip={compact?"Eliminar":undefined} iconName={compact?"trash":undefined} iconOnly={compact}/>
       {!compact&&editing&&editor}

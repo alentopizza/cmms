@@ -115,13 +115,23 @@ export default async function WorkOrderDetailPage({params,searchParams}:{params:
           ),
     query<Worker>(
       `SELECT u.id,u.full_name,om.role,s.name supplier_name
-       FROM organization_members om JOIN users u ON u.id=om.user_id
+       FROM organization_members om
+       JOIN users u ON u.id=om.user_id
        LEFT JOIN suppliers s ON s.id=om.external_supplier_id
        WHERE om.organization_id=$1 AND u.active=true AND om.role IN ('technician','external')
+         AND (
+           COALESCE(om.access_all_sites,true)=true
+           OR EXISTS(
+             SELECT 1 FROM organization_member_sites oms
+             WHERE oms.organization_id=om.organization_id
+               AND oms.user_id=om.user_id
+               AND oms.site_id=$2
+           )
+         )
        ORDER BY u.full_name`,
-      [order.organization_id],
+      [order.organization_id,order.site_id],
     ),
-    query<Crew>("SELECT id,name FROM crews WHERE organization_id=$1 AND active=true ORDER BY name",[order.organization_id]),
+    query<Crew>("SELECT id,name FROM crews WHERE organization_id=$1 AND active=true AND (site_id IS NULL OR site_id=$2) ORDER BY name",[order.organization_id,order.site_id]),
     query<Supplier>("SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('services','both') ORDER BY name",[order.organization_id]),
   ]);
 

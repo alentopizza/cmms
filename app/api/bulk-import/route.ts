@@ -871,7 +871,7 @@ export async function POST(request:Request){
   }catch{
     return NextResponse.json({error:"No se pudo leer el archivo. Verifica que sea un Excel .xlsx válido y no esté protegido o dañado."},{status:400});
   }
-  const catalog=await catalogs(organizationId,session,entity==="inventory");
+  const catalog=await catalogs(organizationId,session,true);
   const fixedSupplier=fixedSupplierId?catalog.suppliers.find(supplier=>supplier.id===fixedSupplierId)||null:null;
   if(fixedSupplierId&&!fixedSupplier)return NextResponse.json({error:"Proveedor no disponible para esta importación."},{status:400});
   const issues:Issue[]=[];

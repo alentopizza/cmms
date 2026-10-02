@@ -81,7 +81,7 @@ export default async function RequisitionsPage({searchParams}:{searchParams:Prom
         {key:"requester",label:"Solicitante",allLabel:"Todos los solicitantes"},
         {key:"approval",label:"Aprobación",allLabel:"Todos los estados de aprobación"},
       ]}
-      action={can(session,"requisitions.write")?<Link className="button" href="/dashboard/inventory#crear-requisicion"><UiIcon name="plus" size={16}/> Crear desde inventario</Link>:undefined}
+      action={can(session,"requisitions.write")?<div className="module-header-action-group"><Link className="ds-button ds-button-primary ds-button-md module-add-button" href="/dashboard/inventory#crear-requisicion"><UiIcon name="plus" size={16}/><span>Crear desde inventario</span></Link></div>:undefined}
     />
 
     {(params.requisition_created||params.created)&&<div className="notice success section">{params.requisition_created||params.created} requisición{(params.requisition_created||params.created)==="1"?"":"es"} creada{(params.requisition_created||params.created)==="1"?"":"s"} correctamente.</div>}

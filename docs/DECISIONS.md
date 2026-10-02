@@ -748,3 +748,18 @@ Rules:
 - logout confirmation is presentation only; confirmed logout continues through the existing authentication/logout route and tracking cleanup.
 
 This keeps white label multi-tenant, entitlement-driven and compatible with the canonical Design System while preserving semantic meaning and existing business authorities.
+
+
+## ADR-046 — Tenant-scoped operational consecutives
+
+Status: accepted.
+
+Work Order and Maintenance Routine visible numbers are business consecutives scoped by Organization, not global table identifiers.
+
+The database owns allocation through `organization_operational_counters`, keyed by `organization_id + entity_type`. This allows two companies to both have OT #1 or Rutina #1 while preserving isolation and avoiding cross-tenant sequence leakage.
+
+Allocation is atomic through PostgreSQL upsert/update semantics. Application-side `MAX(number)+1` is prohibited because concurrent creations can produce duplicates.
+
+UUID primary keys remain authoritative for relations, audit and deep links. The visible consecutive may be normalized within an Organization without changing those UUID relationships.
+
+The sequence boundary is Organization-wide. Sites and sublocations do not maintain independent OT/Routine counters unless a future explicit domain decision changes that rule.

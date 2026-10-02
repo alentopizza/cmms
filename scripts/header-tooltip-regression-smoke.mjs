@@ -22,6 +22,14 @@ if(!phase9.includes('[data-tooltip="Eliminar"]::after')){
   throw new Error("Phase 9 delete action label no longer follows the Design System tooltip source");
 }
 for(const marker of [
+  ".work-order-grid-owner-actions .ds-list-action[data-tooltip]::after",
+  ".maintenance-grid-owner-actions .ds-list-action[data-tooltip]::after",
+  "top:auto!important",
+  "bottom:calc(100% + var(--space-2))!important",
+]){
+  if(!phase9.includes(marker))throw new Error("Phase 9 card tooltip placement missing "+marker);
+}
+for(const marker of [
   'className="module-header-action-group"',
   'className="ds-button ds-button-primary ds-button-md module-add-button"',
   '<span>Crear desde inventario</span>',

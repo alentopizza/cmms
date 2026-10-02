@@ -1,5 +1,9 @@
 # Project context
 
+## Operational numbering state — 2026-10-02
+
+Work Orders and Maintenance Routines use organization-scoped visible consecutives. Each Organization starts and advances its own OT and Routine sequence independently; UUIDs remain the relational identifiers. PostgreSQL allocates these numbers atomically through `organization_operational_counters`.
+
 ## Product identity
 
 **Desweb CMMS** is a commercial, multi-tenant Computerized Maintenance Management System (CMMS) for managing companies, physical locations, assets, maintenance work, preventive plans, inventory and maintenance teams.

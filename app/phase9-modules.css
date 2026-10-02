@@ -299,7 +299,7 @@
   padding:0 var(--space-3);border-radius:var(--radius-xl);font-size:10px;font-weight:var(--font-weight-bold)
 }
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action[aria-label^="Editar"]::after{content:"Editar"}
-.phase9-work-orders .work-order-grid-owner-actions .ds-list-action[title="Eliminar"]::after{content:"Eliminar"}
+.phase9-work-orders .work-order-grid-owner-actions .ds-list-action[data-tooltip="Eliminar"]::after{content:"Eliminar"}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action.danger{color:var(--color-danger-500);border-color:var(--color-danger-border)}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action.danger:hover{background:color-mix(in srgb,var(--color-danger-500) 7%,var(--color-surface))}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action:active{transform:translateY(1px)}
@@ -392,7 +392,7 @@
   padding:0 var(--space-3);border-radius:var(--radius-xl);font-size:10px;font-weight:var(--font-weight-bold)
 }
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[aria-label^="Editar"]::after{content:"Editar"}
-.phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[title="Eliminar"]::after{content:"Eliminar"}
+.phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[data-tooltip="Eliminar"]::after{content:"Eliminar"}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action.danger{color:var(--color-danger-500);border-color:var(--color-danger-border)}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action.danger:hover{background:color-mix(in srgb,var(--color-danger-500) 7%,var(--color-surface))}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action:active{transform:translateY(1px)}

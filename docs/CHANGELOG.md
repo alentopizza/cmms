@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-02 — Edición completa de Órdenes de Trabajo y Rutinas
+
+### Changed
+- La edición rápida de Órdenes de Trabajo deja de limitarse a Título, Prioridad y Estado.
+- OT permite ahora editar activo/equipo, título, descripción, tipo de OT, tipo de trabajo, causa, prioridad, estado, fecha requerida y responsable.
+- Rutinas permiten ahora editar activo/equipo, nombre, descripción, tipo de rutina, prioridad, especialidad, frecuencia, próxima ejecución, duración estimada, responsable y estado activo.
+- Técnico/persona, cuadrilla y proveedor de servicios se mantienen como opciones mutuamente excluyentes en el mismo formulario.
+
+### Integrity
+- El servidor valida que el activo editado permanezca dentro de la misma empresa.
+- Si una OT cambia de activo, su sede se sincroniza con la sede del nuevo activo.
+- Técnico, cuadrilla y proveedor se validan contra organización y sede antes de guardar.
+- Los UUID, consecutivos, relaciones históricas y campos de auditoría no se convierten en campos de edición manual.
+
+### Validation
+- Se añadió `operational-edit-completeness-smoke.mjs` y se incorporó al CI para proteger la cobertura de campos y las reglas de integridad del editor.
+
+
 ## 2026-10-02 — Tooltips únicos y header de Requisiciones
 
 ### Fixed

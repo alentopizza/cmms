@@ -1506,6 +1506,14 @@ export async function POST(request:Request){
     );
     let created=0,updated=0;
 
+    for(const [aliasKey,targetId] of Object.entries(assetResolutions)){
+      if(!targetId||targetId==="__new__")continue;
+      await client.query(
+        "INSERT INTO asset_import_resolution_aliases(organization_id,resolution_key,target_id,updated_by) VALUES($1,$2,$3,$4) ON CONFLICT(organization_id,resolution_key) DO UPDATE SET target_id=EXCLUDED.target_id,updated_by=EXCLUDED.updated_by,updated_at=now()",
+        [organizationId,aliasKey,targetId,session.userId||null],
+      );
+    }
+
     for(const row of rowsToCommit){
       const site=row.site,location=row.location,supplier=row.supplier;
       if(!site||!location||!supplier)throw new Error("La conciliación de relaciones no está completa en la fila "+row.row+".");

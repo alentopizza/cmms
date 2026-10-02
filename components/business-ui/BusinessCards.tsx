@@ -138,9 +138,9 @@ export function InventoryCard({
 }
 
 export function MaintenanceCard({
-  name,asset,company,frequency,nextDue,active,actions,recordProps,variant="compact",site,assignedTo,
+  name,number,asset,company,frequency,nextDue,active,actions,recordProps,variant="compact",site,assignedTo,
 }:{
-  name:string;asset:string;company:string;frequency:string;nextDue:string;active:boolean;actions?:ReactNode;recordProps?:RecordProps;
+  name:string;number?:string;asset:string;company:string;frequency:string;nextDue:string;active:boolean;actions?:ReactNode;recordProps?:RecordProps;
   variant?:"compact"|"dashboard";site?:string;assignedTo?:string;
 }){
   if(variant==="dashboard"){
@@ -150,7 +150,7 @@ export function MaintenanceCard({
           <span className="maintenance-grid-card-icon" aria-hidden="true"><UiIcon name="maintenance" size={20}/></span>
           <div className="maintenance-grid-card-heading">
             <div className="maintenance-grid-card-title-row">
-              <strong>{name}</strong>
+              <strong>{number?"Rutina #"+number+" · ":""}{name}</strong>
               <Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge>
             </div>
             <p>{asset||"No asignado"}</p>
@@ -183,7 +183,7 @@ export function MaintenanceCard({
   return <BusinessCardShell domain="maintenance" className="maintenance-mobile-card" recordProps={recordProps}>
     <div className="maintenance-mobile-main ds-business-mobile-main">
       <div className="maintenance-mobile-icon ds-business-icon" aria-hidden="true"><UiIcon name="maintenance" size={20}/></div>
-      <div className="maintenance-mobile-copy"><span>{active?"Rutina activa":"Rutina inactiva"}</span><strong>{name}</strong><small>{asset}</small></div>
+      <div className="maintenance-mobile-copy"><span>{number?"Rutina #"+number:(active?"Rutina activa":"Rutina inactiva")}</span><strong>{name}</strong><small>{asset}</small></div>
       <Badge variant={active?"success":"neutral"}>{active?"Activa":"Inactiva"}</Badge>
     </div>
     <BusinessMetaGrid className="maintenance-mobile-meta" items={[

@@ -269,7 +269,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
       action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} workers={workers.rows} crews={crews.rows} serviceSuppliers={serviceSuppliers.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="section"><Alert variant="success" title="Rutina creada">Rutina creada correctamente.</Alert></div>}
-    {feedback.error && <div className="section"><Alert variant="danger" title="No fue posible crear la rutina">{feedback.error==="sequence" ? creationGate.message : "Revisa los datos e inténtalo nuevamente."}</Alert></div>}
+    {feedback.error && <div className="section"><Alert variant="danger" title="No fue posible crear la rutina">{feedback.error==="sequence" ? creationGate.message : feedback.error==="executor" ? "Selecciona un único responsable válido con acceso a la sede del activo." : "Revisa los datos e inténtalo nuevamente."}</Alert></div>}
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="maintenance"
       eyebrow="Jerarquía de creación"
@@ -336,6 +336,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           {key:"plan",label:"Rutina",width:"34%"},
           {key:"company",label:"Empresa"},
           {key:"asset",label:"Equipo"},
+          {key:"assigned",label:"Responsable"},
           {key:"due",label:"Próximo vencimiento"},
           {key:"state",label:"Estado"},
           ...(owner?[{key:"actions",label:"Acciones",align:"end" as const}]:[]),
@@ -358,6 +359,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           />,
           company:p.company,
           asset:p.asset,
+          assigned:p.assigned_to_label||"Sin asignar",
           due:p.next_due_at?new Date(p.next_due_at).toLocaleDateString("es-CO"):"Sin programar",
           state:<Badge variant={p.active?"success":"neutral"}>{p.active?"Activa":"Inactiva"}</Badge>,
           ...(owner?{actions:<ListQuickActions><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[

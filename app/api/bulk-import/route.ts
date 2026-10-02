@@ -52,7 +52,7 @@ type ParsedAsset={
   site:Site|null;location:Location|null;supplier:Supplier|null;manufacturer:string;model:string;serial:string;
   status:string;criticality:string;purchaseDate:string;installationDate:string;warrantyDate:string;purchaseCost:number|null;
   locationDetail:string;notes:string;existing:AssetRecord|null;operation:"create"|"update"|"unchanged"|"conflict"|"pending";
-  changedFields:string[];
+  changedFields:string[];changes:Array<{field:string;before:string;after:string}>;
 };
 type Warehouse={id:string;site_id:string|null;location_id:string|null;name:string};
 type Item={id:string;sku:string;name:string;unit:string;unit_cost:string;site_id:string|null;location_id:string|null;warehouse_id:string|null;quantity:string;supplier_id:string|null;supplier_name:string|null;active:boolean;};
@@ -844,22 +844,29 @@ function assetValidation(
     const notes=textValue(row.values.notes)||(existing?.notes||"");
 
     const changedFields:string[]=[];
+    const changes:Array<{field:string;before:string;after:string}>=[];
     if(existing){
-      const effectiveSite=site?.id||existing.site_id;
-      const effectiveLocation=location?.id||existing.location_id;
-      const effectiveSupplier=supplier?.id||existing.supplier_id;
-      const categoryMatch=category?assetCategories.find(item=>key(item.name)===key(category))||null:null;
-      const effectiveCategory=category?categoryMatch?.id||"__new__":existing.category_id||"";
+      const currentSite=catalog.sites.find(item=>item.id===existing.site_id);
+      const currentLocation=catalog.locations.find(item=>item.id===existing.location_id);
+      const currentSupplier=catalog.suppliers.find(item=>item.id===existing.supplier_id);
+      const currentCategory=existing.category_id?categoriesById.get(existing.category_id)||null:null;
       const comparisons:Array<[string,unknown,unknown]>=[
         ["Código",existing.code,code],["Nombre",existing.name,name],["Descripción",existing.description||"",description],
-        ["Sede",existing.site_id,effectiveSite],["Sububicación",existing.location_id,effectiveLocation],["Proveedor",existing.supplier_id,effectiveSupplier],
-        ["Categoría",existing.category_id||"",effectiveCategory],["Fabricante",existing.manufacturer||"",manufacturer],["Modelo",existing.model||"",model],
+        ["Sede",currentSite?.name||existing.site_id,site?.name||existing.site_id],
+        ["Sububicación",currentLocation?.name||existing.location_id,location?.name||existing.location_id],
+        ["Proveedor",currentSupplier?.name||existing.supplier_id,supplier?.name||existing.supplier_id],
+        ["Categoría",currentCategory?.name||"",category],["Fabricante",existing.manufacturer||"",manufacturer],["Modelo",existing.model||"",model],
         ["Serial",existing.serial_number||"",serial],["Estado",existing.status,status],["Criticidad",existing.criticality,crit],
         ["Fecha compra",existing.purchase_date||"",purchaseDate],["Fecha instalación",existing.installation_date||"",installationDate],
         ["Garantía vence",existing.warranty_expires||"",warrantyDate],["Costo compra",existing.purchase_cost===null?"":Number(existing.purchase_cost),purchaseCost===null?"":purchaseCost],
         ["Ubicación detalle",existing.location_detail||"",locationDetail],["Notas",existing.notes||"",notes],
       ];
-      for(const [label,before,after] of comparisons)if(!sameNullable(before,after))changedFields.push(label);
+      for(const [label,before,after] of comparisons){
+        if(!sameNullable(before,after)){
+          changedFields.push(label);
+          changes.push({field:label,before:String(before??""),after:String(after??"")});
+        }
+      }
       if(operation!=="conflict"&&operation!=="pending")operation=changedFields.length?"update":"unchanged";
     }else if(operation!=="conflict"&&operation!=="pending"){
       operation="create";
@@ -874,7 +881,7 @@ function assetValidation(
     parsed.push({
       row:row.rowNumber,assetId:rawAssetId,downloadedUpdatedAt:rawUpdatedAt,code,name,description,category,
       site,location,supplier,manufacturer,model,serial,status,criticality:crit,purchaseDate,installationDate,warrantyDate,
-      purchaseCost,locationDetail,notes,existing,operation,changedFields,
+      purchaseCost,locationDetail,notes,existing,operation,changedFields,changes,
     });
   }
 
@@ -1545,7 +1552,7 @@ export async function POST(request:Request){
   issues.push(...assets.issues);
   const errors=issues.filter(item=>item.severity==="error");
   const preview=assets.parsed.slice(0,250).map(row=>({
-    row:row.row,code:row.code,name:row.name,operation:row.operation,changedFields:row.changedFields,
+    row:row.row,code:row.code,name:row.name,operation:row.operation,changedFields:row.changedFields,changes:row.changes,
   }));
   const assetSummary={
     assetRows:assets.parsed.length,

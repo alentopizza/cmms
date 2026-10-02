@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-10-02 — Consecutivos por empresa para OT y Rutinas
+
+### Fixed
+- Las Órdenes de Trabajo dejan de consumir una secuencia global compartida entre empresas.
+- Cada organización mantiene ahora su propio consecutivo visible para OT: Empresa A puede tener OT #1 y Empresa B también OT #1.
+- Las Rutinas reciben el mismo modelo de consecutivo independiente por organización y muestran su número en listado y tarjetas.
+- Los consecutivos históricos visibles se normalizan cronológicamente dentro de cada organización; las relaciones internas conservan sus UUIDs y no se modifican.
+
+### Technical
+- Nueva migración `999f_tenant_operational_consecutives.sql` con contadores transaccionales por `organization_id + entity_type`.
+- Se evita `MAX()+1`; la asignación usa un contador atómico en PostgreSQL para soportar creación concurrente.
+- Nuevo smoke `tenant-operational-consecutives-smoke.mjs` valida que dos organizaciones puedan crear simultáneamente OT #1/#2 y Rutina #1/#2 sin colisiones.
+- CI ejecuta permanentemente la prueba de consecutivos tenant-scoped.
+
+
 ## 2026-09-29 — Refactor global UX/UI · Header, Sidebar y Perfil
 
 - Se elimina **Manual / Ayuda** de la navegación lateral global; el sidebar queda reservado a módulos y operación.

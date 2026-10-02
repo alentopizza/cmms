@@ -18,7 +18,7 @@ import { getCreationGateForScope } from "@/lib/setup-sequence";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
-type PlanRow={id:string;organization_id:string;site_id:string;site:string;number:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean;assigned_to_label:string|null};
+type PlanRow={id:string;organization_id:string;site_id:string;site:string;number:string;name:string;description:string|null;routine_type:string|null;priority:string|null;specialty:string|null;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;estimated_minutes:number|null;active:boolean;assigned_to:string|null;crew_id:string|null;service_supplier_id:string|null;assigned_to_label:string|null};
 type RoutineSummary={total_count:number;filtered_count:number;active_count:number;overdue_count:number;due_soon_count:number};
 type RoutineFacetValue={value:string;label:string};
 type RoutineFacetRow={organizations:RoutineFacetValue[];sites:RoutineFacetValue[];frequencies:RoutineFacetValue[]};
@@ -92,7 +92,8 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
     SELECT p.id,p.organization_id,a.site_id,s.name site,p.number::text number,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,
-           a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at,p.active,
+           a.name asset,o.name company,p.description,p.routine_type,p.priority,p.specialty,p.frequency_value,p.frequency_unit,p.next_due_at,p.estimated_minutes,p.active,
+           p.assigned_to::text,p.crew_id::text,p.service_supplier_id::text,
            COALESCE(assigned_user.full_name,assigned_crew.name,assigned_supplier.name) assigned_to_label
     FROM maintenance_plans p
     JOIN assets a ON a.id=p.asset_id
@@ -231,7 +232,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const orderSql=sort==="due"?"next_due_at ASC NULLS LAST,name ASC,id ASC":"next_due_at ASC NULLS LAST,name ASC,id ASC";
   const plans=await query<PlanRow>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,site,number,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active,assigned_to_label
+     SELECT id,organization_id,site_id,site,number,name,description,routine_type,priority,specialty,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,estimated_minutes,active,assigned_to,crew_id,service_supplier_id,assigned_to_label
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}
@@ -245,6 +246,37 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
     site:Array.isArray(rawFacets.sites)?rawFacets.sites:[],
     frequency:(Array.isArray(rawFacets.frequencies)?rawFacets.frequencies:[]).map(item=>({...item,label:frequencyLabel(item.value)})),
   };
+
+  function ownerFieldsForPlan(p:PlanRow){
+    const organizationAssets=assets.rows.filter(asset=>asset.organization_id===p.organization_id);
+    const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===p.organization_id && (worker.site_id===null||worker.site_id===p.site_id));
+    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===p.organization_id && (crew.site_id===null||crew.site_id===p.site_id));
+    const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===p.organization_id);
+    return [
+      {name:"asset_id",label:"Activo / Equipo",value:p.asset_id,type:"select" as const,wide:true,options:organizationAssets.map(asset=>({value:asset.id,label:asset.label}))},
+      {name:"name",label:"Nombre",value:p.name,wide:true},
+      {name:"description",label:"Descripción",value:p.description||"",type:"textarea" as const,wide:true},
+      {name:"routine_type",label:"Tipo de rutina",value:p.routine_type||""},
+      {name:"priority",label:"Prioridad",value:p.priority||""},
+      {name:"specialty",label:"Especialidad",value:p.specialty||""},
+      {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number" as const},
+      {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select" as const,options:[
+        {value:"day",label:"Día"},{value:"week",label:"Semana"},{value:"month",label:"Mes"},{value:"year",label:"Año"},{value:"meter",label:"Medidor"}
+      ]},
+      {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date" as const},
+      {name:"estimated_minutes",label:"Duración estimada (min)",value:p.estimated_minutes??"",type:"number" as const},
+      {name:"assigned_to",label:"Técnico / persona",value:p.assigned_to||"",type:"select" as const,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin asignar"},...organizationWorkers.map(worker=>({value:worker.id,label:worker.name}))
+      ]},
+      {name:"crew_id",label:"Cuadrilla",value:p.crew_id||"",type:"select" as const,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin cuadrilla"},...organizationCrews.map(crew=>({value:crew.id,label:crew.name}))
+      ]},
+      {name:"service_supplier_id",label:"Proveedor de servicios",value:p.service_supplier_id||"",type:"select" as const,wide:true,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin proveedor"},...organizationSuppliers.map(supplier=>({value:supplier.id,label:supplier.name}))
+      ]},
+      {name:"active",label:"Estado activo",value:p.active,type:"checkbox" as const},
+    ];
+  }
 
   return <div className="phase9-maintenance">
     <ModuleHeader
@@ -299,15 +331,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           </div>
         </div>
         {plans.rows.map(p=>{
-          const ownerFields=[
-            {name:"name",label:"Nombre",value:p.name},
-            {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number" as const},
-            {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select" as const,options:[
-              {value:"day",label:"Día"},{value:"week",label:"Semana"},{value:"month",label:"Mes"},{value:"year",label:"Año"},{value:"meter",label:"Medidor"}
-            ]},
-            {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date" as const},
-            {name:"active",label:"Estado",value:p.active,type:"checkbox" as const},
-          ];
+          const ownerFields=ownerFieldsForPlan(p);
           return <MaintenanceCard
             key={p.id}
             variant="dashboard"
@@ -363,15 +387,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
           assigned:p.assigned_to_label||"Sin asignar",
           due:p.next_due_at?new Date(p.next_due_at).toLocaleDateString("es-CO"):"Sin programar",
           state:<Badge variant={p.active?"success":"neutral"}>{p.active?"Activa":"Inactiva"}</Badge>,
-          ...(owner?{actions:<ListQuickActions><OwnerRecordActions table="maintenance_plans" id={p.id} label={p.name} fields={[
-            {name:"name",label:"Nombre",value:p.name},
-            {name:"frequency_value",label:"Frecuencia",value:p.frequency_value,type:"number"},
-            {name:"frequency_unit",label:"Unidad",value:p.frequency_unit,type:"select",options:[
-              {value:"day",label:"Día"},{value:"week",label:"Semana"},{value:"month",label:"Mes"},{value:"year",label:"Año"},{value:"meter",label:"Medidor"}
-            ]},
-            {name:"next_due_at",label:"Próxima ejecución",value:p.next_due_at?p.next_due_at.slice(0,10):"",type:"date"},
-            {name:"active",label:"Estado",value:p.active,type:"checkbox"},
-          ]}/></ListQuickActions>}:{})
+          ...(owner?{actions:<ListQuickActions><OwnerRecordActions table="maintenance_plans" id={p.id} label={"Rutina #"+p.number} fields={ownerFieldsForPlan(p)}/></ListQuickActions>}:{})
         }}))}
         empty={<EmptyState icon="file" title="No hay rutinas disponibles" description="Cuando existan rutinas visibles para tu alcance aparecerán aquí."/>}
       />}/>

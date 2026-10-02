@@ -37,6 +37,12 @@ for(const marker of [
   "assets.bulk_import_created",
   "asset_import_resolution_aliases",
   "hasLimitedInventorySiteScope(session)",
+  "after:String(after??\"\")",
+  "before:String(before??\"\")",
+  "changes:Array<{field:string;before:string;after:string}>",
+  "value:\"Sin proveedor\"",
+  "value:\"Sin sede\"",
+  "value:\"Sin sububicación\"",
 ])expect(route,marker,"asset reconciliation engine");
 
 const modal=read("components/BulkImportModal.tsx");
@@ -49,6 +55,8 @@ for(const marker of [
   'body.set("resolutions",JSON.stringify(resolutionChoices))',
   "Sin cambios",
   "Conflicto",
+  "bulk-import-change-details",
+  "Ver antes / después",
 ])expect(modal,marker,"asset reconciliation UI");
 
 const css=read("app/globals.css");

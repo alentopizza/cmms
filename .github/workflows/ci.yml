@@ -69,6 +69,7 @@ jobs:
           DATABASE_URL: postgresql://cmms:cmms@localhost:5432/cmms
       - run: node scripts/design-system-smoke.mjs
       - run: node scripts/ui-kit-core-smoke.mjs
+      - run: node scripts/header-tooltip-regression-smoke.mjs
       - run: node scripts/shell-v2-smoke.mjs
       - run: node scripts/data-ui-smoke.mjs
       - run: node scripts/view-mode-toggle-smoke.mjs

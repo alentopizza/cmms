@@ -26,6 +26,9 @@ export async function POST(request:Request) {
   const nextDueAt=String(form.get("next_due_at")||"").trim();
   const estimatedRaw=String(form.get("estimated_minutes")||"").trim();
   const estimatedMinutes=estimatedRaw ? Number.parseInt(estimatedRaw,10) : null;
+  const assignedTo=String(form.get("assigned_to")||"");
+  const crewId=String(form.get("crew_id")||"");
+  const supplierId=String(form.get("service_supplier_id")||"");
   const returnTo=String(form.get("return_to")||"");
   const target=(suffix:string)=>publicUrl(appendFeedback(safeDashboardReturn(returnTo,"/dashboard/maintenance"),suffix),request.url);
 
@@ -47,10 +50,54 @@ export async function POST(request:Request) {
   const gate=await getCreationGateForScope("routine",asset.rows[0].organization_id,false);
   if(!gate.ready) return NextResponse.redirect(target("?error=sequence"),303);
 
+  const selected=[assignedTo,crewId,supplierId].filter(Boolean);
+  if(selected.length>1) return NextResponse.redirect(target("?error=executor"),303);
+
+  if(assignedTo){
+    const worker=await query(
+      `SELECT 1
+       FROM organization_members om
+       JOIN users u ON u.id=om.user_id
+       WHERE om.organization_id=$1 AND u.id=$2 AND u.active=true
+         AND om.role IN ('technician','external')
+         AND (
+           COALESCE(om.access_all_sites,true)=true
+           OR EXISTS(
+             SELECT 1 FROM organization_member_sites oms
+             WHERE oms.organization_id=om.organization_id
+               AND oms.user_id=om.user_id
+               AND oms.site_id=$3
+           )
+         )`,
+      [asset.rows[0].organization_id,assignedTo,asset.rows[0].site_id],
+    );
+    if(!worker.rowCount) return NextResponse.redirect(target("?error=executor"),303);
+  }
+  if(crewId){
+    const crew=await query(
+      "SELECT 1 FROM crews WHERE id=$1 AND organization_id=$2 AND active=true AND (site_id IS NULL OR site_id=$3)",
+      [crewId,asset.rows[0].organization_id,asset.rows[0].site_id],
+    );
+    if(!crew.rowCount) return NextResponse.redirect(target("?error=executor"),303);
+  }
+  if(supplierId){
+    const supplier=await query(
+      "SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('services','both')",
+      [supplierId,asset.rows[0].organization_id],
+    );
+    if(!supplier.rowCount) return NextResponse.redirect(target("?error=executor"),303);
+  }
+
   await query(
-    `INSERT INTO maintenance_plans(organization_id,asset_id,name,description,routine_type,priority,specialty,trigger_type,frequency_value,frequency_unit,next_due_at,estimated_minutes)
-     VALUES($1,$2,$3,$4,$5,$6,$7,'calendar',$8,$9,$10,$11)`,
-    [asset.rows[0].organization_id,assetId,name,description||null,routineType||null,priority||null,specialty||null,frequencyValue,frequencyUnit,nextDueAt||null,estimatedMinutes],
+    `INSERT INTO maintenance_plans(
+       organization_id,asset_id,name,description,routine_type,priority,specialty,trigger_type,
+       frequency_value,frequency_unit,next_due_at,estimated_minutes,assigned_to,crew_id,service_supplier_id
+     )
+     VALUES($1,$2,$3,$4,$5,$6,$7,'calendar',$8,$9,$10,$11,$12,$13,$14)`,
+    [
+      asset.rows[0].organization_id,assetId,name,description||null,routineType||null,priority||null,specialty||null,
+      frequencyValue,frequencyUnit,nextDueAt||null,estimatedMinutes,assignedTo||null,crewId||null,supplierId||null,
+    ],
   );
 
   return NextResponse.redirect(target("?created=routine"),303);

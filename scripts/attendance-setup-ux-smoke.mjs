@@ -34,13 +34,13 @@ for(const headerMarker of [
   "<ModuleHeader",
   'contextControl={globalOperator?<form',
   'className="attendance-company-header-control"',
-  'className="attendance-company-context-label"',
   'aria-label="Empresa de asistencia"',
-  'data-tooltip="Cambiar empresa"',
+  'data-tooltip={organizationId?"Cambiar empresa":"Seleccionar empresa"}',
 ]){
   if(!page.includes(headerMarker))throw new Error("Attendance global header contract missing "+headerMarker);
 }
 if(page.includes('action={globalOperator?<form'))throw new Error("Attendance company selector must use contextual header slot, not primary action slot");
+if(page.includes('title="Cambiar empresa"'))throw new Error("Attendance company switch must not duplicate native and Design System tooltips");
 
 for(const forbidden of [
   "<AttendanceSetupWorkspace",

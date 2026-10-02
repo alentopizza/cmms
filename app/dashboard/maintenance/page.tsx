@@ -18,7 +18,7 @@ import { getCreationGateForScope } from "@/lib/setup-sequence";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
-type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean;assigned_to_label:string|null};
+type PlanRow={id:string;organization_id:string;site_id:string;site:string;number:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean;assigned_to_label:string|null};
 type RoutineSummary={total_count:number;filtered_count:number;active_count:number;overdue_count:number;due_soon_count:number};
 type RoutineFacetValue={value:string;label:string};
 type RoutineFacetRow={organizations:RoutineFacetValue[];sites:RoutineFacetValue[];frequencies:RoutineFacetValue[]};
@@ -91,7 +91,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   }
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
-    SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,
+    SELECT p.id,p.organization_id,a.site_id,s.name site,p.number::text number,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,
            a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at,p.active,
            COALESCE(assigned_user.full_name,assigned_crew.name,assigned_supplier.name) assigned_to_label
     FROM maintenance_plans p
@@ -231,7 +231,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const orderSql=sort==="due"?"next_due_at ASC NULLS LAST,name ASC,id ASC":"next_due_at ASC NULLS LAST,name ASC,id ASC";
   const plans=await query<PlanRow>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,site,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active,assigned_to_label
+     SELECT id,organization_id,site_id,site,number,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active,assigned_to_label
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}
@@ -312,6 +312,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             key={p.id}
             variant="dashboard"
             name={p.name}
+            number={p.number}
             asset={p.asset||"No asignado"}
             company={p.company}
             site={p.site}
@@ -321,7 +322,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             assignedTo={p.assigned_to_label||"Sin asignar"}
             recordProps={{
               "data-module-record":true,"data-status":p.active?"active":"inactive",
-              "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit,p.assigned_to_label].filter(Boolean).join(" "),
+              "data-search":[p.number,p.name,p.asset,p.company,p.site,p.frequency_unit,p.assigned_to_label].filter(Boolean).join(" "),
               "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
               "data-filter-site":p.site_id,"data-filter-site-label":p.site,
               "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
@@ -343,7 +344,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         ]}
         rows={plans.rows.map(p=>({id:p.id,recordProps:{
           "data-module-record":true,"data-status":p.active?"active":"inactive",
-          "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
+          "data-search":[p.number,p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
           "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
           "data-filter-site":p.site_id,"data-filter-site-label":p.site,
           "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,
@@ -353,7 +354,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             imageAlt={canReadAssets&&p.asset_has_image?"Imagen de "+p.asset:""}
             icon="maintenance"
             variant="thumbnail"
-            title={p.name}
+            title={"Rutina #"+p.number+" · "+p.name}
             subtitle={"Cada "+p.frequency_value+" "+p.frequency_unit}
             meta={p.site}
           />,

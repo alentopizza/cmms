@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-02 — Tooltips únicos y header de Requisiciones
+
+### Fixed
+- Las acciones compactas de edición/eliminación dejan de mostrar simultáneamente el tooltip nativo del navegador y el tooltip visual del Design System.
+- Se conserva un único mensaje funcional mediante `data-tooltip` y `aria-label`; los rótulos visuales ya no dependen del atributo `title`.
+- Las tarjetas de Órdenes de Trabajo y Rutinas mantienen sus etiquetas Editar/Eliminar sin duplicar mensajes al pasar el cursor.
+- La acción **Crear desde inventario** del header de Requisiciones adopta el patrón compartido del header global (`module-header-action-group` + botón primario del Design System), evitando el bloque visual desalineado/solapado observado en escritorio.
+- Se añadió un smoke de regresión para proteger tanto el contrato de tooltips como el patrón del header de Requisiciones.
+
+
 ## 2026-10-02 — Corrección visual del menú Exportar en Reportes
 
 ### Fixed

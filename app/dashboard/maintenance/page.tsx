@@ -249,8 +249,8 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
 
   function ownerFieldsForPlan(p:PlanRow){
     const organizationAssets=assets.rows.filter(asset=>asset.organization_id===p.organization_id);
-    const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===p.organization_id && (worker.site_id===null||worker.site_id===p.site_id));
-    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===p.organization_id && (crew.site_id===null||crew.site_id===p.site_id));
+    const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===p.organization_id);
+    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===p.organization_id);
     const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===p.organization_id);
     return [
       {name:"asset_id",label:"Activo / Equipo",value:p.asset_id,type:"select" as const,wide:true,options:organizationAssets.map(asset=>({value:asset.id,label:asset.label}))},

@@ -1437,15 +1437,25 @@ export async function POST(request:Request){
   validateRowLimit(issues,sheet.name,parsedSheet.rows);
 
   const [existingAssetsResult,assetCategoriesResult,learnedAliasesResult]=await Promise.all([
-    query<AssetRecord>(
-      `SELECT id::text,updated_at::text,site_id::text,location_id::text,supplier_id::text,category_id::text,
-              code,name,description,manufacturer,model,serial_number,status,criticality,
-              purchase_date::text,installation_date::text,warranty_expires::text,purchase_cost::text,
-              location_detail,notes
-       FROM assets
-       WHERE organization_id=$1`,
-      [organizationId],
-    ),
+    hasLimitedInventorySiteScope(session)
+      ?query<AssetRecord>(
+        `SELECT id::text,updated_at::text,site_id::text,location_id::text,supplier_id::text,category_id::text,
+                code,name,description,manufacturer,model,serial_number,status,criticality,
+                purchase_date::text,installation_date::text,warranty_expires::text,purchase_cost::text,
+                location_detail,notes
+         FROM assets
+         WHERE organization_id=$1 AND site_id=ANY($2::uuid[])`,
+        [organizationId,session.siteIds],
+      )
+      :query<AssetRecord>(
+        `SELECT id::text,updated_at::text,site_id::text,location_id::text,supplier_id::text,category_id::text,
+                code,name,description,manufacturer,model,serial_number,status,criticality,
+                purchase_date::text,installation_date::text,warranty_expires::text,purchase_cost::text,
+                location_detail,notes
+         FROM assets
+         WHERE organization_id=$1`,
+        [organizationId],
+      ),
     query<AssetCategory>("SELECT id::text,name FROM asset_categories WHERE organization_id=$1 ORDER BY name",[organizationId]),
     query<{resolution_key:string;target_id:string}>(
       "SELECT resolution_key,target_id::text FROM asset_import_resolution_aliases WHERE organization_id=$1",

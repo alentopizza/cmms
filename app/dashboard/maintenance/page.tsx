@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { can, isPlatformOwner } from "@/lib/permissions";
 import { organizationScopeFor } from "@/lib/organization-scope";
 import { query } from "@/lib/db";
-import { RoutineCreateModal } from "@/components/ContextCreateModals";
+import { RoutineCreateModal, type ExecutorOption, type CrewOption, type ServiceSupplierOption } from "@/components/ContextCreateModals";
 import OwnerRecordActions from "@/components/OwnerRecordActions";
 import ModuleHeader, { type ModuleFacetOptionMap } from "@/components/ModuleHeader";
 import { MaintenanceCard } from "@/components/business-ui";
@@ -18,7 +18,7 @@ import { getCreationGateForScope } from "@/lib/setup-sequence";
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 
 type AssetOption={id:string;organization_id:string;site_id:string;name:string;code:string;label:string};
-type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean};
+type PlanRow={id:string;organization_id:string;site_id:string;site:string;name:string;asset_id:string;asset_has_image:boolean;asset:string;company:string;frequency_value:number;frequency_unit:string;next_due_at:string|null;active:boolean;assigned_to_label:string|null};
 type RoutineSummary={total_count:number;filtered_count:number;active_count:number;overdue_count:number;due_soon_count:number};
 type RoutineFacetValue={value:string;label:string};
 type RoutineFacetRow={organizations:RoutineFacetValue[];sites:RoutineFacetValue[];frequencies:RoutineFacetValue[]};
@@ -92,11 +92,15 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const scopeWhere=scopeConditions.length?"WHERE "+scopeConditions.join(" AND "):"";
   const scopedSql=`
     SELECT p.id,p.organization_id,a.site_id,s.name site,p.name,a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,
-           a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at,p.active
+           a.name asset,o.name company,p.frequency_value,p.frequency_unit,p.next_due_at,p.active,
+           COALESCE(assigned_user.full_name,assigned_crew.name,assigned_supplier.name) assigned_to_label
     FROM maintenance_plans p
     JOIN assets a ON a.id=p.asset_id
     JOIN organizations o ON o.id=p.organization_id
     JOIN sites s ON s.id=a.site_id
+    LEFT JOIN users assigned_user ON assigned_user.id=p.assigned_to
+    LEFT JOIN crews assigned_crew ON assigned_crew.id=p.crew_id
+    LEFT JOIN suppliers assigned_supplier ON assigned_supplier.id=p.service_supplier_id
     ${scopeWhere}`;
 
   const filteredParams=[...scopeParams];
@@ -203,7 +207,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
   const orderSql=sort==="due"?"next_due_at ASC NULLS LAST,name ASC,id ASC":"next_due_at ASC NULLS LAST,name ASC,id ASC";
   const plans=await query<PlanRow>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,site,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active
+     SELECT id,organization_id,site_id,site,name,asset_id,asset_has_image,asset,company,frequency_value,frequency_unit,next_due_at::text,active,assigned_to_label
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}

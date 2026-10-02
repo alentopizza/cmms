@@ -65,7 +65,6 @@ export default function OwnerDeleteButton({
       className={className}
       type="button"
       disabled={deleting}
-      title={tooltip}
       data-tooltip={tooltip}
       onClick={() => setOpen(true)}
     >

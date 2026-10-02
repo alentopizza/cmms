@@ -300,6 +300,11 @@
 }
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action[aria-label^="Editar"]::after{content:"Editar"}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action[data-tooltip="Eliminar"]::after{content:"Eliminar"}
+.phase9-work-orders .work-order-grid-owner-actions .ds-list-action[data-tooltip]::after{
+  top:auto!important;
+  bottom:calc(100% + var(--space-2))!important;
+  z-index:320;
+}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action.danger{color:var(--color-danger-500);border-color:var(--color-danger-border)}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action.danger:hover{background:color-mix(in srgb,var(--color-danger-500) 7%,var(--color-surface))}
 .phase9-work-orders .work-order-grid-owner-actions .ds-list-action:active{transform:translateY(1px)}
@@ -393,6 +398,11 @@
 }
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[aria-label^="Editar"]::after{content:"Editar"}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[data-tooltip="Eliminar"]::after{content:"Eliminar"}
+.phase9-maintenance .maintenance-grid-owner-actions .ds-list-action[data-tooltip]::after{
+  top:auto!important;
+  bottom:calc(100% + var(--space-2))!important;
+  z-index:320;
+}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action.danger{color:var(--color-danger-500);border-color:var(--color-danger-border)}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action.danger:hover{background:color-mix(in srgb,var(--color-danger-500) 7%,var(--color-surface))}
 .phase9-maintenance .maintenance-grid-owner-actions .ds-list-action:active{transform:translateY(1px)}

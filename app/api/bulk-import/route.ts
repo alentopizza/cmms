@@ -1436,7 +1436,7 @@ export async function POST(request:Request){
   const parsedSheet=parseSheet(sheet,ASSET_ALIASES);
   validateRowLimit(issues,sheet.name,parsedSheet.rows);
 
-  const [existingAssetsResult,assetCategoriesResult]=await Promise.all([
+  const [existingAssetsResult,assetCategoriesResult,learnedAliasesResult]=await Promise.all([
     query<AssetRecord>(
       `SELECT id::text,updated_at::text,site_id::text,location_id::text,supplier_id::text,category_id::text,
               code,name,description,manufacturer,model,serial_number,status,criticality,
@@ -1447,7 +1447,14 @@ export async function POST(request:Request){
       [organizationId],
     ),
     query<AssetCategory>("SELECT id::text,name FROM asset_categories WHERE organization_id=$1 ORDER BY name",[organizationId]),
+    query<{resolution_key:string;target_id:string}>(
+      "SELECT resolution_key,target_id::text FROM asset_import_resolution_aliases WHERE organization_id=$1",
+      [organizationId],
+    ),
   ]);
+
+  const learnedResolutions=Object.fromEntries(learnedAliasesResult.rows.map(row=>[row.resolution_key,row.target_id]));
+  const effectiveAssetResolutions={...learnedResolutions,...assetResolutions};
 
   const assets=assetValidation(
     parsedSheet.rows,
@@ -1455,7 +1462,7 @@ export async function POST(request:Request){
     catalog,
     existingAssetsResult.rows,
     assetCategoriesResult.rows,
-    assetResolutions,
+    effectiveAssetResolutions,
   );
   issues.push(...assets.issues);
   const errors=issues.filter(item=>item.severity==="error");

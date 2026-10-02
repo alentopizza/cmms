@@ -303,6 +303,41 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const inProgressOrders=summary.in_progress_count;
   const completedOrders=summary.completed_count;
 
+  function ownerFieldsForOrder(w:OrderRow){
+    const organizationAssets=assets.rows.filter(asset=>asset.organization_id===w.organization_id);
+    const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===w.organization_id);
+    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===w.organization_id && (!crew.site_id||crew.site_id===w.site_id));
+    const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===w.organization_id);
+    return [
+      {name:"asset_id",label:"Activo / Equipo",value:w.asset_id||"",type:"select" as const,wide:true,options:[
+        {value:"",label:"Sin activo"},...organizationAssets.map(asset=>({value:asset.id,label:asset.label}))
+      ]},
+      {name:"title",label:"Título",value:w.title,wide:true},
+      {name:"description",label:"Descripción",value:w.description||"",type:"textarea" as const,wide:true},
+      {name:"type",label:"Tipo de OT",value:w.type,type:"select" as const,options:[
+        {value:"corrective",label:"Correctivo"},{value:"preventive",label:"Preventivo"},{value:"inspection",label:"Inspección"},{value:"emergency",label:"Emergencia"},{value:"improvement",label:"Mejora"}
+      ]},
+      {name:"work_type",label:"Tipo de trabajo",value:w.work_type||""},
+      {name:"cause",label:"Causa",value:w.cause||""},
+      {name:"priority",label:"Prioridad",value:w.priority,type:"select" as const,options:[
+        {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
+      ]},
+      {name:"status",label:"Estado",value:w.status,type:"select" as const,options:[
+        {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
+      ]},
+      {name:"due_at",label:"Fecha requerida",value:w.due_at?w.due_at.slice(0,10):"",type:"date" as const},
+      {name:"assigned_to",label:"Técnico / persona",value:w.assigned_to||"",type:"select" as const,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin asignar"},...organizationWorkers.map(worker=>({value:worker.id,label:worker.label}))
+      ]},
+      {name:"crew_id",label:"Cuadrilla",value:w.crew_id||"",type:"select" as const,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin cuadrilla"},...organizationCrews.map(crew=>({value:crew.id,label:crew.label}))
+      ]},
+      {name:"service_supplier_id",label:"Proveedor de servicios",value:w.service_supplier_id||"",type:"select" as const,wide:true,exclusiveGroup:"executor",options:[
+        {value:"",label:"Sin proveedor"},...organizationSuppliers.map(supplier=>({value:supplier.id,label:supplier.label}))
+      ]},
+    ];
+  }
+
   return <div className="phase9-work-orders">
     <ModuleHeader
       eyebrow="Mantenimiento"
@@ -391,38 +426,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           const createdAt=formatWorkOrderDate(w.created_at||w.requested_at);
           const dueAt=formatWorkOrderDate(w.due_at);
           const assignedTo=(w.assigned_to_label||"").trim()||"Sin asignar";
-          const organizationAssets=assets.rows.filter(asset=>asset.organization_id===w.organization_id);
-          const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===w.organization_id);
-          const organizationCrews=crews.rows.filter(crew=>crew.organization_id===w.organization_id && (!crew.site_id||crew.site_id===w.site_id));
-          const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===w.organization_id);
-          const ownerFields=[
-            {name:"asset_id",label:"Activo / Equipo",value:w.asset_id||"",type:"select" as const,wide:true,options:[
-              {value:"",label:"Sin activo"},...organizationAssets.map(asset=>({value:asset.id,label:asset.label}))
-            ]},
-            {name:"title",label:"Título",value:w.title,wide:true},
-            {name:"description",label:"Descripción",value:w.description||"",type:"textarea" as const,wide:true},
-            {name:"type",label:"Tipo de OT",value:w.type,type:"select" as const,options:[
-              {value:"corrective",label:"Correctivo"},{value:"preventive",label:"Preventivo"},{value:"inspection",label:"Inspección"},{value:"emergency",label:"Emergencia"},{value:"improvement",label:"Mejora"}
-            ]},
-            {name:"work_type",label:"Tipo de trabajo",value:w.work_type||""},
-            {name:"cause",label:"Causa",value:w.cause||""},
-            {name:"priority",label:"Prioridad",value:w.priority,type:"select" as const,options:[
-              {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
-            ]},
-            {name:"status",label:"Estado",value:w.status,type:"select" as const,options:[
-              {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
-            ]},
-            {name:"due_at",label:"Fecha requerida",value:w.due_at?w.due_at.slice(0,10):"",type:"date" as const},
-            {name:"assigned_to",label:"Técnico / persona",value:w.assigned_to||"",type:"select" as const,exclusiveGroup:"executor",options:[
-              {value:"",label:"Sin asignar"},...organizationWorkers.map(worker=>({value:worker.id,label:worker.label}))
-            ]},
-            {name:"crew_id",label:"Cuadrilla",value:w.crew_id||"",type:"select" as const,exclusiveGroup:"executor",options:[
-              {value:"",label:"Sin cuadrilla"},...organizationCrews.map(crew=>({value:crew.id,label:crew.label}))
-            ]},
-            {name:"service_supplier_id",label:"Proveedor de servicios",value:w.service_supplier_id||"",type:"select" as const,wide:true,exclusiveGroup:"executor",options:[
-              {value:"",label:"Sin proveedor"},...organizationSuppliers.map(supplier=>({value:supplier.id,label:supplier.label}))
-            ]},
-          ];
+          const ownerFields=ownerFieldsForOrder(w);
           return <WorkOrderCard
             key={w.id}
             variant="dashboard"
@@ -484,7 +488,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           status:<WorkOrderStatusBadge status={w.status}/>,
           actions:<ListQuickActions>
             <Link className="ds-list-action primary" href={"/dashboard/work-orders/"+w.id} title="Ver actividades" data-tooltip="Ver actividades" aria-label={"Ver actividades de OT #"+w.number}><UiIcon name="eye" size={16}/></Link>
-            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFields}/>}
+            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFieldsForOrder(w)}/>}
           </ListQuickActions>,
         }}))}
         empty={(providerOnly||externalOnly||creationGate.ready)?<EmptyState icon="file" title="No hay órdenes disponibles" description={providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"La jerarquía está lista. Usa Agregar para crear la primera orden."}/>:undefined}

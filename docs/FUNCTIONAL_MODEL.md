@@ -51,6 +51,17 @@ Only the **Super administrator** can assign or change these resource entitlement
 
 Creating a record at the limit must fail on the server with a clear message. Deactivation preserves history and does not normally release an entitlement; only permanent deletion does. This rule prevents plans from being bypassed by repeatedly deactivating records.
 
+## Operational numbering
+
+Visible operational consecutives are tenant-scoped business identifiers.
+
+- Work Orders use a sequence independent per `organization_id`.
+- Maintenance Routines use a sequence independent per `organization_id`.
+- Different organizations may therefore both own `OT #1` and `Rutina #1`.
+- UUID primary keys remain the authoritative relational identifiers.
+- Consecutive generation must be atomic in PostgreSQL; do not use application-side `MAX()+1`.
+- Site scope does not reset the sequence: the boundary is the Organization, not the Site.
+
 ## Operational creation flow
 
 1. Super administrator creates a company and assigns its plan limits.

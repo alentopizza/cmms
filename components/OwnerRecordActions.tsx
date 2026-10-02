@@ -12,6 +12,7 @@ export type OwnerEditField = {
   type?:"text"|"number"|"date"|"datetime-local"|"textarea"|"select"|"checkbox";
   options?:Array<{value:string;label:string}>;
   wide?:boolean;
+  exclusiveGroup?:string;
 };
 
 export default function OwnerRecordActions({
@@ -69,7 +70,18 @@ export default function OwnerRecordActions({
     </div>
     {fields.map(field=><div className={["field",field.wide?"form-span-2":""].filter(Boolean).join(" ")} key={field.name}>
       <label>{field.label}</label>
-      {field.type==="select"?<select name={field.name} defaultValue={String(field.value??"")}>{(field.options||[]).map(option=><option value={option.value} key={option.value}>{option.label}</option>)}</select>
+      {field.type==="select"?<select
+        name={field.name}
+        defaultValue={String(field.value??"")}
+        data-exclusive-group={field.exclusiveGroup}
+        onChange={event=>{
+          if(!field.exclusiveGroup||!event.currentTarget.value)return;
+          const selector='select[data-exclusive-group="'+field.exclusiveGroup+'"]';
+          event.currentTarget.form?.querySelectorAll<HTMLSelectElement>(selector).forEach(select=>{
+            if(select!==event.currentTarget)select.value="";
+          });
+        }}
+      >{(field.options||[]).map(option=><option value={option.value} key={option.value}>{option.label}</option>)}</select>
       :field.type==="textarea"?<textarea name={field.name} defaultValue={String(field.value??"")} rows={3}/>
       :field.type==="checkbox"?<label className="owner-record-checkbox"><input name={field.name} type="checkbox" defaultChecked={Boolean(field.value)}/><span>Activo</span></label>
       :<input name={field.name} type={field.type==="number"?"number":field.type==="date"?"date":field.type==="datetime-local"?"datetime-local":"text"} defaultValue={String(field.value??"")} step={field.type==="number"?"any":undefined}/>}

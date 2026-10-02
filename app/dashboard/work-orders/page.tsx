@@ -20,13 +20,14 @@ import { PriorityBadge, WorkOrderStatusBadge } from "@/components/maintenance-ui
 import { UrlPagination } from "@/components/ui-kit/UrlPagination";
 import ConfigurableCatalogSelect from "@/components/ConfigurableCatalogSelect";
 
-type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;description:string|null;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;priority:string;status:string;requested_at:string;created_at:string;due_at:string|null;assigned_to_label:string|null};
+type OrderRow={id:string;organization_id:string;site_id:string;site:string;number:string;title:string;description:string|null;asset_id:string|null;asset_has_image:boolean;asset:string;company:string;type:string;work_type:string|null;cause:string|null;priority:string;status:string;requested_at:string;created_at:string;due_at:string|null;assigned_to:string|null;crew_id:string|null;service_supplier_id:string|null;assigned_to_label:string|null};
 
 type WorkOrderSummary={total_count:number;filtered_count:number;active_count:number;in_progress_count:number;urgent_count:number;completed_count:number};
 type WorkOrderFacetValue={value:string;label:string};
 type WorkOrderFacetRow={organizations:WorkOrderFacetValue[];sites:WorkOrderFacetValue[];priorities:WorkOrderFacetValue[];types:WorkOrderFacetValue[]};
 type WorkOrderSearchParams={error?:string;q?:string;status?:string;organization?:string;site?:string;priority?:string;type?:string;sort?:string;page?:string};
-type ExecutorChoice={id:string;label:string};
+type AssetChoice={id:string;organization_id:string;site_id:string;label:string};
+type ExecutorChoice={id:string;organization_id:string;site_id:string|null;label:string};
 
 const WORK_ORDER_PAGE_SIZE=24;
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -132,7 +133,8 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const scopedSql=`
     SELECT DISTINCT w.id,w.organization_id,w.site_id,s.name site,w.number::text number,w.title,w.description,
            a.id asset_id,(a.image_data IS NOT NULL) asset_has_image,coalesce(a.name,'Sin equipo') asset,
-           o.name company,w.type,w.priority,w.status,w.requested_at,w.created_at,w.due_at,
+           o.name company,w.type,w.work_type,w.cause,w.priority,w.status,w.requested_at,w.created_at,w.due_at,
+           w.assigned_to::text,w.crew_id::text,w.service_supplier_id::text,
            COALESCE(assigned_user.full_name,assigned_crew.name,assigned_supplier.name) assigned_to_label
     FROM work_orders w
     JOIN organizations o ON o.id=w.organization_id
@@ -201,15 +203,15 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
   const assetsPromise=canWrite
     ? platform
-      ? query<{id:string;label:string}>(`SELECT a.id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' AND ($1::boolean OR a.organization_id=ANY($2::uuid[])) ORDER BY o.name,a.name`,platformScopeParams)
+      ? query<AssetChoice>(`SELECT a.id,a.organization_id::text organization_id,a.site_id::text site_id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' AND ($1::boolean OR a.organization_id=ANY($2::uuid[])) ORDER BY o.name,a.name`,platformScopeParams)
       : session.accessAllSites
-        ? query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
-        : query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
-    : Promise.resolve({rows:[]} as {rows:{id:string;label:string}[]});
+        ? query<AssetChoice>(`SELECT a.id,a.organization_id::text organization_id,a.site_id::text site_id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
+        : query<AssetChoice>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
+    : Promise.resolve({rows:[]} as {rows:AssetChoice[]});
 
   const workersPromise=canWrite&&!requesterOnly
     ? query<ExecutorChoice>(
-        `SELECT u.id::text id,
+        `SELECT u.id::text id,om.organization_id::text organization_id,NULL::text site_id,
                 CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||u.full_name||
                 CASE WHEN COALESCE(om.access_all_sites,true) THEN ' · Todas las sedes'
                      ELSE ' · '||COALESCE(string_agg(DISTINCT s.name,', ' ORDER BY s.name),'Sin sede') END label
@@ -220,7 +222,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
          LEFT JOIN sites s ON s.id=oms.site_id
          WHERE u.active=true AND om.role IN ('technician','external')
            AND ($2::boolean OR om.organization_id=ANY($3::uuid[]))
-         GROUP BY u.id,u.full_name,o.name,om.access_all_sites
+         GROUP BY u.id,om.organization_id,u.full_name,o.name,om.access_all_sites
          ORDER BY label`,
         [platform,organizationScope.unrestricted,organizationScope.organizationIds],
       )
@@ -228,7 +230,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
   const crewsPromise=canWrite&&!requesterOnly
     ? query<ExecutorChoice>(
-        `SELECT c.id::text id,
+        `SELECT c.id::text id,c.organization_id::text organization_id,c.site_id::text site_id,
                 CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||c.name||
                 CASE WHEN s.name IS NOT NULL THEN ' · '||s.name ELSE ' · Todas las sedes' END label
          FROM crews c
@@ -242,7 +244,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
 
   const serviceSuppliersPromise=canWrite&&!requesterOnly
     ? query<ExecutorChoice>(
-        `SELECT s.id::text id,CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||s.name label
+        `SELECT s.id::text id,s.organization_id::text organization_id,NULL::text site_id,CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||s.name label
          FROM suppliers s JOIN organizations o ON o.id=s.organization_id
          WHERE s.active=true AND s.supplier_type IN ('services','both')
            AND ($2::boolean OR s.organization_id=ANY($3::uuid[]))
@@ -279,8 +281,8 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   const orderSql=sort==="requested"?"requested_at DESC,id DESC":"requested_at DESC,id DESC";
   const orders=await query<OrderRow>(
     `WITH scoped AS (${scopedSql})
-     SELECT id,organization_id,site_id,site,number,title,description,asset_id,asset_has_image,asset,company,type,priority,status,
-            requested_at::text,created_at::text,due_at::text,assigned_to_label
+     SELECT id,organization_id,site_id,site,number,title,description,asset_id,asset_has_image,asset,company,type,work_type,cause,priority,status,
+            requested_at::text,created_at::text,due_at::text,assigned_to,crew_id,service_supplier_id,assigned_to_label
      FROM scoped
      ${filteredWhere}
      ORDER BY ${orderSql}
@@ -389,13 +391,36 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           const createdAt=formatWorkOrderDate(w.created_at||w.requested_at);
           const dueAt=formatWorkOrderDate(w.due_at);
           const assignedTo=(w.assigned_to_label||"").trim()||"Sin asignar";
+          const organizationAssets=assets.rows.filter(asset=>asset.organization_id===w.organization_id);
+          const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===w.organization_id);
+          const organizationCrews=crews.rows.filter(crew=>crew.organization_id===w.organization_id && (!crew.site_id||crew.site_id===w.site_id));
+          const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===w.organization_id);
           const ownerFields=[
-            {name:"title",label:"Título",value:w.title},
+            {name:"asset_id",label:"Activo / Equipo",value:w.asset_id||"",type:"select" as const,wide:true,options:[
+              {value:"",label:"Sin activo"},...organizationAssets.map(asset=>({value:asset.id,label:asset.label}))
+            ]},
+            {name:"title",label:"Título",value:w.title,wide:true},
+            {name:"description",label:"Descripción",value:w.description||"",type:"textarea" as const,wide:true},
+            {name:"type",label:"Tipo de OT",value:w.type,type:"select" as const,options:[
+              {value:"corrective",label:"Correctivo"},{value:"preventive",label:"Preventivo"},{value:"inspection",label:"Inspección"},{value:"emergency",label:"Emergencia"},{value:"improvement",label:"Mejora"}
+            ]},
+            {name:"work_type",label:"Tipo de trabajo",value:w.work_type||""},
+            {name:"cause",label:"Causa",value:w.cause||""},
             {name:"priority",label:"Prioridad",value:w.priority,type:"select" as const,options:[
               {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
             ]},
             {name:"status",label:"Estado",value:w.status,type:"select" as const,options:[
               {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
+            ]},
+            {name:"due_at",label:"Fecha requerida",value:w.due_at?w.due_at.slice(0,10):"",type:"date" as const},
+            {name:"assigned_to",label:"Técnico / persona",value:w.assigned_to||"",type:"select" as const,exclusiveGroup:"executor",options:[
+              {value:"",label:"Sin asignar"},...organizationWorkers.map(worker=>({value:worker.id,label:worker.label}))
+            ]},
+            {name:"crew_id",label:"Cuadrilla",value:w.crew_id||"",type:"select" as const,exclusiveGroup:"executor",options:[
+              {value:"",label:"Sin cuadrilla"},...organizationCrews.map(crew=>({value:crew.id,label:crew.label}))
+            ]},
+            {name:"service_supplier_id",label:"Proveedor de servicios",value:w.service_supplier_id||"",type:"select" as const,wide:true,exclusiveGroup:"executor",options:[
+              {value:"",label:"Sin proveedor"},...organizationSuppliers.map(supplier=>({value:supplier.id,label:supplier.label}))
             ]},
           ];
           return <WorkOrderCard
@@ -459,15 +484,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
           status:<WorkOrderStatusBadge status={w.status}/>,
           actions:<ListQuickActions>
             <Link className="ds-list-action primary" href={"/dashboard/work-orders/"+w.id} title="Ver actividades" data-tooltip="Ver actividades" aria-label={"Ver actividades de OT #"+w.number}><UiIcon name="eye" size={16}/></Link>
-            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={[
-              {name:"title",label:"Título",value:w.title},
-              {name:"priority",label:"Prioridad",value:w.priority,type:"select",options:[
-                {value:"low",label:"Baja"},{value:"medium",label:"Media"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}
-              ]},
-              {name:"status",label:"Estado",value:w.status,type:"select",options:[
-                {value:"open",label:"Abierta"},{value:"assigned",label:"Asignada"},{value:"in_progress",label:"En progreso"},{value:"paused",label:"Pausada"},{value:"completed",label:"Completada"},{value:"cancelled",label:"Cancelada"}
-              ]},
-            ]}/>}
+            {owner&&<OwnerRecordActions table="work_orders" id={w.id} label={"OT #"+w.number} fields={ownerFields}/>}
           </ListQuickActions>,
         }}))}
         empty={(providerOnly||externalOnly||creationGate.ready)?<EmptyState icon="file" title="No hay órdenes disponibles" description={providerOnly||externalOnly?"Cuando te asignen trabajo aparecerá aquí.":"La jerarquía está lista. Usa Agregar para crear la primera orden."}/>:undefined}

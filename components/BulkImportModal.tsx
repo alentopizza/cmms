@@ -217,9 +217,15 @@ export default function BulkImportModal({
         </div>}
 
         <div className="bulk-import-guide">
-          <div><b>1</b><span><strong>Descarga la plantilla maestra</strong><small>El formato es idéntico desde Inventario y Proveedores.</small></span></div>
-          <div><b>2</b><span><strong>Completa el archivo</strong><small>Inventario, Kardex, Proveedores, Bodegas y catálogos viven en el mismo Excel.</small></span></div>
-          <div><b>3</b><span><strong>Analiza y confirma</strong><small>Ninguna fila se guarda antes de superar la validación completa.</small></span></div>
+          {entity==="assets"?<>
+            <div><b>1</b><span><strong>Descarga la plantilla informada</strong><small>Incluye referencias e IDs reales del CMMS. Usa “Con datos actuales” para actualizaciones seguras.</small></span></div>
+            <div><b>2</b><span><strong>Completa o actualiza</strong><small>Las celdas vacías conservan la información existente; tildes y puntuación se normalizan automáticamente.</small></span></div>
+            <div><b>3</b><span><strong>Analiza, concilia y confirma</strong><small>Las coincidencias dudosas se resuelven aquí antes de guardar. Nada se sobrescribe con conflictos.</small></span></div>
+          </>:<>
+            <div><b>1</b><span><strong>Descarga la plantilla maestra</strong><small>El formato es idéntico desde Inventario y Proveedores.</small></span></div>
+            <div><b>2</b><span><strong>Completa el archivo</strong><small>Inventario, Kardex, Proveedores, Bodegas y catálogos viven en el mismo Excel.</small></span></div>
+            <div><b>3</b><span><strong>Analiza y confirma</strong><small>Ninguna fila se guarda antes de superar la validación completa.</small></span></div>
+          </>}
         </div>
 
         <div className="bulk-import-actions-top bulk-import-template-actions">

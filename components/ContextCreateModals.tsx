@@ -16,6 +16,9 @@ type SiteOption = { id: string; organization_id: string; name: string; organizat
 type LocationOption = { id: string; organization_id: string; site_id: string; name: string; label?: string };
 type SupplierOption = { id: string; organization_id: string; name: string };
 type AssetOption = { id: string; organization_id: string; site_id: string; name: string; code: string; label?: string };
+export type ExecutorOption = { id:string; organization_id:string; site_id:string|null; name:string; role:string };
+export type CrewOption = { id:string; organization_id:string; site_id:string|null; name:string };
+export type ServiceSupplierOption = { id:string; organization_id:string; name:string };
 
 function ModalShell({
   open,
@@ -295,6 +298,9 @@ export function AssetCreateModal({
 
 export function RoutineCreateModal({
   assets,
+  workers=[],
+  crews=[],
+  serviceSuppliers=[],
   fixedAssetId,
   fixedAssetName,
   returnTo,
@@ -302,6 +308,9 @@ export function RoutineCreateModal({
   secondary = false,
 }: {
   assets: AssetOption[];
+  workers?: ExecutorOption[];
+  crews?: CrewOption[];
+  serviceSuppliers?: ServiceSupplierOption[];
   fixedAssetId?: string;
   fixedAssetName?: string;
   returnTo: string;
@@ -318,6 +327,13 @@ export function RoutineCreateModal({
 
   const selectedAsset=assets.find(asset=>asset.id===assetId);
   const organizationId=selectedAsset?.organization_id;
+  const visibleWorkers=selectedAsset?workers.filter(worker=>
+    worker.organization_id===selectedAsset.organization_id && (worker.site_id===null||worker.site_id===selectedAsset.site_id)
+  ):[];
+  const visibleCrews=selectedAsset?crews.filter(crew=>
+    crew.organization_id===selectedAsset.organization_id && (crew.site_id===null||crew.site_id===selectedAsset.site_id)
+  ):[];
+  const visibleServiceSuppliers=selectedAsset?serviceSuppliers.filter(supplier=>supplier.organization_id===selectedAsset.organization_id):[];
 
   return <>
     <TriggerButton label={triggerLabel} icon="activity" secondary={secondary} disabled={assets.length===0 && !fixedAssetId} onClick={() => setOpen(true)} />
@@ -336,6 +352,10 @@ export function RoutineCreateModal({
           <ConfigurableCatalogSelect name="frequency_unit" label="Unidad" catalog="routine_frequencies" organizationId={organizationId} defaultValue="month" required allowManage help="La frecuencia conserva la lógica calendario existente; el catálogo solo centraliza las opciones permitidas." />
           <div className="field"><label>Próxima ejecución</label><input name="next_due_at" type="date" /></div>
           <div className="field"><label>Duración estimada (min)</label><input name="estimated_minutes" type="number" min="0" placeholder="60" /></div>
+          <div className="field form-span-2"><label>Responsable de la rutina</label><p className="field-help">Selecciona solo una opción: técnico/persona, cuadrilla o proveedor de servicios.</p></div>
+          <div className="field"><label>Técnico / persona</label><select name="assigned_to" defaultValue=""><option value="">Sin asignar</option>{visibleWorkers.map(worker=><option key={worker.id+"-"+(worker.site_id||"all")} value={worker.id}>{worker.name} · {worker.role==="external"?"Externo":"Técnico"}</option>)}</select></div>
+          <div className="field"><label>Cuadrilla</label><select name="crew_id" defaultValue=""><option value="">Sin cuadrilla</option>{visibleCrews.map(crew=><option key={crew.id} value={crew.id}>{crew.name}</option>)}</select></div>
+          <div className="field form-span-2"><label>Proveedor de servicios</label><select name="service_supplier_id" defaultValue=""><option value="">Sin proveedor</option>{visibleServiceSuppliers.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
         </div>
         <footer className="modal-actions">
           <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancelar</button>

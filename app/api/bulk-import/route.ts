@@ -665,7 +665,21 @@ function assetValidation(
         if(!found)issue(issues,sheetName,row.rowNumber,"error","SEDE_ID no es válido para esta empresa.","SEDE_ID",id,"Usa un ID de REFERENCIAS_CMMS.");
         return found;
       }
-      if(!text)return catalog.sites.length===1?catalog.sites[0]:null;
+      if(!text){
+        if(catalog.sites.length===1)return catalog.sites[0];
+        const rKey=resolutionKey("SEDE","__VACIO__");
+        const choice=resolutions[rKey]||"";
+        const resolved=selected(catalog.sites,choice);
+        if(resolved)return resolved;
+        if(catalog.sites.length){
+          addResolution({
+            key:rKey,field:"SEDE",value:"Sin sede",rows:[],
+            candidates:catalog.sites.slice(0,100).map(site=>({id:site.id,label:site.name})),
+          },row.rowNumber);
+          issue(issues,sheetName,row.rowNumber,"error","Falta Sede.","Sede","","Selecciona la sede desde Conciliación.");
+        }
+        return null;
+      }
       const exact=findByName(catalog.sites,text);
       if(exact)return exact;
       const rKey=resolutionKey("SEDE",text);
@@ -688,15 +702,30 @@ function assetValidation(
       const candidates=site?catalog.locations.filter(location=>location.site_id===site.id):[];
       if(!id&&!text&&existing){
         const current=catalog.locations.find(location=>location.id===existing!.location_id)||null;
-        if(current&&site&&current.site_id!==site.id)return null;
-        return current;
+        if(current&&site&&current.site_id===site.id)return current;
       }
       if(id){
         const found=candidates.find(location=>location.id===id)||null;
         if(!found)issue(issues,sheetName,row.rowNumber,"error","SUBUBICACION_ID no pertenece a la sede seleccionada.","SUBUBICACION_ID",id,"Usa una sububicación de la sede correcta.");
         return found;
       }
-      if(!text)return candidates.length===1?candidates[0]:null;
+      if(!text){
+        if(candidates.length===1)return candidates[0];
+        const rKey=resolutionKey("SUBUBICACION","__VACIO__",site?.id||"");
+        const choice=resolutions[rKey]||"";
+        const resolved=selected(candidates,choice);
+        if(resolved)return resolved;
+        if(candidates.length){
+          addResolution({
+            key:rKey,field:"SUBUBICACION",value:"Sin sububicación",rows:[],
+            candidates:candidates.slice(0,100).map(location=>({id:location.id,label:location.name,context:site?.name||""})),
+          },row.rowNumber);
+          issue(issues,sheetName,row.rowNumber,"error","Falta Sububicación.","Sububicación","","Selecciona una sububicación válida desde Conciliación.");
+        }else if(site){
+          issue(issues,sheetName,row.rowNumber,"error","La sede no tiene sububicaciones disponibles.","Sububicación","","Crea primero una sububicación para esta sede.");
+        }
+        return null;
+      }
       const exact=findByName(candidates,text);
       if(exact)return exact;
       const rKey=resolutionKey("SUBUBICACION",text,site?.id||"");
@@ -721,7 +750,21 @@ function assetValidation(
         if(!found)issue(issues,sheetName,row.rowNumber,"error","PROVEEDOR_ID no es válido para esta empresa.","PROVEEDOR_ID",id,"Usa un ID de REFERENCIAS_CMMS.");
         return found;
       }
-      if(!text)return null;
+      if(!text){
+        if(catalog.suppliers.length===1)return catalog.suppliers[0];
+        const rKey=resolutionKey("PROVEEDOR","__VACIO__");
+        const choice=resolutions[rKey]||"";
+        const resolved=selected(catalog.suppliers,choice);
+        if(resolved)return resolved;
+        if(catalog.suppliers.length){
+          addResolution({
+            key:rKey,field:"PROVEEDOR",value:"Sin proveedor",rows:[],
+            candidates:catalog.suppliers.slice(0,100).map(supplier=>({id:supplier.id,label:supplier.name,context:supplier.code||supplier.tax_id||""})),
+          },row.rowNumber);
+          issue(issues,sheetName,row.rowNumber,"error","Falta Proveedor.","Proveedor","","Selecciona un proveedor desde Conciliación.");
+        }
+        return null;
+      }
       const exact=findByName(catalog.suppliers,text);
       if(exact)return exact;
       const rKey=resolutionKey("PROVEEDOR",text);

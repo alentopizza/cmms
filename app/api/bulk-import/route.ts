@@ -1504,7 +1504,7 @@ export async function POST(request:Request){
       if(!site||!location||!supplier)throw new Error("La conciliación de relaciones no está completa en la fila "+row.row+".");
       if(!canAccessSite(session,site.id))throw new Error("Sede no autorizada: "+site.name);
 
-      let categoryId:string|null=null;
+      let categoryId:string|null=row.existing?.category_id||null;
       if(row.category){
         const existingCategory=assetCategoriesResult.rows.find(category=>key(category.name)===key(row.category))||null;
         if(existingCategory)categoryId=existingCategory.id;

@@ -43,7 +43,20 @@ const icons=fs.readFileSync("components/UiIcon.tsx","utf8");
 for(const icon of ['"report"','"sun"','"moon"','"system"'])if(!icons.includes(icon))throw new Error("UiIcon missing "+icon);
 
 const css=fs.readFileSync("app/phase10-modules.css","utf8");
-for(const selector of [".phase10-reports",".phase10-settings",".phase10-personalization",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
+for(const selector of [
+  ".phase10-reports",
+  ".phase10-settings",
+  ".phase10-personalization",
+  ".phase10-report-card{",
+  "overflow:visible",
+  ".phase10-report-card:has(.profile-export-menu[open])",
+  "z-index:60",
+  ".phase10-report-card .profile-export-options",
+  "z-index:70",
+  ":focus-visible",
+  "@media(max-width:700px)",
+  "@media(prefers-reduced-motion:reduce)",
+]){
   if(!css.includes(selector))throw new Error("Phase 10 CSS missing "+selector);
 }
 if(/#[0-9a-fA-F]{3,8}\b/.test(css))throw new Error("Phase 10 CSS must use Design Tokens only");

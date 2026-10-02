@@ -435,14 +435,12 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
       facets={canReports?[{key:"role",label:"Rol",allLabel:"Todos los roles"}]:[]}
       contextControl={globalOperator?<form method="get" action="/dashboard/attendance" className="attendance-company-header-control">
         <input type="hidden" name="view" value={activeView}/>
-        <label htmlFor="attendance-organization" className="attendance-company-context-label">Empresa</label>
         <select
           id="attendance-organization"
           name="organization_id"
           defaultValue={organizationId||""}
           required
           aria-label="Empresa de asistencia"
-          title="Seleccionar empresa"
         >
           <option value="">Selecciona empresa</option>
           {organizations.rows.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
@@ -450,9 +448,8 @@ export default async function AttendancePage({searchParams}:{searchParams:Promis
         <button
           className="attendance-company-switch"
           type="submit"
-          aria-label="Cambiar empresa"
-          title="Cambiar empresa"
-          data-tooltip="Cambiar empresa"
+          aria-label={organizationId?"Cambiar empresa":"Seleccionar empresa"}
+          data-tooltip={organizationId?"Cambiar empresa":"Seleccionar empresa"}
         ><UiIcon name="reorder" size={16}/></button>
       </form>:undefined}
     />

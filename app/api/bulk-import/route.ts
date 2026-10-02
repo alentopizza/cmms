@@ -811,7 +811,32 @@ function assetValidation(
     const purchaseCost=rawCost?(parsedCost===null?null:parsedCost):(existing?.purchase_cost===null||existing?.purchase_cost===undefined?null:Number(existing.purchase_cost));
 
     const description=textValue(row.values.description)||(existing?.description||"");
-    const category=textValue(row.values.category)||(existing?.category_id?categoriesById.get(existing.category_id)?.name||"":"");
+    const rawCategory=textValue(row.values.category);
+    let category=rawCategory||(existing?.category_id?categoriesById.get(existing.category_id)?.name||"":"");
+    if(rawCategory){
+      const exactCategory=assetCategories.find(item=>key(item.name)===key(rawCategory))||null;
+      if(exactCategory)category=exactCategory.name;
+      else{
+        const rKey=resolutionKey("CATEGORIA",rawCategory);
+        const choice=resolutions[rKey]||"";
+        if(choice==="__new__"){
+          category=rawCategory;
+        }else{
+          const selectedCategory=assetCategories.find(item=>item.id===choice)||null;
+          if(selectedCategory)category=selectedCategory.name;
+          else{
+            const candidates=suggestions(assetCategories,rawCategory);
+            if(candidates.length){
+              addResolution({key:rKey,field:"CATEGORIA",value:rawCategory,rows:[],candidates,allowNew:true},row.rowNumber);
+              issue(issues,sheetName,row.rowNumber,"error","La categoría no coincide exactamente con el catálogo; confirma si es existente o nueva.","Categoría",rawCategory,"Resuelve la categoría desde Conciliación.");
+              operation="pending";
+            }else{
+              issue(issues,sheetName,row.rowNumber,"warning","Categoría nueva: se creará al confirmar.","Categoría",rawCategory,"Verifica que el nombre sea correcto para evitar duplicados.");
+            }
+          }
+        }
+      }
+    }
     const manufacturer=textValue(row.values.manufacturer)||(existing?.manufacturer||"");
     const model=textValue(row.values.model)||(existing?.model||"");
     const serial=textValue(row.values.serial)||(existing?.serial_number||"");

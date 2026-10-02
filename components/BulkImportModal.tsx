@@ -23,6 +23,7 @@ type ImportResolution={
 };
 type ImportPreview={
   row:number;code:string;name:string;operation:"create"|"update"|"unchanged"|"conflict"|"pending";changedFields:string[];
+  changes?:Array<{field:string;before:string;after:string}>;
 };
 type ImportResult={
   valid?:boolean;ok?:boolean;error?:string;importId?:string;
@@ -312,6 +313,10 @@ export default function BulkImportModal({
                 <span className={"bulk-import-operation "+item.operation}>{item.operation==="create"?"Nuevo":item.operation==="update"?"Actualizar":item.operation==="unchanged"?"Sin cambios":item.operation==="conflict"?"Conflicto":"Conciliar"}</span>
                 <strong>{item.code||"Sin código"} · {item.name||"Sin nombre"}</strong>
                 <small>{item.changedFields.length?"Cambios: "+item.changedFields.join(", "):item.operation==="unchanged"?"No modifica información existente":"Fila "+item.row}</small>
+                {item.operation==="update"&&item.changes&&item.changes.length>0&&<details className="bulk-import-change-details">
+                  <summary>Ver antes / después</summary>
+                  <div>{item.changes.map(change=><p key={change.field}><b>{change.field}</b><span>{change.before||"—"}</span><i>→</i><span>{change.after||"—"}</span></p>)}</div>
+                </details>}
               </article>)}
             </div>
           </section>}

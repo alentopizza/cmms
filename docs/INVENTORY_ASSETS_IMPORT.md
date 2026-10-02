@@ -95,7 +95,7 @@ Del mismo modo, **Orden de compra, Remisión, Factura y Nota crédito no se impo
 - SKU duplicado compatible se reporta y se procesa una sola vez; duplicados incompatibles son error bloqueante;
 - se validan proveedor, sede y sububicación antes de escribir;
 - se respetan los límites del plan para Inventario y Activos;
-- el hash SHA-256 impide volver a confirmar exactamente el mismo archivo;
+- Inventario conserva la protección por hash/alcance para movimientos y lotes; Activos es idempotente por conciliación de registros: repetir un archivo sin cambios produce filas Sin cambios y no vuelve a escribir el maestro;
 - toda confirmación se ejecuta en transacción;
 - los lotes de importación quedan registrados en `bulk_import_batches`;
 - la validación previa simula el stock y reporta saldos negativos antes de confirmar; PostgreSQL mantiene la validación final;
@@ -136,21 +136,77 @@ mantiene la plantilla específica de Activos porque pertenece a otro dominio de 
 
 ## Activos
 
-La plantilla de Activos carga o actualiza por Código:
+La importación de Activos usa conciliación segura y no reemplazo de registros completos.
 
-- nombre y descripción;
-- categoría;
-- sede y sububicación;
-- proveedor;
-- fabricante, modelo y serial;
-- estado;
-- criticidad;
-- fechas de compra, instalación y garantía;
-- costo;
-- detalle de ubicación;
-- notas.
+### Plantilla informada
 
-Los códigos existentes se actualizan; los nuevos se crean, siempre respetando el límite de activos de la organización.
+La plantilla descargable incluye:
+
+- hoja `ACTIVOS`;
+- hoja `REFERENCIAS_CMMS` con IDs y nombres autorizados de Sedes, Sububicaciones, Proveedores y Categorías;
+- hoja `CATALOGOS`;
+- instrucciones de actualización segura.
+
+La hoja `ACTIVOS` admite identificadores técnicos opcionales:
+
+- `ACTIVO_ID`;
+- `ACTUALIZADO_EN`;
+- `SEDE_ID`;
+- `SUBUBICACION_ID`;
+- `PROVEEDOR_ID`.
+
+El modal ofrece **Plantilla vacía** y **Con datos actuales**. Esta última precarga los activos autorizados e incluye `ACTIVO_ID` y `ACTUALIZADO_EN` para actualizaciones controladas.
+
+### Identidad y coincidencias
+
+Prioridad para identificar un activo:
+
+1. `ACTIVO_ID`, cuando existe;
+2. Código exacto dentro de la empresa;
+3. posible coincidencia por similitud, que nunca se aplica automáticamente sin una resolución previa del usuario.
+
+Sede, Sububicación y Proveedor se resuelven por ID cuando está disponible. Si solo viene texto:
+
+- se normalizan mayúsculas/minúsculas;
+- se eliminan tildes;
+- se normalizan espacios, puntos, guiones y otros separadores;
+- una coincidencia exacta normalizada se acepta;
+- una coincidencia parecida se presenta en **Conciliación en CMMS**;
+- un valor faltante puede resolverse desde el mismo panel cuando existen opciones válidas.
+
+Las decisiones confirmadas se recuerdan por empresa en `asset_import_resolution_aliases`, sin renombrar el registro maestro.
+
+### Actualización no destructiva
+
+Para un activo existente:
+
+- una celda vacía conserva el valor actual;
+- no se borran relaciones ni metadatos por omisión;
+- las filas sin cambios se clasifican como **Sin cambios** y no ejecutan UPDATE;
+- las filas nuevas se clasifican como **Nuevo**;
+- las diferencias reales se clasifican como **Actualizar**;
+- coincidencias pendientes se clasifican como **Conciliar**;
+- cambios concurrentes o inconsistencias se clasifican como **Conflicto**.
+
+`ACTUALIZADO_EN` permite detectar si el activo cambió en CMMS después de descargar una plantilla con datos actuales. Un conflicto bloquea la confirmación de esa fila.
+
+La vista previa muestra los campos modificados y permite revisar **valor actual → valor propuesto** antes de confirmar.
+
+### Commit y auditoría
+
+Solo las filas `create` y `update` se escriben. Las filas `unchanged` se omiten sin modificar el activo.
+
+La confirmación:
+
+- se ejecuta en una transacción;
+- revalida concurrencia antes de actualizar;
+- respeta el scope de Organización/Sede;
+- conserva históricos, rutinas, órdenes, documentos y relaciones que no pertenecen al maestro importado;
+- registra creación/actualización en `audit_log`;
+- conserva antes/después y campos modificados en la auditoría de actualizaciones;
+- registra el lote en `bulk_import_batches`.
+
+Los nuevos activos siguen respetando el límite del plan.
 
 ## Proveedores
 
@@ -183,6 +239,7 @@ Migraciones relacionadas:
 - `030_bulk_import_inventory_kardex.sql`
 - `031_inventory_kardex_metadata.sql`
 - `037_unified_inventory_import.sql`
+- `999d_asset_import_resolution_aliases.sql`
 
 El trigger `cmms_apply_inventory_transaction()` es la autoridad de saldo para movimientos nuevos: actualiza existencias por bodega y el total agregado del artículo.
 

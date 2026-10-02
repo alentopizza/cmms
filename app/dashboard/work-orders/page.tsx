@@ -306,7 +306,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
   function ownerFieldsForOrder(w:OrderRow){
     const organizationAssets=assets.rows.filter(asset=>asset.organization_id===w.organization_id);
     const organizationWorkers=workers.rows.filter(worker=>worker.organization_id===w.organization_id);
-    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===w.organization_id && (!crew.site_id||crew.site_id===w.site_id));
+    const organizationCrews=crews.rows.filter(crew=>crew.organization_id===w.organization_id);
     const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===w.organization_id);
     return [
       {name:"asset_id",label:"Activo / Equipo",value:w.asset_id||"",type:"select" as const,wide:true,options:[

@@ -85,7 +85,7 @@ export async function GET(request:Request){
   }
   if(!organizationId)return new NextResponse("Selecciona una empresa antes de descargar la plantilla.",{status:400});
 
-  const limitedInventoryScope=entity==="inventory"&&hasLimitedInventorySiteScope(session);
+  const limitedInventoryScope=hasLimitedInventorySiteScope(session);
   const [org,sites,locations,suppliers,categories,warehouses,presentations,subcategories,inventoryRows,assetCategories,assetRows]=await Promise.all([
     query<Named>("SELECT id,name FROM organizations WHERE id=$1",[organizationId]),
     limitedInventoryScope

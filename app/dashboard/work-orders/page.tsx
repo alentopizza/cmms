@@ -352,6 +352,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
     />
 
     {feedback.error==="sequence" && <div className="section"><Alert variant="danger" title="Jerarquía incompleta">{creationGate.message}</Alert></div>}
+    {feedback.error==="executor" && <div className="section"><Alert variant="danger" title="Responsable no válido">Selecciona una sola persona, cuadrilla o proveedor con acceso al contexto de la orden.</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState
       icon="work-order"
@@ -415,7 +416,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
             assignedTo={assignedTo}
             recordProps={{
               "data-module-record":true,"data-status":w.status,
-              "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" "),
+              "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status,w.assigned_to_label].filter(Boolean).join(" "),
               "data-filter-organization":w.organization_id,"data-filter-organization-label":w.company,
               "data-filter-site":w.site_id,"data-filter-site-label":w.site,
               "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,
@@ -437,7 +438,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         ]}
         rows={orders.rows.map(w=>({id:w.id,recordProps:{
           "data-module-record":true,"data-status":w.status,
-          "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status].join(" "),
+          "data-search":[w.number,w.title,w.company,w.site,w.asset,w.type,w.priority,w.status,w.assigned_to_label].filter(Boolean).join(" "),
           "data-filter-organization":w.organization_id,"data-filter-organization-label":w.company,
           "data-filter-site":w.site_id,"data-filter-site-label":w.site,
           "data-filter-priority":w.priority,"data-filter-priority-label":w.priority,

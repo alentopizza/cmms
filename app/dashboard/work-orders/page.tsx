@@ -206,7 +206,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
       ? query<AssetChoice>(`SELECT a.id,a.organization_id::text organization_id,a.site_id::text site_id,o.name||' · '||s.name||' · '||a.code||' '||a.name label FROM assets a JOIN organizations o ON o.id=a.organization_id JOIN sites s ON s.id=a.site_id WHERE a.status<>'retired' AND ($1::boolean OR a.organization_id=ANY($2::uuid[])) ORDER BY o.name,a.name`,platformScopeParams)
       : session.accessAllSites
         ? query<AssetChoice>(`SELECT a.id,a.organization_id::text organization_id,a.site_id::text site_id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.status<>'retired' ORDER BY a.name`,[orgId])
-        : query<AssetChoice>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
+        : query<AssetChoice>(`SELECT a.id,a.organization_id::text organization_id,a.site_id::text site_id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:AssetChoice[]});
 
   const workersPromise=canWrite&&!requesterOnly
@@ -310,7 +310,7 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
     const organizationSuppliers=serviceSuppliers.rows.filter(supplier=>supplier.organization_id===w.organization_id);
     return [
       {name:"asset_id",label:"Activo / Equipo",value:w.asset_id||"",type:"select" as const,wide:true,options:[
-        {value:"",label:"Sin activo"},...organizationAssets.map(asset=>({value:asset.id,label:asset.label}))
+        ...organizationAssets.map(asset=>({value:asset.id,label:asset.label}))
       ]},
       {name:"title",label:"Título",value:w.title,wide:true},
       {name:"description",label:"Descripción",value:w.description||"",type:"textarea" as const,wide:true},

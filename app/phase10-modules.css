@@ -69,9 +69,10 @@
 .phase10-report-card .profile-export-trigger{list-style:none;cursor:pointer}
 .phase10-report-card .profile-export-trigger::-webkit-details-marker{display:none}
 .phase10-report-card .profile-export-options{
-  position:absolute;left:0;bottom:calc(100% + var(--space-2));z-index:70;width:min(320px,calc(100vw - 32px));
+  position:absolute;left:0;right:auto;top:calc(100% + var(--space-2));bottom:auto;z-index:70;width:min(320px,calc(100vw - 32px));
   display:grid;gap:var(--space-1);padding:var(--space-2);border:1px solid var(--color-border-subtle);
-  border-radius:var(--radius-xl);background:var(--color-surface);box-shadow:var(--shadow-lg)
+  border-radius:var(--radius-xl);background-color:var(--color-surface);box-shadow:var(--shadow-lg);
+  isolation:isolate;opacity:1
 }
 .phase10-report-card .profile-export-options a{
   display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);align-items:center;padding:var(--space-2);

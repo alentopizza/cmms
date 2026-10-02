@@ -138,10 +138,10 @@ export function InventoryCard({
 }
 
 export function MaintenanceCard({
-  name,asset,company,frequency,nextDue,active,actions,recordProps,variant="compact",site,
+  name,asset,company,frequency,nextDue,active,actions,recordProps,variant="compact",site,assignedTo,
 }:{
   name:string;asset:string;company:string;frequency:string;nextDue:string;active:boolean;actions?:ReactNode;recordProps?:RecordProps;
-  variant?:"compact"|"dashboard";site?:string;
+  variant?:"compact"|"dashboard";site?:string;assignedTo?:string;
 }){
   if(variant==="dashboard"){
     return <BusinessCardShell domain="maintenance" className="maintenance-grid-card-v2" recordProps={recordProps}>
@@ -167,6 +167,7 @@ export function MaintenanceCard({
         <div><span className="maintenance-grid-fact-icon"><UiIcon name="location" size={17}/></span><div><small>Ubicación</small><strong>{site||"No asignado"}</strong></div></div>
         <div><span className="maintenance-grid-fact-icon"><UiIcon name="asset" size={17}/></span><div><small>Activo / Equipo</small><strong>{asset||"No asignado"}</strong></div></div>
         <div><span className="maintenance-grid-fact-icon"><UiIcon name="clock" size={17}/></span><div><small>Frecuencia</small><strong>{frequency||"No especificado"}</strong></div></div>
+        <div><span className="maintenance-grid-fact-icon"><UiIcon name="user" size={17}/></span><div><small>Responsable</small><strong>{assignedTo||"Sin asignar"}</strong></div></div>
       </div>
 
       <div className="maintenance-grid-schedule">
@@ -189,6 +190,7 @@ export function MaintenanceCard({
       {label:"Empresa",value:company},
       {label:"Frecuencia",value:frequency},
       {label:"Próximo vencimiento",value:nextDue},
+      {label:"Responsable",value:assignedTo||"Sin asignar"},
     ]}/>
     {actions&&<div className="maintenance-mobile-footer ds-business-actions">{actions}</div>}
   </BusinessCardShell>;

@@ -26,6 +26,7 @@ type WorkOrderSummary={total_count:number;filtered_count:number;active_count:num
 type WorkOrderFacetValue={value:string;label:string};
 type WorkOrderFacetRow={organizations:WorkOrderFacetValue[];sites:WorkOrderFacetValue[];priorities:WorkOrderFacetValue[];types:WorkOrderFacetValue[]};
 type WorkOrderSearchParams={error?:string;q?:string;status?:string;organization?:string;site?:string;priority?:string;type?:string;sort?:string;page?:string};
+type ExecutorChoice={id:string;label:string};
 
 const WORK_ORDER_PAGE_SIZE=24;
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -206,8 +207,52 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
         : query<{id:string;label:string}>(`SELECT a.id,s.name||' · '||a.code||' '||a.name label FROM assets a JOIN sites s ON s.id=a.site_id WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[]) AND a.status<>'retired' ORDER BY a.name`,[orgId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:{id:string;label:string}[]});
 
-  const [creationGate,summaryResult,facetsResult,assets]=await Promise.all([
-    creationGatePromise,summaryPromise,facetsPromise,assetsPromise,
+  const workersPromise=canWrite&&!requesterOnly
+    ? query<ExecutorChoice>(
+        `SELECT u.id::text id,
+                CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||u.full_name||
+                CASE WHEN COALESCE(om.access_all_sites,true) THEN ' · Todas las sedes'
+                     ELSE ' · '||COALESCE(string_agg(DISTINCT s.name,', ' ORDER BY s.name),'Sin sede') END label
+         FROM organization_members om
+         JOIN users u ON u.id=om.user_id
+         JOIN organizations o ON o.id=om.organization_id
+         LEFT JOIN organization_member_sites oms ON oms.organization_id=om.organization_id AND oms.user_id=om.user_id
+         LEFT JOIN sites s ON s.id=oms.site_id
+         WHERE u.active=true AND om.role IN ('technician','external')
+           AND ($2::boolean OR om.organization_id=ANY($3::uuid[]))
+         GROUP BY u.id,u.full_name,o.name,om.access_all_sites
+         ORDER BY label`,
+        [platform,organizationScope.unrestricted,organizationScope.organizationIds],
+      )
+    : Promise.resolve({rows:[]} as {rows:ExecutorChoice[]});
+
+  const crewsPromise=canWrite&&!requesterOnly
+    ? query<ExecutorChoice>(
+        `SELECT c.id::text id,
+                CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||c.name||
+                CASE WHEN s.name IS NOT NULL THEN ' · '||s.name ELSE ' · Todas las sedes' END label
+         FROM crews c
+         JOIN organizations o ON o.id=c.organization_id
+         LEFT JOIN sites s ON s.id=c.site_id
+         WHERE c.active=true AND ($2::boolean OR c.organization_id=ANY($3::uuid[]))
+         ORDER BY label`,
+        [platform,organizationScope.unrestricted,organizationScope.organizationIds],
+      )
+    : Promise.resolve({rows:[]} as {rows:ExecutorChoice[]});
+
+  const serviceSuppliersPromise=canWrite&&!requesterOnly
+    ? query<ExecutorChoice>(
+        `SELECT s.id::text id,CASE WHEN $1::boolean THEN o.name||' · ' ELSE '' END||s.name label
+         FROM suppliers s JOIN organizations o ON o.id=s.organization_id
+         WHERE s.active=true AND s.supplier_type IN ('services','both')
+           AND ($2::boolean OR s.organization_id=ANY($3::uuid[]))
+         ORDER BY label`,
+        [platform,organizationScope.unrestricted,organizationScope.organizationIds],
+      )
+    : Promise.resolve({rows:[]} as {rows:ExecutorChoice[]});
+
+  const [creationGate,summaryResult,facetsResult,assets,workers,crews,serviceSuppliers]=await Promise.all([
+    creationGatePromise,summaryPromise,facetsPromise,assetsPromise,workersPromise,crewsPromise,serviceSuppliersPromise,
   ]);
   const summary=summaryResult.rows[0]||{total_count:0,filtered_count:0,active_count:0,in_progress_count:0,urgent_count:0,completed_count:0};
   const pageCount=Math.max(1,Math.ceil(summary.filtered_count/WORK_ORDER_PAGE_SIZE));
@@ -296,6 +341,10 @@ export default async function WorkOrdersPage({searchParams}:{searchParams:Promis
             <ConfigurableCatalogSelect name="status" label="Estado inicial" catalog="work_order_statuses" organizationId={orgId||undefined} defaultValue="open" required allowManage />
             <ConfigurableCatalogSelect name="work_type" label="Tipo de trabajo" catalog="work_order_work_types" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea un tipo de trabajo" />
             <ConfigurableCatalogSelect name="cause" label="Causa" catalog="work_order_causes" organizationId={orgId||undefined} allowCreate allowManage placeholder="Selecciona o crea una causa" />
+            <div className="field form-span-2"><label>Responsable inicial</label><small>Selecciona solo una opción. También podrás distribuir actividades después dentro de la OT.</small></div>
+            <div className="field"><label>Técnico / persona</label><select name="assigned_to" defaultValue=""><option value="">Sin asignar</option>{workers.rows.map(worker=><option key={worker.id} value={worker.id}>{worker.label}</option>)}</select></div>
+            <div className="field"><label>Cuadrilla</label><select name="crew_id" defaultValue=""><option value="">Sin cuadrilla</option>{crews.rows.map(crew=><option key={crew.id} value={crew.id}>{crew.label}</option>)}</select></div>
+            <div className="field form-span-2"><label>Proveedor de servicios</label><select name="service_supplier_id" defaultValue=""><option value="">Sin proveedor</option>{serviceSuppliers.rows.map(supplier=><option key={supplier.id} value={supplier.id}>{supplier.label}</option>)}</select></div>
           </>}
           <div className="form-span-2 form-actions"><button className="button" type="submit">{requesterOnly?"Enviar solicitud":"Crear orden"}</button></div>
         </form>

@@ -20,6 +20,9 @@ export async function POST(request: Request) {
   const status = requester ? "open" : String(form.get("status") || "open");
   const workType = requester ? "" : String(form.get("work_type") || "").trim();
   const cause = requester ? "" : String(form.get("cause") || "").trim();
+  const assignedTo = requester ? "" : String(form.get("assigned_to") || "");
+  const crewId = requester ? "" : String(form.get("crew_id") || "");
+  const supplierId = requester ? "" : String(form.get("service_supplier_id") || "");
 
   const asset = session.platformRole !== "user"
     ? await query<{organization_id:string;site_id:string}>("SELECT organization_id,site_id FROM assets WHERE id=$1", [assetId])
@@ -34,10 +37,59 @@ export async function POST(request: Request) {
     return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=sequence",request.url),303);
   }
 
+  const selected=[assignedTo,crewId,supplierId].filter(Boolean);
+  if(selected.length>1){
+    return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=executor",request.url),303);
+  }
+
+  if(assignedTo){
+    const worker=await query(
+      `SELECT 1
+       FROM organization_members om
+       JOIN users u ON u.id=om.user_id
+       WHERE om.organization_id=$1 AND u.id=$2 AND u.active=true
+         AND om.role IN ('technician','external')
+         AND (
+           COALESCE(om.access_all_sites,true)=true
+           OR EXISTS(
+             SELECT 1 FROM organization_member_sites oms
+             WHERE oms.organization_id=om.organization_id
+               AND oms.user_id=om.user_id
+               AND oms.site_id=$3
+           )
+         )`,
+      [organizationId,assignedTo,asset.rows[0].site_id],
+    );
+    if(!worker.rowCount) return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=executor",request.url),303);
+  }
+
+  if(crewId){
+    const crew=await query(
+      "SELECT 1 FROM crews WHERE id=$1 AND organization_id=$2 AND active=true AND (site_id IS NULL OR site_id=$3)",
+      [crewId,organizationId,asset.rows[0].site_id],
+    );
+    if(!crew.rowCount) return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=executor",request.url),303);
+  }
+
+  if(supplierId){
+    const supplier=await query(
+      "SELECT 1 FROM suppliers WHERE id=$1 AND organization_id=$2 AND active=true AND supplier_type IN ('services','both')",
+      [supplierId,organizationId],
+    );
+    if(!supplier.rowCount) return NextResponse.redirect(publicUrl("/dashboard/work-orders?error=executor",request.url),303);
+  }
+
+  const effectiveStatus=selected.length&&status==="open"?"assigned":status;
+
   await query(
-    `INSERT INTO work_orders(organization_id,site_id,asset_id,title,type,priority,status,work_type,cause,requested_by)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-    [organizationId,asset.rows[0].site_id,assetId,title,type,priority,status,workType||null,cause||null,session.userId],
+    `INSERT INTO work_orders(
+       organization_id,site_id,asset_id,title,type,priority,status,work_type,cause,requested_by,assigned_to,crew_id,service_supplier_id
+     )
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+    [
+      organizationId,asset.rows[0].site_id,assetId,title,type,priority,effectiveStatus,workType||null,cause||null,
+      session.userId,assignedTo||null,crewId||null,supplierId||null,
+    ],
   );
   return NextResponse.redirect(publicUrl("/dashboard/work-orders", request.url), 303);
 }

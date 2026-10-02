@@ -43,11 +43,30 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       if(!description || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || selected.length!==1){await client.query("ROLLBACK");return NextResponse.redirect(target("?error=executor"),303);}
 
       if(assignedTo){
-        const user=await client.query("SELECT 1 FROM organization_members om JOIN users u ON u.id=om.user_id WHERE om.organization_id=$1 AND u.id=$2 AND u.active=true AND om.role IN ('technician','external')",[organizationId,assignedTo]);
+        const user=await client.query(
+          `SELECT 1
+           FROM organization_members om
+           JOIN users u ON u.id=om.user_id
+           WHERE om.organization_id=$1 AND u.id=$2 AND u.active=true
+             AND om.role IN ('technician','external')
+             AND (
+               COALESCE(om.access_all_sites,true)=true
+               OR EXISTS(
+                 SELECT 1 FROM organization_member_sites oms
+                 WHERE oms.organization_id=om.organization_id
+                   AND oms.user_id=om.user_id
+                   AND oms.site_id=$3
+               )
+             )`,
+          [organizationId,assignedTo,siteId],
+        );
         if(!user.rowCount){await client.query("ROLLBACK");return NextResponse.redirect(target("?error=executor"),303);}
       }
       if(crewId){
-        const crew=await client.query("SELECT 1 FROM crews WHERE id=$1 AND organization_id=$2 AND active=true",[crewId,organizationId]);
+        const crew=await client.query(
+          "SELECT 1 FROM crews WHERE id=$1 AND organization_id=$2 AND active=true AND (site_id IS NULL OR site_id=$3)",
+          [crewId,organizationId,siteId],
+        );
         if(!crew.rowCount){await client.query("ROLLBACK");return NextResponse.redirect(target("?error=executor"),303);}
       }
       if(supplierId){

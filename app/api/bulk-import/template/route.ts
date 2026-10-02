@@ -156,21 +156,37 @@ export async function GET(request:Request){
       :Promise.resolve({rows:[]} as {rows:InventoryRow[]}),
     query<Category>("SELECT id,name FROM asset_categories WHERE organization_id=$1 ORDER BY name",[organizationId]),
     dataMode==="current"&&entity==="assets"
-      ?query<AssetTemplateRow>(
-        `SELECT a.id::text,a.updated_at::text,a.code,a.name,a.description,c.name category,
-                a.site_id::text,site.name site_name,a.location_id::text,l.name location_name,
-                a.supplier_id::text,s.name supplier_name,a.manufacturer,a.model,a.serial_number,a.status,a.criticality,
-                a.purchase_date::text,a.installation_date::text,a.warranty_expires::text,a.purchase_cost::text,
-                a.location_detail,a.notes
-         FROM assets a
-         JOIN sites site ON site.id=a.site_id
-         JOIN locations l ON l.id=a.location_id
-         JOIN suppliers s ON s.id=a.supplier_id
-         LEFT JOIN asset_categories c ON c.id=a.category_id
-         WHERE a.organization_id=$1
-         ORDER BY a.code`,
-        [organizationId],
-      )
+      ?limitedInventoryScope
+        ?query<AssetTemplateRow>(
+          `SELECT a.id::text,a.updated_at::text,a.code,a.name,a.description,c.name category,
+                  a.site_id::text,site.name site_name,a.location_id::text,l.name location_name,
+                  a.supplier_id::text,s.name supplier_name,a.manufacturer,a.model,a.serial_number,a.status,a.criticality,
+                  a.purchase_date::text,a.installation_date::text,a.warranty_expires::text,a.purchase_cost::text,
+                  a.location_detail,a.notes
+           FROM assets a
+           JOIN sites site ON site.id=a.site_id
+           JOIN locations l ON l.id=a.location_id
+           JOIN suppliers s ON s.id=a.supplier_id
+           LEFT JOIN asset_categories c ON c.id=a.category_id
+           WHERE a.organization_id=$1 AND a.site_id=ANY($2::uuid[])
+           ORDER BY a.code`,
+          [organizationId,session.siteIds],
+        )
+        :query<AssetTemplateRow>(
+          `SELECT a.id::text,a.updated_at::text,a.code,a.name,a.description,c.name category,
+                  a.site_id::text,site.name site_name,a.location_id::text,l.name location_name,
+                  a.supplier_id::text,s.name supplier_name,a.manufacturer,a.model,a.serial_number,a.status,a.criticality,
+                  a.purchase_date::text,a.installation_date::text,a.warranty_expires::text,a.purchase_cost::text,
+                  a.location_detail,a.notes
+           FROM assets a
+           JOIN sites site ON site.id=a.site_id
+           JOIN locations l ON l.id=a.location_id
+           JOIN suppliers s ON s.id=a.supplier_id
+           LEFT JOIN asset_categories c ON c.id=a.category_id
+           WHERE a.organization_id=$1
+           ORDER BY a.code`,
+          [organizationId],
+        )
       :Promise.resolve({rows:[]} as {rows:AssetTemplateRow[]}),
   ]);
 

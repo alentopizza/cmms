@@ -180,8 +180,32 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             [session.organizationId,session.siteIds])
     : Promise.resolve({rows:[]} as {rows:AssetOption[]});
 
-  const [creationGate,summaryResult,facetsResult,assets]=await Promise.all([
-    creationGatePromise,summaryPromise,facetsPromise,assetsPromise,
+  const workersPromise=canWrite
+    ? platform
+      ? query<ExecutorOption>(
+          "SELECT DISTINCT u.id::text id,om.organization_id::text organization_id,CASE WHEN COALESCE(om.access_all_sites,true) THEN NULL ELSE oms.site_id::text END site_id,u.full_name name,om.role FROM organization_members om JOIN users u ON u.id=om.user_id LEFT JOIN organization_member_sites oms ON oms.organization_id=om.organization_id AND oms.user_id=om.user_id WHERE u.active=true AND om.role IN ('technician','external') AND ($1::boolean OR om.organization_id=ANY($2::uuid[])) ORDER BY u.full_name",
+          platformScopeParams,
+        )
+      : query<ExecutorOption>(
+          "SELECT DISTINCT u.id::text id,om.organization_id::text organization_id,CASE WHEN COALESCE(om.access_all_sites,true) THEN NULL ELSE oms.site_id::text END site_id,u.full_name name,om.role FROM organization_members om JOIN users u ON u.id=om.user_id LEFT JOIN organization_member_sites oms ON oms.organization_id=om.organization_id AND oms.user_id=om.user_id WHERE om.organization_id=$1 AND u.active=true AND om.role IN ('technician','external') ORDER BY u.full_name",
+          [session.organizationId],
+        )
+    : Promise.resolve({rows:[]} as {rows:ExecutorOption[]});
+
+  const crewsPromise=canWrite
+    ? platform
+      ? query<CrewOption>("SELECT id::text,organization_id::text,site_id::text,name FROM crews WHERE active=true AND ($1::boolean OR organization_id=ANY($2::uuid[])) ORDER BY name",platformScopeParams)
+      : query<CrewOption>("SELECT id::text,organization_id::text,site_id::text,name FROM crews WHERE organization_id=$1 AND active=true ORDER BY name",[session.organizationId])
+    : Promise.resolve({rows:[]} as {rows:CrewOption[]});
+
+  const serviceSuppliersPromise=canWrite
+    ? platform
+      ? query<ServiceSupplierOption>("SELECT id::text,organization_id::text,name FROM suppliers WHERE active=true AND supplier_type IN ('services','both') AND ($1::boolean OR organization_id=ANY($2::uuid[])) ORDER BY name",platformScopeParams)
+      : query<ServiceSupplierOption>("SELECT id::text,organization_id::text,name FROM suppliers WHERE organization_id=$1 AND active=true AND supplier_type IN ('services','both') ORDER BY name",[session.organizationId])
+    : Promise.resolve({rows:[]} as {rows:ServiceSupplierOption[]});
+
+  const [creationGate,summaryResult,facetsResult,assets,workers,crews,serviceSuppliers]=await Promise.all([
+    creationGatePromise,summaryPromise,facetsPromise,assetsPromise,workersPromise,crewsPromise,serviceSuppliersPromise,
   ]);
   const summary=summaryResult.rows[0]||{total_count:0,filtered_count:0,active_count:0,overdue_count:0,due_soon_count:0};
   const pageCount=Math.max(1,Math.ceil(summary.filtered_count/ROUTINE_PAGE_SIZE));
@@ -242,7 +266,7 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
         facetOptions,
         filteredCount:summary.filtered_count,
       }}
-      action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} returnTo="/dashboard/maintenance" /> : undefined}
+      action={canWrite && creationGate.ready ? <RoutineCreateModal triggerLabel="Agregar" assets={assets.rows} workers={workers.rows} crews={crews.rows} serviceSuppliers={serviceSuppliers.rows} returnTo="/dashboard/maintenance" /> : undefined}
     />
     {feedback.created==="routine" && <div className="section"><Alert variant="success" title="Rutina creada">Rutina creada correctamente.</Alert></div>}
     {feedback.error && <div className="section"><Alert variant="danger" title="No fue posible crear la rutina">{feedback.error==="sequence" ? creationGate.message : "Revisa los datos e inténtalo nuevamente."}</Alert></div>}
@@ -294,9 +318,10 @@ export default async function MaintenancePage({searchParams}:{searchParams:Promi
             frequency={"Cada "+p.frequency_value+" "+frequencyLabel(p.frequency_unit)}
             nextDue={p.next_due_at ? new Date(p.next_due_at).toLocaleDateString("es-CO") : "Sin programar"}
             active={p.active}
+            assignedTo={p.assigned_to_label||"Sin asignar"}
             recordProps={{
               "data-module-record":true,"data-status":p.active?"active":"inactive",
-              "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit].filter(Boolean).join(" "),
+              "data-search":[p.name,p.asset,p.company,p.site,p.frequency_unit,p.assigned_to_label].filter(Boolean).join(" "),
               "data-filter-organization":p.organization_id,"data-filter-organization-label":p.company,
               "data-filter-site":p.site_id,"data-filter-site-label":p.site,
               "data-filter-frequency":p.frequency_unit,"data-filter-frequency-label":p.frequency_unit,

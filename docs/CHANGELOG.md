@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-02 — Header de Asistencia optimizado
+
+### Fixed
+- La acción de contexto de empresa ahora muestra **Seleccionar empresa** cuando no existe empresa activa y **Cambiar empresa** cuando ya hay una seleccionada.
+- Se eliminó el tooltip nativo duplicado del botón de empresa y se conserva un único tooltip del Design System.
+- Se retiró la regla CSS específica que generaba un segundo tooltip sobre el tooltip global.
+- El selector de empresa se compactó eliminando la etiqueta visual redundante `Empresa`; el control conserva `aria-label` y el placeholder del selector.
+- El bloque de empresa reduce su ancho y alinea selector + acción en 40 px para liberar espacio al contador, notificaciones y perfil.
+
+
 ## 2026-10-02 — Edición completa de Órdenes de Trabajo y Rutinas
 
 ### Changed

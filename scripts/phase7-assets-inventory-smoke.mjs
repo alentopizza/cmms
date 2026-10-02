@@ -80,7 +80,7 @@ const globalCss=fs.readFileSync("app/globals.css","utf8");
 for(const marker of [
   ".bulk-import-backdrop{z-index:1500}",
   ".bulk-import-footer{",
-  "grid-template-columns:repeat(3,minmax(0,1fr))",
+  "grid-template-columns:minmax(190px,1fr) minmax(200px,1fr) minmax(250px,1.25fr)",
   "min-height:44px",
   ".bulk-import-modal{",
   "background:var(--surface)",

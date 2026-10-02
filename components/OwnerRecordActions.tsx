@@ -9,8 +9,9 @@ export type OwnerEditField = {
   name:string;
   label:string;
   value:string|number|boolean|null;
-  type?:"text"|"number"|"date"|"textarea"|"select"|"checkbox";
+  type?:"text"|"number"|"date"|"datetime-local"|"textarea"|"select"|"checkbox";
   options?:Array<{value:string;label:string}>;
+  wide?:boolean;
 };
 
 export default function OwnerRecordActions({
@@ -66,12 +67,12 @@ export default function OwnerRecordActions({
       <small>Solo Propietario Desweb</small>
       {compact&&<button className="owner-record-edit-close" type="button" onClick={()=>{if(!saving)setEditing(false);}} aria-label="Cerrar edición" title="Cerrar"><UiIcon name="x" size={16}/></button>}
     </div>
-    {fields.map(field=><div className="field" key={field.name}>
+    {fields.map(field=><div className={["field",field.wide?"form-span-2":""].filter(Boolean).join(" ")} key={field.name}>
       <label>{field.label}</label>
       {field.type==="select"?<select name={field.name} defaultValue={String(field.value??"")}>{(field.options||[]).map(option=><option value={option.value} key={option.value}>{option.label}</option>)}</select>
       :field.type==="textarea"?<textarea name={field.name} defaultValue={String(field.value??"")} rows={3}/>
       :field.type==="checkbox"?<label className="owner-record-checkbox"><input name={field.name} type="checkbox" defaultChecked={Boolean(field.value)}/><span>Activo</span></label>
-      :<input name={field.name} type={field.type==="number"?"number":field.type==="date"?"date":"text"} defaultValue={String(field.value??"")} step={field.type==="number"?"any":undefined}/>}
+      :<input name={field.name} type={field.type==="number"?"number":field.type==="date"?"date":field.type==="datetime-local"?"datetime-local":"text"} defaultValue={String(field.value??"")} step={field.type==="number"?"any":undefined}/>}
     </div>)}
     {error&&<div className="notice error">{error}</div>}
     <div className="form-actions">

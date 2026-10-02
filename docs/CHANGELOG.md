@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-02 — Corrección visual del menú Exportar en Reportes
+
+### Fixed
+- El dropdown de **Exportar** en las tarjetas de Activos, Inventario y Kardex vuelve a renderizarse sobre una superficie opaca del Design System.
+- Se corrigió el conflicto entre las reglas globales del menú (`top`) y las reglas específicas de Reportes (`bottom`), que deformaba el contenedor y hacía que las opciones parecieran transparentes sobre la sección siguiente.
+- El menú ahora define explícitamente `top`, `bottom:auto`, `right:auto`, fondo `var(--color-surface)`, aislamiento de stacking y mantiene borde, sombra y `z-index` del sistema.
+- Se añadió protección al smoke de Fase 10 para evitar regresiones de posicionamiento, fondo y stacking del dropdown.
+
+
 ## 2026-10-02 — Consecutivos por empresa para OT y Rutinas
 
 ### Fixed

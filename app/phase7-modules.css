@@ -15,6 +15,59 @@
 .phase7-assets .ds-card-header h2,.phase7-inventory .ds-card-header h2{color:var(--color-text-primary)}
 .phase7-section-copy{margin:0 0 var(--space-4);color:var(--color-text-muted);font-size:var(--font-size-body);line-height:var(--line-height-body)}
 
+
+/* Compact Assets list summary ------------------------------------------------ */
+.phase7-assets .asset-kpi-compact{
+  margin-top:var(--space-3);
+  gap:var(--space-2);
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-card{
+  min-height:86px;
+  grid-template-columns:34px minmax(0,1fr);
+  grid-template-rows:1fr;
+  align-items:center;
+  gap:var(--space-2);
+  padding:var(--space-3);
+  border-radius:var(--radius-xl);
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-topline{
+  display:block;
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-icon{
+  width:34px;
+  height:34px;
+  border-radius:var(--radius-lg);
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-copy{
+  align-content:center;
+  gap:1px;
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-copy>span{
+  font-size:8px;
+  letter-spacing:.05em;
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-copy>strong{
+  font-size:22px;
+  line-height:1;
+}
+.phase7-assets .asset-kpi-compact .ds-kpi-copy>small{
+  font-size:8px;
+  line-height:1.25;
+}
+.phase7-assets .asset-list-view-compact{
+  margin-top:var(--space-3);
+}
+@media(max-width:900px){
+  .phase7-assets .asset-kpi-compact{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:520px){
+  .phase7-assets .asset-kpi-compact{
+    grid-template-columns:1fr;
+  }
+}
+
 /* Assets ------------------------------------------------------------------- */
 .phase7-assets .asset-modern-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
 .phase7-assets .ds-business-asset{min-width:0}

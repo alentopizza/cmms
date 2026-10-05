@@ -31,6 +31,16 @@ const assets=fs.readFileSync("app/dashboard/assets/page.tsx","utf8");
 for(const marker of ["phase7-assets","<AssetSubnav","<MetricGrid","<KpiCard","<CollectionView","<AssetCard","<AssetCatalogOverview"]){
   if(!assets.includes(marker))throw new Error("Assets Phase 7 contract missing "+marker);
 }
+for(const forbidden of [
+  "Selecciona una empresa para importar",
+  "Vista de tarjetas",
+  "Activos registrados",
+  "Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.",
+]){
+  if(assets.includes(forbidden))throw new Error("Assets list still contains redundant vertical content: "+forbidden);
+}
+if(!assets.includes('asset-kpi-compact')||!assets.includes('asset-list-view-compact'))throw new Error("Assets compact list layout contract missing");
+
 const assetCatalog=fs.readFileSync("components/AssetCatalogOverview.tsx","utf8");
 for(const marker of ["asset-types","asset-categories","asset-brands","asset-models","asset-states","asset-maintenance","asset-history","asset-documents","asset-settings","<StaticDataTable","<StatTiles"]){
   if(!assetCatalog.includes(marker))throw new Error("Asset catalog surface missing "+marker);
@@ -96,6 +106,9 @@ const navigation=fs.readFileSync("components/ui-kit/Navigation.tsx","utf8");
 if(!navigation.includes("if(exact||/[?#]/.test(itemHref))return activeHref===itemHref;")||!navigation.includes("exact?:boolean"))throw new Error("ModuleNavigation must support exact query/hash module sections");
 
 const css=fs.readFileSync("app/phase7-modules.css","utf8");
+for(const marker of [".asset-kpi-compact",".asset-list-view-compact","min-height:86px"]){
+  if(!css.includes(marker))throw new Error("Assets compact KPI styling missing "+marker);
+}
 for(const selector of [".phase7-assets",".phase7-inventory",".phase7-bulk-import",":focus-visible","@media(max-width:700px)","@media(prefers-reduced-motion:reduce)"]){
   if(!css.includes(selector))throw new Error("Phase 7 CSS missing "+selector);
 }

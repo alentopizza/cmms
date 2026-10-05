@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-05 — Compactación visual del listado de Activos
+
+### Changed
+- Se eliminó del listado principal el aviso permanente **Selecciona una empresa para importar**; la importación continúa requiriendo contexto empresarial, pero esa condición ya se comunica desde la propia acción/filtro sin ocupar espacio vertical permanente.
+- Se retiró el bloque redundante **Vista de tarjetas / Activos registrados** y su subtítulo, porque el header ya identifica el módulo y el modo de vista.
+- Las cuatro estadísticas del listado se rediseñaron como una franja compacta de aproximadamente 86 px de alto, con icono, etiqueta, valor y referencia porcentual en una composición horizontal más densa.
+- Se redujeron los márgenes entre subnavegación, métricas y tarjetas para que los activos visibles comiencen mucho más arriba en la pantalla.
+- El resumen conserva 4 columnas en escritorio, 2 en tablet y 1 en pantallas estrechas.
+
+### Validation
+- El smoke de Fase 7 ahora bloquea la reaparición del aviso, títulos redundantes o el layout KPI alto anterior.
+
+
 ## 2026-10-02 — Header de Asistencia optimizado
 
 ### Fixed

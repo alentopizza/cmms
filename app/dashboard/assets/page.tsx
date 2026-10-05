@@ -398,22 +398,20 @@ export default async function AssetsPage({searchParams}:{searchParams:Promise<As
       </div>}
     />
     <AssetSubnav activeView={view}/>
-    {platform&&canWrite&&!importOrganizationId&&<div className="section"><Alert variant="info" title="Selecciona una empresa para importar">La carga masiva de activos requiere un contexto empresarial explícito. Usa el filtro Empresa; únicamente se muestran empresas autorizadas para tu cuenta.</Alert></div>}
     {params.created && <div className="section"><Alert variant="success" title="Activo creado">El activo se registró correctamente.</Alert></div>}
     {error && <div className="section"><Alert variant="danger" title="Revisa la información">{error}</Alert></div>}
 
     {canWrite && !creationGate.ready && <CreationPrerequisiteState icon="◇" eyebrow="Jerarquía de creación" title={creationGate.title} message={creationGate.message} href={creationGate.href || "/dashboard/locations"} action={creationGate.action || "Continuar"}/>}
 
     {view==="list"?<>
-      <MetricGrid className="section phase7-kpi-grid">
+      <MetricGrid className="section phase7-kpi-grid asset-kpi-compact">
         <KpiCard label="Total activos" value={String(summary.total_count)} hint="Todos los activos autorizados" icon="asset"/>
         <KpiCard label="Operativos" value={String(summary.operational_count)} hint={(summary.total_count?Math.round(summary.operational_count/summary.total_count*100):0)+"% del total"} icon="check" tone="success"/>
         <KpiCard label="En mantenimiento" value={String(summary.maintenance_count)} hint={(summary.total_count?Math.round(summary.maintenance_count/summary.total_count*100):0)+"% del total"} icon="maintenance" tone="warning"/>
         <KpiCard label="Fuera de servicio" value={String(summary.down_count)} hint={(summary.total_count?Math.round(summary.down_count/summary.total_count*100):0)+"% del total"} icon="warning" tone="danger"/>
       </MetricGrid>
 
-      <section className="section asset-list-view">
-        <div className="section-heading"><div><span className="eyebrow">Vista de tarjetas</span><h2>Activos registrados</h2><p className="muted">Abre un activo para consultar su ficha, rutinas, historial y órdenes relacionadas.</p></div></div>
+      <section className="section asset-list-view asset-list-view-compact">
         {assets.rows.length?<CollectionView storageKey="assets" label="Vista de activos" grid={<div className="asset-modern-grid asset-modern-grid-dense" data-collection-grid>{assets.rows.map(a=><AssetCard
           key={a.id}
           name={a.name}
